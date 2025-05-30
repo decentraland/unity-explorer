@@ -70,33 +70,15 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && data.Length > 0)
+            // Always convert to mono first, regardless of processing state
+            float[] monoData = ConvertToMono(data, channels);
+
+            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && monoData.Length > 0)
             {
-                // On macOS, avoid allocations in audio thread due to Core Audio sensitivity
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-                if (tempBuffer == null)
-                {
-                    // Pre-allocate a reasonably large buffer to avoid reallocations
-                    tempBuffer = new float[8192];
-                }
-
-                if (tempBuffer.Length < data.Length)
-                {
-                    // If we absolutely must reallocate, do it but log a warning
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio buffer reallocation on macOS (from {tempBuffer.Length} to {data.Length}). This may cause audio glitches.");
-                    tempBuffer = new float[Mathf.Max(data.Length, 8192)];
-                }
-#else
-                if (tempBuffer == null || tempBuffer.Length != data.Length) { tempBuffer = new float[data.Length]; }
-#endif
-                Array.Copy(data, tempBuffer, data.Length);
-
                 try
                 {
-                    // Process audio and convert to mono for voice chat transmission
-                    float[] monoData = ProcessAudioToMono(tempBuffer, channels, cachedSampleRate);
-
-                    // Send mono audio to LiveKit (more efficient for voice chat)
+                    // Process the mono audio
+                    audioProcessor.ProcessAudio(monoData, cachedSampleRate);
                     AudioRead?.Invoke(monoData, 1, cachedSampleRate);
                     return;
                 }
@@ -113,7 +95,8 @@ namespace DCL.VoiceChat
                 }
             }
 
-            AudioRead?.Invoke(GetSilenceBuffer(data.Length / channels), 1, cachedSampleRate);
+            // Send raw mono audio when processing is disabled or failed
+            AudioRead?.Invoke(monoData, 1, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility
@@ -137,33 +120,39 @@ namespace DCL.VoiceChat
             audioProcessor?.Reset();
         }
 
-        private float[] ProcessAudioToMono(float[] data, int channels, int sampleRate)
+        private float[] ConvertToMono(float[] data, int channels)
         {
-            // Since we force mono at the AudioSource level, we should always get mono-like data
-            // But we'll handle any edge cases where multi-channel data still comes through
-
             if (channels == 1)
             {
-                // True mono audio - process directly and return
-                audioProcessor.ProcessAudio(data, sampleRate);
+                // Already mono - return as-is
                 return data;
             }
-            else
+
+            // Multi-channel input - convert to mono by averaging all channels
+            int samplesPerChannel = data.Length / channels;
+            
+            // Ensure we have a properly sized buffer
+            if (tempBuffer == null || tempBuffer.Length < samplesPerChannel)
             {
-                // Multi-channel input (shouldn't happen with our forced mono setup, but safety fallback)
-                // Convert to mono by taking only the first channel (most efficient for forced mono sources)
-                int samplesPerChannel = data.Length / channels;
-                float[] monoData = new float[samplesPerChannel];
-
-                // Extract first channel only (more efficient than averaging since source is forced mono)
-                for (var sampleIndex = 0; sampleIndex < samplesPerChannel; sampleIndex++)
-                {
-                    monoData[sampleIndex] = data[sampleIndex * channels];
-                }
-
-                audioProcessor.ProcessAudio(monoData, sampleRate);
-                return monoData;
+#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+                tempBuffer = new float[Mathf.Max(samplesPerChannel, 8192)];
+#else
+                tempBuffer = new float[samplesPerChannel];
+#endif
             }
+
+            // Average all channels - standard mono conversion
+            for (int sampleIndex = 0; sampleIndex < samplesPerChannel; sampleIndex++)
+            {
+                float sum = 0f;
+                for (int ch = 0; ch < channels; ch++)
+                {
+                    sum += data[sampleIndex * channels + ch];
+                }
+                tempBuffer[sampleIndex] = sum / channels;
+            }
+
+            return tempBuffer;
         }
 
         private float[] GetSilenceBuffer(int length)
@@ -172,10 +161,9 @@ namespace DCL.VoiceChat
             {
                 silenceBuffer = new float[Mathf.Max(length, 1024)];
             }
-            else if (silenceBuffer.Length > length)
-            {
-                Array.Clear(silenceBuffer, 0, length);
-            }
+            
+            // Always clear the buffer to ensure silence
+            Array.Clear(silenceBuffer, 0, Mathf.Min(length, silenceBuffer.Length));
             return silenceBuffer;
         }
     }

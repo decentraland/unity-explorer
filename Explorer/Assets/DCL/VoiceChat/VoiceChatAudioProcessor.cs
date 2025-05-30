@@ -300,7 +300,7 @@ namespace DCL.VoiceChat
 
             if (!gateIsOpen && GateSmoothing < 0.01f)
             {
-                ResetFilterStates();
+                ResetFilterStatesGradually();
             }
 
             float gateMultiplier = GateSmoothing;
@@ -334,6 +334,33 @@ namespace DCL.VoiceChat
                 dcBlockPrevInput = 0f;
                 dcBlockPrevOutput = 0f;
             }
+        }
+
+        private void ResetFilterStatesGradually()
+        {
+            // Gradually decay filter states to prevent pops and clicks
+            // This is much gentler than abrupt reset and prevents artifacts
+            float decayFactor = 0.95f; 
+            
+            for (int i = 0; i < 2; i++)
+            {
+                highPassPrevInputs[i] *= decayFactor;
+                highPassPrevOutputs[i] *= decayFactor;
+                
+                lowPassPrevInputs[i] *= decayFactor;
+                lowPassPrevOutputs[i] *= decayFactor;
+                
+                if (Mathf.Abs(highPassPrevInputs[i]) < 1e-10f) highPassPrevInputs[i] = 0f;
+                if (Mathf.Abs(highPassPrevOutputs[i]) < 1e-10f) highPassPrevOutputs[i] = 0f;
+                if (Mathf.Abs(lowPassPrevInputs[i]) < 1e-10f) lowPassPrevInputs[i] = 0f;
+                if (Mathf.Abs(lowPassPrevOutputs[i]) < 1e-10f) lowPassPrevOutputs[i] = 0f;
+            }
+            
+            dcBlockPrevInput *= decayFactor;
+            dcBlockPrevOutput *= decayFactor;
+            
+            if (Mathf.Abs(dcBlockPrevInput) < 1e-10f) dcBlockPrevInput = 0f;
+            if (Mathf.Abs(dcBlockPrevOutput) < 1e-10f) dcBlockPrevOutput = 0f;
         }
 
         private float ApplyAGC(float sample)

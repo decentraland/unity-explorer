@@ -56,6 +56,8 @@ namespace DCL.VoiceChat
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
 
             isInCall = false;
+            
+            InitializeMicrophone();
         }
 
         public void Dispose()
@@ -73,14 +75,13 @@ namespace DCL.VoiceChat
             {
                 if (audioSource != null)
                 {
-                    audioSource.volume = 0f;
+                    audioSource.mute = true;
                     StopAudioSource();
                     audioSource.clip = null;
                 }
                 Microphone.End(MicrophoneName);
 
-                if (audioFilter != null)
-                    audioFilter.enabled = false;
+                audioFilter.enabled = false;
             }
         }
 
@@ -210,7 +211,8 @@ namespace DCL.VoiceChat
 
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
-            audioSource.volume = 0f;
+            audioSource.volume = 1f;  // Keep volume at 1 so OnAudioFilterRead gets called
+            audioSource.mute = true;  // Mute local playback to prevent feedback
             
             // Force mono audio for voice chat - this ensures we always get mono input to our filter
             // This eliminates the need for channel mixing in the audio filter
@@ -219,8 +221,7 @@ namespace DCL.VoiceChat
             
             audioSource.Play();
 
-            if (audioFilter != null)
-                audioFilter.enabled = false;
+            audioFilter.enabled = false;
 
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
@@ -231,21 +232,16 @@ namespace DCL.VoiceChat
 
         private void EnableMicrophone()
         {
-            if (!isMicrophoneInitialized)
-                InitializeMicrophone();
-
-            audioSource.volume = 0f;
-            if (audioFilter != null)
-                audioFilter.enabled = true;
+            audioSource.mute = false;  // Allow audio processing - mute state controls local playback
+            audioFilter.enabled = true;
             EnabledMicrophone?.Invoke();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone (capture only, no local playback)");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone (capture and processing enabled)");
         }
 
         private void DisableMicrophone()
         {
-            audioSource.volume = 0f;
-            if (audioFilter != null)
-                audioFilter.enabled = false;
+            audioSource.mute = true;
+            audioFilter.enabled = false;
             DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
         }
@@ -258,44 +254,17 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            bool wasTalking = IsTalking;
-
-            if (isMicrophoneInitialized)
-            {
-                audioSource.Stop();
-                audioSource.clip = null;
-                Microphone.End(MicrophoneName);
-                isMicrophoneInitialized = false;
-            }
-
-            audioFilter?.ResetProcessor();
-
-            if (isInCall)
-            {
-                InitializeMicrophone();
-
-                if (wasTalking)
-                {
-                    // Keep AudioSource volume at 0 - never play microphone locally
-                    audioSource.volume = 0f;
-
-                    if (audioFilter != null)
-                        audioFilter.enabled = true;
-                }
-                else
-                {
-                    if (audioFilter != null)
-                        audioFilter.enabled = false;
-                }
-            }
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
+            HandleMicrophoneChange(newMicrophoneIndex);
         }
 
         private async UniTaskVoid OnMicrophoneChangedAsync(int newMicrophoneIndex)
         {
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
-            
+            HandleMicrophoneChange(newMicrophoneIndex);
+        }
+
+        private void HandleMicrophoneChange(int newMicrophoneIndex)
+        {
             bool wasTalking = IsTalking;
 
             if (isMicrophoneInitialized)
@@ -306,25 +275,16 @@ namespace DCL.VoiceChat
                 isMicrophoneInitialized = false;
             }
 
-            audioFilter?.ResetProcessor();
+            audioFilter.ResetProcessor();
 
-            if (isInCall)
+            // Always reinitialize microphone so it's ready when needed
+            InitializeMicrophone();
+
+            // Restore previous talking state if in call
+            if (isInCall && wasTalking)
             {
-                InitializeMicrophone();
-
-                if (wasTalking)
-                {
-                    // Keep AudioSource volume at 0 - never play microphone locally
-                    audioSource.volume = 0f;
-
-                    if (audioFilter != null)
-                        audioFilter.enabled = true;
-                }
-                else
-                {
-                    if (audioFilter != null)
-                        audioFilter.enabled = false;
-                }
+                audioSource.mute = false;
+                audioFilter.enabled = true;
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");

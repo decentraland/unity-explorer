@@ -20,12 +20,12 @@ MonoBehaviour:
   NoiseGateReleaseTime: 0.1
   EnableBandPassFilter: 1
   HighPassCutoffFreq: 80
-  LowPassCutoffFreq: 4000
+  LowPassCutoffFreq: 7000
   EnableAutoGainControl: 1
-  AGCTargetLevel: 1
+  AGCTargetLevel: 0.7
   AGCResponseSpeed: 1
   EnableNoiseReduction: 1
-  NoiseReductionStrength: 1
+  NoiseReductionStrength: 0.3
   EnableDeEsser: 1
   DeEsserThreshold: 0.282
   DeEsserRatio: 3
