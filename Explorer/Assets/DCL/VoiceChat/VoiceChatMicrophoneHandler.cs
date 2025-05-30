@@ -16,6 +16,7 @@ namespace DCL.VoiceChat
 
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
+        public event Action MicrophoneReady;
 
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
@@ -63,6 +64,10 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
             voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
+
+            EnabledMicrophone = null;
+            DisabledMicrophone = null;
+            MicrophoneReady = null;
 
             if (isMicrophoneInitialized)
             {
@@ -220,6 +225,8 @@ namespace DCL.VoiceChat
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized with forced mono configuration");
+            
+            MicrophoneReady?.Invoke();
         }
 
         private void EnableMicrophone()
@@ -227,11 +234,11 @@ namespace DCL.VoiceChat
             if (!isMicrophoneInitialized)
                 InitializeMicrophone();
 
-            audioSource.volume = 1f;
+            audioSource.volume = 0f;
             if (audioFilter != null)
                 audioFilter.enabled = true;
             EnabledMicrophone?.Invoke();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone (capture only, no local playback)");
         }
 
         private void DisableMicrophone()
@@ -269,7 +276,8 @@ namespace DCL.VoiceChat
 
                 if (wasTalking)
                 {
-                    audioSource.volume = 1f;
+                    // Keep AudioSource volume at 0 - never play microphone locally
+                    audioSource.volume = 0f;
 
                     if (audioFilter != null)
                         audioFilter.enabled = true;
@@ -306,7 +314,8 @@ namespace DCL.VoiceChat
 
                 if (wasTalking)
                 {
-                    audioSource.volume = 1f;
+                    // Keep AudioSource volume at 0 - never play microphone locally
+                    audioSource.volume = 0f;
 
                     if (audioFilter != null)
                         audioFilter.enabled = true;

@@ -29,6 +29,7 @@ namespace DCL.VoiceChat
         private CancellationTokenSource cts;
         private bool isMediaOpen;
         private RtcAudioSource rtcAudioSource;
+        private bool pendingTrackPublish = false;
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedAudioSource combinedAudioSource,
@@ -95,13 +96,14 @@ namespace DCL.VoiceChat
                     {
                         cts = cts.SafeRestart();
                         OpenMedia();
-                        PublishTrack(cts.Token);
+                        TryPublishTrack(cts.Token);
                     }
                     break;
                 case ConnectionUpdate.Disconnected:
                     cts.SafeCancelAndDispose();
                     CloseMedia();
                     isMediaOpen = false;
+                    pendingTrackPublish = false;
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
                     break;
                 case ConnectionUpdate.Reconnecting:
@@ -111,8 +113,49 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void PublishTrack(CancellationToken ct)
+        private void TryPublishTrack(CancellationToken ct)
         {
+            if (PublishTrack(ct))
+            {
+                pendingTrackPublish = false;
+            }
+            else
+            {
+                pendingTrackPublish = true;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Track publishing deferred until microphone is ready");
+            }
+        }
+
+        /// <summary>
+        /// Call this when microphone becomes available to retry publishing if needed
+        /// </summary>
+        public void OnMicrophoneReady()
+        {
+            if (pendingTrackPublish && cts != null && !cts.Token.IsCancellationRequested)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone ready - attempting to publish track");
+                if (PublishTrack(cts.Token))
+                {
+                    pendingTrackPublish = false;
+                }
+            }
+        }
+
+        private bool PublishTrack(CancellationToken ct)
+        {
+            // Ensure microphone AudioSource and AudioClip are ready before creating RTCAudioSource
+            if (microphoneAudioSource == null)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot publish track: microphone AudioSource is null. Microphone may not be initialized yet.");
+                return false;
+            }
+
+            if (microphoneAudioSource.clip == null)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot publish track: microphone AudioClip is null. Microphone may not be started yet.");
+                return false;
+            }
+
             rtcAudioSource = new RtcAudioSource(microphoneAudioSource, microphoneAudioFilter);
             rtcAudioSource.Start();
             microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource);
@@ -128,6 +171,8 @@ namespace DCL.VoiceChat
 
             voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack, options, ct);
             isMediaOpen = true;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Voice chat track published successfully");
+            return true;
         }
 
         private void OpenMedia()

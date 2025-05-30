@@ -17,6 +17,7 @@ namespace DCL.VoiceChat
         private bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
 
         private float[] tempBuffer;
+        private float[] silenceBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
 
         private void Awake()
@@ -49,6 +50,7 @@ namespace DCL.VoiceChat
             AudioRead = null!;
             audioProcessor = null;
             tempBuffer = null;
+            silenceBuffer = null;
         }
 
         /// <summary>
@@ -58,6 +60,12 @@ namespace DCL.VoiceChat
         {
             if (data == null)
                 return;
+
+            if (!enabled)
+            {
+                AudioRead?.Invoke(GetSilenceBuffer(data.Length / channels), 1, cachedSampleRate);
+                return;
+            }
 
             if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && data.Length > 0)
             {
@@ -102,8 +110,7 @@ namespace DCL.VoiceChat
                 }
             }
 
-            // Fallback: send original data if processing failed or is disabled
-            AudioRead?.Invoke(data, channels, cachedSampleRate);
+            AudioRead?.Invoke(GetSilenceBuffer(data.Length / channels), 1, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility
@@ -154,6 +161,19 @@ namespace DCL.VoiceChat
                 audioProcessor.ProcessAudio(monoData, sampleRate);
                 return monoData;
             }
+        }
+
+        private float[] GetSilenceBuffer(int length)
+        {
+            if (silenceBuffer == null || silenceBuffer.Length < length)
+            {
+                silenceBuffer = new float[Mathf.Max(length, 1024)];
+            }
+            else if (silenceBuffer.Length > length)
+            {
+                Array.Clear(silenceBuffer, 0, length);
+            }
+            return silenceBuffer;
         }
     }
 }
