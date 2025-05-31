@@ -5,6 +5,7 @@ using DCL.Browser;
 using DCL.InWorldCamera.PassportBridge;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using UnityEngine;
@@ -41,10 +42,10 @@ namespace DCL.InWorldCamera.PhotoDetail
             int equippedWearableDefaultCapacity,
             int equippedWearableMaxSize,
             Action wearableMarketClicked,
-            ViewDependencies viewDependencies)
+            ProfileRepositoryWrapper profileDataProvider)
         {
             visiblePersonPool = new ObjectPool<VisiblePersonController>(
-                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, viewDependencies),
+                createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, profileDataProvider),
                 actionOnGet: visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson),
                 actionOnDestroy: visiblePerson => GameObject.Destroy(visiblePerson.view.gameObject),
@@ -111,10 +112,10 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearableStorage wearableStorage,
             IWearablesProvider wearablesProvider,
             IPassportBridge passportBridge,
-            ViewDependencies viewDependencies)
+            ProfileRepositoryWrapper profileDataProvider)
         {
             VisiblePersonView view = GameObject.Instantiate(visiblePersonPrefab, visiblePersonParent);
-            return new VisiblePersonController(view, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, viewDependencies);
+            return new VisiblePersonController(view, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, this, profileDataProvider);
         }
 
         public VisiblePersonController GetVisiblePerson() =>

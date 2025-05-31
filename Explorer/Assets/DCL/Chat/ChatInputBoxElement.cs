@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Emoji;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.UI.CustomInputField;
@@ -81,6 +82,8 @@ namespace DCL.Chat
 
         private bool isInputSubmissionEnabled;
 
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
+
         public string InputBoxText
         {
             get => inputField.text;
@@ -105,6 +108,11 @@ namespace DCL.Chat
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
+        }
+
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         private bool IsEmojisEnabled
@@ -479,11 +487,11 @@ namespace DCL.Chat
                     if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                     {
                         if (profileSuggestionData.ProfileData != profile)
-                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, viewDependencies);
+                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileRepositoryWrapper);
                     }
                     else
                     {
-                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, viewDependencies));
+                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, profileRepositoryWrapper));
                     }
                 }
             }

@@ -1,9 +1,11 @@
 using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SocialService;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using System;
@@ -12,43 +14,38 @@ using Utility;
 
 namespace DCL.PluginSystem.Global
 {
-    public class SocialServicesPlugin : IDCLGlobalPluginWithoutSettings
+    public class SocialServicesContainer : IDisposable
     {
-        private readonly IRPCSocialServices rpcSocialServices;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IAppArgs appArgs;
 
+        internal readonly RPCSocialServices socialServicesRPC;
+
         private CancellationTokenSource cts = new ();
 
-        public SocialServicesPlugin(
-            IRPCSocialServices rpcSocialServices,
-            IDecentralandUrlsSource dclUrlSource,
+        public SocialServicesContainer(IDecentralandUrlsSource dclUrlSource,
             IWeb3IdentityCache web3IdentityCache,
             ISocialServiceEventBus socialServiceEventBus,
             IAppArgs appArgs)
         {
-            this.rpcSocialServices = rpcSocialServices;
             this.dclUrlSource = dclUrlSource;
             this.web3IdentityCache = web3IdentityCache;
             this.socialServiceEventBus = socialServiceEventBus;
             this.appArgs = appArgs;
-        }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
-
-        public async UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct)
-        {
             // We need to restart the connection to the service as identity changes
             // since that affects which friends the user can access
             web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReInitializeRpcClient;
+
+            socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, socialServiceEventBus);
         }
 
         public void Dispose()
         {
-            rpcSocialServices?.Dispose();
+            socialServicesRPC?.Dispose();
             web3IdentityCache.OnIdentityCleared -= DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged -= ReInitializeRpcClient;
         }
@@ -61,19 +58,17 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid ReconnectRpcClientAsync(CancellationToken ct)
             {
-                if (rpcSocialServices == null) return;
-
                 try
                 {
-                    await rpcSocialServices.DisconnectAsync(ct);
-                    await rpcSocialServices.EnsureRpcConnectionAsync(ct);
+                    await socialServicesRPC.DisconnectAsync(ct);
+                    await socialServicesRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
                 }
-                catch (Exception e) when (e is not OperationCanceledException) { }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
 
                 socialServiceEventBus.SendTransportReconnectedNotification();
             }
         }
-
 
         private void DisconnectRpcClient()
         {
@@ -83,10 +78,7 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid DisconnectRpcClientAsync(CancellationToken ct)
             {
-                if (rpcSocialServices == null) return;
-
-                try { await rpcSocialServices.DisconnectAsync(ct); }
-                catch (Exception e) when (e is not OperationCanceledException) { }
+                await socialServicesRPC.DisconnectAsync(ct).SuppressToResultAsync(ReportCategory.ENGINE);
             }
         }
 
@@ -99,7 +91,5 @@ namespace DCL.PluginSystem.Global
 
             return URLAddress.FromString(url);
         }
-
-
     }
 }

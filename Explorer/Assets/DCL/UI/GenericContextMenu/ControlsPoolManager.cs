@@ -1,5 +1,6 @@
 using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace DCL.UI.GenericContextMenu
 
         public ControlsPoolManager(
             ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             Transform controlsParent,
             GenericContextMenuSeparatorView separatorPrefab,
             GenericContextMenuButtonWithTextView buttonPrefab,
@@ -58,6 +60,7 @@ namespace DCL.UI.GenericContextMenu
                 {
                     GenericContextMenuUserProfileView profileView = Object.Instantiate(userProfilePrefab, controlsParent);
                     profileView.InjectDependencies(viewDependencies);
+                    profileView.SetProfileDataProvider(profileDataProvider);
                     return profileView;
                 },
                 actionOnGet: userProfileView => userProfileView.gameObject.SetActive(true),

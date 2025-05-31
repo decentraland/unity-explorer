@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.PluginSystem.Global;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -17,17 +18,20 @@ namespace DCL.PluginSystem
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private GenericContextMenuController? genericContextMenuController;
 
         public GenericContextMenuPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public void Dispose()
@@ -53,7 +57,7 @@ namespace DCL.PluginSystem
             GenericContextMenuButtonWithStringDelegateView buttonWithStringDelegatePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonWithStringDelegatePrefab, ct)).GetComponent<GenericContextMenuButtonWithStringDelegateView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
-                new ControlsPoolManager(viewDependencies, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab));
+                new ControlsPoolManager(viewDependencies, profileRepositoryWrapper, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab));
             mvcManager.RegisterController(genericContextMenuController);
         }
 

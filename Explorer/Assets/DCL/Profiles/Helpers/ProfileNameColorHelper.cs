@@ -3,7 +3,7 @@ using System.Text;
 using UnityEngine;
 using Random = System.Random;
 
-namespace DCL.UI.Profiles.Helpers
+namespace DCL.Profiles.Helpers
 {
     public static class ProfileNameColorHelper
     {
