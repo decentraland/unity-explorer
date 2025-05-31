@@ -14,7 +14,6 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -76,21 +75,26 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 (mainCameraComponent.virtualCameraInstance == null || mainCameraComponent.virtualCameraInstance.enabled))
                 return;
 
-            mainCameraComponent.virtualCameraCRDTEntity = virtualCameraCRDTEntity;
-
             CinemachineFreeLook? previousVirtualCamera = mainCameraComponent.virtualCameraInstance;
             bool hasPreviousVirtualCamera = previousVirtualCamera != null && previousVirtualCamera.enabled;
             if (virtualCameraCRDTEntity.HasValue)
             {
                 Vector3 cinemachineCurrentActiveCamPos = cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject.transform.position;
-                ApplyVirtualCamera(
-                    ref mainCameraComponent,
-                    virtualCameraCRDTEntity.Value,
-                    hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos
-                );
+
+                // It may take more than 1 run to detect the VirtualCamera component on the crdt entity
+                if (TryApplyVirtualCamera(
+                        ref mainCameraComponent,
+                        virtualCameraCRDTEntity.Value,
+                        hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos))
+                {
+                    // virtualCameraCRDTEntity assigned only after successfully applying it, so that
+                    // the system keeps trying otherwise
+                    mainCameraComponent.virtualCameraCRDTEntity = virtualCameraCRDTEntity;
+                }
             }
             else
             {
+                mainCameraComponent.virtualCameraCRDTEntity = null;
                 mainCameraComponent.virtualCameraInstance = null;
             }
 
@@ -142,7 +146,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             DisableActiveVirtualCamera(component);
         }
 
-        private void ApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, CRDTEntity virtualCamCRDTEntity, Vector3? previousCameraPosition)
+        private bool TryApplyVirtualCamera(ref MainCameraComponent mainCameraComponent, CRDTEntity virtualCamCRDTEntity, Vector3? previousCameraPosition)
         {
             if (!VirtualCameraUtils.TryGetVirtualCameraComponents(
                     World,
@@ -150,7 +154,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                     virtualCamCRDTEntity,
                     out var virtualCameraComponent,
                     out var pbVirtualCameraComponent))
-                return;
+                return false;
 
             var virtualCameraInstance = virtualCameraComponent!.Value.virtualCameraInstance;
 
@@ -166,6 +170,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             virtualCameraInstance.enabled = true;
 
             sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateCameraLocked(SceneRestrictionsAction.APPLIED));
+
+            return true;
         }
 
         private void UpdateGlobalWorldCameraMode(bool isAnyVirtualCameraActive)
@@ -180,7 +186,9 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 }
             }
             else if (cameraComponent.Mode == CameraMode.SDKCamera)
+            {
                 cameraComponent.Mode = lastNonSDKCameraMode;
+            }
         }
 
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
