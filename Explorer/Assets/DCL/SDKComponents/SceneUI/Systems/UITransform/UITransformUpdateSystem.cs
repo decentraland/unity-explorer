@@ -63,6 +63,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             switch (isCurrent)
             {
                 case false when !uiTransformComponent.IsHidden:
+                    // Note: This check is needed to avoid an ArgumentException happening due to a
+                    // race condition in the lifecycle of entities and uiElements when reloading a
+                    // scene by the /reload command
                     if(canvas.rootVisualElement.Contains(uiTransformComponent.Transform))
                         canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
                     uiTransformComponent.IsHidden = true;
