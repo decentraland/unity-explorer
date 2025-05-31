@@ -31,9 +31,11 @@ namespace DCL.ECSComponents {
             "QVJEEAQSDwoLSUFfQkFDS1dBUkQQBRIMCghJQV9SSUdIVBAGEgsKB0lBX0xF",
             "RlQQBxILCgdJQV9KVU1QEAgSCwoHSUFfV0FMSxAJEg8KC0lBX0FDVElPTl8z",
             "EAoSDwoLSUFfQUNUSU9OXzQQCxIPCgtJQV9BQ1RJT05fNRAMEg8KC0lBX0FD",
-            "VElPTl82EA0qVgoQUG9pbnRlckV2ZW50VHlwZRIKCgZQRVRfVVAQABIMCghQ",
-            "RVRfRE9XThABEhMKD1BFVF9IT1ZFUl9FTlRFUhACEhMKD1BFVF9IT1ZFUl9M",
-            "RUFWRRADQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "VElPTl82EA0qkQEKEFBvaW50ZXJFdmVudFR5cGUSCgoGUEVUX1VQEAASDAoI",
+            "UEVUX0RPV04QARITCg9QRVRfSE9WRVJfRU5URVIQAhITCg9QRVRfSE9WRVJf",
+            "TEVBVkUQAxITCg9QRVRfRFJBR19MT0NLRUQQBBISCg5QRVRfRFJBR19TVEFS",
+            "VBAFEhAKDFBFVF9EUkFHX0VORBAGQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IG",
+            "cHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.InputAction), typeof(global::DCL.ECSComponents.PointerEventType), }, null, null));
@@ -67,6 +69,9 @@ namespace DCL.ECSComponents {
     [pbr::OriginalName("PET_DOWN")] PetDown = 1,
     [pbr::OriginalName("PET_HOVER_ENTER")] PetHoverEnter = 2,
     [pbr::OriginalName("PET_HOVER_LEAVE")] PetHoverLeave = 3,
+    [pbr::OriginalName("PET_DRAG_LOCKED")] PetDragLocked = 4,
+    [pbr::OriginalName("PET_DRAG_START")] PetDragStart = 5,
+    [pbr::OriginalName("PET_DRAG_END")] PetDragEnd = 6,
   }
 
   #endregion
