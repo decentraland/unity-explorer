@@ -31,6 +31,8 @@ namespace DCL.Communities
                 this.profilePicture = profilePicture;
                 this.name = name;
                 this.hasClaimedName = hasClaimedName;
+
+                SetUserNameColor();
             }
 
             public MemberData(string id, string profilePicture, string name, bool hasClaimedName, CommunityMemberRole role,
@@ -45,6 +47,11 @@ namespace DCL.Communities
                 this.friendshipStatus = friendshipStatus;
                 this.UserNameColor = Color.white;
 
+                SetUserNameColor();
+            }
+
+            private void SetUserNameColor()
+            {
                 string displayName = string.Empty;
 
                 if (string.IsNullOrEmpty(name)) return;
@@ -61,38 +68,6 @@ namespace DCL.Communities
                     displayName = $"{result}{id}";
 
                 UserNameColor = ProfileNameColorHelper.GetNameColor(displayName);
-            }
-
-            private const string HEX_CHARS = "0123456789abcdef";
-            private static readonly string[] ADJECTIVES =
-            {
-                "cool", "fast", "silent", "happy", "dark", "bright",
-                "blue", "frozen", "angry", "brave", "smart", "wild"
-            };
-
-            private static readonly string[] NOUNS =
-            {
-                "fox", "wolf", "rider", "ghost", "cat", "hawk", "stone",
-                "blade", "shadow", "storm", "dragon", "raven"
-            };
-
-            private static readonly CommunityMemberRole[] ROLES = EnumUtils.Values<CommunityMemberRole>().Where(role => role != CommunityMemberRole.none).ToArray();
-            private static readonly FriendshipStatus[] FRIENDSHIP_STATUSES = EnumUtils.Values<FriendshipStatus>();
-
-            public static MemberData RandomMember()
-            {
-                var sb = new StringBuilder("0x");
-
-                for (int i = 0; i < 40; i++)
-                    sb.Append(HEX_CHARS[UnityEngine.Random.Range(0, HEX_CHARS.Length)]);
-
-                return new MemberData(sb.ToString(),
-                    "",
-                    $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
-                    UnityEngine.Random.Range(0, 100) > 50,
-                    ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
-                    UnityEngine.Random.Range(0, 10),
-                    FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]);
             }
 
             public override int GetHashCode() =>

@@ -2,28 +2,24 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using Utility;
 
 namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
-        private readonly IAppArgs appArgs;
         private readonly List<GetUserCommunitiesResponse.CommunityData> currentCommunities;
 
         public FakeCommunitiesDataProvider(IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
-            IDecentralandUrlsSource urlsSource,
-            IAppArgs appArgs)
+            IDecentralandUrlsSource urlsSource)
         {
-            this.appArgs = appArgs;
-
             currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 1);
         }
 
@@ -102,7 +98,7 @@ namespace DCL.Communities
             {
                 if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
                 {
-                    GetCommunityMembersResponse.MemberData member = GetCommunityMembersResponse.MemberData.RandomMember();
+                    GetCommunityMembersResponse.MemberData member = GetRandomMember();
 
                     if (areBanned)
                         member.role = CommunityMemberRole.none;
@@ -209,6 +205,38 @@ namespace DCL.Communities
             }
 
             return communities;
+        }
+
+        private const string HEX_CHARS = "0123456789abcdef";
+        private static readonly string[] ADJECTIVES =
+        {
+            "cool", "fast", "silent", "happy", "dark", "bright",
+            "blue", "frozen", "angry", "brave", "smart", "wild"
+        };
+
+        private static readonly string[] NOUNS =
+        {
+            "fox", "wolf", "rider", "ghost", "cat", "hawk", "stone",
+            "blade", "shadow", "storm", "dragon", "raven"
+        };
+
+        private static readonly CommunityMemberRole[] ROLES = EnumUtils.Values<CommunityMemberRole>().Where(role => role != CommunityMemberRole.none).ToArray();
+        private static readonly FriendshipStatus[] FRIENDSHIP_STATUSES = EnumUtils.Values<FriendshipStatus>();
+
+        public static GetCommunityMembersResponse.MemberData GetRandomMember()
+        {
+            var sb = new StringBuilder("0x");
+
+            for (int i = 0; i < 40; i++)
+                sb.Append(HEX_CHARS[UnityEngine.Random.Range(0, HEX_CHARS.Length)]);
+
+            return new GetCommunityMembersResponse.MemberData(sb.ToString(),
+                "",
+                $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
+                UnityEngine.Random.Range(0, 100) > 50,
+                ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
+                UnityEngine.Random.Range(0, 10),
+                FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]);
         }
     }
 }

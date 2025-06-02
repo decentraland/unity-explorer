@@ -103,8 +103,13 @@ namespace DCL.Communities.CommunitiesCard
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
-            Color.RGBToHSV(viewInstance.BackgroundColor, out float h, out float s, out float v);
-            viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
+            SetCardBackgroundColor(viewInstance.BackgroundColor);
+        }
+
+        private void SetCardBackgroundColor(Color color)
+        {
+            Color.RGBToHSV(color, out float h, out float s, out float v);
+            viewInstance!.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
         protected override void OnViewShow()
