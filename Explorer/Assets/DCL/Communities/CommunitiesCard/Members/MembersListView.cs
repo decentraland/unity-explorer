@@ -1,10 +1,10 @@
-using DCL.UI;
 using SuperScrollView;
 using UnityEngine;
 using DCL.UI.Utilities;
 using MVC;
 using System;
 using UnityEngine.UI;
+using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -25,10 +25,10 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public event Action<MemberListSections> ActiveSectionChanged;
         public event Action? NewDataRequested;
-        public event Action<GetCommunityMembersResponse.MemberData>? ElementMainButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListItemView>? ElementContextMenuButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData>? ElementFriendButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData>? ElementUnbanButtonClicked;
+        public event Action<MemberData>? ElementMainButtonClicked;
+        public event Action<MemberData, Vector2, MemberListItemView>? ElementContextMenuButtonClicked;
+        public event Action<MemberData>? ElementFriendButtonClicked;
+        public event Action<MemberData>? ElementUnbanButtonClicked;
 
         private float scrollViewMaxHeight;
         private float scrollViewHeight;

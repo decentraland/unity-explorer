@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -38,12 +39,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         private bool canUnHover = true;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
-        public GetCommunityMembersResponse.MemberData UserProfile { get; protected set; }
+        public MemberData UserProfile { get; protected set; }
 
-        public event Action<GetCommunityMembersResponse.MemberData>? MainButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListItemView>? ContextMenuButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData>? FriendButtonClicked;
-        public event Action<GetCommunityMembersResponse.MemberData>? UnbanButtonClicked;
+        public event Action<MemberData>? MainButtonClicked;
+        public event Action<MemberData, Vector2, MemberListItemView>? ContextMenuButtonClicked;
+        public event Action<MemberData>? FriendButtonClicked;
+        public event Action<MemberData>? UnbanButtonClicked;
 
         private void RemoveAllListeners()
         {
@@ -85,7 +86,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             Background.color = NormalColor;
         }
 
-        public void Configure(GetCommunityMembersResponse.MemberData memberProfile, MembersListView.MemberListSections section)
+        public void Configure(MemberData memberProfile, MembersListView.MemberListSections section)
         {
             UnHover();
             UserProfile = memberProfile;
@@ -112,10 +113,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             UnblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
         }
 
-        public void SubscribeToInteractions(Action<GetCommunityMembersResponse.MemberData> mainButton,
-            Action<GetCommunityMembersResponse.MemberData, Vector2, MemberListItemView> contextMenuButton,
-            Action<GetCommunityMembersResponse.MemberData> friendButton,
-            Action<GetCommunityMembersResponse.MemberData> unbanButton)
+        public void SubscribeToInteractions(Action<MemberData> mainButton,
+            Action<MemberData, Vector2, MemberListItemView> contextMenuButton,
+            Action<MemberData> friendButton,
+            Action<MemberData> unbanButton)
         {
             RemoveAllListeners();
 

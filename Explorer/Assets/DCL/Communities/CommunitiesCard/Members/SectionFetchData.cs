@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -10,7 +11,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         public int totalFetched;
         public int totalToFetch;
 
-        public readonly List<GetCommunityMembersResponse.MemberData> members;
+        public readonly List<MemberData> members;
 
         public SectionFetchData(int pageSize)
         {
@@ -18,7 +19,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             pageNumber = 0;
             totalFetched = 0;
             totalToFetch = 0;
-            members = new List<GetCommunityMembersResponse.MemberData>(pageSize);
+            members = new List<MemberData>(pageSize);
         }
 
         public void Reset()

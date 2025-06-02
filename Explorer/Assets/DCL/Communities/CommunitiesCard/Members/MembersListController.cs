@@ -17,6 +17,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 using Utility.Types;
+using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
@@ -58,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
         private SectionFetchData currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
 
-        private GetCommunityMembersResponse.MemberData lastClickedProfileCtx;
+        private MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
         private CancellationTokenSource contextMenuOperationCts = new ();
         private UniTaskCompletionSource? panelLifecycleTask;
@@ -148,10 +149,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void BlockUserClicked(GetCommunityMembersResponse.MemberData profile) =>
+        private void BlockUserClicked(MemberData profile) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.id), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), cancellationToken).Forget();
 
-        private void BanUser(GetCommunityMembersResponse.MemberData profile)
+        private void BanUser(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             BanUserAsync(contextMenuOperationCts.Token).Forget();
@@ -177,7 +178,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     {
                         allMembersFetchData.members.Remove(profile);
 
-                        List<GetCommunityMembersResponse.MemberData> memberList = bannedMembersFetchData.members;
+                        List<MemberData> memberList = bannedMembersFetchData.members;
                         profile.role = CommunityMemberRole.none;
                         memberList.Add(profile);
 
@@ -193,7 +194,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void KickUser(GetCommunityMembersResponse.MemberData profile)
+        private void KickUser(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             KickUserAsync(contextMenuOperationCts.Token).Forget();
@@ -228,7 +229,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void AddModerator(GetCommunityMembersResponse.MemberData profile)
+        private void AddModerator(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             AddModeratorAsync(contextMenuOperationCts.Token).Forget();
@@ -242,9 +243,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (result)
                     {
-                        List<GetCommunityMembersResponse.MemberData> memberList = allMembersFetchData.members;
+                        List<MemberData> memberList = allMembersFetchData.members;
 
-                        foreach (GetCommunityMembersResponse.MemberData member in memberList)
+                        foreach (MemberData member in memberList)
                             if (member.id.Equals(profile.id))
                             {
                                 member.role = CommunityMemberRole.moderator;
@@ -263,7 +264,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void RemoveModerator(GetCommunityMembersResponse.MemberData profile)
+        private void RemoveModerator(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             RemoveModeratorAsync(contextMenuOperationCts.Token).Forget();
@@ -277,8 +278,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (result)
                     {
-                        List<GetCommunityMembersResponse.MemberData> memberList = allMembersFetchData.members;
-                        foreach (GetCommunityMembersResponse.MemberData member in memberList)
+                        List<MemberData> memberList = allMembersFetchData.members;
+                        foreach (MemberData member in memberList)
                             if (member.id.Equals(profile.id))
                             {
                                 member.role = CommunityMemberRole.member;
@@ -297,17 +298,17 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void CallUser(GetCommunityMembersResponse.MemberData profile)
+        private void CallUser(MemberData profile)
         {
             throw new NotImplementedException();
         }
 
-        private void OpenChatWithUser(GetCommunityMembersResponse.MemberData profile)
+        private void OpenChatWithUser(MemberData profile)
         {
             throw new NotImplementedException();
         }
 
-        private void OpenProfilePassport(GetCommunityMembersResponse.MemberData profile) =>
+        private void OpenProfilePassport(MemberData profile) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.id)), cancellationToken).Forget();
 
         public void Reset()
@@ -419,7 +420,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             FetchNewDataAsync(ct).Forget();
         }
 
-        private void MainButtonClicked(GetCommunityMembersResponse.MemberData profile)
+        private void MainButtonClicked(MemberData profile)
         {
             // Handle main button click
             // Debug.Log("MainButtonClicked: " + profile.id);
@@ -439,7 +440,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             };
         }
 
-        private void ContextMenuButtonClicked(GetCommunityMembersResponse.MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
+        private void ContextMenuButtonClicked(MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
             lastClickedProfileCtx = profile;
             userProfileContextMenuControlSettings.SetInitialData(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
@@ -459,10 +460,10 @@ namespace DCL.Communities.CommunitiesCard.Members
                       .Forget();
         }
 
-        private void FriendButtonClicked(GetCommunityMembersResponse.MemberData profile) =>
+        private void FriendButtonClicked(MemberData profile) =>
             HandleContextMenuUserProfileButton(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
 
-        private void UnbanButtonClicked(GetCommunityMembersResponse.MemberData profile)
+        private void UnbanButtonClicked(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             UnbanUserAsync(contextMenuOperationCts.Token).Forget();
