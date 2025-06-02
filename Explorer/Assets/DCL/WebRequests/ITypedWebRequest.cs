@@ -1,5 +1,6 @@
 ﻿using Best.HTTP;
 using System;
+using System.Net.Http;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -43,6 +44,8 @@ namespace DCL.WebRequests
         UnityWebRequest CreateUnityWebRequest();
 
         HTTPRequest CreateHttp2Request();
+
+        HttpRequestMessage CreateYetAnotherHttpRequest();
     }
 
     public interface ITypedWebRequest<out TArgs> : ITypedWebRequest where TArgs: struct

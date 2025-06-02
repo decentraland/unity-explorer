@@ -14,7 +14,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             using IWebRequest? nativeRequest = await request.SendAsync(ct);
 
-            string responseData = nativeRequest.Response.Text;
+            string responseData = await nativeRequest.Response.GetTextAsync(ct);
             Dictionary<string, string>? responseHeadersDictionary = nativeRequest.Response.FlattenHeaders();
             bool requestOk = nativeRequest.Response.IsSuccess;
             bool requestRedirected = nativeRequest.Redirected;

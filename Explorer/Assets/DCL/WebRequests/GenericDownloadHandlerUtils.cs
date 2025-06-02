@@ -26,17 +26,17 @@ namespace DCL.WebRequests
         public delegate void TransformChunk<in T>(T context, NativeArray<byte>.ReadOnly chunk, ulong chunkIndex);
         public delegate T PrepareContext<out T>(ulong dataLength);
 
-        public static async UniTask<TResult> ProcessAndDisposeAsync<TResult>(this ITypedWebRequest request, Func<IWebRequest, TResult> getResult, CancellationToken ct)
+        public static async UniTask<TResult> ProcessAndDisposeAsync<TResult>(this ITypedWebRequest request, Func<IWebRequest, CancellationToken, UniTask<TResult>> getResult, CancellationToken ct)
         {
             using IWebRequest? req = await request.SendAsync(ct);
-            return getResult(req);
+            return await getResult(req, ct);
         }
 
         public static UniTask<string> StoreTextAsync(this ITypedWebRequest request, CancellationToken ct) =>
-            request.ProcessAndDisposeAsync(static r => r.Response.Text, ct);
+            request.ProcessAndDisposeAsync<string>(static (r, ct) => r.Response.GetTextAsync(ct), ct);
 
         public static UniTask<byte[]> GetDataCopyAsync(this ITypedWebRequest request, CancellationToken ct) =>
-            request.ProcessAndDisposeAsync(static r => r.Response.Data, ct);
+            request.ProcessAndDisposeAsync<byte[]>(static (r, ct) => r.Response.GetDataAsync(ct), ct);
 
         public static async UniTask<string?> GetResponseHeaderAsync(this ITypedWebRequest request, string headerName, CancellationToken ct)
         {
@@ -70,13 +70,13 @@ namespace DCL.WebRequests
 #if !UNITY_EDITOR
                     case WRJsonParser.NewtonsoftInEditor:
 #endif
-                        text = createdRequest.Response.Text;
+                        text = await createdRequest.Response.GetTextAsync(ct);
                         await SwitchToThreadAsync(threadFlags);
                         JsonUtility.FromJsonOverwrite(text, target);
                         break;
                     default:
                     {
-                        using Stream stream = createdRequest.Response.GetCompleteStream();
+                        using Stream stream = await createdRequest.Response.GetCompleteStreamAsync(ct);
 
                         await SwitchToThreadAsync(threadFlags);
 
@@ -133,12 +133,12 @@ namespace DCL.WebRequests
 #if !UNITY_EDITOR
                     case WRJsonParser.NewtonsoftInEditor:
 #endif
-                        text = createdRequest.Response.Text;
+                        text = await createdRequest.Response.GetTextAsync(ct);
                         await SwitchToThreadAsync(threadFlags);
                         return JsonUtility.FromJson<T>(text);
                     default:
                     {
-                        using Stream stream = createdRequest.Response.GetCompleteStream();
+                        using Stream stream = await createdRequest.Response.GetCompleteStreamAsync(ct);
 
                         await SwitchToThreadAsync(threadFlags);
 

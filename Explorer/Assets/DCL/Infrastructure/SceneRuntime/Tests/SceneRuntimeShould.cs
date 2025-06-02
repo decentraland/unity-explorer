@@ -24,6 +24,7 @@ namespace SceneRuntime.Tests
 {
     [TestFixture(WebRequestsMode.UNITY)]
     [TestFixture(WebRequestsMode.HTTP2)]
+    [TestFixture(WebRequestsMode.YET_ANOTHER)]
     public class SceneRuntimeShould
     {
         private readonly WebRequestsMode webRequestsMode;

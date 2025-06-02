@@ -19,9 +19,12 @@ using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoadin
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.HTTP2)]
+    [TestFixture(WebRequestsMode.YET_ANOTHER)]
     public partial class LoadAssetBundlePartialSystemShould : UnitySystemTestBase<PartialLoadAssetBundleSystem>
     {
+        private readonly WebRequestsMode mode;
+
         private const string REAL_ASSET_HASH = "bafybeidlrouln4f77ryns4wffz4pyapvfvbudno4pc2hirrhb5b554ixky";
 
         // 210 KB, Texture
@@ -43,13 +46,17 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private IWebRequestController webRequestController;
         private List<ABPromise> promises;
 
+        public LoadAssetBundlePartialSystemShould(WebRequestsMode mode)
+        {
+            this.mode = mode;
+        }
+
         [SetUp]
         public void Setup()
         {
             promises = new List<ABPromise>();
 
-            webRequestController = TestWebRequestController.Create(WebRequestsMode.HTTP2,
-                TestWebRequestController.InitializeCache(), CHUNK_SIZE);
+            webRequestController = TestWebRequestController.Create(mode, TestWebRequestController.InitializeCache(), CHUNK_SIZE);
 
             system = CreateSystem(webRequestController);
             system.Initialize();

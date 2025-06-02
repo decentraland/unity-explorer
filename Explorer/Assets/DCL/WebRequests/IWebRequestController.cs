@@ -21,7 +21,8 @@ namespace DCL.WebRequests
                 HTTPManager.LocalCache,
                 false,
                 0L,
-                false
+                false,
+                WebRequestsMode.UNITY
             )
         );
 

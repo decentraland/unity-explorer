@@ -1,6 +1,7 @@
 ﻿using Best.HTTP;
 using DCL.Diagnostics;
 using System;
+using System.Net.Http;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -31,6 +32,9 @@ namespace DCL.WebRequests
 
         public virtual HTTPRequest CreateHttp2Request() =>
             throw new NotSupportedException($"{nameof(CreateHttp2Request)} is not supported by {GetType().Name}");
+
+        public virtual HttpRequestMessage CreateYetAnotherHttpRequest() =>
+            throw new NotSupportedException($"{nameof(CreateYetAnotherHttpRequest)} is not supported by {GetType().Name}");
 
         protected CommonArguments commonArguments => Envelope.CommonArguments;
 

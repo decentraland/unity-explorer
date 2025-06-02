@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace DCL.WebRequests
 {
@@ -20,7 +22,7 @@ namespace DCL.WebRequests
         ///         </list>
         ///     </remarks>
         /// </summary>
-        string Text { get; }
+        UniTask<string> GetTextAsync(CancellationToken ct);
 
         /// <summary>
         ///     A human-readable string describing any system errors encountered by this UnityWebRequest object while handling HTTP requests or responses.
@@ -34,7 +36,7 @@ namespace DCL.WebRequests
         ///         This method can allocate heavily and must be used only if there are no other alternatives left
         ///     </remarks>
         /// </summary>
-        byte[] Data { get; }
+        UniTask<byte[]> GetDataAsync(CancellationToken ct);
 
         int StatusCode { get; }
 
@@ -49,7 +51,7 @@ namespace DCL.WebRequests
         ///     </remarks>
         /// </summary>
         /// <returns></returns>
-        Stream GetCompleteStream();
+        UniTask<Stream> GetCompleteStreamAsync(CancellationToken ct);
 
         /// <summary>
         ///     Gets the first value of the given header

@@ -3,10 +3,12 @@ using Best.HTTP.Response;
 using Best.HTTP.Shared.PlatformSupport.Memory;
 using Best.HTTP.Shared.PlatformSupport.Text;
 using Best.HTTP.Shared.Streams;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace DCL.WebRequests.HTTP2
 {
@@ -88,74 +90,7 @@ namespace DCL.WebRequests.HTTP2
 
             public bool Received => request.Response != null;
 
-            public string Text
-            {
-                get
-                {
-                    if (request.Response == null) return string.Empty;
-
-                    using DownloadContentStream? stream = request.Response.DownStream;
-
-                    // Create a string from the stream
-
-                    // Until we read the whole buffer we don't know the size of the string (char encoding is variable)
-                    // We can't read the down stream multiple times as it dequeues the chunks internally
-                    // We can't read by chunks straight-away either as trailing bytes may belong to the next character
-
-                    long bytesLength = stream.Length;
-
-                    // So we need a StringBuilder :-(
-                    // This length is just a hint, it's not the actual length of the string
-                    StringBuilder? stringBuilder = StringBuilderPool.Get((int)bytesLength / 2);
-
-                    try
-                    {
-                        // Warning: it creates a new instance of decoder
-                        Decoder decoder = Encoding.UTF8.GetDecoder();
-
-                        while (TryReadSegment(decoder)) ;
-
-                        return stringBuilder.ToString();
-                    }
-                    catch (DecoderFallbackException) { return string.Empty; }
-                    finally { StringBuilderPool.Release(stringBuilder); }
-
-                    bool TryReadSegment(Decoder decoder)
-                    {
-                        if (stream.TryTake(out BufferSegment bufferSegment))
-                        {
-                            // Check if we can actually allocate a segment on stack to avoid heap allocations
-                            Span<char> charsBuffer = stackalloc char[bufferSegment.Count];
-
-                            // Setting flush to `false` will preserve trailing bytes of the next character
-                            int charsDecoded = decoder.GetChars(bufferSegment.AsSpan(), charsBuffer, false);
-
-                            stringBuilder.Append(charsBuffer[..charsDecoded]);
-
-                            BufferPool.Release(bufferSegment);
-                            return true;
-                        }
-
-                        return false;
-                    }
-                }
-            }
-
             public string Error => IsSuccess ? string.Empty : request.Response?.Message ?? string.Empty;
-
-            public byte[] Data
-            {
-                get
-                {
-                    // The following will not work as it checks the response itself is disposed of (but should rely on the stream instead)
-                    // request.Response?.Data ?? Array.Empty<byte>();
-                    DownloadContentStream? downStream = request.Response.DownStream;
-
-                    var data = new byte[downStream.Length];
-                    downStream.Read(data, 0, data.Length);
-                    return data;
-                }
-            }
 
             public int StatusCode
             {
@@ -173,6 +108,7 @@ namespace DCL.WebRequests.HTTP2
 
             public bool IsSuccess => request.State == HTTPRequestStates.Finished;
 
+            // TODO implemented incorrectly - should read the header instead
             public ulong DataLength => (ulong)(request.Response?.DownStream?.Length ?? 0);
 
             internal Http2Response(HTTPRequest request)
@@ -180,8 +116,72 @@ namespace DCL.WebRequests.HTTP2
                 this.request = request;
             }
 
-            public Stream GetCompleteStream()
+            public UniTask<string> GetTextAsync(CancellationToken ct)
             {
+                if (request.Response == null) return UniTask.FromResult(string.Empty);
+
+                using DownloadContentStream? stream = request.Response.DownStream;
+
+                // Create a string from the stream
+
+                // Until we read the whole buffer we don't know the size of the string (char encoding is variable)
+                // We can't read the down stream multiple times as it dequeues the chunks internally
+                // We can't read by chunks straight-away either as trailing bytes may belong to the next character
+
+                long bytesLength = stream.Length;
+
+                // So we need a StringBuilder :-(
+                // This length is just a hint, it's not the actual length of the string
+                StringBuilder? stringBuilder = StringBuilderPool.Get((int)bytesLength / 2);
+
+                try
+                {
+                    // Warning: it creates a new instance of decoder
+                    Decoder decoder = Encoding.UTF8.GetDecoder();
+
+                    while (TryReadSegment(decoder)) ; //TODO will block the thread
+
+                    return UniTask.FromResult(stringBuilder.ToString());
+                }
+                catch (DecoderFallbackException) { return UniTask.FromResult(string.Empty); }
+                finally { StringBuilderPool.Release(stringBuilder); }
+
+                bool TryReadSegment(Decoder decoder)
+                {
+                    if (stream.TryTake(out BufferSegment bufferSegment))
+                    {
+                        // Check if we can actually allocate a segment on stack to avoid heap allocations
+                        Span<char> charsBuffer = stackalloc char[bufferSegment.Count];
+
+                        // Setting flush to `false` will preserve trailing bytes of the next character
+                        int charsDecoded = decoder.GetChars(bufferSegment.AsSpan(), charsBuffer, false);
+
+                        stringBuilder.Append(charsBuffer[..charsDecoded]);
+
+                        BufferPool.Release(bufferSegment);
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+
+            public UniTask<byte[]> GetDataAsync(CancellationToken ct)
+            {
+                // TODO wrong
+
+                // The following will not work as it checks the response itself is disposed of (but should rely on the stream instead)
+                // request.Response?.Data ?? Array.Empty<byte>();
+                DownloadContentStream? downStream = request.Response.DownStream;
+
+                var data = new byte[downStream.Length];
+                downStream.Read(data, 0, data.Length);
+                return UniTask.FromResult(data);
+            }
+
+            public UniTask<Stream> GetCompleteStreamAsync(CancellationToken ct)
+            {
+                // TODO it blocks the thread, critical if it's the main thread
                 using DownloadContentStream downStream = request.Response.DownStream;
 
                 var bufferStream = new BufferSegmentStream();
@@ -189,7 +189,7 @@ namespace DCL.WebRequests.HTTP2
                 while (downStream.TryTake(out BufferSegment segment))
                     bufferStream.Write(segment);
 
-                return bufferStream;
+                return UniTask.FromResult<Stream>(bufferStream);
             }
 
             public string? GetHeader(string headerName) =>

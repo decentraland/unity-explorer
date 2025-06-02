@@ -46,6 +46,7 @@ namespace DCL.WebRequests
                 [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
                 [field: SerializeField] public ushort PingAckTimeoutSeconds { get; private set; } = 10;
                 [field: SerializeField] public bool EnablePartialDownloading { get; private set; }
+                [field: SerializeField] public PartialRequestsDump PartialRequestsDump { get; private set; } = null!;
             }
 
             [field: SerializeField] public WebRequestsMode WebRequestsMode { get; private set; } = WebRequestsMode.HTTP2;
@@ -144,12 +145,13 @@ namespace DCL.WebRequests
 
             int partialChunkSize = container.settings.Http2Settings.PartialChunkSizeMB * 1024 * 1024;
 
-            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, ktxEnabled);
+            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, ktxEnabled, container.WebRequestsMode, container.settings.Http2Settings.PartialRequestsDump);
             container.requestHub = requestHub;
 
             IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,
                                                                  new DefaultWebRequestController(analyticsContainer, web3IdentityProvider, requestHub),
                                                                  new Http2WebRequestController(analyticsContainer, web3IdentityProvider, requestHub),
+                                                                 new YetAnotherWebRequestController(analyticsContainer, web3IdentityProvider, requestHub),
                                                                  requestHub)
                                                             .WithLog()
                                                             .WithArtificialDelay(options);
@@ -271,6 +273,14 @@ namespace DCL.WebRequests
         {
             // TODO: Temporary until we rewrite FF to be static
             requestHub.SetKTXEnabled(enabled);
+        }
+
+        public override void Dispose()
+        {
+            PartialRequestsDump dump = settings.Http2Settings.PartialRequestsDump;
+
+            if (dump)
+                dump.Serialize();
         }
     }
 }

@@ -1,4 +1,5 @@
 using Best.HTTP;
+using System.Net.Http;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -14,5 +15,8 @@ namespace DCL.WebRequests
 
         public override UnityWebRequest CreateUnityWebRequest() =>
             UnityWebRequest.Head(Envelope.CommonArguments.URL);
+
+        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
+            new (HttpMethod.Head, Envelope.CommonArguments.URL);
     }
 }

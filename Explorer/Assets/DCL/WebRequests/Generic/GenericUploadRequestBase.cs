@@ -1,8 +1,10 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Request.Upload.Forms;
+using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using UnityEngine.Networking;
 
@@ -12,6 +14,37 @@ namespace DCL.WebRequests
     {
         protected internal GenericUploadRequestBase(RequestEnvelope envelope, GenericUploadArguments args, IWebRequestController controller)
             : base(envelope, args, controller) { }
+
+        protected HttpRequestMessage CreateYetAnotherHttpRequest(HttpMethod method)
+        {
+            var request = new HttpRequestMessage(method, Envelope.CommonArguments.URL);
+
+            if (Args.MultipartFormSections != null)
+            {
+                var stream = new MultipartFormDataContent();
+
+                foreach (IMultipartFormSection? section in Args.MultipartFormSections)
+                    stream.Add(new ReadOnlyMemoryContent(section.sectionData), section.contentType, section.fileName);
+
+                request.Content = stream;
+            }
+            else if (Args.WWWForm != null)
+            {
+                var stream = new ReadOnlyMemoryContent(Args.WWWForm.data);
+
+                foreach (KeyValuePair<string, string> formHeader in Args.WWWForm.headers)
+                    stream.Headers.TryAddWithoutValidation(formHeader.Key, formHeader.Value);
+
+                request.Content = stream;
+            }
+            else
+            {
+                var content = new ReadOnlyMemoryContent(Args.PostData == null ? Array.Empty<byte>() : Encoding.UTF8.GetBytes(Args.PostData));
+                content.Headers.TryAddWithoutValidation(WebRequestHeaders.CONTENT_TYPE_HEADER, Args.ContentType);
+            }
+
+            return request;
+        }
 
         protected HTTPRequest CreateHttp2Request(HTTPMethods method)
         {

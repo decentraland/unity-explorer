@@ -53,9 +53,9 @@ namespace DCL.WebRequests.HTTP2.Tests
         {
             cache = TestWebRequestController.InitializeCache();
 
-            var requestsHub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, true, chunkSize, false);
+            var requestsHub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, true, chunkSize, false, WebRequestsMode.YET_ANOTHER);
 
-            webRequestController = new DisposeRequestWrap(new Http2WebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
+            webRequestController = new DisposeRequestWrap(new YetAnotherWebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
                 Substitute.For<IWeb3IdentityCache>(), requestsHub));
         }
 
@@ -281,7 +281,7 @@ namespace DCL.WebRequests.HTTP2.Tests
 
         private async Task<ulong> GetContentSizeAsync(string url)
         {
-            string? header = await webRequestController.HeadAsync(url, ReportCategory.GENERIC_WEB_REQUEST)
+            string? header = await webRequestController.GetAsync(url, ReportCategory.GENERIC_WEB_REQUEST)
                                                        .GetResponseHeaderAsync(WebRequestHeaders.CONTENT_LENGTH_HEADER, CancellationToken.None);
 
             Assert.IsTrue(WebRequestHeaders.TryParseUnsigned(header, out ulong length));

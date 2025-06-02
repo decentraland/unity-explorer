@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Networking;
@@ -73,11 +75,13 @@ namespace DCL.WebRequests
 
             public bool Received => unityWebRequest is not { result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError };
 
-            public string Text => unityWebRequest.downloadHandler.text;
+            public UniTask<string> GetTextAsync(CancellationToken ct) =>
+                UniTask.FromResult(unityWebRequest.downloadHandler.text);
 
             public string Error => unityWebRequest.error ?? string.Empty;
 
-            public byte[] Data => unityWebRequest.downloadHandler.data;
+            public UniTask<byte[]> GetDataAsync(CancellationToken ct) =>
+                UniTask.FromResult(unityWebRequest.downloadHandler.data);
 
             public int StatusCode => (int)unityWebRequest.responseCode;
 
@@ -90,14 +94,14 @@ namespace DCL.WebRequests
                 this.unityWebRequest = unityWebRequest;
             }
 
-            public Stream GetCompleteStream()
+            public UniTask<Stream> GetCompleteStreamAsync(CancellationToken ct)
             {
                 NativeArray<byte>.ReadOnly nativeData = unityWebRequest.downloadHandler.nativeData;
 
                 unsafe
                 {
                     var dataPtr = (byte*)nativeData.GetUnsafeReadOnlyPtr();
-                    return new UnmanagedMemoryStream(dataPtr, nativeData.Length, nativeData.Length, FileAccess.Read);
+                    return UniTask.FromResult<Stream>(new UnmanagedMemoryStream(dataPtr, nativeData.Length, nativeData.Length, FileAccess.Read));
                 }
             }
 

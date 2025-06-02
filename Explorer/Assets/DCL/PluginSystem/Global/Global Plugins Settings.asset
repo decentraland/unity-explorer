@@ -486,6 +486,7 @@ MonoBehaviour:
           <PartialChunkSizeMB>k__BackingField: 2
           <PingAckTimeoutSeconds>k__BackingField: 10
           <EnablePartialDownloading>k__BackingField: 1
+          <PartialRequestsDump>k__BackingField: {fileID: 11400000, guid: 65d6f4fe11d6ab343bce8fb13bd5b9c9, type: 2}
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

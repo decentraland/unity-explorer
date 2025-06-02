@@ -25,7 +25,9 @@ namespace DCL.WebRequests.HTTP2.Tests
             IWebRequestController tw = TestWebRequestController.Create(WebRequestsMode.HTTP2);
 
             webRequestController = new RedirectWebRequestController(WebRequestsMode.HTTP2,
-                                       Substitute.For<IWebRequestController>(), tw, tw.requestHub)
+                                       Substitute.For<IWebRequestController>(),
+                                       tw,
+                                       Substitute.For<IWebRequestController>(), tw.requestHub)
                                   .WithLog()
                                   .WithArtificialDelay(delay)
                                   .WithBudget(10, new ElementBinding<ulong>(0));

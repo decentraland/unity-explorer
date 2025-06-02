@@ -43,7 +43,12 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         public static async UniTask<FlatFetchResponse> ToFlatFetchResponseAsync(this ITypedWebRequest request, CancellationToken ct)
         {
             using IWebRequest? sentRequest = await request.SendAsync(ct);
-            return new FlatFetchResponse(sentRequest.Response.IsSuccess, sentRequest.Response.StatusCode, sentRequest.Response.StatusCode.ToString(), sentRequest.Response.Text, sentRequest.Response.FlattenHeaders()!);
+
+            return new FlatFetchResponse(sentRequest.Response.IsSuccess,
+                sentRequest.Response.StatusCode,
+                sentRequest.Response.StatusCode.ToString(),
+                await sentRequest.Response.GetTextAsync(ct),
+                sentRequest.Response.FlattenHeaders()!);
         }
     }
 }

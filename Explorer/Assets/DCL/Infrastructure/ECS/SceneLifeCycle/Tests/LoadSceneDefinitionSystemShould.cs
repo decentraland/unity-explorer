@@ -1,11 +1,9 @@
 ﻿using DCL.Ipfs;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
-using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -13,6 +11,7 @@ namespace ECS.SceneLifeCycle.Tests
 {
     [TestFixture(WebRequestsMode.HTTP2)]
     [TestFixture(WebRequestsMode.UNITY)]
+    [TestFixture(WebRequestsMode.YET_ANOTHER)]
     public class LoadSceneDefinitionSystemShould : LoadSystemBaseShould<LoadSceneDefinitionSystem, SceneEntityDefinition, GetSceneDefinition>
     {
         public LoadSceneDefinitionSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }

@@ -2,6 +2,7 @@
 using Best.HTTP.Request.Upload.Forms;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using UnityEngine.Networking;
 
@@ -18,5 +19,8 @@ namespace DCL.WebRequests
 
         public override UnityWebRequest CreateUnityWebRequest() =>
             CreateUnityWebRequest("POST");
+
+        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
+            CreateYetAnotherHttpRequest(HttpMethod.Post);
     }
 }

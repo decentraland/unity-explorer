@@ -6,14 +6,13 @@ using Best.HTTP.Shared.PlatformSupport.Memory;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.HTTP2;
-using NSubstitute;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
-using Utility.Multithreading;
 
 namespace DCL.WebRequests
 {
@@ -23,9 +22,11 @@ namespace DCL.WebRequests
     public class PartialDownloadRequest : TypedWebRequestBase<PartialDownloadArguments>
     {
         private readonly bool partialDownloadingIsEnabled;
+        private readonly WebRequestsMode mode;
 
         private readonly HTTPCache cache;
         private readonly long chunkSize;
+        private readonly PartialRequestsDump? partialRequestsDump;
 
         private volatile HTTPRequest? request;
         private volatile Dictionary<string, List<string>>? storedHeaders;
@@ -41,11 +42,15 @@ namespace DCL.WebRequests
             PartialDownloadArguments args,
             IWebRequestController controller,
             long chunkSize,
-            bool partialDownloadingIsEnabled)
+            bool partialDownloadingIsEnabled,
+            WebRequestsMode mode,
+            PartialRequestsDump? partialRequestsDump)
             : base(envelope, args, controller)
         {
             this.cache = cache;
             this.partialDownloadingIsEnabled = partialDownloadingIsEnabled;
+            this.mode = mode;
+            this.partialRequestsDump = partialRequestsDump;
             this.chunkSize = chunkSize;
             partialStream = args.Stream as Http2PartialDownloadDataStream;
         }
@@ -64,10 +69,149 @@ namespace DCL.WebRequests
             return request;
         }
 
-        public async UniTask<PartialDownloadStream> GetStreamAsync(CancellationToken ct)
+        public UniTask<PartialDownloadStream> GetStreamAsync(CancellationToken ct)
         {
             if (!partialDownloadingIsEnabled)
                 throw new NotSupportedException("Partial Downloading is disabled");
+
+            return mode switch
+                   {
+                       WebRequestsMode.HTTP2 => GetStreamFromBestHttpAsync(ct),
+                       WebRequestsMode.YET_ANOTHER => GetStreamFromYetAnotherRequest(ct),
+                       _ => throw new NotSupportedException($"WebRequestsMode {mode} is not supported for {nameof(PartialDownloadRequest)}"),
+                   };
+        }
+
+        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
+            new (HttpMethod.Get, commonArguments.URL);
+
+        private async UniTask<PartialDownloadStream> GetStreamFromYetAnotherRequest(CancellationToken ct)
+        {
+            if (PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToThreadPool();
+
+            var uri = new Uri(commonArguments.URL);
+
+            if (partialStream is { IsFullyDownloaded: true })
+            {
+                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"{nameof(PartialDownloadStream)} {commonArguments.URL} is already fully downloaded");
+                return DisposeAndReturn();
+            }
+
+            // BestHTTP does not use the file stream directly, instead it allocates chunks via SegmentBuffer as with a regular request
+            // We fix it here
+            if (uri.IsFile)
+            {
+                try
+                {
+                    partialStream = Http2PartialDownloadDataStream.InitializeFromFile(uri);
+                    return DisposeAndReturn();
+                }
+                catch (Exception ex)
+                {
+                    Dispose();
+                    throw new WebRequestException(uri, ex);
+                }
+            }
+
+            // if the result is already fully cached return it immediately without creating a web request
+            if (partialStream == null
+                && Http2PartialDownloadDataStream.TryInitializeFromCache(cache, uri, HTTPCache.CalculateHash(HTTPMethods.Get, uri), chunkSize, out partialStream)
+                && partialStream!.IsFullyDownloaded)
+                return DisposeAndReturn();
+
+            // Otherwise a new request is needed
+            // Create headers accordingly, at this point don't create a partial stream as we don't know if the endpoint actually supports "Range" requests
+            long chunkStart = partialStream?.partialContentLength ?? 0;
+            long chunkEnd = partialStream == null ? chunkSize - 1 : Math.Min(partialStream.fullFileSize - 1, chunkStart + chunkSize - 1);
+
+            envelope = new RequestEnvelope(envelope.CommonArguments, envelope.ReportData,
+                envelope.HeadersInfo.WithRange(chunkStart, chunkEnd), envelope.SignInfo, envelope.SuppressErrors, envelope.OnCreated);
+
+            // partialRequestsDump?.Add(envelope.CommonArguments.URL, chunkStart, chunkEnd);
+
+            var createdRequest = (YetAnotherWebRequest)await this.SendAsync(ct); // It will return the control when the headers are received
+
+            // Now we just need to linearly read
+
+            HttpRequestMessage nativeRequest = createdRequest.request;
+            YetAnotherWebResponse nativeResponse = createdRequest.response!;
+            var headers = new WebRequestHeaders(nativeResponse.response);
+
+            Http2PartialDownloadDataStream result;
+
+            try
+            {
+                HTTPMethods method = Enum.Parse<HTTPMethods>(nativeRequest.Method.Method, true);
+                int statusCode = nativeResponse.StatusCode;
+
+                // Check headers
+                // If at any stage headers are not correct discard the partial stream and the cached result, as the server does not support any headers
+                if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, uri, method, statusCode, null, headers, ref partialStream, out long expectedChunkLength))
+                {
+                    partialStream?.DiscardAndDispose();
+                    partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource(uri);
+                }
+
+                long startPartialLength = partialStream!.partialContentLength;
+
+                AdaptedDownloadContentStream downStream = nativeResponse.downStream;
+                LoggingContext? loggingContext = null;
+
+                // Keep non-blocking reading from the download stream
+
+                while (true)
+                {
+                    (BufferSegment segment, bool finished) = await downStream.TryTakeNextAsync(ct);
+
+                    if (finished)
+                        break;
+
+                    if (!partialStream!.TryAppend(uri, segment, loggingContext))
+                        throw CreateException($"{nameof(Http2PartialDownloadDataStream.TryAppend)} failed");
+                }
+
+                ct.ThrowIfCancellationRequested();
+
+                // Check that enough data was downloaded
+                if (expectedChunkLength != 0)
+                {
+                    var downloadLength = (int)(partialStream!.partialContentLength - startPartialLength);
+
+                    if (downloadLength != expectedChunkLength)
+                        throw CreateException($"Expected to load {expectedChunkLength} bytes, but loaded {downloadLength} bytes");
+                }
+                else
+                {
+                    // Finalize the downloading as we don't know the expected chunk size
+                    partialStream.ForceFinalize();
+                }
+            }
+            catch (Exception e)
+            {
+                // Dispose it here as well to break ContentReceiveLoop if needed
+                partialStream?.DiscardAndDispose();
+
+                // If it is a cancellation, it is the result of the parent task so it should not be propagated further
+                if (e is not OperationCanceledException && e is not TaskCanceledException)
+                    throw;
+            }
+            finally
+            {
+                result = partialStream!;
+                createdRequest.Dispose();
+            }
+
+            return result;
+        }
+
+        private async UniTask<PartialDownloadStream> GetStreamFromBestHttpAsync(CancellationToken ct)
+        {
+            if (!partialDownloadingIsEnabled)
+                throw new NotSupportedException("Partial Downloading is disabled");
+
+            if (PlayerLoopHelper.IsMainThread)
+                await UniTask.SwitchToThreadPool();
 
             // If the result is fully cached in the stream that was passed, return it immediately
 
@@ -101,13 +245,6 @@ namespace DCL.WebRequests
                 && partialStream!.IsFullyDownloaded)
                 return DisposeAndReturn();
 
-            PartialDownloadStream DisposeAndReturn()
-            {
-                Http2PartialDownloadDataStream? stream = partialStream;
-                Dispose();
-                return stream!;
-            }
-
             // Otherwise a new request is needed
             // Create headers accordingly, at this point don't create a partial stream as we don't know if the endpoint actually supports "Range" requests
             long chunkStart = partialStream?.partialContentLength ?? 0;
@@ -115,6 +252,8 @@ namespace DCL.WebRequests
 
             envelope = new RequestEnvelope(envelope.CommonArguments, envelope.ReportData,
                 envelope.HeadersInfo.WithRange(chunkStart, chunkEnd), envelope.SignInfo, envelope.SuppressErrors, envelope.OnCreated);
+
+            partialRequestsDump?.Add(envelope.CommonArguments.URL, chunkStart, chunkEnd);
 
             IWebRequest? createdRequest = null;
 
@@ -150,6 +289,13 @@ namespace DCL.WebRequests
             return result;
         }
 
+        private PartialDownloadStream DisposeAndReturn()
+        {
+            Http2PartialDownloadDataStream? stream = partialStream;
+            Dispose();
+            return stream!;
+        }
+
         private async UniTask ProcessPartialDownloadStreamAsync(CancellationToken ct)
         {
             await UniTask.SwitchToThreadPool();
@@ -164,9 +310,11 @@ namespace DCL.WebRequests
                 while (storedHeaders == null)
                     await PollDelayAsync(ct);
 
+                var headers = new WebRequestHeaders(storedHeaders);
+
                 // Check headers
                 // If at any stage headers are not correct discard the partial stream and the cached result, as the server does not support any headers
-                if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, request, storedHeaders, ref partialStream, out long expectedChunkLength))
+                if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, request.Uri, request.MethodType, request.Response.StatusCode, request.Context, headers, ref partialStream, out long expectedChunkLength))
                 {
                     partialStream?.DiscardAndDispose();
                     partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource(request.Uri);
@@ -192,7 +340,7 @@ namespace DCL.WebRequests
                         if (!partialStream!.TryAppend(request.Uri, segment, loggingContext))
                             throw CreateException($"{nameof(Http2PartialDownloadDataStream.TryAppend)} failed");
 
-                    Thread.Sleep(CONTENT_POLL_INTERVAL);
+                    // Thread.Sleep(CONTENT_POLL_INTERVAL);
                 }
                 while (!downStream.IsCompleted);
 
@@ -257,7 +405,7 @@ namespace DCL.WebRequests
         }
 
         private Exception CreateException(string message) =>
-            new ($"Exception occured in {nameof(GetStreamAsync)} {Envelope.CommonArguments.URL}: {message}");
+            new ($"Exception occured in {nameof(GetStreamFromBestHttpAsync)} {Envelope.CommonArguments.URL}: {message}");
 
         protected override void OnDispose()
         {

@@ -142,7 +142,11 @@ namespace DCL.WebRequests
 
             void OnCreated(IWebRequest webRequest)
             {
-                webRequest.OnDownloadStarted += _ => downloadStarted = true;
+                webRequest.OnDownloadStarted += _ =>
+                {
+                    downloadStarted = true;
+                    webRequest.Abort();
+                };
             }
 
             // We are not interested in exception
