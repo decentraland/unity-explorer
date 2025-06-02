@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -57,6 +58,9 @@ namespace DCL.Communities
         public UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             fakeDataProvider.BanUserFromCommunityAsync(userId, communityId, ct);
 
+        public UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
+            fakeDataProvider.UnBanUserFromCommunityAsync(userId, communityId, ct);
+
         public UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct) =>
             fakeDataProvider.LeaveCommunityAsync(communityId, ct);
 
@@ -66,7 +70,7 @@ namespace DCL.Communities
         public UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
             fakeDataProvider.DeleteCommunityAsync(communityId, ct);
 
-        public UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
-            fakeDataProvider.SetMemberRoleAsync(userId, communityId, ct);
+        public UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct) =>
+            fakeDataProvider.SetMemberRoleAsync(userId, communityId, newRole, ct);
     }
 }

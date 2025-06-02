@@ -26,7 +26,7 @@ namespace DCL.Communities
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
-            
+
             GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
             return new GetCommunityResponse()
@@ -225,7 +225,7 @@ namespace DCL.Communities
         private static readonly CommunityMemberRole[] ROLES = EnumUtils.Values<CommunityMemberRole>().Where(role => role != CommunityMemberRole.none).ToArray();
         private static readonly FriendshipStatus[] FRIENDSHIP_STATUSES = EnumUtils.Values<FriendshipStatus>();
 
-        public static GetCommunityMembersResponse.MemberData GetRandomMember()
+        private static GetCommunityMembersResponse.MemberData GetRandomMember()
         {
             var sb = new StringBuilder("0x");
 
