@@ -79,10 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             RemoveFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
             CancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
             UnblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-        }
 
-        private void Start()
-        {
             Background.color = NormalColor;
         }
 
