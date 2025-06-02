@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Movement
             // else
             if (intComp.Start.platform != null) transComp.Transform.position = offset + intComp.Start.platform.position;
             else if (intComp.End.platform != null) transComp.Transform.position = offset + intComp.End.platform.position;
-            else
+            else if (!float.IsNaN(offset.x))
             {
                 transComp.Transform.position = offset;
             }
