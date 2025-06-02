@@ -5,11 +5,12 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
+using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using SceneRunner.Scene;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using InputAction = UnityEngine.InputSystem.InputAction;
 using Vector2 = UnityEngine.Vector2;
 
 namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
@@ -19,6 +20,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
     public partial class PrimaryPointerInfoSystem : BaseUnityLoopSystem
     {
         private readonly World globalWorld;
+        private readonly ObjectProxy<DCLInput> inputProxy;
+        private InputAction inputAction;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private Vector2 previousPosition = Vector2.zero;
         private Vector2 mousePos;
@@ -29,11 +32,13 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         internal PrimaryPointerInfoSystem(
             World world,
             World globalWorld,
+            ObjectProxy<DCLInput> inputProxy,
             ISceneStateProvider sceneStateProvider,
             IECSToCRDTWriter ecsToCRDTWriter
         ) : base(world)
         {
             this.globalWorld = globalWorld;
+            this.inputProxy = inputProxy;
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
@@ -51,12 +56,18 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
+            if (!inputProxy.Configured) return;
+
+            if (inputAction == null)
+                inputAction = inputProxy.StrictObject.Camera.Point;
+
             UpdatePointerInfo();
         }
 
         private void UpdatePointerInfo()
         {
-            mousePos = Mouse.current.position.value;
+            mousePos = inputAction.ReadValue<Vector2>();
+
             deltaPos = mousePos - previousPosition;
             previousPosition = mousePos;
 

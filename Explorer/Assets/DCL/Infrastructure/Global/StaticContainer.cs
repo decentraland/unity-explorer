@@ -280,7 +280,7 @@ namespace Global
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
-                new PrimaryPointerInfoPlugin(globalWorld),
+                new PrimaryPointerInfoPlugin(globalWorld, container.InputProxy),
                 promisesAnalyticsPlugin,
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.PrimaryPointerInfo.Systems;
+using DCL.Utilities;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;
@@ -11,10 +12,12 @@ namespace DCL.PluginSystem.World
     public class PrimaryPointerInfoPlugin : IDCLWorldPlugin<NoExposedPluginSettings>
     {
         private readonly Arch.Core.World globalWorld;
+        private readonly ObjectProxy<DCLInput> containerInputProxy;
 
-        public PrimaryPointerInfoPlugin(Arch.Core.World globalWorld)
+        public PrimaryPointerInfoPlugin(Arch.Core.World globalWorld, ObjectProxy<DCLInput> containerInputProxy)
         {
             this.globalWorld = globalWorld;
+            this.containerInputProxy = containerInputProxy;
         }
 
         public void Dispose()
@@ -27,6 +30,7 @@ namespace DCL.PluginSystem.World
             PrimaryPointerInfoSystem.InjectToWorld(
                 ref builder,
                 globalWorld,
+                containerInputProxy,
                 sharedDependencies.SceneStateProvider,
                 sharedDependencies.EcsToCRDTWriter
             );
