@@ -38,9 +38,7 @@ namespace DCL.Communities.CommunitiesCard
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
-        private CancellationTokenSource photosSectionCancellationTokenSource = new ();
-        private CancellationTokenSource membersSectionCancellationTokenSource = new ();
-        private CancellationTokenSource placesSectionCancellationTokenSource = new ();
+        private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
 
@@ -75,9 +73,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
             }
 
-            photosSectionCancellationTokenSource.SafeCancelAndDispose();
-            membersSectionCancellationTokenSource.SafeCancelAndDispose();
-            placesSectionCancellationTokenSource.SafeCancelAndDispose();
+            sectionCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             if (cameraReelGalleryController != null)
@@ -139,9 +135,7 @@ namespace DCL.Communities.CommunitiesCard
 
         protected override void OnViewClose()
         {
-            photosSectionCancellationTokenSource.SafeCancelAndDispose();
-            membersSectionCancellationTokenSource.SafeCancelAndDispose();
-            placesSectionCancellationTokenSource.SafeCancelAndDispose();
+            sectionCancellationTokenSource.SafeCancelAndDispose();
             loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
@@ -153,18 +147,16 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnSectionChanged(CommunityCardView.Sections section)
         {
+            sectionCancellationTokenSource = sectionCancellationTokenSource.SafeRestart();
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
-                    photosSectionCancellationTokenSource = photosSectionCancellationTokenSource.SafeRestart();
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityData.places, photosSectionCancellationTokenSource.Token).Forget();
+                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityData.places, sectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
-                    membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
-                    membersListController!.ShowMembersList(communityData, membersSectionCancellationTokenSource.Token);
+                    membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
-                    placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();
                     break;
             }
         }
