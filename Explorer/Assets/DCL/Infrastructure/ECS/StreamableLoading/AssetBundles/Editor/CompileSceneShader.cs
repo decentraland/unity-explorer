@@ -66,7 +66,8 @@ namespace DCL.Rendering.Menus
                 }
             }
 
-            const string PATH = "Library/PackageCache/com.decentraland.unity-shared-dependencies@117a97066303/Runtime/Shaders/SceneRendering/";
+            //TODO: This path is not used anymore since we are using packages now. We need to find the best way to rebuild the package that can fit our pipeline
+            const string PATH = "Assets/git-submodules/unity-shared-dependencies/Runtime/Shaders/SceneRendering/";
 
             var importers = new List<AssetImporter>();
 
