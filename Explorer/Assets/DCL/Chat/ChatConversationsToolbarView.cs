@@ -75,6 +75,7 @@ namespace DCL.Chat
             if (items.TryGetValue(channel.Id, out var item)) return;
 
             ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
+            newItem.Initialize();
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
             newItem.TooltipShown += OnItemTooltipShown;
@@ -101,7 +102,6 @@ namespace DCL.Chat
             }
 
             newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
-            newItem.Initialize();
             
             items.Add(channel.Id, newItem);
 
