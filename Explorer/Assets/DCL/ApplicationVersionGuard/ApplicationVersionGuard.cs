@@ -27,7 +27,7 @@ namespace DCL.ApplicationVersionGuard
         private const string DECENTRALAND_LAUNCHER_WIN_X64_EXE = "Decentraland_x64-setup.exe";
         private const string DECENTRALAND_LAUNCHER_MAC_ARM_64DMG = "Decentraland_aarch64.dmg";
         //Aga: Rust version of launcher does not support intel macs, until fully deprecating it, we need to keep the old launcher for intel based macs
-        private const string DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64DMG = "Decentraland%20Launcher-mac-x64.dmg";
+        private const string DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64DMG = "Decentraland Launcher-mac-x64.dmg";
 
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
