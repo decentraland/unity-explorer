@@ -101,7 +101,8 @@ namespace DCL.Chat
             }
 
             newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
-
+            newItem.Initialize();
+            
             items.Add(channel.Id, newItem);
 
             if(items.Count == 1)

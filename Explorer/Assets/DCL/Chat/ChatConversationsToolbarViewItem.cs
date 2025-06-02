@@ -214,7 +214,7 @@ namespace DCL.Chat
             }
         }
 
-        private void Awake()
+        public void Initialize()
         {
             openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
             removeButton.onClick.AddListener(() =>
@@ -222,6 +222,7 @@ namespace DCL.Chat
                 HideTooltip(true);
                 RemoveButtonClicked?.Invoke(this);
             });
+            SetUnreadMessages(0);
         }
 
         private void Start()
