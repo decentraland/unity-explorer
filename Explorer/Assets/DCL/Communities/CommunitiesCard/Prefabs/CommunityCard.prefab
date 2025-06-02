@@ -399,6 +399,8 @@ MonoBehaviour:
   <BackgroundImage>k__BackingField: {fileID: 7299820048526774152}
   <BackgroundColor>k__BackingField: {r: 0.595366, g: 0.39520293, b: 0.7830189, a: 1}
   <ConfirmationDialogView>k__BackingField: {fileID: 2113713318068618317}
+  <HeaderObject>k__BackingField: {fileID: 5139753108102950695}
+  <ContentObject>k__BackingField: {fileID: 4438923677015721477}
   <OpenWizardButton>k__BackingField: {fileID: 1634923376034701604}
   <JoinedButton>k__BackingField: {fileID: 8865448273156285983}
   <JoinButton>k__BackingField: {fileID: 1251281582169058030}

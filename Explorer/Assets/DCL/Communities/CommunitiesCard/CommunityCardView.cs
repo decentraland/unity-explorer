@@ -3,7 +3,6 @@ using DCL.Communities.CommunitiesCard.Places;
 using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.UI;
-using DG.Tweening;
 using MVC;
 using System;
 using TMPro;
@@ -44,6 +43,8 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Image BackgroundImage { get; private set; }
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] public ConfirmationDialogView ConfirmationDialogView { get; private set; }
+        [field: SerializeField] public GameObject HeaderObject { get; private set; }
+        [field: SerializeField] public GameObject ContentObject { get; private set; }
 
         [field: Header("Community interactions")]
         [field: SerializeField] public Button OpenWizardButton { get; private set; }
@@ -104,6 +105,9 @@ namespace DCL.Communities.CommunitiesCard
 
         public void SetLoadingState(bool isLoading)
         {
+            HeaderObject.SetActive(!isLoading);
+            ContentObject.SetActive(!isLoading);
+
             if (isLoading)
                 LoadingObject?.Show();
             else
@@ -136,6 +140,7 @@ namespace DCL.Communities.CommunitiesCard
             CommunityName.text = communityData.name;
             CommunityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, NumberToCompactString(communityData.membersCount));
             CommunityDescription.text = communityData.description;
+            //TODO: handle thumbnails properly
             imageController.RequestImage(communityData.thumbnails[0], true, true);
 
             ConfigureInteractionButtons(communityData.role);

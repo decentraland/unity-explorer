@@ -25,6 +25,8 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+            
             GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
             return new GetCommunityResponse()
