@@ -55,7 +55,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             {
                 // Update profile data
                 ownProfile.TutorialStep = TUTORIAL_STEP_DONE_MARK;
-                Profile? profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
+                Profile? profile = await selfProfile.UpdateProfileAsync(ownProfile, ct);
 
                 if (profile != null)
                 {

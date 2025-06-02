@@ -47,10 +47,6 @@ namespace DCL.UI.ProfileNames
             return newProfile;
         }
 
-        public UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct) =>
-            // What is the point of this call? It feels odd to publish the profile without modifications..
-            origin.ForcePublishWithoutModificationsAsync(ct);
-
         private void UpdateAvatarInWorld(Profile profile)
         {
             profile.IsDirty = true;

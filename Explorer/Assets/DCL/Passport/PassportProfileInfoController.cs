@@ -27,20 +27,20 @@ namespace DCL.Passport
             this.playerEntity = playerEntity;
         }
 
-        public async UniTask UpdateProfileAsync(CancellationToken ct)
+        public async UniTask UpdateProfileAsync(Profile profile, CancellationToken ct)
         {
             try
             {
                 // Update profile data
-                var profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
+                var updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct);
 
-                if (profile != null)
+                if (updatedProfile != null)
                 {
                     // Update player entity in world
-                    profile.IsDirty = true;
-                    world.Set(playerEntity, profile);
+                    updatedProfile.IsDirty = true;
+                    world.Set(playerEntity, updatedProfile);
 
-                    OnProfilePublished?.Invoke(profile);
+                    OnProfilePublished?.Invoke(updatedProfile);
                 }
             }
             catch (OperationCanceledException) { }
