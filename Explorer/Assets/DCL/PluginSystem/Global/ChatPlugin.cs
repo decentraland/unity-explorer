@@ -26,6 +26,8 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -62,7 +64,9 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
 
         private ChatController chatController;
-
+        private IRealmData realmData;
+        private IRealmNavigator realmNavigator;
+        
         public ChatPlugin(
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
@@ -88,7 +92,9 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy)
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IRealmData realmData,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -116,6 +122,8 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
+            this.realmData = realmData;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose()
@@ -171,6 +179,19 @@ namespace DCL.PluginSystem.Global
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+
+            realmData.RealmType.OnUpdate += OnRealmChange;
+            realmNavigator.NavigationExecuted += OnNavigationExecuted;
+        }
+
+        private void OnNavigationExecuted(Vector2Int parcel)
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
+        }
+
+        private void OnRealmChange(RealmKind realmKind)
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
         }
 
         private void OnIdentityCleared()

@@ -702,7 +702,9 @@ namespace Global.Dynamic
                     friendsEventBus,
                     chatMessageFactory,
                     staticContainer.FeatureFlagsCache,
-                    friendServiceProxy),
+                    friendServiceProxy,
+                    staticContainer.RealmData,
+                    realmNavigator),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
