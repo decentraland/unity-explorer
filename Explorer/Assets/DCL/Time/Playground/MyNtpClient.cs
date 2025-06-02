@@ -81,11 +81,18 @@ namespace DCL.SDKComponents.Tween.Playground
         [ContextMenu("VVV")]
         private void Poll()
         {
-            foreach (string server in ntpServers)
-                PollServer(server);
+            try
+            {
+                foreach (string server in ntpServers)
+                    PollServer(server);
 
-            MiniFilter();
-            MitigateAndCalculateOffset();
+                MiniFilter();
+                MitigateAndCalculateOffset();
+            }
+            catch
+            {
+                // ignored
+            }
         }
 
         private void MiniFilter()
