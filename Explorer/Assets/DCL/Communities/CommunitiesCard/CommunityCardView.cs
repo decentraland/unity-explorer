@@ -91,29 +91,16 @@ namespace DCL.Communities.CommunitiesCard
             OpenWizardButton.onClick.AddListener(() => OpenWizard?.Invoke());
             JoinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
             JoinedButton.onClick.AddListener(() => LeaveCommunityRequested?.Invoke());
+
+            PhotosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
+            MembersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
+            MembersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
+            PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+            PlacesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
         }
 
-        public void ToggleUIListeners(bool active)
-        {
-            if (active)
-            {
-                PhotosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
-                MembersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
-                MembersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
-                PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
-                PlacesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
-
-                ToggleSection(Sections.PHOTOS);
-            }
-            else
-            {
-                PhotosButton.onClick.RemoveAllListeners();
-                MembersButton.onClick.RemoveAllListeners();
-                MembersTextButton.onClick.RemoveAllListeners();
-                PlacesButton.onClick.RemoveAllListeners();
-                PlacesWithSignButton.onClick.RemoveAllListeners();
-            }
-        }
+        public void ResetToggle() =>
+            ToggleSection(Sections.PHOTOS);
 
         public void SetLoadingState(bool isLoading)
         {

@@ -129,7 +129,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.ConfigureCommunity(communityData, imageController);
 
-                viewInstance.ToggleUIListeners(true);
+                viewInstance.ResetToggle();
             }
         }
 
@@ -139,7 +139,6 @@ namespace DCL.Communities.CommunitiesCard
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
             placesSectionCancellationTokenSource.SafeCancelAndDispose();
             loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
-            viewInstance!.ToggleUIListeners(false);
 
             membersListController?.Reset();
         }
