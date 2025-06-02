@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.WebRequests;
 using MVC;
@@ -24,7 +23,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
         private readonly ICommunitiesDataProvider dataProvider;
-        private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
@@ -46,7 +44,6 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunitiesBrowserView view,
             ICursor cursor,
             ICommunitiesDataProvider dataProvider,
-            ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies)
@@ -55,7 +52,6 @@ namespace DCL.Communities.CommunitiesBrowser
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.dataProvider = dataProvider;
-            this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
@@ -133,19 +129,14 @@ namespace DCL.Communities.CommunitiesBrowser
             view.ClearMyCommunitiesItems();
             view.SetMyCommunitiesAsLoading(true);
 
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile == null)
-                return;
-
             var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
-                userId: ownProfile.UserId,
                 name: string.Empty,
                 onlyMemberOf: true,
                 pageNumber: 1,
                 elementsPerPage: 1000,
                 ct: ct);
 
-            view.AddMyCommunitiesItems(userCommunitiesResponse.communities, true);
+            view.AddMyCommunitiesItems(userCommunitiesResponse.data.results, true);
             view.SetMyCommunitiesAsLoading(false);
         }
 
@@ -208,25 +199,20 @@ namespace DCL.Communities.CommunitiesBrowser
             else
                 view.SetResultsLoadingMoreActive(true);
 
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile == null)
-                return;
-
             var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
-                ownProfile.UserId,
                 name,
                 onlyMemberOf,
                 pageNumber,
                 elementsPerPage,
                 ct);
 
-            if (userCommunitiesResponse.communities.Length > 0)
+            if (userCommunitiesResponse.data.results.Length > 0)
             {
                 currentPageNumberFilter = pageNumber;
-                view.AddResultsItems(userCommunitiesResponse.communities, pageNumber == 1);
+                view.AddResultsItems(userCommunitiesResponse.data.results, pageNumber == 1);
             }
 
-            currentResultsTotalAmount = userCommunitiesResponse.totalAmount;
+            currentResultsTotalAmount = userCommunitiesResponse.data.total;
 
             if (pageNumber == 1)
                 view.SetResultsAsLoading(false);

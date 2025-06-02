@@ -9,7 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using CommunityData = DCL.Communities.GetUserCommunitiesResponse.CommunityData;
+using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -159,8 +159,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 bool friendExists = i < communityData.friends.Length;
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
-                GetUserCommunitiesResponse.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.id);
+                GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
+                mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.address);
             }
         }
 
