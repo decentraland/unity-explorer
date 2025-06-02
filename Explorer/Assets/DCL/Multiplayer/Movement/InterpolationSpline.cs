@@ -105,7 +105,7 @@ namespace DCL.Multiplayer.Movement
         /// <returns></returns>
         public static Vector3 MonotoneYHermite(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
-            (start.velocity.y, end.velocity.y) = Monotonize(start.position.y, end.position.y, start.velocity.y, end.velocity.y, end.timestamp - start.timestamp);
+            (start.velocity.y, end.velocity.y) = Monotonize(start.position.y, end.position.y, start.velocity.y, end.velocity.y, (end.syncTimestamp - start.syncTimestamp)/1000f);
             return Hermite(start, end, t, totalDuration);
         }
 
@@ -120,7 +120,7 @@ namespace DCL.Multiplayer.Movement
         /// <returns></returns>
         public static Vector3 FullMonotonicHermite(NetworkMovementMessage start, NetworkMovementMessage end, float t, float totalDuration)
         {
-            float timeDiff = end.timestamp - start.timestamp;
+            float timeDiff = (end.syncTimestamp - start.syncTimestamp)/1000f;
 
             (start.velocity.x, end.velocity.x) = Monotonize(start.position.x, end.position.x, start.velocity.x, end.velocity.x, timeDiff);
             (start.velocity.y, end.velocity.y) = Monotonize(start.position.y, end.position.y, start.velocity.y, end.velocity.y, timeDiff);

@@ -164,7 +164,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             static void UpdateNetworkMessageMarkers(NetworkMessageBindings bindings, NetworkMovementMessage networkMessage)
             {
-                bindings.Timestamp.Value = networkMessage.timestamp.ToString();
+                bindings.Timestamp.Value = (networkMessage.syncTimestamp/1000f).ToString();
                 bindings.Position.Value = networkMessage.position.ToString();
                 bindings.Velocity.Value = networkMessage.velocity.ToString();
                 bindings.MovementKind.Value = networkMessage.movementKind.ToString();

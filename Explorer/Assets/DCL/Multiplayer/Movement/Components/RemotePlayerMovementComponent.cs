@@ -48,14 +48,14 @@ namespace DCL.Multiplayer.Movement
             while (queue.Count > MAX_MESSAGES)
                 queue.Dequeue();
 
-            queue.Enqueue(message, message.timestamp);
+            queue.Enqueue(message, message.syncTimestamp);
         }
 
         public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)
         {
             if (!WasTeleported)
             {
-                float totalDuration = message.timestamp - PastMessage.timestamp;
+                float totalDuration = (message.syncTimestamp - PastMessage.syncTimestamp)/1000f;
 
                 message.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.MovementBlendValue,
                     message.movementKind, message.velocitySqrMagnitude, settings);

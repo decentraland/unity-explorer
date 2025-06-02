@@ -81,7 +81,8 @@ namespace DCL.Multiplayer.Movement.Systems
             if (isMoving && sendRate > settings.MoveSendRate)
                 sendRate = settings.MoveSendRate;
 
-            if (timeDiff > sendRate)
+            if (timeDiff > sendRate
+                && (!ntpTimeService.IsSynced || ntpTimeService.ServerTimeMs > playerMovement.LastSentMessage.syncTimestamp))
             {
                 if (!isMoving && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);

@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Movement
             End = to;
 
             Time = 0f;
-            TotalDuration = End.timestamp - Start.timestamp;
+            TotalDuration = (End.syncTimestamp - Start.syncTimestamp)/1000f;
 
             End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(TotalDuration, Start.animState.MovementBlendValue,
                 End.movementKind, End.velocitySqrMagnitude, settings);

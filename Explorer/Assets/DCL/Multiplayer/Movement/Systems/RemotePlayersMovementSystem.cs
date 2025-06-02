@@ -88,7 +88,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 }
 
                 // Filter old messages that arrived too late
-                while (playerInbox.Count > 0 && playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp)
+                while (playerInbox.Count > 0 && playerInbox.First.syncTimestamp <= remotePlayerMovement.PastMessage.syncTimestamp)
                     playerInbox.Dequeue();
 
                 // When there is no messages, we extrapolate
@@ -108,10 +108,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 if (playerInbox.Count > 0)
                 {
-                    sumTime = 0f;
-                    foreach (NetworkMovementMessage message in playerInbox)
-                        sumTime += message.timestamp;
-
                     settings.InboxCount = playerInbox.Count;
                     deltaTime = HandleNewMessage(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, ref extComp, playerInbox);
                 }
@@ -139,10 +135,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 // remote.position += platform.trsnsf.position;
 
                 var startTime = intComp.Enabled
-                    ? intComp.Start.timestamp + intComp.Time
-                    : remotePlayerMovement.PastMessage.timestamp + deltaTime;
+                    ? (intComp.Start.syncTimestamp/1000f) + intComp.Time
+                    : (remotePlayerMovement.PastMessage.syncTimestamp/1000f) + deltaTime;
 
-                var deltaFuture = remote.timestamp - startTime;
+                var deltaFuture = (remote.syncTimestamp/1000f) - startTime;
                 Vector3? offset = platform.tweener.GetFuture(deltaFuture);
                 if (offset.HasValue)
                 {
@@ -180,13 +176,13 @@ namespace DCL.Multiplayer.Movement.Systems
         private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
-            float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
+            float minExtTimestamp = (extComp.Start.syncTimestamp/1000f) + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
             // Filter all messages that are behind in time (otherwise we will run back)
-            for (var i = 0; i < RemotePlayerUtils.BEHIND_EXTRAPOLATION_BATCH && playerInbox.Count > 0 && remote.timestamp <= minExtTimestamp; i++)
+            for (var i = 0; i < RemotePlayerUtils.BEHIND_EXTRAPOLATION_BATCH && playerInbox.Count > 0 && remote.syncTimestamp/1000f <= minExtTimestamp; i++)
                 remote = playerInbox.Dequeue();
 
-            if (remote.timestamp <= minExtTimestamp)
+            if (remote.syncTimestamp/1000f <= minExtTimestamp)
                 return false;
 
             // Stop extrapolating and proceed to blending
@@ -196,6 +192,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 var local = new NetworkMovementMessage
                 {
                     timestamp = minExtTimestamp, // we need to take the timestamp that < remote.timestamp
+                    syncTimestamp = (ulong) (minExtTimestamp * 1000f),
 
                     position = transComp.Transform.position,
                     velocity = extComp.Start.velocity,
