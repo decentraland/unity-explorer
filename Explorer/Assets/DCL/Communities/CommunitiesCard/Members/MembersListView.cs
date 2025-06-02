@@ -46,6 +46,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
         }
 
+        public void SetActive(bool active) => gameObject.SetActive(active);
+
         private void ToggleSection(MemberListSections section)
         {
             foreach (var sectionMapping in MemberListSectionsElements)

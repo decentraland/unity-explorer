@@ -117,9 +117,9 @@ namespace DCL.Communities.CommunitiesCard
             PlacesSectionSelection.SetActive(section == Sections.PLACES);
             PlacesWithSignSectionSelection.SetActive(section == Sections.PLACES);
 
-            CameraReelGalleryConfigs.CameraReelGalleryView.transform.parent.gameObject.SetActive(section == Sections.PHOTOS);
-            MembersListView.gameObject.SetActive(section == Sections.MEMBERS);
-            PlacesSectionView.gameObject.SetActive(section == Sections.PLACES);
+            CameraReelGalleryConfigs.CameraReelGalleryView.SetParentActive(section == Sections.PHOTOS);
+            MembersListView.SetActive(section == Sections.MEMBERS);
+            PlacesSectionView.SetActive(section == Sections.PLACES);
 
             SectionChanged?.Invoke(section);
         }
