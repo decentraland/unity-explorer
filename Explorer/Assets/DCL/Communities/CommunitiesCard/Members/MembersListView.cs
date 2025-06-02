@@ -91,8 +91,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 (member, position, item) => ElementContextMenuButtonClicked?.Invoke(member, position, item),
-                member => ElementFriendButtonClicked?.Invoke(member)
-                , member => ElementUnbanButtonClicked?.Invoke(member));
+                member => ElementFriendButtonClicked?.Invoke(member),
+                member => ElementUnbanButtonClicked?.Invoke(member));
 
             if (index >= membersData.totalFetched - ELEMENT_MISSING_THRESHOLD && membersData.totalFetched < membersData.totalToFetch)
                 NewDataRequested?.Invoke();
