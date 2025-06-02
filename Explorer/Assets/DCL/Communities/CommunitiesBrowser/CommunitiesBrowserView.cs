@@ -196,7 +196,7 @@ namespace DCL.Communities.CommunitiesBrowser
             SetResultsAsEmpty(currentResults.Count == 0);
         }
 
-        public void SetResultCommunityAsJoined(int index)
+        public void UpdateJoinedCommunity(int index)
         {
             // Change the role and increment the members amount
             currentResults[index].role = CommunityMemberRole.member;

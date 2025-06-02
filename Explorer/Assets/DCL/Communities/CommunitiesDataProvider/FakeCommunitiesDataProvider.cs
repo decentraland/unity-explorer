@@ -22,14 +22,14 @@ namespace DCL.Communities
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = currentCommunities
                                                                                 .Where(x => (
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.owner) && x.role == CommunityMemberRole.owner) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.moderator) && x.role == CommunityMemberRole.moderator) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.member) && x.role == CommunityMemberRole.member) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.none) && x.role == CommunityMemberRole.none)) &&
+                                                                                                (onlyMemberOf && x.role == CommunityMemberRole.owner) ||
+                                                                                                (onlyMemberOf && x.role == CommunityMemberRole.moderator) ||
+                                                                                                (onlyMemberOf && x.role == CommunityMemberRole.member) ||
+                                                                                                (!onlyMemberOf && x.role == CommunityMemberRole.none)) &&
                                                                                             (x.name.ToLower().Contains(name.ToLower()) || x.description.ToLower().Contains(name.ToLower())))
                                                                                 .ToList();
 
@@ -125,7 +125,7 @@ namespace DCL.Communities
                     thumbnails = new[] { "https://picsum.photos/280/280" },
                     name = $"Community {i + 1}",
                     description = $"Test description for Community {i + 1}. This is only a fake text to test this awesome feature!! This is the card that represent a community in Decentraland.",
-                    ownerId = string.Empty,
+                    ownerAddress = string.Empty,
                     privacy = i is 3 or 5 ? CommunityPrivacy.@private : CommunityPrivacy.@public,
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :

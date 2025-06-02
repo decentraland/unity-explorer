@@ -21,7 +21,7 @@ namespace DCL.Communities
             public string[] thumbnails;
             public string name;
             public string description;
-            public string ownerId;
+            public string ownerAddress;
             public int memberCount;
             public bool isLive;
             public CommunityPrivacy privacy;

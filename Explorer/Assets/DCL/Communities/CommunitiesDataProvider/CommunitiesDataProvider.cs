@@ -30,8 +30,8 @@ namespace DCL.Communities
         public UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
             fakeDataProvider.GetCommunityAsync(communityId, ct);
 
-        public UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetUserCommunitiesAsync(userId, name, memberRolesIncluded, pageNumber, elementsPerPage, ct);
+        public UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct) =>
+            fakeDataProvider.GetUserCommunitiesAsync(userId, name, onlyMemberOf, pageNumber, elementsPerPage, ct);
 
         public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetUserLandsAsync(userId, pageNumber, elementsPerPage, ct);
