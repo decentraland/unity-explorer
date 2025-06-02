@@ -94,10 +94,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.InitGrid(() => currentSectionFetchData);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
             this.view.NewDataRequested += OnNewDataRequested;
-            this.view.ElementMainButtonClicked += MainButtonClicked;
-            this.view.ElementContextMenuButtonClicked += ContextMenuButtonClicked;
-            this.view.ElementFriendButtonClicked += FriendButtonClicked;
-            this.view.ElementUnbanButtonClicked += UnbanButtonClicked;
+            this.view.ElementMainButtonClicked += OnMainButtonClicked;
+            this.view.ElementContextMenuButtonClicked += OnContextMenuButtonClicked;
+            this.view.ElementFriendButtonClicked += OnFriendButtonClicked;
+            this.view.ElementUnbanButtonClicked += OnUnbanButtonClicked;
 
             this.view.InjectDependencies(viewDependencies);
         }
@@ -108,10 +108,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             friendshipOperationCts.SafeCancelAndDispose();
             view.ActiveSectionChanged -= OnMemberListSectionChanged;
             view.NewDataRequested -= OnNewDataRequested;
-            view.ElementMainButtonClicked -= MainButtonClicked;
-            view.ElementContextMenuButtonClicked -= ContextMenuButtonClicked;
-            view.ElementFriendButtonClicked -= FriendButtonClicked;
-            view.ElementUnbanButtonClicked -= UnbanButtonClicked;
+            view.ElementMainButtonClicked -= OnMainButtonClicked;
+            view.ElementContextMenuButtonClicked -= OnContextMenuButtonClicked;
+            view.ElementFriendButtonClicked -= OnFriendButtonClicked;
+            view.ElementUnbanButtonClicked -= OnUnbanButtonClicked;
         }
 
         private void OnNewDataRequested()
@@ -407,7 +407,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             membersData.totalToFetch = response.Value.totalAmount;
         }
 
-        public void ShowMembersListAsync(GetCommunityResponse.CommunityData community, CancellationToken ct)
+        public void ShowMembersList(GetCommunityResponse.CommunityData community, CancellationToken ct)
         {
             cancellationToken = ct;
 
@@ -420,7 +420,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             FetchNewDataAsync(ct).Forget();
         }
 
-        private void MainButtonClicked(MemberData profile)
+        private void OnMainButtonClicked(MemberData profile)
         {
             // Handle main button click
             // Debug.Log("MainButtonClicked: " + profile.id);
@@ -440,7 +440,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             };
         }
 
-        private void ContextMenuButtonClicked(MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
+        private void OnContextMenuButtonClicked(MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
             lastClickedProfileCtx = profile;
             userProfileContextMenuControlSettings.SetInitialData(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
@@ -460,10 +460,10 @@ namespace DCL.Communities.CommunitiesCard.Members
                       .Forget();
         }
 
-        private void FriendButtonClicked(MemberData profile) =>
+        private void OnFriendButtonClicked(MemberData profile) =>
             HandleContextMenuUserProfileButton(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
 
-        private void UnbanButtonClicked(MemberData profile)
+        private void OnUnbanButtonClicked(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             UnbanUserAsync(contextMenuOperationCts.Token).Forget();

@@ -10,6 +10,12 @@ namespace DCL.Communities.CommunitiesCard.Members
 {
     public class MembersListView : MonoBehaviour, IViewWithGlobalDependencies
     {
+        public enum MemberListSections
+        {
+            ALL,
+            BANNED
+        }
+
         private const int ELEMENT_MISSING_THRESHOLD = 5;
 
         [field: SerializeField] public LoopGridView LoopGrid { get; private set; }
@@ -50,6 +56,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void ToggleSection(MemberListSections section)
         {
+            if (currentSection == section) return;
+
             foreach (var sectionMapping in MemberListSectionsElements)
             {
                 sectionMapping.SelectedBackground.SetActive(sectionMapping.Section == section);
@@ -58,13 +66,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 sectionMapping.UnselectedText.SetActive(sectionMapping.Section != section);
             }
 
-            if (currentSection != section)
-            {
-                currentSection = section;
-                ActiveSectionChanged?.Invoke(section);
-            }
-
             currentSection = section;
+            ActiveSectionChanged?.Invoke(section);
         }
 
         public void SetSectionButtonsActive(bool isActive)
@@ -104,12 +107,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             LoopGrid.SetListItemCount(getCurrentSectionFetchData().members.Count, false);
             LoopGrid.RefreshAllShownItem();
-        }
-
-        public enum MemberListSections
-        {
-            ALL,
-            BANNED
         }
 
         [Serializable]

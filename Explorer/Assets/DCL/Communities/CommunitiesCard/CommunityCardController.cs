@@ -78,6 +78,10 @@ namespace DCL.Communities.CommunitiesCard
             photosSectionCancellationTokenSource.SafeCancelAndDispose();
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
             placesSectionCancellationTokenSource.SafeCancelAndDispose();
+            communityOperationsCancellationTokenSource.SafeCancelAndDispose();
+
+            if (cameraReelGalleryController != null)
+                cameraReelGalleryController.ThumbnailClicked -= OnThumbnailClicked;
 
             cameraReelGalleryController?.Dispose();
             membersListController?.Dispose();
@@ -93,7 +97,7 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.CameraReelGalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
-            cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
+            cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView,
                 viewInstance.ConfirmationDialogView,
@@ -139,11 +143,12 @@ namespace DCL.Communities.CommunitiesCard
             membersSectionCancellationTokenSource.SafeCancelAndDispose();
             placesSectionCancellationTokenSource.SafeCancelAndDispose();
             loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
+            communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             membersListController?.Reset();
         }
 
-        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
+        private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
 
         private void OnSectionChanged(CommunityCardView.Sections section)
@@ -156,7 +161,7 @@ namespace DCL.Communities.CommunitiesCard
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersSectionCancellationTokenSource = membersSectionCancellationTokenSource.SafeRestart();
-                    membersListController!.ShowMembersListAsync(communityData, membersSectionCancellationTokenSource.Token);
+                    membersListController!.ShowMembersList(communityData, membersSectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
                     placesSectionCancellationTokenSource = placesSectionCancellationTokenSource.SafeRestart();
