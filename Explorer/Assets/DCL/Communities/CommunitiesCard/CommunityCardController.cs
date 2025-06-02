@@ -68,7 +68,7 @@ namespace DCL.Communities.CommunitiesCard
             if (viewInstance != null)
             {
                 viewInstance.SectionChanged -= OnSectionChanged;
-                viewInstance.OpenWizard -= OpenCommunityWizard;
+                viewInstance.OpenWizardRequested -= OnOpenCommunityWizard;
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
             }
@@ -86,7 +86,7 @@ namespace DCL.Communities.CommunitiesCard
         protected override void OnViewInstantiated()
         {
             viewInstance!.SectionChanged += OnSectionChanged;
-            viewInstance.OpenWizard += OpenCommunityWizard;
+            viewInstance.OpenWizardRequested += OnOpenCommunityWizard;
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
 
@@ -161,8 +161,9 @@ namespace DCL.Communities.CommunitiesCard
             }
         }
 
-        private void OpenCommunityWizard()
+        private void OnOpenCommunityWizard()
         {
+            //TODO: Open the community wizard
             throw new NotImplementedException();
         }
 

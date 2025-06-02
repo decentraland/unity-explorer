@@ -32,7 +32,7 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public event Action<Sections>? SectionChanged;
-        public event Action? OpenWizard;
+        public event Action? OpenWizardRequested;
         public event Action? JoinCommunity;
         public event Action? LeaveCommunityRequested;
 
@@ -89,7 +89,7 @@ namespace DCL.Communities.CommunitiesCard
 
         private void Awake()
         {
-            OpenWizardButton.onClick.AddListener(() => OpenWizard?.Invoke());
+            OpenWizardButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
             JoinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
             JoinedButton.onClick.AddListener(() => LeaveCommunityRequested?.Invoke());
 
