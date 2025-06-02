@@ -88,7 +88,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             UnHover();
             UserProfile = memberProfile;
 
-            Color userColor = memberProfile.UserNameColor;
+            Color userColor = memberProfile.GetUserNameColor();
 
             UserName.text = memberProfile.name;
             UserName.color = userColor;
@@ -99,7 +99,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             MutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
             RoleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
             RoleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            ProfilePicture.Setup(memberProfile.UserNameColor, memberProfile.profilePicture, memberProfile.id);
+            ProfilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePicture, memberProfile.id);
 
             currentSection = section;
 

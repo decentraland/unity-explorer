@@ -23,7 +23,8 @@ namespace DCL.Communities
             public CommunityMemberRole role;
             public int mutualFriends;
             public FriendshipStatus friendshipStatus;
-            public Color UserNameColor;
+
+            private Color userNameColor;
 
             public MemberData(string id, string profilePicture, string name, bool hasClaimedName)
             {
@@ -31,8 +32,6 @@ namespace DCL.Communities
                 this.profilePicture = profilePicture;
                 this.name = name;
                 this.hasClaimedName = hasClaimedName;
-
-                SetUserNameColor();
             }
 
             public MemberData(string id, string profilePicture, string name, bool hasClaimedName, CommunityMemberRole role,
@@ -45,16 +44,22 @@ namespace DCL.Communities
                 this.role = role;
                 this.mutualFriends = mutualFriends;
                 this.friendshipStatus = friendshipStatus;
-                this.UserNameColor = Color.white;
-
-                SetUserNameColor();
             }
 
-            private void SetUserNameColor()
+            public Color GetUserNameColor()
+            {
+                if (userNameColor == default(Color))
+                    userNameColor = CalculateUserNameColor();
+
+                return userNameColor;
+            }
+
+            private Color CalculateUserNameColor()
             {
                 string displayName = string.Empty;
 
-                if (string.IsNullOrEmpty(name)) return;
+                if (string.IsNullOrEmpty(name))
+                    return ProfileNameColorHelper.GetNameColor(name);
 
                 string result = string.Empty;
                 MatchCollection matches = Profile.VALID_NAME_CHARACTERS.Matches(name);
@@ -67,7 +72,7 @@ namespace DCL.Communities
                 if (!hasClaimedName && !string.IsNullOrEmpty(id) && id.Length > 4)
                     displayName = $"{result}{id}";
 
-                UserNameColor = ProfileNameColorHelper.GetNameColor(displayName);
+                return ProfileNameColorHelper.GetNameColor(displayName);
             }
 
             public override int GetHashCode() =>

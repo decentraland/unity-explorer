@@ -12,16 +12,13 @@ namespace DCL.Communities.CommunitiesCard
             {
                 hasClaimedName = profile.hasClaimedName,
                 userAddress = profile.id,
-                userColor = profile.UserNameColor,
+                userColor = profile.GetUserNameColor(),
                 userName = profile.name,
                 userThumbnailAddress = profile.profilePicture
             };
 
         public static GetCommunityMembersResponse.MemberData ToMemberData(this UserProfileContextMenuControlSettings.UserData user) =>
-            new (user.userAddress, user.userThumbnailAddress, user.userName, user.hasClaimedName)
-            {
-                UserNameColor = user.userColor,
-            };
+            new (user.userAddress, user.userThumbnailAddress, user.userName, user.hasClaimedName);
 
         public static FriendProfile ToFriendProfile(this UserProfileContextMenuControlSettings.UserData user) =>
             new (new Web3Address(user.userAddress), user.userName, user.hasClaimedName, URLAddress.FromString(user.userThumbnailAddress), user.userColor);
