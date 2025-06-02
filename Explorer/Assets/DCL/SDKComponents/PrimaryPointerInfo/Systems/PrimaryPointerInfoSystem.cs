@@ -24,7 +24,6 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         private InputAction inputAction;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private Vector2 previousPosition = Vector2.zero;
-        private Vector2 mousePos;
         private Vector2 deltaPos;
         private Camera cachedCamera;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -49,7 +48,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
 
-            UpdatePointerInfo();
+            UpdatePointerInfo(Vector2.zero);
         }
 
         protected override void Update(float t)
@@ -60,18 +59,16 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             if (inputAction == null)
                 inputAction = inputProxy.StrictObject.Camera.Point;
-
-            UpdatePointerInfo();
+            else
+                UpdatePointerInfo(inputAction.ReadValue<Vector2>());
         }
 
-        private void UpdatePointerInfo()
+        private void UpdatePointerInfo(Vector2 pointerPos)
         {
-            mousePos = inputAction.ReadValue<Vector2>();
+            deltaPos = pointerPos - previousPosition;
+            previousPosition = pointerPos;
 
-            deltaPos = mousePos - previousPosition;
-            previousPosition = mousePos;
-
-            var ray = cachedCamera.ScreenPointToRay(mousePos);
+            var ray = cachedCamera.ScreenPointToRay(pointerPos);
 
             var worldRayDirection = new Decentraland.Common.Vector3
             {
@@ -85,7 +82,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
                 component.ScreenCoordinates = new Decentraland.Common.Vector2 { X = data.pos.x, Y = data.pos.y };
                 component.ScreenDelta = new Decentraland.Common.Vector2 { X = data.delta.x, Y = data.delta.y };
                 component.WorldRayDirection = data.rayDir;
-            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (mousePos, deltaPos, worldRayDirection));
+            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (pointerPos, deltaPos, worldRayDirection));
         }
     }
 }
