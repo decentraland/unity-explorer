@@ -56,10 +56,14 @@ namespace ECS.StreamableLoading.AssetBundles
                 ct.ThrowIfCancellationRequested();
                 assetBundle = await AssetBundle.LoadFromStreamAsync(stream).WithCancellation(ct);
             }
-            catch
+            catch (Exception e)
             {
                 stream.Dispose();
-                throw;
+
+                if (e is OperationCanceledException)
+                    throw;
+
+                throw new Exception($"Exception occured on loading AssetBundle {intention.Hash} from stream", e);
             }
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock

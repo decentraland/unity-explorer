@@ -474,7 +474,7 @@ MonoBehaviour:
     - rid: 3440223528247361540
       type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests, asm: DCL.Plugins}
       data:
-        <WebRequestsMode>k__BackingField: 1
+        <WebRequestsMode>k__BackingField: 2
         <DefaultSettings>k__BackingField:
           <CoreWebRequestsBudget>k__BackingField: 15
           <SceneWebRequestsBudget>k__BackingField: 5
