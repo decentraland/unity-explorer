@@ -13,7 +13,10 @@ namespace DCL.Communities.CommunityCreation
 
         }
 
+        protected override void OnBeforeViewShow() =>
+            viewInstance.SetAsClaimedName(inputData.HasClaimedName);
+
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.BackgroundCloseButton.OnClickAsync(ct));
+            UniTask.WhenAny(viewInstance!.backgroundCloseButton.OnClickAsync(ct));
     }
 }

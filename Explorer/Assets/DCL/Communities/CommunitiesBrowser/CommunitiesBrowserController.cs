@@ -38,6 +38,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
         private CancellationTokenSource searchCancellationCts;
+        private CancellationTokenSource openCommunityCreationCts;
 
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
@@ -99,6 +100,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
+            openCommunityCreationCts?.SafeCancelAndDispose();
         }
 
         public void Animate(int triggerId) =>
@@ -126,6 +128,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
+            openCommunityCreationCts?.SafeCancelAndDispose();
         }
 
         private void ConfigureMyCommunitiesList() =>
@@ -322,7 +325,20 @@ namespace DCL.Communities.CommunitiesBrowser
             // TODO: Open community profile (currently implemented by Lorenzo)
         }
 
-        private void CreateCommunity() =>
-            mvcManager.ShowAsync(CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(string.Empty))).Forget();
+        private void CreateCommunity()
+        {
+            openCommunityCreationCts = openCommunityCreationCts.SafeRestart();
+            CreateCommunityAsync(openCommunityCreationCts.Token).Forget();
+        }
+
+        private async UniTaskVoid CreateCommunityAsync(CancellationToken ct)
+        {
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    hasClaimedName: ownProfile is { HasClaimedName: true },
+                    communityId: string.Empty)), ct).Forget();
+        }
     }
 }

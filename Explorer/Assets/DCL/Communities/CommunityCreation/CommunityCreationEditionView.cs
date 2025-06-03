@@ -6,6 +6,15 @@ namespace DCL.Communities.CommunityCreation
 {
     public class CommunityCreationEditionView : ViewBase, IView
     {
-        [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
+
+        [SerializeField] public Button backgroundCloseButton;
+        [SerializeField] private GameObject getNamePanel;
+        [SerializeField] private GameObject creationPanel;
+
+        public void SetAsClaimedName(bool hasClaimedName)
+        {
+            getNamePanel.SetActive(!hasClaimedName);
+            creationPanel.SetActive(hasClaimedName);
+        }
     }
 }
