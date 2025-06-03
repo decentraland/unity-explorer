@@ -245,7 +245,7 @@ MonoBehaviour:
   <loadingObject>k__BackingField: {fileID: 5749406410202981772}
   <backgroundImage>k__BackingField: {fileID: 7299820048526774152}
   <BackgroundColor>k__BackingField: {r: 0.595366, g: 0.39520293, b: 0.7830189, a: 1}
-  <ConfirmationDialogView>k__BackingField: {fileID: 2113713318068618317}
+  <confirmationDialogView>k__BackingField: {fileID: 2113713318068618317}
   <headerObject>k__BackingField: {fileID: 5139753108102950695}
   <contentObject>k__BackingField: {fileID: 4438923677015721477}
   <openWizardButton>k__BackingField: {fileID: 1634923376034701604}
@@ -1360,6 +1360,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3132197045897695742}
     m_Modifications:
+    - target: {fileID: 294090086415643421, guid: 4f3f08bbf975e4422a094f5be9eb5ea1, type: 3}
+      propertyPath: <confirmationDialogView>k__BackingField
+      value: 
+      objectReference: {fileID: 2113713318068618317}
     - target: {fileID: 5192301517037361721, guid: 4f3f08bbf975e4422a094f5be9eb5ea1, type: 3}
       propertyPath: m_Pivot.x
       value: 0

@@ -1754,9 +1754,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9019cd331c0641a29956b61dd3fd0b07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <confirmationDialogView>k__BackingField: {fileID: 0}
   <loopGrid>k__BackingField: {fileID: 7858954228254115977}
   <loopListScrollRect>k__BackingField: {fileID: 8903778519026221505}
-  <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: ce2d11f38b01f4bb49520e11f28a5ed9, type: 2}
   <sectionButtons>k__BackingField: {fileID: 1165049079490157410}
   <scrollViewRect>k__BackingField: {fileID: 1933858771915660424}
   <memberListSectionsElements>k__BackingField:
@@ -1772,8 +1772,9 @@ MonoBehaviour:
     <SelectedText>k__BackingField: {fileID: 2961424354771174431}
     <UnselectedBackground>k__BackingField: {fileID: 6416773400672022123}
     <UnselectedText>k__BackingField: {fileID: 8060992581175765104}
-  <KickSprite>k__BackingField: {fileID: 21300000, guid: 1c3a82503c07d4bc1b72831189ecac2c, type: 3}
-  <BanSprite>k__BackingField: {fileID: 21300000, guid: dfc1a44a069d347b0ba9bde7be300ec3, type: 3}
+  <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: ce2d11f38b01f4bb49520e11f28a5ed9, type: 2}
+  <kickSprite>k__BackingField: {fileID: 21300000, guid: 1c3a82503c07d4bc1b72831189ecac2c, type: 3}
+  <banSprite>k__BackingField: {fileID: 21300000, guid: dfc1a44a069d347b0ba9bde7be300ec3, type: 3}
 --- !u!1001 &3723107797840121950
 PrefabInstance:
   m_ObjectHideFlags: 0

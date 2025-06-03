@@ -35,14 +35,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
-        private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to kick '{0}' from {1}?";
-        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban '{0}' from {1}?";
-
-        private const string KICK_MEMBER_CANCEL_TEXT = "CANCEL";
-        private const string KICK_MEMBER_CONFIRM_TEXT = "KICK";
-        private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
-        private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
-
         private readonly MembersListView view;
         private readonly ConfirmationDialogView confirmationDialogView;
         private readonly IMVCManager mvcManager;
@@ -74,7 +66,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
         public MembersListController(MembersListView view,
-            ConfirmationDialogView confirmationDialogView,
             ViewDependencies viewDependencies,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
@@ -82,7 +73,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             WarningNotificationView inWorldWarningNotificationView)
         {
             this.view = view;
-            this.confirmationDialogView = confirmationDialogView;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -98,8 +88,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(communityOptionsSeparatorContextMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right)))
                          .AddControl(removeModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.RemoveModeratorText, view.ContextMenuSettings.RemoveModeratorSprite, () => RemoveModerator(lastClickedProfileCtx!))))
                          .AddControl(addModeratorContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.AddModeratorText, view.ContextMenuSettings.AddModeratorSprite, () => AddModerator(lastClickedProfileCtx!))))
-                         .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.KickUserText, view.ContextMenuSettings.KickUserSprite, () => KickUser(lastClickedProfileCtx!))))
-                         .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => BanUser(lastClickedProfileCtx!))));
+                         .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.KickUserText, view.ContextMenuSettings.KickUserSprite, () => view.ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name))))
+                         .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => view.ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name))));
 
             this.view.InitGrid(() => currentSectionFetchData);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
@@ -108,6 +98,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.ElementContextMenuButtonClicked += OnContextMenuButtonClicked;
             this.view.ElementFriendButtonClicked += OnFriendButtonClicked;
             this.view.ElementUnbanButtonClicked += OnUnbanButtonClicked;
+
+            this.view.KickUserRequested += OnKickUser;
+            this.view.BanUserRequested += OnBanUser;
 
             this.view.InjectDependencies(viewDependencies);
         }
@@ -122,6 +115,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.ElementContextMenuButtonClicked -= OnContextMenuButtonClicked;
             view.ElementFriendButtonClicked -= OnFriendButtonClicked;
             view.ElementUnbanButtonClicked -= OnUnbanButtonClicked;
+
+            view.KickUserRequested -= OnKickUser;
+            view.BanUserRequested -= OnBanUser;
         }
 
         private void OnNewDataRequested()
@@ -162,7 +158,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void BlockUserClicked(MemberData profile) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.id), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), cancellationToken).Forget();
 
-        private void BanUser(MemberData profile)
+        private void OnBanUser(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             BanUserAsync(contextMenuOperationCts.Token).Forget();
@@ -170,40 +166,28 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid BanUserAsync(CancellationToken token)
             {
+                Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, communityData?.id, token)
+                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                        new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityData?.name),
-                            BAN_MEMBER_CANCEL_TEXT,
-                            BAN_MEMBER_CONFIRM_TEXT,
-                            view.BanSprite,
-                            false, false),
-                        cancellationToken);
+                if (!result.Success || !result.Value)
+                {
+                    await inWorldWarningNotificationView.AnimatedShowAsync(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    return;
+                }
 
-                    if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                allMembersFetchData.members.Remove(profile);
 
-                    Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, communityData?.id, token)
-                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                List<MemberData> memberList = bannedMembersFetchData.members;
+                profile.role = CommunityMemberRole.none;
+                memberList.Add(profile);
 
-                    if (!result.Success || !result.Value)
-                    {
-                        await inWorldWarningNotificationView.AnimatedShowAsync(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
-                        return;
-                    }
+                MembersSorter.SortMembersList(memberList);
 
-                    allMembersFetchData.members.Remove(profile);
-
-                    List<MemberData> memberList = bannedMembersFetchData.members;
-                    profile.role = CommunityMemberRole.none;
-                    memberList.Add(profile);
-
-                    MembersSorter.SortMembersList(memberList);
-
-                    view.RefreshGrid();
-
+                view.RefreshGrid();
             }
         }
 
-        private void KickUser(MemberData profile)
+        private void OnKickUser(MemberData profile)
         {
             contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
             KickUserAsync(contextMenuOperationCts.Token).Forget();
@@ -211,17 +195,6 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid KickUserAsync(CancellationToken token)
             {
-
-                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                    new ConfirmationDialogView.DialogData(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityData?.name),
-                        KICK_MEMBER_CANCEL_TEXT,
-                        KICK_MEMBER_CONFIRM_TEXT,
-                        view.KickSprite,
-                        false, false),
-                    cancellationToken);
-
-                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
-
                 Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

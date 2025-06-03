@@ -24,9 +24,6 @@ namespace DCL.Communities.CommunitiesCard
     {
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
-        private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
-        private const string LEAVE_COMMUNITY_CONFIRM_TEXT = "YES";
-        private const string LEAVE_COMMUNITY_CANCEL_TEXT = "NO";
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
@@ -105,7 +102,6 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView,
-                viewInstance.ConfirmationDialogView,
                 viewDependencies,mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
@@ -200,16 +196,6 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid LeaveCommunityAsync(CancellationToken ct)
             {
-                ConfirmationDialogView.ConfirmationResult dialogResult = await viewInstance!.ConfirmationDialogView.ShowConfirmationDialogAsync(
-                   new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, viewInstance.CommunityNameText),
-                       LEAVE_COMMUNITY_CANCEL_TEXT,
-                       LEAVE_COMMUNITY_CONFIRM_TEXT,
-                       viewInstance.CommunityThumbnail.ImageSprite,
-                       true, true),
-                   ct);
-
-                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
-
                 Result<bool> result = await communitiesDataProvider.LeaveCommunityAsync(communityData.id, ct)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

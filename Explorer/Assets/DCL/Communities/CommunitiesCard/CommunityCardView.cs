@@ -10,12 +10,17 @@ using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Communities.CommunitiesCard
 {
     public class CommunityCardView : ViewBase, IView
     {
         private const string COMMUNITY_MEMBERS_NUMBER_FORMAT = "<b>{0}</b> members";
+
+        private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
+        private const string LEAVE_COMMUNITY_CONFIRM_TEXT = "YES";
+        private const string LEAVE_COMMUNITY_CANCEL_TEXT = "NO";
 
         public enum Sections
         {
@@ -44,7 +49,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private SectionLoadingView loadingObject { get; set; }
         [field: SerializeField] private Image backgroundImage { get; set; }
         [field: SerializeField] public Color BackgroundColor { get; private set; }
-        [field: SerializeField] public ConfirmationDialogView ConfirmationDialogView { get; private set; }
+        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
         [field: SerializeField] private GameObject headerObject { get; set; }
         [field: SerializeField] private GameObject contentObject { get; set; }
 
@@ -78,21 +83,47 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public MembersListView MembersListView { get; private set; }
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; }
 
-        public string CommunityNameText => communityName.text;
-
         private readonly UniTask[] closingTasks = new UniTask[2];
+        private CancellationTokenSource confirmationDialogCts = new ();
 
         private void Awake()
         {
             openWizardButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
             joinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
-            joinedButton.onClick.AddListener(() => LeaveCommunityRequested?.Invoke());
+            joinedButton.onClick.AddListener(ShowLeaveConfirmationDialog);
 
             photosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
             membersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
             membersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
             placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+        }
+
+        private void OnDisable()
+        {
+            confirmationDialogCts.SafeCancelAndDispose();
+        }
+
+        private void ShowLeaveConfirmationDialog()
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowLeaveConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowLeaveConfirmationDialogAsync(CancellationToken ct)
+            {
+                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                    new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, communityName.text),
+                        LEAVE_COMMUNITY_CANCEL_TEXT,
+                        LEAVE_COMMUNITY_CONFIRM_TEXT,
+                        CommunityThumbnail.ImageSprite,
+                        true, true),
+                    ct);
+
+                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
+                LeaveCommunityRequested?.Invoke();
+            }
         }
 
         public UniTask[] GetClosingTasks(CancellationToken ct)
