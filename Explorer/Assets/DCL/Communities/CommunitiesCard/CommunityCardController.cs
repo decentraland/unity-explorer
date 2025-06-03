@@ -113,13 +113,7 @@ namespace DCL.Communities.CommunitiesCard
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
-            SetCardBackgroundColor(viewInstance.BackgroundColor);
-        }
-
-        private void SetCardBackgroundColor(Color color)
-        {
-            Color.RGBToHSV(color, out float h, out float s, out float v);
-            viewInstance!.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
+            viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
         protected override void OnViewShow()
@@ -207,7 +201,7 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LeaveCommunityAsync(CancellationToken ct)
             {
                 ConfirmationDialogView.ConfirmationResult dialogResult = await viewInstance!.ConfirmationDialogView.ShowConfirmationDialogAsync(
-                   new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, viewInstance.CommunityName.text),
+                   new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, viewInstance.CommunityNameText),
                        LEAVE_COMMUNITY_CANCEL_TEXT,
                        LEAVE_COMMUNITY_CONFIRM_TEXT,
                        viewInstance.CommunityThumbnail.ImageSprite,
@@ -230,6 +224,6 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), viewInstance!.BackgroundCloseButton.OnClickAsync(ct));
+            UniTask.WhenAny(viewInstance!.GetClosingTasks(ct));
     }
 }

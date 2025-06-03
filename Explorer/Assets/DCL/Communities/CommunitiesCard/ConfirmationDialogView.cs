@@ -35,44 +35,44 @@ namespace DCL.Communities.CommunitiesCard
             CANCEL,
         }
 
-        [field: SerializeField] public CanvasGroup ViewCanvasGroup { get; private set; }
-        [field: SerializeField] public Button BackgroundButton { get; private set; }
-        [field: SerializeField] public Button CancelButton { get; private set; }
-        [field: SerializeField] public TMP_Text CancelButtonText { get; private set; }
-        [field: SerializeField] public Button ConfirmButton { get; private set; }
-        [field: SerializeField] public TMP_Text ConfirmButtonText { get; private set; }
-        [field: SerializeField] public float FadeDuration { get; private set; } = 0.3f;
-        [field: SerializeField] public TMP_Text MainText { get; private set; }
-        [field: SerializeField] public Image MainImage { get; private set; }
-        [field: SerializeField] public GameObject QuitImage { get; private set; }
-        [field: SerializeField] public Image RimImage { get; private set; }
+        [field: SerializeField] private CanvasGroup viewCanvasGroup { get; set; }
+        [field: SerializeField] private Button backgroundButton { get; set; }
+        [field: SerializeField] private Button cancelButton { get; set; }
+        [field: SerializeField] private TMP_Text cancelButtonText { get; set; }
+        [field: SerializeField] private Button confirmButton { get; set; }
+        [field: SerializeField] private TMP_Text confirmButtonText { get; set; }
+        [field: SerializeField] private float fadeDuration { get; set; } = 0.3f;
+        [field: SerializeField] private TMP_Text mainText { get; set; }
+        [field: SerializeField] private Image mainImage { get; set; }
+        [field: SerializeField] private GameObject quitImage { get; set; }
+        [field: SerializeField] private Image rimImage { get; set; }
 
         public async UniTask<ConfirmationResult> ShowConfirmationDialogAsync(DialogData dialogData,
             CancellationToken ct = default)
         {
             gameObject.SetActive(true);
-            CancelButton.gameObject.SetActive(true);
-            ConfirmButton.gameObject.SetActive(true);
+            cancelButton.gameObject.SetActive(true);
+            confirmButton.gameObject.SetActive(true);
 
-            MainText.text = dialogData.Text;
-            CancelButtonText.text = dialogData.CancelButtonText;
-            ConfirmButtonText.text = dialogData.ConfirmButtonText;
-            RimImage.enabled = dialogData.ShowImageRim;
-            QuitImage.SetActive(dialogData.ShowQuitImage);
-            MainImage.sprite = dialogData.Image;
+            mainText.text = dialogData.Text;
+            cancelButtonText.text = dialogData.CancelButtonText;
+            confirmButtonText.text = dialogData.ConfirmButtonText;
+            rimImage.enabled = dialogData.ShowImageRim;
+            quitImage.SetActive(dialogData.ShowQuitImage);
+            mainImage.sprite = dialogData.Image;
 
-            await ViewCanvasGroup.DOFade(1f, FadeDuration).ToUniTask(cancellationToken: ct);
-            ViewCanvasGroup.interactable = true;
-            ViewCanvasGroup.blocksRaycasts = true;
+            await viewCanvasGroup.DOFade(1f, fadeDuration).ToUniTask(cancellationToken: ct);
+            viewCanvasGroup.interactable = true;
+            viewCanvasGroup.blocksRaycasts = true;
 
-            int index = await UniTask.WhenAny(CancelButton.OnClickAsync(ct), BackgroundButton.OnClickAsync(ct), ConfirmButton.OnClickAsync(ct));
+            int index = await UniTask.WhenAny(cancelButton.OnClickAsync(ct), backgroundButton.OnClickAsync(ct), confirmButton.OnClickAsync(ct));
 
-            await ViewCanvasGroup.DOFade(0f, FadeDuration).ToUniTask(cancellationToken: ct);
-            ViewCanvasGroup.interactable = false;
-            ViewCanvasGroup.blocksRaycasts = false;
+            await viewCanvasGroup.DOFade(0f, fadeDuration).ToUniTask(cancellationToken: ct);
+            viewCanvasGroup.interactable = false;
+            viewCanvasGroup.blocksRaycasts = false;
 
-            CancelButton.gameObject.SetActive(false);
-            ConfirmButton.gameObject.SetActive(false);
+            cancelButton.gameObject.SetActive(false);
+            confirmButton.gameObject.SetActive(false);
 
             return index > 1 ? ConfirmationResult.CONFIRM : ConfirmationResult.CANCEL;
         }

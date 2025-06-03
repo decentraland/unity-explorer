@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
@@ -5,6 +6,7 @@ using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.UI;
 using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,56 +39,74 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? LeaveCommunityRequested;
 
         [field: Header("References")]
-        [field: SerializeField] public Button CloseButton { get; private set; }
-        [field: SerializeField] public Button BackgroundCloseButton { get; private set; }
-        [field: SerializeField] public SectionLoadingView LoadingObject { get; private set; }
-        [field: SerializeField] public Image BackgroundImage { get; private set; }
+        [field: SerializeField] private Button closeButton { get; set; }
+        [field: SerializeField] private Button backgroundCloseButton { get; set; }
+        [field: SerializeField] private SectionLoadingView loadingObject { get; set; }
+        [field: SerializeField] private Image backgroundImage { get; set; }
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] public ConfirmationDialogView ConfirmationDialogView { get; private set; }
-        [field: SerializeField] public GameObject HeaderObject { get; private set; }
-        [field: SerializeField] public GameObject ContentObject { get; private set; }
+        [field: SerializeField] private GameObject headerObject { get; set; }
+        [field: SerializeField] private GameObject contentObject { get; set; }
 
         [field: Header("Community interactions")]
-        [field: SerializeField] public Button OpenWizardButton { get; private set; }
-        [field: SerializeField] public Button JoinedButton { get; private set; }
-        [field: SerializeField] public Button JoinButton { get; private set; }
+        [field: SerializeField] private Button openWizardButton { get; set; }
+        [field: SerializeField] private Button joinedButton { get; set; }
+        [field: SerializeField] private Button joinButton { get; set; }
 
         [field: Header("Community data references")]
-        [field: SerializeField] public TMP_Text CommunityName { get; private set; }
-        [field: SerializeField] public TMP_Text CommunityMembersNumber { get; private set; }
-        [field: SerializeField] public TMP_Text CommunityDescription { get; private set; }
+        [field: SerializeField] private TMP_Text communityName { get; set; }
+        [field: SerializeField] private TMP_Text communityMembersNumber { get; set; }
+        [field: SerializeField] private TMP_Text communityDescription { get; set; }
         [field: SerializeField] public ImageView CommunityThumbnail { get; private set; }
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
-        [field: SerializeField] public Button PhotosButton { get; private set; }
-        [field: SerializeField] public Button MembersButton { get; private set; }
-        [field: SerializeField] public Button PlacesButton { get; private set; }
-        [field: SerializeField] public Button PlacesWithSignButton { get; private set; }
-        [field: SerializeField] public Button MembersTextButton { get; private set; }
+        [field: SerializeField] private Button photosButton { get; set; }
+        [field: SerializeField] private Button membersButton { get; set; }
+        [field: SerializeField] private Button placesButton { get; set; }
+        [field: SerializeField] private Button placesWithSignButton { get; set; }
+        [field: SerializeField] private Button membersTextButton { get; set; }
 
         [field: Header("Selections")]
-        [field: SerializeField] public GameObject PhotosSectionSelection { get; private set; }
-        [field: SerializeField] public GameObject MembersSectionSelection { get; private set; }
-        [field: SerializeField] public GameObject PlacesSectionSelection { get; private set; }
-        [field: SerializeField] public GameObject PlacesWithSignSectionSelection { get; private set; }
+        [field: SerializeField] private GameObject photosSectionSelection { get; set; }
+        [field: SerializeField] private GameObject membersSectionSelection { get; set; }
+        [field: SerializeField] private GameObject placesSectionSelection { get; set; }
+        [field: SerializeField] private GameObject placesWithSignSectionSelection { get; set; }
 
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; }
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; }
 
+        public string CommunityNameText => communityName.text;
+
+        private readonly UniTask[] closingTasks = new UniTask[2];
+
         private void Awake()
         {
-            OpenWizardButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
-            JoinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
-            JoinedButton.onClick.AddListener(() => LeaveCommunityRequested?.Invoke());
+            openWizardButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
+            joinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
+            joinedButton.onClick.AddListener(() => LeaveCommunityRequested?.Invoke());
 
-            PhotosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
-            MembersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
-            MembersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
-            PlacesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
-            PlacesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+            photosButton.onClick.AddListener(() => ToggleSection(Sections.PHOTOS));
+            membersButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
+            membersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
+            placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+            placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+        }
+
+        public UniTask[] GetClosingTasks(CancellationToken ct)
+        {
+            closingTasks[0] = closeButton.OnClickAsync(ct);
+            closingTasks[1] = backgroundCloseButton.OnClickAsync(ct);
+
+            return closingTasks;
+        }
+
+        public void SetCardBackgroundColor(Color color, int shaderProperty)
+        {
+            Color.RGBToHSV(color, out float h, out float s, out float v);
+            backgroundImage.material.SetColor(shaderProperty, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
         public void ResetToggle() =>
@@ -94,21 +114,21 @@ namespace DCL.Communities.CommunitiesCard
 
         public void SetLoadingState(bool isLoading)
         {
-            HeaderObject.SetActive(!isLoading);
-            ContentObject.SetActive(!isLoading);
+            headerObject.SetActive(!isLoading);
+            contentObject.SetActive(!isLoading);
 
             if (isLoading)
-                LoadingObject?.Show();
+                loadingObject?.Show();
             else
-                LoadingObject?.Hide();
+                loadingObject?.Hide();
         }
 
         private void ToggleSection(Sections section)
         {
-            PhotosSectionSelection.SetActive(section == Sections.PHOTOS);
-            MembersSectionSelection.SetActive(section == Sections.MEMBERS);
-            PlacesSectionSelection.SetActive(section == Sections.PLACES);
-            PlacesWithSignSectionSelection.SetActive(section == Sections.PLACES);
+            photosSectionSelection.SetActive(section == Sections.PHOTOS);
+            membersSectionSelection.SetActive(section == Sections.MEMBERS);
+            placesSectionSelection.SetActive(section == Sections.PLACES);
+            placesWithSignSectionSelection.SetActive(section == Sections.PLACES);
 
             CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
             MembersListView.SetActive(section == Sections.MEMBERS);
@@ -119,25 +139,25 @@ namespace DCL.Communities.CommunitiesCard
 
         public void ConfigureInteractionButtons(CommunityMemberRole role)
         {
-            JoinedButton.gameObject.SetActive(role is CommunityMemberRole.member or CommunityMemberRole.moderator);
-            OpenWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner);
-            JoinButton.gameObject.SetActive(role == CommunityMemberRole.none);
+            joinedButton.gameObject.SetActive(role is CommunityMemberRole.member or CommunityMemberRole.moderator);
+            openWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner);
+            joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
         }
 
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, ImageController imageController)
         {
-            CommunityName.text = communityData.name;
+            communityName.text = communityData.name;
 
-            CommunityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
+            communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
 
-            CommunityDescription.text = communityData.description;
+            communityDescription.text = communityData.description;
             //TODO: handle thumbnails properly
             imageController.RequestImage(communityData.thumbnails[0], true, true);
 
             ConfigureInteractionButtons(communityData.role);
 
-            PlacesWithSignButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            PlacesButton.gameObject.SetActive(!PlacesWithSignButton.gameObject.activeSelf);
+            placesWithSignButton.gameObject.SetActive(communityData.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
+            placesButton.gameObject.SetActive(!placesWithSignButton.gameObject.activeSelf);
         }
     }
 }

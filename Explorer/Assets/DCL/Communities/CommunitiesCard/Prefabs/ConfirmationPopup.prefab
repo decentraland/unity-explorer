@@ -216,17 +216,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7967c340b3b64d4da6171c97dfcf0bb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <ViewCanvasGroup>k__BackingField: {fileID: 7148772016283282334}
-  <BackgroundButton>k__BackingField: {fileID: 2573271936253177660}
-  <CancelButton>k__BackingField: {fileID: 4703601987723925820}
-  <CancelButtonText>k__BackingField: {fileID: 5172961755820453843}
-  <ConfirmButton>k__BackingField: {fileID: 177293625116832667}
-  <ConfirmButtonText>k__BackingField: {fileID: 219328096485043431}
-  <FadeDuration>k__BackingField: 0.3
-  <MainText>k__BackingField: {fileID: 5497906910841171124}
-  <MainImage>k__BackingField: {fileID: 4769151607430399632}
-  <QuitImage>k__BackingField: {fileID: 5140257922541452098}
-  <RimImage>k__BackingField: {fileID: 6890867881214203102}
+  <viewCanvasGroup>k__BackingField: {fileID: 7148772016283282334}
+  <backgroundButton>k__BackingField: {fileID: 2573271936253177660}
+  <cancelButton>k__BackingField: {fileID: 4703601987723925820}
+  <cancelButtonText>k__BackingField: {fileID: 5172961755820453843}
+  <confirmButton>k__BackingField: {fileID: 177293625116832667}
+  <confirmButtonText>k__BackingField: {fileID: 219328096485043431}
+  <fadeDuration>k__BackingField: 0.3
+  <mainText>k__BackingField: {fileID: 5497906910841171124}
+  <mainImage>k__BackingField: {fileID: 4769151607430399632}
+  <quitImage>k__BackingField: {fileID: 5140257922541452098}
+  <rimImage>k__BackingField: {fileID: 6890867881214203102}
 --- !u!1 &852062044135285399
 GameObject:
   m_ObjectHideFlags: 0

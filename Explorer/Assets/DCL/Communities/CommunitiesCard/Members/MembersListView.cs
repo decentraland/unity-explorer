@@ -18,14 +18,14 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
 
-        [field: SerializeField] public LoopGridView LoopGrid { get; private set; }
-        [field: SerializeField] public ScrollRect LoopListScrollRect { get; private set; }
-        [field: SerializeField] public CommunityMemberListContextMenuConfiguration ContextMenuSettings { get; private set; }
-        [field: SerializeField] public RectTransform SectionButtons { get; private set; }
-        [field: SerializeField] public RectTransform ScrollViewRect { get; private set; }
-        [field: SerializeField] public MemberListSectionMapping[] MemberListSectionsElements { get; private set; }
+        [field: SerializeField] private LoopGridView loopGrid { get; set; }
+        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; }
+        [field: SerializeField] private RectTransform sectionButtons { get; set; }
+        [field: SerializeField] private RectTransform scrollViewRect { get; set; }
+        [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; }
 
         [field: Header("Assets")]
+        [field: SerializeField] public CommunityMemberListContextMenuConfiguration ContextMenuSettings { get; private set; }
         [field: SerializeField] public Sprite KickSprite { get; private set; }
         [field: SerializeField] public Sprite BanSprite { get; private set; }
 
@@ -44,11 +44,11 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void Awake()
         {
-            LoopListScrollRect.SetScrollSensitivityBasedOnPlatform();
-            scrollViewHeight = ScrollViewRect.sizeDelta.y;
-            scrollViewMaxHeight = scrollViewHeight + SectionButtons.sizeDelta.y;
+            loopListScrollRect.SetScrollSensitivityBasedOnPlatform();
+            scrollViewHeight = scrollViewRect.sizeDelta.y;
+            scrollViewMaxHeight = scrollViewHeight + sectionButtons.sizeDelta.y;
 
-            foreach (var sectionMapping in MemberListSectionsElements)
+            foreach (var sectionMapping in memberListSectionsElements)
                 sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
         }
 
@@ -58,7 +58,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             if (currentSection == section) return;
 
-            foreach (var sectionMapping in MemberListSectionsElements)
+            foreach (var sectionMapping in memberListSectionsElements)
             {
                 sectionMapping.SelectedBackground.SetActive(sectionMapping.Section == section);
                 sectionMapping.SelectedText.SetActive(sectionMapping.Section == section);
@@ -72,13 +72,13 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void SetSectionButtonsActive(bool isActive)
         {
-            SectionButtons.gameObject.SetActive(isActive);
-            ScrollViewRect.sizeDelta = new Vector2(ScrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
+            sectionButtons.gameObject.SetActive(isActive);
+            scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
         }
 
         public void InitGrid(Func<SectionFetchData> currentSectionDataFunc)
         {
-            LoopGrid.InitGridView(0, GetLoopGridItemByIndex);
+            loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getCurrentSectionFetchData = currentSectionDataFunc;
         }
 
@@ -105,8 +105,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void RefreshGrid()
         {
-            LoopGrid.SetListItemCount(getCurrentSectionFetchData().members.Count, false);
-            LoopGrid.RefreshAllShownItem();
+            loopGrid.SetListItemCount(getCurrentSectionFetchData().members.Count, false);
+            loopGrid.RefreshAllShownItem();
         }
 
         [Serializable]

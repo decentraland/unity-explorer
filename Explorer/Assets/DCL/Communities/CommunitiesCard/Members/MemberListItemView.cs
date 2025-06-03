@@ -14,27 +14,27 @@ namespace DCL.Communities.CommunitiesCard.Members
     {
         private const string MUTUAL_FRIENDS_FORMAT = "{0} Mutual Friends";
 
-        [field: SerializeField] public Image Background { get; private set; }
-        [field: SerializeField] public Color NormalColor { get; private set; }
-        [field: SerializeField] public Color HoveredColor { get; private set; }
-        [field: SerializeField] public Button MainButton { get; private set; }
-        [field: SerializeField] public Button ContextMenuButton { get; private set; }
-        [field: SerializeField] public Button UnbanButton { get; private set; }
+        [field: SerializeField] private Image background { get; set; }
+        [field: SerializeField] private Color normalColor { get; set; }
+        [field: SerializeField] private Color hoveredColor { get; set; }
+        [field: SerializeField] private Button mainButton { get; set; }
+        [field: SerializeField] private Button contextMenuButton { get; set; }
+        [field: SerializeField] private Button unbanButton { get; set; }
 
         [field: Header("User")]
-        [field: SerializeField] public TMP_Text UserName { get; private set; }
-        [field: SerializeField] public TMP_Text UserNameTag { get; private set; }
-        [field: SerializeField] public GameObject VerifiedIcon { get; private set; }
-        [field: SerializeField] public ProfilePictureView ProfilePicture { get; private set; }
-        [field: SerializeField] public TMP_Text MutualFriendsText { get; private set; }
-        [field: SerializeField] public TMP_Text RoleText { get; private set; }
+        [field: SerializeField] private TMP_Text userName { get; set; }
+        [field: SerializeField] private TMP_Text userNameTag { get; set; }
+        [field: SerializeField] private GameObject verifiedIcon { get; set; }
+        [field: SerializeField] private ProfilePictureView profilePicture { get; set; }
+        [field: SerializeField] private TMP_Text mutualFriendsText { get; set; }
+        [field: SerializeField] private TMP_Text roleText { get; set; }
 
         [field: Header("Friend buttons")]
-        [field: SerializeField] public Button AddFriendButton { get; private set; }
-        [field: SerializeField] public Button AcceptFriendButton { get; private set; }
-        [field: SerializeField] public Button RemoveFriendButton { get; private set; }
-        [field: SerializeField] public Button CancelFriendButton { get; private set; }
-        [field: SerializeField] public Button UnblockFriendButton { get; private set; }
+        [field: SerializeField] private Button addFriendButton { get; set; }
+        [field: SerializeField] private Button acceptFriendButton { get; set; }
+        [field: SerializeField] private Button removeFriendButton { get; set; }
+        [field: SerializeField] private Button cancelFriendButton { get; set; }
+        [field: SerializeField] private Button unblockFriendButton { get; set; }
 
         private bool canUnHover = true;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
@@ -70,17 +70,17 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void Awake()
         {
-            MainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
-            UnbanButton.onClick.AddListener(() => UnbanButtonClicked?.Invoke(UserProfile));
-            ContextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile, ContextMenuButton.transform.position, this));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
+            unbanButton.onClick.AddListener(() => UnbanButtonClicked?.Invoke(UserProfile));
+            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile, contextMenuButton.transform.position, this));
 
-            AddFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            AcceptFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            RemoveFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            CancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            UnblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            addFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            acceptFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            removeFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            cancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            unblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
 
-            Background.color = NormalColor;
+            background.color = normalColor;
         }
 
         public void Configure(MemberData memberProfile, MembersListView.MemberListSections section)
@@ -90,24 +90,24 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             Color userColor = memberProfile.GetUserNameColor();
 
-            UserName.text = memberProfile.name;
-            UserName.color = userColor;
-            UserNameTag.text = $"#{memberProfile.id[^4..]}";
-            UserNameTag.gameObject.SetActive(!memberProfile.hasClaimedName);
-            VerifiedIcon.SetActive(memberProfile.hasClaimedName);
-            MutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, memberProfile.mutualFriends);
-            MutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
-            RoleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
-            RoleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            ProfilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePicture, memberProfile.id);
+            userName.text = memberProfile.name;
+            userName.color = userColor;
+            userNameTag.text = $"#{memberProfile.id[^4..]}";
+            userNameTag.gameObject.SetActive(!memberProfile.hasClaimedName);
+            verifiedIcon.SetActive(memberProfile.hasClaimedName);
+            mutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, memberProfile.mutualFriends);
+            mutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
+            roleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
+            roleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
+            profilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePicture, memberProfile.id);
 
             currentSection = section;
 
-            AddFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
-            AcceptFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
-            RemoveFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL);
-            CancelFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.ALL);
-            UnblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
+            addFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
+            acceptFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
+            removeFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL);
+            cancelFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.ALL);
+            unblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
         }
 
         public void SubscribeToInteractions(Action<MemberData> mainButton,
@@ -125,16 +125,16 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void UnHover()
         {
-            ContextMenuButton.gameObject.SetActive(false);
-            UnbanButton.gameObject.SetActive(false);
-            Background.color = NormalColor;
+            contextMenuButton.gameObject.SetActive(false);
+            unbanButton.gameObject.SetActive(false);
+            background.color = normalColor;
         }
 
         private void Hover()
         {
-            ContextMenuButton.gameObject.SetActive(true);
-            UnbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
-            Background.color = HoveredColor;
+            contextMenuButton.gameObject.SetActive(true);
+            unbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
+            background.color = hoveredColor;
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>
@@ -148,7 +148,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
-            ProfilePicture.InjectDependencies(dependencies);
+            profilePicture.InjectDependencies(dependencies);
         }
     }
 }

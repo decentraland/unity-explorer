@@ -475,7 +475,6 @@ GameObject:
   - component: {fileID: 5982544211041837584}
   - component: {fileID: 220671849225280344}
   - component: {fileID: 3102670708108383198}
-  - component: {fileID: 299677709406048080}
   m_Layer: 5
   m_Name: Scrollbar Vertical
   m_TagString: Untagged
@@ -590,18 +589,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &299677709406048080
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4697464940743538001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &5406496724393045926
 GameObject:
   m_ObjectHideFlags: 0
@@ -822,7 +809,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6033940532248413702}
-  - component: {fileID: 3211095064415867530}
   m_Layer: 5
   m_Name: Sliding Area
   m_TagString: Untagged
@@ -850,18 +836,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &3211095064415867530
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6912338548553454486}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &6926917801310899169
 GameObject:
   m_ObjectHideFlags: 0
@@ -873,7 +847,6 @@ GameObject:
   - component: {fileID: 6939845272471368607}
   - component: {fileID: 3750450455145668269}
   - component: {fileID: 1725521100080508153}
-  - component: {fileID: 8294012876670521571}
   m_Layer: 5
   m_Name: Handle
   m_TagString: Untagged
@@ -938,18 +911,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &8294012876670521571
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6926917801310899169}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &7248618899696990284
 GameObject:
   m_ObjectHideFlags: 0
@@ -962,7 +923,6 @@ GameObject:
   - component: {fileID: 4906816502050159444}
   - component: {fileID: 2603045649370785650}
   - component: {fileID: 8903778519026221505}
-  - component: {fileID: 2009412832417128568}
   - component: {fileID: 7858954228254115977}
   m_Layer: 5
   m_Name: Scroll View
@@ -1060,18 +1020,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &2009412832417128568
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7248618899696990284}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &7858954228254115977
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1649,7 +1597,6 @@ GameObject:
   - component: {fileID: 5657371385851263502}
   - component: {fileID: 4050503633356921552}
   - component: {fileID: 4476313531092101160}
-  - component: {fileID: 6183339219129772782}
   - component: {fileID: 6039278837222826790}
   m_Layer: 5
   m_Name: Viewport
@@ -1729,18 +1676,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &6183339219129772782
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8689637641832742699}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &6039278837222826790
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1778,7 +1713,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5192301517037361721}
-  - component: {fileID: 1446929974319442008}
   - component: {fileID: 294090086415643421}
   m_Layer: 5
   m_Name: CommunityCardMembers
@@ -1808,18 +1742,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
---- !u!114 &1446929974319442008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8983093640179705060}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &294090086415643421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1832,12 +1754,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9019cd331c0641a29956b61dd3fd0b07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <LoopGrid>k__BackingField: {fileID: 7858954228254115977}
-  <LoopListScrollRect>k__BackingField: {fileID: 8903778519026221505}
+  <loopGrid>k__BackingField: {fileID: 7858954228254115977}
+  <loopListScrollRect>k__BackingField: {fileID: 8903778519026221505}
   <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: ce2d11f38b01f4bb49520e11f28a5ed9, type: 2}
-  <SectionButtons>k__BackingField: {fileID: 1165049079490157410}
-  <ScrollViewRect>k__BackingField: {fileID: 1933858771915660424}
-  <MemberListSectionsElements>k__BackingField:
+  <sectionButtons>k__BackingField: {fileID: 1165049079490157410}
+  <scrollViewRect>k__BackingField: {fileID: 1933858771915660424}
+  <memberListSectionsElements>k__BackingField:
   - <Section>k__BackingField: 0
     <Button>k__BackingField: {fileID: 1694283236187587186}
     <SelectedBackground>k__BackingField: {fileID: 8545687878889349317}

@@ -240,30 +240,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 3871887858605939141}
   <raycaster>k__BackingField: {fileID: 6579474225357820591}
-  <CloseButton>k__BackingField: {fileID: 8765912401497571406}
-  <BackgroundCloseButton>k__BackingField: {fileID: 6113321632732672044}
-  <LoadingObject>k__BackingField: {fileID: 5749406410202981772}
-  <BackgroundImage>k__BackingField: {fileID: 7299820048526774152}
+  <closeButton>k__BackingField: {fileID: 8765912401497571406}
+  <backgroundCloseButton>k__BackingField: {fileID: 6113321632732672044}
+  <loadingObject>k__BackingField: {fileID: 5749406410202981772}
+  <backgroundImage>k__BackingField: {fileID: 7299820048526774152}
   <BackgroundColor>k__BackingField: {r: 0.595366, g: 0.39520293, b: 0.7830189, a: 1}
   <ConfirmationDialogView>k__BackingField: {fileID: 2113713318068618317}
-  <HeaderObject>k__BackingField: {fileID: 5139753108102950695}
-  <ContentObject>k__BackingField: {fileID: 4438923677015721477}
-  <OpenWizardButton>k__BackingField: {fileID: 1634923376034701604}
-  <JoinedButton>k__BackingField: {fileID: 8865448273156285983}
-  <JoinButton>k__BackingField: {fileID: 1251281582169058030}
-  <CommunityName>k__BackingField: {fileID: 9161292668902543015}
-  <CommunityMembersNumber>k__BackingField: {fileID: 5158590217882725722}
-  <CommunityDescription>k__BackingField: {fileID: 4415717452583342345}
+  <headerObject>k__BackingField: {fileID: 5139753108102950695}
+  <contentObject>k__BackingField: {fileID: 4438923677015721477}
+  <openWizardButton>k__BackingField: {fileID: 1634923376034701604}
+  <joinedButton>k__BackingField: {fileID: 8865448273156285983}
+  <joinButton>k__BackingField: {fileID: 1251281582169058030}
+  <communityName>k__BackingField: {fileID: 9161292668902543015}
+  <communityMembersNumber>k__BackingField: {fileID: 5158590217882725722}
+  <communityDescription>k__BackingField: {fileID: 4415717452583342345}
   <CommunityThumbnail>k__BackingField: {fileID: 8955283832351146763}
-  <PhotosButton>k__BackingField: {fileID: 989126922802926807}
-  <MembersButton>k__BackingField: {fileID: 1899825836782332159}
-  <PlacesButton>k__BackingField: {fileID: 7242158169097855626}
-  <PlacesWithSignButton>k__BackingField: {fileID: 6004137563627653444}
-  <MembersTextButton>k__BackingField: {fileID: 8727945829379734659}
-  <PhotosSectionSelection>k__BackingField: {fileID: 3929084366575678202}
-  <MembersSectionSelection>k__BackingField: {fileID: 2405332664425647826}
-  <PlacesSectionSelection>k__BackingField: {fileID: 6898860024198349991}
-  <PlacesWithSignSectionSelection>k__BackingField: {fileID: 7524960366525296489}
+  <photosButton>k__BackingField: {fileID: 989126922802926807}
+  <membersButton>k__BackingField: {fileID: 1899825836782332159}
+  <placesButton>k__BackingField: {fileID: 7242158169097855626}
+  <placesWithSignButton>k__BackingField: {fileID: 6004137563627653444}
+  <membersTextButton>k__BackingField: {fileID: 8727945829379734659}
+  <photosSectionSelection>k__BackingField: {fileID: 3929084366575678202}
+  <membersSectionSelection>k__BackingField: {fileID: 2405332664425647826}
+  <placesSectionSelection>k__BackingField: {fileID: 6898860024198349991}
+  <placesWithSignSectionSelection>k__BackingField: {fileID: 7524960366525296489}
   <CameraReelGalleryConfigs>k__BackingField:
     PhotosView: {fileID: 3987833900840312972}
     GridLayoutFixedColumnCount: 4
