@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -34,7 +35,7 @@ namespace DCL.Communities
 
         public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/communities?search={name}&onlyMemberOf={onlyMemberOf}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            var url = $"{communitiesBaseUrl}/communities?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetUserCommunitiesResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                                                   .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);

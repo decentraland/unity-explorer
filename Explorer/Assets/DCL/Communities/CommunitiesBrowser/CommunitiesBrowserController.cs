@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.UI;
@@ -18,6 +19,10 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string MY_GENERAL_RESULTS_TITLE = "Decentraland Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
+        private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
+        private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
+        private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
+        private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
@@ -26,7 +31,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
-        private bool currentOnlyMemberOf;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -38,6 +43,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private int currentPageNumberFilter = 1;
         private int currentResultsTotalAmount;
         private string currentSearchText = string.Empty;
+        private bool currentOnlyMemberOf;
         private bool isGridResultsLoadingItems;
 
         public CommunitiesBrowserController(
@@ -46,7 +52,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ICommunitiesDataProvider dataProvider,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies)
+            ViewDependencies viewDependencies,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -55,6 +62,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -126,18 +134,26 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid LoadMyCommunitiesAsync(CancellationToken ct)
         {
-            view.ClearMyCommunitiesItems();
-            view.SetMyCommunitiesAsLoading(true);
+            try
+            {
+                view.ClearMyCommunitiesItems();
+                view.SetMyCommunitiesAsLoading(true);
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
-                name: string.Empty,
-                onlyMemberOf: true,
-                pageNumber: 1,
-                elementsPerPage: 1000,
-                ct: ct);
+                var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
+                    name: string.Empty,
+                    onlyMemberOf: true,
+                    pageNumber: 1,
+                    elementsPerPage: 1000,
+                    ct: ct);
 
-            view.AddMyCommunitiesItems(userCommunitiesResponse.data.results, true);
-            view.SetMyCommunitiesAsLoading(false);
+                view.AddMyCommunitiesItems(userCommunitiesResponse.data.results, true);
+                view.SetMyCommunitiesAsLoading(false);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ShowErrorNotificationAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, ct).Forget();
+                ReportHub.LogError(ReportCategory.COMMUNITIES, $"{MY_COMMUNITIES_LOADING_ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private void ViewAllMyCommunitiesResults()
@@ -189,40 +205,48 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            isGridResultsLoadingItems = true;
-
-            if (pageNumber == 1)
+            try
             {
-                view.ClearResultsItems();
-                view.SetResultsAsLoading(true);
+                isGridResultsLoadingItems = true;
+
+                if (pageNumber == 1)
+                {
+                    view.ClearResultsItems();
+                    view.SetResultsAsLoading(true);
+                }
+                else
+                    view.SetResultsLoadingMoreActive(true);
+
+                var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
+                    name,
+                    onlyMemberOf,
+                    pageNumber,
+                    elementsPerPage,
+                    ct);
+
+                if (userCommunitiesResponse.data.results.Length > 0)
+                {
+                    currentPageNumberFilter = pageNumber;
+                    view.AddResultsItems(userCommunitiesResponse.data.results, pageNumber == 1);
+                }
+
+                currentResultsTotalAmount = userCommunitiesResponse.data.total;
+
+                if (pageNumber == 1)
+                    view.SetResultsAsLoading(false);
+
+                view.SetResultsLoadingMoreActive(false);
+                view.SetResultsCountText(currentResultsTotalAmount);
+
+                currentNameFilter = name;
+                currentOnlyMemberOf = onlyMemberOf;
+                isGridResultsLoadingItems = false;
             }
-            else
-                view.SetResultsLoadingMoreActive(true);
-
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
-                name,
-                onlyMemberOf,
-                pageNumber,
-                elementsPerPage,
-                ct);
-
-            if (userCommunitiesResponse.data.results.Length > 0)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
-                currentPageNumberFilter = pageNumber;
-                view.AddResultsItems(userCommunitiesResponse.data.results, pageNumber == 1);
+                ShowErrorNotificationAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, ct).Forget();
+                ReportHub.LogError(ReportCategory.COMMUNITIES, $"{ALL_COMMUNITIES_LOADING_ERROR_MESSAGE} ERROR: {e.Message}");
             }
-
-            currentResultsTotalAmount = userCommunitiesResponse.data.total;
-
-            if (pageNumber == 1)
-                view.SetResultsAsLoading(false);
-
-            view.SetResultsLoadingMoreActive(false);
-            view.SetResultsCountText(currentResultsTotalAmount);
-
-            currentNameFilter = name;
-            currentOnlyMemberOf = onlyMemberOf;
-            isGridResultsLoadingItems = false;
         }
 
         private void DisableShortcutsInput(string text) =>
@@ -287,14 +311,32 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid JoinCommunityAsync(int index, string communityId, CancellationToken ct)
         {
-            bool joinedSuccess = await dataProvider.JoinCommunityAsync(communityId, ct);
-            if (joinedSuccess)
-                view.UpdateJoinedCommunity(index);
+            try
+            {
+                bool joinedSuccess = await dataProvider.JoinCommunityAsync(communityId, ct);
+                if (joinedSuccess)
+                    view.UpdateJoinedCommunity(index);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ShowErrorNotificationAsync(JOIN_COMMUNITY_ERROR_MESSAGE, ct).Forget();
+                ReportHub.LogError(ReportCategory.COMMUNITIES, $"{JOIN_COMMUNITY_ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private void OpenCommunityProfile(string communityId)
         {
             // TODO: Open community profile (currently implemented by Lorenzo)
+        }
+
+        private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
+        {
+            inWorldWarningNotificationView.SetText(errorMessage);
+            inWorldWarningNotificationView.Show(ct);
+
+            await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
+
+            inWorldWarningNotificationView.Hide(ct: ct);
         }
     }
 }
