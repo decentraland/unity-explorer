@@ -3,7 +3,6 @@ using DCL.AvatarRendering.Loading.DTO;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Serialization;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -13,9 +12,19 @@ namespace DCL.AvatarRendering.Emotes
         [Serializable]
         public class EmoteMetadataDto : MetadataBase
         {
-            public Data data = new();
+            // emotes DTO fetched from builder-API use the normal 'data' property
+            // emotes DTO fetched from realm use 'emoteDataADR74' property...
+            public Data emoteDataADR74;
+            public Data data
+            {
+                get => emoteDataADR74;
+                set
+                {
+                    emoteDataADR74 = value;
+                }
+            }
 
-            public override DataBase AbstractData => data;
+            public override DataBase AbstractData => emoteDataADR74;
 
             [Serializable]
             public class Data : DataBase

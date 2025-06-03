@@ -155,8 +155,8 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
             var dto = new EmoteDTO();
             dto.metadata = new EmoteDTO.EmoteMetadataDto();
-            dto.metadata.data = new EmoteDTO.EmoteMetadataDto.Data();
-            dto.metadata.data.category = category;
+            dto.metadata.emoteDataADR74 = new EmoteDTO.EmoteMetadataDto.Data();
+            dto.metadata.emoteDataADR74.category = category;
 
             mockWearable.DTO.Returns(dto);
 

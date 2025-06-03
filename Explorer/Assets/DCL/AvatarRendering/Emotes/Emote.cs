@@ -1,10 +1,14 @@
+using DCL.AvatarRendering.Loading;
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
+using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
+using System;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -44,7 +48,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsLooping() =>
             //as the Asset is nullable the loop property might be retrieved in situations in which the Asset has not been yet loaded
             //to avoid a breaking null reference we provide safe access to the loop property by using the is pattern
-            Model.Asset is { metadata: { data: { loop: true } } };
+            Model.Asset is { metadata: { emoteDataADR74: { loop: true } } };
 
         public bool HasSameClipForAllGenders()
         {

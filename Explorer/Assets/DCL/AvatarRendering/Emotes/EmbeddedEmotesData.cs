@@ -68,7 +68,7 @@ namespace DCL.AvatarRendering.Emotes
                 };
 
                 model.metadata.thumbnail = "thumbnail";
-                model.metadata.data = embeddedEmote.entity;
+                model.metadata.emoteDataADR74 = embeddedEmote.entity;
 
                 emote.Model = new StreamableLoadingResult<EmoteDTO>(model);
                 emote.ThumbnailAssetResult = embeddedEmote.thumbnail.ToUnownedSpriteData();
