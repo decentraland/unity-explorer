@@ -45,6 +45,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button joinCommunityButton;
         [SerializeField] private GameObject joiningLoading;
         [SerializeField] private MutualFriendsConfig mutualFriends;
+        [SerializeField] private Sprite defaultThumbnailSprite;
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -99,6 +100,8 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+            else
+                imageController.SetImage(defaultThumbnailSprite);
         }
 
         public void SetCommunityId(string id) =>
