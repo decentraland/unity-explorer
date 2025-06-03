@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility.Multithreading;
 using Cysharp.Threading.Tasks;
+using LiveKit.Rooms.Streaming.Audio;
 
 namespace DCL.VoiceChat
 {
@@ -21,6 +22,7 @@ namespace DCL.VoiceChat
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
         public event Action MicrophoneReady;
+        public event Action<RtcAudioSource> RtcAudioSourceReconfigured;
 
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
@@ -30,6 +32,8 @@ namespace DCL.VoiceChat
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private AudioClip microphoneAudioClip;
+        private RtcAudioSource rtcAudioSource; // LiveKit audio source for voice chat
+        private int currentMicrophoneSampleRate; // Track current sample rate for reconfiguration detection
 
         private bool isMicrophoneInitialized;
         private bool isInCall;
@@ -38,6 +42,7 @@ namespace DCL.VoiceChat
 
         public bool IsTalking { get; private set; }
         public string MicrophoneName { get; private set; }
+        public RtcAudioSource RtcAudioSource => rtcAudioSource;
 
         public VoiceChatMicrophoneHandler(
             DCLInput dclInput,
@@ -74,6 +79,12 @@ namespace DCL.VoiceChat
             EnabledMicrophone = null;
             DisabledMicrophone = null;
             MicrophoneReady = null;
+            RtcAudioSourceReconfigured = null;
+
+            // Stop and dispose LiveKit audio source
+            rtcAudioSource?.Stop();
+            rtcAudioSource?.Dispose();
+            rtcAudioSource = null;
 
             if (isMicrophoneInitialized)
             {
@@ -200,7 +211,7 @@ namespace DCL.VoiceChat
             }
             else
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT,
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
                     $"macOS Core Audio matches Unity config: {unitySampleRate}Hz");
             }
 #endif
@@ -325,6 +336,40 @@ namespace DCL.VoiceChat
             
             audioSource.Play();
 
+            // Create LiveKit RtcAudioSource optimized for voice chat (mono, 1 channel)
+            int newSampleRate = microphoneAudioClip.frequency;
+            bool needsReconfiguration = rtcAudioSource != null && currentMicrophoneSampleRate != newSampleRate;
+            
+            try
+            {
+                if (needsReconfiguration)
+                {
+                    // Sample rate changed - reconfigure existing RtcAudioSource
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Sample rate changed from {currentMicrophoneSampleRate}Hz to {newSampleRate}Hz - reconfiguring RtcAudioSource");
+                    rtcAudioSource.Reconfigure(audioSource, audioFilter, forceChannels: 1, forceSampleRate: (uint)newSampleRate);
+                    currentMicrophoneSampleRate = newSampleRate;
+                    
+                    // Notify RoomHandler about the reconfiguration
+                    RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "LiveKit RtcAudioSource reconfigured successfully for new sample rate");
+                }
+                else if (rtcAudioSource == null)
+                {
+                    // Create new RtcAudioSource
+                    rtcAudioSource = RtcAudioSource.CreateForVoiceChat(audioSource, audioFilter);
+                    currentMicrophoneSampleRate = newSampleRate;
+                    
+                    // Start RtcAudioSource immediately after creation (not for pausing/unpausing)
+                    rtcAudioSource.Start();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {newSampleRate}Hz");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to create/reconfigure LiveKit RtcAudioSource: {ex.Message}");
+                return;
+            }
+
             audioFilter.enabled = false;
 
             EnabledMicrophone?.Invoke();
@@ -335,6 +380,8 @@ namespace DCL.VoiceChat
 
         private void EnableMicrophone()
         {
+            // Use mute/enable for temporary microphone control during calls
+            // RtcAudioSource.Start() is only for initialization, not pausing
             audioSource.mute = false;  // Allow audio processing - mute state controls local playback
             audioFilter.enabled = true;
             EnabledMicrophone?.Invoke();
@@ -342,6 +389,8 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophone()
         {
+            // Use mute/disable for temporary microphone control during calls
+            // RtcAudioSource.Stop() is only for cleanup, not pausing
             audioSource.mute = true;
             audioFilter.enabled = false;
             DisabledMicrophone?.Invoke();
@@ -370,6 +419,15 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
+                // Stop and dispose LiveKit audio source for microphone change
+                if (rtcAudioSource != null)
+                {
+                    rtcAudioSource.Stop();
+                    rtcAudioSource.Dispose();
+                    rtcAudioSource = null;
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Stopped and disposed RtcAudioSource for microphone change");
+                }
+
                 // Clear all audio stream subscribers to prevent duplicate streams
                 audioFilter.ResetProcessor();
                 audioFilter.enabled = false;
@@ -384,11 +442,13 @@ namespace DCL.VoiceChat
             // Always reinitialize microphone so it's ready when needed
             InitializeMicrophone();
 
+            // RtcAudioSource reconfiguration is handled in InitializeMicrophone() 
+            // based on sample rate changes - no additional handling needed here
+
             // Restore previous talking state if in call
             if (isInCall && wasTalking)
             {
-                audioSource.mute = false;
-                audioFilter.enabled = true;
+                EnableMicrophone();
             }
         }
     }

@@ -59,33 +59,33 @@ namespace DCL.VoiceChat
         {
             lock (processingLock) // Thread-safe reset
             {
-                for (var i = 0; i < 2; i++)
-                {
-                    highPassPrevInputs[i] = 0f;
-                    highPassPrevOutputs[i] = 0f;
-                    lowPassPrevInputs[i] = 0f;
-                    lowPassPrevOutputs[i] = 0f;
-                }
+            for (var i = 0; i < 2; i++)
+            {
+                highPassPrevInputs[i] = 0f;
+                highPassPrevOutputs[i] = 0f;
+                lowPassPrevInputs[i] = 0f;
+                lowPassPrevOutputs[i] = 0f;
+            }
 
-                dcBlockPrevInput = 0f;
-                dcBlockPrevOutput = 0f;
+            dcBlockPrevInput = 0f;
+            dcBlockPrevOutput = 0f;
 
-                CurrentGain = 1f;
-                peakLevel = 0f;
-                GateSmoothing = 0f;
-                gateIsOpen = false;
-                lastSpeechTime = 0f;
+            CurrentGain = 1f;
+            peakLevel = 0f;
+            GateSmoothing = 0f;
+            gateIsOpen = false;
+            lastSpeechTime = 0f;
 
-                if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize) { fadeInBuffer = new float[configuration.FadeInBufferSize]; }
+            if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize) { fadeInBuffer = new float[configuration.FadeInBufferSize]; }
 
-                for (var i = 0; i < fadeInBuffer.Length; i++) { fadeInBuffer[i] = 0f; }
+            for (var i = 0; i < fadeInBuffer.Length; i++) { fadeInBuffer[i] = 0f; }
 
-                fadeInBufferIndex = 0;
-                isGateOpening = false;
-                gateOpenFadeProgress = 0f;
+            fadeInBufferIndex = 0;
+            isGateOpening = false;
+            gateOpenFadeProgress = 0f;
 
-                noiseFloor = 0f;
-                noiseFloorUpdateTime = 0f;
+            noiseFloor = 0f;
+            noiseFloorUpdateTime = 0f;
             }
         }
 
@@ -106,18 +106,18 @@ namespace DCL.VoiceChat
                 float sampleDeltaTime = (float)actualSampleCount / sampleRate;
 
                 for (var i = 0; i < actualSampleCount; i++)
-                {
-                    float sample = audioData[i];
+            {
+                float sample = audioData[i];
 
-                    if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
+                if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
 
                     if (configuration.EnableNoiseReduction) { sample = ApplyNoiseReduction(sample, sampleDeltaTime); }
 
                     if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, sampleDeltaTime); }
 
-                    if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
+                if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
 
-                    audioData[i] = Mathf.Clamp(sample, -1f, 1f);
+                audioData[i] = Mathf.Clamp(sample, -1f, 1f);
                 }
             }
         }

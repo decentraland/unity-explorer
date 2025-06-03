@@ -24,12 +24,12 @@ namespace DCL.VoiceChat
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
         private bool disposed;
         private ITrack microphoneTrack;
         private CancellationTokenSource cts;
         private bool isMediaOpen;
-        private RtcAudioSource rtcAudioSource;
         private bool pendingTrackPublish = false;
 
         public VoiceChatLivekitRoomHandler(
@@ -38,7 +38,8 @@ namespace DCL.VoiceChat
             AudioSource microphoneAudioSource,
             IRoom voiceChatRoom,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            IRoomHub roomHub)
+            IRoomHub roomHub,
+            VoiceChatMicrophoneHandler microphoneHandler)
         {
             this.combinedAudioSource = combinedAudioSource;
             this.microphoneAudioFilter = microphoneAudioFilter;
@@ -46,8 +47,11 @@ namespace DCL.VoiceChat
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.roomHub = roomHub;
+            this.microphoneHandler = microphoneHandler;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
+            microphoneHandler.RtcAudioSourceReconfigured += OnRtcAudioSourceReconfigured;
+            microphoneHandler.MicrophoneReady += OnMicrophoneReady;
         }
 
         private void OnCallStatusChanged(VoiceChatStatus newStatus)
@@ -75,6 +79,8 @@ namespace DCL.VoiceChat
             disposed = true;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
+            microphoneHandler.RtcAudioSourceReconfigured -= OnRtcAudioSourceReconfigured;
+            microphoneHandler.MicrophoneReady -= OnMicrophoneReady;
             CloseMedia();
         }
 
@@ -142,9 +148,38 @@ namespace DCL.VoiceChat
             }
         }
 
+        /// <summary>
+        /// Called when the RtcAudioSource is reconfigured due to sample rate changes
+        /// </summary>
+        private void OnRtcAudioSourceReconfigured(RtcAudioSource newRtcAudioSource)
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource reconfigured - updating track if published");
+            
+            // If we have an active track, we need to republish with the new RtcAudioSource
+            if (microphoneTrack != null && isMediaOpen && cts != null && !cts.Token.IsCancellationRequested)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Republishing track with reconfigured RtcAudioSource");
+                
+                // Unpublish the old track
+                voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
+                
+                // Publish new track with reconfigured RtcAudioSource
+                TryPublishTrack(cts.Token);
+            }
+        }
+
         private bool PublishTrack(CancellationToken ct)
         {
-            // Ensure microphone AudioSource and AudioClip are ready before creating RTCAudioSource
+            // Get RtcAudioSource from MicrophoneHandler (single source of truth)
+            RtcAudioSource rtcAudioSource = microphoneHandler.RtcAudioSource;
+            
+            if (rtcAudioSource == null)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot publish track: RtcAudioSource is null. Microphone may not be initialized yet.");
+                return false;
+            }
+
+            // Ensure microphone AudioSource and AudioClip are ready
             if (microphoneAudioSource == null)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot publish track: microphone AudioSource is null. Microphone may not be initialized yet.");
@@ -159,7 +194,7 @@ namespace DCL.VoiceChat
 
             // Log microphone and audio configuration details
             ReportHub.Log(ReportCategory.VOICE_CHAT,
-                $"Creating LiveKit audio track - Microphone: {microphoneAudioSource.clip.name}, " +
+                $"Creating LiveKit audio track with existing RtcAudioSource - Microphone: {microphoneAudioSource.clip.name}, " +
                 $"SampleRate: {microphoneAudioSource.clip.frequency}Hz, " +
                 $"Channels: {microphoneAudioSource.clip.channels}, " +
                 $"Length: {microphoneAudioSource.clip.length:F2}s, " +
@@ -172,10 +207,7 @@ namespace DCL.VoiceChat
                 $"Component Enabled: {microphoneAudioFilter.enabled}, " +
                 $"GameObject Active: {microphoneAudioFilter.gameObject.activeInHierarchy}");
 
-            rtcAudioSource = RtcAudioSource.CreateForVoiceChat(microphoneAudioSource, microphoneAudioFilter);
-            rtcAudioSource.Start();
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource created and started");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Using existing RtcAudioSource - IsRunning: {rtcAudioSource.IsRunning}");
 
             microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource);
 
@@ -247,7 +279,7 @@ namespace DCL.VoiceChat
                 combinedAudioSource.Free();
             }
 
-            rtcAudioSource?.Stop();
+            // Note: RtcAudioSource is managed by MicrophoneHandler - don't stop it here
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
         }
 
@@ -261,7 +293,7 @@ namespace DCL.VoiceChat
                 combinedAudioSource.Free();
             }
 
-            rtcAudioSource?.Stop();
+            // Note: RtcAudioSource is managed by MicrophoneHandler - don't stop it here
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
         }
     }
