@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.Components;
+using DCL.Web3;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace DCL.Profiles
         private Color eyesColor;
         private Color hairColor;
         private Color skinColor;
+        private Color userNameColor;
         private IReadOnlyCollection<URN>? emotes;
         private HashSet<string>? forceRender;
         private HashSet<string>? blocked;
@@ -79,6 +81,7 @@ namespace DCL.Profiles
             userId = profile.UserId;
             hasClaimedName = profile.HasClaimedName;
             hasConnectedWeb3 = profile.HasConnectedWeb3;
+            userNameColor = profile.UserNameColor;
 
             return this;
         }
@@ -126,6 +129,18 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithUserId(string id)
+        {
+            userId = id;
+            return this;
+        }
+
+        public ProfileBuilder WithUserNameColor(Color color)
+        {
+            userNameColor = color;
+            return this;
+        }
+
         public Profile Build()
         {
             var profile = Profile.Create();
@@ -153,6 +168,7 @@ namespace DCL.Profiles
             profile.UnclaimedName = unclaimedName ?? "";
             profile.HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
+            profile.UserNameColor = userNameColor;
 
             var avatar = new Avatar();
             profile.Avatar = avatar;

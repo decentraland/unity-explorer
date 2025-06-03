@@ -36,7 +36,6 @@ namespace DCL.Backpack
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly ProfileBuilder profileBuilder = new ();
         private CancellationTokenSource? publishProfileCts;
 
         public BackpackEquipStatusController(
@@ -165,43 +164,29 @@ namespace DCL.Backpack
                 return;
             }
 
-            Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
-                forceRender, emoteStorage, wearableStorage,
-                // Don't increment the version as it will be incremented later on selfProfile.UpdateProfileAsync
-                !publishProfileChange);
+            if (!publishProfileChange)
+            {
+                Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
+                    forceRender, emoteStorage, wearableStorage);
 
-            // Skip publishing the same profile
-            if (newProfile.Avatar.IsSameAvatar(oldProfile.Avatar))
+                // Skip publishing the same profile
+                if (newProfile.IsSameProfile(oldProfile))
+                    return;
+
+                profileCache.Set(newProfile.UserId, newProfile);
+                UpdateAvatarInWorld(newProfile);
                 return;
-
-            // Clone the old profile since the original will be disposed when its replaced in the cache
-            oldProfile = profileBuilder.From(oldProfile).Build();
-
-            // Update profile immediately to prevent UI inconsistencies
-            // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
-            // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
-            profileCache.Set(newProfile.UserId, newProfile);
-            UpdateAvatarInWorld(newProfile);
-
-            if (!publishProfileChange) return;
+            }
 
             try
             {
-                Profile? savedProfile = await selfProfile.UpdateProfileAsync(newProfile, ct);
+                await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
-                // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
-                // breaking the avatar and the backpack
-                UpdateAvatarInWorld(savedProfile!);
-                oldProfile.Dispose();
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.PROFILE);
-
-                // Revert to the old profile so we are aligned to the catalyst's version
-                profileCache.Set(oldProfile.UserId, oldProfile);
-                UpdateAvatarInWorld(oldProfile);
 
                 ShowErrorNotificationAsync(ct).Forget();
             }

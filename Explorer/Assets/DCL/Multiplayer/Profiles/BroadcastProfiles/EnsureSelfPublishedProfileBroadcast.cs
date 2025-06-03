@@ -37,7 +37,9 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
                 bool published = await selfProfile.IsProfilePublishedAsync(ct);
 
                 if (published == false)
-                    await selfProfile.UpdateProfileAsync(ct);
+                    await selfProfile.UpdateProfileAsync(ct,
+                        // No need to update avatar since its already updated
+                        updateAvatarInWorld: false);
 
                 origin.NotifyRemotes();
             }

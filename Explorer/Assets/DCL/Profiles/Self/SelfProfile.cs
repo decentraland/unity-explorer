@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
@@ -19,6 +20,9 @@ namespace DCL.Profiles.Self
         private readonly IWearableStorage wearableStorage;
         private readonly IEmoteStorage emoteStorage;
         private readonly IReadOnlyList<URN>? forcedEmotes;
+        private readonly IProfileCache profileCache;
+        private readonly World world;
+        private readonly Entity playerEntity;
         private readonly ProfileBuilder profileBuilder = new ();
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
@@ -32,7 +36,10 @@ namespace DCL.Profiles.Self
             IEmoteStorage emoteStorage,
             IEquippedEmotes equippedEmotes,
             IReadOnlyList<string> forceRender,
-            IReadOnlyList<URN>? forcedEmotes)
+            IReadOnlyList<URN>? forcedEmotes,
+            IProfileCache profileCache,
+            World world,
+            Entity playerEntity)
         {
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
@@ -42,6 +49,9 @@ namespace DCL.Profiles.Self
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
             this.forcedEmotes = forcedEmotes;
+            this.profileCache = profileCache;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
         public Profile? OwnProfile { get; private set; }
@@ -72,7 +82,11 @@ namespace DCL.Profiles.Self
             return profile;
         }
 
-        public async UniTask<Profile?> UpdateProfileAsync(CancellationToken ct)
+        /// <summary>Updates the profile based on the IEquippedEmotes, IEquippedWearables & force render</summary>
+        /// <param name="ct"></param>
+        /// <param name="updateAvatarInWorld">Updates the avatar in-world immediately and performs a revert operation in case of failure</param>
+        /// <returns>The updated avatar</returns>
+        public async UniTask<Profile?> UpdateProfileAsync(CancellationToken ct, bool updateAvatarInWorld = true)
         {
             Profile? profile = await ProfileAsync(ct);
 
@@ -82,58 +96,78 @@ namespace DCL.Profiles.Self
             if (profile == null)
                 throw new Exception("Self profile not found");
 
-            Profile newProfile = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, forceRender, emoteStorage, wearableStorage);
+            Profile newProfile = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, forceRender, emoteStorage, wearableStorage,
+                // Don't update the version as it will be incremented at UpdateProfileAsync function
+                incrementVersion: false);
 
-            newProfile.UserId = web3IdentityCache.Identity.Address;
+            return await UpdateProfileAsync(newProfile, ct, updateAvatarInWorld);
+        }
+
+        public async UniTask<Profile?> UpdateProfileAsync(Profile newProfile, CancellationToken ct, bool updateAvatarInWorld = true)
+        {
+            Profile? profile = await ProfileAsync(ct);
+
+            if (web3IdentityCache.Identity == null)
+                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+
+            if (profile == null)
+                throw new Exception("Self profile not found");
 
             // Skip publishing the same profile
-            if (newProfile.Avatar.IsSameAvatar(profile.Avatar))
-                return profile;
-
-            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-            OwnProfile = newProfile;
-
-            await profileRepository.SetAsync(newProfile, ct);
-            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
-        }
-
-        public async UniTask<Profile?> UpdateProfileAsync(Profile profile, CancellationToken ct)
-        {
-            if (web3IdentityCache.Identity == null)
-                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
-
-            Profile newProfile = profileBuilder.From(profile)
-                                               .WithVersion(profile.Version + 1)
-                                               .Build();
+            if (newProfile.IsSameProfile(profile)) return profile;
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
+            newProfile.Version++;
             newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+
             OwnProfile = newProfile;
 
-            await profileRepository.SetAsync(newProfile, ct);
-            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+            if (!updateAvatarInWorld)
+            {
+                await profileRepository.SetAsync(newProfile, ct);
+                return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+            }
+
+            // Clone the old profile since the original will be disposed when its replaced in the cache
+            var oldProfile = profileBuilder.From(profile).Build();
+
+            // Update profile immediately to prevent UI inconsistencies
+            // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
+            // Example: Opening the emote wheel before catalyst validation would show outdated emote selections
+            profileCache.Set(newProfile.UserId, newProfile);
+            UpdateAvatarInWorld(newProfile);
+
+            try
+            {
+                await profileRepository.SetAsync(newProfile, ct);
+                Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+
+                // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
+                // breaking the avatar and the backpack
+                UpdateAvatarInWorld(savedProfile!);
+                oldProfile.Dispose();
+                return savedProfile;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // Revert to the old profile so we are aligned to the catalyst's version
+                profileCache.Set(oldProfile.UserId, oldProfile);
+                UpdateAvatarInWorld(oldProfile);
+                OwnProfile = oldProfile;
+                throw;
+            }
         }
 
-        public async UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct)
+        private void UpdateAvatarInWorld(Profile profile)
         {
-            Profile? profile = await ProfileAsync(ct);
+            profile.IsDirty = true;
 
-            if (web3IdentityCache.Identity == null)
-                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+            bool found = world.Has<Profile>(playerEntity);
 
-            if (profile == null)
-                throw new Exception("Self profile not found");
-
-            Profile newProfile = profileBuilder.From(profile)
-                                               .WithVersion(profile.Version + 1)
-                                               .Build();
-
-            newProfile.UserId = web3IdentityCache.Identity.Address;
-            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-            OwnProfile = newProfile;
-
-            await profileRepository.SetAsync(newProfile, ct);
-            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+            if (found)
+                world.Set(playerEntity, profile);
+            else
+                world.Add(playerEntity, profile);
         }
     }
 }
