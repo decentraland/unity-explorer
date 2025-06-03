@@ -46,7 +46,6 @@ namespace DCL.WebRequests
                 [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
                 [field: SerializeField] public ushort PingAckTimeoutSeconds { get; private set; } = 10;
                 [field: SerializeField] public bool EnablePartialDownloading { get; private set; }
-                [field: SerializeField] public PartialRequestsDump PartialRequestsDump { get; private set; } = null!;
             }
 
             [field: SerializeField] public WebRequestsMode WebRequestsMode { get; private set; } = WebRequestsMode.HTTP2;
@@ -144,7 +143,7 @@ namespace DCL.WebRequests
 
             int partialChunkSize = container.settings.Http2Settings.PartialChunkSizeMB * 1024 * 1024;
 
-            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, ktxEnabled, container.WebRequestsMode, container.settings.Http2Settings.PartialRequestsDump);
+            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, ktxEnabled, container.WebRequestsMode);
             container.requestHub = requestHub;
 
             IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,
@@ -276,11 +275,6 @@ namespace DCL.WebRequests
 
         public override void Dispose()
         {
-            PartialRequestsDump dump = settings.Http2Settings.PartialRequestsDump;
-
-            if (dump)
-                dump.Serialize();
-
             WebRequestController.Dispose();
             SceneWebRequestController.Dispose();
             HTTPManager.LocalCache?.Dispose();

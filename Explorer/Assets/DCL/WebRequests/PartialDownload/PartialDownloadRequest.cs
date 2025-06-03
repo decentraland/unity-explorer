@@ -26,7 +26,6 @@ namespace DCL.WebRequests
 
         private readonly HTTPCache cache;
         private readonly long chunkSize;
-        private readonly PartialRequestsDump? partialRequestsDump;
 
         private volatile HTTPRequest? request;
         private volatile Dictionary<string, List<string>>? storedHeaders;
@@ -43,14 +42,12 @@ namespace DCL.WebRequests
             IWebRequestController controller,
             long chunkSize,
             bool partialDownloadingIsEnabled,
-            WebRequestsMode mode,
-            PartialRequestsDump? partialRequestsDump)
+            WebRequestsMode mode)
             : base(envelope, args, controller)
         {
             this.cache = cache;
             this.partialDownloadingIsEnabled = partialDownloadingIsEnabled;
             this.mode = mode;
-            this.partialRequestsDump = partialRequestsDump;
             this.chunkSize = chunkSize;
             partialStream = args.Stream as Http2PartialDownloadDataStream;
         }
@@ -255,8 +252,6 @@ namespace DCL.WebRequests
 
             envelope = new RequestEnvelope(envelope.CommonArguments, envelope.ReportData,
                 envelope.HeadersInfo.WithRange(chunkStart, chunkEnd), envelope.SignInfo, envelope.SuppressErrors, envelope.OnCreated);
-
-            partialRequestsDump?.Add(envelope.CommonArguments.URL, chunkStart, chunkEnd);
 
             IWebRequest? createdRequest = null;
 

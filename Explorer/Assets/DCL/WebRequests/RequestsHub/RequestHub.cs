@@ -36,16 +36,12 @@ namespace DCL.WebRequests.RequestsHub
         private bool ktxEnabled;
 
         public RequestHub(IDecentralandUrlsSource urlsSource, HTTPCache cache, bool partialDownloadingEnabled, long chunkSize, bool ktxEnabled,
-            WebRequestsMode mode,
-            PartialRequestsDump? partialRequestsDump = null)
+            WebRequestsMode mode)
         {
             this.ktxEnabled = ktxEnabled;
 
             var mutableMap = new Dictionary<Key, object>();
             map = mutableMap;
-
-            if (partialRequestsDump)
-                partialRequestsDump.Clear();
 
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetTextureArguments args) => new GetTextureWebRequest(envelope, args, controller, this.ktxEnabled, urlsSource));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericGetArguments args) => new GenericGetRequest(envelope, args, controller));
@@ -56,7 +52,7 @@ namespace DCL.WebRequests.RequestsHub
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPatchRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAudioClipArguments args) => new GetAudioClipWebRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAssetBundleArguments args) => new GetAssetBundleWebRequest(envelope, args, controller));
-            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(cache, envelope, args, controller, chunkSize, partialDownloadingEnabled, mode, partialRequestsDump));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(cache, envelope, args, controller, chunkSize, partialDownloadingEnabled, mode));
         }
 
         private static void Add<TArgs, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<TArgs, TWebRequest> requestDelegate)
