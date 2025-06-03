@@ -1,6 +1,5 @@
 ﻿using Best.HTTP;
 using Best.HTTP.Request.Upload.Forms;
-using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.IO;
