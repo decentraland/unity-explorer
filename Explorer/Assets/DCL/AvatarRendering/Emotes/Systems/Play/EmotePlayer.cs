@@ -194,13 +194,12 @@ namespace DCL.AvatarRendering.Emotes.Play
             Animation animationComp;
             if (!(animationComp = avatarAnimatorGameObject.GetComponent<Animation>()))
                 animationComp = avatarAnimatorGameObject.AddComponent<Animation>();
-            ClearLegacyAnimationClips(animationComp);
             animationComp.playAutomatically = false;
+            animationComp.Stop();
 
             if (emoteReferences.avatarClip != null)
             {
                 emoteComponent.EmoteLoop = loop;
-
                 var avatarClipName = emoteReferences.avatarClip.name;
                 animationComp.AddClip(emoteReferences.avatarClip, avatarClipName);
                 animationComp[avatarClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
@@ -213,19 +212,6 @@ namespace DCL.AvatarRendering.Emotes.Play
                 var propClipName = emoteReferences.propClip.name;
                 propAnimationComp[propClipName].wrapMode = loop ? WrapMode.Loop : WrapMode.Once;
                 propAnimationComp.Play(propClipName);
-            }
-        }
-
-        private void ClearLegacyAnimationClips(Animation animationComp)
-        {
-            HashSet<string> animationsToRemove = new HashSet<string>();
-            foreach (AnimationState state in animationComp)
-            {
-                animationsToRemove.Add(state.clip.name);
-            }
-            foreach (string clipName in animationsToRemove)
-            {
-                animationComp.RemoveClip(clipName);
             }
         }
 
