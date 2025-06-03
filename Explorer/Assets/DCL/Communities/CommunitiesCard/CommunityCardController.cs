@@ -184,7 +184,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShow(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
                     return;
                 }
 
@@ -215,7 +215,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShow(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
                     return;
                 }
 

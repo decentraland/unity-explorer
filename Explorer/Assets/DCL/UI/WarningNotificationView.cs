@@ -43,7 +43,7 @@ namespace DCL.UI
             CanvasGroup.blocksRaycasts = false;
         }
 
-        public async UniTask AnimatedShow(string text, int showDurationMs, CancellationToken ct = default)
+        public async UniTask AnimatedShowAsync(string text, int showDurationMs, CancellationToken ct = default)
         {
             SetText(text);
             Show(ct);
