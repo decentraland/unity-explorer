@@ -189,11 +189,23 @@ namespace DCL.PluginSystem.Global
             realmNavigator.NavigationExecuted += OnNavigationExecuted;
         }
 
+        /// <summary>
+        /// TODO: This is a temporary solution to show the chat when the user navigates to a parcel.
+        /// NOTE: check this PR for more details:
+        /// https://github.com/decentraland/unity-explorer/issues/4324
+        /// </summary>
+        /// <param name="parcel"></param>
         private void OnNavigationExecuted(Vector2Int parcel)
         {
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
         }
 
+        /// <summary>
+        /// TODO: This is a temporary solution to show the chat when the user changes realm.
+        /// NOTE: check this PR for more details:
+        /// https://github.com/decentraland/unity-explorer/issues/4324
+        /// </summary>
+        /// <param name="realmKind"></param>
         private void OnRealmChange(RealmKind realmKind)
         {
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
