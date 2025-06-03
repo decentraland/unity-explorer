@@ -15,9 +15,18 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.voiceChatSettings = voiceChatSettings;
 
-
-            // Use the default value from the asset if no saved value exists
-            view.InputField.text = voiceChatSettings.ConnectionString;
+            // Load saved connection string if it exists
+            if (settingsDataStore.HasKey(CONNECTION_STRING_DATA_STORE_KEY))
+            {
+                string savedConnectionString = settingsDataStore.GetStringValue(CONNECTION_STRING_DATA_STORE_KEY);
+                view.InputField.text = savedConnectionString;
+                voiceChatSettings.OnConnectionStringChanged(savedConnectionString);
+            }
+            else if (!string.IsNullOrEmpty(voiceChatSettings.ConnectionString))
+            {
+                // Use the default value from the asset if no saved value exists
+                view.InputField.text = voiceChatSettings.ConnectionString;
+            }
 
             // Listen for input field changes
             view.InputField.onEndEdit.AddListener(OnConnectionStringChanged);
@@ -25,6 +34,9 @@ namespace DCL.Settings.ModuleControllers
 
         private void OnConnectionStringChanged(string newConnectionString)
         {
+            // Save to data store
+            settingsDataStore.SetStringValue(CONNECTION_STRING_DATA_STORE_KEY, newConnectionString, true);
+            
             // Update the voice chat settings asset
             voiceChatSettings.OnConnectionStringChanged(newConnectionString);
         }
@@ -34,4 +46,4 @@ namespace DCL.Settings.ModuleControllers
             view.InputField.onEndEdit.RemoveListener(OnConnectionStringChanged);
         }
     }
-}
+} 
