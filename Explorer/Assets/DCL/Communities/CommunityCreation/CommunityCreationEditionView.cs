@@ -8,6 +8,7 @@ namespace DCL.Communities.CommunityCreation
     {
 
         [SerializeField] public Button backgroundCloseButton;
+        [SerializeField] public Button cancelButton;
         [SerializeField] private GameObject getNamePanel;
         [SerializeField] private GameObject creationPanel;
 

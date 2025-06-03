@@ -17,6 +17,6 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SetAsClaimedName(inputData.HasClaimedName);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.backgroundCloseButton.OnClickAsync(ct));
+            UniTask.WhenAny(viewInstance!.backgroundCloseButton.OnClickAsync(ct), viewInstance!.cancelButton.OnClickAsync(ct));
     }
 }
