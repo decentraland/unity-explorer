@@ -319,8 +319,13 @@ namespace DCL.Communities.CommunitiesBrowser
             try
             {
                 bool joinedSuccess = await dataProvider.JoinCommunityAsync(communityId, ct);
-                if (joinedSuccess)
-                    view.UpdateJoinedCommunity(index);
+                view.UpdateJoinedCommunity(index, joinedSuccess);
+
+                if (!joinedSuccess)
+                {
+                    showErrorCts = showErrorCts.SafeRestart();
+                    ShowErrorNotificationAsync(JOIN_COMMUNITY_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                }
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {

@@ -196,17 +196,21 @@ namespace DCL.Communities.CommunitiesBrowser
             SetResultsAsEmpty(currentResults.Count == 0);
         }
 
-        public void UpdateJoinedCommunity(int index)
+        public void UpdateJoinedCommunity(int index, bool isSuccess)
         {
-            // Change the role and increment the members amount
-            currentResults[index].role = CommunityMemberRole.member;
-            currentResults[index].memberCount++;
-            resultLoopGrid.RefreshItemByItemIndex(index);
+            if (isSuccess)
+            {
+                // Change the role and increment the members amount
+                currentResults[index].role = CommunityMemberRole.member;
+                currentResults[index].memberCount++;
 
-            // Add the joined community to My Communities
-            currentMyCommunities.Add(currentResults[index]);
-            myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
-            SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+                // Add the joined community to My Communities
+                currentMyCommunities.Add(currentResults[index]);
+                myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
+                SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+            }
+
+            resultLoopGrid.RefreshItemByItemIndex(index);
         }
 
         private void SetSearchBarClearButtonActive(bool isActive) =>
