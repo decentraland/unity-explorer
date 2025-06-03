@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -42,6 +43,7 @@ namespace DCL.Communities.CommunitiesCard
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
+        private PlacesSectionController? placesSectionController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
@@ -87,6 +89,7 @@ namespace DCL.Communities.CommunitiesCard
 
             cameraReelGalleryController?.Dispose();
             membersListController?.Dispose();
+            placesSectionController?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -106,6 +109,8 @@ namespace DCL.Communities.CommunitiesCard
                 friendServiceProxy,
                 communitiesDataProvider,
                 inWorldWarningNotificationView);
+
+            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
@@ -157,6 +162,7 @@ namespace DCL.Communities.CommunitiesCard
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
+                    placesSectionController!.ShowPlaces(communityData, sectionCancellationTokenSource.Token);
                     break;
             }
         }
