@@ -265,7 +265,7 @@ MonoBehaviour:
   <PlacesSectionSelection>k__BackingField: {fileID: 6898860024198349991}
   <PlacesWithSignSectionSelection>k__BackingField: {fileID: 7524960366525296489}
   <CameraReelGalleryConfigs>k__BackingField:
-    CameraReelGalleryView: {fileID: 3396249771664456913}
+    PhotosView: {fileID: 3987833900840312972}
     GridLayoutFixedColumnCount: 4
     ThumbnailHeight: 201
     ThumbnailWidth: 272
@@ -843,8 +843,29 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3347680580169306179, guid: 36e03be5daa5644c58de05fe7cab0fcb, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3987833900840312972}
   m_SourcePrefab: {fileID: 100100000, guid: 36e03be5daa5644c58de05fe7cab0fcb, type: 3}
+--- !u!1 &2964399526342758766 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3347680580169306179, guid: 36e03be5daa5644c58de05fe7cab0fcb, type: 3}
+  m_PrefabInstance: {fileID: 528874344211284269}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3987833900840312972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2964399526342758766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 535343d74dc846a48e6b3284f606388d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <GalleryView>k__BackingField: {fileID: 3396249771664456913}
 --- !u!224 &3301959556277715360 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3063603132394881165, guid: 36e03be5daa5644c58de05fe7cab0fcb, type: 3}
@@ -2177,6 +2198,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4703632569581191112, guid: 701bea1a4a6854aba93b0c68f11bb4fd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9046675390165111191, guid: 701bea1a4a6854aba93b0c68f11bb4fd, type: 3}
+      propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

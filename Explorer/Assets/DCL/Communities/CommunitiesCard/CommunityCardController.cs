@@ -99,7 +99,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
 
-            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.CameraReelGalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
+            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;

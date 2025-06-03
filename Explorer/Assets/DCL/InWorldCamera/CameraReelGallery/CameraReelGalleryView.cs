@@ -41,8 +41,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void OnDisable() => Disable?.Invoke();
 
-        public void SetParentActive(bool active) => transform.parent.gameObject.SetActive(active);
-
     }
 
 }

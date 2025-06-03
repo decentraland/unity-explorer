@@ -1,7 +1,7 @@
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Friends.UI.FriendPanel.Sections;
-using DCL.InWorldCamera.CameraReelGallery;
 using DCL.UI;
 using MVC;
 using System;
@@ -25,7 +25,7 @@ namespace DCL.Communities.CommunitiesCard
         [Serializable]
         public struct CameraReelGalleryConfig
         {
-            public CameraReelGalleryView CameraReelGalleryView;
+            public PhotosView PhotosView;
             public int GridLayoutFixedColumnCount;
             public int ThumbnailHeight;
             public int ThumbnailWidth;
@@ -110,7 +110,7 @@ namespace DCL.Communities.CommunitiesCard
             PlacesSectionSelection.SetActive(section == Sections.PLACES);
             PlacesWithSignSectionSelection.SetActive(section == Sections.PLACES);
 
-            CameraReelGalleryConfigs.CameraReelGalleryView.SetParentActive(section == Sections.PHOTOS);
+            CameraReelGalleryConfigs.PhotosView.SetActive(section == Sections.PHOTOS);
             MembersListView.SetActive(section == Sections.MEMBERS);
             PlacesSectionView.SetActive(section == Sections.PLACES);
 
