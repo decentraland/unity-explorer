@@ -22,6 +22,8 @@ namespace DCL.AvatarRendering.Emotes.Load
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadOwnedEmotesSystem : LoadElementsByIntentionSystem<EmotesResolution, GetOwnedEmotesFromRealmIntention, IEmote, EmoteDTO>
     {
+        private static readonly BodyShape[] ALL_BODYSHAPES = { BodyShape.MALE, BodyShape.FEMALE };
+
         internal IURLBuilder urlBuilder = new URLBuilder();
         private readonly IEmoteStorage emoteStorage;
 
@@ -99,17 +101,21 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             bool foundGlb = false;
 
-            bool isUnisexWithSameClip = emote.IsUnisex() && emote.HasSameClipForAllGenders();
-            BodyShape[] bodyShapesToProcess = isUnisexWithSameClip ? new[] { BodyShape.MALE }
-                : new[] { BodyShape.MALE, BodyShape.FEMALE };
+            BodyShape? targetBodyShape = null;
+            if (!emote.IsUnisex())
+                targetBodyShape = BodyShape.FromStringSafe(emote.DTO.Metadata.AbstractData.representations[0].bodyShapes[0]);
 
             // The resolution of these promises will be finalized by FinalizeEmoteLoadingSystem
             foreach (var content in emote.DTO.content)
             {
                 if (content.file.EndsWith(".glb"))
                 {
-                    foreach (BodyShape bodyShape in bodyShapesToProcess)
+                    for (int i = 0; i < ALL_BODYSHAPES.Length; i++)
                     {
+                        BodyShape bodyShape = ALL_BODYSHAPES[i];
+                        if (!emote.IsUnisex() && !bodyShape.Equals(targetBodyShape!))
+                            continue;
+
                         // Skip if this bodyshape already has an asset result
                         if (emote.AssetResults[bodyShape] != null)
                             continue;
@@ -130,8 +136,12 @@ namespace DCL.AvatarRendering.Emotes.Load
                     urlBuilder.AppendDomain(URLDomain.FromString(emote.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
                     URLAddress url = urlBuilder.Build();
 
-                    foreach (BodyShape bodyShape in bodyShapesToProcess)
+                    for (int i = 0; i < ALL_BODYSHAPES.Length; i++)
                     {
+                        BodyShape bodyShape = ALL_BODYSHAPES[i];
+                        if (!emote.IsUnisex() && !bodyShape.Equals(targetBodyShape))
+                            continue;
+
                         var audioPromise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, PartitionComponent.TOP_PRIORITY);
                         World.Create(audioPromise, emote, bodyShape);
                     }
