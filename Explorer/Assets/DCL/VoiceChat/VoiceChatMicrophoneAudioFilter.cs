@@ -7,6 +7,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Utility;
+using System.Collections.Generic;
 
 namespace DCL.VoiceChat
 {
@@ -48,6 +49,13 @@ namespace DCL.VoiceChat
         private CancellationTokenSource realtimeProcessingCts;
         private bool isRealtimeThreadRunning = false;
         private volatile int currentMicrophonePosition = 0; // Thread-safe position sharing
+        
+        // Thread-safe audio data queue
+        private readonly Queue<float[]> audioDataQueue = new Queue<float[]>();
+        private readonly object queueLock = new object();
+        
+        // Logging for debugging LiveKit audio flow
+        private int audioSentCounter = 0;
 
         private void Awake()
         {
@@ -68,10 +76,68 @@ namespace DCL.VoiceChat
 
         private void Update()
         {
-            // Update microphone position from main thread for thread safety
+            // Process real-time microphone input on main thread (AudioClip.GetData requires main thread)
             if (cachedEnabled && useRealtimeProcessing && !string.IsNullOrEmpty(currentMicrophoneName))
             {
-                currentMicrophonePosition = Microphone.GetPosition(currentMicrophoneName);
+                ProcessRealtimeMicrophoneInput();
+            }
+        }
+        
+        /// <summary>
+        /// Process microphone input in real-time from main thread
+        /// This method reads audio data from microphone and queues it for background processing
+        /// </summary>
+        private void ProcessRealtimeMicrophoneInput()
+        {
+            if (microphoneClip == null)
+                return;
+                
+            currentMicrophonePosition = Microphone.GetPosition(currentMicrophoneName);
+            
+            if (currentMicrophonePosition == lastMicrophonePosition)
+                return; // No new samples available
+            
+            // Calculate how many new samples are available
+            int totalBufferSamples = microphoneClip.samples;
+            int samplesToRead;
+            
+            if (currentMicrophonePosition >= lastMicrophonePosition)
+            {
+                samplesToRead = currentMicrophonePosition - lastMicrophonePosition;
+            }
+            else
+            {
+                // Handle buffer wrap-around (circular buffer)
+                samplesToRead = (totalBufferSamples - lastMicrophonePosition) + currentMicrophonePosition;
+            }
+            
+            // Process in chunks to maintain low latency
+            while (samplesToRead > 0)
+            {
+                int chunkSize = Mathf.Min(samplesToRead, REALTIME_CHUNK_SIZE);
+                
+                // Ensure we have buffer allocated for this chunk
+                if (realtimeAudioBuffer == null || realtimeAudioBuffer.Length < chunkSize)
+                {
+                    realtimeAudioBuffer = new float[Mathf.Max(chunkSize, REALTIME_CHUNK_SIZE)];
+                }
+                
+                // Extract new audio data directly from microphone clip (main thread only)
+                microphoneClip.GetData(realtimeAudioBuffer, lastMicrophonePosition);
+                
+                // Create a copy for the background thread to avoid shared data issues
+                float[] audioChunk = new float[chunkSize];
+                Array.Copy(realtimeAudioBuffer, 0, audioChunk, 0, chunkSize);
+                
+                // Queue audio data for background processing
+                lock (queueLock)
+                {
+                    audioDataQueue.Enqueue(audioChunk);
+                }
+                
+                // Update position for next chunk
+                lastMicrophonePosition = (lastMicrophonePosition + chunkSize) % totalBufferSamples;
+                samplesToRead -= chunkSize;
             }
         }
 
@@ -95,7 +161,14 @@ namespace DCL.VoiceChat
 
             // Clear all AudioRead subscribers to prevent duplicate streams when switching microphones
             ClearAudioReadSubscribers();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "AudioFilter disabled - cleared AudioRead subscribers");
+            
+            // Clear any pending audio data in the queue
+            lock (queueLock)
+            {
+                audioDataQueue.Clear();
+            }
+            
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "AudioFilter disabled - cleared AudioRead subscribers and audio queue");
         }
 
         private void OnDestroy()
@@ -141,6 +214,7 @@ namespace DCL.VoiceChat
                 {
                     audioProcessor.ProcessAudio(monoData, cachedSampleRate);
                     audioReadEvent?.Invoke(monoData, 1, cachedSampleRate);
+                    LogAudioSentToLiveKit("OnAudioFilterRead-Processed", monoData, cachedSampleRate);
                     return;
                 }
                 catch (Exception ex)
@@ -158,6 +232,7 @@ namespace DCL.VoiceChat
 
             // Send mono audio when processing is disabled or failed
             audioReadEvent?.Invoke(monoData, 1, cachedSampleRate);
+            LogAudioSentToLiveKit("OnAudioFilterRead-Fallback", monoData, cachedSampleRate);
         }
 
         // Event is called from the Unity audio thread - LiveKit compatibility
@@ -298,7 +373,7 @@ namespace DCL.VoiceChat
 
         /// <summary>
         /// Background thread loop for truly real-time audio processing
-        /// Runs independently of Unity's main thread and audio thread timing
+        /// Processes audio data queued from the main thread
         /// </summary>
         private async UniTaskVoid RealtimeAudioProcessingLoopAsync(CancellationToken ct)
         {
@@ -312,9 +387,24 @@ namespace DCL.VoiceChat
                 {
                     try
                     {
-                        if (microphoneClip != null && !string.IsNullOrEmpty(currentMicrophoneName))
+                        // Process all queued audio chunks
+                        while (true)
                         {
-                            ProcessNewMicrophoneSamples();
+                            float[] audioChunk = null;
+                            
+                            lock (queueLock)
+                            {
+                                if (audioDataQueue.Count > 0)
+                                {
+                                    audioChunk = audioDataQueue.Dequeue();
+                                }
+                            }
+                            
+                            if (audioChunk == null)
+                                break; // No more data to process
+                                
+                            // Process the audio chunk
+                            ProcessRealtimeAudioChunk(audioChunk, audioChunk.Length);
                         }
                         
                         // Small delay to prevent excessive CPU usage while maintaining responsiveness
@@ -350,50 +440,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        /// <summary>
-        /// Process new microphone samples on background thread
-        /// </summary>
-        private void ProcessNewMicrophoneSamples()
-        {
-            if (microphoneClip == null)
-                return;
-                
-            // Use thread-safe position updated from main thread
-            int currentPosition = currentMicrophonePosition;
-            
-            if (currentPosition == lastMicrophonePosition)
-                return; // No new samples available
-            
-            // Calculate how many new samples are available
-            int totalBufferSamples = microphoneClip.samples;
-            int samplesToRead;
-            
-            if (currentPosition >= lastMicrophonePosition)
-            {
-                samplesToRead = currentPosition - lastMicrophonePosition;
-            }
-            else
-            {
-                // Handle buffer wrap-around (circular buffer)
-                samplesToRead = (totalBufferSamples - lastMicrophonePosition) + currentPosition;
-            }
-            
-            // Process in chunks to maintain low latency
-            while (samplesToRead > 0)
-            {
-                int chunkSize = Mathf.Min(samplesToRead, REALTIME_CHUNK_SIZE);
-                
-                // Extract new audio data directly from microphone clip
-                microphoneClip.GetData(realtimeAudioBuffer, lastMicrophonePosition);
-                
-                // Process only the new samples (not the entire buffer)
-                ProcessRealtimeAudioChunk(realtimeAudioBuffer, chunkSize);
-                
-                // Update position for next chunk
-                lastMicrophonePosition = (lastMicrophonePosition + chunkSize) % totalBufferSamples;
-                samplesToRead -= chunkSize;
-            }
-        }
+
         
         /// <summary>
         /// Process a chunk of real-time audio data with minimal latency
@@ -419,6 +466,7 @@ namespace DCL.VoiceChat
                 
                 // Send processed audio to LiveKit immediately
                 audioReadEvent?.Invoke(processingSamplesBuffer, 1, microphoneSampleRate);
+                LogAudioSentToLiveKit("RealtimeProcessing", processingSamplesBuffer, microphoneSampleRate, sampleCount);
             }
             catch (Exception ex)
             {
@@ -429,6 +477,66 @@ namespace DCL.VoiceChat
 #else
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Real-time audio processing error: {ex.Message}");
 #endif
+            }
+        }
+        
+        /// <summary>
+        /// Log audio data being sent to LiveKit for debugging (thread-safe)
+        /// </summary>
+        private void LogAudioSentToLiveKit(string source, float[] audioData, int sampleRate, int? explicitSampleCount = null)
+        {
+            if (audioReadEvent == null)
+            {
+                // No subscribers - audio won't actually be sent
+                // Use counter-based throttling instead of time (thread-safe)
+                if (audioSentCounter % 120 == 0) // Log every 120 attempts (roughly every 2-3 seconds)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"[{source}] No LiveKit subscribers - audio data not being sent!");
+                }
+                audioSentCounter++; // Still increment counter even when no subscribers
+                return;
+            }
+            
+            audioSentCounter++;
+            
+            // Log every 60 audio chunks (roughly every second) to avoid spam
+            if (audioSentCounter % 60 == 0)
+            {
+                int sampleCount = explicitSampleCount ?? audioData.Length;
+                
+                // Calculate simple RMS level to verify there's actual audio
+                float rms = 0f;
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    rms += audioData[i] * audioData[i];
+                }
+                rms = Mathf.Sqrt(rms / sampleCount);
+                
+                // Convert RMS to dB for more meaningful audio level
+                float dbLevel = rms > 0f ? 20f * Mathf.Log10(rms) : -100f;
+                
+                ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                    $"[{source}] Sent audio to LiveKit - Samples: {sampleCount}, SampleRate: {sampleRate}Hz, " +
+                    $"RMS Level: {rms:F4} ({dbLevel:F1} dB), Subscribers: {GetSubscriberCount()}, Counter: {audioSentCounter}");
+            }
+        }
+        
+        /// <summary>
+        /// Get the number of LiveKit audio subscribers for debugging
+        /// </summary>
+        private int GetSubscriberCount()
+        {
+            if (audioReadEvent == null) return 0;
+            
+            // Use reflection to get invocation list length (safer than direct access)
+            try
+            {
+                var invocationList = audioReadEvent.GetInvocationList();
+                return invocationList?.Length ?? 0;
+            }
+            catch
+            {
+                return -1; // Unknown
             }
         }
     }
