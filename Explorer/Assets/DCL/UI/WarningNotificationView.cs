@@ -42,5 +42,14 @@ namespace DCL.UI
             CanvasGroup.interactable = false;
             CanvasGroup.blocksRaycasts = false;
         }
+
+        public async UniTask AnimatedShow(string text, int showDurationMs, CancellationToken ct = default)
+        {
+            SetText(text);
+            Show(ct);
+            await UniTask.Delay(showDurationMs, cancellationToken: ct);
+            Hide(ct: ct);
+        }
+
     }
 }

@@ -5,6 +5,7 @@ using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.Requests;
 using DCL.Passport;
+using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Utilities;
@@ -27,6 +28,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
         private const int PAGE_SIZE = 20;
+        private const string UNBAN_USER_ERROR_TEXT = "There was an error unbanning the user. Please try again.";
+        private const string REMOVE_MODERATOR_ERROR_TEXT = "There was an error removing moderator from user. Please try again.";
+        private const string ADD_MODERATOR_ERROR_TEXT = "There was an error adding moderator to user. Please try again.";
+        private const string KICK_USER_ERROR_TEXT = "There was an error kicking the user. Please try again.";
+        private const string BAN_USER_ERROR_TEXT = "There was an error banning the user. Please try again.";
+        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to kick '{0}' from {1}?";
         private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban '{0}' from {1}?";
@@ -41,6 +48,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly GenericContextMenuElement removeModeratorContextMenuElement;
@@ -70,13 +78,15 @@ namespace DCL.Communities.CommunitiesCard.Members
             ViewDependencies viewDependencies,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider)
+            ICommunitiesDataProvider communitiesDataProvider,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.view = view;
             this.confirmationDialogView = confirmationDialogView;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
@@ -160,8 +170,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid BanUserAsync(CancellationToken token)
             {
-                try
-                {
+
                     ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
                         new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityData?.name),
                             BAN_MEMBER_CANCEL_TEXT,
@@ -172,25 +181,25 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                     if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
-                    bool result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, communityData?.id, token);
+                    Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, communityData?.id, token)
+                                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                    if (result)
+                    if (!result.Success || !result.Value)
                     {
-                        allMembersFetchData.members.Remove(profile);
-
-                        List<MemberData> memberList = bannedMembersFetchData.members;
-                        profile.role = CommunityMemberRole.none;
-                        memberList.Add(profile);
-
-                        MembersSorter.SortMembersList(memberList);
-
-                        view.RefreshGrid();
+                        await inWorldWarningNotificationView.AnimatedShow(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                        return;
                     }
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
-                }
+
+                    allMembersFetchData.members.Remove(profile);
+
+                    List<MemberData> memberList = bannedMembersFetchData.members;
+                    profile.role = CommunityMemberRole.none;
+                    memberList.Add(profile);
+
+                    MembersSorter.SortMembersList(memberList);
+
+                    view.RefreshGrid();
+
             }
         }
 
@@ -202,30 +211,28 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid KickUserAsync(CancellationToken token)
             {
-                try
+
+                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                    new ConfirmationDialogView.DialogData(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityData?.name),
+                        KICK_MEMBER_CANCEL_TEXT,
+                        KICK_MEMBER_CONFIRM_TEXT,
+                        view.KickSprite,
+                        false, false),
+                    cancellationToken);
+
+                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
+                Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, communityData?.id, token)
+                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success || !result.Value)
                 {
-                    ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                        new ConfirmationDialogView.DialogData(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityData?.name),
-                            KICK_MEMBER_CANCEL_TEXT,
-                            KICK_MEMBER_CONFIRM_TEXT,
-                            view.KickSprite,
-                            false, false),
-                        cancellationToken);
-
-                    if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
-
-                    bool result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, communityData?.id, token);
-
-                    if (result)
-                    {
-                        allMembersFetchData.members.Remove(profile);
-                        view.RefreshGrid();
-                    }
+                    await inWorldWarningNotificationView.AnimatedShow(KICK_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    return;
                 }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
-                }
+
+                allMembersFetchData.members.Remove(profile);
+                view.RefreshGrid();
             }
         }
 
@@ -237,30 +244,27 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid AddModeratorAsync(CancellationToken token)
             {
-                try
-                {
-                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.moderator, token);
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.moderator, token)
+                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                    if (result)
+                if (!result.Success || !result.Value)
+                {
+                    await inWorldWarningNotificationView.AnimatedShow(ADD_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    return;
+                }
+
+                List<MemberData> memberList = allMembersFetchData.members;
+
+                foreach (MemberData member in memberList)
+                    if (member.id.Equals(profile.id))
                     {
-                        List<MemberData> memberList = allMembersFetchData.members;
-
-                        foreach (MemberData member in memberList)
-                            if (member.id.Equals(profile.id))
-                            {
-                                member.role = CommunityMemberRole.moderator;
-                                break;
-                            }
-
-                        MembersSorter.SortMembersList(memberList);
-
-                        view.RefreshGrid();
+                        member.role = CommunityMemberRole.moderator;
+                        break;
                     }
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
-                }
+
+                MembersSorter.SortMembersList(memberList);
+
+                view.RefreshGrid();
             }
         }
 
@@ -272,29 +276,27 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid RemoveModeratorAsync(CancellationToken token)
             {
-                try
-                {
-                    bool result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.member, token);
 
-                    if (result)
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.member, token)
+                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success || !result.Value)
+                {
+                    await inWorldWarningNotificationView.AnimatedShow(REMOVE_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    return;
+                }
+
+                List<MemberData> memberList = allMembersFetchData.members;
+                foreach (MemberData member in memberList)
+                    if (member.id.Equals(profile.id))
                     {
-                        List<MemberData> memberList = allMembersFetchData.members;
-                        foreach (MemberData member in memberList)
-                            if (member.id.Equals(profile.id))
-                            {
-                                member.role = CommunityMemberRole.member;
-                                break;
-                            }
-
-                        MembersSorter.SortMembersList(memberList);
-
-                        view.RefreshGrid();
+                        member.role = CommunityMemberRole.member;
+                        break;
                     }
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
-                }
+
+                MembersSorter.SortMembersList(memberList);
+
+                view.RefreshGrid();
             }
         }
 
@@ -471,20 +473,19 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid UnbanUserAsync(CancellationToken ct)
             {
-                try
-                {
-                    bool result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, communityData?.id, ct);
 
-                    if (result)
-                    {
-                        bannedMembersFetchData.members.Remove(profile);
-                        view.RefreshGrid();
-                    }
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
+                Result<bool> result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, communityData?.id, ct)
+                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success || !result.Value)
                 {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
+                    await inWorldWarningNotificationView.AnimatedShow(UNBAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return;
                 }
+
+                bannedMembersFetchData.members.Remove(profile);
+                view.RefreshGrid();
+
             }
         }
     }

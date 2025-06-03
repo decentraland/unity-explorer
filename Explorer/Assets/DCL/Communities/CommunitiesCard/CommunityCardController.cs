@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -7,6 +8,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -14,6 +16,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Communities.CommunitiesCard
 {
@@ -24,6 +27,9 @@ namespace DCL.Communities.CommunitiesCard
         private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
         private const string LEAVE_COMMUNITY_CONFIRM_TEXT = "YES";
         private const string LEAVE_COMMUNITY_CANCEL_TEXT = "NO";
+        private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
+        private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
+        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -34,6 +40,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -51,7 +58,8 @@ namespace DCL.Communities.CommunitiesCard
             ViewDependencies viewDependencies,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            WarningNotificationView inWorldWarningNotificationView)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -61,6 +69,7 @@ namespace DCL.Communities.CommunitiesCard
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
         }
 
         public override void Dispose()
@@ -99,7 +108,8 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.ConfirmationDialogView,
                 viewDependencies,mvcManager,
                 friendServiceProxy,
-                communitiesDataProvider);
+                communitiesDataProvider,
+                inWorldWarningNotificationView);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
@@ -175,10 +185,16 @@ namespace DCL.Communities.CommunitiesCard
 
             async UniTaskVoid JoinCommunityAsync(CancellationToken ct)
             {
-                bool result = await communitiesDataProvider.JoinCommunityAsync(communityData.id, ct);
+                Result<bool> result = await communitiesDataProvider.JoinCommunityAsync(communityData.id, ct)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (result)
-                    viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.member);
+                if (!result.Success || !result.Value)
+                {
+                    await inWorldWarningNotificationView.AnimatedShow(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return;
+                }
+
+                viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.member);
             }
         }
 
@@ -200,10 +216,16 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
-                bool result = await communitiesDataProvider.LeaveCommunityAsync(communityData.id, ct);
+                Result<bool> result = await communitiesDataProvider.LeaveCommunityAsync(communityData.id, ct)
+                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (result)
-                    viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
+                if (!result.Success || !result.Value)
+                {
+                    await inWorldWarningNotificationView.AnimatedShow(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return;
+                }
+
+                viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
             }
         }
 

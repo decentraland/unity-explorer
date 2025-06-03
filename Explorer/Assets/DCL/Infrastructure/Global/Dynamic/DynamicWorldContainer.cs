@@ -953,7 +953,8 @@ namespace Global.Dynamic
                     viewDependencies,
                     friendServiceProxy,
                     communitiesDataProvider,
-                    staticContainer.WebRequestsContainer.WebRequestController));
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    mainUIView.WarningNotification));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
