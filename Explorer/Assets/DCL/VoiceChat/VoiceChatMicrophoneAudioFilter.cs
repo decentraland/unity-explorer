@@ -241,10 +241,12 @@ namespace DCL.VoiceChat
             add
             {
                 audioReadEvent += value;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber added - Total subscribers: {GetSubscriberCount()}");
             }
             remove
             {
                 audioReadEvent -= value;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber removed - Total subscribers: {GetSubscriberCount()}");
             }
         }
 
@@ -252,7 +254,9 @@ namespace DCL.VoiceChat
 
         private void ClearAudioReadSubscribers()
         {
+            int subscriberCountBefore = GetSubscriberCount();
             audioReadEvent = null;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Cleared all AudioRead subscribers - Was: {subscriberCountBefore}, Now: 0");
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
@@ -273,6 +277,16 @@ namespace DCL.VoiceChat
         {
             voiceChatConfiguration = configuration;
             audioProcessor = new VoiceChatAudioProcessor(configuration);
+        }
+
+        /// <summary>
+        /// Enable or disable audio processing without clearing LiveKit subscribers.
+        /// Use this for muting/unmuting instead of disabling the component.
+        /// </summary>
+        public void SetProcessingEnabled(bool enabled)
+        {
+            cachedEnabled = enabled;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Audio filter processing {(enabled ? "enabled" : "disabled")} - LiveKit subscribers preserved");
         }
 
                 public void SetMicrophoneInfo(string microphoneName, int sampleRate, int bufferLengthSeconds)
