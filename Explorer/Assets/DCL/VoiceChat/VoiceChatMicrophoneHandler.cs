@@ -337,46 +337,32 @@ namespace DCL.VoiceChat
 
             audioSource.Play();
 
-            // Create LiveKit RtcAudioSource optimized for voice chat (mono, 1 channel)
-            int newSampleRate = microphoneAudioClip.frequency;
-            bool needsReconfiguration = rtcAudioSource != null && currentMicrophoneSampleRate != newSampleRate;
-
-            try
+            if (rtcAudioSource == null)
             {
-                if (needsReconfiguration)
+                int newSampleRate = microphoneAudioClip.frequency;
+                
+                try
                 {
-                    // Sample rate changed - reconfigure existing RtcAudioSource
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Sample rate changed from {currentMicrophoneSampleRate}Hz to {newSampleRate}Hz - reconfiguring RtcAudioSource");
-                    rtcAudioSource.Reconfigure(audioSource, audioFilter, forceChannels: 1, forceSampleRate: (uint)newSampleRate);
-                    currentMicrophoneSampleRate = newSampleRate;
-
-                    // Notify RoomHandler about the reconfiguration
-                    RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "LiveKit RtcAudioSource reconfigured successfully for new sample rate");
-                }
-                else if (rtcAudioSource == null)
-                {
-                    // Create new RtcAudioSource
                     rtcAudioSource = RtcAudioSource.CreateForVoiceChat(audioSource, audioFilter, (uint)newSampleRate);
                     currentMicrophoneSampleRate = newSampleRate;
 
-                    // Start RtcAudioSource immediately after creation (not for pausing/unpausing)
-                    rtcAudioSource.Start();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {newSampleRate}Hz");
+                                         rtcAudioSource.Start();
+                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {newSampleRate}Hz");
+                     
+                     // Signal ready after RtcAudioSource is fully initialized
+                     MicrophoneReady?.Invoke();
+                }
+                catch (System.Exception ex)
+                {
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to create LiveKit RtcAudioSource: {ex.Message}");
+                    return;
                 }
             }
-            catch (System.Exception ex)
-            {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to create/reconfigure LiveKit RtcAudioSource: {ex.Message}");
-                return;
-            }
 
-            audioFilter.enabled = false;
+                        audioFilter.enabled = false;
 
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
-
-            MicrophoneReady?.Invoke();
         }
 
         private void EnableMicrophone()
@@ -420,20 +406,9 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                // Stop and dispose LiveKit audio source for microphone change
-                if (rtcAudioSource != null)
-                {
-                    rtcAudioSource.Stop();
-                    rtcAudioSource.Dispose();
-                    rtcAudioSource = null;
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Stopped and disposed RtcAudioSource for microphone change");
-                }
-
-                // Clear all audio stream subscribers to prevent duplicate streams
                 audioFilter.ResetProcessor();
                 audioFilter.enabled = false;
 
-                // Then stop and clean up the audio source
                 audioSource.Stop();
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
@@ -443,8 +418,34 @@ namespace DCL.VoiceChat
             // Always reinitialize microphone so it's ready when needed
             InitializeMicrophone();
 
-            // RtcAudioSource reconfiguration is handled in InitializeMicrophone()
-            // based on sample rate changes - no additional handling needed here
+            // If we have an existing RtcAudioSource, reconfigure it with the new microphone
+            if (rtcAudioSource != null && isMicrophoneInitialized && microphoneAudioClip != null)
+            {
+                try
+                {
+                    int newSampleRate = microphoneAudioClip.frequency;
+                    rtcAudioSource.Reconfigure(audioSource, audioFilter, forceChannels: 1, forceSampleRate: (uint)newSampleRate);
+                    currentMicrophoneSampleRate = newSampleRate;
+                    
+                                         // Notify RoomHandler about the reconfiguration
+                     RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
+                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource reconfigured for new microphone '{MicrophoneName}' at {newSampleRate}Hz");
+                     
+                     // Signal ready after RtcAudioSource is fully reconfigured
+                     MicrophoneReady?.Invoke();
+                }
+                catch (System.Exception ex)
+                {
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to reconfigure RtcAudioSource for new microphone: {ex.Message}");
+                                         // Fall back to creating a new one
+                     rtcAudioSource?.Stop();
+                     rtcAudioSource?.Dispose();
+                     rtcAudioSource = null;
+                     
+                     // InitializeMicrophone will create a new RtcAudioSource and signal ready
+                     InitializeMicrophone();
+                }
+            }
 
             // Restore previous talking state if in call
             if (isInCall && wasTalking)
