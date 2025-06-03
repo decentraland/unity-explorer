@@ -9,7 +9,7 @@ namespace DCL.Utilities.Extensions
     public static class UniTaskExtensions
     {
         /// <summary>
-        ///     Suppresses all exceptions, reports them and converts them to <see cref="Result" />
+        ///     Suppresses all exceptions, reports them (doesn't report <see cref="OperationCanceledException"/>) and converts them to <see cref="Result" />
         /// </summary>
         public static async UniTask<EnumResult<TaskError>> SuppressToResultAsync(this UniTask coreOp, ReportData? reportData = null, Func<Exception, EnumResult<TaskError>>? exceptionToResult = null)
         {
