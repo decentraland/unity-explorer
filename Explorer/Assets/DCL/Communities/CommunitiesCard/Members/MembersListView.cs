@@ -96,10 +96,10 @@ namespace DCL.Communities.CommunitiesCard.Members
         internal void ShowBanConfirmationDialog(MemberData profile, string communityName)
         {
             confirmationDialogCts = confirmationDialogCts.SafeRestart();
-            ShowKickConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            ShowBanConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
             return;
 
-            async UniTaskVoid ShowKickConfirmationDialogAsync(CancellationToken ct)
+            async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
                 ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
                     new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
