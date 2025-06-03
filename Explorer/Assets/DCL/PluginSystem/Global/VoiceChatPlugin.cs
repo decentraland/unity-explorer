@@ -55,9 +55,6 @@ namespace DCL.PluginSystem.Global
                 return;
             }
 
-            // Clean up event subscription
-            voiceChatHandler.MicrophoneReady -= livekitRoomHandler.OnMicrophoneReady;
-
             voiceChatHandler.Dispose();
             livekitRoomHandler.Dispose();
 
@@ -89,12 +86,9 @@ namespace DCL.PluginSystem.Global
             microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
             audioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub);
-
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
 
-            // Connect microphone ready event to LiveKit room handler for deferred track publishing
-            voiceChatHandler.MicrophoneReady += livekitRoomHandler.OnMicrophoneReady;
+            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatHandler);
 
             controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
         }
