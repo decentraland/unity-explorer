@@ -83,9 +83,14 @@ namespace DCL.VoiceChat
             RtcAudioSourceReconfigured = null;
 
             // Stop and dispose LiveKit audio source
-            rtcAudioSource?.Stop();
-            rtcAudioSource?.Dispose();
-            rtcAudioSource = null;
+            if (rtcAudioSource != null)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Disposing RtcAudioSource - Current subscribers: {GetAudioFilterSubscriberCount()}");
+                rtcAudioSource.Stop();
+                rtcAudioSource.Dispose();
+                rtcAudioSource = null;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource disposed - Remaining subscribers: {GetAudioFilterSubscriberCount()}");
+            }
 
             if (isMicrophoneInitialized)
             {
@@ -99,9 +104,7 @@ namespace DCL.VoiceChat
 
                 if (audioFilter != null)
                 {
-                    // Reset processor - RtcAudioSource.Stop() above already unsubscribed
                     audioFilter.ResetProcessor();
-                    // Note: Don't disable the component - let Unity manage component lifecycle
                 }
             }
         }
@@ -355,11 +358,12 @@ namespace DCL.VoiceChat
                 
                 try
                 {
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Creating new RtcAudioSource - Current AudioFilter subscribers: {GetAudioFilterSubscriberCount()}");
                     rtcAudioSource = RtcAudioSource.CreateForVoiceChat(audioSource, audioFilter, (uint)newSampleRate);
                     currentMicrophoneSampleRate = newSampleRate;
 
                     rtcAudioSource.Start();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {newSampleRate}Hz");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {newSampleRate}Hz - Subscribers: {GetAudioFilterSubscriberCount()}");
                      
                     // Signal ready after RtcAudioSource is fully initialized
                     MicrophoneReady?.Invoke();
@@ -376,8 +380,9 @@ namespace DCL.VoiceChat
                 // This handles cases where subscribers were cleared but RtcAudioSource already exists
                 try
                 {
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Restarting existing RtcAudioSource - Current AudioFilter subscribers: {GetAudioFilterSubscriberCount()}");
                     rtcAudioSource.Start();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Existing RtcAudioSource restarted after microphone reinitialization");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Existing RtcAudioSource restarted after microphone reinitialization - Subscribers: {GetAudioFilterSubscriberCount()}");
                 }
                 catch (System.Exception ex)
                 {
@@ -432,11 +437,12 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                // Stop RtcAudioSource first - this will automatically unsubscribe from AudioFilter
-                rtcAudioSource?.Stop();
+                // Don't stop RtcAudioSource during microphone change - let Reconfigure() handle the transition
+                // Stopping would cancel background processing and set _isRunning = false unnecessarily
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone change - Current subscribers: {GetAudioFilterSubscriberCount()}");
                 
-                audioFilter.ResetProcessor();  // Reset processor only, don't manually clear subscribers
-                audioFilter.SetProcessingEnabled(false);  // Disable processing
+                audioFilter.ResetProcessor();  // Reset processor state
+                audioFilter.SetProcessingEnabled(false);  // Disable processing temporarily
 
                 audioSource.Stop();
                 audioSource.clip = null;
@@ -485,6 +491,11 @@ namespace DCL.VoiceChat
             {
                 EnableMicrophone();
             }
+        }
+
+        private int GetAudioFilterSubscriberCount()
+        {
+            return audioFilter?.GetSubscriberCount() ?? 0;
         }
     }
 }

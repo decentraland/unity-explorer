@@ -244,6 +244,12 @@ namespace DCL.VoiceChat
             {
                 audioReadEvent -= value;
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber removed - Total subscribers: {GetSubscriberCount()}");
+                
+                // Log stack trace when subscriber count drops to 0 to help debug unexpected unsubscriptions
+                if (GetSubscriberCount() == 0)
+                {
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"All AudioRead subscribers removed - Stack trace: {System.Environment.StackTrace}");
+                }
             }
         }
 
@@ -310,8 +316,6 @@ namespace DCL.VoiceChat
         {
             audioProcessor?.Reset();
             
-            // Don't clear AudioRead subscribers here - they should persist across processor resets
-            // RtcAudioSource.Stop() will handle unsubscription when the RTC source is stopped
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Audio processor reset - LiveKit subscribers preserved");
         }
 
@@ -494,7 +498,7 @@ namespace DCL.VoiceChat
         /// <summary>
         /// Get the number of LiveKit audio subscribers for debugging
         /// </summary>
-        private int GetSubscriberCount()
+        public int GetSubscriberCount()
         {
             if (audioReadEvent == null) return 0;
 
