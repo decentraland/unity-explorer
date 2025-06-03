@@ -98,7 +98,11 @@ namespace DCL.VoiceChat
                 Microphone.End(MicrophoneName);
 
                 if (audioFilter != null)
-                    audioFilter.enabled = false;
+                {
+                    // Reset processor - RtcAudioSource.Stop() above already unsubscribed
+                    audioFilter.ResetProcessor();
+                    // Note: Don't disable the component - let Unity manage component lifecycle
+                }
             }
         }
 
@@ -266,8 +270,10 @@ namespace DCL.VoiceChat
                 }
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started on macOS with sample rate: {microphoneSampleRate}Hz (device optimal)");
 
-                // Pass microphone info to audio filter for latency optimization
-                audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneSampleRate, MICROPHONE_LENGTH_SECONDS);
+                // Always use the actual microphone frequency for audio filter processing
+                // This ensures the audio filter uses the correct sample rate regardless of any Unity adjustments
+                int actualMicrophoneFrequency = microphoneAudioClip != null ? microphoneAudioClip.frequency : microphoneSampleRate;
+                audioFilter.SetMicrophoneInfo(MicrophoneName, actualMicrophoneFrequency, MICROPHONE_LENGTH_SECONDS);
                 audioFilter.SetMicrophoneClip(microphoneAudioClip);
             }
             catch (System.Exception ex)
@@ -305,10 +311,6 @@ namespace DCL.VoiceChat
             microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started with sample rate: {microphoneSampleRate}Hz (device optimal)");
 
-            // Pass microphone info to audio filter for latency optimization
-            audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneSampleRate, MICROPHONE_LENGTH_SECONDS);
-            audioFilter.SetMicrophoneClip(microphoneAudioClip);
-
             // Verify the actual recording sample rate matches what we requested
             if (microphoneAudioClip != null)
             {
@@ -320,8 +322,19 @@ namespace DCL.VoiceChat
                 {
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
                         $"Sample rate mismatch! Requested: {microphoneSampleRate}Hz, Microphone actual: {microphoneAudioClip.frequency}Hz. " +
-                        $"This may cause audio quality issues.");
+                        $"Using actual microphone frequency for audio processing.");
                 }
+
+                // Always use the actual microphone frequency for audio filter processing
+                // This ensures the audio filter uses the correct sample rate regardless of any Unity adjustments
+                audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneAudioClip.frequency, MICROPHONE_LENGTH_SECONDS);
+                audioFilter.SetMicrophoneClip(microphoneAudioClip);
+            }
+            else
+            {
+                // Fallback to requested rate if clip creation failed
+                audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneSampleRate, MICROPHONE_LENGTH_SECONDS);
+                audioFilter.SetMicrophoneClip(microphoneAudioClip);
             }
 #endif
 
@@ -357,6 +370,20 @@ namespace DCL.VoiceChat
                     return;
                 }
             }
+            else
+            {
+                // Existing RtcAudioSource - ensure it's started after microphone reinitialization
+                // This handles cases where subscribers were cleared but RtcAudioSource already exists
+                try
+                {
+                    rtcAudioSource.Start();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Existing RtcAudioSource restarted after microphone reinitialization");
+                }
+                catch (System.Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to restart existing RtcAudioSource: {ex.Message}");
+                }
+            }
 
             // Set initial audio filter processing state based on current talking status
             // If we're in a call and talking, enable processing; otherwise disable it while preserving LiveKit connection
@@ -369,7 +396,6 @@ namespace DCL.VoiceChat
         private void EnableMicrophone()
         {
             // Use mute/enable for temporary microphone control during calls
-            // RtcAudioSource.Start() is only for initialization, not pausing
             audioSource.mute = false;  // Allow audio processing - mute state controls local playback
             audioFilter.SetProcessingEnabled(true);  // Enable processing while preserving LiveKit subscribers
             EnabledMicrophone?.Invoke();
@@ -378,7 +404,6 @@ namespace DCL.VoiceChat
         private void DisableMicrophone()
         {
             // Use mute/disable for temporary microphone control during calls
-            // RtcAudioSource.Stop() is only for cleanup, not pausing
             audioSource.mute = true;
             audioFilter.SetProcessingEnabled(false);  // Disable processing while preserving LiveKit subscribers
             DisabledMicrophone?.Invoke();
@@ -407,8 +432,11 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                audioFilter.ResetProcessor();  // This will clear subscribers when switching microphones
-                audioFilter.SetProcessingEnabled(false);  // Disable processing but don't clear subscribers again
+                // Stop RtcAudioSource first - this will automatically unsubscribe from AudioFilter
+                rtcAudioSource?.Stop();
+                
+                audioFilter.ResetProcessor();  // Reset processor only, don't manually clear subscribers
+                audioFilter.SetProcessingEnabled(false);  // Disable processing
 
                 audioSource.Stop();
                 audioSource.clip = null;
@@ -430,12 +458,11 @@ namespace DCL.VoiceChat
                     rtcAudioSource.Reconfigure(audioSource, audioFilter, forceChannels: 1, forceSampleRate: (uint)newSampleRate);
                     currentMicrophoneSampleRate = newSampleRate;
                     
-                    // IMPORTANT: Start() re-subscribes to the audio filter's AudioRead event after ResetProcessor() cleared it
-                    rtcAudioSource.Start();
+                    // Note: Start() was already called in InitializeMicrophone() above
                     
                     // Notify RoomHandler about the reconfiguration
                     RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource reconfigured and restarted for new microphone '{MicrophoneName}' at {newSampleRate}Hz");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource reconfigured for new microphone '{MicrophoneName}' at {newSampleRate}Hz");
                      
                     // Signal ready after RtcAudioSource is fully reconfigured
                     MicrophoneReady?.Invoke();
