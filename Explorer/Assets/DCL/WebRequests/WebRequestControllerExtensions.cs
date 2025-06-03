@@ -93,8 +93,9 @@ namespace DCL.WebRequests
             CommonArguments commonArguments,
             ReportData reportCategory,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) =>
-            controller.Create<GenericHeadRequest, GenericHeadArguments>(new GenericHeadArguments(), commonArguments, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null,
+            bool suppressErrors = false) =>
+            controller.Create<GenericHeadRequest, GenericHeadArguments>(new GenericHeadArguments(), commonArguments, reportCategory, headersInfo, signInfo, suppressErrors);
 
         public static PartialDownloadRequest GetPartialAsync(
             this IWebRequestController controller,
@@ -108,7 +109,7 @@ namespace DCL.WebRequests
         {
             try
             {
-                await controller.HeadAsync(url, reportData).SendAndForgetAsync(ct);
+                await controller.HeadAsync(new CommonArguments(url, 1), reportData, suppressErrors: true).SendAndForgetAsync(ct);
                 return Result.SuccessResult();
             }
             catch (WebRequestException e)
@@ -145,6 +146,8 @@ namespace DCL.WebRequests
                 webRequest.OnDownloadStarted += _ =>
                 {
                     downloadStarted = true;
+
+                    // TODO Abort is not supported by HttpClient
                     webRequest.Abort();
                 };
             }

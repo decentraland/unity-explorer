@@ -39,7 +39,7 @@ namespace DCL.WebRequests
             {
                 switch (mode)
                 {
-                    // Doesn't support files => use UnityWebRequest
+                    // Yet Another doesn't support files => use UnityWebRequest
                     case WebRequestsMode.YET_ANOTHER when !requestWrap.Envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase):
                         return yetAnotherWebRequestController.SendAsync(requestWrap, detachDownloadHandler, ct);
                     case WebRequestsMode.HTTP2:
@@ -48,6 +48,13 @@ namespace DCL.WebRequests
             }
 
             return unityWebRequestController.SendAsync(requestWrap, detachDownloadHandler, ct);
+        }
+
+        public void Dispose()
+        {
+            unityWebRequestController.Dispose();
+            http2WebRequestController.Dispose();
+            yetAnotherWebRequestController.Dispose();
         }
     }
 }

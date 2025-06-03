@@ -24,13 +24,13 @@ namespace DCL.WebRequests
                 var stream = new MultipartFormDataContent();
 
                 foreach (IMultipartFormSection? section in Args.MultipartFormSections)
-                    stream.Add(new ReadOnlyMemoryContent(section.sectionData), section.contentType, section.fileName);
+                    stream.Add(new ByteArrayContent(section.sectionData), section.contentType, section.fileName);
 
                 request.Content = stream;
             }
             else if (Args.WWWForm != null)
             {
-                var stream = new ReadOnlyMemoryContent(Args.WWWForm.data);
+                var stream = new ByteArrayContent(Args.WWWForm.data);
 
                 foreach (KeyValuePair<string, string> formHeader in Args.WWWForm.headers)
                     stream.Headers.TryAddWithoutValidation(formHeader.Key, formHeader.Value);
@@ -39,8 +39,9 @@ namespace DCL.WebRequests
             }
             else
             {
-                var content = new ReadOnlyMemoryContent(Args.PostData == null ? Array.Empty<byte>() : Encoding.UTF8.GetBytes(Args.PostData));
+                var content = new ByteArrayContent(Args.PostData == null ? Array.Empty<byte>() : Encoding.UTF8.GetBytes(Args.PostData));
                 content.Headers.TryAddWithoutValidation(WebRequestHeaders.CONTENT_TYPE_HEADER, Args.ContentType);
+                request.Content = content;
             }
 
             return request;

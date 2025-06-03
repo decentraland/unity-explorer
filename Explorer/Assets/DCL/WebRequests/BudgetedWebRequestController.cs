@@ -43,5 +43,10 @@ namespace DCL.WebRequests
                 totalBudgetAcquired.Dispose();
             }
         }
+
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

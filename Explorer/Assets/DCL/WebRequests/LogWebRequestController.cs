@@ -34,5 +34,10 @@ namespace DCL.WebRequests
                 throw; // don't re-throw it as a new exception as we loose the original type in that case
             }
         }
+
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

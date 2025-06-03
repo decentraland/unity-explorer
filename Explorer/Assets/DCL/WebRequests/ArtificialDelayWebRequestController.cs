@@ -38,5 +38,10 @@ namespace DCL.WebRequests
         {
             UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync();
         }
+
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

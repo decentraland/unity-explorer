@@ -286,7 +286,7 @@ namespace DCL.WebRequests.HTTP2
 
                 if (!DownloadHandlersUtils.TryParseContentRange(fullSizeHeaderValueRaw, out fullSize, out chunkSize))
                 {
-                    ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"{CONTENT_RANGE_HEADER} is not in the expected format: \"int/int\"");
+                    ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"{CONTENT_RANGE_HEADER}:{fullSizeHeaderValueRaw} is not in the expected format: \"int/int\"");
                     return false;
                 }
 

@@ -29,5 +29,10 @@ namespace DCL.WebRequests
                 throw;
             }
         }
+
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

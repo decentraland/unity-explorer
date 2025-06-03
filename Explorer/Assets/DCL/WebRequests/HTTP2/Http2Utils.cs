@@ -29,7 +29,7 @@ namespace DCL.WebRequests.HTTP2
 
             if (headerValue != null && long.TryParse(headerValue, out value)) return true;
 
-            ReportHub.LogWarning(reportData, $"{header} can't be parsed to \"ulong\"");
+            ReportHub.LogWarning(reportData, $"{header}:{headerValue} can't be parsed to \"ulong\"");
             value = 0;
             return false;
         }

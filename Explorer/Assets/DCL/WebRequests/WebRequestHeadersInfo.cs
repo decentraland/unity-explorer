@@ -1,4 +1,5 @@
 ﻿using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace DCL.WebRequests
 
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
 
-        private static readonly ListObjectPool<WebRequestHeader> POOL = new (listInstanceDefaultCapacity: 4);
+        private static readonly ThreadSafeListPool<WebRequestHeader> POOL = new (4, 10);
 
         private List<WebRequestHeader>? values;
 

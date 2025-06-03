@@ -26,8 +26,14 @@ namespace DCL.WebRequests
             this.analyticsContainer = analyticsContainer;
             this.identityCache = identityCache;
             this.requestHub = requestHub;
+
             var handler = new YetAnotherHttpHandler();
             httpClient = new HttpClient(handler);
+        }
+
+        public void Dispose()
+        {
+            httpClient.Dispose();
         }
 
         public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
@@ -39,11 +45,9 @@ namespace DCL.WebRequests
 
             RequestEnvelope envelope = requestWrap.Envelope;
 
-            HttpRequestMessage nativeRequest = requestWrap.CreateYetAnotherHttpRequest();
-
             int attemptsLeft = envelope.CommonArguments.AttemptsCount;
 
-            var adapter = new YetAnotherWebRequest(nativeRequest, requestWrap);
+            YetAnotherWebRequest? adapter = null;
 
             TimeSpan delayBeforeRepeat = TimeSpan.Zero;
 
@@ -54,6 +58,8 @@ namespace DCL.WebRequests
                     if (delayBeforeRepeat != TimeSpan.Zero)
                         await UniTask.Delay(delayBeforeRepeat, cancellationToken: ct);
 
+                    HttpRequestMessage nativeRequest = requestWrap.CreateYetAnotherHttpRequest();
+                    adapter = new YetAnotherWebRequest(nativeRequest, requestWrap);
                     envelope.OnCreated?.Invoke(adapter);
 
                     envelope.InitializedWebRequest(identityCache, adapter);
@@ -62,6 +68,10 @@ namespace DCL.WebRequests
                     // TODO analytics
 
                     HttpResponseMessage? response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+
+                    // HttpClient will not throw an exception for non-success status codes, so we need to throw an exception manually
+                    if (!response.IsSuccessStatusCode)
+                        throw new HttpRequestException(response.ReasonPhrase);
 
                     Stream? stream = await response.Content.ReadAsStreamAsync();
 
@@ -74,9 +84,10 @@ namespace DCL.WebRequests
                 catch (TaskCanceledException e) when (!ct.IsCancellationRequested)
                 {
                     // Timeout
-                    adapter.IsTimedOut = true;
+                    if (adapter != null)
+                        adapter.IsTimedOut = true;
 
-                    if (adapter.response != null)
+                    if (adapter?.response != null)
                         adapter.response.Error = "The request timed out.";
 
                     throw new YetAnotherHttpWebRequestException(adapter, new TimeoutException("The request timed out.", e));
@@ -85,7 +96,7 @@ namespace DCL.WebRequests
                 {
                     attemptsLeft--;
 
-                    if (adapter.response != null)
+                    if (adapter!.response != null)
                         adapter.response.Error = exception.Message;
 
                     if (!envelope.SuppressErrors)
@@ -107,8 +118,6 @@ namespace DCL.WebRequests
 
                     if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
                         delayBeforeRepeat = TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds());
-
-                    adapter.Dispose();
 
                     // Dispose of the previous native request before repeating
                     adapter.response?.Dispose();

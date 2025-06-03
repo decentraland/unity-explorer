@@ -7,11 +7,12 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using Global.Dynamic.LaunchModes;
+using System;
 using System.Threading;
 
 namespace DCL.WebRequests
 {
-    public interface IWebRequestController
+    public interface IWebRequestController : IDisposable
     {
         static readonly IWebRequestController UNITY = new DefaultWebRequestController(
             IWebRequestsAnalyticsContainer.DEFAULT,

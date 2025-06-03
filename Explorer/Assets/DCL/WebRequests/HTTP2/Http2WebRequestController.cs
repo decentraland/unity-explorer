@@ -146,5 +146,10 @@ namespace DCL.WebRequests.HTTP2
                 }
             }
         }
+
+        public void Dispose()
+        {
+            // TODO release managed resources here
+        }
     }
 }

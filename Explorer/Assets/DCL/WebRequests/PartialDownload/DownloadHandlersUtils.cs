@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading;
 
 namespace DCL.WebRequests
 {
@@ -7,15 +8,16 @@ namespace DCL.WebRequests
     {
         private const string BYTES_HEADER = "bytes=";
         private const string BYTES_HEADER_SEPARATOR = "-";
-        private static readonly StringBuilder STRING_BUILDER = new ();
+
+        private static readonly ThreadLocal<StringBuilder> STRING_BUILDER = new (() => new StringBuilder());
 
         public static string GetContentRangeHeaderValue(long start, long end)
         {
-            STRING_BUILDER.Clear();
-            STRING_BUILDER.Append(BYTES_HEADER);
-            STRING_BUILDER.Append(start);
-            STRING_BUILDER.Append(BYTES_HEADER_SEPARATOR);
-            STRING_BUILDER.Append(end);
+            STRING_BUILDER.Value.Clear();
+            STRING_BUILDER.Value.Append(BYTES_HEADER);
+            STRING_BUILDER.Value.Append(start);
+            STRING_BUILDER.Value.Append(BYTES_HEADER_SEPARATOR);
+            STRING_BUILDER.Value.Append(end);
             return STRING_BUILDER.ToString();
         }
 

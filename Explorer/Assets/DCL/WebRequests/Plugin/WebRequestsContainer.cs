@@ -58,7 +58,7 @@ namespace DCL.WebRequests
 
         public WebRequestsMode WebRequestsMode { get; private set; }
 
-        public bool EnablePartialDownloading => WebRequestsMode == WebRequestsMode.HTTP2 && settings.Http2Settings.EnablePartialDownloading;
+        public bool EnablePartialDownloading => WebRequestsMode != WebRequestsMode.UNITY && settings.Http2Settings.EnablePartialDownloading;
 
         public IWebRequestController WebRequestController { get; private set; } = null!;
 
@@ -118,8 +118,7 @@ namespace DCL.WebRequests
             // Set Threading Mode initialize the cache itself so we must do it after our cache initialization, otherwise there will be a sharing violation exception
             HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
 
-            // TODO split Unity WR and HTTP2 budgets
-            if (container.WebRequestsMode == WebRequestsMode.HTTP2)
+            if (container.WebRequestsMode != WebRequestsMode.UNITY)
             {
                 coreBudget = container.settings.Http2Settings.CoreWebRequestsBudget;
                 sceneBudget = container.settings.Http2Settings.SceneWebRequestsBudget;
@@ -281,6 +280,10 @@ namespace DCL.WebRequests
 
             if (dump)
                 dump.Serialize();
+
+            WebRequestController.Dispose();
+            SceneWebRequestController.Dispose();
+            HTTPManager.LocalCache?.Dispose();
         }
     }
 }

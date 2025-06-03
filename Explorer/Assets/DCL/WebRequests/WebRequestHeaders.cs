@@ -1,4 +1,5 @@
 ﻿using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -18,10 +19,10 @@ namespace DCL.WebRequests
         internal const string BYTES_RANGE_HEADER = "bytes";
         internal const string RANGE_HEADER = "Range";
 
-        private static readonly DictionaryObjectPool<string, List<string>> HEADERS_POOL
-            = new (dictionaryInstanceDefaultCapacity: 10, defaultCapacity: 12, equalityComparer: StringComparer.OrdinalIgnoreCase);
+        private static readonly ThreadSafeDictionaryPool<string, List<string>> HEADERS_POOL
+            = new (10, 12, equalityComparer: StringComparer.OrdinalIgnoreCase);
 
-        private static readonly ListObjectPool<string> HEADER_VALUES_POOL = new (defaultCapacity: 1);
+        private static readonly ThreadSafeListPool<string> HEADER_VALUES_POOL = new (1, 12);
 
         private readonly bool pooled;
 

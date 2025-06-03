@@ -30,7 +30,7 @@ namespace DCL.WebRequests
 
         private volatile HTTPRequest? request;
         private volatile Dictionary<string, List<string>>? storedHeaders;
-        private volatile Http2PartialDownloadDataStream? partialStream;
+        private Http2PartialDownloadDataStream? partialStream;
 
         private CancellationTokenSource? partialFlowCts;
 
@@ -136,9 +136,10 @@ namespace DCL.WebRequests
 
             HttpRequestMessage nativeRequest = createdRequest.request;
             YetAnotherWebResponse nativeResponse = createdRequest.response!;
+
             var headers = new WebRequestHeaders(nativeResponse.response);
 
-            Http2PartialDownloadDataStream result;
+            Http2PartialDownloadDataStream? result;
 
             try
             {
@@ -149,8 +150,13 @@ namespace DCL.WebRequests
                 // If at any stage headers are not correct discard the partial stream and the cached result, as the server does not support any headers
                 if (!Http2PartialDownloadDataStream.TryInitializeFromHeaders(cache, uri, method, statusCode, null, headers, ref partialStream, out long expectedChunkLength))
                 {
-                    partialStream?.DiscardAndDispose();
-                    partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource(uri);
+                    if (partialStream == null && nativeResponse.response.Content.Headers.ContentRange == null) // We can continue only if it's not a partial request
+                        partialStream = Http2PartialDownloadDataStream.InitializeFromUnknownSource(uri);
+                    else
+                    {
+                        throw CreateException($"Failed to initialize {nameof(Http2PartialDownloadDataStream)} from headers for {uri}\n"
+                                              + $"Expected Range: {chunkStart}-{chunkEnd}");
+                    }
                 }
 
                 long startPartialLength = partialStream!.partialContentLength;
@@ -187,14 +193,11 @@ namespace DCL.WebRequests
                     partialStream.ForceFinalize();
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // Dispose it here as well to break ContentReceiveLoop if needed
                 partialStream?.DiscardAndDispose();
-
-                // If it is a cancellation, it is the result of the parent task so it should not be propagated further
-                if (e is not OperationCanceledException && e is not TaskCanceledException)
-                    throw;
+                throw;
             }
             finally
             {
@@ -258,7 +261,7 @@ namespace DCL.WebRequests
             IWebRequest? createdRequest = null;
 
             partialFlowCts = new CancellationTokenSource();
-            PartialDownloadStream result;
+            PartialDownloadStream? result;
 
             async UniTask WaitForRequestAsync()
             {

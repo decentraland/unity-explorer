@@ -135,5 +135,7 @@ namespace DCL.WebRequests
                 analyticsContainer.OnRequestFinished(request, adapter);
             }
         }
+
+        public void Dispose() { }
     }
 }
