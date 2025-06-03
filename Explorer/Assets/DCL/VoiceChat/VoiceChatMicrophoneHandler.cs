@@ -11,8 +11,12 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private const bool MICROPHONE_LOOP = true;
-        private const int MICROPHONE_LENGTH_SECONDS = 1;
+        private const int MICROPHONE_LENGTH_SECONDS = 1; // Unity minimum - cannot be less than 1 second
         private const int MAX_SAMPLE_RATE = 48000; // Cap sample rate for voice chat bandwidth efficiency
+
+        private const float AUDIO_SOURCE_VOLUME = 1f; // Keep volume at 1 so OnAudioFilterRead gets called
+        private const float SPATIAL_BLEND_2D = 0f; // 2D audio (not spatial)
+        private const float CENTER_PAN = 0f; // Center pan (no stereo separation)
 
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
@@ -174,24 +178,31 @@ namespace DCL.VoiceChat
             if (isMicrophoneInitialized)
                 return;
 
-            // Configure Unity's audio system for LiveKit compatibility
-            var configuration = AudioSettings.GetConfiguration();
-            configuration.sampleRate = 48000;  // 48kHz - LiveKit standard
-            configuration.dspBufferSize = 512;  // Good balance of latency and performance
-            AudioSettings.Reset(configuration);
-            
-            // Verify what Unity actually set after the reset
+            // Ensure clean state by clearing any existing audio subscribers
+            audioFilter.ResetProcessor();
+
+            // Get Unity's current audio configuration - voice chat adapts to it
             var actualConfig = AudioSettings.GetConfiguration();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, 
-                $"Configured Unity audio system - Requested: SampleRate {configuration.sampleRate}Hz, BufferSize {configuration.dspBufferSize}");
+            
+            // On macOS, Core Audio may override Unity's settings, so use actual output sample rate
+            int unitySampleRate = AudioSettings.outputSampleRate;
+            
             ReportHub.Log(ReportCategory.VOICE_CHAT,
-                $"Actual Unity audio config - SampleRate: {actualConfig.sampleRate}Hz, BufferSize: {actualConfig.dspBufferSize}, " +
-                $"OutputSampleRate: {AudioSettings.outputSampleRate}Hz");
+                $"Unity audio config - Configured: {actualConfig.sampleRate}Hz, BufferSize: {actualConfig.dspBufferSize}, " +
+                $"Actual Output: {unitySampleRate}Hz");
                 
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            ReportHub.Log(ReportCategory.VOICE_CHAT,
-                $"macOS Audio System - Unity may be overridden by Core Audio. " +
-                $"Expected 48kHz, Actual Output: {AudioSettings.outputSampleRate}Hz");
+            if (actualConfig.sampleRate != unitySampleRate)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
+                    $"macOS Core Audio override detected - Unity configured: {actualConfig.sampleRate}Hz, " +
+                    $"but Core Audio using: {unitySampleRate}Hz. Using actual rate for LiveKit compatibility.");
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
+                    $"macOS Core Audio matches Unity config: {unitySampleRate}Hz");
+            }
 #endif
 
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
@@ -209,40 +220,44 @@ namespace DCL.VoiceChat
             }
             else
                 MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-
-            // Get device capabilities to determine appropriate sample rate
+            // Get device capabilities to determine optimal microphone sample rate
             int minFreq, maxFreq;
             Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
             
             // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
             // If device reports specific range, use the minimum of (maxFreq, 48kHz)
-            // If device supports any frequency (0,0), default to 48kHz
-            int sampleRate;
+            // If device supports any frequency (0,0), default to Unity's output rate or 48kHz
+            int microphoneSampleRate;
             if (minFreq == 0 && maxFreq == 0)
             {
-                sampleRate = MAX_SAMPLE_RATE; // Device supports any rate, use our preferred max
+                // Device supports any rate - prefer Unity's output rate, fallback to 48kHz
+                microphoneSampleRate = (unitySampleRate <= MAX_SAMPLE_RATE) ? unitySampleRate : MAX_SAMPLE_RATE;
             }
             else
             {
-                sampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE); // Cap at 48kHz
+                microphoneSampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE); // Cap at 48kHz
                 // Ensure we don't go below the device minimum
-                sampleRate = Mathf.Max(sampleRate, minFreq);
+                microphoneSampleRate = Mathf.Max(microphoneSampleRate, minFreq);
             }
             
             ReportHub.Log(ReportCategory.VOICE_CHAT, 
                 $"Microphone device '{MicrophoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
-                $"Selected SampleRate: {sampleRate}Hz");
+                $"Selected: {microphoneSampleRate}Hz (Unity output: {unitySampleRate}Hz)");
             
             // On macOS, be more conservative with microphone settings
             try
             {
-                microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, sampleRate);
+                microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
                 if (microphoneAudioClip == null)
                 {
                     ReportHub.LogError(ReportCategory.VOICE_CHAT, "Failed to start microphone on macOS. This may indicate permission issues or device conflicts.");
                     return;
                 }
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started on macOS with sample rate: {sampleRate}Hz (device caps: {minFreq}-{maxFreq}Hz, capped at {MAX_SAMPLE_RATE}Hz)");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started on macOS with sample rate: {microphoneSampleRate}Hz (device optimal)");
+                
+                // Pass microphone info to audio filter for latency optimization
+                audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneSampleRate, MICROPHONE_LENGTH_SECONDS);
+                audioFilter.SetMicrophoneClip(microphoneAudioClip);
             }
             catch (System.Exception ex)
             {
@@ -252,31 +267,36 @@ namespace DCL.VoiceChat
 #else
             MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
             
-            // Get device capabilities to determine appropriate sample rate
+            // Get device capabilities to determine optimal microphone sample rate
             int minFreq, maxFreq;
             Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
             
             // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
             // If device reports specific range, use the minimum of (maxFreq, 48kHz)
-            // If device supports any frequency (0,0), default to 48kHz
-            int sampleRate;
+            // If device supports any frequency (0,0), default to Unity's output rate or 48kHz
+            int microphoneSampleRate;
             if (minFreq == 0 && maxFreq == 0)
             {
-                sampleRate = MAX_SAMPLE_RATE; // Device supports any rate, use our preferred max
+                // Device supports any rate - prefer Unity's output rate, fallback to 48kHz
+                microphoneSampleRate = (unitySampleRate <= MAX_SAMPLE_RATE) ? unitySampleRate : MAX_SAMPLE_RATE;
             }
             else
             {
-                sampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE); // Cap at 48kHz
+                microphoneSampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE); // Cap at 48kHz
                 // Ensure we don't go below the device minimum
-                sampleRate = Mathf.Max(sampleRate, minFreq);
+                microphoneSampleRate = Mathf.Max(microphoneSampleRate, minFreq);
             }
             
             ReportHub.Log(ReportCategory.VOICE_CHAT, 
                 $"Microphone device '{MicrophoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
-                $"Selected SampleRate: {sampleRate}Hz");
+                $"Selected: {microphoneSampleRate}Hz (Unity output: {unitySampleRate}Hz)");
             
-            microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, sampleRate);
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started with sample rate: {sampleRate}Hz (device caps: {minFreq}-{maxFreq}Hz, capped at {MAX_SAMPLE_RATE}Hz)");
+            microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started with sample rate: {microphoneSampleRate}Hz (device optimal)");
+            
+            // Pass microphone info to audio filter for latency optimization
+            audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneSampleRate, MICROPHONE_LENGTH_SECONDS);
+            audioFilter.SetMicrophoneClip(microphoneAudioClip);
             
             // Verify the actual recording sample rate matches what we requested
             if (microphoneAudioClip != null)
@@ -284,17 +304,24 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, 
                     $"Microphone AudioClip created - Actual Frequency: {microphoneAudioClip.frequency}Hz, " +
                     $"Channels: {microphoneAudioClip.channels}, Length: {microphoneAudioClip.length}s");
+                    
+                if (microphoneAudioClip.frequency != microphoneSampleRate)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
+                        $"Sample rate mismatch! Requested: {microphoneSampleRate}Hz, Microphone actual: {microphoneAudioClip.frequency}Hz. " +
+                        $"This may cause audio quality issues.");
+                }
             }
 #endif
 
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
-            audioSource.volume = 1f;  // Keep volume at 1 so OnAudioFilterRead gets called
+            audioSource.volume = AUDIO_SOURCE_VOLUME;
             
             // Force mono audio for voice chat - this ensures we always get mono input to our filter
             // This eliminates the need for channel mixing in the audio filter
-            audioSource.spatialBlend = 0f;  // 2D audio (not spatial)
-            audioSource.panStereo = 0f;     // Center pan (no stereo separation)
+            audioSource.spatialBlend = SPATIAL_BLEND_2D;
+            audioSource.panStereo = CENTER_PAN;
             
             audioSource.Play();
 
@@ -302,7 +329,6 @@ namespace DCL.VoiceChat
 
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized with forced mono configuration");
             
             MicrophoneReady?.Invoke();
         }
@@ -312,7 +338,6 @@ namespace DCL.VoiceChat
             audioSource.mute = false;  // Allow audio processing - mute state controls local playback
             audioFilter.enabled = true;
             EnabledMicrophone?.Invoke();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone (capture and processing enabled)");
         }
 
         private void DisableMicrophone()
@@ -320,7 +345,6 @@ namespace DCL.VoiceChat
             audioSource.mute = true;
             audioFilter.enabled = false;
             DisabledMicrophone?.Invoke();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
         }
 
         private void OnMicrophoneChanged(int newMicrophoneIndex)
@@ -346,7 +370,8 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                // Disable the audio filter first to stop audio processing
+                // Clear all audio stream subscribers to prevent duplicate streams
+                audioFilter.ResetProcessor();
                 audioFilter.enabled = false;
                 
                 // Then stop and clean up the audio source
@@ -354,12 +379,7 @@ namespace DCL.VoiceChat
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
                 isMicrophoneInitialized = false;
-                
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone cleanup completed - filter disabled, audio source stopped");
             }
-
-            // Reset the processor and clear any remaining state
-            audioFilter.ResetProcessor();
 
             // Always reinitialize microphone so it's ready when needed
             InitializeMicrophone();
@@ -369,10 +389,7 @@ namespace DCL.VoiceChat
             {
                 audioSource.mute = false;
                 audioFilter.enabled = true;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Restored talking state after microphone switch");
             }
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
         }
     }
 }

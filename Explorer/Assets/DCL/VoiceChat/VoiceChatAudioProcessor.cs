@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 namespace DCL.VoiceChat
 {
@@ -29,6 +30,9 @@ namespace DCL.VoiceChat
 
         private float noiseFloor;
         private float noiseFloorUpdateTime;
+        
+        // Thread safety for background processing
+        private readonly object processingLock = new object();
 
         /// <summary>
         ///     Get the current noise gate status for UI feedback
@@ -53,57 +57,68 @@ namespace DCL.VoiceChat
 
         public void Reset()
         {
-            for (var i = 0; i < 2; i++)
+            lock (processingLock) // Thread-safe reset
             {
-                highPassPrevInputs[i] = 0f;
-                highPassPrevOutputs[i] = 0f;
-                lowPassPrevInputs[i] = 0f;
-                lowPassPrevOutputs[i] = 0f;
+                for (var i = 0; i < 2; i++)
+                {
+                    highPassPrevInputs[i] = 0f;
+                    highPassPrevOutputs[i] = 0f;
+                    lowPassPrevInputs[i] = 0f;
+                    lowPassPrevOutputs[i] = 0f;
+                }
+
+                dcBlockPrevInput = 0f;
+                dcBlockPrevOutput = 0f;
+
+                CurrentGain = 1f;
+                peakLevel = 0f;
+                GateSmoothing = 0f;
+                gateIsOpen = false;
+                lastSpeechTime = 0f;
+
+                if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize) { fadeInBuffer = new float[configuration.FadeInBufferSize]; }
+
+                for (var i = 0; i < fadeInBuffer.Length; i++) { fadeInBuffer[i] = 0f; }
+
+                fadeInBufferIndex = 0;
+                isGateOpening = false;
+                gateOpenFadeProgress = 0f;
+
+                noiseFloor = 0f;
+                noiseFloorUpdateTime = 0f;
             }
-
-            dcBlockPrevInput = 0f;
-            dcBlockPrevOutput = 0f;
-
-            CurrentGain = 1f;
-            peakLevel = 0f;
-            GateSmoothing = 0f;
-            gateIsOpen = false;
-            lastSpeechTime = 0f;
-
-            if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize) { fadeInBuffer = new float[configuration.FadeInBufferSize]; }
-
-            for (var i = 0; i < fadeInBuffer.Length; i++) { fadeInBuffer[i] = 0f; }
-
-            fadeInBufferIndex = 0;
-            isGateOpening = false;
-            gateOpenFadeProgress = 0f;
-
-            noiseFloor = 0f;
-            noiseFloorUpdateTime = 0f;
         }
 
         /// <summary>
         ///     Process audio samples with noise reduction and other effects
+        ///     Thread-safe for real-time background processing
         /// </summary>
-        public void ProcessAudio(float[] audioData, int sampleRate)
+        public void ProcessAudio(float[] audioData, int sampleRate, int sampleCount = -1)
         {
             if (audioData == null || audioData.Length == 0) return;
 
-            float deltaTime = (float)audioData.Length / sampleRate;
-
-            for (var i = 0; i < audioData.Length; i++)
+            // Use provided sampleCount or default to array length
+            int actualSampleCount = sampleCount > 0 ? sampleCount : audioData.Length;
+            
+            lock (processingLock) // Ensure thread safety
             {
-                float sample = audioData[i];
+                // Use sample-based timing - more accurate for audio processing than wall clock
+                float sampleDeltaTime = (float)actualSampleCount / sampleRate;
 
-                if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
+                for (var i = 0; i < actualSampleCount; i++)
+                {
+                    float sample = audioData[i];
 
-                if (configuration.EnableNoiseReduction) { sample = ApplyNoiseReduction(sample, deltaTime); }
+                    if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
 
-                if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime); }
+                    if (configuration.EnableNoiseReduction) { sample = ApplyNoiseReduction(sample, sampleDeltaTime); }
 
-                if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
+                    if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, sampleDeltaTime); }
 
-                audioData[i] = Mathf.Clamp(sample, -1f, 1f);
+                    if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
+
+                    audioData[i] = Mathf.Clamp(sample, -1f, 1f);
+                }
             }
         }
 

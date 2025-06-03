@@ -12,6 +12,7 @@ namespace DCL.VoiceChat
         private bool isPlaying;
         private int sampleRate = 48000; // Default to 48kHz for voice chat (LiveKit standard)
         private float[] tempBuffer;
+        private int lastDataLength = 0; // Track buffer size changes
 
         private void OnEnable()
         {
@@ -33,7 +34,12 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            if (tempBuffer == null || tempBuffer.Length != data.Length) { tempBuffer = new float[data.Length]; }
+            // Only reallocate if buffer size actually changed (reduce allocation frequency)
+            if (tempBuffer == null || lastDataLength != data.Length) 
+            { 
+                tempBuffer = new float[data.Length]; 
+                lastDataLength = data.Length;
+            }
 
             Array.Clear(data, 0, data.Length);
             var activeStreams = 0;
