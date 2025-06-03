@@ -121,17 +121,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMembersCount(int memberCount)
         {
-            string formattedCount;
-
-            if (memberCount >= 1000)
-            {
-                float countInK = memberCount / 1000f;
-                formattedCount = $"{countInK:0.#}k";
-            }
-            else
-                formattedCount = memberCount.ToString();
-
-            communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, formattedCount);
+            communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
 
         public void SetOwnership(bool isMember)

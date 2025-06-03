@@ -76,17 +76,6 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public MembersListView MembersListView { get; private set; }
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; }
 
-        private static string NumberToCompactString(long number)
-        {
-            return number switch
-                   {
-                       >= 1_000_000_000 => (number / 1_000_000_000D).ToString("0.#") + "B",
-                       >= 1_000_000 => (number / 1_000_000D).ToString("0.#") + "M",
-                       >= 1_000 => (number / 1_000D).ToString("0.#") + "k",
-                       _ => number.ToString()
-                   };
-        }
-
         private void Awake()
         {
             OpenWizardButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
@@ -138,7 +127,9 @@ namespace DCL.Communities.CommunitiesCard
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, ImageController imageController)
         {
             CommunityName.text = communityData.name;
-            CommunityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, NumberToCompactString(communityData.membersCount));
+
+            CommunityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
+
             CommunityDescription.text = communityData.description;
             //TODO: handle thumbnails properly
             imageController.RequestImage(communityData.thumbnails[0], true, true);
