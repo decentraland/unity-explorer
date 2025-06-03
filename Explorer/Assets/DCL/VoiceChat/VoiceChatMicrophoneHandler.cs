@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using Utility.Multithreading;
 using Cysharp.Threading.Tasks;
 using LiveKit.Rooms.Streaming.Audio;
+using LiveKit;
 
 namespace DCL.VoiceChat
 {
@@ -65,7 +66,7 @@ namespace DCL.VoiceChat
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
 
             isInCall = false;
-            
+
             InitializeMicrophone();
         }
 
@@ -194,14 +195,14 @@ namespace DCL.VoiceChat
 
             // Get Unity's current audio configuration - voice chat adapts to it
             var actualConfig = AudioSettings.GetConfiguration();
-            
+
             // On macOS, Core Audio may override Unity's settings, so use actual output sample rate
             int unitySampleRate = AudioSettings.outputSampleRate;
-            
+
             ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"Unity audio config - Configured: {actualConfig.sampleRate}Hz, BufferSize: {actualConfig.dspBufferSize}, " +
                 $"Actual Output: {unitySampleRate}Hz");
-                
+
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
             if (actualConfig.sampleRate != unitySampleRate)
             {
@@ -234,7 +235,7 @@ namespace DCL.VoiceChat
             // Get device capabilities to determine optimal microphone sample rate
             int minFreq, maxFreq;
             Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
-            
+
             // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
             // If device reports specific range, use the minimum of (maxFreq, 48kHz)
             // If device supports any frequency (0,0), default to Unity's output rate or 48kHz
@@ -250,11 +251,11 @@ namespace DCL.VoiceChat
                 // Ensure we don't go below the device minimum
                 microphoneSampleRate = Mathf.Max(microphoneSampleRate, minFreq);
             }
-            
-            ReportHub.Log(ReportCategory.VOICE_CHAT, 
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"Microphone device '{MicrophoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
                 $"Selected: {microphoneSampleRate}Hz (Unity output: {unitySampleRate}Hz)");
-            
+
             // On macOS, be more conservative with microphone settings
             try
             {
@@ -265,7 +266,7 @@ namespace DCL.VoiceChat
                     return;
                 }
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started on macOS with sample rate: {microphoneSampleRate}Hz (device optimal)");
-                
+
                 // Pass microphone info to audio filter for latency optimization
                 audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneSampleRate, MICROPHONE_LENGTH_SECONDS);
                 audioFilter.SetMicrophoneClip(microphoneAudioClip);
@@ -277,11 +278,11 @@ namespace DCL.VoiceChat
             }
 #else
             MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-            
+
             // Get device capabilities to determine optimal microphone sample rate
             int minFreq, maxFreq;
             Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
-            
+
             // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
             // If device reports specific range, use the minimum of (maxFreq, 48kHz)
             // If device supports any frequency (0,0), default to Unity's output rate or 48kHz
@@ -297,25 +298,25 @@ namespace DCL.VoiceChat
                 // Ensure we don't go below the device minimum
                 microphoneSampleRate = Mathf.Max(microphoneSampleRate, minFreq);
             }
-            
-            ReportHub.Log(ReportCategory.VOICE_CHAT, 
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"Microphone device '{MicrophoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
                 $"Selected: {microphoneSampleRate}Hz (Unity output: {unitySampleRate}Hz)");
-            
+
             microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started with sample rate: {microphoneSampleRate}Hz (device optimal)");
-            
+
             // Pass microphone info to audio filter for latency optimization
             audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneSampleRate, MICROPHONE_LENGTH_SECONDS);
             audioFilter.SetMicrophoneClip(microphoneAudioClip);
-            
+
             // Verify the actual recording sample rate matches what we requested
             if (microphoneAudioClip != null)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
                     $"Microphone AudioClip created - Actual Frequency: {microphoneAudioClip.frequency}Hz, " +
                     $"Channels: {microphoneAudioClip.channels}, Length: {microphoneAudioClip.length}s");
-                    
+
                 if (microphoneAudioClip.frequency != microphoneSampleRate)
                 {
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
@@ -328,18 +329,18 @@ namespace DCL.VoiceChat
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
             audioSource.volume = AUDIO_SOURCE_VOLUME;
-            
+
             // Force mono audio for voice chat - this ensures we always get mono input to our filter
             // This eliminates the need for channel mixing in the audio filter
             audioSource.spatialBlend = SPATIAL_BLEND_2D;
             audioSource.panStereo = CENTER_PAN;
-            
+
             audioSource.Play();
 
             // Create LiveKit RtcAudioSource optimized for voice chat (mono, 1 channel)
             int newSampleRate = microphoneAudioClip.frequency;
             bool needsReconfiguration = rtcAudioSource != null && currentMicrophoneSampleRate != newSampleRate;
-            
+
             try
             {
                 if (needsReconfiguration)
@@ -348,7 +349,7 @@ namespace DCL.VoiceChat
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Sample rate changed from {currentMicrophoneSampleRate}Hz to {newSampleRate}Hz - reconfiguring RtcAudioSource");
                     rtcAudioSource.Reconfigure(audioSource, audioFilter, forceChannels: 1, forceSampleRate: (uint)newSampleRate);
                     currentMicrophoneSampleRate = newSampleRate;
-                    
+
                     // Notify RoomHandler about the reconfiguration
                     RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
                     ReportHub.Log(ReportCategory.VOICE_CHAT, "LiveKit RtcAudioSource reconfigured successfully for new sample rate");
@@ -358,7 +359,7 @@ namespace DCL.VoiceChat
                     // Create new RtcAudioSource
                     rtcAudioSource = RtcAudioSource.CreateForVoiceChat(audioSource, audioFilter);
                     currentMicrophoneSampleRate = newSampleRate;
-                    
+
                     // Start RtcAudioSource immediately after creation (not for pausing/unpausing)
                     rtcAudioSource.Start();
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {newSampleRate}Hz");
@@ -374,7 +375,7 @@ namespace DCL.VoiceChat
 
             EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
-            
+
             MicrophoneReady?.Invoke();
         }
 
@@ -431,7 +432,7 @@ namespace DCL.VoiceChat
                 // Clear all audio stream subscribers to prevent duplicate streams
                 audioFilter.ResetProcessor();
                 audioFilter.enabled = false;
-                
+
                 // Then stop and clean up the audio source
                 audioSource.Stop();
                 audioSource.clip = null;
@@ -442,7 +443,7 @@ namespace DCL.VoiceChat
             // Always reinitialize microphone so it's ready when needed
             InitializeMicrophone();
 
-            // RtcAudioSource reconfiguration is handled in InitializeMicrophone() 
+            // RtcAudioSource reconfiguration is handled in InitializeMicrophone()
             // based on sample rate changes - no additional handling needed here
 
             // Restore previous talking state if in call
