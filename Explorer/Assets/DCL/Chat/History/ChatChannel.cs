@@ -17,6 +17,32 @@ namespace DCL.Chat.History
         public static readonly ChannelId EMPTY_CHANNEL_ID = new ();
         public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.NEARBY, ChatChannelType.NEARBY.ToString());
 
+        private const string COMMUNITY_PREFIX = "community:";
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="communityId"></param>
+        /// <returns></returns>
+        public static ChannelId NewCommunityChannelId(string communityId) =>
+            new (COMMUNITY_PREFIX + communityId);
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="channelId"></param>
+        /// <returns></returns>
+        public static bool IsCommunityChannelId(ChannelId channelId) =>
+            channelId.Id.StartsWith(COMMUNITY_PREFIX);
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="channelId"></param>
+        /// <returns></returns>
+        public static bool IsCommunityChannelId(string channelId) =>
+            channelId.StartsWith(COMMUNITY_PREFIX);
+
         /// <summary>
         /// The unique identifier of a chat channel.
         /// </summary>

@@ -23,7 +23,7 @@ namespace MVC
         public readonly ICursor Cursor;
         public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
 
-        private readonly IProfileThumbnailCache thumbnailCache;
+        private readonly IThumbnailCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
@@ -37,7 +37,7 @@ namespace MVC
             await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
 
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IProfileThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            IThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;

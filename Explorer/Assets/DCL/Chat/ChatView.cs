@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.UI;
@@ -204,6 +205,8 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
 
+        private IThumbnailCache thumbnailCache;
+
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
@@ -269,6 +272,11 @@ namespace DCL.Chat
                         case ChatChannel.ChatChannelType.USER:
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
                             break;
+                        case ChatChannel.ChatChannelType.COMMUNITY:
+                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            GetUserCommunitiesCompactResponse.CommunityData communityData = communitiesData[currentChannel.Id];
+                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.smallThumbnail, CancellationToken.None); // TODO: Add a cancelation token
+                            break;
                     }
 
                     CurrentChannelChanged?.Invoke();
@@ -333,12 +341,16 @@ namespace DCL.Chat
 
         public void SetupInitialConversationToolbarStatusIconForUsers(HashSet<string> userIds)
         {
-            foreach (var channelId in channels!.Keys)
+            foreach (var channelPair in channels)
             {
-                conversationsToolbar.SetConnectionStatus(channelId,
-                    userIds.Contains(channelId.Id) ?
-                    OnlineStatus.ONLINE :
-                    OnlineStatus.OFFLINE);
+                if (channelPair.Value.ChannelType == ChatChannel.ChatChannelType.USER)
+                {
+                    conversationsToolbar.SetConnectionStatus(channelPair.Value.Id,
+                        userIds.Contains(channelPair.Value.Id.Id) ?
+                        OnlineStatus.ONLINE :
+                        OnlineStatus.OFFLINE);
+                }
+
             }
         }
 
@@ -451,8 +463,10 @@ namespace DCL.Chat
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatSettingsAsset chatSettings,
             GetParticipantProfilesDelegate getParticipantProfilesDelegate,
-            ILoadingStatus loadingStatus)
+            ILoadingStatus loadingStatus,
+            IThumbnailCache thumbnailCache)
         {
+            this.thumbnailCache = thumbnailCache;
             channels = chatChannels;
 
             chatTitleBar.Initialize();
@@ -489,7 +503,12 @@ namespace DCL.Chat
 
             // Initializes the conversations toolbar
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
-                AddConversation(channelPair.Value);
+            {
+                if(channelPair.Value.ChannelType == ChatChannel.ChatChannelType.NEARBY)
+                    AddNearbyConversation(channelPair.Value);
+                else if(channelPair.Value.ChannelType == ChatChannel.ChatChannelType.USER)
+                    AddPrivateConversation(channelPair.Value);
+            }
         }
 
         private void OnDeleteChatHistoryRequested()
@@ -711,12 +730,32 @@ namespace DCL.Chat
         /// Creates a new item in the conversation toolbar.
         /// </summary>
         /// <param name="channelToAdd">The channel for which the item will be created.</param>
-        public void AddConversation(ChatChannel channelToAdd)
+        public void AddNearbyConversation(ChatChannel channelToAdd)
         {
-            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL.Id))
-                conversationsToolbar.AddConversation(channelToAdd, nearbyConversationIcon);
-            else
-                conversationsToolbar.AddConversation(channelToAdd);
+            conversationsToolbar.AddConversation(channelToAdd);
+            conversationsToolbar.SetNearbyConversationData(nearbyConversationIcon);
+        }
+
+        /// <summary>
+        /// Creates a new item in the conversation toolbar.
+        /// </summary>
+        /// <param name="channelToAdd">The channel for which the item will be created.</param>
+        public void AddPrivateConversation(ChatChannel channelToAdd)
+        {
+            conversationsToolbar.AddConversation(channelToAdd);
+            conversationsToolbar.SetPrivateConversationData(channelToAdd.Id);
+        }
+
+        /// <summary>
+        /// Creates a new item in the conversation toolbar.
+        /// </summary>
+        /// <param name="channelToAdd">The channel for which the item will be created.</param>
+        /// <param name="thumbnailCache">A reference to the thumbnail cache to get the icon of the toolbar.</param>
+        public void AddCommunityConversation(ChatChannel channelToAdd, IThumbnailCache thumbnailCache)
+        {
+            conversationsToolbar.AddConversation(channelToAdd);
+            GetUserCommunitiesCompactResponse.CommunityData communityData = communitiesData[channelToAdd.Id];
+            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData);
         }
 
         /// <summary>
@@ -998,6 +1037,13 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
+        }
+
+        Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData> communitiesData = new Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData>();
+
+        public void SetCommunitiesData(Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData> communities)
+        {
+            communitiesData = communities;
         }
     }
 }

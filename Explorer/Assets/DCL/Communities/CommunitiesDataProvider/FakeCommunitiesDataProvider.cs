@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
@@ -11,9 +12,11 @@ namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
-        public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource)
-        {
+        private IThumbnailCache thumbnailCache;
 
+        public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource, IThumbnailCache thumbnailCache)
+        {
+            this.thumbnailCache = thumbnailCache;
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
@@ -35,8 +38,25 @@ namespace DCL.Communities
         public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct) =>
-            throw new NotImplementedException();
+        public async UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct)
+        {
+            await UniTask.Delay(500, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
+            return new GetUserCommunitiesCompactResponse()
+            {
+                communities = new []
+                {
+                    new GetUserCommunitiesCompactResponse.CommunityData()
+                    {
+                        name = "Community 5",
+                        id= "c5e5a5b6-5555-4a5b-9555-555555555555",
+                        role = CommunityMemberRole.moderator,
+                        memberCount = 10,
+                        ownerId = "0xf118c24c103a4ba9e13d9db8f2747efe87be507f",
+                        smallThumbnail = "https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"
+                    }
+                }
+            };
+        }
 
         public async UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
             throw new NotImplementedException();
@@ -58,5 +78,11 @@ namespace DCL.Communities
 
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
+
+        public async UniTask<Sprite> GetCommunityThumbnailAsync(string communityId, string thumbnailUrl, CancellationToken ct)
+        {
+            await UniTask.Delay(500, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
+            return await thumbnailCache.GetThumbnailAsync(communityId, thumbnailUrl, ct);
+        }
     }
 }

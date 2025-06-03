@@ -8,6 +8,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Communities;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
@@ -60,6 +61,8 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly ICommunitiesDataProvider communityDataProvider;
+        private readonly IThumbnailCache thumbnailCache;
 
         private ChatController chatController;
 
@@ -88,7 +91,9 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy)
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            ICommunitiesDataProvider communityDataProvider,
+            IThumbnailCache thumbnailCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -116,6 +121,8 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
+            this.communityDataProvider = communityDataProvider;
+            this.thumbnailCache = thumbnailCache;
         }
 
         public void Dispose()
@@ -161,7 +168,9 @@ namespace DCL.PluginSystem.Global
                 privacySettings,
                 friendsEventBus,
                 chatStorage,
-                friendsServiceProxy
+                friendsServiceProxy,
+                communityDataProvider,
+                thumbnailCache
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

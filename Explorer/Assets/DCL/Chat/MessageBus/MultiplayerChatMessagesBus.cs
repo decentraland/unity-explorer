@@ -47,8 +47,19 @@ namespace DCL.Chat.MessageBus
 
         private void OnChatPipeMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
-            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Private Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload} with topic: {receivedMessage.Topic}");
-            OnChatAsync(receivedMessage, true).Forget();
+            ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Received Chat Message from {receivedMessage.FromWalletId}: {receivedMessage.Payload} with topic: {receivedMessage.Topic}");
+
+            ChatChannel.ChatChannelType channelType = ChatChannel.ChatChannelType.USER;
+
+            if (!string.IsNullOrEmpty(receivedMessage.Topic))
+            {
+                if (ChatChannel.IsCommunityChannelId(receivedMessage.Topic))
+                    channelType = ChatChannel.ChatChannelType.COMMUNITY;
+
+                // groups in the future?
+            }
+
+            OnChatAsync(receivedMessage, channelType).Forget();
         }
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
@@ -56,7 +67,7 @@ namespace DCL.Chat.MessageBus
             OnChatAsync(receivedMessage).Forget();
         }
 
-        private async UniTaskVoid OnChatAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, bool isPrivate = false)
+        private async UniTaskVoid OnChatAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, ChatChannel.ChatChannelType channelType = ChatChannel.ChatChannelType.NEARBY)
         {
             using (receivedMessage)
             {
@@ -64,8 +75,42 @@ namespace DCL.Chat.MessageBus
                     || IsUserBlockedAndMessagesHidden(receivedMessage.FromWalletId))
                     return;
 
-                ChatChannel.ChannelId parsedChannelId = isPrivate? new ChatChannel.ChannelId(receivedMessage.FromWalletId) : ChatChannel.NEARBY_CHANNEL_ID;
-                ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, receivedMessage.Topic, cancellationTokenSource.Token);
+                ChatChannel.ChannelId parsedChannelId;
+
+                // TODO: Remove this when protobuf is ready
+                string topic = receivedMessage.Topic;
+                //topic.Split(":from:", 1, StringSplitOptions.RemoveEmptyEntries);
+                if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
+                {
+                    int topicPartLength = "community:c1e1a1b2-1111-4a1b-9111-111111111111".Length;
+                    topic = receivedMessage.Topic.Substring(0, topicPartLength);
+                }
+
+                switch (channelType)
+                {
+                    case ChatChannel.ChatChannelType.NEARBY:
+                        parsedChannelId = ChatChannel.NEARBY_CHANNEL_ID;
+                        break;
+                    case ChatChannel.ChatChannelType.COMMUNITY:
+                        parsedChannelId = new ChatChannel.ChannelId(topic);
+                        break;
+                    case ChatChannel.ChatChannelType.USER:
+                        parsedChannelId = new ChatChannel.ChannelId(receivedMessage.FromWalletId);
+                        break;
+                    default:
+                        parsedChannelId = new ChatChannel.ChannelId();
+                        break;
+                }
+
+                // TODO: Remove this when protobuf is ready
+                string walletId = receivedMessage.FromWalletId;
+                if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
+                {
+                    int walletPartLength = "community:c1e1a1b2-1111-4a1b-9111-111111111111:from:".Length;
+                    walletId = receivedMessage.Topic.Substring(walletPartLength);
+                }
+
+                ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(walletId, false, receivedMessage.Payload.Message, null, topic, cancellationTokenSource.Token);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
             }
@@ -87,10 +132,10 @@ namespace DCL.Chat.MessageBus
                     SendTo(message, timestamp, messagePipesHub.ScenePipe());
                     break;
                 case ChatChannel.ChatChannelType.USER:
-                    SendTo(message, timestamp, "custom-topic", messagePipesHub.ChatPipe(), channel.Id.Id);
+                    SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
                     break;
                 case ChatChannel.ChatChannelType.COMMUNITY:
-                    SendTo(message, timestamp, topic, messagePipesHub.ChatPipe(), "TODO-Server-User-Id"); // TODO
+                    SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), "message-router-0");
                     break;
                 default:
                     break;
@@ -100,7 +145,7 @@ namespace DCL.Chat.MessageBus
 
         private void SendTo(string message, double timestamp, IMessagePipe messagePipe, string? recipient = null)
         {
-            SendTo(message, timestamp, null, messagePipe, recipient);
+            SendTo(message, timestamp, string.Empty, messagePipe, recipient);
         }
 
         private void SendTo(string message, double timestamp, string topic, IMessagePipe messagePipe, string? recipient = null)

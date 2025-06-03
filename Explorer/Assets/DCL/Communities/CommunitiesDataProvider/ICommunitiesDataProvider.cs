@@ -22,5 +22,7 @@ namespace DCL.Communities
         UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct);
+
+        UniTask<Sprite> GetCommunityThumbnailAsync(string communityId, string thumbnailUrl, CancellationToken ct);
     }
 }

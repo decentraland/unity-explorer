@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Profiles;
+using DCL.UI.Communities;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
 using MVC;
@@ -41,6 +43,7 @@ namespace DCL.Chat
         [SerializeField] private GameObject memberCountObject;
         [SerializeField] private GameObject nearbyChannelContainer;
         [SerializeField] private SimpleProfileView profileView;
+        [SerializeField] private CommunityTitleView communityChannelContainer;
 
         [Header("Context Menu Data")]
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
@@ -108,6 +111,7 @@ namespace DCL.Chat
             nearbyChannelContainer.SetActive(true);
             memberCountObject.SetActive(true);
             profileView.gameObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(false);
         }
 
         public void SetupProfileView(Web3Address userId)
@@ -117,6 +121,16 @@ namespace DCL.Chat
             profileView.SetupAsync(userId, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(false);
+        }
+
+        public void SetupCommunityView(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CancellationToken ct)
+        {
+            nearbyChannelContainer.SetActive(false);
+            memberCountObject.SetActive(true);
+            profileView.gameObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(true);
+            communityChannelContainer.SetupAsync(thumbnailCache, communityId, communityName, thumbnailUrl, ct).Forget();
         }
 
         private void OnOpenContextMenuButtonClicked()

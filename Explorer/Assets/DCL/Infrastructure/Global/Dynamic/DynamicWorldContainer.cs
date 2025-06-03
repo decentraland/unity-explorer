@@ -580,7 +580,7 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
-            IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
+            IThumbnailCache thumbnailCache = new ThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
@@ -589,7 +589,7 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
-            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource);
+            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource, thumbnailCache);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -611,7 +611,7 @@ namespace Global.Dynamic
                 menusAccessFacade,
                 clipboardManager,
                 dclCursor,
-                profileThumbnailCache,
+                thumbnailCache,
                 profileRepository,
                 remoteMetadata,
                 userBlockingCacheProxy);
@@ -711,7 +711,9 @@ namespace Global.Dynamic
                     friendsEventBus,
                     chatMessageFactory,
                     staticContainer.FeatureFlagsCache,
-                    friendServiceProxy),
+                    friendServiceProxy,
+                    communitiesDataProvider,
+                    thumbnailCache),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

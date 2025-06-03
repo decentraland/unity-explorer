@@ -1,12 +1,12 @@
 {
-    "name": "Communities",
+    "name": "DCL.UI.Communities",
     "rootNamespace": "",
     "references": [
-        "GUID:e169fa6683c924c7e99a85981a91d953",
-        "GUID:4ea6ca08dc181df4487ffee3648c7d94",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-        "GUID:e56a0d6a94c144c784012e63b6043100"
+        "GUID:e56a0d6a94c144c784012e63b6043100",
+        "GUID:e169fa6683c924c7e99a85981a91d953"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

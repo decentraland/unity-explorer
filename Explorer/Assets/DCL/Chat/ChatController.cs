@@ -6,6 +6,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Communities;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -25,6 +26,7 @@ using DCL.Utilities;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -61,6 +63,8 @@ namespace DCL.Chat
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly IThumbnailCache thumbnailCache;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -70,8 +74,10 @@ namespace DCL.Chat
         // Used exclusively to calculate the new value of the read messages once the Unread messages separator has been viewed
         private int messageCountWhenSeparatorViewed;
         private bool hasToResetUnreadMessagesWhenNewMessageArrive;
+
         private bool viewInstanceCreated;
         private CancellationTokenSource chatUsersUpdateCts = new();
+        private CancellationTokenSource communitiesServiceCts = new();
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
@@ -80,7 +86,7 @@ namespace DCL.Chat
         public event ConversationClosedDelegate? ConversationClosed;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public bool IsViewReady => viewInstanceCreated && viewInstance != null;
+        private bool IsViewReady => viewInstanceCreated && viewInstance != null;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -103,7 +109,10 @@ namespace DCL.Chat
             RPCChatPrivacyService chatPrivacyService,
             IFriendsEventBus friendsEventBus,
             ChatHistoryStorage chatStorage,
-            ObjectProxy<IFriendsService> friendsService) : base(viewFactory)
+            ObjectProxy<IFriendsService> friendsService,
+            ICommunitiesDataProvider communitiesDataProvider,
+            IThumbnailCache thumbnailCache)
+            : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -120,6 +129,8 @@ namespace DCL.Chat
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.thumbnailCache = thumbnailCache;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -159,7 +170,7 @@ namespace DCL.Chat
         /// </summary>
         public bool IsUnfolded
         {
-            get => viewInstanceCreated && viewInstance.IsUnfolded;
+            get => viewInstanceCreated && viewInstance!.IsUnfolded;
 
             set
             {
@@ -227,7 +238,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus, thumbnailCache);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -236,10 +247,36 @@ namespace DCL.Chat
 
             memberListHelper.StartUpdating();
 
+            // TODO: Make all the code below async
+
             InitializeChannelsAndConversationsAsync().Forget();
 
             IsUnfolded = inputData.Unfold;
             viewInstance.Blur();
+
+            AddCommunityCoversationsAsync().Forget();
+        }
+
+        private async UniTaskVoid AddCommunityCoversationsAsync()
+        {
+            communitiesServiceCts = communitiesServiceCts.SafeRestart();
+            GetUserCommunitiesCompactResponse response = await communitiesDataProvider.GetUserCommunitiesCompactAsync(communitiesServiceCts.Token);
+
+            await UniTask.SwitchToMainThread();
+
+            Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData> newCommunities = new Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData>();
+
+            for (int i = 0; i < response.communities.Length; ++i)
+            {
+                newCommunities.Add(ChatChannel.NewCommunityChannelId(response.communities[i].id), response.communities[i]);
+            }
+
+            viewInstance.SetCommunitiesData(newCommunities);
+
+            for (int i = 0; i < response.communities.Length; ++i)
+            {
+                chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.communities[i].id), ChatChannel.ChatChannelType.COMMUNITY);
+            }
         }
 
         private void AddNearbyChannelAndSendWelcomeMessage()
@@ -277,6 +314,7 @@ namespace DCL.Chat
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
+            memberListHelper.SetView(viewInstance!);
             viewInstanceCreated = true;
         }
 
@@ -292,8 +330,9 @@ namespace DCL.Chat
             chatUserStateUpdater.Dispose();
             chatHistory.DeleteAllChannels();
             viewInstance?.RemoveAllConversations();
-            memberListHelper.StopUpdating();
+            memberListHelper.Dispose();
             chatUsersUpdateCts.SafeCancelAndDispose();
+            communitiesServiceCts.SafeCancelAndDispose();
         }
 
 #endregion
@@ -322,19 +361,21 @@ namespace DCL.Chat
             if(!IsViewReady)
                 return;
 
-            chatUserStateUpdater.CurrentConversation = channelId.Id;
+            if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
+                chatUserStateUpdater.CurrentConversation = channelId.Id;
 
             viewInstance!.CurrentChannelId = channelId;
 
-            if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+            if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
+            {
+                chatUserStateUpdater.AddConversation(channelId.Id);
+                chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
+            }
+            else
             {
                 viewInstance.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
-                return;
             }
-
-            chatUserStateUpdater.AddConversation(channelId.Id);
-            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
-            UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
         }
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
@@ -559,16 +600,29 @@ namespace DCL.Chat
 
 #region Chat History Channel Events
 
-        private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
+        private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType)
         {
-            chatUserStateUpdater.RemoveConversation(removedChannel.Id);
+            if(channelType == ChatChannel.ChatChannelType.USER)
+                chatUserStateUpdater.RemoveConversation(removedChannel.Id);
+
             viewInstance!.RemoveConversation(removedChannel);
         }
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)
         {
-            chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
-            viewInstance!.AddConversation(addedChannel);
+            if (addedChannel.ChannelType == ChatChannel.ChatChannelType.USER)
+            {
+                chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
+                viewInstance!.AddPrivateConversation(addedChannel);
+            }
+            else if (addedChannel.ChannelType == ChatChannel.ChatChannelType.NEARBY)
+            {
+                viewInstance!.AddNearbyConversation(addedChannel);
+            }
+            else if (addedChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                viewInstance!.AddCommunityConversation(addedChannel, thumbnailCache);
+            }
         }
 #endregion
 
@@ -646,7 +700,7 @@ namespace DCL.Chat
         private void GetProfilesFromParticipants(List<Profile> outProfiles)
         {
             outProfiles.Clear();
-
+// TODO with communities
             foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
             {
                 // TODO: Use new endpoint to get a bunch of profile info
