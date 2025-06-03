@@ -445,7 +445,7 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            //viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
             return base.HideAsync(ct, isInstant);
         }
 
@@ -488,7 +488,7 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
+            //viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
             viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
 
@@ -786,7 +786,7 @@ namespace DCL.Chat
                 chatMessageViewer.StartChatEntriesFadeout();
         }
 
-        private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
+        public void HandleUIInput()
         {
             if (isChatFocused)
             {
@@ -802,6 +802,23 @@ namespace DCL.Chat
                 Focus();
             }
         }
+        
+        // private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
+        // {
+        //     if (isChatFocused)
+        //     {
+        //         chatInputBox.SubmitInputField();
+        //         chatInputBox.Focus(); // Necessary in order not to hide the caret
+        //     }
+        //     else
+        //     {
+        //         // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
+        //         if (memberListView.IsVisible)
+        //             memberListView.IsVisible = false;
+        //
+        //         Focus();
+        //     }
+        // }
 
         private void OnClickUIInputPerformed(InputAction.CallbackContext callbackContext)
         {
