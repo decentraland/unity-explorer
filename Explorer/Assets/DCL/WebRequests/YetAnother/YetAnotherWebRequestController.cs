@@ -64,7 +64,7 @@ namespace DCL.WebRequests
 
                     envelope.InitializedWebRequest(identityCache, adapter);
 
-                    // TODO Timeout per request configuration: how to split it for Receiving headers and getting the body?
+                    // TODO Timeout per request configuration: how to split it for Receiving headers and getting the body? Do we ever need it?
                     // TODO analytics
 
                     HttpResponseMessage? response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
@@ -120,12 +120,12 @@ namespace DCL.WebRequests
                         delayBeforeRepeat = TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds());
 
                     // Dispose of the previous native request before repeating
-                    adapter.response?.Dispose();
+                    adapter.Dispose();
                 }
                 catch (Exception) // any other exception
                 {
                     // Dispose adapter on exception as it won't be returned to the caller
-                    adapter.Dispose();
+                    adapter?.Dispose();
                     throw;
                 }
                 finally

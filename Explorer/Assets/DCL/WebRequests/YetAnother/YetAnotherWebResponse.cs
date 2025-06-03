@@ -15,9 +15,10 @@ namespace DCL.WebRequests
     public class YetAnotherWebResponse : IWebRequestResponse, IDisposable
     {
         internal readonly HttpResponseMessage response;
-        internal readonly AdaptedDownloadContentStream downStream;
 
-        public YetAnotherWebResponse(HttpResponseMessage response, AdaptedDownloadContentStream downStream)
+        internal AdaptedDownloadContentStream downStream;
+
+        internal YetAnotherWebResponse(HttpResponseMessage response, AdaptedDownloadContentStream downStream)
         {
             this.response = response;
             this.downStream = downStream;
@@ -40,9 +41,6 @@ namespace DCL.WebRequests
 
         public async UniTask<string> GetTextAsync(CancellationToken ct)
         {
-            bool finished;
-            BufferSegment segment;
-
             StringBuilder? stringBuilder = StringBuilderPool.Get(100);
 
             // Warning: it creates a new instance of decoder
@@ -52,6 +50,8 @@ namespace DCL.WebRequests
             {
                 while (!ct.IsCancellationRequested)
                 {
+                    bool finished;
+                    BufferSegment segment;
                     (segment, finished) = await downStream.TryTakeNextAsync(ct);
 
                     if (finished)

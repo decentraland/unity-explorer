@@ -2,28 +2,32 @@
 using Best.HTTP.Shared.PlatformSupport.Memory;
 using Best.HTTP.Shared.Streams;
 using Cysharp.Threading.Tasks;
-using System;
 using System.IO;
 using System.Threading;
 
 namespace DCL.WebRequests
 {
-    public readonly struct AdaptedDownloadContentStream
+    internal struct AdaptedDownloadContentStream
     {
         private const int BUFFER_SIZE = 16 * 1024; // 16 KB
 
         // will be disposed of with the response message
         private readonly Stream httpContentStream;
 
+        /// <summary>
+        ///     Downloaded bytes increment when the content stream is read.
+        /// </summary>
+        public ulong DownloadedBytes { get; private set; }
+
         public AdaptedDownloadContentStream(Stream httpContentStream)
         {
             this.httpContentStream = httpContentStream;
+            DownloadedBytes = 0;
         }
 
         public async UniTask<(BufferSegment segment, bool finished)> TryTakeNextAsync(CancellationToken ct)
         {
             byte[] buffer = BufferPool.Get(BUFFER_SIZE, true);
-            ;
 
             int bytesRead = await httpContentStream.ReadAsync(buffer, 0, BUFFER_SIZE, ct);
 
@@ -34,6 +38,8 @@ namespace DCL.WebRequests
                 return (default(BufferSegment), true);
             }
 
+            DownloadedBytes += (ulong)bytesRead;
+
             BufferSegment segment = buffer.AsBuffer(bytesRead);
             return (segment, false);
         }
@@ -42,26 +48,14 @@ namespace DCL.WebRequests
         {
             var contentStream = new BufferSegmentStream();
 
-            int bytesRead;
-
-            byte[] buffer = BufferPool.Get(BUFFER_SIZE, true);
-            ;
-
-            try
+            while (!cancellationToken.IsCancellationRequested)
             {
-                while ((bytesRead = await httpContentStream.ReadAsync(buffer, 0, BUFFER_SIZE, cancellationToken)) > 0)
-                {
-                    BufferSegment segment = buffer.AsBuffer(bytesRead);
-                    contentStream.Write(segment);
+                (BufferSegment segment, bool finished) = await TryTakeNextAsync(cancellationToken);
 
-                    // Renew the buffer
-                    buffer = BufferPool.Get(BUFFER_SIZE, true);
-                }
-            }
-            finally
-            {
-                // Release the unused buffer back to the pool
-                BufferPool.Release(buffer);
+                if (finished)
+                    break;
+
+                contentStream.Write(segment);
             }
 
             return contentStream;

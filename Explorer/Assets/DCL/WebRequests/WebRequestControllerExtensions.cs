@@ -19,6 +19,9 @@ namespace DCL.WebRequests
 
         /// <summary>
         ///     Send the web request, awaits its execution, and disposes of its internals. Does not provide any output that can be used
+        ///     <para>
+        ///         As the output is not used, the web request can be disposed of before the response is actually read
+        ///     </para>
         /// </summary>
         /// <param name="request"></param>
         /// <param name="ct"></param>
@@ -147,7 +150,8 @@ namespace DCL.WebRequests
                 {
                     downloadStarted = true;
 
-                    // TODO Abort is not supported by HttpClient
+                    // Despite Abort is not supported by YetAnotherWebRequest, `SendAndForgetAsync` will wait for headers only and dispose of the request
+                    // so it will be the expected behavior
                     webRequest.Abort();
                 };
             }

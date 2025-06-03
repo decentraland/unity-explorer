@@ -28,7 +28,7 @@ namespace DCL.WebRequests
         internal void SetResponse(HttpResponseMessage response, AdaptedDownloadContentStream responseContentStream)
         {
             this.response = new YetAnotherWebResponse(response, responseContentStream);
-            ;
+
             Response = this.response;
             successfullyExecutedByController = true;
 
@@ -51,15 +51,17 @@ namespace DCL.WebRequests
 
         public event Action<IWebRequest>? OnDownloadStarted;
 
+        /// <summary>
+        ///     Implementation is not needed as <see cref="YetAnotherWebRequestController" /> will stop the execution on headers received
+        ///     and if no content is needed, the request will be simply disposed of
+        /// </summary>
         public void Abort()
         {
-            // TODO
         }
 
         public DateTime CreationTime { get; }
 
-        // TODO
-        public ulong DownloadedBytes => 0;
+        public ulong DownloadedBytes => response?.downStream.DownloadedBytes ?? 0;
 
         // TODO
         public ulong UploadedBytes => 0;
