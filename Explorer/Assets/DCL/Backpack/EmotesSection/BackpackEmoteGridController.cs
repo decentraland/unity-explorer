@@ -152,7 +152,7 @@ namespace DCL.Backpack.EmotesSection
                 using var _ = ListPool<IEmote>.Get(out var customOwnedEmotes);
                 customOwnedEmotes = customOwnedEmotes.EnsureNotNull();
 
-                int totalAmount = await emoteProvider.GetAsync(
+                int totalAmount = await emoteProvider.GetOwnedEmotesAsync(
                     web3IdentityCache.Identity!.Address,
                     ct,
                     new IEmoteProvider.OwnedEmotesRequestOptions(
@@ -172,7 +172,7 @@ namespace DCL.Backpack.EmotesSection
                     using var scope = ListPool<IEmote>.Get(out var embeddedEmotes);
                     embeddedEmotes = embeddedEmotes.EnsureNotNull();
 
-                    await emoteProvider.RequestPointersAsync(embeddedEmoteIds, currentBodyShape, ct, embeddedEmotes);
+                    await emoteProvider.GetEmotesAsync(embeddedEmoteIds, currentBodyShape, ct, embeddedEmotes);
 
                     IEnumerable<IEmote> filteredEmotes = embeddedEmotes;
 

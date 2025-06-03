@@ -41,7 +41,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         /// <returns>Total amount</returns>
-        UniTask<int> GetAsync(
+        UniTask<int> GetOwnedEmotesAsync(
             Web3Address userId,
             CancellationToken ct,
             OwnedEmotesRequestOptions requestOptions,
@@ -50,7 +50,7 @@ namespace DCL.AvatarRendering.Emotes
             bool needsBuilderAPISigning = false
         );
 
-        UniTask RequestPointersAsync(
+        UniTask GetEmotesAsync(
             IReadOnlyCollection<URN> emoteIds,
             BodyShape bodyShape,
             CancellationToken ct,

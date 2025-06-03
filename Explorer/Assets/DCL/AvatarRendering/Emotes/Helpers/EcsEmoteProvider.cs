@@ -29,7 +29,7 @@ namespace DCL.AvatarRendering.Emotes
             this.realmData = realmData;
         }
 
-        public async UniTask<int> GetAsync(
+        public async UniTask<int> GetOwnedEmotesAsync(
             Web3Address userId,
             CancellationToken ct,
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
@@ -91,7 +91,7 @@ namespace DCL.AvatarRendering.Emotes
             return promise.Result.Value.Asset.TotalAmount;
         }
 
-        public async UniTask RequestPointersAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)
+        public async UniTask GetEmotesAsync(IReadOnlyCollection<URN> emoteIds, BodyShape bodyShape, CancellationToken ct, List<IEmote> output)
         {
             output.Clear();
 
