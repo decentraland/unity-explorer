@@ -357,7 +357,7 @@ namespace DCL.VoiceChat
                 else if (rtcAudioSource == null)
                 {
                     // Create new RtcAudioSource
-                    rtcAudioSource = RtcAudioSource.CreateForVoiceChat(audioSource, audioFilter);
+                    rtcAudioSource = RtcAudioSource.CreateForVoiceChat(audioSource, audioFilter, (uint)newSampleRate);
                     currentMicrophoneSampleRate = newSampleRate;
 
                     // Start RtcAudioSource immediately after creation (not for pausing/unpausing)
