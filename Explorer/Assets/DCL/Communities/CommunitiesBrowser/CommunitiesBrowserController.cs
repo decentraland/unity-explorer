@@ -31,11 +31,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly WarningNotificationView warningNotificationView;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
         private CancellationTokenSource searchCancellationCts;
+        private CancellationTokenSource showErrorCts;
 
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
@@ -53,7 +54,7 @@ namespace DCL.Communities.CommunitiesBrowser
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView warningNotificationView)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -62,7 +63,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.warningNotificationView = warningNotificationView;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -95,6 +96,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
+            showErrorCts?.SafeCancelAndDispose();
         }
 
         public void Animate(int triggerId) =>
@@ -121,6 +123,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
+            showErrorCts?.SafeCancelAndDispose();
         }
 
         private void ConfigureMyCommunitiesList() =>
@@ -151,7 +154,8 @@ namespace DCL.Communities.CommunitiesBrowser
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ShowErrorNotificationAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, ct).Forget();
+                showErrorCts = showErrorCts.SafeRestart();
+                ShowErrorNotificationAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
                 ReportHub.LogError(ReportCategory.COMMUNITIES, $"{MY_COMMUNITIES_LOADING_ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
@@ -244,7 +248,8 @@ namespace DCL.Communities.CommunitiesBrowser
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ShowErrorNotificationAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, ct).Forget();
+                showErrorCts = showErrorCts.SafeRestart();
+                ShowErrorNotificationAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
                 ReportHub.LogError(ReportCategory.COMMUNITIES, $"{ALL_COMMUNITIES_LOADING_ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
@@ -319,7 +324,8 @@ namespace DCL.Communities.CommunitiesBrowser
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                ShowErrorNotificationAsync(JOIN_COMMUNITY_ERROR_MESSAGE, ct).Forget();
+                showErrorCts = showErrorCts.SafeRestart();
+                ShowErrorNotificationAsync(JOIN_COMMUNITY_ERROR_MESSAGE, showErrorCts.Token).Forget();
                 ReportHub.LogError(ReportCategory.COMMUNITIES, $"{JOIN_COMMUNITY_ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
@@ -331,12 +337,12 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
         {
-            inWorldWarningNotificationView.SetText(errorMessage);
-            inWorldWarningNotificationView.Show(ct);
+            warningNotificationView.SetText(errorMessage);
+            warningNotificationView.Show(ct);
 
             await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
 
-            inWorldWarningNotificationView.Hide(ct: ct);
+            warningNotificationView.Hide(ct: ct);
         }
     }
 }
