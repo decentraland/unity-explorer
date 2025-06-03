@@ -29,7 +29,7 @@ namespace DCL.CharacterCamera.Systems
             switch (camera.Mode)
             {
                 case CameraMode.ThirdPerson:
-                    CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
+                    CinemachineVirtualCamera tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
                     LensSettings tpcMLens = tpc.m_Lens;
                     tpcMLens.FieldOfView = 60 + fieldOfViewComponent.AdditiveFov;
                     tpc.m_Lens = tpcMLens;
