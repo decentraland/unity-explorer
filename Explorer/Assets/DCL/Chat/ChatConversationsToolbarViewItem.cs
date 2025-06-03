@@ -214,10 +214,11 @@ namespace DCL.Chat
             }
         }
 
-        private void Awake()
+        public void Initialize()
         {
             openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
-            removeButton.onClick.AddListener(() => {
+            removeButton.onClick.AddListener(() =>
+            {
                 HideTooltip(true);
                 RemoveButtonClicked?.Invoke(this);
             });
