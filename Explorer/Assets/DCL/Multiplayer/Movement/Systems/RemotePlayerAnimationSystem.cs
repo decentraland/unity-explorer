@@ -12,13 +12,14 @@ using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using System;
 using UnityEngine;
 using Utility.Animations;
 using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     [UpdateAfter(typeof(RemotePlayersMovementSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
@@ -98,7 +99,12 @@ namespace DCL.Multiplayer.Movement.Systems
             bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
                         && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON;
 
-            if (bothPointBlendsAreZero && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > RemotePlayerUtils.MOVEMENT_EPSILON)
+            bool isNotOnPlatform = intComp.Start.syncedPlatform == null
+                                   || intComp.Start.syncedPlatform.Value.EntityId == uint.MaxValue
+                                   ||intComp.End.syncedPlatform == null || intComp.End.syncedPlatform.Value.EntityId == uint.MaxValue;
+
+            if (bothPointBlendsAreZero && isNotOnPlatform
+                && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > RemotePlayerUtils.MOVEMENT_EPSILON)
                 BlendBetweenTwoZeroMovementPoints(ref anim, intComp);
             else
             {

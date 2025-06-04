@@ -113,6 +113,7 @@ namespace DCL.Multiplayer.Movement.Systems
             return new NetworkMovementMessage
             {
                 timestamp = proto.Timestamp,
+                syncTimestamp = proto.SyncedTimestamp,
                 position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
                 rotationY = proto.RotationY,
 
@@ -132,6 +133,11 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongFall = proto.IsLongFall,
                 },
                 isStunned = proto.IsStunned,
+                syncedPlatform = proto.NetworkEntity == null? null : new NetworkMovementMessage.SyncedPlatform
+                {
+                    EntityId = proto.NetworkEntity.EntityId,
+                    NetworkId = proto.NetworkEntity.NetworkId,
+                },
             };
         }
 
@@ -164,6 +170,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
         {
             movement.Timestamp = message.timestamp;
+            movement.SyncedTimestamp = message.syncTimestamp;
 
             movement.PositionX = message.position.x;
             movement.PositionY = message.position.y;
@@ -185,6 +192,13 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsStunned = message.isStunned;
 
             movement.RotationY = message.rotationY;
+
+            if (message.syncedPlatform != null)
+                movement.NetworkEntity = new Decentraland.Kernel.Comms.Rfc4.Movement.Types.NetworkEntity
+                {
+                    EntityId = message.syncedPlatform.Value.EntityId,
+                    NetworkId = message.syncedPlatform.Value.NetworkId,
+                };
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)

@@ -8,6 +8,7 @@ namespace DCL.Multiplayer.Movement
     public struct NetworkMovementMessage : IEquatable<NetworkMovementMessage>
     {
         public float timestamp;
+        public ulong syncTimestamp;
         public Vector3 position;
         public Vector3 velocity;
         public float velocitySqrMagnitude;
@@ -22,6 +23,9 @@ namespace DCL.Multiplayer.Movement
 
         public byte velocityTier;
 
+        public SyncedPlatform? syncedPlatform;
+        public Transform platform;
+
         public override string ToString() =>
             JsonUtility.ToJson(this)!;
 
@@ -29,6 +33,7 @@ namespace DCL.Multiplayer.Movement
         {
             var hashCode = new HashCode();
             hashCode.Add(timestamp);
+            hashCode.Add(syncTimestamp);
             hashCode.Add(position);
             hashCode.Add(velocity);
             hashCode.Add(velocitySqrMagnitude);
@@ -38,11 +43,13 @@ namespace DCL.Multiplayer.Movement
             hashCode.Add(isStunned);
             hashCode.Add(animState);
             hashCode.Add(velocityTier);
+            hashCode.Add(syncedPlatform);
             return hashCode.ToHashCode();
         }
 
         public bool Equals(NetworkMovementMessage other) =>
             timestamp.Equals(other.timestamp)
+            && syncTimestamp.Equals(other.syncTimestamp)
             && position.Equals(other.position)
             && velocity.Equals(other.velocity)
             && velocitySqrMagnitude.Equals(other.velocitySqrMagnitude)
@@ -55,5 +62,20 @@ namespace DCL.Multiplayer.Movement
 
         public override bool Equals(object obj) =>
             obj is NetworkMovementMessage other && Equals(other);
+
+        public struct SyncedPlatform : IEquatable<SyncedPlatform>
+        {
+            public uint EntityId;
+            public ulong NetworkId;
+
+            public bool Equals(SyncedPlatform other) =>
+                EntityId == other.EntityId && NetworkId == other.NetworkId;
+
+            public override bool Equals(object? obj) =>
+                obj is SyncedPlatform other && Equals(other);
+
+            public override int GetHashCode() =>
+                HashCode.Combine(EntityId, NetworkId);
+        }
     }
 }
