@@ -133,7 +133,7 @@ namespace DCL.Communities
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
-                    memberCount = UnityEngine.Random.Range(1, 101),
+                    membersCount = UnityEngine.Random.Range(1, 101),
                     isLive = UnityEngine.Random.Range(0, 5) == 0,
                     friends = mutualFriends.ToArray(),
                 });

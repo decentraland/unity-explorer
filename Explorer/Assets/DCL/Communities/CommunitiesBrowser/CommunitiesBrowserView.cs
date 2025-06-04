@@ -205,7 +205,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 // Change the role and increment the members amount
                 currentResults[index].role = CommunityMemberRole.member;
-                currentResults[index].memberCount++;
+                currentResults[index].membersCount++;
 
                 // Add the joined community to My Communities
                 currentMyCommunities.Add(currentResults[index]);
@@ -252,7 +252,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
-            cardView.SetMembersCount(communityData.memberCount);
+            cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);
