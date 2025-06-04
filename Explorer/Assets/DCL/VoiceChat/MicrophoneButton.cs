@@ -12,6 +12,9 @@ namespace DCL.VoiceChat
         private Image MicImageField;
 
         [field: SerializeField]
+        private GameObject MicOnIcon;
+
+        [field: SerializeField]
         private Sprite MicOnImage;
 
         [field: SerializeField]
@@ -27,6 +30,7 @@ namespace DCL.VoiceChat
         {
             MicImageField.sprite = isOn ? MicOnImage : MicOffImage;
             MicImageField.color = isOn ? MicOnColor : MicOffColor;
+            MicOnIcon.SetActive(isOn);
         }
     }
 }

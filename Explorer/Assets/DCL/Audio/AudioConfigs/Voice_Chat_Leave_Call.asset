@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Voice_Chat_Leave_Call
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: b1b683df4984e7c40802deee36cfe444, type: 3}
+  - {fileID: 8300000, guid: 2eb89b926d4bef14f8b67651a3f288eb, type: 3}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0.01

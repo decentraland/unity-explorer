@@ -1,12 +1,8 @@
-
-using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Web3;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using Utility;
 
 namespace DCL.VoiceChat
 {
@@ -39,7 +35,6 @@ namespace DCL.VoiceChat
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
             view.InCallView.ProfileView.InjectDependencies(dependencies);
 
-
             var list = new List<MicrophoneButton>
             {
                 view.OutgoingCallView.MicrophoneButton,
@@ -54,21 +49,10 @@ namespace DCL.VoiceChat
         private void OnVoiceChatStatusChanged(VoiceChatStatus status, Web3Address walletId)
         {
             if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
-                Hide();
+                view.Hide(status, walletId);
             else
-                Show();
+                view.Show(status, walletId);
 
-            view.SetActiveSection(status, walletId);
-        }
-
-        public void Show()
-        {
-            view.VoiceChatContainer.SetActive(true);
-        }
-
-        public void Hide()
-        {
-            view.VoiceChatContainer.SetActive(false);
         }
 
         private void HangUp()

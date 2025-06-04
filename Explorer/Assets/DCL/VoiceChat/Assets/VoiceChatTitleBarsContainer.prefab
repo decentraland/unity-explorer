@@ -73,9 +73,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a63b2b486ec4141f681fb2fd3f59772f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <VoiceChatCanvasGroup>k__BackingField: {fileID: 1500625878595052749}
+  VoiceChatContainer: {fileID: 0}
   InCallView: {fileID: 7720559182070351556}
   IncomingCallView: {fileID: 7130602595238643013}
   OutgoingCallView: {fileID: 8738720022471105927}
+  <MuteMicrophoneAudio>k__BackingField: {fileID: 11400000, guid: 261a78e93a10e47e48497b48dff1cad0, type: 2}
+  <UnMuteMicrophoneAudio>k__BackingField: {fileID: 11400000, guid: d99ca4a62bf3744c299beac41f2035b3, type: 2}
+  <JoinCallAudio>k__BackingField: {fileID: 11400000, guid: 40f0c59c2ab6f48e4b20c3f631bddd2f, type: 2}
+  <LeaveCallAudio>k__BackingField: {fileID: 11400000, guid: 76661e0067a37477b8b782b7056f9a18, type: 2}
 --- !u!1001 &3234945878829315382
 PrefabInstance:
   m_ObjectHideFlags: 0
