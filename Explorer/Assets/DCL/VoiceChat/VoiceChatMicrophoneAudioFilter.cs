@@ -150,7 +150,7 @@ namespace DCL.VoiceChat
             // Start background real-time processing thread
             StartRealtimeProcessingThread();
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioFilter enabled - GameObject: {gameObject.name}, Processing: {cachedEnabled}, Subscribers: {GetSubscriberCount()}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioFilter enabled - GameObject: {gameObject.name}, Processing: {cachedEnabled}, Subscribers: {GetSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
         }
 
         private void OnDisable()
@@ -165,7 +165,7 @@ namespace DCL.VoiceChat
                 audioDataQueue.Clear();
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioFilter disabled - GameObject: {gameObject.name}, LiveKit subscribers preserved ({GetSubscriberCount()}), audio queue cleared");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioFilter disabled - GameObject: {gameObject.name}, LiveKit subscribers preserved ({GetSubscriberCount()}), audio queue cleared - Stack trace: {System.Environment.StackTrace}");
         }
 
         private void OnDestroy()
@@ -219,10 +219,10 @@ namespace DCL.VoiceChat
                     // On macOS, Core Audio is very sensitive to exceptions in audio callbacks
                     // Disable processing to prevent further issues
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error on macOS: {ex.Message}. Disabling processing to prevent audio system instability.");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error on macOS: {ex.Message}. Disabling processing to prevent audio system instability. - Stack trace: {System.Environment.StackTrace}");
                     isProcessingEnabled = false;
 #else
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error: {ex.Message}");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
 #endif
                 }
             }
@@ -238,12 +238,12 @@ namespace DCL.VoiceChat
             add
             {
                 audioReadEvent += value;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber added - Total subscribers: {GetSubscriberCount()}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber added - Total subscribers: {GetSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
             }
             remove
             {
                 audioReadEvent -= value;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber removed - Total subscribers: {GetSubscriberCount()}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber removed - Total subscribers: {GetSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
                 
                 // Log stack trace when subscriber count drops to 0 to help debug unexpected unsubscriptions
                 if (GetSubscriberCount() == 0)
@@ -259,7 +259,7 @@ namespace DCL.VoiceChat
         {
             int subscriberCountBefore = GetSubscriberCount();
             audioReadEvent = null;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Cleared all AudioRead subscribers - Was: {subscriberCountBefore}, Now: 0");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Cleared all AudioRead subscribers - Was: {subscriberCountBefore}, Now: 0 - Stack trace: {System.Environment.StackTrace}");
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
@@ -272,7 +272,7 @@ namespace DCL.VoiceChat
             var config = AudioSettings.GetConfiguration();
             ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"macOS Audio Debug - Unity Config SampleRate: {config.sampleRate}Hz, " +
-                $"DSPBufferSize: {config.dspBufferSize}, OutputSampleRate: {AudioSettings.outputSampleRate}Hz");
+                $"DSPBufferSize: {config.dspBufferSize}, OutputSampleRate: {AudioSettings.outputSampleRate}Hz - Stack trace: {System.Environment.StackTrace}");
 #endif
         }
 
@@ -289,7 +289,7 @@ namespace DCL.VoiceChat
         public void SetProcessingEnabled(bool enabled)
         {
             cachedEnabled = enabled;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Audio filter processing {(enabled ? "enabled" : "disabled")} - LiveKit subscribers preserved");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Audio filter processing {(enabled ? "enabled" : "disabled")} - LiveKit subscribers preserved - Stack trace: {System.Environment.StackTrace}");
         }
 
         public void SetMicrophoneInfo(string microphoneName, int sampleRate, int bufferLengthSeconds)
@@ -304,7 +304,7 @@ namespace DCL.VoiceChat
             processingSamplesBuffer = new float[REALTIME_CHUNK_SIZE];
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, 
-                $"AudioFilter microphone info updated - Name: '{microphoneName}', SampleRate: {sampleRate}Hz, Buffer: {bufferLengthSeconds}s");
+                $"AudioFilter microphone info updated - Name: '{microphoneName}', SampleRate: {sampleRate}Hz, Buffer: {bufferLengthSeconds}s - Stack trace: {System.Environment.StackTrace}");
         }
 
         public void SetMicrophoneClip(AudioClip clip)
@@ -316,7 +316,7 @@ namespace DCL.VoiceChat
         {
             audioProcessor?.Reset();
             
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Audio processor reset - LiveKit subscribers preserved");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Audio processor reset - LiveKit subscribers preserved - Stack trace: {System.Environment.StackTrace}");
         }
 
         /// <summary>
@@ -393,7 +393,7 @@ namespace DCL.VoiceChat
                     catch (System.Exception ex)
                     {
                         ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
-                            $"Real-time audio processing error: {ex.Message}. Continuing...");
+                            $"Real-time audio processing error: {ex.Message}. Continuing... - Stack trace: {System.Environment.StackTrace}");
 
                         // Brief pause before retrying to prevent error spam
                         await UniTask.Delay(10, cancellationToken: ct);
@@ -407,7 +407,7 @@ namespace DCL.VoiceChat
             catch (System.Exception ex)
             {
                 ReportHub.LogError(ReportCategory.VOICE_CHAT,
-                    $"Real-time audio processing thread failed: {ex.Message}. Falling back to standard processing.");
+                    $"Real-time audio processing thread failed: {ex.Message}. Falling back to standard processing. - Stack trace: {System.Environment.StackTrace}");
                 useRealtimeProcessing = false;
             }
             finally
@@ -446,10 +446,10 @@ namespace DCL.VoiceChat
             {
                 // On macOS, Core Audio is very sensitive to exceptions
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Real-time audio processing error on macOS: {ex.Message}. Disabling real-time processing.");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Real-time audio processing error on macOS: {ex.Message}. Disabling real-time processing. - Stack trace: {System.Environment.StackTrace}");
                 useRealtimeProcessing = false;
 #else
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Real-time audio processing error: {ex.Message}");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Real-time audio processing error: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
 #endif
             }
         }
@@ -465,7 +465,7 @@ namespace DCL.VoiceChat
                 // Use counter-based throttling instead of time (thread-safe)
                 if (audioSentCounter % 120 == 0) // Log every 120 attempts (roughly every 2-3 seconds)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"[{source}] No LiveKit subscribers - audio data not being sent!");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"[{source}] No LiveKit subscribers - audio data not being sent! - Stack trace: {System.Environment.StackTrace}");
                 }
                 audioSentCounter++; // Still increment counter even when no subscribers
                 return;
@@ -491,7 +491,7 @@ namespace DCL.VoiceChat
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT,
                     $"[{source}] Sent audio to LiveKit - Samples: {sampleCount}, SampleRate: {sampleRate}Hz, " +
-                    $"RMS Level: {rms:F4} ({dbLevel:F1} dB), Subscribers: {GetSubscriberCount()}, Counter: {audioSentCounter}");
+                    $"RMS Level: {rms:F4} ({dbLevel:F1} dB), Subscribers: {GetSubscriberCount()}, Counter: {audioSentCounter} - Stack trace: {System.Environment.StackTrace}");
             }
         }
 

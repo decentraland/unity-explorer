@@ -31,13 +31,7 @@ namespace DCL.VoiceChat
         private float noiseFloor;
         private float noiseFloorUpdateTime;
         
-        // Thread safety for background processing
         private readonly object processingLock = new object();
-
-        /// <summary>
-        ///     Get the current noise gate status for UI feedback
-        /// </summary>
-        public bool IsGateOpen => GateSmoothing > 0.5f;
 
         /// <summary>
         ///     Get the current gain level for UI feedback
@@ -57,7 +51,7 @@ namespace DCL.VoiceChat
 
         public void Reset()
         {
-            lock (processingLock) // Thread-safe reset
+            lock (processingLock)
             {
             for (var i = 0; i < 2; i++)
             {
@@ -100,9 +94,8 @@ namespace DCL.VoiceChat
             // Use provided sampleCount or default to array length
             int actualSampleCount = sampleCount > 0 ? sampleCount : audioData.Length;
             
-            lock (processingLock) // Ensure thread safety
+            lock (processingLock)
             {
-                // Use sample-based timing - more accurate for audio processing than wall clock
                 float sampleDeltaTime = (float)actualSampleCount / sampleRate;
 
                 for (var i = 0; i < actualSampleCount; i++)
@@ -113,7 +106,7 @@ namespace DCL.VoiceChat
 
                     if (configuration.EnableNoiseReduction) { sample = ApplyNoiseReduction(sample, sampleDeltaTime); }
 
-                    if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, sampleDeltaTime); }
+                    if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, sampleDeltaTime, sampleRate); }
 
                 if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
 
@@ -219,7 +212,7 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private float ApplyNoiseGateWithHold(float sample, float deltaTime)
+        private float ApplyNoiseGateWithHold(float sample, float deltaTime, int sampleRate)
         {
             float sampleAbs = Mathf.Abs(sample);
 
@@ -267,7 +260,7 @@ namespace DCL.VoiceChat
 
             if (configuration.EnableGateFadeIn && isGateOpening && gateOpenFadeProgress < 1f)
             {
-                float fadeInSpeed = 1f / (configuration.NoiseGateAttackTime * 48000f);
+                float fadeInSpeed = 1f / (configuration.NoiseGateAttackTime * sampleRate);
                 gateOpenFadeProgress += fadeInSpeed;
                 gateOpenFadeProgress = Mathf.Clamp01(gateOpenFadeProgress);
 
