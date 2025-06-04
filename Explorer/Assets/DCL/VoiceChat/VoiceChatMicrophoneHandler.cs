@@ -307,7 +307,19 @@ namespace DCL.VoiceChat
             else
             {
                 // Non-macOS initialization
-                MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+                if (Microphone.devices.Length == 0)
+                {
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, "No microphone devices found. Cannot initialize microphone.");
+                    return;
+                }
+
+                if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range. Using default microphone. - Stack trace: {System.Environment.StackTrace}");
+                    MicrophoneName = Microphone.devices[0];
+                }
+                else
+                    MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
 
                 // Get device capabilities to determine optimal microphone sample rate
                 int minFreq, maxFreq;
