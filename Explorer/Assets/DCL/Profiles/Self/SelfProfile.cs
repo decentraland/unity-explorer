@@ -162,12 +162,8 @@ namespace DCL.Profiles.Self
         {
             profile.IsDirty = true;
 
-            bool found = world.Has<Profile>(playerEntity);
-
-            if (found)
-                world.Set(playerEntity, profile);
-            else
-                world.Add(playerEntity, profile);
+            // We assume that the profile already exists at this point, so we don't add it but update it
+            world.Set(playerEntity, profile);
         }
     }
 }
