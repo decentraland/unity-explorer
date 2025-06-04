@@ -75,6 +75,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         public void OnSceneIsCurrentChanged(bool value)
         {
+            if(sceneStateProvider.State.Value() == SceneState.Disposed) return;
+
             CheckUITransformOutOfSceneQuery(World, value);
         }
     }
