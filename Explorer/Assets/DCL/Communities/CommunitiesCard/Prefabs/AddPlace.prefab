@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 9014589530727837754}
   - component: {fileID: 828992719798038521}
   - component: {fileID: 5447653537668019572}
+  - component: {fileID: 5837556196655782512}
   m_Layer: 5
   m_Name: AddPlace
   m_TagString: Untagged
@@ -137,6 +138,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <mainButton>k__BackingField: {fileID: 828992719798038521}
+--- !u!114 &5837556196655782512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 899005320659056294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 828992719798038521}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &1632446131777901760
 GameObject:
   m_ObjectHideFlags: 0
