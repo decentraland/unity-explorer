@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.Web3;
 using System;
 using System.Threading;
@@ -19,6 +20,18 @@ namespace DCL.VoiceChat
 
         [field: SerializeField]
         public VoiceChatOutgoingCallView OutgoingCallView;
+
+        [field: SerializeField]
+        public AudioClipConfig MuteMicrophoneAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig UnMuteMicrophoneAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig JoinCallAudio { get; private set; }
+
+        [field: SerializeField]
+        public AudioClipConfig LeaveCallAudio { get; private set; }
 
         private CancellationTokenSource cts;
 

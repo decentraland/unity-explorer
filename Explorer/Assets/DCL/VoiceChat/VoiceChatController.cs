@@ -1,5 +1,6 @@
 
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Web3;
 using MVC;
 using System;
@@ -45,7 +46,7 @@ namespace DCL.VoiceChat
                 view.InCallView.MicrophoneButton,
             };
 
-            micController = new MicrophoneButtonController(list, microphoneHandler);
+            micController = new MicrophoneButtonController(list, microphoneHandler, view.MuteMicrophoneAudio, view.UnMuteMicrophoneAudio);
 
             this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
         }
@@ -72,6 +73,7 @@ namespace DCL.VoiceChat
 
         private void HangUp()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.LeaveCallAudio);
             voiceChatCallStatusService.StopCall();
         }
 
