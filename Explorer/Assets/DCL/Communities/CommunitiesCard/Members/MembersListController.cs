@@ -363,8 +363,11 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             SectionFetchData membersData = currentSectionFetchData;
 
-            Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct)
-                                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<GetCommunityMembersResponse> response = currentSection == MembersListView.MemberListSections.ALL
+                ? await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
+                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES)
+                : await communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
+                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!response.Success)
             {

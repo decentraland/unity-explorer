@@ -88,13 +88,11 @@ namespace DCL.Communities
             List<string> worlds, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
-            const int BANNED_MEMBERS = 5;
-
-            int totalMembers = areBanned ? BANNED_MEMBERS : communityData.memberCount;
+            int totalMembers = communityData.memberCount;
 
             List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
 
@@ -104,9 +102,6 @@ namespace DCL.Communities
                 {
                     GetCommunityMembersResponse.MemberData member = GetRandomMember();
 
-                    if (areBanned)
-                        member.role = CommunityMemberRole.none;
-
                     paginatedData.Add(member);
                 }
             }
@@ -114,6 +109,33 @@ namespace DCL.Communities
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
             {
                 totalAmount = totalMembers,
+                members = paginatedData.ToArray(),
+            };
+
+            return result;
+        }
+
+        public async UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            const int BANNED_MEMBERS = 5;
+
+            List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
+
+            for (var i = 0; i < BANNED_MEMBERS; i++)
+            {
+                if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
+                {
+                    GetCommunityMembersResponse.MemberData member = GetRandomMember();
+
+                    member.role = CommunityMemberRole.none;
+
+                    paginatedData.Add(member);
+                }
+            }
+
+            GetCommunityMembersResponse result = new GetCommunityMembersResponse
+            {
+                totalAmount = BANNED_MEMBERS,
                 members = paginatedData.ToArray(),
             };
 
