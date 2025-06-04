@@ -130,10 +130,7 @@ namespace ECS.StreamableLoading.Common
         {
             if (Entity == Entity.Null || !world.IsAlive(Entity)) return;
 
-            // Avoids ObjectDisposedException on already-disposed TokenSources
-            if(LoadingIntention.CancellationTokenSource.Token.CanBeCanceled)
-                LoadingIntention.CancellationTokenSource.Cancel();
-
+            LoadingIntention.CancellationTokenSource.Cancel();
             DestroyEntity(world);
         }
 

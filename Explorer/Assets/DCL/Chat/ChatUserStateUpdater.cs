@@ -199,9 +199,6 @@ namespace DCL.Chat
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
-
-            if (!userBlockingCacheProxy.Configured) return;
-
             var userId = participant.Identity;
 
             switch (update)

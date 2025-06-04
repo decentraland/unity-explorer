@@ -75,7 +75,7 @@ namespace ECS.SceneLifeCycle
             ct.ThrowIfCancellationRequested();
 
             //There is a lingering promise we need to remove, and add the DeleteEntityIntention to make the standard unload flow.
-            world.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
+            world!.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             world.Add<DeleteEntityIntention>(entity);
 
             //We wait until scene is fully disposed
@@ -93,9 +93,9 @@ namespace ECS.SceneLifeCycle
                 world.Query(in new QueryDescription().WithAll<RealmComponent>(),
                     (ref StaticScenePointers staticScenePointers) => { staticScenePointers.Promise = null; });
 
-                await WaitUntilNewSceneIsFullyLoadedAsync();
-
                 Resources.UnloadUnusedAssets();
+
+                await WaitUntilNewSceneIsFullyLoadedAsync();
             }
 
             return;
