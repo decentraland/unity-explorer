@@ -9,6 +9,7 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -31,7 +32,7 @@ namespace DCL.VoiceChat
         private CancellationTokenSource cts;
         private bool isMediaOpen;
         private bool pendingTrackPublish = false;
-        
+
         private readonly Dictionary<string, WeakReference<IAudioStream>> activeStreams = new();
 
         private static string GetStreamKey(string participantIdentity, string trackSid) => $"{participantIdentity}:{trackSid}";
@@ -166,15 +167,15 @@ namespace DCL.VoiceChat
         private void OnRtcAudioSourceReconfigured(RtcAudioSource newRtcAudioSource)
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource reconfigured - updating track if published");
-            
+
             // If we have an active track, we need to republish with the new RtcAudioSource
             if (microphoneTrack != null && isMediaOpen && cts != null && !cts.Token.IsCancellationRequested)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Republishing track with reconfigured RtcAudioSource");
-                
+
                 // Unpublish the old track
                 voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
-                
+
                 // Publish new track with reconfigured RtcAudioSource
                 TryPublishTrack(cts.Token);
             }
@@ -184,7 +185,7 @@ namespace DCL.VoiceChat
         {
             // Get RtcAudioSource from MicrophoneHandler (single source of truth)
             RtcAudioSource rtcAudioSource = microphoneHandler.RtcAudioSource;
-            
+
             if (rtcAudioSource == null)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot publish track: RtcAudioSource is null. Microphone may not be initialized yet.");
@@ -261,7 +262,7 @@ namespace DCL.VoiceChat
 
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed += OnTrackUnsubscribed;
-            
+
             combinedAudioSource.gameObject.SetActive(true);
             combinedAudioSource.Play();
         }
