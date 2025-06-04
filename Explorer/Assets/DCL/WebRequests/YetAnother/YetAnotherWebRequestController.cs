@@ -71,7 +71,7 @@ namespace DCL.WebRequests
 
                     // HttpClient will not throw an exception for non-success status codes, so we need to throw an exception manually
                     if (!response.IsSuccessStatusCode)
-                        throw new HttpRequestException(response.ReasonPhrase);
+                        throw new HttpRequestException($"{nativeRequest.RequestUri}, {(int)response.StatusCode}: {response.ReasonPhrase}");
 
                     Stream? stream = await response.Content.ReadAsStreamAsync();
 
