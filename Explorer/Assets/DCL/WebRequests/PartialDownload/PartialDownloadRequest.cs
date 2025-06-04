@@ -167,11 +167,12 @@ namespace DCL.WebRequests
                 {
                     (BufferSegment segment, bool finished) = await downStream.TryTakeNextAsync(ct);
 
+                    if (segment.Count > 0)
+                        if (!partialStream!.TryAppend(uri, segment, loggingContext))
+                            throw CreateException($"{nameof(Http2PartialDownloadDataStream.TryAppend)} failed");
+
                     if (finished)
                         break;
-
-                    if (!partialStream!.TryAppend(uri, segment, loggingContext))
-                        throw CreateException($"{nameof(Http2PartialDownloadDataStream.TryAppend)} failed");
                 }
 
                 ct.ThrowIfCancellationRequested();

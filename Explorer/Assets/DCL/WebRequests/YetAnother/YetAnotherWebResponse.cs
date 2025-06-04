@@ -92,6 +92,9 @@ namespace DCL.WebRequests
         public async UniTask<Stream> GetCompleteStreamAsync(CancellationToken ct) =>
             await downStream.GetCompleteContentStreamAsync(ct);
 
+        public UniTask<(BufferSegment segment, bool finished)> TryTakeNextDataChunkAsync(CancellationToken ct) =>
+            downStream.TryTakeNextAsync(ct);
+
         public string? GetHeader(string headerName) =>
             response.Headers.TryGetValues(headerName, out IEnumerable<string>? values) ? values.First() :
             response.Content.Headers.TryGetValues(headerName, out values) ? values.First() : null;

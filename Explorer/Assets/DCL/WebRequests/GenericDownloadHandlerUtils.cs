@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -189,34 +190,52 @@ namespace DCL.WebRequests
                         ProcessSegments(http2Req.Response.DownStream);
 
                     break;
+
+                    void ProcessSegments(DownloadContentStream stream)
+                    {
+                        ulong offsetFromStart = 0;
+
+                        while (stream.TryTake(out BufferSegment segment))
+                            offsetFromStart = ProcessSegment(segment, offsetFromStart);
+                    }
+                case HttpRequestMessage:
+                    ulong offsetFromStart = 0;
+
+                    while (true)
+                    {
+                        (BufferSegment segment, bool finished) segment = await ((YetAnotherWebResponse)sentRequest.Response).TryTakeNextDataChunkAsync(ct);
+
+                        if (segment.segment.Count > 0)
+                            offsetFromStart = ProcessSegment(segment.segment, offsetFromStart);
+
+                        if (segment.finished)
+                            break;
+                    }
+
+                    break;
             }
 
             return context;
 
-            unsafe void ProcessSegments(DownloadContentStream stream)
+            unsafe ulong ProcessSegment(BufferSegment segment, ulong offsetFromStart)
             {
-                ulong offsetFromStart = 0;
-
-                while (stream.TryTake(out BufferSegment segment))
+                // Convert segment to native array
+                fixed (byte* segmentPtr = segment.Data)
                 {
-                    // Convert segment to native array
-                    fixed (byte* segmentPtr = segment.Data)
-                    {
-                        void* ptr = segmentPtr + segment.Offset;
-                        NativeArray<byte> nativeArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, segment.Count, Allocator.None);
+                    void* ptr = segmentPtr + segment.Offset;
+                    NativeArray<byte> nativeArray = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, segment.Count, Allocator.None);
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                        NativeArrayUnsafeUtility.SetAtomicSafetyHandle(
-                            ref nativeArray,
-                            AtomicSafetyHandle.Create()
-                        );
+                    NativeArrayUnsafeUtility.SetAtomicSafetyHandle(
+                        ref nativeArray,
+                        AtomicSafetyHandle.Create()
+                    );
 #endif
 
-                        transformChunk(context, nativeArray.AsReadOnly(), offsetFromStart);
-                    }
-
-                    offsetFromStart += (ulong)segment.Count;
+                    transformChunk(context, nativeArray.AsReadOnly(), offsetFromStart);
                 }
+
+                return offsetFromStart + (ulong)segment.Count;
             }
         }
 

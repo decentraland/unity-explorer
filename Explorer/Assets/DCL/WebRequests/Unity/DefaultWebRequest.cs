@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Best.HTTP.Shared.PlatformSupport.Memory;
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -104,6 +105,9 @@ namespace DCL.WebRequests
                     return UniTask.FromResult<Stream>(new UnmanagedMemoryStream(dataPtr, nativeData.Length, nativeData.Length, FileAccess.Read));
                 }
             }
+
+            public UniTask<(BufferSegment segment, bool finished)> TryTakeNextDataChunkAsync(CancellationToken ct) =>
+                throw new NotImplementedException();
 
             public string? GetHeader(string headerName) =>
                 unityWebRequest.GetResponseHeader(headerName);
