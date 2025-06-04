@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
     {
         private readonly World globalWorld;
         private readonly ObjectProxy<DCLInput> inputProxy;
-        private InputAction inputAction;
+        private InputAction inputPoint;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private Vector2 previousPosition = Vector2.zero;
         private Vector2 deltaPos;
@@ -48,6 +48,8 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
 
+            inputPoint = inputProxy.StrictObject.Camera.Point;
+
             UpdatePointerInfo(Vector2.zero);
         }
 
@@ -55,12 +57,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            if (!inputProxy.Configured) return;
-
-            if (inputAction == null)
-                inputAction = inputProxy.StrictObject.Camera.Point;
-            else
-                UpdatePointerInfo(inputAction.ReadValue<Vector2>());
+            UpdatePointerInfo(inputPoint.ReadValue<Vector2>());
         }
 
         private void UpdatePointerInfo(Vector2 pointerPos)

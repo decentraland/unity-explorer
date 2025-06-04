@@ -169,8 +169,10 @@ namespace Global
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new Profiler();
-
             var container = new StaticContainer();
+            var dclInput = new DCLInput();
+
+            container.InputProxy.SetObject(dclInput);
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;
