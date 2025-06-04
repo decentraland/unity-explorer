@@ -17,7 +17,11 @@ namespace MVC
         {
             int orderInLayer = popupStack.Count * 2;
             popupStack.Add(controller);
-
+            
+            foreach (var persistant in persistentStack)
+                if (persistant.State == ControllerState.ViewFocused)
+                    persistant.Blur();
+            
             return new PopupPushInfo(
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer),
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer - 1),
@@ -68,6 +72,11 @@ namespace MVC
         public PopupPopInfo PopPopup(IController controller)
         {
             popupStack.Remove(controller);
+
+            foreach (var persistant in persistentStack)
+                if (persistant.State == ControllerState.ViewBlurred)
+                    persistant.Focus();
+            
             return new PopupPopInfo(
                 new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, ((popupStack.Count - 1) * 2) - 1),
                 TopMostPopup);

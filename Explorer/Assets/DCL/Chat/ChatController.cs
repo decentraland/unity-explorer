@@ -254,6 +254,16 @@ namespace DCL.Chat
             viewInstance.Blur();
         }
 
+        protected override void OnBlur()
+        {
+            viewInstance?.UnsubscribeToSubmitEvent();
+        }
+
+        protected override void OnFocus()
+        {
+            viewInstance?.SubscribeToSubmitEvent();
+        }
+
         private void AddNearbyChannelAndSendWelcomeMessage()
         {
             chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
@@ -711,7 +721,6 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
         }
 
         private void OnViewDeleteChatHistoryRequested()
@@ -762,17 +771,6 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
-        }
-
-        private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
-        {
-            // check if we don't have other things opened
-            // like popup or something else?
-            if (TryGetView(out var view))
-            {
-                view.HandleUIInput();
-            }
         }
     }
 }
