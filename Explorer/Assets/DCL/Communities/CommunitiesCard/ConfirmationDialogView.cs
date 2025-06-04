@@ -47,6 +47,16 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject quitImage { get; set; }
         [field: SerializeField] private Image rimImage { get; set; }
 
+        private readonly UniTask[] closeTasks = new UniTask[3];
+
+        private UniTask[] GetCloseTasks(CancellationToken ct)
+        {
+            closeTasks[0] = cancelButton.OnClickAsync(ct);
+            closeTasks[1] = backgroundButton.OnClickAsync(ct);
+            closeTasks[2] = confirmButton.OnClickAsync(ct);
+            return closeTasks;
+        }
+
         public async UniTask<ConfirmationResult> ShowConfirmationDialogAsync(DialogData dialogData,
             CancellationToken ct = default)
         {
@@ -65,7 +75,7 @@ namespace DCL.Communities.CommunitiesCard
             viewCanvasGroup.interactable = true;
             viewCanvasGroup.blocksRaycasts = true;
 
-            int index = await UniTask.WhenAny(cancelButton.OnClickAsync(ct), backgroundButton.OnClickAsync(ct), confirmButton.OnClickAsync(ct));
+            int index = await UniTask.WhenAny(GetCloseTasks(ct));
 
             await viewCanvasGroup.DOFade(0f, fadeDuration).ToUniTask(cancellationToken: ct);
             viewCanvasGroup.interactable = false;

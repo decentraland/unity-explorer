@@ -68,6 +68,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void OnDisable()
         {
+            ToggleSection(MemberListSections.ALL);
             confirmationDialogCts.SafeCancelAndDispose();
         }
 
