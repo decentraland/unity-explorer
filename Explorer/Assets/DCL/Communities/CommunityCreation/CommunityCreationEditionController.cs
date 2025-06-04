@@ -29,8 +29,8 @@ namespace DCL.Communities.CommunityCreation
 
         public override void Dispose()
         {
-            viewInstance.GetNameButtonClicked -= GoToGetNameLink;
-            base.Dispose();
+            if (viewInstance)
+                viewInstance.GetNameButtonClicked -= GoToGetNameLink;
         }
 
         protected override void OnBeforeViewShow() =>
