@@ -3,11 +3,13 @@ using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -35,6 +37,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ViewDependencies viewDependencies;
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
+        private readonly ISelfProfile selfProfile;
         private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
         private readonly CommunityMemberRole[] rolesIncludedForMyCommunities = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member };
         private readonly CommunityMemberRole[] rolesIncludedForGenericSearch = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none };
@@ -62,7 +65,8 @@ namespace DCL.Communities.CommunitiesBrowser
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             WarningNotificationView warningNotificationView,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ISelfProfile selfProfile)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -73,6 +77,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.viewDependencies = viewDependencies;
             this.warningNotificationView = warningNotificationView;
             this.mvcManager = mvcManager;
+            this.selfProfile = selfProfile;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();

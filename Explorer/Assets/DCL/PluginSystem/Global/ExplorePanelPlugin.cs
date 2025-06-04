@@ -395,7 +395,8 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 viewDependencies,
                 explorePanelView.WarningNotificationView,
-                mvcManager);
+                mvcManager,
+                selfProfile);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
