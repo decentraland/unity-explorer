@@ -145,6 +145,7 @@ namespace DCL.Communities.CommunitiesCard
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             membersListController?.Reset();
+            placesSectionController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>

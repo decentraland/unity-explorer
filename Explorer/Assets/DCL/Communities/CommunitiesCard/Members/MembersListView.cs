@@ -11,7 +11,7 @@ using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MembersListView : MonoBehaviour, IViewWithGlobalDependencies
+    public class MembersListView : MonoBehaviour, IViewWithGlobalDependencies, ICommunityFetchingView
     {
         public enum MemberListSections
         {
@@ -172,6 +172,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             loopGrid.SetListItemCount(getCurrentSectionFetchData().members.Count, false);
             loopGrid.RefreshAllShownItem();
         }
+
+        public void SetEmptyStateActive(bool active) { }
 
         [Serializable]
         public struct MemberListSectionMapping

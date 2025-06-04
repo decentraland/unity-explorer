@@ -5,13 +5,14 @@ using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
-    public class PlacesSectionView : MonoBehaviour
+    public class PlacesSectionView : MonoBehaviour, ICommunityFetchingView
     {
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const int ADD_PLACE_PREFAB_INDEX = 0;
         private const int PLACE_PREFAB_INDEX = 1;
 
         [field: SerializeField] private LoopGridView loopGrid { get; set; }
+        [field: SerializeField] private GameObject emptyState { get; set; }
 
         public event Action? NewDataRequested;
         public event Action? AddPlaceRequested;
@@ -27,6 +28,11 @@ namespace DCL.Communities.CommunitiesCard.Places
         private bool canModify;
 
         public void SetActive(bool active) => gameObject.SetActive(active);
+
+        public void SetEmptyStateActive(bool active)
+        {
+            emptyState.SetActive(active);
+        }
 
         public void SetCanModify(bool canModify)
         {
