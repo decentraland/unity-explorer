@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -14,6 +15,8 @@ namespace DCL.Communities
         private readonly IWebRequestController webRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IDecentralandUrlsSource urlsSource;
+
+        private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
 
         public CommunitiesDataProvider(
             ICommunitiesDataProvider fakeDataProvider,
@@ -30,8 +33,15 @@ namespace DCL.Communities
         public UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
             fakeDataProvider.GetCommunityAsync(communityId, ct);
 
-        public UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetUserCommunitiesAsync(userId, name, memberRolesIncluded, pageNumber, elementsPerPage, ct);
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/communities?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+
+            GetUserCommunitiesResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                                  .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
+
+            return creditsProgramProgressResponse;
+        }
 
         public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetUserLandsAsync(userId, pageNumber, elementsPerPage, ct);
