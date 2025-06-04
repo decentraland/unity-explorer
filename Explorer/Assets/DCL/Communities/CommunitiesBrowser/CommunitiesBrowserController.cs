@@ -38,9 +38,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
-        private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
-        private readonly CommunityMemberRole[] rolesIncludedForMyCommunities = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member };
-        private readonly CommunityMemberRole[] rolesIncludedForGenericSearch = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none };
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
