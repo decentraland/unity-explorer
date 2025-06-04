@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Profiles;
 using MVC;
 using System.Threading;
 
@@ -34,7 +35,7 @@ namespace DCL.Communities.CommunityCreation
         }
 
         protected override void OnBeforeViewShow() =>
-            viewInstance.SetAsClaimedName(inputData.HasClaimedName);
+            viewInstance.SetAsClaimedName(inputData.CanCreateCommunities);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(viewInstance!.backgroundCloseButton.OnClickAsync(ct), viewInstance!.cancelButton.OnClickAsync(ct));

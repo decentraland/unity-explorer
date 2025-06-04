@@ -3,9 +3,11 @@ using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
+using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -38,6 +40,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
+        private readonly INftNamesProvider nftNamesProvider;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -63,7 +66,8 @@ namespace DCL.Communities.CommunitiesBrowser
             ViewDependencies viewDependencies,
             WarningNotificationView warningNotificationView,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            INftNamesProvider nftNamesProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -75,6 +79,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.warningNotificationView = warningNotificationView;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
+            this.nftNamesProvider = nftNamesProvider;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -361,11 +366,18 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid CreateCommunityAsync(CancellationToken ct)
         {
+            var canCreate = false;
             var ownProfile = await selfProfile.ProfileAsync(ct);
+
+            if (ownProfile != null)
+            {
+                INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1, ct);
+                canCreate = names.TotalAmount > 0;
+            }
 
             mvcManager.ShowAsync(
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
-                    hasClaimedName: ownProfile is { HasClaimedName: true },
+                    canCreateCommunities: canCreate,
                     communityId: string.Empty)), ct).Forget();
         }
     }

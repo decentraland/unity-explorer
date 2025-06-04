@@ -118,6 +118,7 @@ namespace DCL.PluginSystem.Global
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IProfileChangesBus profileChangesBus;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly INftNamesProvider nftNamesProvider;
 
         private readonly bool includeCameraReel;
         private readonly bool includeCommunities;
@@ -187,7 +188,8 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
-            ICommunitiesDataProvider communitiesDataProvider)
+            ICommunitiesDataProvider communitiesDataProvider,
+            INftNamesProvider nftNamesProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -242,6 +244,7 @@ namespace DCL.PluginSystem.Global
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.nftNamesProvider = nftNamesProvider;
         }
 
         public void Dispose()
@@ -396,7 +399,8 @@ namespace DCL.PluginSystem.Global
                 viewDependencies,
                 explorePanelView.WarningNotificationView,
                 mvcManager,
-                selfProfile);
+                selfProfile,
+                nftNamesProvider);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,

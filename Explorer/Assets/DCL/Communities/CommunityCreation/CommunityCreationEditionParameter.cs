@@ -2,12 +2,12 @@ namespace DCL.Communities.CommunityCreation
 {
     public struct CommunityCreationEditionParameter
     {
-        public readonly bool HasClaimedName;
+        public readonly bool CanCreateCommunities;
         public readonly string CommunityId;
 
-        public CommunityCreationEditionParameter(bool hasClaimedName, string communityId)
+        public CommunityCreationEditionParameter(bool canCreateCommunities, string communityId)
         {
-            HasClaimedName = hasClaimedName;
+            CanCreateCommunities = canCreateCommunities;
             CommunityId = communityId;
         }
     }
