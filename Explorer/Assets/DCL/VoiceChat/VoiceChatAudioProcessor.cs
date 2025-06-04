@@ -84,33 +84,30 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
-        ///     Process audio samples with noise reduction and other effects
+        ///     Process audio samples using spans for allocation-free processing
         ///     Thread-safe for real-time background processing
         /// </summary>
-        public void ProcessAudio(float[] audioData, int sampleRate, int sampleCount = -1)
+        public void ProcessAudio(Span<float> audioData, int sampleRate)
         {
-            if (audioData == null || audioData.Length == 0) return;
-
-            // Use provided sampleCount or default to array length
-            int actualSampleCount = sampleCount > 0 ? sampleCount : audioData.Length;
+            if (audioData.Length == 0) return;
             
             lock (processingLock)
             {
-                float sampleDeltaTime = (float)actualSampleCount / sampleRate;
+                float sampleDeltaTime = (float)audioData.Length / sampleRate;
 
-                for (var i = 0; i < actualSampleCount; i++)
-            {
-                float sample = audioData[i];
+                for (var i = 0; i < audioData.Length; i++)
+                {
+                    float sample = audioData[i];
 
-                if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
+                    if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
 
                     if (configuration.EnableNoiseReduction) { sample = ApplyNoiseReduction(sample, sampleDeltaTime); }
 
                     if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, sampleDeltaTime, sampleRate); }
 
-                if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
+                    if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
 
-                audioData[i] = Mathf.Clamp(sample, -1f, 1f);
+                    audioData[i] = Mathf.Clamp(sample, -1f, 1f);
                 }
             }
         }
