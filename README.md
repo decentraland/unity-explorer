@@ -46,13 +46,7 @@ Unity Explorer is the official desktop client implementation for Decentraland 2.
    git clone https://github.com/decentraland/unity-explorer.git
    ```
 
-2. Install and update the submodules:
-   ```
-   git submodule update --init
-   git submodule update .
-   ```
-
-3. Open the project in Unity
+2. Open the project in Unity
 
 
 ## 🎮 Quick Start
