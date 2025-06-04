@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
 using DCL.Communities.CommunityCreation;
 using MVC;
 using System;
@@ -14,16 +15,22 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWebBrowser webBrowser;
+
+        private CommunityCreationEditionController? communityCreationEditionController;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            IWebBrowser webBrowser)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
+            this.webBrowser = webBrowser;
         }
 
         public void Dispose()
         {
+            communityCreationEditionController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -34,7 +41,8 @@ namespace DCL.PluginSystem.Global
         {
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
-            mvcManager.RegisterController(new CommunityCreationEditionController(communityCreationEditionViewFactoryMethod));
+            communityCreationEditionController = new CommunityCreationEditionController(communityCreationEditionViewFactoryMethod, webBrowser);
+            mvcManager.RegisterController(communityCreationEditionController);
         }
     }
 

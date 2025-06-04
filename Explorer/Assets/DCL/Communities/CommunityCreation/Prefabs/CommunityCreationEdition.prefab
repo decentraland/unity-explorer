@@ -241,7 +241,10 @@ MonoBehaviour:
   backgroundCloseButton: {fileID: 6113321632732672044}
   cancelButton: {fileID: 5455405486749098612}
   getNamePanel: {fileID: 7715970416886079361}
+  getNamePanelDescriptionText: {fileID: 3152901255718515722}
+  getNameButton: {fileID: 4703426438053234353}
   creationPanel: {fileID: 7863611624615513122}
+  clickOnLinksAudio: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &1501630461376916409
 GameObject:
   m_ObjectHideFlags: 0
@@ -495,9 +498,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "NAMEs are unique Decentraland usernames that come with a World, the ability
-    to create Communities, and 100 Voting Power in the DAO.  \L\LGet your own for
-    the full Decentraland experience!"
+  m_text: "NAMEs are unique Decentraland usernames that come with a <color=#FF2D55><b><u><link=WORLD_LINK_ID>World</link></u></b></color>,
+    the ability to create Communities, and 100 Voting Power in the DAO.  \L\LGet
+    your own for the full Decentraland experience!"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
@@ -992,6 +995,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+--- !u!114 &4703426438053234353 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 31746976412255473, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+  m_PrefabInstance: {fileID: 4698702296377639488}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7707160166464264095 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}

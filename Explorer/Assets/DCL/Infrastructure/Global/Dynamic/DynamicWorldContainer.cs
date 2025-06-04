@@ -946,7 +946,7 @@ namespace Global.Dynamic
             }
 
             if (includeCommunities)
-                globalPlugins.Add(new CommunitiesPlugin(mvcManager, assetsProvisioner));
+                globalPlugins.Add(new CommunitiesPlugin(mvcManager, assetsProvisioner, webBrowser));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
