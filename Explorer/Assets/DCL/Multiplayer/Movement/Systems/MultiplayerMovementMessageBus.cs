@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.SDKComponents.Tween.Playground;
 using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
@@ -27,17 +28,19 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         private readonly World globalWorld;
+        private readonly INtpTimeService ntpTimeService;
 
         private NetworkMessageEncoder messageEncoder;
 
         private bool isDisposed;
         private IMultiplayerMovementSettings settingsValue;
 
-        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld)
+        public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, World globalWorld, INtpTimeService ntpTimeService)
         {
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
             this.globalWorld = globalWorld;
+            this.ntpTimeService = ntpTimeService;
 
             this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnOldSchemaMessageReceived);
@@ -211,6 +214,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             TryEnqueue(@for, fullMovementMessage);
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
+            ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Latency from {@for} - {ntpTimeService.ServerTimeMs - fullMovementMessage.syncTimestamp}");
         }
 
         private void TryEnqueue(string walletId, NetworkMovementMessage fullMovementMessage)
