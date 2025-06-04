@@ -6,14 +6,12 @@ namespace DCL.Communities
     [Serializable]
     public class GetUserCommunitiesResponse
     {
-        [Serializable]
-        public struct FriendInCommunity
-        {
-            public string id;
-            public string name;
-            public string profilePictureUrl;
-        }
+        public GetUserCommunitiesData data;
+    }
 
+    [Serializable]
+    public class GetUserCommunitiesData
+    {
         [Serializable]
         public class CommunityData
         {
@@ -21,7 +19,7 @@ namespace DCL.Communities
             public string[] thumbnails;
             public string name;
             public string description;
-            public string ownerId;
+            public string ownerAddress;
             public int memberCount;
             public bool isLive;
             public CommunityPrivacy privacy;
@@ -29,9 +27,19 @@ namespace DCL.Communities
             public FriendInCommunity[] friends;
         }
 
-        public CommunityData[] communities;
-        public int totalAmount;
+        [Serializable]
+        public struct FriendInCommunity
+        {
+            public string address;
+            public string name;
+            public string profilePictureUrl;
+        }
+
+        public CommunityData[] results;
+        public int total;
     }
+
+
 }
 
 

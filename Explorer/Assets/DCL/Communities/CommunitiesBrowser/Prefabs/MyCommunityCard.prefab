@@ -312,6 +312,7 @@ MonoBehaviour:
   communityThumbnail: {fileID: 5359017888257299776}
   communityLiveMark: {fileID: 4697007145502245620}
   mainButton: {fileID: 322440660326183502}
+  defaultThumbnailSprite: {fileID: 21300000, guid: 2b752416b286d4fc5b1428a469c85712, type: 3}
 --- !u!1 &3958030276339269872
 GameObject:
   m_ObjectHideFlags: 0
@@ -516,7 +517,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
