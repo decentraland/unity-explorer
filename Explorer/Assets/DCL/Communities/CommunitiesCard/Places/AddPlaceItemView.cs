@@ -14,5 +14,11 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke());
         }
+
+        public void SubscribeToInteraction(Action mainButtonClicked)
+        {
+            MainButtonClicked = null;
+            MainButtonClicked = mainButtonClicked;
+        }
     }
 }

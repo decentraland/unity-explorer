@@ -53,7 +53,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private float scrollViewHeight;
         private MemberListSections currentSection;
         private ViewDependencies viewDependencies;
-        private Func<SectionFetchData> getCurrentSectionFetchData;
+        private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData;
         private CancellationTokenSource confirmationDialogCts = new ();
 
         private void Awake()
@@ -140,7 +140,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
         }
 
-        public void InitGrid(Func<SectionFetchData> currentSectionDataFunc)
+        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getCurrentSectionFetchData = currentSectionDataFunc;
@@ -151,7 +151,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
 
-            SectionFetchData membersData = getCurrentSectionFetchData();
+            SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
             elementView.InjectDependencies(viewDependencies);
             elementView.Configure(membersData.members[index], currentSection);

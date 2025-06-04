@@ -8,6 +8,9 @@ namespace DCL.Communities.CommunitiesCard.Places
     {
         private readonly PlacesSectionView view;
 
+        private CancellationToken cancellationToken;
+        private bool isFetching;
+
         public PlacesSectionController(PlacesSectionView view)
         {
             this.view = view;
@@ -16,6 +19,13 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void Dispose()
         {
             throw new NotImplementedException();
+        }
+
+        private void OnNewDataRequested()
+        {
+            if (isFetching) return;
+
+            FetchNewDataAsync(cancellationToken).Forget();
         }
 
         public void ShowPlaces(CommunityData communityData, CancellationToken token)

@@ -50,14 +50,14 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly GenericContextMenuElement banUserContextMenuElement;
         private readonly GenericContextMenuElement communityOptionsSeparatorContextMenuElement;
 
-        private readonly SectionFetchData allMembersFetchData = new (PAGE_SIZE);
-        private readonly SectionFetchData bannedMembersFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<MemberData> allMembersFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<MemberData> bannedMembersFetchData = new (PAGE_SIZE);
 
         private GetCommunityResponse.CommunityData? communityData = null;
         private CancellationToken cancellationToken;
         private bool isFetching;
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
-        private SectionFetchData currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
+        private SectionFetchData<MemberData> currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
 
         private MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
@@ -146,7 +146,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 currentSection = section;
 
-                SectionFetchData sectionData = currentSectionFetchData;
+                SectionFetchData<MemberData> sectionData = currentSectionFetchData;
 
                 if (sectionData.pageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
@@ -348,7 +348,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             isFetching = true;
 
-            SectionFetchData membersData = currentSectionFetchData;
+            SectionFetchData<MemberData> membersData = currentSectionFetchData;
 
             membersData.pageNumber++;
             await FetchDataAsync(ct);
@@ -361,7 +361,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private async UniTask FetchDataAsync(CancellationToken ct)
         {
-            SectionFetchData membersData = currentSectionFetchData;
+            SectionFetchData<MemberData> membersData = currentSectionFetchData;
 
             Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct)
                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);

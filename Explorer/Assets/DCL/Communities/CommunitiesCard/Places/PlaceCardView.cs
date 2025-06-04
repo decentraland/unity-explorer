@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -35,12 +36,57 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
 
-        public event Action<bool> LikeToggleChanged;
-        public event Action<bool> DislikeToggleChanged;
-        public event Action<bool> FavoriteToggleChanged;
-        public event Action ShareButtonClicked;
-        public event Action InfoButtonClicked;
-        public event Action JumpInButtonClicked;
+        private PlaceInfo currentPlaceInfo;
+
+        public event Action<PlaceInfo, bool> LikeToggleChanged;
+        public event Action<PlaceInfo, bool> DislikeToggleChanged;
+        public event Action<PlaceInfo, bool> FavoriteToggleChanged;
+        public event Action<PlaceInfo> ShareButtonClicked;
+        public event Action<PlaceInfo> InfoButtonClicked;
+        public event Action<PlaceInfo> JumpInButtonClicked;
+
+        private void Awake()
+        {
+            originalHeaderSizeDelta = headerContainer.sizeDelta;
+            originalFooterSizeDelta = footerContainer.sizeDelta;
+
+            likeToggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value));
+            dislikeToggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value));
+            favoriteToggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value));
+            shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo));
+            infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo));
+            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
+        }
+
+        private void OnEnable() =>
+            PlayHoverExitAnimation(instant: true);
+
+        public void Configure(PlaceInfo placeInfo)
+        {
+            currentPlaceInfo = placeInfo;
+        }
+
+        public void SubscribeToInteractions(Action<PlaceInfo, bool> likeToggleChanged,
+            Action<PlaceInfo, bool> dislikeToggleChanged,
+            Action<PlaceInfo, bool> favoriteToggleChanged,
+            Action<PlaceInfo> shareButtonClicked,
+            Action<PlaceInfo> infoButtonClicked,
+            Action<PlaceInfo> jumpInButtonClicked)
+        {
+            LikeToggleChanged = null;
+            DislikeToggleChanged = null;
+            FavoriteToggleChanged = null;
+            ShareButtonClicked = null;
+            InfoButtonClicked = null;
+            JumpInButtonClicked = null;
+
+            LikeToggleChanged += likeToggleChanged;
+            DislikeToggleChanged += dislikeToggleChanged;
+            FavoriteToggleChanged += favoriteToggleChanged;
+            ShareButtonClicked += shareButtonClicked;
+            InfoButtonClicked += infoButtonClicked;
+            JumpInButtonClicked += jumpInButtonClicked;
+        }
 
         public void OnPointerEnter(PointerEventData eventData) =>
             PlayHoverAnimation();
