@@ -1,5 +1,7 @@
+#nullable enable
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using DCL.Chat.History;
 
 namespace DCL.Chat.Commands
 {
@@ -24,7 +26,7 @@ namespace DCL.Chat.Commands
         public bool ValidateParameters(string[] parameters) =>
             parameters.Length == 1 && ChatParamUtils.IsPositionParameter(parameters[0], false);
 
-        public UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct) =>
+        public UniTask<string> ExecuteCommandAsync(ChatChannel channel, string[] parameters, CancellationToken ct) =>
             chatTeleporter.TeleportToParcelAsync(ChatParamUtils.ParseRawPosition(parameters[0]), true, ct);
     }
 }
