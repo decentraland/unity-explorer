@@ -215,7 +215,7 @@ namespace DCL.VoiceChat
             {
                 AudioEncoding = new AudioEncoding
                 {
-                    MaxBitrate = 48000,
+                    MaxBitrate = 128000, // 128 kbps - proper bitrate for voice chat (was 48kbps causing massive delays!)
                 },
                 Source = TrackSource.SourceMicrophone,
             };
