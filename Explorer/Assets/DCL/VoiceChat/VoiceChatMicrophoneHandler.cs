@@ -66,7 +66,7 @@ namespace DCL.VoiceChat
                     return false;
                 }
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started on macOS with sample rate: {microphoneSampleRate}Hz (device optimal) - Stack trace: {System.Environment.StackTrace}");
-                
+
                 // Always use the actual microphone frequency for audio filter processing
                 actualSampleRate = microphoneAudioClip != null ? microphoneAudioClip.frequency : microphoneSampleRate;
                 return true;
@@ -110,9 +110,16 @@ namespace DCL.VoiceChat
         private bool isMicrophoneInitialized;
         private bool isInCall;
         private float buttonPressStartTime;
+        private string microphoneName;
 
         public bool IsTalking { get; private set; }
-        public string MicrophoneName { get; private set; }
+
+        public string MicrophoneName
+        {
+            get => microphoneName;
+
+            private set => microphoneName = value;
+        }
 
         public RtcAudioSource RtcAudioSource => rtcAudioSource;
 
@@ -295,8 +302,8 @@ namespace DCL.VoiceChat
 #endif
 
             // Try macOS-specific initialization first
-            bool macOSSuccess = MacOSMicrophoneHelper.TryInitializeMicrophone(voiceChatSettings, out MicrophoneName, out microphoneAudioClip, out int actualSampleRate);
-            
+            bool macOSSuccess = MacOSMicrophoneHelper.TryInitializeMicrophone(voiceChatSettings, out microphoneName, out microphoneAudioClip, out int actualSampleRate);
+
             if (!macOSSuccess)
             {
                 // Non-macOS initialization
@@ -407,7 +414,7 @@ namespace DCL.VoiceChat
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Starting existing RtcAudioSource - Current AudioFilter subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
                     rtcAudioSource.Start();
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Existing RtcAudioSource started after microphone reinitialization - Subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
-                    
+
                     // Signal ready after RtcAudioSource is restarted
                     MicrophoneReady?.Invoke();
                 }
