@@ -6,6 +6,9 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner;
 using SceneRunner.Scene;
+using System.Linq;
+using System.Net.NetworkInformation;
+using UnityEngine;
 
 namespace DCL.Profiling.ECS
 {
@@ -20,10 +23,37 @@ namespace DCL.Profiling.ECS
         {
             this.profiler = profiler;
             this.scenesCache = scenesCache;
+
+            foreach (var ns in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
+                {
+                    var stats = ns.GetIPv4Statistics();
+                    initialBytesSent = (ulong)stats.BytesSent;
+                    initialBytesRecieved = (ulong)stats.BytesReceived;
+                    break;
+                }
+            }
         }
+
+        ulong initialBytesSent = 0;
+        ulong initialBytesRecieved = 0;
 
         protected override void Update(float t)
         {
+            // var stats = NetworkInterface.GetAllNetworkInterfaces().First(n => n.OperationalStatus == OperationalStatus.Up).GetIPv4Statistics();
+
+            foreach (var ns in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
+                {
+                    var stats = ns.GetIPv4Statistics();
+                    NetworkProfilerCounters.TOTAL_BYTES_SENT.Value = (ulong)stats.BytesSent - initialBytesSent;
+                    NetworkProfilerCounters.TOTAL_BYTES_RECEIVED.Value = (ulong)stats.BytesReceived - initialBytesRecieved;
+                    break;
+                }
+            }
+
             profiler.AllScenesTotalHeapSize = 0ul;
             profiler.AllScenesTotalHeapSizeExecutable = 0ul;
             profiler.AllScenesTotalPhysicalSize = 0ul;

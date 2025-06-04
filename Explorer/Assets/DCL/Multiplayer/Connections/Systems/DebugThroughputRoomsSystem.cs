@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Nametags;
+using DCL.Profiling;
 using ECS.Abstract;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
@@ -73,6 +74,18 @@ namespace DCL.Multiplayer.Connections.Systems
         {
             if (buffersInitialized == false)
                 return;
+
+#if ENABLE_PROFILER
+            (ulong incoming, ulong outgoing) = island.CollectAndClear();
+
+            NetworkProfilerCounters.LIVEKIT_ISLAND_RECEIVED.Value = incoming;
+            NetworkProfilerCounters.LIVEKIT_ISLAND_SEND.Value = outgoing;
+
+            (incoming, outgoing) = scene.CollectAndClear();
+
+            NetworkProfilerCounters.LIVEKIT_SCENE_RECEIVED.Value = incoming;
+            NetworkProfilerCounters.LIVEKIT_SCENE_SEND.Value = outgoing;
+#endif
 
             current += t;
 
@@ -144,6 +157,17 @@ namespace DCL.Multiplayer.Connections.Systems
                 CollectAndDraw(bufferBunch.Outgoing, outgoing);
             }
 
+            public (ulong incoming, ulong outgoing) CollectAndClear()
+            {
+                ulong incomingBytes = bufferBunch.Incoming.CurrentAmount();
+                bufferBunch.Incoming.Clear();
+
+                ulong outgoingBytes = bufferBunch.Outgoing.CurrentAmount();
+                bufferBunch.Outgoing.Clear();
+
+                return (incomingBytes, outgoingBytes);
+            }
+
             public void Reset()
             {
                 bufferBunch.Incoming.Clear();
@@ -156,6 +180,8 @@ namespace DCL.Multiplayer.Connections.Systems
                 buffer.Clear();
                 binding.Value = incomingBytes;
             }
+
+
         }
     }
 }
