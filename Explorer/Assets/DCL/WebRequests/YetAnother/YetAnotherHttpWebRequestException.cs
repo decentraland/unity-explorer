@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace DCL.WebRequests
 {
@@ -9,7 +8,5 @@ namespace DCL.WebRequests
         {
             Text = exception.Message;
         }
-
-        public override Dictionary<string, string>? ResponseHeaders => base.ResponseHeaders;
     }
 }

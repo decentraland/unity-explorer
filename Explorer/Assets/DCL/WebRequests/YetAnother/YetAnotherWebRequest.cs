@@ -5,13 +5,12 @@ namespace DCL.WebRequests
 {
     public class YetAnotherWebRequest : WebRequestBase, IWebRequest
     {
-        internal readonly HttpRequestMessage request;
+        internal HttpRequestMessage request;
         internal YetAnotherWebResponse? response { get; private set; }
 
         public YetAnotherWebRequest(HttpRequestMessage request, ITypedWebRequest createdFrom) : base(createdFrom)
         {
             CreationTime = DateTime.Now;
-
             this.request = request;
         }
 
@@ -23,6 +22,12 @@ namespace DCL.WebRequests
         public void SetRequestHeader(string name, string value)
         {
             request.Headers.TryAddWithoutValidation(name, value);
+        }
+
+        internal void SetRedirected(HttpRequestMessage requestMessage)
+        {
+            request = requestMessage;
+            Redirected = true;
         }
 
         internal YetAnotherWebResponse SetResponse(HttpResponseMessage response, AdaptedDownloadContentStream responseContentStream)
@@ -38,7 +43,10 @@ namespace DCL.WebRequests
 
         public IWebRequestResponse Response { get; private set; } = NotReceivedResponse.INSTANCE;
 
-        public bool Redirected => response?.response.RequestMessage?.RequestUri != request.RequestUri;
+        /// <summary>
+        ///     Redirect is resolved manually
+        /// </summary>
+        public bool Redirected { get; private set; }
 
         /// <summary>
         ///     Must be manually set

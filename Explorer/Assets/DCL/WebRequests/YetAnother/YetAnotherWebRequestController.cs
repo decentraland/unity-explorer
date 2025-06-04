@@ -74,7 +74,24 @@ namespace DCL.WebRequests
                     // TODO Timeout per request configuration: how to split it for Receiving headers and getting the body? Do we ever need it?
                     // TODO analytics
 
-                    HttpResponseMessage? response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+                    HttpResponseMessage response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+
+                    // We must handle redirections manually as hyper doesn't support them automatically
+                    while (response.IsRedirected())
+                    {
+                        Uri? lastUri = nativeRequest.RequestUri;
+
+                        nativeRequest.Dispose();
+                        response.Dispose();
+
+                        nativeRequest = requestWrap.CreateYetAnotherHttpRequest();
+                        nativeRequest.RequestUri = response.Headers.Location;
+                        nativeRequest.Headers.Referrer = lastUri;
+
+                        adapter.SetRedirected(nativeRequest);
+
+                        response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+                    }
 
                     Stream? stream = await response.Content.ReadAsStreamAsync();
 

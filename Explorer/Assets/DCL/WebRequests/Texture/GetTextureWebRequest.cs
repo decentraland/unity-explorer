@@ -5,6 +5,8 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiling;
 using KtxUnity;
 using System;
+using System.IO;
+using System.Net.Http;
 using System.Threading;
 using Unity.Collections;
 using UnityEngine;
@@ -38,6 +40,9 @@ namespace DCL.WebRequests
         public override HTTPRequest CreateHttp2Request() =>
             new (GetEffectiveUrl());
 
+        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
+            new (HttpMethod.Get, GetEffectiveUrl());
+
         private Uri GetEffectiveUrl() =>
             new (useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(Envelope.CommonArguments.URL)) : Envelope.CommonArguments.URL);
 
@@ -60,12 +65,13 @@ namespace DCL.WebRequests
 
                     return await ExecuteNoCompressionAsync(unityWebRequest, wrapMode, filterMode, ct);
 
-                case HTTPRequest http2Request when useKtx:
+                case HTTPRequest when useKtx:
+                case HttpRequestMessage when useKtx:
                 {
                     // Streams are non-linear memory, not much we can do about it to avoid allocations
-                    using var nativeArray = new NativeArray<byte>((int)http2Request.Response.DownStream.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+                    using Stream? stream = await wr.Response.GetCompleteStreamAsync(ct);
 
-                    using DownloadContentStream? stream = http2Request.Response.DownStream;
+                    using var nativeArray = new NativeArray<byte>((int)stream.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
                     stream.Read(nativeArray.AsSpan());
 
                     return await ExecuteKtxAsync(nativeArray, wrapMode, filterMode, ct);
