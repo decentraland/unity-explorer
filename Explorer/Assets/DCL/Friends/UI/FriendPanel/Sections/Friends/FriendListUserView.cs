@@ -1,5 +1,6 @@
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
@@ -21,13 +22,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [field: SerializeField] public Image OnlineStatusColorIndicator { get; private set; }
         [field: SerializeField] public OnlineStatusConfiguration OnlineStatusConfiguration { get; private set; }
 
-        public override void Configure(FriendProfile profile)
+        public override void Configure(FriendProfile profile, ProfileRepositoryWrapper profileDataProvider)
         {
             buttons.Clear();
             buttons.Add(JumpInButton);
             buttons.Add(ContextMenuButton);
             buttons.Add(ChatButton);
-            base.Configure(profile);
+            base.Configure(profile, profileDataProvider);
             SetOnlineStatus(OnlineStatus.OFFLINE);
         }
 

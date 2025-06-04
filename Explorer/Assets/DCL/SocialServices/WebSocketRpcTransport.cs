@@ -19,9 +19,9 @@ namespace DCL.SocialService
         private bool isConnected => State == WebSocketState.Open;
 
         public event Action? OnCloseEvent;
-        public event Action<string>? OnErrorEvent;
-        public event Action<byte[]>? OnMessageEvent;
-        public event Action? OnConnectEvent;
+        public event Action<Exception> OnErrorEvent;
+        public event Action<byte[]> OnMessageEvent;
+        public event Action OnConnectEvent;
 
         public WebSocketState State => webSocket.State;
 
@@ -89,7 +89,7 @@ namespace DCL.SocialService
                             break;
                         }
                     }
-                    catch (WebSocketException e) { OnErrorEvent?.Invoke(e.Message); }
+                    catch (WebSocketException e) { OnErrorEvent?.Invoke(e); }
                 }
             }
         }
@@ -113,7 +113,7 @@ namespace DCL.SocialService
             }
             catch (WebSocketException e)
             {
-                OnErrorEvent?.Invoke(e.Message);
+                OnErrorEvent?.Invoke(e);
             }
         }
 
@@ -125,7 +125,7 @@ namespace DCL.SocialService
             }
             catch (WebSocketException e)
             {
-                OnErrorEvent?.Invoke(e.Message);
+                OnErrorEvent?.Invoke(e);
             }
         }
 

@@ -131,6 +131,18 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: unblock_user
       isEnabled: 1
+  - groupName: MarketplaceCredits
+    events:
+    - eventName: marketplace_credits_opened
+      isEnabled: 1
+  - groupName: Settings
+    events:
+    - eventName: chat-bubbles-visibility-changed
+      isEnabled: 1
+  - groupName: FeatureFlags
+    events:
+    - eventName: feature_flags
+      isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
   flushInterval: 30

@@ -1,5 +1,5 @@
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
-using MVC;
 using System;
 using TMPro;
 using UnityEngine;
@@ -69,9 +69,9 @@ namespace DCL.Chat
                 contextMenuButton.gameObject.SetActive(false);
         }
 
-        public void SetupProfilePicture(ViewDependencies viewDependencies, Color userColor, string faceSnapshotUrl, string userId)
+        public void SetupProfilePicture(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
         {
-            profilePictureView.SetupWithDependencies(viewDependencies, userColor, faceSnapshotUrl, userId);
+            profilePictureView.SetupWithDependencies(profileDataProvider, userColor, faceSnapshotUrl, userId);
         }
 
         private void Start()

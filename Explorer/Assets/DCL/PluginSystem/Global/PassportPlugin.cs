@@ -18,6 +18,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isNameEditorEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private PassportController? passportController;
 
@@ -104,7 +106,7 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
-            bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager)
+            bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager, ProfileRepositoryWrapper profileDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -140,6 +142,7 @@ namespace DCL.PluginSystem.Global
             this.isNameEditorEnabled = isNameEditorEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public void Dispose()
@@ -199,7 +202,8 @@ namespace DCL.PluginSystem.Global
                 includeUserBlocking,
                 isNameEditorEnabled,
                 chatEventBus,
-                sharedSpaceManager
+                sharedSpaceManager,
+                profileRepositoryWrapper
             );
 
             mvcManager.RegisterController(passportController);
