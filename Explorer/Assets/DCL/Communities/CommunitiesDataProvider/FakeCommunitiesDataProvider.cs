@@ -31,14 +31,13 @@ namespace DCL.Communities
 
             return new GetCommunityResponse()
             {
-                community = new GetCommunityResponse.CommunityData()
+                data = new GetCommunityResponse.CommunityData()
                 {
                     id = communityData.id,
                     thumbnails = communityData.thumbnails,
                     name = communityData.name,
                     description = communityData.description,
                     ownerId = "test",
-                    memberCount = communityData.memberCount,
                     privacy = communityData.privacy,
                     role = communityData.role,
                     places = new [] { "land1", "land2" },

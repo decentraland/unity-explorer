@@ -123,7 +123,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance!.SetLoadingState(true);
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
-                communityData = response.community;
+                communityData = response.data;
 
                 viewInstance.SetLoadingState(false);
 
