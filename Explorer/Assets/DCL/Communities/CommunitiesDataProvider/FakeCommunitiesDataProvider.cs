@@ -14,7 +14,7 @@ namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
-        private readonly List<GetUserCommunitiesResponse.CommunityData> currentCommunities;
+        private readonly List<GetUserCommunitiesData.CommunityData> currentCommunities;
 
         public FakeCommunitiesDataProvider(IWebRequestController webRequestController,
             IWeb3IdentityCache web3IdentityCache,
@@ -27,7 +27,7 @@ namespace DCL.Communities
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
-            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
+            GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
             return new GetCommunityResponse()
             {
@@ -37,7 +37,7 @@ namespace DCL.Communities
                     thumbnails = communityData.thumbnails,
                     name = communityData.name,
                     description = communityData.description,
-                    ownerId = communityData.ownerId,
+                    ownerId = "test",
                     memberCount = communityData.memberCount,
                     privacy = communityData.privacy,
                     role = communityData.role,
@@ -47,18 +47,18 @@ namespace DCL.Communities
             };
         }
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = currentCommunities
-                                                                                .Where(x => (
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.owner) && x.role == CommunityMemberRole.owner) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.moderator) && x.role == CommunityMemberRole.moderator) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.member) && x.role == CommunityMemberRole.member) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.none) && x.role == CommunityMemberRole.none)) &&
-                                                                                            (x.name.ToLower().Contains(name.ToLower()) || x.description.ToLower().Contains(name.ToLower())))
-                                                                                .ToList();
+            List<GetUserCommunitiesData.CommunityData> filteredCommunities = currentCommunities
+                                                                            .Where(x => (
+                                                                                            (onlyMemberOf && x.role == CommunityMemberRole.owner) ||
+                                                                                            (onlyMemberOf && x.role == CommunityMemberRole.moderator) ||
+                                                                                            (onlyMemberOf && x.role == CommunityMemberRole.member) ||
+                                                                                            (!onlyMemberOf && x.role == CommunityMemberRole.none)) &&
+                                                                                        (x.name.ToLower().Contains(name.ToLower()) || x.description.ToLower().Contains(name.ToLower())))
+                                                                            .ToList();
 
-            List<GetUserCommunitiesResponse.CommunityData> paginatedCommunities = new();
+            List<GetUserCommunitiesData.CommunityData> paginatedCommunities = new();
             for (var i = 0; i < filteredCommunities.Count; i++)
             {
                 if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
@@ -67,8 +67,11 @@ namespace DCL.Communities
 
             GetUserCommunitiesResponse result = new GetUserCommunitiesResponse
             {
-                communities = paginatedCommunities.ToArray(),
-                totalAmount = filteredCommunities.Count,
+                data = new GetUserCommunitiesData
+                {
+                    results = paginatedCommunities.ToArray(),
+                    total = filteredCommunities.Count,
+                },
             };
 
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
@@ -88,7 +91,7 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
+            GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
             const int BANNED_MEMBERS = 5;
 
@@ -137,7 +140,7 @@ namespace DCL.Communities
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
-            foreach (GetUserCommunitiesResponse.CommunityData community in currentCommunities)
+            foreach (GetUserCommunitiesData.CommunityData community in currentCommunities)
             {
                 if (community.id == communityId)
                 {
@@ -153,7 +156,7 @@ namespace DCL.Communities
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
-            foreach (GetUserCommunitiesResponse.CommunityData community in currentCommunities)
+            foreach (GetUserCommunitiesData.CommunityData community in currentCommunities)
             {
                 if (community.id == communityId)
                 {
@@ -171,31 +174,31 @@ namespace DCL.Communities
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId,  CommunityMemberRole newRole, CancellationToken ct) =>
             true;
 
-        private List<GetUserCommunitiesResponse.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsModerator, int communitiesAsMember)
+        private List<GetUserCommunitiesData.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsModerator, int communitiesAsMember)
         {
-            List<GetUserCommunitiesResponse.CommunityData> communities = new List<GetUserCommunitiesResponse.CommunityData>();
+            List<GetUserCommunitiesData.CommunityData> communities = new List<GetUserCommunitiesData.CommunityData>();
 
             for (var i = 0; i < 100; i++)
             {
-                List<GetUserCommunitiesResponse.FriendInCommunity> mutualFriends = new ();
+                List<GetUserCommunitiesData.FriendInCommunity> mutualFriends = new ();
                 int amountMutualFriends = UnityEngine.Random.Range(0, 4);
                 for (var j = 0; j < amountMutualFriends; j++)
                 {
-                    mutualFriends.Add(new GetUserCommunitiesResponse.FriendInCommunity
+                    mutualFriends.Add(new GetUserCommunitiesData.FriendInCommunity
                     {
-                        id = $"test{i + 1}",
+                        address = $"test{i + 1}",
                         name = $"testUser{i + 1}",
                         profilePictureUrl = "https://picsum.photos/20/20",
                     });
                 }
 
-                communities.Add(new GetUserCommunitiesResponse.CommunityData
+                communities.Add(new GetUserCommunitiesData.CommunityData
                 {
                     id = (i + 1).ToString(),
                     thumbnails = new[] { "https://picsum.photos/280/280" },
                     name = $"Community {i + 1}",
                     description = $"Test description for Community {i + 1}. This is only a fake text to test this awesome feature!! This is the card that represent a community in Decentraland.",
-                    ownerId = string.Empty,
+                    ownerAddress = string.Empty,
                     privacy = i is 3 or 5 ? CommunityPrivacy.@private : CommunityPrivacy.@public,
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :

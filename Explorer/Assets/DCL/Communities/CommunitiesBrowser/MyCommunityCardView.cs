@@ -11,12 +11,13 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         public event Action<string> MainButtonClicked;
 
-        [SerializeField] private TMP_Text communityTitle ;
-        [SerializeField] private GameObject userRoleContainer ;
-        [SerializeField] private TMP_Text userRole ;
-        [SerializeField] private ImageView communityThumbnail ;
-        [SerializeField] private GameObject communityLiveMark ;
-        [SerializeField] private Button mainButton ;
+        [SerializeField] private TMP_Text communityTitle;
+        [SerializeField] private GameObject userRoleContainer;
+        [SerializeField] private TMP_Text userRole;
+        [SerializeField] private ImageView communityThumbnail;
+        [SerializeField] private GameObject communityLiveMark;
+        [SerializeField] private Button mainButton;
+        [SerializeField] private Sprite defaultThumbnailSprite;
 
         private ImageController imageController;
         private string currentCommunityId;
@@ -39,6 +40,8 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+            else
+                imageController.SetImage(defaultThumbnailSprite);
         }
 
         public void SetCommunityId(string id) =>

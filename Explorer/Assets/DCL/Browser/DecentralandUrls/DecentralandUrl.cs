@@ -81,5 +81,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         MarketplaceCredits,
         GoShoppingWithMarketplaceCredits,
         EmailSubscriptions,
+
+        Communities,
     }
 }
