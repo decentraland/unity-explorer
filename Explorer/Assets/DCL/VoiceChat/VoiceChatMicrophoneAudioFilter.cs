@@ -125,6 +125,8 @@ namespace DCL.VoiceChat
                 // Extract new audio data directly from microphone clip (main thread only)
                 microphoneClip.GetData(realtimeAudioBuffer, lastMicrophonePosition);
 
+                ReportHub.LogError(ReportCategory.VOICE_CHAT,"MICROPHONE SAMPLE RATE : "+ microphoneClip.frequency);
+
                 // Create a copy for the background thread to avoid shared data issues
                 float[] audioChunk = new float[chunkSize];
                 Array.Copy(realtimeAudioBuffer, 0, audioChunk, 0, chunkSize);
@@ -198,21 +200,21 @@ namespace DCL.VoiceChat
             {
                 // Don't send anything to LiveKit - real-time processing handles this
                 // This prevents duplicate audio frames
-                
+
                 // Debug logging (throttled to avoid spam)
                 if (audioSentCounter % 300 == 0) // Log every 300 calls (roughly every 6-7 seconds)
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                    ReportHub.Log(ReportCategory.VOICE_CHAT,
                         $"OnAudioFilterRead skipped - real-time processing active (Counter: {audioSentCounter})");
                 }
                 audioSentCounter++;
                 return;
             }
-            
+
             // Debug: Log why real-time processing is not being used (throttled)
             if (audioSentCounter % 300 == 0)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, 
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
                     $"Real-time processing NOT active - useRealtimeProcessing: {useRealtimeProcessing}, " +
                     $"useMicrophonePositionOptimization: {useMicrophonePositionOptimization}, " +
                     $"currentMicrophoneName: '{currentMicrophoneName}', " +
@@ -261,7 +263,7 @@ namespace DCL.VoiceChat
             {
                 audioReadEvent -= value;
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"AudioRead subscriber removed - Total subscribers: {GetSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
-                
+
                 // Log stack trace when subscriber count drops to 0 to help debug unexpected unsubscriptions
                 if (GetSubscriberCount() == 0)
                 {
@@ -320,7 +322,7 @@ namespace DCL.VoiceChat
             realtimeAudioBuffer = new float[REALTIME_CHUNK_SIZE];
             processingSamplesBuffer = new float[REALTIME_CHUNK_SIZE];
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, 
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"AudioFilter microphone info updated - Name: '{microphoneName}', SampleRate: {sampleRate}Hz, Buffer: {bufferLengthSeconds}s, " +
                 $"Real-time conditions now: useRealtimeProcessing={useRealtimeProcessing}, " +
                 $"useMicrophonePositionOptimization={useMicrophonePositionOptimization}, " +
@@ -335,7 +337,7 @@ namespace DCL.VoiceChat
         public void ResetProcessor()
         {
             audioProcessor?.Reset();
-            
+
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Audio processor reset - LiveKit subscribers preserved - Stack trace: {System.Environment.StackTrace}");
         }
 
@@ -394,7 +396,7 @@ namespace DCL.VoiceChat
                 bool initialConditionsOk = !ct.IsCancellationRequested && useRealtimeProcessing;
                 if (!initialConditionsOk)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, 
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
                         $"Real-time processing loop exiting immediately - ct.IsCancellationRequested: {ct.IsCancellationRequested}, " +
                         $"useRealtimeProcessing: {useRealtimeProcessing} (cachedEnabled: {cachedEnabled} - doesn't affect thread lifecycle)");
                     return;
