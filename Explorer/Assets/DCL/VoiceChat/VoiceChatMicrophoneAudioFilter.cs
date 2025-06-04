@@ -185,21 +185,38 @@ namespace DCL.VoiceChat
             if (data == null)
                 return;
 
-            // Real-time processing runs on background thread - this is just fallback
-            if (useRealtimeProcessing && useMicrophonePositionOptimization && !string.IsNullOrEmpty(currentMicrophoneName) && isRealtimeThreadRunning)
-            {
-                // Send silence to prevent Unity from processing this audio since we handle it in Update()
-                float[] silenceBuffer = GetSilenceBuffer(data.Length / channels);
-                audioReadEvent?.Invoke(silenceBuffer, 1, GetEffectiveSampleRate());
-                return;
-            }
-
-            // Fallback path: Use Unity's OnAudioFilterRead when real-time processing unavailable
+            // First check if processing is enabled at all
             if (!cachedEnabled)
             {
                 float[] silenceBuffer = GetSilenceBuffer(data.Length / channels);
                 audioReadEvent?.Invoke(silenceBuffer, 1, GetEffectiveSampleRate());
                 return;
+            }
+
+            // Real-time processing runs on background thread - completely skip OnAudioFilterRead
+            if (useRealtimeProcessing && useMicrophonePositionOptimization && !string.IsNullOrEmpty(currentMicrophoneName) && isRealtimeThreadRunning)
+            {
+                // Don't send anything to LiveKit - real-time processing handles this
+                // This prevents duplicate audio frames
+                
+                // Debug logging (throttled to avoid spam)
+                if (audioSentCounter % 300 == 0) // Log every 300 calls (roughly every 6-7 seconds)
+                {
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                        $"OnAudioFilterRead skipped - real-time processing active (Counter: {audioSentCounter})");
+                }
+                audioSentCounter++;
+                return;
+            }
+            
+            // Debug: Log why real-time processing is not being used (throttled)
+            if (audioSentCounter % 300 == 0)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, 
+                    $"Real-time processing NOT active - useRealtimeProcessing: {useRealtimeProcessing}, " +
+                    $"useMicrophonePositionOptimization: {useMicrophonePositionOptimization}, " +
+                    $"currentMicrophoneName: '{currentMicrophoneName}', " +
+                    $"isRealtimeThreadRunning: {isRealtimeThreadRunning}");
             }
 
             // Always convert to mono first, regardless of processing state
@@ -304,7 +321,10 @@ namespace DCL.VoiceChat
             processingSamplesBuffer = new float[REALTIME_CHUNK_SIZE];
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, 
-                $"AudioFilter microphone info updated - Name: '{microphoneName}', SampleRate: {sampleRate}Hz, Buffer: {bufferLengthSeconds}s - Stack trace: {System.Environment.StackTrace}");
+                $"AudioFilter microphone info updated - Name: '{microphoneName}', SampleRate: {sampleRate}Hz, Buffer: {bufferLengthSeconds}s, " +
+                $"Real-time conditions now: useRealtimeProcessing={useRealtimeProcessing}, " +
+                $"useMicrophonePositionOptimization={useMicrophonePositionOptimization}, " +
+                $"isRealtimeThreadRunning={isRealtimeThreadRunning} - Stack trace: {System.Environment.StackTrace}");
         }
 
         public void SetMicrophoneClip(AudioClip clip)
@@ -325,10 +345,15 @@ namespace DCL.VoiceChat
         private void StartRealtimeProcessingThread()
         {
             if (isRealtimeThreadRunning)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Real-time processing thread already running - skipping start");
                 return;
+            }
 
             realtimeProcessingCts = new CancellationTokenSource();
             isRealtimeThreadRunning = true;
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Starting real-time processing thread - cachedEnabled: {cachedEnabled}, useRealtimeProcessing: {useRealtimeProcessing}");
 
             // Start background thread for real-time processing
             RealtimeAudioProcessingLoopAsync(realtimeProcessingCts.Token).Forget();
@@ -340,8 +365,12 @@ namespace DCL.VoiceChat
         private void StopRealtimeProcessingThread()
         {
             if (!isRealtimeThreadRunning)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Real-time processing thread already stopped - skipping stop");
                 return;
+            }
 
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Stopping real-time processing thread");
             isRealtimeThreadRunning = false;
             realtimeProcessingCts?.SafeCancelAndDispose();
             realtimeProcessingCts = null;
@@ -355,32 +384,56 @@ namespace DCL.VoiceChat
         {
             await UniTask.SwitchToThreadPool(); // Switch to background thread
 
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Real-time audio processing loop started - cachedEnabled: {cachedEnabled}, useRealtimeProcessing: {useRealtimeProcessing}");
+
             try
             {
                 const int POLL_INTERVAL_MS = 1; // Poll every 1ms for maximum responsiveness
 
-                while (!ct.IsCancellationRequested && cachedEnabled && useRealtimeProcessing)
+                // Check initial conditions before entering loop (thread should stay alive even if disabled)
+                bool initialConditionsOk = !ct.IsCancellationRequested && useRealtimeProcessing;
+                if (!initialConditionsOk)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, 
+                        $"Real-time processing loop exiting immediately - ct.IsCancellationRequested: {ct.IsCancellationRequested}, " +
+                        $"useRealtimeProcessing: {useRealtimeProcessing} (cachedEnabled: {cachedEnabled} - doesn't affect thread lifecycle)");
+                    return;
+                }
+
+                while (!ct.IsCancellationRequested && useRealtimeProcessing)
                 {
                     try
                     {
-                        // Process all queued audio chunks
-                        while (true)
+                        // Only process audio when enabled, but keep thread alive
+                        if (cachedEnabled)
                         {
-                            float[] audioChunk = null;
+                            // Process all queued audio chunks
+                            while (true)
+                            {
+                                float[] audioChunk = null;
 
+                                lock (queueLock)
+                                {
+                                    if (audioDataQueue.Count > 0)
+                                    {
+                                        audioChunk = audioDataQueue.Dequeue();
+                                    }
+                                }
+
+                                if (audioChunk == null)
+                                    break; // No more data to process
+
+                                // Process the audio chunk
+                                ProcessRealtimeAudioChunk(audioChunk, audioChunk.Length);
+                            }
+                        }
+                        else
+                        {
+                            // Clear queue when disabled to prevent buildup
                             lock (queueLock)
                             {
-                                if (audioDataQueue.Count > 0)
-                                {
-                                    audioChunk = audioDataQueue.Dequeue();
-                                }
+                                audioDataQueue.Clear();
                             }
-
-                            if (audioChunk == null)
-                                break; // No more data to process
-
-                            // Process the audio chunk
-                            ProcessRealtimeAudioChunk(audioChunk, audioChunk.Length);
                         }
 
                         // Small delay to prevent excessive CPU usage while maintaining responsiveness
@@ -402,7 +455,7 @@ namespace DCL.VoiceChat
             }
             catch (OperationCanceledException)
             {
-                // Expected cancellation
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Real-time audio processing loop cancelled (expected)");
             }
             catch (System.Exception ex)
             {
@@ -412,6 +465,7 @@ namespace DCL.VoiceChat
             }
             finally
             {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Real-time audio processing loop exiting - setting isRealtimeThreadRunning = false");
                 isRealtimeThreadRunning = false;
             }
         }

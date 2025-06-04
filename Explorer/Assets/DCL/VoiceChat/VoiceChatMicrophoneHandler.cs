@@ -275,12 +275,7 @@ namespace DCL.VoiceChat
             if (isMicrophoneInitialized)
                 return;
 
-            // Note: Only reset processor when switching microphones to avoid clearing LiveKit subscribers
-
-            // Get Unity's current audio configuration - voice chat adapts to it
             var actualConfig = AudioSettings.GetConfiguration();
-
-            // On macOS, Core Audio may override Unity's settings, so use actual output sample rate
             int unitySampleRate = AudioSettings.outputSampleRate;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT,
@@ -302,9 +297,14 @@ namespace DCL.VoiceChat
 #endif
 
             // Try macOS-specific initialization first
-            bool macOSSuccess = MacOSMicrophoneHelper.TryInitializeMicrophone(voiceChatSettings, out microphoneName, out microphoneAudioClip, out int actualSampleRate);
+            bool macOSSuccess = MacOSMicrophoneHelper.TryInitializeMicrophone(voiceChatSettings, out string tempMicrophoneName, out microphoneAudioClip, out int actualSampleRate);
 
-            if (!macOSSuccess)
+            if (macOSSuccess)
+            {
+                // Set the microphone name property for macOS success path
+                MicrophoneName = tempMicrophoneName;
+            }
+            else
             {
                 // Non-macOS initialization
                 MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
