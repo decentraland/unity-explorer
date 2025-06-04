@@ -97,7 +97,7 @@ namespace DCL.CharacterCamera.Systems
                 case CameraMode.Free:
                 case CameraMode.ThirdPerson:
                 case CameraMode.DroneView:
-                    cameraFocus.transform.rotation = Quaternion.Euler(CinemachineExtensions.GetHorizontalAndVerticalAxisForIntent(lookAtIntent));
+                    cameraFocus.transform.rotation = Quaternion.LookRotation(lookAtIntent.LookAtTarget - lookAtIntent.PlayerPosition);
                     break;
                 default:
                     ReportHub.LogError(GetReportData(), $"Camera mode is unknown {camera.Mode}");
