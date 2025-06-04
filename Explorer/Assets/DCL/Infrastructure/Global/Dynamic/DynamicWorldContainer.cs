@@ -264,8 +264,7 @@ namespace Global.Dynamic
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
-            var dclInput = new DCLInput();
-            staticContainer.InputProxy.SetObject(dclInput);
+            var dclInput = staticContainer.InputProxy.StrictObject;
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
