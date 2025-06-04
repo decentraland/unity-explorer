@@ -44,7 +44,7 @@ namespace DCL.Communities.CommunityCreation
             if (id != WORLD_LINK_ID)
                 return;
 
-            webBrowser.OpenUrl(DecentralandUrl.DecentralandWorlds);
+            webBrowser.OpenUrl($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
             viewInstance.PlayOnLinkClickAudio();
         }
 
