@@ -115,7 +115,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 if (promiseResult.Succeeded)
                     uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, promiseResult.Asset);
                 else
-                    ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
+                    ReportHub.LogError(ReportCategory.SCENE_UI, $"Error consuming texture promise: {promiseResult.Exception}");
 
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
                 uiBackgroundComponent.Image.IsHidden = false;

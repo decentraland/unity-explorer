@@ -25,7 +25,7 @@ namespace DCL.WebRequests
             request.Headers.TryAddWithoutValidation(name, value);
         }
 
-        internal void SetResponse(HttpResponseMessage response, AdaptedDownloadContentStream responseContentStream)
+        internal YetAnotherWebResponse SetResponse(HttpResponseMessage response, AdaptedDownloadContentStream responseContentStream)
         {
             this.response = new YetAnotherWebResponse(response, responseContentStream);
 
@@ -33,6 +33,7 @@ namespace DCL.WebRequests
             successfullyExecutedByController = true;
 
             OnDownloadStarted?.Invoke(this);
+            return this.response;
         }
 
         public IWebRequestResponse Response { get; private set; } = NotReceivedResponse.INSTANCE;
