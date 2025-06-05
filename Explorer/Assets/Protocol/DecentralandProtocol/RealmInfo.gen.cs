@@ -97,6 +97,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "base_url" field.</summary>
     public const int BaseUrlFieldNumber = 1;
     private string baseUrl_ = "";
+    /// <summary>
+    /// the domain of the realm server
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string BaseUrl {
@@ -109,6 +112,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "realm_name" field.</summary>
     public const int RealmNameFieldNumber = 2;
     private string realmName_ = "";
+    /// <summary>
+    /// the name of the realm server (more info https://adr.decentraland.org/adr/ADR-110)
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string RealmName {
@@ -121,6 +127,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "network_id" field.</summary>
     public const int NetworkIdFieldNumber = 3;
     private int networkId_;
+    /// <summary>
+    /// the network id (1=Ethereum, more info https://chainlist.org/)
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int NetworkId {
@@ -133,6 +142,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "comms_adapter" field.</summary>
     public const int CommsAdapterFieldNumber = 4;
     private string commsAdapter_ = "";
+    /// <summary>
+    /// comms adapter (more info https://adr.decentraland.org/adr/ADR-180)
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string CommsAdapter {
@@ -145,6 +157,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "is_preview" field.</summary>
     public const int IsPreviewFieldNumber = 5;
     private bool isPreview_;
+    /// <summary>
+    /// true if the scene is running as a local preview, instead of published in Decentraland.
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool IsPreview {
@@ -157,6 +172,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "room" field.</summary>
     public const int RoomFieldNumber = 6;
     private string room_;
+    /// <summary>
+    /// the room session id.
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string Room {
@@ -181,6 +199,9 @@ namespace DCL.ECSComponents {
     /// <summary>Field number for the "is_connected_scene_room" field.</summary>
     public const int IsConnectedSceneRoomFieldNumber = 7;
     private bool isConnectedSceneRoom_;
+    /// <summary>
+    /// true if the user is connected to the scene room.
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool IsConnectedSceneRoom {
