@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Browser.DecentralandUrls;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -64,6 +65,15 @@ namespace Global.Tests.PlayMode
 
             var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
 
+            var world = World.Create();
+            var cameraEntity = world.Create();
+
+            var cameraGameObject = new GameObject("TestCamera");
+            var camera = cameraGameObject.AddComponent<Camera>();
+
+            var cameraComponent = new CameraComponent(camera);
+            world.Add(cameraEntity, cameraComponent);
+
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 dclUrls,
                 assetProvisioner,
@@ -76,7 +86,7 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
                 useRemoteAssetBundles: false,
-                World.Create(),
+                world,
                 new Entity(),
                 new SystemMemoryCap(),
                 new WorldVolumeMacBus(),
