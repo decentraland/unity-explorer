@@ -108,8 +108,11 @@ namespace DCL.Communities
 
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
             {
-                totalAmount = totalMembers,
-                members = paginatedData.ToArray(),
+                data = new ()
+                {
+                    total = totalMembers,
+                    results = paginatedData.ToArray(),
+                }
             };
 
             return result;
@@ -135,8 +138,11 @@ namespace DCL.Communities
 
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
             {
-                totalAmount = BANNED_MEMBERS,
-                members = paginatedData.ToArray(),
+                data = new ()
+                {
+                    total = BANNED_MEMBERS,
+                    results = paginatedData.ToArray(),
+                }
             };
 
             return result;
@@ -256,13 +262,14 @@ namespace DCL.Communities
             for (int i = 0; i < 40; i++)
                 sb.Append(HEX_CHARS[UnityEngine.Random.Range(0, HEX_CHARS.Length)]);
 
-            return new GetCommunityMembersResponse.MemberData(sb.ToString(),
-                "",
-                $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
-                UnityEngine.Random.Range(0, 100) > 50,
-                ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
-                UnityEngine.Random.Range(0, 10),
-                FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]);
+            return new GetCommunityMembersResponse.MemberData()
+            {
+                memberAddress = sb.ToString(),
+                name = $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
+                hasClaimedName = UnityEngine.Random.Range(0, 100) > 50,
+                role = ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
+                friendshipStatus = FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]
+            };
         }
     }
 }

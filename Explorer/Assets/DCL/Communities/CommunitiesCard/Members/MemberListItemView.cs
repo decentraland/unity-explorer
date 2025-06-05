@@ -92,14 +92,14 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             userName.text = memberProfile.name;
             userName.color = userColor;
-            userNameTag.text = $"#{memberProfile.id[^4..]}";
+            userNameTag.text = $"#{memberProfile.memberAddress[^4..]}";
             userNameTag.gameObject.SetActive(!memberProfile.hasClaimedName);
             verifiedIcon.SetActive(memberProfile.hasClaimedName);
             mutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, memberProfile.mutualFriends);
-            mutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
+            mutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend && memberProfile.mutualFriends > 0);
             roleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
             roleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            profilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePicture, memberProfile.id);
+            profilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePictureUrl, memberProfile.memberAddress);
 
             currentSection = section;
 
