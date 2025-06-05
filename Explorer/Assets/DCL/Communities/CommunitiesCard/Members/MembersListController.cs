@@ -279,14 +279,14 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public override void Reset()
         {
-            base.Reset();
-
             communityData = null;
 
             allMembersFetchData.Reset();
             bannedMembersFetchData.Reset();
 
             panelLifecycleTask?.TrySetResult();
+
+            base.Reset();
         }
 
         private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)

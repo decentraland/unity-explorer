@@ -84,9 +84,10 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public override void Reset()
         {
-            base.Reset();
             communityData = null;
             placesFetchData.Reset();
+            view.SetCanModify(false);
+            base.Reset();
         }
 
         protected override async UniTask FetchNewDataAsync(CancellationToken ct)
