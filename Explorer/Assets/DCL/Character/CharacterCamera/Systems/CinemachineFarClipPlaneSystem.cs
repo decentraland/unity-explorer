@@ -44,6 +44,14 @@ namespace DCL.CharacterCamera.Systems
                     ICinemachineThirdPersonCameraData droneCamera = cinemachinePreset.DroneViewCameraData;
                     UpdateFarClipPlane(droneCamera.Camera.Follow, settings, ref droneCamera.Camera.m_Lens);
                     break;
+
+                case CameraMode.Free:
+                    cinemachinePreset.FreeCameraData.Camera.m_Lens.FarClipPlane = settings.MaxFarClipPlane;
+                    break;
+
+                case CameraMode.InWorld:
+                    cinemachinePreset.InWorldCameraData.Camera.m_Lens.FarClipPlane = settings.MaxFarClipPlane;
+                    break;
             }
 
         }
