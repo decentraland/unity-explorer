@@ -1,3 +1,4 @@
+using DCL.WebRequests;
 using SuperScrollView;
 using System;
 using UnityEngine;
@@ -26,6 +27,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData;
         private bool canModify;
+        private IWebRequestController webRequestController;
 
         public void SetActive(bool active) => gameObject.SetActive(active);
 
@@ -39,10 +41,11 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.canModify = canModify;
         }
 
-        public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc)
+        public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc, IWebRequestController webRequestController)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getPlacesFetchData = placesDataFunc;
+            this.webRequestController = webRequestController;
         }
 
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
@@ -62,7 +65,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             SectionFetchData<PlaceInfo> membersData = getPlacesFetchData();
 
             int realIndex = canModify ? index - 1 : index;
-            elementView.Configure(membersData.members[realIndex]);
+            elementView.Configure(membersData.members[realIndex], webRequestController);
 
             elementView.SubscribeToInteractions((placeInfo, value) => ElementLikeToggleChanged?.Invoke(placeInfo, value),
                 (placeInfo, value) => ElementDislikeToggleChanged?.Invoke(placeInfo, value),

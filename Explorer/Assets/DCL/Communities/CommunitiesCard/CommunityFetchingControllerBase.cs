@@ -54,5 +54,10 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         protected abstract UniTask<int> FetchDataAsync(CancellationToken ct);
+
+        public virtual void Reset()
+        {
+            isFetching = false;
+        }
     }
 }

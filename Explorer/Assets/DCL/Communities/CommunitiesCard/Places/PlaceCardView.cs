@@ -1,3 +1,5 @@
+using DCL.UI;
+using DCL.WebRequests;
 using DG.Tweening;
 using System;
 using TMPro;
@@ -18,6 +20,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private CanvasGroup interactionButtonsCanvasGroup;
 
         [Header("Place info")]
+        [SerializeField] private ImageView placeThumbnailImage;
         [SerializeField] private TMP_Text onlineMembersText;
         [SerializeField] private TMP_Text placeNameText;
         [SerializeField] private TMP_Text placeDescriptionText;
@@ -37,6 +40,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Vector2 originalFooterSizeDelta;
 
         private PlaceInfo currentPlaceInfo;
+        private ImageController imageController;
 
         public event Action<PlaceInfo, bool> LikeToggleChanged;
         public event Action<PlaceInfo, bool> DislikeToggleChanged;
@@ -61,9 +65,26 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceInfo placeInfo)
+        public void Configure(PlaceInfo placeInfo, IWebRequestController webRequestController)
         {
             currentPlaceInfo = placeInfo;
+
+            imageController ??= new ImageController(placeThumbnailImage, webRequestController);
+
+            imageController.RequestImage(placeInfo.image);
+
+            placeNameText.text = placeInfo.world_name;
+            placeDescriptionText.text = placeInfo.description;
+            onlineMembersText.text = $"{placeInfo.user_count}";
+
+            //Make sure to remove listeners before setting values in order to avoid unwanted calls to previously subscribed methods
+            LikeToggleChanged = null;
+            DislikeToggleChanged = null;
+            FavoriteToggleChanged = null;
+
+            likeToggle.isOn = placeInfo.user_like;
+            dislikeToggle.isOn = placeInfo.user_dislike;
+            favoriteToggle.isOn = placeInfo.user_favorite;
         }
 
         public void SubscribeToInteractions(Action<PlaceInfo, bool> likeToggleChanged,

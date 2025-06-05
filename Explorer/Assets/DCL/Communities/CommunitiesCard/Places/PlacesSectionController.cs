@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.WebRequests;
 using System;
 using System.Threading;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
@@ -17,12 +18,12 @@ namespace DCL.Communities.CommunitiesCard.Places
         private CommunityData? communityData = null;
         private bool userCanModify = false;
 
-        public PlacesSectionController(PlacesSectionView view)
-        : base (view, PAGE_SIZE)
+        public PlacesSectionController(PlacesSectionView view,
+            IWebRequestController webRequestController) : base (view, PAGE_SIZE)
         {
             this.view = view;
 
-            view.InitGrid(() => currentSectionFetchData);
+            view.InitGrid(() => currentSectionFetchData, webRequestController);
 
             view.ElementLikeToggleChanged += OnElementLikeToggleChanged;
             view.ElementDislikeToggleChanged += OnElementDislikeToggleChanged;
@@ -74,13 +75,11 @@ namespace DCL.Communities.CommunitiesCard.Places
             throw new NotImplementedException();
         }
 
-        public void Reset()
+        public override void Reset()
         {
+            base.Reset();
             communityData = null;
-
             placesFetchData.Reset();
-
-            isFetching = false;
         }
 
         protected override async UniTask FetchNewDataAsync(CancellationToken ct)

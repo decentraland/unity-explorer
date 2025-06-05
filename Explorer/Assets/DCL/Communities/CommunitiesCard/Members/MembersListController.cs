@@ -277,14 +277,15 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void OpenProfilePassport(MemberData profile) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.id)), cancellationToken).Forget();
 
-        public void Reset()
+        public override void Reset()
         {
+            base.Reset();
+
             communityData = null;
 
             allMembersFetchData.Reset();
             bannedMembersFetchData.Reset();
 
-            isFetching = false;
             panelLifecycleTask?.TrySetResult();
         }
 

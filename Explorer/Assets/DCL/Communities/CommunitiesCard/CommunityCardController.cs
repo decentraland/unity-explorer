@@ -110,7 +110,7 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 inWorldWarningNotificationView);
 
-            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView);
+            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView, webRequestController);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
