@@ -12,6 +12,7 @@ using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
 using DCL.BadgesAPIService;
 using DCL.Browser;
+using DCL.Browser.DecentralandUrls;
 using DCL.CharacterPreview;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
@@ -92,6 +93,7 @@ using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
+using Global.Dynamic.LaunchModes;
 using Global.Versioning;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
@@ -523,7 +525,7 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(selfProfile, profileRepository);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy)
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY))
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)

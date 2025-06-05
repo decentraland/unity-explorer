@@ -1,9 +1,11 @@
 #nullable enable
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -21,18 +23,25 @@ namespace DCL.Chat.MessageBus
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ChatMessageFactory messageFactory;
+        private readonly string routingUser;
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub,
             ChatMessageFactory messageFactory,
             IMessageDeduplication<double> messageDeduplication,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            DecentralandUrlsSource decentralandUrlsSource)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
+
+            string serverEnv = decentralandUrlsSource.Environment == DecentralandEnvironment.Org ? "prd" :
+                               decentralandUrlsSource.Environment == DecentralandEnvironment.Zone ? "dev" :
+                               "local";
+            routingUser = $"message-router-{serverEnv}-0";
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
@@ -135,7 +144,7 @@ namespace DCL.Chat.MessageBus
                     SendTo(message, timestamp, messagePipesHub.ChatPipe(), channel.Id.Id);
                     break;
                 case ChatChannel.ChatChannelType.COMMUNITY:
-                    SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), "message-router-0");
+                    SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), routingUser);
                     break;
                 default:
                     break;
