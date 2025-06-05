@@ -1,4 +1,6 @@
-﻿namespace CommunicationData.URLHelpers
+﻿using System;
+
+namespace CommunicationData.URLHelpers
 {
     public interface IURLBuilder
     {
@@ -6,7 +8,7 @@
 
         void Clear();
 
-        URLAddress Build();
+        Uri Build();
 
         IURLBuilder AppendDomain(in URLDomain domain);
 

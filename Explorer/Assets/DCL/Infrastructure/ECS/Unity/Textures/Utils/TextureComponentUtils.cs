@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.Utils
             GetTextureIntention intention = promiseValue.LoadingIntention;
 
             return textureComponent.FileHash == promiseValue.LoadingIntention.FileHash &&
-                   textureComponent.Src == intention.Src &&
+                   textureComponent.Src == intention.Src.OriginalString &&
                    textureComponent.WrapMode == intention.WrapMode &&
                    textureComponent.FilterMode == intention.FilterMode;
         }

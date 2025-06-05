@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
+using System;
 using System.Threading;
 
 namespace SceneRuntime.Factory.WebSceneSource
@@ -14,7 +15,7 @@ namespace SceneRuntime.Factory.WebSceneSource
             this.codeContentResolver = codeContentResolver;
         }
 
-        public UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct) =>
+        public UniTask<string> SceneSourceCodeAsync(Uri path, CancellationToken ct) =>
             codeContentResolver.GetCodeContent(path, ct);
     }
 }

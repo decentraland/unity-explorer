@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using DCL.LOD;
 using DCL.Profiles;
+using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.NFTShapes;
@@ -200,10 +201,10 @@ namespace DCL.ResourcesUnloading.Tests
 
         private void FillCachesWithElements(string hashID)
         {
-            var textureIntention = new GetTextureIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
+            var textureIntention = new GetTextureIntention($"file://{Application.dataPath + "/../TestResources/Images/"}{hashID}", hashID, TextureWrapMode.Clamp, FilterMode.Bilinear, TextureType.Albedo);
             texturesCache.Add(textureIntention, new Texture2DData(new Texture2D(1, 1)));
 
-            var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
+            var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = new Uri($"file://{Application.dataPath + "/../TestResources/Audio/cuckoo-test-clip.mp3"}") } };
             var audioClip = new AudioClipData(AudioClip.Create(hashID, 1, 1, 2000, false));
             audioClipsCache.Add(audioClipIntention, audioClip);
             audioClipsCache.AddReference(in audioClipIntention, audioClip);

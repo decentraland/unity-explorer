@@ -5,6 +5,7 @@ using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures.Tests
@@ -14,12 +15,12 @@ namespace ECS.StreamableLoading.Textures.Tests
     {
         public LoadTextureSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
 
-        private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
-        private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
-        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        private Uri successPath => new ($"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}");
+        private Uri failPath => new ($"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}");
+        private Uri wrongTypePath => new ($"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}");
 
         protected override GetTextureIntention CreateSuccessIntention() =>
-            new (successPath, string.Empty, TextureWrapMode.MirrorOnce, FilterMode.Trilinear, TextureType.Albedo);
+            new (successPath.OriginalString, string.Empty, TextureWrapMode.MirrorOnce, FilterMode.Trilinear, TextureType.Albedo);
 
         protected override GetTextureIntention CreateNotFoundIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(failPath) };

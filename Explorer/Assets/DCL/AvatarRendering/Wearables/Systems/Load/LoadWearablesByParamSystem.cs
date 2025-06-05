@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             this.wearablesSubdirectory = wearablesSubdirectory;
         }
 
-        protected override URLAddress BuildUrlFromIntention(in GetWearableByParamIntention intention)
+        protected override Uri BuildUrlFromIntention(in GetWearableByParamIntention intention)
         {
             string userID = intention.UserID;
             IReadOnlyList<(string, string)> urlEncodedParams = intention.Params;
@@ -47,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
             if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
             {
-                var url = new Uri(intention.CommonArguments.URL);
+                Uri url = intention.CommonArguments.URL;
 
                 urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))
                           .AppendSubDirectory(URLSubdirectory.FromString(url.AbsolutePath));

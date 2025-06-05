@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Best.HTTP;
+using System;
 using System.Net.Http;
 
 namespace DCL.WebRequests
@@ -6,11 +7,14 @@ namespace DCL.WebRequests
     public class YetAnotherWebRequest : WebRequestBase, IWebRequest
     {
         internal HttpRequestMessage request;
+        internal readonly HTTPMethods Method;
+
         internal YetAnotherWebResponse? response { get; private set; }
 
         public YetAnotherWebRequest(HttpRequestMessage request, ITypedWebRequest createdFrom) : base(createdFrom)
         {
             CreationTime = DateTime.Now;
+            Method = Enum.Parse<HTTPMethods>(request.Method.Method, true);
             this.request = request;
         }
 
@@ -30,12 +34,11 @@ namespace DCL.WebRequests
             Redirected = true;
         }
 
-        internal YetAnotherWebResponse SetResponse(HttpResponseMessage response, AdaptedDownloadContentStream responseContentStream)
+        internal YetAnotherWebResponse SetResponse(HttpResponseMessage response, WebRequestHeaders headers, YetAnotherDownloadContentStream responseContentStream)
         {
-            this.response = new YetAnotherWebResponse(response, responseContentStream);
+            this.response = new YetAnotherWebResponse(response, headers, responseContentStream);
 
             Response = this.response;
-            successfullyExecutedByController = true;
 
             OnDownloadStarted?.Invoke(this);
             return this.response;

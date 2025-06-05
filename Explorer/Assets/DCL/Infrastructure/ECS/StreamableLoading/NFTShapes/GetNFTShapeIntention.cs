@@ -22,6 +22,8 @@ namespace ECS.StreamableLoading.NFTShapes
         public GetNFTShapeIntention(string urn, IURNSource urnSource)
         {
             this.URN = urn;
+
+            // TODO nullity
             CommonArguments = new CommonLoadingArguments(urnSource.UrlOrEmpty(urn));
         }
 

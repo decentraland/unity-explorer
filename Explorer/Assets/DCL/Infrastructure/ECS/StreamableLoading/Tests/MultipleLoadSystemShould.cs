@@ -5,6 +5,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;

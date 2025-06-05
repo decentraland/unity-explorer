@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -31,9 +32,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelStorageResponse> GetStorageInfoAsync(string userAddress, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(userDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(userDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -46,9 +47,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelStorageResponse> UnsignedGetStorageInfoAsync(string userAddress, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(userDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(userDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -61,10 +62,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelResponse> GetScreenshotsMetadataAsync(string uuid, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(imageDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(uuid))
-                                       .AppendSubDirectory(URLSubdirectory.FromString("metadata"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(imageDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(uuid))
+                                .AppendSubDirectory(URLSubdirectory.FromString("metadata"))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -77,10 +78,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelResponses> GetScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(userDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
-                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(userDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -93,10 +94,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelResponsesCompact> GetCompactScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(userDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
-                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}&compact=true"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(userDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}&compact=true"))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -109,10 +110,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelResponsesCompact> GetCompactPlaceScreenshotsAsync(string placeId, int limit, int offset, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(placesDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(placeId))
-                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(placesDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(placeId))
+                                .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -125,10 +126,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelResponsesCompact> UnsignedGetCompactScreenshotsAsync(string userAddress, int limit, int offset, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(userDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
-                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}&compact=true"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(userDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(userAddress))
+                                .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}&compact=true"))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -141,9 +142,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelStorageResponse> DeleteScreenshotAsync(string uuid, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(imageDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(uuid))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(imageDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(uuid))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -156,10 +157,10 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask UpdateScreenshotVisibilityAsync(string uuid, bool isPublic, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(imageDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString(uuid))
-                                       .AppendSubDirectory(URLSubdirectory.FromString("visibility"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(imageDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString(uuid))
+                                .AppendSubDirectory(URLSubdirectory.FromString("visibility"))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -170,7 +171,7 @@ namespace DCL.InWorldCamera.CameraReelStorageService
 
         public async UniTask<CameraReelUploadResponse> UploadScreenshotAsync(byte[] image, ScreenshotMetadata metadata, CancellationToken ct)
         {
-            URLAddress url = urlBuilder.AppendDomain(imageDomain).Build();
+            Uri url = urlBuilder.AppendDomain(imageDomain).Build();
             urlBuilder.Clear();
 
             var formData = new List<IMultipartFormSection>

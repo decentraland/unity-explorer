@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using NSubstitute;
 using SceneRunner.Scene;
+using System;
 
 namespace DCL.Tests.Editor
 {
@@ -9,7 +10,8 @@ namespace DCL.Tests.Editor
         public static ISceneData SceneDataSub()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
+
+            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<Uri>())
                      .Returns(args =>
                       {
                           args[1] = URLAddress.FromString(args.ArgAt<string>(0));

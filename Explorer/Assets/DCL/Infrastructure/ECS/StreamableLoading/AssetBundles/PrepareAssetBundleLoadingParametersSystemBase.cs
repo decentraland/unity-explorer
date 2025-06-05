@@ -73,7 +73,7 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
+        private Uri GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
 
             // There is a special case when it comes to the shaders:
             // they are shared and custom subdirectory should be ignored, otherwise we would need to store a copy in every subdirectory

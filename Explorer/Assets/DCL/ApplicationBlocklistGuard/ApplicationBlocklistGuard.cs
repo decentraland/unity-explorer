@@ -2,7 +2,6 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
-using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System.Linq;
 using System.Threading;
 using UnityEngine;

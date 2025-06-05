@@ -7,6 +7,7 @@ using ECS;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -99,7 +100,7 @@ namespace SceneRuntime.Factory
         ///     Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
-            URLAddress path,
+            Uri path,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,

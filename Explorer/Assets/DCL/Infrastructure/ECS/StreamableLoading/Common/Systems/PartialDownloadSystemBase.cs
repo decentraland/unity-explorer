@@ -11,7 +11,7 @@ using System.Threading;
 namespace ECS.StreamableLoading.Common.Systems
 {
     public abstract class PartialDownloadSystemBase<TData, TIntention> : LoadSystemBase<TData, TIntention>
-        where TIntention: struct, ILoadingIntention
+        where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
         private readonly IWebRequestController webRequestController;
 

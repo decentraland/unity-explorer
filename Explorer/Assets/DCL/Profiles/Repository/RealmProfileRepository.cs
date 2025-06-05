@@ -98,7 +98,7 @@ namespace DCL.Profiles
 
             Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
 
-            URLAddress url = Url(id, fromCatalyst);
+            Uri url = Url(id, fromCatalyst);
             GenericGetRequest response = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
 
             using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
@@ -126,7 +126,7 @@ namespace DCL.Profiles
             return profile;
         }
 
-        private URLAddress Url(string id, URLDomain? fromCatalyst)
+        private Uri Url(string id, URLDomain? fromCatalyst)
         {
             urlBuilder.Clear();
 

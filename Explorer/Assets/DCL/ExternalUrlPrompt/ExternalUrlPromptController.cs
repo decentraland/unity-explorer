@@ -40,7 +40,7 @@ namespace DCL.ExternalUrlPrompt
 
             if (trustedDomains.Contains(inputData.Uri.Host))
             {
-                webBrowser.OpenUrl(inputData.Uri.OriginalString);
+                webBrowser.OpenUrl(inputData.Uri);
                 viewInstance.CloseButton.OnClickAsync(CancellationToken.None).Forget();
                 return;
             }
@@ -53,10 +53,11 @@ namespace DCL.ExternalUrlPrompt
                     case ExternalUrlPromptResultType.ApprovedTrusted:
                         if (!trustedDomains.Contains(inputData.Uri.Host))
                             trustedDomains.Add(inputData.Uri.Host);
-                        webBrowser.OpenUrl(inputData.Uri.OriginalString);
+
+                        webBrowser.OpenUrl(inputData.Uri);
                         break;
                     case ExternalUrlPromptResultType.Approved:
-                        webBrowser.OpenUrl(inputData.Uri.OriginalString);
+                        webBrowser.OpenUrl(inputData.Uri);
                         break;
                 }
             });

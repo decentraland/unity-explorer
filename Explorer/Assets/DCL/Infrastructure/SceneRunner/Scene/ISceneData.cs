@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
@@ -34,13 +35,13 @@ namespace SceneRunner.Scene
         ///     Translates URL encoded in SDK components into a path in the scene bundle
         ///     from which an asset can be downloaded from
         /// </summary>
-        bool TryGetMainScriptUrl(out URLAddress result);
+        bool TryGetMainScriptUrl(out Uri result);
 
         /// <summary>
         ///     Translates URL encoded in SDK components into a path in the scene bundle
         ///     from which an asset can be downloaded from
         /// </summary>
-        bool TryGetContentUrl(string url, out URLAddress result);
+        bool TryGetContentUrl(string url, out Uri result);
 
         /// <summary>
         ///     Translates the name of the scene asset into the hash, that can be used as part of URL
@@ -53,7 +54,7 @@ namespace SceneRunner.Scene
         /// <param name="url"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        bool TryGetMediaUrl(string url, out URLAddress result);
+        bool TryGetMediaUrl(string url, out Uri result);
 
         bool TryGetMediaFileHash(string url, out string fileHash);
 
@@ -83,15 +84,15 @@ namespace SceneRunner.Scene
             public bool HasRequiredPermission(string permission) =>
                 true;
 
-            public bool TryGetMainScriptUrl(out URLAddress result)
+            public bool TryGetMainScriptUrl(out Uri result)
             {
-                result = URLAddress.EMPTY;
+                result = null!;
                 return false;
             }
 
-            public bool TryGetContentUrl(string url, out URLAddress result)
+            public bool TryGetContentUrl(string url, out Uri result)
             {
-                result = URLAddress.EMPTY;
+                result = null!;
                 return false;
             }
 
@@ -101,9 +102,9 @@ namespace SceneRunner.Scene
                 return false;
             }
 
-            public bool TryGetMediaUrl(string url, out URLAddress result)
+            public bool TryGetMediaUrl(string url, out Uri result)
             {
-                result = URLAddress.EMPTY;
+                result = null!;
                 return false;
             }
 

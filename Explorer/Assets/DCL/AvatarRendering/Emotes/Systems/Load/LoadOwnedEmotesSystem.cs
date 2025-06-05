@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override EmotesResolution AssetFromPreparedIntention(in GetOwnedEmotesFromRealmIntention intention) =>
             new (intention.Result, intention.TotalAmount);
 
-        protected override URLAddress BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention) =>
+        protected override Uri BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention) =>
             intention.CommonArguments.URL;
     }
 }

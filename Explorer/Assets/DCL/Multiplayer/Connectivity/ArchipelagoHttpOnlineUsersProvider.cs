@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -13,12 +14,12 @@ namespace DCL.Multiplayer.Connectivity
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new OnlinePlayersJsonDtoConverter() } };
 
         private readonly IWebRequestController webRequestController;
-        private readonly URLAddress baseUrl;
+        private readonly Uri baseUrl;
         private readonly URLBuilder urlBuilder = new ();
 
         public ArchipelagoHttpOnlineUsersProvider(
             IWebRequestController webRequestController,
-            URLAddress baseUrl)
+            Uri baseUrl)
         {
             this.webRequestController = webRequestController;
             this.baseUrl = baseUrl;
@@ -31,7 +32,7 @@ namespace DCL.Multiplayer.Connectivity
         public async UniTask<IReadOnlyCollection<OnlineUserData>> GetAsync(IEnumerable<string> userIds, CancellationToken ct)
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(baseUrl));
+            urlBuilder.AppendDomain(URLDomain.FromString(baseUrl.OriginalString));
 
             foreach (string userId in userIds)
                 urlBuilder.AppendParameter(new URLParameter("id", userId));

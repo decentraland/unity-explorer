@@ -1,4 +1,5 @@
-﻿using Cysharp.Net.Http;
+﻿using Best.HTTP.Caching;
+using Cysharp.Net.Http;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
@@ -95,9 +96,11 @@ namespace DCL.WebRequests
 
                     Stream? stream = await response.Content.ReadAsStreamAsync();
 
+                    var headers = new WebRequestHeaders(response);
+
                     // Adapt the stream for compatibility with the existing cache and logic
-                    var adaptedStream = new AdaptedDownloadContentStream(stream);
-                    YetAnotherWebResponse adaptedResponse = adapter.SetResponse(response, adaptedStream);
+                    var adaptedStream = new YetAnotherDownloadContentStream(stream);
+                    YetAnotherWebResponse adaptedResponse = adapter.SetResponse(response, headers, adaptedStream);
 
                     // HttpClient will not throw an exception for non-success status codes, so we need to throw an exception manually
                     if (!response.IsSuccessStatusCode)
@@ -110,6 +113,8 @@ namespace DCL.WebRequests
 
                         throw new HttpRequestException($"{nativeRequest.Method} {nativeRequest.RequestUri}, {(int)response.StatusCode}: {response.ReasonPhrase}\n{error}");
                     }
+
+                    adapter.successfullyExecutedByController = true;
 
                     return adapter;
                 }

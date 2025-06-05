@@ -18,6 +18,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using SceneRunner.Scene;
+using System;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
@@ -58,7 +59,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [None(typeof(UIBackgroundComponent))]
         private void InstantiateUIBackground(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var image = imagesPool.Get();
+            DCLImage? image = imagesPool.Get();
             image.Initialize(uiTransformComponent.Transform);
 
             var uiBackgroundComponent = new UIBackgroundComponent();
@@ -104,7 +105,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 !memoryBudgetProvider.TrySpendBudget())
                 return;
 
-            var texturePromise = uiBackgroundComponent.TexturePromise.Value;
+            Promise texturePromise = uiBackgroundComponent.TexturePromise.Value;
 
             // We hide the image until the texture is loaded in order to avoid to show a white image in the meanwhile
             uiBackgroundComponent.Image.IsHidden = true;
@@ -144,7 +145,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             // If component is being reused forget the previous promise
             TryAddAbortIntention(World, ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.FileHash, textureComponentValue.WrapMode, textureComponentValue.FilterMode, textureComponentValue.TextureType, attemptsCount: ATTEMPTS_COUNT, isAvatarTexture: textureComponentValue.IsAvatarTexture), partitionComponent);
+            promise = Promise.Create(World,
+                new GetTextureIntention(textureComponentValue.Src, textureComponentValue.FileHash, textureComponentValue.WrapMode, textureComponentValue.FilterMode, textureComponentValue.TextureType, attemptsCount: ATTEMPTS_COUNT), partitionComponent);
         }
 
         private static void TryAddAbortIntention(World world, ref Promise? promise)

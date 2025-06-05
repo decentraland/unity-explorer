@@ -31,8 +31,8 @@ namespace DCL.Web3.Authenticators
         private const string SEPOLIA_NET_VERSION = "11155111";
 
         private readonly IWebBrowser webBrowser;
-        private readonly URLAddress authApiUrl;
-        private readonly URLAddress signatureWebAppUrl;
+        private readonly Uri authApiUrl;
+        private readonly Uri signatureWebAppUrl;
         private readonly URLDomain rpcServerUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IWeb3AccountFactory web3AccountFactory;
@@ -57,8 +57,8 @@ namespace DCL.Web3.Authenticators
         private IVerifiedEthereumApi.VerificationDelegate? signatureVerificationCallback;
 
         public DappWeb3Authenticator(IWebBrowser webBrowser,
-            URLAddress authApiUrl,
-            URLAddress signatureWebAppUrl,
+            Uri authApiUrl,
+            Uri signatureWebAppUrl,
             URLDomain rpcServerUrl,
             IWeb3IdentityCache identityCache,
             IWeb3AccountFactory web3AccountFactory,
@@ -294,7 +294,7 @@ namespace DCL.Web3.Authenticators
             urlBuilder.AppendPath(new URLPath(network));
 
             rpcWebSocket = new ClientWebSocket();
-            await rpcWebSocket.ConnectAsync(new Uri(urlBuilder.Build()), ct);
+            await rpcWebSocket.ConnectAsync(urlBuilder.Build(), ct);
         }
 
         private async UniTask<EthApiResponse> RequestEthMethodWithoutSignatureAsync(EthApiRequest request, CancellationToken ct)
@@ -419,7 +419,7 @@ namespace DCL.Web3.Authenticators
 
         private async UniTask<T> RequestWalletConfirmationAsync<T>(string requestId, DateTime expiration, CancellationToken ct)
         {
-            webBrowser.OpenUrl($"{signatureWebAppUrl}/{requestId}");
+            webBrowser.OpenUrl(signatureWebAppUrl.Append(requestId));
 
             signatureOutcomeTask?.TrySetCanceled(ct);
             signatureOutcomeTask = new UniTaskCompletionSource<SocketIOResponse>();
@@ -461,9 +461,7 @@ namespace DCL.Web3.Authenticators
         {
             if (authApiWebSocket == null)
             {
-                var uri = new Uri(authApiUrl);
-
-                authApiWebSocket = new SocketIO(uri, new SocketIOOptions
+                authApiWebSocket = new SocketIO(authApiUrl, new SocketIOOptions
                 {
                     Transport = TransportProtocol.WebSocket,
                 });

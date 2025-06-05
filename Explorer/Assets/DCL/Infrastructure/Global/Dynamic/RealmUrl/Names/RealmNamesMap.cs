@@ -19,7 +19,7 @@ namespace Global.Dynamic.RealmUrl.Names
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<string> UrlFromNameAsync(string name, CancellationToken token)
+        public async UniTask<Uri> UrlFromNameAsync(string name, CancellationToken token)
         {
             IReadOnlyList<NodeDTO> nodes = await NodesAsync(token);
 
@@ -28,17 +28,19 @@ namespace Global.Dynamic.RealmUrl.Names
                 string nodeName = await NameOfNodeAsync(nodeDTO, token);
 
                 if (nodeName == name)
-                    return nodeDTO.BaseUrl;
+                    return new Uri(nodeDTO.BaseUrl);
             }
 
             throw new Exception($"Node with name '{name}' not found");
         }
 
+        private static readonly Uri SERVERS_URI = new ("https://peer.decentraland.org/lambdas/contracts/servers");
+
         private async UniTask<IReadOnlyList<NodeDTO>> NodesAsync(CancellationToken token)
         {
             if (cachedNodes == null)
             {
-                CommonArguments arguments = "https://peer.decentraland.org/lambdas/contracts/servers";
+                CommonArguments arguments = SERVERS_URI;
 
                 cachedNodes = await webRequestController
                                    .GetAsync(arguments, ReportCategory.GENERIC_WEB_REQUEST)
@@ -52,7 +54,7 @@ namespace Global.Dynamic.RealmUrl.Names
         {
             if (cachedUrlToNameDictionary.TryGetValue(nodeDTO.BaseUrl, out string? name) == false)
             {
-                CommonArguments arguments = $"{nodeDTO.baseUrl}/about";
+                CommonArguments arguments = new Uri($"{nodeDTO.baseUrl}/about");
 
                 var about = await webRequestController
                                  .GetAsync(arguments, ReportCategory.GENERIC_WEB_REQUEST)

@@ -450,7 +450,7 @@ namespace Global.Dynamic
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
             // If we want to save one http request, we could have a hardcoded list of trusted realms instead
-            var url = URLAddress.FromString(dclUrls.Url(DecentralandUrl.Servers));
+            Uri url = dclUrls.Url(DecentralandUrl.Servers);
             GenericGetRequest adapter = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
             TrustedRealmApiResponse[] realms = await adapter.CreateFromJsonAsync<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft, ct);
 

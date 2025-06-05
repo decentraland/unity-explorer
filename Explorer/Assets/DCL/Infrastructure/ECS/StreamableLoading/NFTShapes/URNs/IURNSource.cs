@@ -1,13 +1,14 @@
 using CommunicationData.URLHelpers;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using System;
 
 namespace ECS.StreamableLoading.NFTShapes.URNs
 {
     public interface IURNSource
     {
-        URLAddress UrlOrEmpty(URN urn);
+        Uri? UrlOrEmpty(URN urn);
 
-        public static string BaseURL(IDecentralandUrlsSource decentralandUrlsSource) =>
-            $"{decentralandUrlsSource.Url(DecentralandUrl.OpenSea)}/api/v2/chain/{{chain}}/contract/{{address}}/nfts/{{id}}";
+        public static Uri BaseURL(IDecentralandUrlsSource decentralandUrlsSource) =>
+            decentralandUrlsSource.Url(DecentralandUrl.OpenSea).Append("/api/v2/chain/{chain}/contract/{address}/nfts/{id}");
     }
 }

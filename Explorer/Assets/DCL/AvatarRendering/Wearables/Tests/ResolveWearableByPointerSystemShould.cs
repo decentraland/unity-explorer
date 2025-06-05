@@ -98,7 +98,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var assetBundleManifestPromise
                 = AssetBundleManifestPromise.Create(world, new GetWearableAssetBundleManifestIntention
                 {
-                    CommonArguments = new CommonLoadingArguments("mockURL", cancellationTokenSource: cts),
+                    CommonArguments = new CommonLoadingArguments(null!, cancellationTokenSource: cts),
                 }, PartitionComponent.TOP_PRIORITY);
 
             world.Create(assetBundleManifestPromise, mockWearable, BodyShape.MALE);
@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             var assetBundlePromise
                 = AssetBundlePromise.Create(world, new GetAssetBundleIntention
                 {
-                    CommonArguments = new CommonLoadingArguments("mockURL", cancellationTokenSource: cts),
+                    CommonArguments = new CommonLoadingArguments(null!, cancellationTokenSource: cts),
                 }, PartitionComponent.TOP_PRIORITY);
 
             world.Create(assetBundlePromise, mockWearable, BodyShape.MALE);

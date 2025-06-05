@@ -108,7 +108,7 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null) =>
             controller.Create<PartialDownloadRequest, PartialDownloadArguments>(partialArgs, commonArguments, reportData, headersInfo);
 
-        public static async UniTask<Result> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
+        public static async UniTask<Result> IsHeadReachableAsync(this IWebRequestController controller, ReportData reportData, Uri url, CancellationToken ct)
         {
             try
             {

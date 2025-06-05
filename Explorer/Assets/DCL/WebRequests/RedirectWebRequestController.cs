@@ -40,7 +40,7 @@ namespace DCL.WebRequests
                 switch (mode)
                 {
                     // Yet Another doesn't support files => use UnityWebRequest
-                    case WebRequestsMode.YET_ANOTHER when !requestWrap.Envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase):
+                    case WebRequestsMode.YET_ANOTHER when !requestWrap.Envelope.CommonArguments.URL.IsFile:
                         return yetAnotherWebRequestController.SendAsync(requestWrap, detachDownloadHandler, ct);
                     case WebRequestsMode.HTTP2:
                         return http2WebRequestController.SendAsync(requestWrap, detachDownloadHandler, ct);

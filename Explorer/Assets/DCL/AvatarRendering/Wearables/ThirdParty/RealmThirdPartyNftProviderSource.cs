@@ -27,9 +27,9 @@ namespace DCL.AvatarRendering.Wearables.ThirdParty
             if (providers != null) return providers;
             var urlBuilder = new URLBuilder();
 
-            URLAddress url = urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                                       .AppendPath(URLPath.FromString("third-party-integrations"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+                                .AppendPath(URLPath.FromString("third-party-integrations"))
+                                .Build();
 
             GenericGetRequest request = webRequestController.GetAsync(new CommonArguments(url), reportData);
             ThirdPartyProviderListJsonDto providersDto = await request.CreateFromJsonAsync<ThirdPartyProviderListJsonDto>(WRJsonParser.Unity, ct);

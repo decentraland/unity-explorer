@@ -25,11 +25,10 @@ namespace DCL.PlacesAPIService
 
         private readonly URLBuilder urlBuilder = new ();
 
-        private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
-        private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
-        private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
-        private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
-        private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
+        private Uri baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
+        private Uri poiURL => decentralandUrlsSource.Url(DecentralandUrl.POI);
+        private Uri mapApiUrl => decentralandUrlsSource.Url(DecentralandUrl.Map);
+        private Uri contentModerationReportURL => decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport);
 
         public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -78,7 +77,7 @@ namespace DCL.PlacesAPIService
                 foreach (string xy in positions)
                     urlBuilder.AppendParameter(new URLParameter("positions", xy));
 
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
 
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
@@ -105,7 +104,7 @@ namespace DCL.PlacesAPIService
         public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct)
         {
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            var url = $"{baseURL}/{placeId}?with_realms_detail=true";
+            Uri url = baseURL.Append($"/{placeId}?with_realms_detail=true");
 
             var result = webRequestController.GetAsync(
                 url, ReportCategory.UI,
@@ -126,24 +125,22 @@ namespace DCL.PlacesAPIService
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            string url = baseURL + "/{0}/favorites";
+            Uri url = baseURL.Append($"/{placeId}/favorites");
             const string FAVORITE_PAYLOAD = "{\"favorites\": true}";
             const string NOT_FAVORITE_PAYLOAD = "{\"favorites\": false}";
 
-            var fullUrl = string.Format(url, placeId);
-
             await webRequestController.PatchAsync(
-                                           fullUrl,
+                                           url,
                                            GenericUploadArguments.CreateJson(isFavorite ? FAVORITE_PAYLOAD : NOT_FAVORITE_PAYLOAD),
                                            ReportCategory.UI,
-                                           signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
+                                           signInfo: WebRequestSignInfo.NewFromUrl(url, unixTimestamp, "patch"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place favorite:"), ct);
         }
 
         public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {
-            string url = baseURL + "/{0}/likes";
+            Uri url = baseURL.Append($"/{placeId}/likes");
             const string LIKE_PAYLOAD = "{\"like\": true}";
             const string DISLIKE_PAYLOAD = "{\"like\": false}";
             const string NO_LIKE_PAYLOAD = "{\"like\": null}";
@@ -155,14 +152,13 @@ namespace DCL.PlacesAPIService
             else
                 payload = isUpvote == true ? LIKE_PAYLOAD : DISLIKE_PAYLOAD;
 
-            var fullUrl = string.Format(url, placeId);
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             await webRequestController.PatchAsync(
-                                           fullUrl,
+                                           url,
                                            GenericUploadArguments.CreateJson(payload),
                                            ReportCategory.UI,
-                                           signInfo: WebRequestSignInfo.NewFromUrl(fullUrl, unixTimestamp, "patch"),
+                                           signInfo: WebRequestSignInfo.NewFromUrl(url, unixTimestamp, "patch"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error setting place vote:"), ct);
         }
@@ -182,7 +178,7 @@ namespace DCL.PlacesAPIService
 
         public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct)
         {
-            var url = $"{mapApiUrl}?categories={category}";
+            var url = new Uri($"{mapApiUrl}?categories={category}");
 
             List<OptimizedPlaceInMapResponse> categoryPlaces = await webRequestController.GetAsync(url, ReportCategory.UI)
                                                                                          .CreateFromNewtonsoftJsonAsync<List<OptimizedPlaceInMapResponse>>(ct, serializerSettings: SERIALIZER_SETTINGS);
@@ -215,7 +211,7 @@ namespace DCL.PlacesAPIService
 
             await UniTask.SwitchToMainThread();
 
-            await webRequestController.PutAsync(response.data.signed_url, GenericUploadArguments.CreateJson(putData), ReportCategory.UI)
+            await webRequestController.PutAsync(new Uri(response.data.signed_url), GenericUploadArguments.CreateJson(putData), ReportCategory.UI)
                                       .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error reporting place:"), ct);
         }
     }

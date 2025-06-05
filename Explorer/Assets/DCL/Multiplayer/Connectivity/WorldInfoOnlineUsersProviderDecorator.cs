@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,13 +17,13 @@ namespace DCL.Multiplayer.Connectivity
 
         private readonly IOnlineUsersProvider baseProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly URLAddress baseUrlWorlds;
+        private readonly Uri baseUrlWorlds;
         private readonly URLBuilder urlBuilder = new ();
 
         public WorldInfoOnlineUsersProviderDecorator(
             IOnlineUsersProvider baseProvider,
             IWebRequestController webRequestController,
-            URLAddress baseUrlWorlds)
+            Uri baseUrlWorlds)
         {
             this.baseProvider = baseProvider;
             this.webRequestController = webRequestController;
@@ -51,7 +52,7 @@ namespace DCL.Multiplayer.Connectivity
                     continue;
 
                 urlBuilder.Clear();
-                urlBuilder.AppendDomain(URLDomain.FromString(baseUrlWorlds.Value.Replace(USER_ID_FIELD, userId)));
+                urlBuilder.AppendDomain(URLDomain.FromString(baseUrlWorlds.OriginalString.Replace(USER_ID_FIELD, userId)));
 
                 OnlineUserData worldUserData = await webRequestController.GetAsync(urlBuilder.Build(), ReportCategory.MULTIPLAYER)
                                                                          .CreateFromNewtonsoftJsonAsync<OnlineUserData>(ct, serializerSettings: SERIALIZER_SETTINGS)

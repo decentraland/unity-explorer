@@ -1,13 +1,14 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 
 namespace ECS.StreamableLoading.Common.Components
 {
     public struct CommonLoadingArguments
     {
-        public URLAddress URL;
+        public Uri URL;
         public int Attempts;
         public int Timeout;
 
@@ -29,7 +30,7 @@ namespace ECS.StreamableLoading.Common.Components
 
         public readonly CancellationTokenSource CancellationTokenSource;
 
-        public CommonLoadingArguments(URLAddress url, URLSubdirectory customEmbeddedSubDirectory = default,
+        public CommonLoadingArguments(Uri url, URLSubdirectory customEmbeddedSubDirectory = default,
             int timeout = StreamableLoadingDefaults.TIMEOUT,
             int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
             AssetSource permittedSources = AssetSource.WEB,
@@ -44,17 +45,6 @@ namespace ECS.StreamableLoading.Common.Components
             CurrentSource = currentSource;
             CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
         }
-
-        /// <summary>
-        ///     Use URLAddress instead of string
-        /// </summary>
-        public CommonLoadingArguments(string url, URLSubdirectory customEmbeddedSubDirectory = default,
-            int timeout = StreamableLoadingDefaults.TIMEOUT,
-            int attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT,
-            AssetSource permittedSources = AssetSource.WEB,
-            AssetSource currentSource = AssetSource.WEB,
-            CancellationTokenSource cancellationTokenSource = null) :
-            this(URLAddress.FromString(url), customEmbeddedSubDirectory, timeout, attempts, permittedSources, currentSource, cancellationTokenSource) { }
 
         // Always override attempts count for streamable assets as repetitions are handled in LoadSystemBase
         public static implicit operator CommonArguments(in CommonLoadingArguments commonLoadingArguments) =>

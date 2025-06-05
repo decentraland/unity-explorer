@@ -81,7 +81,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                         hairColor: $"#{ColorUtility.ToHtmlStringRGB(avatar.HairColor)}",
                         skinColor: $"#{ColorUtility.ToHtmlStringRGB(avatar.SkinColor)}",
                         wearablesCache,
-                        new Snapshot(avatar.BodySnapshotUrl, avatar.FaceSnapshotUrl)
+                        new Snapshot(avatar.BodySnapshotUrl.ToString(), avatar.FaceSnapshotUrl.ToString())
                     ) { }
 
                     public Avatar(string bodyShape, string eyeColor, string hairColor, string skinColor, List<string> wearables,

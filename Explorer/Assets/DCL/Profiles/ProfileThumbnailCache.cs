@@ -57,7 +57,7 @@ namespace DCL.Profiles
         public Sprite? GetThumbnail(string userId) =>
             thumbnails.GetValueOrDefault(userId);
 
-        public async UniTask<Sprite?> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
+        public async UniTask<Sprite?> GetThumbnailAsync(string userId, Uri thumbnailUrl, CancellationToken ct)
         {
             Sprite? sprite = GetThumbnail(userId);
             if (sprite != null)
@@ -74,11 +74,11 @@ namespace DCL.Profiles
             return await spriteTaskCompletionSource.Task;
         }
 
-        private async UniTaskVoid DownloadThumbnailAsync(string userId, string thumbnailUrl, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
+        private async UniTaskVoid DownloadThumbnailAsync(string userId, Uri thumbnailUrl, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
         {
             Sprite? result = null;
 
-            if (URLAddress.EMPTY.Equals(thumbnailUrl))
+            if (thumbnailUrl == null)
             {
                 FinalizeTask(tcs, result, userId);
                 return;
@@ -93,7 +93,7 @@ namespace DCL.Profiles
             try
             {
                 IOwnedTexture2D? ownedTexture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(thumbnailUrl)),
+                                                                               new CommonArguments(thumbnailUrl),
                     new GetTextureArguments(TextureType.Albedo),
                     ReportCategory.UI,
                     suppressErrors: true

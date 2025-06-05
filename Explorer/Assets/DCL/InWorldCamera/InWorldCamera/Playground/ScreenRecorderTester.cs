@@ -74,7 +74,7 @@ namespace DCL.InWorldCamera.Playground
                         web3IdentityCache,
                         IWebRequestController.UNITY,
                         URLDomain.FromString("TestRealm"),
-                        URLDomain.EMPTY,
+                        null!,
                         new ServerAbout(
                             lambdas: new ContentEndpoint(profileUrl)
                         )

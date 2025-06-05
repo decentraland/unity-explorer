@@ -15,13 +15,15 @@ namespace DCL.WebRequests
     public class YetAnotherWebResponse : IWebRequestResponse, IDisposable
     {
         internal readonly HttpResponseMessage response;
+        internal readonly WebRequestHeaders headers;
 
-        internal AdaptedDownloadContentStream downStream;
+        internal YetAnotherDownloadContentStream downStream;
 
-        internal YetAnotherWebResponse(HttpResponseMessage response, AdaptedDownloadContentStream downStream)
+        internal YetAnotherWebResponse(HttpResponseMessage response, WebRequestHeaders headers, YetAnotherDownloadContentStream downStream)
         {
             this.response = response;
             this.downStream = downStream;
+            this.headers = headers;
             Error = string.Empty;
         }
 
@@ -111,6 +113,7 @@ namespace DCL.WebRequests
         public void Dispose()
         {
             response.Dispose();
+            headers.Dispose();
         }
     }
 }

@@ -10,11 +10,20 @@ using System.Threading.Tasks;
 
 namespace DCL.WebRequests.HTTP2.Tests
 {
+    [TestFixture(WebRequestsMode.HTTP2)]
+    [TestFixture(WebRequestsMode.YET_ANOTHER)]
     public class Http2WebRequestControllerShould
     {
-        private const string NOT_FOUND_URL = "https://ab-cdn.decentraland.org/LOD/1/not_found_1_windows";
+        private readonly WebRequestsMode mode;
+
+        private static readonly Uri NOT_FOUND_URL = new ("https://ab-cdn.decentraland.org/LOD/1/not_found_1_windows");
 
         private IWebRequestController webRequestController;
+
+        public Http2WebRequestControllerShould(WebRequestsMode mode)
+        {
+            this.mode = mode;
+        }
 
         [SetUp]
         public void SetUp()
@@ -22,15 +31,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             ArtificialDelayWebRequestController.IReadOnlyOptions? delay = Substitute.For<ArtificialDelayWebRequestController.IReadOnlyOptions>();
             delay.GetOptionsAsync().Returns(UniTask.FromResult<(float ArtificialDelaySeconds, bool UseDelay)>((0, false)));
 
-            IWebRequestController tw = TestWebRequestController.Create(WebRequestsMode.HTTP2);
-
-            webRequestController = new RedirectWebRequestController(WebRequestsMode.HTTP2,
-                                       Substitute.For<IWebRequestController>(),
-                                       tw,
-                                       Substitute.For<IWebRequestController>(), tw.requestHub)
-                                  .WithLog()
-                                  .WithArtificialDelay(delay)
-                                  .WithBudget(10, new ElementBinding<ulong>(0));
+            webRequestController = TestWebRequestController.Create(mode);
         }
 
         [TearDown]

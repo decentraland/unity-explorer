@@ -9,6 +9,7 @@ using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Collections.Generic;
 using SceneRunner.Scene;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -73,9 +74,9 @@ namespace Global.Dynamic
         public bool EnableLOD { get; init; }
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
-        public string LocalSceneDevelopmentRealm { get; init; }
+        public Uri? LocalSceneDevelopmentRealm { get; init; }
         public IAppArgs AppParameters { get; init; }
-        public string DefaultStartingRealm { get; init; }
+        public Uri DefaultStartingRealm { get; init; }
     }
 
     public struct HybridSceneParams

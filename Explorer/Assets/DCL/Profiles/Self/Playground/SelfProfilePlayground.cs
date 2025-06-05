@@ -39,7 +39,7 @@ namespace DCL.Profiles.Self.Playground
                                     web3IdentityCache,
                                     IWebRequestController.UNITY,
                                     URLDomain.FromString(url),
-                                    URLDomain.EMPTY,
+                                    URLAddress.EMPTY,
                                     new ServerAbout(
                                         lambdas: new ContentEndpoint(url)
                                     )

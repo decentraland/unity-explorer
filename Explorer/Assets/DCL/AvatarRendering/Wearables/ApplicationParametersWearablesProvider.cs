@@ -78,7 +78,7 @@ namespace DCL.AvatarRendering.Wearables
                     // localBuffer accumulates the loaded wearables
                     await source.GetAsync(pageSize, pageNumber, ct, sortingField, orderBy, category, collectionType, name, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
-                            builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collections[i]),
+                            new Uri(builderDTOsUrl.Replace(BUILDER_DTO_URL_COL_ID, collections[i])),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
                         needsBuilderAPISigning: true);

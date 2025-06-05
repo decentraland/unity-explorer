@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.SceneLifeCycle.Realm;
@@ -21,7 +22,7 @@ namespace Global.Dynamic.RealmUrl
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public async UniTask<string> StartingRealmAsync(CancellationToken ct)
+        public async UniTask<Uri> StartingRealmAsync(CancellationToken ct)
         {
             return realmLaunchSettings.initialRealm switch
                    {
@@ -30,14 +31,14 @@ namespace Global.Dynamic.RealmUrl
                        InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
                        InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
                        InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,
-                       InitialRealm.World => decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer) + "/" + realmLaunchSettings.targetWorld,
+                       InitialRealm.World => decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer).Append(realmLaunchSettings.targetWorld),
                        InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
                        InitialRealm.Custom => await CustomRealmAsync(ct),
                        _ => decentralandUrlsSource.Url(DecentralandUrl.Genesis),
                    };
         }
 
-        public async UniTask<string?> LocalSceneDevelopmentRealmAsync(CancellationToken ct) =>
+        public async UniTask<Uri?> LocalSceneDevelopmentRealmAsync(CancellationToken ct) =>
             realmLaunchSettings.CurrentMode switch
             {
                 LaunchMode.Play => null,
@@ -45,12 +46,12 @@ namespace Global.Dynamic.RealmUrl
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-        private async UniTask<string> CustomRealmAsync(CancellationToken ct)
+        private async UniTask<Uri> CustomRealmAsync(CancellationToken ct)
         {
             string realm = realmLaunchSettings.customRealm;
 
             if (realm.StartsWith("http://", StringComparison.Ordinal) || realm.StartsWith("https://", StringComparison.Ordinal))
-                return realm;
+                return new Uri(realm);
 
             return await realmNames.UrlFromNameAsync(realm, ct);
         }

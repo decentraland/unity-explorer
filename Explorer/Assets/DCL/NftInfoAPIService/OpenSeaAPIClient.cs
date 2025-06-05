@@ -1,7 +1,9 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 
 namespace DCL.NftInfoAPIService
@@ -14,7 +16,7 @@ namespace DCL.NftInfoAPIService
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.OpenSea);
+        private Uri baseURL => decentralandUrlsSource.Url(DecentralandUrl.OpenSea);
 
         public OpenSeaAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -24,7 +26,7 @@ namespace DCL.NftInfoAPIService
 
         public async UniTask<NftInfo> FetchNftInfoAsync(string chain, string contractAddress, string tokenId, CancellationToken ct)
         {
-            var url = $"{baseURL}/api/v2/chain/{(string.IsNullOrEmpty(chain) ? DEFAULT_CHAIN : chain)}/contract/{contractAddress}/nfts/{tokenId}";
+            Uri url = baseURL.Append($"/api/v2/chain/{(string.IsNullOrEmpty(chain) ? DEFAULT_CHAIN : chain)}/contract/{contractAddress}/nfts/{tokenId}");
 
             OpenSeaNftResponse nftResponse = await webRequestController.GetAsync(url, ReportCategory.NFT_INFO_WEB_REQUEST)
                                                                        .CreateFromJsonAsync<OpenSeaNftResponse>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);

@@ -74,7 +74,7 @@ namespace DCL.WebRequests
             return mode switch
                    {
                        WebRequestsMode.HTTP2 => GetStreamFromBestHttpAsync(ct),
-                       WebRequestsMode.YET_ANOTHER => GetStreamFromYetAnotherRequest(ct),
+                       WebRequestsMode.YET_ANOTHER => GetStreamFromYetAnotherRequestAsync(ct),
                        _ => throw new NotSupportedException($"WebRequestsMode {mode} is not supported for {nameof(PartialDownloadRequest)}"),
                    };
         }
@@ -82,12 +82,12 @@ namespace DCL.WebRequests
         public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
             new (HttpMethod.Get, commonArguments.URL);
 
-        private async UniTask<PartialDownloadStream> GetStreamFromYetAnotherRequest(CancellationToken ct)
+        private async UniTask<PartialDownloadStream> GetStreamFromYetAnotherRequestAsync(CancellationToken ct)
         {
             if (PlayerLoopHelper.IsMainThread)
                 await UniTask.SwitchToThreadPool();
 
-            var uri = new Uri(commonArguments.URL);
+            Uri uri = commonArguments.URL;
 
             if (partialStream is { IsFullyDownloaded: true })
             {
@@ -158,7 +158,7 @@ namespace DCL.WebRequests
 
                 long startPartialLength = partialStream!.partialContentLength;
 
-                AdaptedDownloadContentStream downStream = nativeResponse.downStream;
+                YetAnotherDownloadContentStream downStream = nativeResponse.downStream;
                 LoggingContext? loggingContext = null;
 
                 // Keep non-blocking reading from the download stream
@@ -216,7 +216,7 @@ namespace DCL.WebRequests
 
             // If the result is fully cached in the stream that was passed, return it immediately
 
-            var uri = new Uri(commonArguments.URL);
+            Uri uri = commonArguments.URL;
 
             if (partialStream is { IsFullyDownloaded: true })
             {

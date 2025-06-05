@@ -9,10 +9,10 @@ namespace DCL.AvatarRendering.Wearables.Components
         public CommonLoadingArguments CommonArguments { get; set; }
         public readonly string Hash;
 
-        public GetWearableAssetBundleManifestIntention(string hash, CommonLoadingArguments commonArguments)
+        public GetWearableAssetBundleManifestIntention(string hash, CancellationTokenSource cts)
         {
             Hash = hash;
-            CommonArguments = commonArguments;
+            CommonArguments = new CommonLoadingArguments(null!, cancellationTokenSource: cts);
         }
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;

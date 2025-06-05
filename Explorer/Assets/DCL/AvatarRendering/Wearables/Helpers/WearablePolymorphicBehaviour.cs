@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             where T: IAvatarAttachment
         {
             var promise = AssetBundleManifestPromise.Create(world,
-                new GetWearableAssetBundleManifestIntention(component.DTO.GetHash(), new CommonLoadingArguments(component.DTO.GetHash(), cancellationTokenSource: cts)),
+                new GetWearableAssetBundleManifestIntention(component.DTO.GetHash(), cts),
                 partitionComponent);
 
             component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();

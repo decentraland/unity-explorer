@@ -360,6 +360,6 @@ namespace DCL.Backpack
         }
 
         private void OpenMarketplaceLink(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrl(new Uri(url));
     }
 }

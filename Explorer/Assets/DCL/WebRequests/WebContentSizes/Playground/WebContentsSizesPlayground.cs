@@ -1,6 +1,7 @@
 #nullable enable
 
 using DCL.WebRequests.WebContentSizes.Sizes;
+using System;
 using UnityEngine;
 
 namespace DCL.WebRequests.WebContentSizes.Playground
@@ -26,7 +27,7 @@ namespace DCL.WebRequests.WebContentSizes.Playground
                 return;
             }
 
-            bool isOk = await webContentSizes.IsOkSizeAsync(targetUrl, destroyCancellationToken);
+            bool isOk = await webContentSizes.IsOkSizeAsync(new Uri(targetUrl), destroyCancellationToken);
             print($"Size for {targetUrl} is ok: {isOk}");
         }
 

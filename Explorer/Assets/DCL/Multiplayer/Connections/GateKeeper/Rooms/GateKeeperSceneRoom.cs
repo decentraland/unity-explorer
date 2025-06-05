@@ -151,7 +151,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            string url = options.AdapterUrl;
+            Uri url = options.AdapterUrl;
             AdapterResponse response = await webRequests.SignedFetchPostAsync(
                                                              url,
                                                              meta.ToJson(),

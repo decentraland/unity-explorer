@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.WebContentSizes.Sizes;
+using System;
 using System.Threading;
 
 namespace DCL.WebRequests.WebContentSizes
@@ -18,7 +19,7 @@ namespace DCL.WebRequests.WebContentSizes
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken token)
+        public async UniTask<bool> IsOkSizeAsync(Uri url, CancellationToken token)
         {
             // Make a Head request with Range
 

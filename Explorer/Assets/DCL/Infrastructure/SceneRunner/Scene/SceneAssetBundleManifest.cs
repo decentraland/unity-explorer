@@ -65,7 +65,7 @@ namespace SceneRunner.Scene
         public bool TryGet(string hash, out string convertedFile) =>
             convertedFiles.TryGetValue(hash, out convertedFile);
 
-        public URLAddress GetAssetBundleURL(string hash)
+        public Uri GetAssetBundleURL(string hash)
         {
             if (hasSceneIDInPath)
                 return assetBundlesBaseUrl.Append(new URLPath($"{version}/{sceneID}/{hash}"));

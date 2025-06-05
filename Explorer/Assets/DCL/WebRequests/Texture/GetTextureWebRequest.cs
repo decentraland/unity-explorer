@@ -44,7 +44,9 @@ namespace DCL.WebRequests
             new (HttpMethod.Get, GetEffectiveUrl());
 
         private Uri GetEffectiveUrl() =>
-            new (useKtx ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(Envelope.CommonArguments.URL)) : Envelope.CommonArguments.URL);
+            useKtx
+                ? new Uri(string.Format(urlsSource.Url(DecentralandUrl.MediaConverter).OriginalString, Uri.EscapeDataString(Envelope.CommonArguments.URL.OriginalString)))
+                : Envelope.CommonArguments.URL;
 
         /// <summary>
         ///     Creates the texture
@@ -125,7 +127,7 @@ namespace DCL.WebRequests
 
             finalTex.wrapMode = wrapMode;
             finalTex.filterMode = filterMode;
-            finalTex.SetDebugName(Envelope.CommonArguments.URL);
+            finalTex.SetDebugName(Envelope.CommonArguments.URL.OriginalString);
             ProfilingCounters.TexturesAmount.Value++;
             return new IOwnedTexture2D.Const(finalTex);
         }

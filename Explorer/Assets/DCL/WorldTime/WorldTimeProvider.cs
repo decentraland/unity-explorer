@@ -5,6 +5,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
@@ -28,7 +29,7 @@ namespace DCL.Time
         private float cachedTimeInSeconds;
         private bool isPaused;
 
-        private string TIME_SERVER_URL => decentralandUrlsSource.Url(DecentralandUrl.PeerAbout);
+        private Uri timeServerURL => decentralandUrlsSource.Url(DecentralandUrl.PeerAbout);
 
         public WorldTimeProvider(IDecentralandUrlsSource decentralandUrlsSource, IWebRequestController webRequestController)
         {
@@ -46,8 +47,8 @@ namespace DCL.Time
 
             if (timeDifference.TotalMilliseconds > TIME_BETWEEN_UPDATES)
             {
-                var intent = new SubIntention(new CommonLoadingArguments(TIME_SERVER_URL));
-                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServerAsync, null, ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
+                var intent = new SubIntention(new CommonLoadingArguments(timeServerURL));
+                string serverDate = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, GetTimeFromServerAsync, null, default(IntentionsComparer<SubIntention>.SourcedIntentionId), ReportCategory.ENGINE, ct)).UnwrapAndRethrow();
                 cachedServerTime = ObtainDateTimeFromServerTime(serverDate);
                 currentTime = cachedServerTime;
                 cachedSystemTime = DateTime.Now;
@@ -76,7 +77,7 @@ namespace DCL.Time
 
         private async UniTask<StreamableLoadingResult<string?>> GetTimeFromServerAsync(SubIntention intention, IAcquiredBudget budget, IPartitionComponent partition, CancellationToken ct)
         {
-            string? date = await webRequestController.GetAsync(TIME_SERVER_URL, ReportCategory.JAVASCRIPT)
+            string? date = await webRequestController.GetAsync(timeServerURL, ReportCategory.JAVASCRIPT)
                                                      .GetResponseHeaderAsync("date", ct);
 
             return new StreamableLoadingResult<string?>(date);

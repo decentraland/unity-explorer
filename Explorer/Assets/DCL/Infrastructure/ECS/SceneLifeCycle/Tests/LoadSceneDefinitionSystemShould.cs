@@ -5,6 +5,7 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Tests
@@ -16,9 +17,9 @@ namespace ECS.SceneLifeCycle.Tests
     {
         public LoadSceneDefinitionSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
 
-        private string successPath => $"file://{Application.dataPath + "/../TestResources/Content/bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"}";
-        private string failPath => $"file://{Application.dataPath + "/../TestResources/Content/non_existing"}";
-        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        private Uri successPath => new ($"file://{Application.dataPath + "/../TestResources/Content/bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"}");
+        private Uri failPath => new ($"file://{Application.dataPath + "/../TestResources/Content/non_existing"}");
+        private Uri wrongTypePath => new ($"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}");
 
         protected override GetSceneDefinition CreateSuccessIntention() =>
             new (new CommonLoadingArguments(successPath), new IpfsPath());

@@ -24,7 +24,7 @@ namespace DCL.MarketplaceCredits
 {
     public partial class MarketplaceCreditsMenuController : ControllerBase<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>, IControllerInSharedSpace<MarketplaceCreditsMenuView, MarketplaceCreditsMenuController.Params>
     {
-        public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
+        public static readonly Uri WEEKLY_REWARDS_INFO_LINK = new ("https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits");
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -268,7 +268,7 @@ namespace DCL.MarketplaceCredits
             OnAnyPlaceClick.Invoke();
 
         private void OpenInfoLink() =>
-            webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
+            webBrowser.OpenUrl((Uri)WEEKLY_REWARDS_INFO_LINK);
 
         private void OpenGoShoppingLink() =>
             webBrowser.OpenUrl(DecentralandUrl.GoShoppingWithMarketplaceCredits);

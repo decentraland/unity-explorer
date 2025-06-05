@@ -26,14 +26,11 @@ namespace DCL.Multiplayer.HealthChecks
 
         public async UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct)
         {
-            URLAddress urlAddress = Url();
+            Uri urlAddress = Url();
             return await webRequestController.IsHeadReachableAsync(ReportCategory.LIVEKIT, urlAddress, ct);
         }
 
-        private URLAddress Url()
-        {
-            string stringUrl = decentralandUrlsSource.Url(url);
-            return URLAddress.FromString(stringUrl);
-        }
+        private Uri Url() =>
+            decentralandUrlsSource.Url(url);
     }
 }

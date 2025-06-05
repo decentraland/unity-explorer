@@ -76,7 +76,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             urlBuilder.AppendDomainWithReplacedPath(Arg.Any<URLDomain>(), Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
             urlBuilder.AppendSubDirectory(Arg.Any<URLSubdirectory>()).Returns(urlBuilder);
             urlBuilder.GetResult().Returns(path);
-            urlBuilder.Build().Returns(URLAddress.FromString(path));
+            urlBuilder.Build().Returns(new Uri(path));
 
             system!.urlBuilder = urlBuilder;
 

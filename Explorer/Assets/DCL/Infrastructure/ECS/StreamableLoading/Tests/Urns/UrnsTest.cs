@@ -1,5 +1,3 @@
-#nullable enable
-
 using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.StreamableLoading.NFTShapes.URNs;
@@ -25,7 +23,6 @@ namespace ECS.StreamableLoading.Tests.URNs
                 expectedUrl,
                 new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))
                    .UrlOrEmpty(urn)
-                   .Value
             );
         }
     }

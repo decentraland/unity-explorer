@@ -3,6 +3,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests.WebContentSizes.Sizes;
+using System;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -19,7 +20,7 @@ namespace DCL.WebRequests.WebContentSizes
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken cancellationToken)
+        public async UniTask<bool> IsOkSizeAsync(Uri url, CancellationToken cancellationToken)
         {
             string? header = await webRequestController.HeadAsync(url, ReportCategory.GENERIC_WEB_REQUEST)
                                                        .GetResponseHeaderAsync(WebRequestHeaders.CONTENT_LENGTH_HEADER, cancellationToken);

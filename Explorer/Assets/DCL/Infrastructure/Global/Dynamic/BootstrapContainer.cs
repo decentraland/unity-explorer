@@ -221,8 +221,8 @@ namespace Global.Dynamic
 
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiAuth)),
-                URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp)),
+                decentralandUrlsSource.Url(DecentralandUrl.ApiAuth),
+                decentralandUrlsSource.Url(DecentralandUrl.AuthSignatureWebApp),
                 URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.ApiRpc)),
                 identityCache,
                 web3AccountFactory,

@@ -28,7 +28,7 @@ namespace DCL.SDKComponents.AudioSources
 
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)
         {
-            if (!sceneData.TryGetContentUrl(pbAudioClipUrl, out URLAddress audioClipUrl))
+            if (!sceneData.TryGetContentUrl(pbAudioClipUrl, out Uri audioClipUrl))
             {
                 assetPromise = null;
                 return false;
@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.AudioSources
             return true;
         }
 
-        public static Promise CreateAudioClipPromise(World world, string url, AudioType audioType, IPartitionComponent partitionComponent) =>
+        public static Promise CreateAudioClipPromise(World world, Uri url, AudioType audioType, IPartitionComponent partitionComponent) =>
             Promise.Create(world, new GetAudioClipIntention
             {
                 CommonArguments = new CommonLoadingArguments(url),

@@ -31,13 +31,13 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             bool isBaseGltfFetch = uri.OriginalString.Equals(targetGltfOriginalPath);
             string originalFilePath = GetFileOriginalPathFromUri(uri);
 
-            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out URLAddress tryGetContentUrlResult))
+            if (!sceneData.SceneContent.TryGetContentUrl(originalFilePath, out Uri tryGetContentUrlResult))
             {
                 if (isBaseGltfFetch) acquiredBudget.Release();
                 throw new Exception($"Error on GLTF download ({targetGltfOriginalPath} - {originalFilePath}): NOT FOUND");
             }
 
-            return new Uri(tryGetContentUrlResult);
+            return tryGetContentUrlResult;
         }
 
         protected override string GetErrorMessage(Uri downloadUri, WebRequestException e)

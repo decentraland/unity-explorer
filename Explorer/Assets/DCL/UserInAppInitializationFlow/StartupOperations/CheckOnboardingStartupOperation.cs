@@ -105,8 +105,8 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             // TODO So operations will be called from the operation. Re-consideration required
             //try
             //{
-            string worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
-            var realmURL = URLDomain.FromString($"{worldContentServerUrl}/{realm}");
+            Uri worldContentServerUrl = decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer);
+            var realmURL = URLDomain.FromString($"{worldContentServerUrl.OriginalString}/{realm}");
             EnumResult<ChangeRealmError> result = await realmNavigator.TryChangeRealmAsync(realmURL, ct);
             isProfilePendingToBeUpdated = true;
 

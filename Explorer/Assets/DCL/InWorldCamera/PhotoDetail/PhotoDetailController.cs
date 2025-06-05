@@ -174,7 +174,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             {
                 try
                 {
-                    await ReelCommonActions.DownloadReelToFileAsync(webRequestController, inputData.AllReels[currentReelIndex].url, ct);
+                    await ReelCommonActions.DownloadReelToFileAsync(webRequestController, new Uri(inputData.AllReels[currentReelIndex].url), ct);
                     ScreenshotDownloaded?.Invoke();
 
                     viewInstance!.cameraReelToastMessage?.ShowToastMessage(

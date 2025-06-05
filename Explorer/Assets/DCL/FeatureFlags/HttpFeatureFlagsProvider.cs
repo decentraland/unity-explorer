@@ -26,9 +26,9 @@ namespace DCL.FeatureFlags
         {
             urlBuilder.Clear();
 
-            URLAddress fetchUrl = urlBuilder.AppendDomain(options.URL)
-                                            .AppendPath(URLPath.FromString($"{options.AppName}.json"))
-                                            .Build();
+            var fetchUrl = urlBuilder.AppendDomain(options.URL)
+                                     .AppendPath(URLPath.FromString($"{options.AppName}.json"))
+                                     .Build();
 
             headers.Clear();
             headers["X-Debug"] = options.Debug ? "true" : "false";

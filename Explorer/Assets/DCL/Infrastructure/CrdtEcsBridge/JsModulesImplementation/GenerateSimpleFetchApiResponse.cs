@@ -20,7 +20,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             bool requestRedirected = nativeRequest.Redirected;
             int requestStatus = nativeRequest.Response.StatusCode;
             var requestStatusText = nativeRequest.Response.StatusCode.ToString();
-            string requestUrl = nativeRequest.Url.EnsureNotNull();
+            string requestUrl = nativeRequest.Url.EnsureNotNull().OriginalString;
 
             return new ISimpleFetchApi.Response
             {

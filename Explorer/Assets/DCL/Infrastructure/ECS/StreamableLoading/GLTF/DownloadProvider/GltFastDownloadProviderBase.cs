@@ -85,7 +85,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             var downloadUri = GetDownloadUri(uri);
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(downloadUri.AbsoluteUri, attempts: ATTEMPTS_COUNT),
+                CommonArguments = new CommonLoadingArguments(downloadUri, attempts: ATTEMPTS_COUNT),
             }, partitionComponent);
 
             // The textures fetching need to finish before the GLTF loading can continue its flow...

@@ -28,7 +28,7 @@ namespace Global.Dynamic
         [SerializeField] internal Vector2Int targetScene;
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] internal string targetWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
+        [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL.OriginalString;
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles = true;

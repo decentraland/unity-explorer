@@ -8,6 +8,10 @@ namespace DCL.ExternalUrlPrompt
         {
             public Uri Uri { get; }
 
+            public Params(Uri uri)
+            {
+                Uri = uri;
+            }
             public Params(string url)
             {
                 Uri = Uri.TryCreate(url, UriKind.Absolute, out Uri uri) ? uri : null;

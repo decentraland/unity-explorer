@@ -23,7 +23,7 @@ namespace DCL.LOD.Systems
             Enumerable
                .Range(0, 4)
                .Select(level => new SceneAssetBundleManifest(
-                        URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)}/LOD/{level}/")
+                        URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN).OriginalString}/LOD/{level}/")
                     )
                 )
                .ToArray();

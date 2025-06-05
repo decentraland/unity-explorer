@@ -3,36 +3,29 @@ using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
-using ECS.StreamableLoading.AssetBundles;
 using Unity.Profiling;
-using UnityEngine;
 
 namespace ECS.StreamableLoading.Cache
 {
     public abstract class RefCountStreamableCacheBase<TAssetData, TAsset, TLoadingIntention> : IStreamableCache<TAssetData, TLoadingIntention>
-        where TAssetData: StreamableRefCountData<TAsset> where TAsset: class
+        where TAssetData: StreamableRefCountData<TAsset> where TAsset: class where TLoadingIntention: IEquatable<TLoadingIntention>
     {
         private static readonly Comparison<(TLoadingIntention intention, TAssetData asset)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
             (d1, d2) => d2.asset.LastUsedFrame.CompareTo(d1.asset.LastUsedFrame);
 
-        internal readonly Dictionary<TLoadingIntention, TAssetData> cache;
+        internal readonly Dictionary<TLoadingIntention, TAssetData> cache = new (IntentionsComparer<TLoadingIntention>.INSTANCE);
 
         internal readonly List<(TLoadingIntention intention, TAssetData asset)> listedCache = new ();
 
         private bool disposed;
 
         public IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>> OngoingRequests { get; }
+            = new Dictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>>(IntentionsComparer<TLoadingIntention>.INSTANCE);
 
-        public IDictionary<string, StreamableLoadingResult<TAssetData>?> IrrecoverableFailures { get; }
-            = new Dictionary<string, StreamableLoadingResult<TAssetData>?>();
+        public IDictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAssetData>?> IrrecoverableFailures { get; }
+            = new Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAssetData>?>();
 
         protected abstract ref ProfilerCounterValue<int> inCacheCount { get; }
-
-        protected RefCountStreamableCacheBase()
-        {
-            cache = new Dictionary<TLoadingIntention, TAssetData>(this);
-            OngoingRequests = new Dictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>>(this);
-        }
 
         public void Dispose()
         {
@@ -84,9 +77,5 @@ namespace ECS.StreamableLoading.Cache
 
             inCacheCount.Value = cache.Count;
         }
-
-        public abstract bool Equals(TLoadingIntention x, TLoadingIntention y);
-
-        public abstract int GetHashCode(TLoadingIntention obj);
     }
 }

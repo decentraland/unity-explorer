@@ -158,7 +158,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 try
                 {
-                    await ReelCommonActions.DownloadReelToFileAsync(webRequestController, response.url, ct);
+                    await ReelCommonActions.DownloadReelToFileAsync(webRequestController, new Uri(response.url), ct);
                     ScreenshotDownloaded?.Invoke();
 
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.DOWNLOAD,

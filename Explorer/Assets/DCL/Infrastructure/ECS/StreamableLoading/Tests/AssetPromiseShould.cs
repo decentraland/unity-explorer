@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.Tests
         {
             world = World.Create();
 
-            assetPromise = AssetPromise<Asset, Intent>.Create(world, new Intent { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
+            assetPromise = AssetPromise<Asset, Intent>.Create(world, new Intent { CommonArguments = new CommonLoadingArguments(null!) }, PartitionComponent.TOP_PRIORITY);
         }
 
         [Test]

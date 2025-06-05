@@ -1,4 +1,6 @@
-﻿namespace DCL.WebRequests
+﻿using System;
+
+namespace DCL.WebRequests
 {
     public abstract class WebRequestBase
     {
@@ -13,7 +15,7 @@
 
         internal bool successfullyExecutedByController;
 
-        public string Url => CreatedFrom.Envelope.CommonArguments.URL;
+        public Uri Url => CreatedFrom.Envelope.CommonArguments.URL;
 
         public void Dispose()
         {

@@ -18,8 +18,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
     public abstract class LoadElementsByIntentionSystem<TAsset, TIntention, TAvatarElement, TAvatarElementDTO> :
         LoadSystemBase<TAsset, TIntention>
-        where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>
-        where TAvatarElementDTO: AvatarAttachmentDTO where TAvatarElement : IAvatarAttachment<TAvatarElementDTO>
+        where TIntention: struct, IAttachmentsLoadingIntention<TAvatarElement>, IEquatable<TIntention> where TAvatarElementDTO: AvatarAttachmentDTO where TAvatarElement: IAvatarAttachment<TAvatarElementDTO>
     {
         private readonly IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage;
         private readonly IWebRequestController webRequestController;
@@ -46,7 +45,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             await realmData.WaitConfiguredAsync();
 
-            URLAddress url = BuildUrlFromIntention(in intention);
+            Uri url = BuildUrlFromIntention(in intention);
 
             if (intention.NeedsBuilderAPISigning)
             {
@@ -135,6 +134,6 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         protected abstract TAsset AssetFromPreparedIntention(in TIntention intention);
 
-        protected abstract URLAddress BuildUrlFromIntention(in TIntention intention);
+        protected abstract Uri BuildUrlFromIntention(in TIntention intention);
     }
 }

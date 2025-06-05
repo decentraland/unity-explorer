@@ -59,7 +59,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // Don't resolve URL here
 
-            CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
+            CommonArguments = new CommonLoadingArguments(null!, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
             Manifest = assetBundleManifest;
             LookForShaderAssets = lookForShaderAssets;

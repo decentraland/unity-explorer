@@ -28,7 +28,7 @@ namespace Global.Tests.EditMode
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.UNITY), dclUrlSource);
 
             Assert.IsTrue(realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment);
-            Assert.AreEqual("http://127.0.0.1:8000", realmUrls.LocalSceneDevelopmentRealmBlocking()!);
+            Assert.AreEqual("http://127.0.0.1:8000", realmUrls.LocalSceneDevelopmentRealmBlocking()!.OriginalString);
             Assert.AreEqual(100, realmLaunchSettings.targetScene.x);
             Assert.AreEqual(100, realmLaunchSettings.targetScene.y);
         }
@@ -49,7 +49,7 @@ namespace Global.Tests.EditMode
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.UNITY), dclUrlSource);
 
             Assert.IsFalse(realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment);
-            Assert.AreEqual("http://127.0.0.1:8000", realmUrls.StartingRealmBlocking());
+            Assert.AreEqual("http://127.0.0.1:8000", realmUrls.StartingRealmBlocking().OriginalString);
             Assert.AreEqual(70, realmLaunchSettings.targetScene.x);
             Assert.AreEqual(70, realmLaunchSettings.targetScene.y);
         }
@@ -88,7 +88,7 @@ namespace Global.Tests.EditMode
             DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org, realmLaunchSettings);
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.UNITY), dclUrlSource);
 
-            Assert.AreEqual(realm, realmUrls.StartingRealmBlocking());
+            Assert.AreEqual(realm, realmUrls.StartingRealmBlocking().OriginalString);
         }
 
         [TestCase("metadyne.dcl.eth")]
@@ -108,7 +108,7 @@ namespace Global.Tests.EditMode
             DecentralandUrlsSource dclUrlSource = new (DecentralandEnvironment.Org, realmLaunchSettings);
             IRealmUrls realmUrls = new RealmUrls(realmLaunchSettings, new RealmNamesMap(IWebRequestController.UNITY), dclUrlSource);
 
-            Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmUrls.StartingRealmBlocking());
+            Assert.AreEqual($"https://worlds-content-server.decentraland.org/world/{world}", realmUrls.StartingRealmBlocking().OriginalString);
         }
 
         [Test]

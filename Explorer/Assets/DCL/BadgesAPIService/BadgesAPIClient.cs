@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -18,7 +19,7 @@ namespace DCL.BadgesAPIService
 
         private readonly BadgesInfo instantiatedDetailedBadges;
 
-        private string badgesBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
+        private Uri badgesBaseUrl => decentralandUrlsSource.Url(DecentralandUrl.Badges);
 
         public BadgesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -34,7 +35,7 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<List<string>> FetchBadgeCategoriesAsync(CancellationToken ct)
         {
-            var url = $"{badgesBaseUrl}/categories";
+            Uri url = badgesBaseUrl.Append("categories");
 
             CategoriesResponse badgesResponse = await webRequestController.GetAsync(url, reportData: ReportCategory.BADGES)
                                                                           .CreateFromJsonAsync<CategoriesResponse>(WRJsonParser.Newtonsoft, ct);
@@ -44,7 +45,7 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<IReadOnlyList<LatestAchievedBadgeData>> FetchLatestAchievedBadgesAsync(string walletId, CancellationToken ct)
         {
-            var url = $"{badgesBaseUrl}/users/{walletId}/preview";
+            Uri url = badgesBaseUrl.Append($"/users/{walletId}/preview");
 
             LatestAchievedBadgesResponse latestAchievedBadgesResponse = await webRequestController.GetAsync(url, reportData: ReportCategory.BADGES)
                                                                                                   .CreateFromJsonAsync<LatestAchievedBadgesResponse>(WRJsonParser.Newtonsoft, ct);
@@ -56,7 +57,7 @@ namespace DCL.BadgesAPIService
         {
             ClearDetailedBadges();
 
-            var url = $"{badgesBaseUrl}/users/{walletId}/badges?includeNotAchieved={(isOwnProfile ? "true" : "false")}";
+            Uri url = badgesBaseUrl.Append($"/users/{walletId}/badges?includeNotAchieved={(isOwnProfile ? "true" : "false")}");
 
             BadgesResponse badgesResponse = await webRequestController.GetAsync(url, reportData: ReportCategory.BADGES)
                                                                       .CreateFromJsonAsync<BadgesResponse>(WRJsonParser.Newtonsoft, ct);
@@ -66,7 +67,7 @@ namespace DCL.BadgesAPIService
 
         public async UniTask<IReadOnlyList<TierData>> FetchTiersAsync(string badgeId, CancellationToken ct)
         {
-            var url = $"{badgesBaseUrl}/badges/{badgeId}/tiers";
+            Uri url = badgesBaseUrl.Append($"/badges/{badgeId}/tiers");
 
             TiersResponse tiersResponse = await webRequestController.GetAsync(url, reportData: ReportCategory.BADGES)
                                                                     .CreateFromJsonAsync<TiersResponse>(WRJsonParser.Newtonsoft, ct);

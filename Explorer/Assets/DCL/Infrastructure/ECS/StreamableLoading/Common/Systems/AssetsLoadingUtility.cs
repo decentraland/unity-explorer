@@ -5,6 +5,7 @@ using DCL.WebRequests;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -29,10 +30,11 @@ namespace ECS.StreamableLoading.Common.Systems
             TState state,
             IPartitionComponent partition,
             InternalFlowDelegate<TAsset, TState, TIntention> flow,
-            IDictionary<string, StreamableLoadingResult<TAsset>?>? irrecoverableFailures,
+            IDictionary<IntentionsComparer<TIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>?>? irrecoverableFailures,
+            IntentionsComparer<TIntention>.SourcedIntentionId intentionId,
             ReportData reportData,
             CancellationToken ct)
-            where TIntention: struct, ILoadingIntention where TState: class
+            where TIntention: struct, ILoadingIntention, IEquatable<TIntention> where TState: class
         {
             int attemptCount = intention.CommonArguments.Attempts;
 
@@ -100,7 +102,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (irrecoverableFailures == null)
                     return;
 
-                bool result = irrecoverableFailures.SyncTryAdd(intention.CommonArguments.URL, failure);
+                bool result = irrecoverableFailures.SyncTryAdd(intentionId, failure);
                 if (result == false) ReportHub.LogError(reportData, $"Irrecoverable failure for {intention} is already added");
             }
         }

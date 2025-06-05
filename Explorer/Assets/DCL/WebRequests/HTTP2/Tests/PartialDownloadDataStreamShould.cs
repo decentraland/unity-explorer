@@ -36,7 +36,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         private static readonly Uri NO_SIZE_HEADERS_URL = new ("https://bunny.net");
 
         //size 64800
-        private static readonly string LOCAL_ASSET_PATH = $"{Application.dataPath + "/../TestResources/AssetBundles/shark"}";
+        private static readonly Uri LOCAL_ASSET_PATH = new ($"{Application.dataPath + "/../TestResources/AssetBundles/shark"}");
 
         private HTTPCache cache;
         private IWebRequestController webRequestController;
@@ -79,7 +79,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         [Test]
         public async Task RecoverPartialDataFromCacheAsync([Values(true, false)] bool finalize)
         {
-            ulong contentSize = await GetContentSizeAsync(PARTIAL_TEST_URL.OriginalString);
+            ulong contentSize = await GetContentSizeAsync(PARTIAL_TEST_URL);
 
             var iterationsCount = (int)Math.Ceiling(contentSize / (double)chunkSize);
 
@@ -87,7 +87,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             cache.Delete(PARTIAL_TEST_URL_HASH, null);
 
             // Perform one iteration
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
                                                                                .GetStreamAsync(CancellationToken.None);
             iterationsCount--;
 
@@ -116,7 +116,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             // Perform remaining iterations to finish its downloading
 
             for (var i = 0; i < iterationsCount; i++)
-                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
                                                                                    .GetStreamAsync(CancellationToken.None);
 
             Assert.That(stream, Is.Not.Null);
@@ -150,7 +150,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             stream = null;
 
             // At this point the data should be fully cached
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
                                                                                .GetStreamAsync(CancellationToken.None);
             Assert.That(stream, Is.Not.Null);
             Assert.That(stream.IsFullyDownloaded, Is.True);
@@ -168,12 +168,12 @@ namespace DCL.WebRequests.HTTP2.Tests
             // Delete from cache to ensure a fresh start
             cache.Delete(PARTIAL_TEST_URL_HASH, null);
 
-            ulong fileSize = await GetContentSizeAsync(PARTIAL_TEST_URL.OriginalString);
+            ulong fileSize = await GetContentSizeAsync(PARTIAL_TEST_URL);
 
             var iterationsCount = (int)Math.Ceiling(fileSize / (double)chunkSize);
 
             for (var i = 0; i < iterationsCount; i++)
-                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+                stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
                                                                                    .GetStreamAsync(CancellationToken.None);
 
             await UniTask.SwitchToMainThread();
@@ -214,10 +214,10 @@ namespace DCL.WebRequests.HTTP2.Tests
             // Delete from cache to ensure a fresh start
             cache.Delete(PARTIAL_NOT_SUPPORTED_URL_HASH, null);
 
-            ulong fileSize = await GetContentSizeAsync(PARTIAL_NOT_SUPPORTED_URL.OriginalString);
+            ulong fileSize = await GetContentSizeAsync(PARTIAL_NOT_SUPPORTED_URL);
 
             // The data must be complete for one iteration
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_NOT_SUPPORTED_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_NOT_SUPPORTED_URL, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
                                                                                .GetStreamAsync(CancellationToken.None);
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
@@ -243,7 +243,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         [Test]
         public async Task ConstructUnknownDataInMemoryAsync()
         {
-            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(NO_SIZE_HEADERS_URL.OriginalString, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
+            stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(NO_SIZE_HEADERS_URL, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
                                                                                .GetStreamAsync(CancellationToken.None);
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
@@ -279,7 +279,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             Assert.That(stream.CanSeek, Is.True);
         }
 
-        private async Task<ulong> GetContentSizeAsync(string url)
+        private async Task<ulong> GetContentSizeAsync(Uri url)
         {
             string? header = await webRequestController.GetAsync(url, ReportCategory.GENERIC_WEB_REQUEST)
                                                        .GetResponseHeaderAsync(WebRequestHeaders.CONTENT_LENGTH_HEADER, CancellationToken.None);

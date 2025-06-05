@@ -63,20 +63,20 @@ namespace SceneRunner.Scene
             return false;
         }
 
-        public bool TryGetMainScriptUrl(out URLAddress result) =>
+        public bool TryGetMainScriptUrl(out Uri result) =>
             TryGetContentUrl(SceneEntityDefinition.metadata.main, out result);
 
-        public bool TryGetContentUrl(string url, out URLAddress result) =>
+        public bool TryGetContentUrl(string url, out Uri result) =>
             SceneContent.TryGetContentUrl(url, out result);
 
         public bool TryGetHash(string name, out string hash) =>
             SceneContent.TryGetHash(name, out hash);
 
-        public bool TryGetMediaUrl(string url, out URLAddress result)
+        public bool TryGetMediaUrl(string url, out Uri result)
         {
             if (string.IsNullOrEmpty(url))
             {
-                result = URLAddress.EMPTY;
+                result = null!;
                 return false;
             }
 
@@ -87,11 +87,10 @@ namespace SceneRunner.Scene
             if (!CHECK_ALLOWED_MEDIA_HOSTNAMES
                 || (HasRequiredPermission(ScenePermissionNames.ALLOW_MEDIA_HOSTNAMES) && IsUrlDomainAllowed(url)))
             {
-                result = URLAddress.FromString(url);
-                return true;
+                return Uri.TryCreate(url, UriKind.Absolute, out result);
             }
 
-            result = URLAddress.EMPTY;
+            result = null!;
             return false;
         }
 

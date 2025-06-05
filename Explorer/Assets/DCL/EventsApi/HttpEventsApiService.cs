@@ -72,7 +72,7 @@ namespace DCL.EventsApi
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
             urlBuilder.AppendPath(URLPath.FromString($"{eventId}/attendees"));
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             var result = webRequestController.PostAsync(
@@ -93,7 +93,7 @@ namespace DCL.EventsApi
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
             urlBuilder.AppendPath(URLPath.FromString($"{eventId}/attendees"));
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             var result = webRequestController.DeleteAsync(
@@ -109,7 +109,7 @@ namespace DCL.EventsApi
                 throw new EventsApiException($"Error on trying to create attend intention to event {eventId}");
         }
 
-        private async UniTask<IReadOnlyList<EventDTO>> FetchEventListAsync(URLAddress url, CancellationToken ct)
+        private async UniTask<IReadOnlyList<EventDTO>> FetchEventListAsync(Uri url, CancellationToken ct)
         {
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 

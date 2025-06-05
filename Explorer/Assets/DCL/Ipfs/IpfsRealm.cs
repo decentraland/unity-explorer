@@ -19,20 +19,21 @@ namespace DCL.Ipfs
         private readonly List<string> sceneUrns;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
-        private readonly URLDomain entitiesBaseUrl;
+
+        private readonly Uri entitiesBaseUrl;
 
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }
         public URLDomain LambdasBaseUrl { get; }
-        public URLDomain EntitiesActiveEndpoint { get; }
-        public URLDomain AssetBundleRegistry { get; }
+        public Uri EntitiesActiveEndpoint { get; }
+        public Uri AssetBundleRegistry { get; }
 
         public IReadOnlyList<string> SceneUrns => sceneUrns;
 
         public IpfsRealm(IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             URLDomain realmName,
-            URLDomain assetBundleRegistry,
+            Uri? assetBundleRegistry,
             ServerAbout? serverAbout = null)
         {
             this.web3IdentityCache = web3IdentityCache;
@@ -44,23 +45,23 @@ namespace DCL.Ipfs
             if (serverAbout != null)
             {
                 sceneUrns = serverAbout.configurations.scenesUrn;
-                entitiesBaseUrl = URLBuilder.Combine(URLDomain.FromString(serverAbout.content.publicUrl), URLSubdirectory.FromString("entities/"));
+                entitiesBaseUrl = new Uri(URLBuilder.Combine(URLDomain.FromString(serverAbout.content.publicUrl), URLSubdirectory.FromString("entities/")).Value);
                 ContentBaseUrl = URLDomain.FromString(serverAbout.content.publicUrl);
                 LambdasBaseUrl = URLDomain.FromString(serverAbout.lambdas.publicUrl);
 
                 //Note: Content url requires the subdirectory content, but the actives endpoint requires the base one.
-                EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
+                EntitiesActiveEndpoint = new Uri(URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active")).Value);
                 ContentBaseUrl = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("contents/"));
 
-                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
+                AssetBundleRegistry = assetBundleRegistry == null ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
             else
             {
                 sceneUrns = new List<string>();
-                entitiesBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/"));
+                entitiesBaseUrl = new Uri(URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/")).Value);
                 ContentBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/contents/"));
-                EntitiesActiveEndpoint = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active"));
-                AssetBundleRegistry = assetBundleRegistry.IsEmpty ? EntitiesActiveEndpoint : assetBundleRegistry;
+                EntitiesActiveEndpoint = new Uri(URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active")).Value);
+                AssetBundleRegistry = assetBundleRegistry == null ? EntitiesActiveEndpoint : assetBundleRegistry;
             }
         }
 
@@ -125,22 +126,14 @@ namespace DCL.Ipfs
 
         private UniTask SendFormAsync(WWWForm form, CancellationToken ct)
         {
-            URLAddress url = GetEntitiesUrl();
             //Added an attempts delay to allow a retry after 2 seconds in order
             //to reduce the chances of parallel profiles deployments
             return webRequestController.PostAsync(
-                new CommonArguments(url, attemptsDelay: 2000f),
+                                            new CommonArguments(entitiesBaseUrl, attemptsDelay: 2000f),
                 GenericUploadArguments.CreateWWWForm(form),
                 ReportCategory.REALM
                                         )
                                        .SendAndForgetAsync(ct);
-        }
-
-        private URLAddress GetEntitiesUrl()
-        {
-            urlBuilder.Clear();
-            urlBuilder.AppendDomain(entitiesBaseUrl);
-            return urlBuilder.Build();
         }
 
         public string GetFileHash(byte[] file) =>

@@ -383,6 +383,6 @@ namespace DCL.Backpack.EmotesSection
         }
 
         private void OpenMarketplaceLink(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrl(new Uri(url));
     }
 }

@@ -43,14 +43,14 @@ namespace ECS.SceneLifeCycle.Realm
 
     public interface IRealmNavigator
     {
-        public const string LOCALHOST = "http://127.0.0.1:8000";
+        public static readonly Uri LOCALHOST = new ("http://127.0.0.1:8000");
 
-        public const string GOERLI_OLD_URL = "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main";
-        public const string GOERLI_URL = "https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest";
+        public static readonly Uri GOERLI_OLD_URL = new ("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main");
+        public static readonly Uri GOERLI_URL = new ("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest");
 
-        public const string STREAM_WORLD_URL = "https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main";
-        public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
-        public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
+        public static readonly Uri STREAM_WORLD_URL = new ("https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main");
+        public static readonly Uri SDK_TEST_SCENES_URL = new ("https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest");
+        public static readonly Uri TEST_SCENES_URL = new ("https://sdk-test-scenes.decentraland.zone");
 
         event Action<Vector2Int> NavigationExecuted;
 

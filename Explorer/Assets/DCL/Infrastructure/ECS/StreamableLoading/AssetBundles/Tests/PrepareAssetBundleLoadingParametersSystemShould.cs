@@ -43,7 +43,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(1));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.EMBEDDED));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo(path + "TEST"));
+            Assert.That(intent.CommonArguments.URL.OriginalString, Is.EqualTo(path + "TEST"));
         }
 
         [Test]
@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(StreamableLoadingDefaults.ATTEMPTS_COUNT));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.WEB));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo($"http://www.fakepath.com/{version}/abcd"));
+            Assert.That(intent.CommonArguments.URL.OriginalString, Is.EqualTo($"http://www.fakepath.com/{version}/abcd"));
             Assert.That(intent.cacheHash, Is.Not.Null);
         }
 
@@ -81,7 +81,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(StreamableLoadingDefaults.ATTEMPTS_COUNT));
             Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.WEB));
-            Assert.That(intent.CommonArguments.URL, Is.EqualTo($"http://www.fakepath.com/{version}/hash/abcd"));
+            Assert.That(intent.CommonArguments.URL.OriginalString, Is.EqualTo($"http://www.fakepath.com/{version}/hash/abcd"));
             Assert.That(intent.cacheHash, Is.Not.Null);
         }
 

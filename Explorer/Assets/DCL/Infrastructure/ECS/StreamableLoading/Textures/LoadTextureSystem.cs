@@ -43,11 +43,11 @@ namespace ECS.StreamableLoading.Textures
         {
             if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
 
-            IOwnedTexture2D? result = null;
+            IOwnedTexture2D? result;
 
             if (intention.IsAvatarTexture)
             {
-                URLAddress? url = await avatarTextureUrlProvider.GetAsync(intention.CommonArguments.URL.Value, ct);
+                URLAddress? url = await avatarTextureUrlProvider.GetAsync(intention.AvatarId!, ct);
 
                 if (url == null)
                     throw new Exception($"No profile found for {intention.CommonArguments.URL}");

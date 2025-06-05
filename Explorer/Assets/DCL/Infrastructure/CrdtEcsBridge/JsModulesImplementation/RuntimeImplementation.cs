@@ -6,6 +6,7 @@ using DCL.Time;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using Microsoft.ClearScript.JavaScript;
@@ -48,7 +49,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public async UniTask<IRuntime.ReadFileResponse> ReadFileAsync(string fileName, CancellationToken ct)
         {
-            sceneData.TryGetContentUrl(fileName, out URLAddress url);
+            sceneData.TryGetContentUrl(fileName, out Uri url);
             sceneData.TryGetHash(fileName, out string hash);
 
             await UniTask.SwitchToMainThread();
@@ -66,7 +67,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
 
             var intent = new SubIntention(new CommonLoadingArguments(url));
-            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, null, ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
+            ITypedArray<byte> content = (await intent.RepeatLoopAsync(NoAcquiredBudget.INSTANCE, PartitionComponent.TOP_PRIORITY, CreateFileRequestAsync, null, default(IntentionsComparer<SubIntention>.SourcedIntentionId), ReportCategory.JAVASCRIPT, ct)).UnwrapAndRethrow();
 
             return new IRuntime.ReadFileResponse
             {

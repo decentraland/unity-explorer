@@ -87,7 +87,7 @@ namespace Global.Dynamic
 
             cursorRoot.EnsureNotNull();
 
-            string realm = await realmUrls.StartingRealmAsync(token);
+            Uri realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
 
             // Hides the debug UI during the initial flow
@@ -167,8 +167,8 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
-            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
-            string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
+            Uri defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
+            Uri? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
 
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
@@ -184,7 +184,7 @@ namespace Global.Dynamic
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
-                    LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
+                    LocalSceneDevelopmentRealm = localSceneDevelopmentRealm,
                     AppParameters = appArgs,
                 },
                 backgroundMusic,

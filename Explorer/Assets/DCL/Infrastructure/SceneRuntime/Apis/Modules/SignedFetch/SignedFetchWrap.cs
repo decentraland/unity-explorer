@@ -99,7 +99,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             var signInfo = WebRequestSignInfo.NewFromRaw(
                 signatureMetadata,
-                request.url,
+                new Uri(request.url),
                 unixTimestamp,
                 method ?? string.Empty
             );
@@ -168,7 +168,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             var signInfo = WebRequestSignInfo.NewFromRaw(
                 signatureMetadata,
-                request.url,
+                new Uri(request.url),
                 unixTimestamp,
                 method ?? string.Empty
             );
@@ -185,7 +185,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     {
                         case null:
                             response = await webController.SignedFetchPostAsync(
-                                request.url,
+                                                               new Uri(request.url),
                                 signatureMetadata,
                                 GetReportData())
                                                           .ToFlatFetchResponseAsync(disposeCts.Token);
@@ -193,7 +193,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             break;
                         case "post":
                             response = await webController.PostAsync(
-                                request.url,
+                                                               new Uri(request.url),
                                 GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,
@@ -203,7 +203,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             break;
                         case "get":
                             response = await webController.GetAsync(
-                                request.url,
+                                                               new Uri(request.url),
                                 headersInfo: headers,
                                 signInfo: signInfo,
                                 reportData: GetReportData())
@@ -212,7 +212,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             break;
                         case "put":
                             response = await webController.PutAsync(
-                                request.url,
+                                                               new Uri(request.url),
                                 GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,
@@ -221,7 +221,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             break;
                         case "delete":
                             response = await webController.DeleteAsync(
-                                request.url,
+                                                               new Uri(request.url),
                                 GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,

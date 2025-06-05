@@ -196,9 +196,9 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.RarityBackground2.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, equippedWearableItem.RarityBackground2.color.a);
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
-                string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
-                equippedWearableItem.BuyButton.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != string.Empty);
-                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
+                Uri? marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
+                equippedWearableItem.BuyButton.gameObject.SetActive(wearable.IsOnChain() && marketPlaceLink != null);
+                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink!));
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -219,9 +219,9 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.RarityBackground2.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, equippedWearableItem.RarityBackground2.color.a);
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
-                string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
-                equippedWearableItem.BuyButton.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty);
-                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
+                Uri? marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
+                equippedWearableItem.BuyButton.gameObject.SetActive(emote.IsOnChain() && rarityName != "base" && marketPlaceLink != null);
+                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink!));
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -325,14 +325,14 @@ namespace DCL.Passport.Modules
             instantiatedEmptyItems.Clear();
         }
 
-        private string GetMarketplaceLink(string id)
+        private Uri? GetMarketplaceLink(string id)
         {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market).OriginalString}/contracts/{{0}}/items/{{1}}";
             ReadOnlySpan<char> idSpan = id.AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
             if (lastColonIndex == -1)
-                return "";
+                return null;
 
             var item = idSpan.Slice(lastColonIndex + 1).ToString();
             idSpan = idSpan.Slice(0, lastColonIndex);
@@ -341,9 +341,9 @@ namespace DCL.Passport.Modules
 
             // If this is not correct, we could retrieve the marketplace link by checking TheGraph, but that's super slow
             if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
-                return "";
+                return null;
 
-            return string.Format(marketplace, contract, item);
+            return new Uri(string.Format(marketplace, contract, item));
         }
     }
 }

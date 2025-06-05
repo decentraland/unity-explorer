@@ -1,35 +1,37 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 
 namespace CommunicationData.URLHelpers
 {
     /// <summary>
     ///     The final URL address
     /// </summary>
-    public readonly struct URLAddress : IEquatable<URLAddress>, IEquatable<string>
+    public readonly struct URLAddress : IEquatable<URLAddress>
     {
-        public static readonly URLAddress EMPTY = new (string.Empty);
-        public readonly string Value;
+        public static readonly URLAddress EMPTY = new (null!);
 
-        internal URLAddress(string value)
+        public readonly Uri? Value;
+
+        internal URLAddress(Uri? value)
         {
             Value = value;
         }
 
-        public static implicit operator string(in URLAddress address) =>
-            address.Value;
+        public bool TryGetStringValue(out string value)
+        {
+            value = string.Empty;
+
+            if (Value == null)
+                return false;
+
+            value = Value.OriginalString;
+            return true;
+        }
 
         public static URLAddress FromString(string value) =>
-            new (value);
+            new (new Uri(value));
 
-        //public static implicit operator URLAddress(string value) =>
-        //    new (value);
-
-        public bool Equals(URLAddress other) =>
-            Value == other.Value;
-
-        public bool Equals(string other) =>
-            Value == other;
+        public static implicit operator Uri?(URLAddress value) =>
+            value.Value;
 
         public override bool Equals(object obj) =>
             obj is URLAddress other && Equals(other);
@@ -44,7 +46,9 @@ namespace CommunicationData.URLHelpers
             !left.Equals(right);
 
         public override string ToString() =>
-            Value;
+            Value?.OriginalString ?? string.Empty;
 
+        public bool Equals(URLAddress other) =>
+            Equals(Value, other.Value);
     }
 }

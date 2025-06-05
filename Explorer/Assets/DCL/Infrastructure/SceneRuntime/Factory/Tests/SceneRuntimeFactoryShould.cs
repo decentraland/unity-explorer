@@ -11,6 +11,7 @@ using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory.WebSceneSource;
+using System;
 using System.Collections;
 using System.Threading;
 using UnityEngine;

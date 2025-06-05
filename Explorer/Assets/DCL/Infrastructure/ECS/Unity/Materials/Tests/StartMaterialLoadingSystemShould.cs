@@ -17,6 +17,7 @@ using ECS.Unity.Textures.Components.Extensions;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Primitives;
@@ -50,10 +51,10 @@ namespace ECS.Unity.Materials.Tests
                 sceneData = Substitute.For<ISceneData>(), ATTEMPTS_COUNT, releasablePerformanceBudget, Substitute.For<IReadOnlyDictionary<CRDTEntity, Entity>>()
                 , new ExtendedObjectPool<Texture2D>(() => new Texture2D(1, 1)));
 
-            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
+            sceneData.TryGetMediaUrl(Arg.Any<string>(), out Arg.Any<Uri>())
                      .Returns(c =>
                       {
-                          c[1] = URLAddress.FromString(c.ArgAt<string>(0));
+                          c[1] = new Uri(c.ArgAt<string>(0));
                           return true;
                       });
         }
@@ -220,7 +221,7 @@ namespace ECS.Unity.Materials.Tests
             c.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             // Add entity reference
-            var texPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("URL") }, PartitionComponent.TOP_PRIORITY);
+            var texPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments(null!) }, PartitionComponent.TOP_PRIORITY);
             c.AlphaTexPromise = texPromise;
 
             // Second run -> release promise
@@ -240,7 +241,7 @@ namespace ECS.Unity.Materials.Tests
             AssetPromise<Texture2DData, GetTextureIntention> promiseValue = promise.Value;
 
             Assert.That(world.TryGet(promiseValue.Entity, out GetTextureIntention intention), Is.True);
-            Assert.That(intention.CommonArguments.URL, Is.EqualTo(src));
+            Assert.That(intention.CommonArguments.URL.OriginalString, Is.EqualTo(src));
             Assert.That(intention.CommonArguments.Attempts, Is.EqualTo(ATTEMPTS_COUNT));
         }
 

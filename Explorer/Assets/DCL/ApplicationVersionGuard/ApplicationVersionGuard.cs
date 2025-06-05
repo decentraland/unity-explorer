@@ -95,7 +95,7 @@ namespace DCL.ApplicationVersionGuard
             string downloadUrl = $"{GetLauncherDownloadPath()}/{assetName}";
 
             if (!string.IsNullOrEmpty(downloadUrl))
-                webBrowser.OpenUrl(downloadUrl);
+                webBrowser.OpenUrl(new Uri(downloadUrl));
             else
                 ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Failed to get launcher download URL.");
         }
@@ -110,8 +110,7 @@ namespace DCL.ApplicationVersionGuard
             };
         }
 
-
-        private static string GetLauncherDownloadPath()
+        private static Uri GetLauncherDownloadPath()
         {
             return Application.platform switch
                    {

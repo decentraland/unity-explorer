@@ -19,7 +19,7 @@ namespace DCL.Chat.Commands
         private const string WORLD_SUFFIX = ".dcl.eth";
 
         private readonly IRealmNavigator realmNavigator;
-        private readonly Dictionary<string, string> paramUrls;
+        private readonly Dictionary<string, Uri> paramUrls;
         private readonly ChatEnvironmentValidator environmentValidator;
         private readonly URLDomain worldDomain;
 
@@ -27,9 +27,9 @@ namespace DCL.Chat.Commands
         {
             this.realmNavigator = realmNavigator;
             this.environmentValidator = environmentValidator;
-            worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer));
+            worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer).OriginalString);
 
-            paramUrls = new Dictionary<string, string>
+            paramUrls = new Dictionary<string, Uri>
             {
                 { "genesis", decentralandUrlsSource.Url(DecentralandUrl.Genesis) },
                 { "goerli", IRealmNavigator.GOERLI_URL },
@@ -45,10 +45,7 @@ namespace DCL.Chat.Commands
         /// </summary>
         public async UniTask<string> TeleportToRealmAsync(string realm, Vector2Int? targetPosition, CancellationToken ct)
         {
-            string realmAddress;
-
-            if (realm.StartsWith("https"))
-                realmAddress = realm;
+            if (Uri.TryCreate(realm, UriKind.Absolute, out Uri realmAddress)) { }
             else if (!paramUrls.TryGetValue(realm, out realmAddress))
             {
                 // Dont modify realms like your.world.eth
@@ -62,14 +59,12 @@ namespace DCL.Chat.Commands
                 realmAddress = GetWorldAddress(realm);
             }
 
-            var realmURL = URLDomain.FromString(realmAddress!);
-
-            var environmentValidationResult = environmentValidator.ValidateTeleport(realmURL.ToString());
+            Result environmentValidationResult = environmentValidator.ValidateTeleport(realmAddress.OriginalString);
 
             if (!environmentValidationResult.Success)
                 return environmentValidationResult.ErrorMessage!;
 
-            var result = await realmNavigator.TryChangeRealmAsync(realmURL, ct, targetPosition ?? default);
+            EnumResult<ChangeRealmError> result = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmAddress.OriginalString), ct, targetPosition ?? default(Vector2Int));
 
             if (result.Success)
                 return $"🟢 Welcome to the {realm} world!";
@@ -108,7 +103,7 @@ namespace DCL.Chat.Commands
                    };
         }
 
-        private string GetWorldAddress(string worldPath) =>
-            worldDomain.Append(URLPath.FromString(worldPath)).Value;
+        private Uri GetWorldAddress(string worldPath) =>
+            worldDomain.Append(URLPath.FromString(worldPath));
     }
 }

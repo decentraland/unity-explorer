@@ -50,7 +50,7 @@ namespace DCL.SocialService
         /// </summary>
         private readonly SemaphoreSlim handshakeMutex = new (1, 1);
 
-        private readonly URLAddress apiUrl;
+        private readonly Uri apiUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly ISocialServiceEventBus socialServiceEventBus;
@@ -68,7 +68,7 @@ namespace DCL.SocialService
                                           && port != null;
 
         public RPCSocialServices(
-            URLAddress apiUrl,
+            Uri apiUrl,
             IWeb3IdentityCache identityCache,
             ISocialServiceEventBus socialServiceEventBus)
         {
@@ -211,7 +211,7 @@ namespace DCL.SocialService
             client?.Dispose();
             transport?.Dispose();
 
-            transport = new WebSocketRpcTransport(new Uri(apiUrl));
+            transport = new WebSocketRpcTransport(apiUrl);
             transport.OnCloseEvent += OnTransportClosed;
             client = new RpcClient(transport);
 

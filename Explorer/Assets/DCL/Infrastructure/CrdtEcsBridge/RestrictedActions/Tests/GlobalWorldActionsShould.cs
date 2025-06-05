@@ -15,6 +15,7 @@ using System.Threading;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using DCL.Multiplayer.Profiles.Bunches;
+using System;
 using Utility;
 
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
@@ -195,7 +196,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             var sceneId = "remoteSceneId";
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition(sceneId, new SceneMetadata()) };
-            mockSceneData.AssetBundleManifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", System.Array.Empty<string>(), "hash", "date");
+            mockSceneData.AssetBundleManifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date");
 
             var hash = "emote_hash_remote";
             var loop = false;
@@ -235,9 +236,9 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 SentEmotes.Add((urn, loopCyclePassed));
             }
 
-            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new System.NotImplementedException();
-            public void OnPlayerRemoved(string walletId) => throw new System.NotImplementedException();
-            public void SaveForRetry(RemoteEmoteIntention intention) => throw new System.NotImplementedException();
+            public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() => throw new NotImplementedException();
+            public void OnPlayerRemoved(string walletId) => throw new NotImplementedException();
+            public void SaveForRetry(RemoteEmoteIntention intention) => throw new NotImplementedException();
         }
 
         private class MockSceneData : ISceneData
@@ -253,13 +254,13 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             public bool HasRequiredPermission(string permission) => true;
 
-            public bool TryGetMainScriptUrl(out URLAddress result)
+            public bool TryGetMainScriptUrl(out Uri result)
             {
                 result = URLAddress.EMPTY;
                 return false;
             }
 
-            public bool TryGetContentUrl(string url, out URLAddress result)
+            public bool TryGetContentUrl(string url, out Uri result)
             {
                 result = URLAddress.FromString(url); // Simple mock: assume url is the content path
                 return true;
@@ -271,7 +272,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
                 return true;
             }
 
-            public bool TryGetMediaUrl(string url, out URLAddress result)
+            public bool TryGetMediaUrl(string url, out Uri result)
             {
                 result = URLAddress.FromString(url);
                 return true;

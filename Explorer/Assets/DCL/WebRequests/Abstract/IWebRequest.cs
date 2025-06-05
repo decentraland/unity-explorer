@@ -14,7 +14,7 @@ namespace DCL.WebRequests
     /// </summary>
     public partial interface IWebRequest : IDisposable
     {
-        string Url { get; }
+        Uri Url { get; }
 
         /// <summary>
         ///     The envelope this request was created from

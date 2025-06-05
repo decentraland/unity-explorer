@@ -106,7 +106,7 @@ namespace DCL.WebRequests.HTTP2
                 }
             }
 
-            public bool IsSuccess => request.State == HTTPRequestStates.Finished;
+            public bool IsSuccess => request.Response.IsSuccess;
 
             // TODO implemented incorrectly - should read the header instead
             public ulong DataLength => (ulong)(request.Response?.DownStream?.Length ?? 0);

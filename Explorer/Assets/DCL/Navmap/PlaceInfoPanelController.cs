@@ -289,7 +289,7 @@ namespace DCL.Navmap
         }
 
         private void OpenUrl(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrl(new Uri(url));
 
         private void OnLikeButtonClick(bool isEnabled)
         {

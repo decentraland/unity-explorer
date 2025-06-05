@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.AudioClips.Tests
@@ -18,9 +19,9 @@ namespace ECS.StreamableLoading.AudioClips.Tests
     {
         public LoadAudioClipSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
 
-        private string successPath => $"file://{Application.dataPath + "/../TestResources/Audio/cuckoo-test-clip.mp3"}";
-        private string failPath => $"file://{Application.dataPath + "/../TestResources/Audio/non_existing.mp3"}";
-        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.mp3"}";
+        private Uri successPath => new ($"file://{Application.dataPath + "/../TestResources/Audio/cuckoo-test-clip.mp3"}");
+        private Uri failPath => new ($"file://{Application.dataPath + "/../TestResources/Audio/non_existing.mp3"}");
+        private Uri wrongTypePath => new ($"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.mp3"}");
 
         protected override GetAudioClipIntention CreateSuccessIntention() =>
             new ()

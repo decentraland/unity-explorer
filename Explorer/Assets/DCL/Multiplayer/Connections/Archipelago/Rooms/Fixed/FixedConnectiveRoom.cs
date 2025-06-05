@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken token)
         {
-            string adapterUrl = currentAdapterAddress.AdapterUrl();
+            var adapterUrl = new Uri(currentAdapterAddress.AdapterUrl());
             string metadata = FixedMetadata.Default.ToJson();
             GenericPostRequest? result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, ReportCategory.LIVEKIT);
             AdapterResponse response = await result.CreateFromJsonAsync<AdapterResponse>(WRJsonParser.Unity, token);

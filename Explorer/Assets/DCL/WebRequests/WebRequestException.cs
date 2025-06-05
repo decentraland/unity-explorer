@@ -17,7 +17,7 @@ namespace DCL.WebRequests
         ///     Will be empty for HTTP2 requests
         /// </summary>
         public string Error { get; }
-        public string Url { get; }
+        public Uri Url { get; }
         public int ResponseCode { get; }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace DCL.WebRequests
 
         internal WebRequestException(Uri fileUrl, Exception fileException) : base($"{nameof(WebRequestException)} was thrown.", fileException)
         {
-            Url = fileUrl.OriginalString;
+            Url = fileUrl;
             Error = fileException.Message;
             ResponseReceived = true;
             IsTimedOut = false;

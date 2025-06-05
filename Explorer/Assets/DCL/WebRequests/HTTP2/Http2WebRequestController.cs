@@ -64,6 +64,11 @@ namespace DCL.WebRequests.HTTP2
 
                 await ExecuteWithAnalyticsAsync(requestWrap, requestAdapter, envelope.ReportData, ct);
 
+                if (!requestAdapter.Response.IsSuccess)
+                    throw new AsyncHTTPException(requestAdapter.Response.StatusCode,
+                        requestAdapter.Response.Error,
+                        await requestAdapter.Response.GetTextAsync(ct), null);
+
                 requestAdapter.successfullyExecutedByController = true;
                 return requestAdapter;
             }

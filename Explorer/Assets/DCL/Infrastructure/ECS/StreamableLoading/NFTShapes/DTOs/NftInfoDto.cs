@@ -7,7 +7,7 @@ namespace ECS.StreamableLoading.NFTShapes.DTOs
     {
         public NftDto nft;
 
-        public string ImageUrl() =>
-            nft.image_url;
+        public Uri ImageUrl() =>
+            new (nft.image_url);
     }
 }

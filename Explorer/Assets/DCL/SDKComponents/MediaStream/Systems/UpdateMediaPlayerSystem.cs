@@ -139,7 +139,7 @@ namespace DCL.SDKComponents.MediaStream
                 string otherUrl = other!.Value.Url;
 
                 if (selfUrl != otherUrl
-                    && (!sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) || selfUrl != localMediaUrl))
+                    && (!sceneData.TryGetMediaUrl(otherUrl, out Uri localMediaUrl) || selfUrl != localMediaUrl.OriginalString))
                     return PerformRemove(World, ref component, sdkComponent, entity);
             }
             else if (component.MediaAddress != address)
@@ -199,7 +199,7 @@ namespace DCL.SDKComponents.MediaStream
                     onUrlMediaAddress: static (ctx, componentAddress) =>
                     {
                         string mediaAddressUrl = ctx.mediaAddress.IsUrlMediaAddress(out var otherUrl) ? otherUrl!.Value.Url : "";
-                        return !ctx.sceneData.TryGetMediaUrl(mediaAddressUrl, out URLAddress localMediaUrl) || componentAddress.Url != localMediaUrl;
+                        return !ctx.sceneData.TryGetMediaUrl(mediaAddressUrl, out Uri localMediaUrl) || componentAddress.Url != localMediaUrl.OriginalString;
                     },
                     onLivekitAddress: static (_, _) => true
                 );
@@ -269,10 +269,10 @@ namespace DCL.SDKComponents.MediaStream
 
             if (!isValidStreamUrl)
             {
-                isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                isValidLocalPath = sceneData.TryGetMediaUrl(url, out Uri mediaUrl);
 
                 if (isValidLocalPath)
-                    mediaAddress = MediaAddress.New(mediaUrl.Value);
+                    mediaAddress = MediaAddress.New(mediaUrl.OriginalString);
             }
 
             component.MediaAddress = mediaAddress;

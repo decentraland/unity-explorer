@@ -65,7 +65,7 @@ namespace DCL.Ipfs
             }
         }
 
-        public URLDomain EntitiesActiveEndpoint
+        public Uri EntitiesActiveEndpoint
         {
             get
             {
@@ -77,7 +77,7 @@ namespace DCL.Ipfs
             }
         }
 
-        public URLDomain AssetBundleRegistry
+        public Uri AssetBundleRegistry
         {
             get
             {

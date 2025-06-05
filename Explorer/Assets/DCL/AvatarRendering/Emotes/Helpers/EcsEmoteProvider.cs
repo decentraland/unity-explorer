@@ -7,6 +7,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using PromiseByPointers = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -68,7 +69,7 @@ namespace DCL.AvatarRendering.Emotes
             if (name != null)
                 urlBuilder.AppendParameter(new URLParameter("name", name));
 
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
 
             var intention = new GetOwnedEmotesFromRealmIntention(new CommonLoadingArguments(url));
 

@@ -4,6 +4,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Buffers;
 using UnityEngine;
 using Utility.Multithreading;
@@ -23,9 +24,9 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
                 promise.Result.Value.Asset.AssetBundle.Unload(true);
         }
 
-        private string successPath => $"file://{Application.dataPath + "/../TestResources/AssetBundles/bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda"}";
-        private string failPath => $"file://{Application.dataPath + "/../TestResources/AssetBundles/non_existing"}";
-        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        private Uri successPath => new ($"file://{Application.dataPath + "/../TestResources/AssetBundles/bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda"}");
+        private Uri failPath => new ($"file://{Application.dataPath + "/../TestResources/AssetBundles/non_existing"}");
+        private Uri wrongTypePath => new ($"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}");
 
         protected override GetAssetBundleIntention CreateSuccessIntention() =>
 

@@ -47,11 +47,11 @@ namespace ECS.TestSuite
             IWebRequestsAnalyticsContainer? analyticsContainer = Substitute.For<IWebRequestsAnalyticsContainer>();
             IWeb3IdentityCache? identityCache = Substitute.For<IWeb3IdentityCache>();
 
-            return new RedirectWebRequestController(mode,
+            return new DisposeRequestWrap(new RedirectWebRequestController(mode,
                 new DefaultWebRequestController(analyticsContainer, identityCache, hub),
                 new Http2WebRequestController(analyticsContainer, identityCache, hub),
                 new YetAnotherWebRequestController(analyticsContainer, identityCache, hub),
-                hub);
+                hub));
         }
     }
 }

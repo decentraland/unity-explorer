@@ -92,7 +92,7 @@ namespace DCL.UI.ProfileNames
                 claimedConfig.saveButtonInteractable = i != -1;
             });
 
-            claimedConfig.clickeableLink.OnLinkClicked += url => webBrowser.OpenUrl(url);
+            claimedConfig.clickeableLink.OnLinkClicked += url => webBrowser.OpenUrl(new Uri(url));
 
             viewInstance.OverlayCloseButton.onClick.AddListener(Close);
 

@@ -48,7 +48,7 @@ namespace Global.Dynamic
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly bool isLocalSceneDevelopment;
         private readonly RealmNavigatorDebugView realmNavigatorDebugView;
-        private readonly URLDomain assetBundleRegistry;
+        private readonly Uri? assetBundleRegistry;
         private readonly IAppArgs appArgs;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
@@ -85,7 +85,7 @@ namespace Global.Dynamic
             IComponentPool<PartitionComponent> partitionComponentPool,
             RealmNavigatorDebugView realmNavigatorDebugView,
             bool isLocalSceneDevelopment,
-            URLDomain assetBundleRegistry,
+            Uri? assetBundleRegistry,
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -115,7 +115,7 @@ namespace Global.Dynamic
 
             await UniTask.SwitchToMainThread();
 
-            URLAddress url = realm.Append(new URLPath("/about"));
+            Uri url = realm.Append(new URLPath("/about"));
 
             try
             {

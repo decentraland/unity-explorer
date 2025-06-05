@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
