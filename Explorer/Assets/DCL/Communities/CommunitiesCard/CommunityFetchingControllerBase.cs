@@ -41,14 +41,11 @@ namespace DCL.Communities.CommunitiesCard
 
             SectionFetchData<T> membersData = currentSectionFetchData;
 
-            int membersCount = membersData.members.Count;
-
             membersData.pageNumber++;
             membersData.totalToFetch = await FetchDataAsync(ct);
             membersData.totalFetched = membersData.pageNumber * pageSize;
 
-            if (membersCount != membersData.members.Count)
-                view.RefreshGrid();
+            view.RefreshGrid();
 
             isFetching = false;
         }
