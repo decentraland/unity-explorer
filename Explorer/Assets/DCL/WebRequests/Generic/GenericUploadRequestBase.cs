@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using UnityEngine.Networking;
 
@@ -23,7 +24,16 @@ namespace DCL.WebRequests
                 var stream = new MultipartFormDataContent();
 
                 foreach (IMultipartFormSection? section in Args.MultipartFormSections)
-                    stream.Add(new ByteArrayContent(section.sectionData), section.contentType, section.fileName);
+                {
+                    var content = new ByteArrayContent(section.sectionData);
+                    content.Headers.TryAddWithoutValidation(WebRequestHeaders.CONTENT_TYPE_HEADER, section.contentType);
+
+                    // There is validation in the constructor that may throw an exception
+                    if (string.IsNullOrWhiteSpace(section.fileName))
+                        stream.Add(content, section.sectionName);
+                    else
+                        stream.Add(content, section.sectionName, section.fileName);
+                }
 
                 request.Content = stream;
             }

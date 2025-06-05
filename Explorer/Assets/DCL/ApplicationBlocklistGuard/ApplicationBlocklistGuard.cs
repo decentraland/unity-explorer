@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.ApplicationBlocklistGuard
 {
