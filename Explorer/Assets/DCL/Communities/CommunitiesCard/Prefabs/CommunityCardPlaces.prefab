@@ -515,7 +515,7 @@ MonoBehaviour:
   mPadding:
     m_Left: 0
     m_Right: 0
-    m_Top: 20
+    m_Top: 0
     m_Bottom: 0
   mItemPadding: {x: 10, y: 10}
   mItemSize: {x: 0, y: 0}
