@@ -19,14 +19,15 @@ namespace DCL.ApplicationVersionGuard
 {
     public class ApplicationVersionGuard
     {
-        private const string LAUNCHER_EXECUTABLE_NAME = "Decentraland Launcher";
+        private const string LAUNCHER_EXECUTABLE_NAME = "Decentraland";
+        private const string LEGACY_LAUNCHER_EXECUTABLE_NAME = "Decentraland Launcher";
+        private const string LAUNCHER_EXECUTABLE_FILENAME = "dcl_launcher.exe";
         private const string LAUNCHER_PATH_MAC = "/Applications/" + LAUNCHER_EXECUTABLE_NAME + ".app";
-        private const string LAUNCHER_PATH_WIN_MAIN = @"C:\Program Files\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
-        private const string LAUNCHER_PATH_WIN_86 = @"C:\Program Files (x86)\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
-        private const string LAUNCHER_PATH_WIN_COMBINED = @"Programs\Decentraland Launcher\" + LAUNCHER_EXECUTABLE_NAME + ".exe";
-        private const string DECENTRALAND_LAUNCHER_WIN_X64_EXE = "Decentraland-Launcher-win-x64.exe";
-        private const string DECENTRALAND_LAUNCHER_MAC_ARM_64DMG = "Decentraland-Launcher-mac-arm64.dmg";
-        private const string DECENTRALAND_LAUNCHER_MAC_X_64DMG = "Decentraland-Launcher-mac-x64.dmg";
+        private const string LEGACY_LAUNCHER_PATH_MAC = "/Applications/" + LEGACY_LAUNCHER_EXECUTABLE_NAME + ".app";
+        private const string DECENTRALAND_LAUNCHER_WIN_X64_EXE = "Decentraland_x64-setup.exe";
+        private const string DECENTRALAND_LAUNCHER_MAC_ARM_64DMG = "Decentraland_aarch64.dmg";
+        //Aga: Rust version of launcher does not support intel macs, until fully deprecating it, we need to keep the old launcher for intel based macs
+        private const string DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64DMG = "Decentraland Launcher-mac-x64.dmg";
 
         private readonly IWebRequestController webRequestController;
         private readonly IWebBrowser webBrowser;
@@ -58,7 +59,7 @@ namespace DCL.ApplicationVersionGuard
 
             if (string.IsNullOrEmpty(launcherPath))
             {
-                await DownloadLauncherAsync(ct);
+                DownloadLauncher();
                 Quit();
             }
             else
@@ -90,40 +91,34 @@ namespace DCL.ApplicationVersionGuard
 #endif
         }
 
-        private async UniTask DownloadLauncherAsync(CancellationToken ct)
+        private void DownloadLauncher()
         {
-            string downloadUrl = await GetLauncherDownloadUrlAsync(ct);
+            string assetName = GetLauncherAssetName();
+            string downloadUrl = $"{GetLauncherDownloadPath()}/{assetName}";
 
             if (!string.IsNullOrEmpty(downloadUrl))
                 webBrowser.OpenUrl(downloadUrl);
             else
                 ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Failed to get launcher download URL.");
-
-            return;
-
-            async UniTask<string> GetLauncherDownloadUrlAsync(CancellationToken cancellationToken)
-            {
-                FlatFetchResponse response = await webRequestController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                    IDecentralandUrlsSource.LAUNCHER_LATEST_RELEASE_URL,
-                    new FlatFetchResponse<GenericGetRequest>(),
-                    cancellationToken,
-                    ReportCategory.VERSION_CONTROL,
-                    new WebRequestHeadersInfo());
-
-                GitHubRelease latestRelease = JsonUtility.FromJson<GitHubRelease>(response.body);
-                string version = latestRelease.tag_name.TrimStart('v');
-
-                string assetName = GetLauncherAssetName();
-                return $"{IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL}/{version}/{assetName}";
-            }
         }
 
         private static string GetLauncherAssetName()
         {
             return Application.platform switch
+            {
+                RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer => DECENTRALAND_LAUNCHER_WIN_X64_EXE,
+                RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => IsAppleSiliconMac ? DECENTRALAND_LAUNCHER_MAC_ARM_64DMG : DECENTRALAND_LEGACY_LAUNCHER_MAC_X_64DMG,
+                _ => throw new NotSupportedException("Unsupported platform for launcher download."),
+            };
+        }
+
+
+        private static string GetLauncherDownloadPath()
+        {
+            return Application.platform switch
                    {
-                       RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer => DECENTRALAND_LAUNCHER_WIN_X64_EXE,
-                       RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => SystemInfo.processorType.ToLower().Contains("arm") ? DECENTRALAND_LAUNCHER_MAC_ARM_64DMG : DECENTRALAND_LAUNCHER_MAC_X_64DMG,
+                       RuntimePlatform.WindowsEditor or RuntimePlatform.WindowsPlayer => IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL,
+                       RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer => IsAppleSiliconMac ? IDecentralandUrlsSource.LAUNCHER_DOWNLOAD_URL : IDecentralandUrlsSource.LEGACY_LAUNCHER_DOWNLOAD_URL,
                        _ => throw new NotSupportedException("Unsupported platform for launcher download."),
                    };
         }
@@ -138,29 +133,38 @@ namespace DCL.ApplicationVersionGuard
                 case RuntimePlatform.WindowsPlayer:
                     possiblePaths = new[]
                     {
-                        LAUNCHER_PATH_WIN_MAIN,
-                        LAUNCHER_PATH_WIN_86,
-                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), LAUNCHER_PATH_WIN_COMBINED),
+                        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), LAUNCHER_EXECUTABLE_NAME, LAUNCHER_EXECUTABLE_FILENAME),
                     };
-
                     break;
+
                 case RuntimePlatform.OSXEditor:
                 case RuntimePlatform.OSXPlayer:
-                    possiblePaths = new[]
-                    {
-                        LAUNCHER_PATH_MAC,
-                        $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}{LAUNCHER_PATH_MAC}",
-                    };
-
+                    possiblePaths = IsAppleSiliconMac
+                        ? new[]
+                        {
+                            LAUNCHER_PATH_MAC,
+                            $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}{LAUNCHER_PATH_MAC}",
+                        }
+                        : new[]
+                        {
+                            LEGACY_LAUNCHER_PATH_MAC,
+                            $"{Environment.GetFolderPath(Environment.SpecialFolder.Personal)}{LEGACY_LAUNCHER_PATH_MAC}",
+                        };
                     break;
+
                 default:
                     ReportHub.LogError(ReportCategory.VERSION_CONTROL, "Unsupported platform for launching the application.");
                     return null;
             }
 
-            return possiblePaths.FirstOrDefault(path => File.Exists(path)
-                                                        || (Directory.Exists(path) && (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)));
+            return possiblePaths.FirstOrDefault(path =>
+                File.Exists(path) ||
+                (Directory.Exists(path) && (Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.OSXPlayer)));
         }
+
+        private static bool IsAppleSiliconMac =>
+            Application.platform is RuntimePlatform.OSXEditor or RuntimePlatform.OSXPlayer &&
+            SystemInfo.processorType.Contains("apple", StringComparison.OrdinalIgnoreCase);
 
         [Serializable]
         private struct GitHubRelease

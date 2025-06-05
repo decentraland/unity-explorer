@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using MVC;
 using System;
 using System.Threading;
@@ -76,18 +77,8 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid BlockUserAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.BlockUserAsync(inputData.TargetUserId, ct);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
-                finally
-                {
-                    ClosePopup();
-                }
+                await friendsService.BlockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                ClosePopup();
             }
         }
 
@@ -98,18 +89,8 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid UnblockUserAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.UnblockUserAsync(inputData.TargetUserId, ct);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
-                finally
-                {
-                    ClosePopup();
-                }
+                await friendsService.UnblockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                ClosePopup();
             }
         }
 

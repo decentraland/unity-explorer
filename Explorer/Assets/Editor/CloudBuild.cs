@@ -34,8 +34,6 @@ namespace Editor
             //This should ensure that the roslyn compiler has been run and everything is generated as needed.
             EditorApplication.ExecuteMenuItem("File/Save Project");
 
-            CompileSceneShader.CompileTheSceneShader(EditorUserBuildSettings.activeBuildTarget);
-
             // Set version for this build
             var buildVersion = Parameters["BUILD_VERSION"] as string;
             PlayerSettings.bundleVersion = buildVersion;
