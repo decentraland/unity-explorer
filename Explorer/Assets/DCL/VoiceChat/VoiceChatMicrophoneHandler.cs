@@ -111,6 +111,10 @@ namespace DCL.VoiceChat
         private bool isInCall;
         private float buttonPressStartTime;
         private string microphoneName;
+        
+        // Track previous microphone specs for comparison
+        private int previousSampleRate = 0;
+        private int previousChannels = 0;
 
         public bool IsTalking { get; private set; }
 
@@ -401,6 +405,15 @@ namespace DCL.VoiceChat
             audioFilter.SetProcessingEnabled(false);
 
             isMicrophoneInitialized = true;
+            
+            // Track initial microphone specs for future comparisons
+            if (microphoneAudioClip != null)
+            {
+                previousSampleRate = microphoneAudioClip.frequency;
+                previousChannels = microphoneAudioClip.channels;
+                ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                    $"Initial microphone specs tracked - SampleRate: {previousSampleRate}Hz, Channels: {previousChannels}");
+            }
         }
 
         private void InitializeOrStartRtcAudioSource(int sampleRate, bool isReconfigure = false)
@@ -529,22 +542,58 @@ namespace DCL.VoiceChat
                 try
                 {
                     int newSampleRate = microphoneAudioClip.frequency;
+                    int newChannels = microphoneAudioClip.channels;
 
-                    rtcAudioSource.Reconfigure(audioSource, audioFilter, forceChannels: 1, forceSampleRate: (uint)newSampleRate);
-                    rtcAudioSource.Start();
+                    // Check if sample rate or channels changed
+                    bool specsChanged = (newSampleRate != previousSampleRate) || (newChannels != previousChannels);
 
-                    RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource reconfigured and restarted for new microphone '{MicrophoneName}' at {newSampleRate}Hz - Stack trace: {System.Environment.StackTrace}");
+                    if (specsChanged)
+                    {
+                        // Dispose and recreate RtcAudioSource due to spec changes
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                            $"Microphone specs changed (SampleRate: {previousSampleRate}→{newSampleRate}Hz, Channels: {previousChannels}→{newChannels}) - disposing and recreating RtcAudioSource");
+                        
+                        rtcAudioSource.Stop();
+                        rtcAudioSource.Dispose();
+                        rtcAudioSource = null;
+
+                        // Create new RtcAudioSource with new specs
+                        InitializeOrStartRtcAudioSource(newSampleRate);
+                        
+                        // Update tracked specs
+                        previousSampleRate = newSampleRate;
+                        previousChannels = newChannels;
+                    }
+                    else
+                    {
+                        // Same specs - just restart the existing RtcAudioSource
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                            $"Microphone device changed but specs remain the same ({newSampleRate}Hz, {newChannels}ch) - restarting existing RtcAudioSource");
+                        
+                        rtcAudioSource.Stop();
+                        rtcAudioSource.Start();
+                    }
+
+                    // Only invoke reconfigured event if we actually recreated the RtcAudioSource
+                    if (specsChanged)
+                    {
+                        RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
+                    }
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource updated for new microphone '{MicrophoneName}' at {newSampleRate}Hz");
                     MicrophoneReady?.Invoke();
                 }
                 catch (System.Exception ex)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to reconfigure RtcAudioSource for new microphone: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to update RtcAudioSource for new microphone: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
                     rtcAudioSource?.Stop();
                     rtcAudioSource?.Dispose();
                     rtcAudioSource = null;
 
                     InitializeOrStartRtcAudioSource(microphoneAudioClip.frequency);
+                    
+                    // Update tracked specs on fallback
+                    previousSampleRate = microphoneAudioClip.frequency;
+                    previousChannels = microphoneAudioClip.channels;
                 }
             }
 
