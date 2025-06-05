@@ -5,6 +5,7 @@ using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -28,6 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly IPlacesAPIService placesAPIService;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
@@ -37,7 +39,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView inWorldWarningNotificationView,
+            IPlacesAPIService placesAPIService)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -48,6 +51,7 @@ namespace DCL.PluginSystem.Global
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.placesAPIService = placesAPIService;
         }
 
         public void Dispose()
@@ -71,7 +75,8 @@ namespace DCL.PluginSystem.Global
                 friendServiceProxy,
                 communitiesDataProvider,
                 webRequestController,
-                inWorldWarningNotificationView));
+                inWorldWarningNotificationView,
+                placesAPIService));
         }
     }
 

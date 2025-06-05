@@ -7,6 +7,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -39,6 +40,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly IPlacesAPIService placesAPIService;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -58,7 +60,8 @@ namespace DCL.Communities.CommunitiesCard
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView inWorldWarningNotificationView,
+            IPlacesAPIService placesAPIService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -69,6 +72,7 @@ namespace DCL.Communities.CommunitiesCard
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.placesAPIService = placesAPIService;
         }
 
         public override void Dispose()
@@ -110,7 +114,7 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 inWorldWarningNotificationView);
 
-            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView, webRequestController);
+            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView, webRequestController, placesAPIService);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 

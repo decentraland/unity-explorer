@@ -55,6 +55,7 @@ namespace DCL.Communities.CommunitiesCard
         public virtual void Reset()
         {
             isFetching = false;
+            view.RefreshGrid();
         }
     }
 }

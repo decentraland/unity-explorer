@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility.Times;
+using Random = UnityEngine.Random;
 
 namespace DCL.PlacesAPIService
 {
@@ -121,6 +122,42 @@ namespace DCL.PlacesAPIService
 
             // At this moment WR is already disposed
             return response.data;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
+        {
+            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
+
+            List<string> placeIdsList = new List<string>(placeIds);
+
+            List<PlacesData.PlaceInfo> result = new List<PlacesData.PlaceInfo>(placeIdsList.Count);
+
+            bool userLike = Random.Range(0, 100) > 50;
+            bool userDislike = false;
+
+            if (!userLike)
+                userDislike = Random.Range(0, 100) > 50;
+
+            for (int i = 0; i < placeIdsList.Count; i++)
+            {
+                result.Add(new PlacesData.PlaceInfo(new Vector2Int(Random.Range(-150, 151), Random.Range(-150, 151)))
+                {
+                    id = placeIdsList[i],
+                    title = $"Place {i + 1}",
+                    description = $"Description for Place {i + 1}",
+                    user_count = Random.Range(0, 100),
+                    user_like = userLike,
+                    user_dislike = userDislike,
+                    user_favorite = Random.Range(0, 100) > 50,
+                });
+            }
+
+            return new PlacesData.PlacesAPIResponse()
+            {
+                ok = true,
+                total = placeIdsList.Count,
+                data = result
+            };
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)

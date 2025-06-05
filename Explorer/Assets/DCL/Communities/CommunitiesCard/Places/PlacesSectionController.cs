@@ -1,7 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.PlacesAPIService;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using System;
 using System.Threading;
+using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
@@ -13,15 +17,18 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private readonly PlacesSectionView view;
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
+        private readonly IPlacesAPIService placesAPIService;
         protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
 
         private CommunityData? communityData = null;
         private bool userCanModify = false;
 
         public PlacesSectionController(PlacesSectionView view,
-            IWebRequestController webRequestController) : base (view, PAGE_SIZE)
+            IWebRequestController webRequestController,
+            IPlacesAPIService placesAPIService) : base (view, PAGE_SIZE)
         {
             this.view = view;
+            this.placesAPIService = placesAPIService;
 
             view.InitGrid(() => currentSectionFetchData, webRequestController);
 
@@ -91,7 +98,26 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            return 0;
+            int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
+            int total = communityData!.Value.places.Length;
+
+            int remaining = total - offset;
+            int count = Math.Min(PAGE_SIZE, remaining);
+
+            ArraySegment<string> slice = new ArraySegment<string>(communityData.Value.places, offset, count);
+
+            Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
+                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!response.Success || !response.Value.ok)
+            {
+                placesFetchData.pageNumber--;
+                return total;
+            }
+
+            placesFetchData.members.AddRange(response.Value.data);
+
+            return total;
         }
 
         public void ShowPlaces(CommunityData community, CancellationToken token)
