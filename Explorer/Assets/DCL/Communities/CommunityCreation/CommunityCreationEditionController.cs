@@ -1,10 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.UI;
+using DCL.Utilities.Extensions;
 using MVC;
 using System.Threading;
+using Utility;
 
 namespace DCL.Communities.CommunityCreation
 {
@@ -13,20 +17,31 @@ namespace DCL.Communities.CommunityCreation
         private const string WORLD_LINK_ID = "WORLD_LINK_ID";
         private const string CREATE_COMMUNITY_TITLE = "Create a Community";
         private const string EDIT_COMMUNITY_TITLE = "Edit Community";
+        private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
+        private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
+        private readonly ICommunitiesDataProvider dataProvider;
+        private readonly WarningNotificationView warningNotificationView;
+
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
+        private CancellationTokenSource createCommunityCts;
+        private CancellationTokenSource showErrorCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
-            IInputBlock inputBlock) : base(viewFactory)
+            IInputBlock inputBlock,
+            ICommunitiesDataProvider dataProvider,
+            WarningNotificationView warningNotificationView) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
+            this.dataProvider = dataProvider;
+            this.warningNotificationView = warningNotificationView;
         }
 
         protected override void OnViewInstantiated()
@@ -35,6 +50,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.GetNameButtonClicked += GoToGetNameLink;
             viewInstance.CancelButtonClicked += OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked += OpenImageSelection;
+            viewInstance.CreateCommunityButtonClicked += CreateCommunity;
         }
 
         protected override void OnBeforeViewShow()
@@ -47,8 +63,13 @@ namespace DCL.Communities.CommunityCreation
         protected override void OnViewShow() =>
             DisableShortcutsInput();
 
-        protected override void OnViewClose() =>
+        protected override void OnViewClose()
+        {
             RestoreInput();
+
+            createCommunityCts?.SafeCancelAndDispose();
+            showErrorCts?.SafeCancelAndDispose();
+        }
 
         public override void Dispose()
         {
@@ -58,6 +79,10 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.GetNameButtonClicked -= GoToGetNameLink;
             viewInstance.CancelButtonClicked -= OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked -= OpenImageSelection;
+            viewInstance.CreateCommunityButtonClicked -= CreateCommunity;
+
+            createCommunityCts?.SafeCancelAndDispose();
+            showErrorCts?.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -89,6 +114,39 @@ namespace DCL.Communities.CommunityCreation
         private void OpenImageSelection()
         {
 
+        }
+
+        private void CreateCommunity(string name, string description)
+        {
+            createCommunityCts = createCommunityCts.SafeRestart();
+            CreateCommunityAsync(name, description, createCommunityCts.Token).Forget();
+        }
+
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, CancellationToken ct)
+        {
+            viewInstance!.SetCreationCommunityAsLoading(true);
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, null, null, null, ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!result.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                ShowErrorNotificationAsync(CREATE_COMMUNITY_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                viewInstance.SetCreationCommunityAsLoading(false);
+                return;
+            }
+
+            closeTaskCompletionSource.TrySetResult();
+        }
+
+        private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
+        {
+            warningNotificationView.SetText(errorMessage);
+            warningNotificationView.Show(ct);
+
+            await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
+
+            warningNotificationView.Hide(ct: ct);
         }
     }
 }

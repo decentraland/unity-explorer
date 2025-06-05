@@ -15,6 +15,7 @@ namespace DCL.Communities.CommunityCreation
         public Action CancelButtonClicked;
         public Action GetNameButtonClicked;
         public Action SelectProfilePictureButtonClicked;
+        public Action<string, string> CreateCommunityButtonClicked;
 
         [SerializeField] public Button backgroundCloseButton;
 
@@ -39,6 +40,8 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private Button creationPanelAddPlaceButton;
         [SerializeField] private Button creationPanelCancelButton;
         [SerializeField] private Button creationPanelCreateButton;
+        [SerializeField] private GameObject creationPanelCreateButtonText;
+        [SerializeField] private GameObject creationPanelCreateLoading;
 
         private void Awake()
         {
@@ -49,6 +52,9 @@ namespace DCL.Communities.CommunityCreation
             creationPanelEditProfilePictureButton.onClick.AddListener(() => SelectProfilePictureButtonClicked?.Invoke());
             creationPanelCommunityNameInputField.onValueChanged.AddListener(CreationPanelCommunityNameInputChanged);
             creationPanelCommunityDescriptionInputField.onValueChanged.AddListener(CreationPanelCommunityDescriptionInputChanged);
+            creationPanelCreateButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke(
+                creationPanelCommunityNameInputField.text,
+                creationPanelCommunityDescriptionInputField.text));
         }
 
         private void OnDestroy()
@@ -78,6 +84,19 @@ namespace DCL.Communities.CommunityCreation
 
         public void SetCreationPanelTitle(string title) =>
             creationPanelTitleText.text = title;
+
+        public void SetCreationCommunityAsLoading(bool isLoading)
+        {
+            creationPanelCreateLoading.SetActive(isLoading);
+            creationPanelCreateButtonText.SetActive(!isLoading);
+
+            if (isLoading)
+                creationPanelCreateButton.interactable = false;
+            else
+            {
+                CheckForCreateButtonAvailability();
+            }
+        }
 
         public void SetProfileSelectedImage(Sprite sprite)
         {
@@ -109,6 +128,7 @@ namespace DCL.Communities.CommunityCreation
 
         private void CleanCreationPanel()
         {
+            SetCreationCommunityAsLoading(false);
             SetProfileSelectedImage(null);
             SetCommunityName(string.Empty);
             SetCommunityDescription(string.Empty);

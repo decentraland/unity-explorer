@@ -37,10 +37,10 @@ namespace DCL.Communities
         {
             var url = $"{communitiesBaseUrl}/communities?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
-            GetUserCommunitiesResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
-                                                                                                  .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
+            GetUserCommunitiesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                            .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
 
-            return creditsProgramProgressResponse;
+            return response;
         }
 
         public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
@@ -49,8 +49,20 @@ namespace DCL.Communities
         public UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetUserWorldsAsync(userId, pageNumber, elementsPerPage, ct);
 
-        public UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands, List<string> worlds, CancellationToken ct) =>
-            fakeDataProvider.CreateOrUpdateCommunityAsync(communityId, name, description, thumbnail, lands, worlds, ct);
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands, List<string> worlds, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/communities";
+            string jsonBody = JsonUtility.ToJson(new CreateCommunityBody
+            {
+                name = name,
+                description = description,
+            });
+
+            CreateOrUpdateCommunityResponse response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                                                 .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
+
+            return response;
+        }
 
         public UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetCommunityMembersAsync(communityId, areBanned, pageNumber, elementsPerPage, ct);

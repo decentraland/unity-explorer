@@ -257,6 +257,8 @@ MonoBehaviour:
   creationPanelAddPlaceButton: {fileID: 8377134968439250937}
   creationPanelCancelButton: {fileID: 2428634819478053848}
   creationPanelCreateButton: {fileID: 3026729670463483168}
+  creationPanelCreateButtonText: {fileID: 3122269740363934201}
+  creationPanelCreateLoading: {fileID: 1998900302886066027}
 --- !u!1 &1501630461376916409
 GameObject:
   m_ObjectHideFlags: 0
@@ -889,6 +891,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1998900302886066027 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5571412109002997220, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+  m_PrefabInstance: {fileID: 6263421827064736399}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &2089798970030989633 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5470837670738627534, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
@@ -922,6 +929,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &3122269740363934201 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9059170138074956662, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+  m_PrefabInstance: {fileID: 6263421827064736399}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &3788980449318604006 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7095717341087278697, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}

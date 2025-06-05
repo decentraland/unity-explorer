@@ -20,6 +20,13 @@ namespace DCL.Communities
         public bool ok;
         public CommunityData communityData;
     }
+
+    [Serializable]
+    public class CreateCommunityBody
+    {
+        public string name;
+        public string description;
+    }
 }
 
 
