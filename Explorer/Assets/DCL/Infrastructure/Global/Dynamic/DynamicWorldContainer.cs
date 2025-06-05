@@ -955,7 +955,8 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     mainUIView.WarningNotification,
-                    placesAPIService));
+                    placesAPIService,
+                    realmNavigator));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

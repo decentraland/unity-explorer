@@ -10,6 +10,7 @@ using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmNavigator realmNavigator;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
@@ -40,7 +42,8 @@ namespace DCL.PluginSystem.Global
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             WarningNotificationView inWorldWarningNotificationView,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -52,6 +55,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.placesAPIService = placesAPIService;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose()
@@ -76,7 +80,8 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 webRequestController,
                 inWorldWarningNotificationView,
-                placesAPIService));
+                placesAPIService,
+                realmNavigator));
         }
     }
 

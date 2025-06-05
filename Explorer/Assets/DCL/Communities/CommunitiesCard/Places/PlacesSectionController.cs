@@ -1,9 +1,12 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Threading;
 using Utility;
@@ -26,21 +29,24 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly IRealmNavigator realmNavigator;
 
         protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
 
         private CommunityData? communityData = null;
         private bool userCanModify = false;
-        private CancellationTokenSource contextMenuOpenedCts = new ();
+        private CancellationTokenSource placeCardOperationsCts = new ();
 
         public PlacesSectionController(PlacesSectionView view,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
-            WarningNotificationView inWorldWarningNotificationView) : base (view, PAGE_SIZE)
+            WarningNotificationView inWorldWarningNotificationView,
+            IRealmNavigator realmNavigator) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.realmNavigator = realmNavigator;
 
             view.InitGrid(() => currentSectionFetchData, webRequestController);
 
@@ -61,12 +67,19 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementInfoButtonClicked -= OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked -= OnElementJumpInButtonClicked;
 
+            placeCardOperationsCts.SafeCancelAndDispose();
+
             base.Dispose();
         }
 
-        private void OnElementJumpInButtonClicked(PlaceInfo obj)
+        private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)
         {
-            throw new NotImplementedException();
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+
+            if (!string.IsNullOrWhiteSpace(placeInfo.world_name))
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(placeInfo.world_name).ConvertEnsToWorldUrl()), placeCardOperationsCts.Token).Forget();
+            else
+                realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, placeCardOperationsCts.Token, false).Forget();
         }
 
         private void OnElementInfoButtonClicked(PlaceInfo obj)
@@ -81,8 +94,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
         {
-            contextMenuOpenedCts = contextMenuOpenedCts.SafeRestart();
-            FavoritePlaceAsync(contextMenuOpenedCts.Token).Forget();
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            FavoritePlaceAsync(placeCardOperationsCts.Token).Forget();
             return;
 
             async UniTaskVoid FavoritePlaceAsync(CancellationToken ct)
@@ -100,8 +113,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void OnElementDislikeToggleChanged(PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
         {
-            contextMenuOpenedCts = contextMenuOpenedCts.SafeRestart();
-            DislikePlaceAsync(contextMenuOpenedCts.Token).Forget();
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            DislikePlaceAsync(placeCardOperationsCts.Token).Forget();
             return;
 
             async UniTaskVoid DislikePlaceAsync(CancellationToken ct)
@@ -128,8 +141,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void OnElementLikeToggleChanged(PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
         {
-            contextMenuOpenedCts = contextMenuOpenedCts.SafeRestart();
-            LikePlaceAsync(contextMenuOpenedCts.Token).Forget();
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            LikePlaceAsync(placeCardOperationsCts.Token).Forget();
             return;
 
             async UniTaskVoid LikePlaceAsync(CancellationToken ct)

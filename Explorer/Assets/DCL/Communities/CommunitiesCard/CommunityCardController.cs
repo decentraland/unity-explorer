@@ -12,6 +12,7 @@ using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -41,6 +42,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmNavigator realmNavigator;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -61,7 +63,8 @@ namespace DCL.Communities.CommunitiesCard
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             WarningNotificationView inWorldWarningNotificationView,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IRealmNavigator realmNavigator)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -73,6 +76,7 @@ namespace DCL.Communities.CommunitiesCard
             this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.placesAPIService = placesAPIService;
+            this.realmNavigator = realmNavigator;
         }
 
         public override void Dispose()
@@ -117,7 +121,8 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 webRequestController,
                 placesAPIService,
-                inWorldWarningNotificationView);
+                inWorldWarningNotificationView,
+                realmNavigator);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
