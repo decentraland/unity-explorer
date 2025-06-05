@@ -78,10 +78,12 @@ namespace DCL.WebRequests
                     if (envelope.CommonArguments.AttemptsDelayInMilliseconds() > 0)
                         await UniTask.Delay(TimeSpan.FromMilliseconds(envelope.CommonArguments.AttemptsDelayInMilliseconds()));
 
-                    SentrySdk.AddBreadcrumb($"Failed URL {envelope.CommonArguments.URL}");
 
                     if (exception.IsIrrecoverableError(attemptsLeft) && !envelope.IgnoreIrrecoverableErrors)
+                    {
+                        SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n");
                         throw;
+                    }
                 }
             }
 
