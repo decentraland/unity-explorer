@@ -1,10 +1,12 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PlacesAPIService;
+using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using System;
 using System.Threading;
+using Utility;
 using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
@@ -15,20 +17,30 @@ namespace DCL.Communities.CommunitiesCard.Places
     {
         private const int PAGE_SIZE = 10;
 
+        private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
+        private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
+        private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
+        private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
+
         private readonly PlacesSectionView view;
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
+
         protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
 
         private CommunityData? communityData = null;
         private bool userCanModify = false;
+        private CancellationTokenSource contextMenuOpenedCts = new ();
 
         public PlacesSectionController(PlacesSectionView view,
             IWebRequestController webRequestController,
-            IPlacesAPIService placesAPIService) : base (view, PAGE_SIZE)
+            IPlacesAPIService placesAPIService,
+            WarningNotificationView inWorldWarningNotificationView) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
 
             view.InitGrid(() => currentSectionFetchData, webRequestController);
 
@@ -67,19 +79,61 @@ namespace DCL.Communities.CommunitiesCard.Places
             throw new NotImplementedException();
         }
 
-        private void OnElementFavoriteToggleChanged(PlaceInfo arg1, bool arg2)
+        private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
         {
-            throw new NotImplementedException();
+            contextMenuOpenedCts = contextMenuOpenedCts.SafeRestart();
+            FavoritePlaceAsync(contextMenuOpenedCts.Token).Forget();
+            return;
+
+            async UniTaskVoid FavoritePlaceAsync(CancellationToken ct)
+            {
+                var result = await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, favoriteValue, ct)
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success)
+                {
+                    placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(FAVORITE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                }
+            }
         }
 
-        private void OnElementDislikeToggleChanged(PlaceInfo arg1, bool arg2)
+        private void OnElementDislikeToggleChanged(PlaceInfo placeInfo, bool dislikeValue, PlaceCardView placeCardView)
         {
-            throw new NotImplementedException();
+            contextMenuOpenedCts = contextMenuOpenedCts.SafeRestart();
+            DislikePlaceAsync(contextMenuOpenedCts.Token).Forget();
+            return;
+
+            async UniTaskVoid DislikePlaceAsync(CancellationToken ct)
+            {
+                var result = await placesAPIService.RatePlaceAsync(dislikeValue ? false : null, placeInfo.id, ct)
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success)
+                {
+                    placeCardView.SilentlySetDislikeToggle(!dislikeValue);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(DISLIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                }
+            }
         }
 
-        private void OnElementLikeToggleChanged(PlaceInfo arg1, bool arg2)
+        private void OnElementLikeToggleChanged(PlaceInfo placeInfo, bool likeValue, PlaceCardView placeCardView)
         {
-            throw new NotImplementedException();
+            contextMenuOpenedCts = contextMenuOpenedCts.SafeRestart();
+            LikePlaceAsync(contextMenuOpenedCts.Token).Forget();
+            return;
+
+            async UniTaskVoid LikePlaceAsync(CancellationToken ct)
+            {
+                var result = await placesAPIService.RatePlaceAsync(likeValue ? true : null, placeInfo.id, ct)
+                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success)
+                {
+                    placeCardView.SilentlySetLikeToggle(!likeValue);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(LIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                }
+            }
         }
 
         public override void Reset()

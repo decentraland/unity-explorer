@@ -114,7 +114,10 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 inWorldWarningNotificationView);
 
-            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView, webRequestController, placesAPIService);
+            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
+                webRequestController,
+                placesAPIService,
+                inWorldWarningNotificationView);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 

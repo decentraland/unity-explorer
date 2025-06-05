@@ -42,9 +42,9 @@ namespace DCL.Communities.CommunitiesCard.Places
         private PlaceInfo currentPlaceInfo;
         private ImageController imageController;
 
-        public event Action<PlaceInfo, bool> LikeToggleChanged;
-        public event Action<PlaceInfo, bool> DislikeToggleChanged;
-        public event Action<PlaceInfo, bool> FavoriteToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView> LikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView> DislikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView> FavoriteToggleChanged;
         public event Action<PlaceInfo> ShareButtonClicked;
         public event Action<PlaceInfo> InfoButtonClicked;
         public event Action<PlaceInfo> JumpInButtonClicked;
@@ -54,9 +54,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
 
-            likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value));
-            dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value));
-            favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value));
+            likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value, this));
+            dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value, this));
+            favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value, this));
             shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo));
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
@@ -87,9 +87,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
         }
 
-        public void SubscribeToInteractions(Action<PlaceInfo, bool> likeToggleChanged,
-            Action<PlaceInfo, bool> dislikeToggleChanged,
-            Action<PlaceInfo, bool> favoriteToggleChanged,
+        public void SubscribeToInteractions(Action<PlaceInfo, bool, PlaceCardView> likeToggleChanged,
+            Action<PlaceInfo, bool, PlaceCardView> dislikeToggleChanged,
+            Action<PlaceInfo, bool, PlaceCardView> favoriteToggleChanged,
             Action<PlaceInfo> shareButtonClicked,
             Action<PlaceInfo> infoButtonClicked,
             Action<PlaceInfo> jumpInButtonClicked)
@@ -107,6 +107,24 @@ namespace DCL.Communities.CommunitiesCard.Places
             ShareButtonClicked += shareButtonClicked;
             InfoButtonClicked += infoButtonClicked;
             JumpInButtonClicked += jumpInButtonClicked;
+        }
+
+        public void SilentlySetLikeToggle(bool isOn)
+        {
+            likeToggle.Toggle.SetIsOnWithoutNotify(isOn);
+            likeToggle.SetToggleGraphics(isOn);
+        }
+
+        public void SilentlySetDislikeToggle(bool isOn)
+        {
+            dislikeToggle.Toggle.SetIsOnWithoutNotify(isOn);
+            dislikeToggle.SetToggleGraphics(isOn);
+        }
+
+        public void SilentlySetFavoriteToggle(bool isOn)
+        {
+            favoriteToggle.Toggle.SetIsOnWithoutNotify(isOn);
+            favoriteToggle.SetToggleGraphics(isOn);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

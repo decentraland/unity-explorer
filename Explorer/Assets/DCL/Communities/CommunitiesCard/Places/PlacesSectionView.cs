@@ -18,9 +18,9 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action? NewDataRequested;
         public event Action? AddPlaceRequested;
 
-        public event Action<PlaceInfo, bool> ElementLikeToggleChanged;
-        public event Action<PlaceInfo, bool> ElementDislikeToggleChanged;
-        public event Action<PlaceInfo, bool> ElementFavoriteToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView> ElementLikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView> ElementDislikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView> ElementFavoriteToggleChanged;
         public event Action<PlaceInfo> ElementShareButtonClicked;
         public event Action<PlaceInfo> ElementInfoButtonClicked;
         public event Action<PlaceInfo> ElementJumpInButtonClicked;
@@ -67,9 +67,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             int realIndex = canModify ? index - 1 : index;
             elementView.Configure(membersData.members[realIndex], webRequestController);
 
-            elementView.SubscribeToInteractions((placeInfo, value) => ElementLikeToggleChanged?.Invoke(placeInfo, value),
-                (placeInfo, value) => ElementDislikeToggleChanged?.Invoke(placeInfo, value),
-                (placeInfo, value) => ElementFavoriteToggleChanged?.Invoke(placeInfo, value),
+            elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
+                (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
+                (placeInfo, value, cardView) => ElementFavoriteToggleChanged?.Invoke(placeInfo, value, cardView),
                 placeInfo => ElementShareButtonClicked?.Invoke(placeInfo),
                 placeInfo => ElementInfoButtonClicked?.Invoke(placeInfo),
                 placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo));
