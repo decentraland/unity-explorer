@@ -164,7 +164,16 @@ namespace DCL.VoiceChat
             // Stop and dispose LiveKit audio source
             if (rtcAudioSource != null)
             {
-                rtcAudioSource.Stop();
+                try
+                {
+                    rtcAudioSource.Stop();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource stopped during dispose");
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource during dispose: {ex.Message}");
+                }
+                
                 rtcAudioSource.Dispose();
                 rtcAudioSource = null;
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource disposed - Remaining subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
@@ -379,21 +388,18 @@ namespace DCL.VoiceChat
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
             audioSource.volume = AUDIO_SOURCE_VOLUME;
-
+            audioSource.mute = true; // Start muted
             audioSource.spatialBlend = SPATIAL_BLEND_2D;
             audioSource.panStereo = CENTER_PAN;
 
-            audioSource.Play();
 
             // Initialize RtcAudioSource if needed
             if (initializeRtcAudioSource)
                 InitializeOrStartRtcAudioSource(actualSampleRate);
 
-            // Set initial audio filter processing state based on current talking status
-            // If we're in a call and talking, enable processing; otherwise disable it while preserving LiveKit connection
-            audioFilter.SetProcessingEnabled(isInCall && IsTalking);
+            // Set initial audio filter processing state to disabled
+            audioFilter.SetProcessingEnabled(false);
 
-            EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
         }
 
@@ -409,7 +415,6 @@ namespace DCL.VoiceChat
                     rtcAudioSource.Start();
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {sampleRate}Hz - Subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
 
-                    // Signal ready after RtcAudioSource is fully initialized
                     MicrophoneReady?.Invoke();
                 }
                 catch (System.Exception ex)
@@ -419,15 +424,12 @@ namespace DCL.VoiceChat
             }
             else if (!isReconfigure)
             {
-                // Only start existing RtcAudioSource if we're not about to reconfigure it
-                // The new Start() method handles already running states gracefully
                 try
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Starting existing RtcAudioSource - Current AudioFilter subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
                     rtcAudioSource.Start();
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Existing RtcAudioSource started after microphone reinitialization - Subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
 
-                    // Signal ready after RtcAudioSource is restarted
                     MicrophoneReady?.Invoke();
                 }
                 catch (System.Exception ex)
@@ -442,6 +444,21 @@ namespace DCL.VoiceChat
             // Use mute/enable for temporary microphone control during calls
             audioSource.mute = false;  // Allow audio processing - mute state controls local playback
             audioFilter.SetProcessingEnabled(true);  // Enable processing while preserving LiveKit subscribers
+            
+            // Start RtcAudioSource if it exists
+            if (rtcAudioSource != null)
+            {
+                try
+                {
+                    rtcAudioSource.Start();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource started for microphone enable");
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to start RtcAudioSource: {ex.Message}");
+                }
+            }
+            
             EnabledMicrophone?.Invoke();
         }
 
@@ -450,6 +467,21 @@ namespace DCL.VoiceChat
             // Use mute/disable for temporary microphone control during calls
             audioSource.mute = true;
             audioFilter.SetProcessingEnabled(false);  // Disable processing while preserving LiveKit subscribers
+            
+            // Stop RtcAudioSource if it exists
+            if (rtcAudioSource != null)
+            {
+                try
+                {
+                    rtcAudioSource.Stop();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource stopped for microphone disable");
+                }
+                catch (Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource: {ex.Message}");
+                }
+            }
+            
             DisabledMicrophone?.Invoke();
         }
 
