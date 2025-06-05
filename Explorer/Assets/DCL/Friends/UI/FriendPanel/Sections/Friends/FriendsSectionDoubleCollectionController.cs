@@ -90,7 +90,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             FriendListSectionUtilities.OpenProfilePassport(contextMenuFriendProfile, passportBridge);
 
         private void CallFriendCtx() =>
-            FriendListSectionUtilities.CallFriend(contextMenuFriendProfile.Address, contextMenuFriendProfile.Name, voiceChatCallStatusService);
+            FriendListSectionUtilities.CallFriend(contextMenuFriendProfile.Address, voiceChatCallStatusService);
 
         private void BlockUserCtx() =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, contextMenuFriendProfile.Address, contextMenuFriendProfile.Name);

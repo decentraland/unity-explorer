@@ -64,7 +64,7 @@ MonoBehaviour:
   showMemberListButton: {fileID: 5604716553980016840}
   hideMemberListButton: {fileID: 5170978931841489419}
   openContextMenuButton: {fileID: 3140900631477848246}
-  callButton: {fileID: 6391386383363355038}
+  <CallButton>k__BackingField: {fileID: 4796994676283525494}
   chatTitleMemberListNumberText: {fileID: 2895227464705487980}
   memberListTitleMemberListNumberText: {fileID: 5377769190290950630}
   chatChannelNameNameText: {fileID: 9044296380937847988}
@@ -197,6 +197,22 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -7
       objectReference: {fileID: 0}
+    - target: {fileID: 3249571879539907308, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3249571879539907308, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3249571879539907308, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3249571879539907308, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4267390204394800137, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.x
       value: 9.7573
@@ -267,6 +283,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5692778132738695535, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
       propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5803140496283438381, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5803140496283438381, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5803140496283438381, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5803140496283438381, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6424338667524882794, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
@@ -571,6 +603,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4796994676283525494 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2094100389185887119, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
+  m_PrefabInstance: {fileID: 6889913742591480569}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfdbe7decd2b4bffbe2615bb69cd0e09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5174794944162340121 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1751184055433940960, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
@@ -597,17 +640,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 730101595095240254, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
   m_PrefabInstance: {fileID: 6889913742591480569}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &6391386383363355038 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 517667692624962407, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}
-  m_PrefabInstance: {fileID: 6889913742591480569}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &9044296380937847988 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2458454848096015949, guid: aa79ac765ebe12445ac2278bed5f1dad, type: 3}

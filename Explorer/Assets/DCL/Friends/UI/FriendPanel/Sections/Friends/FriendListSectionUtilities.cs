@@ -88,10 +88,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
-        internal static void CallFriend(Web3Address walletId, string username, IVoiceChatCallStatusService voiceChatCallStatusService)
-        {
+        internal static void CallFriend(Web3Address walletId, IVoiceChatCallStatusService voiceChatCallStatusService) =>
             voiceChatCallStatusService.StartCall(walletId);
-        }
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();
