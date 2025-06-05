@@ -113,6 +113,15 @@ namespace DCL.Communities.CommunitiesCard.Places
                 {
                     placeCardView.SilentlySetDislikeToggle(!dislikeValue);
                     await inWorldWarningNotificationView.AnimatedShowAsync(DISLIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+
+                    return;
+                }
+
+                if (dislikeValue)
+                {
+                    placeCardView.SilentlySetLikeToggle(false);
+                    placeInfo.user_dislike = true;
+                    placeInfo.user_like = false;
                 }
             }
         }
@@ -132,6 +141,15 @@ namespace DCL.Communities.CommunitiesCard.Places
                 {
                     placeCardView.SilentlySetLikeToggle(!likeValue);
                     await inWorldWarningNotificationView.AnimatedShowAsync(LIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+
+                    return;
+                }
+
+                if (likeValue)
+                {
+                    placeCardView.SilentlySetDislikeToggle(false);
+                    placeInfo.user_dislike = false;
+                    placeInfo.user_like = true;
                 }
             }
         }
