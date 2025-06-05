@@ -9,88 +9,15 @@ using LiveKit;
 
 namespace DCL.VoiceChat
 {
-    internal static class MacOSMicrophoneHelper
-    {
-        internal static bool TryInitializeMicrophone(VoiceChatSettingsAsset voiceChatSettings, out string microphoneName, out AudioClip microphoneAudioClip, out int actualSampleRate)
-        {
-            microphoneName = null;
-            microphoneAudioClip = null;
-            actualSampleRate = 0;
-
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            int microphoneSampleRate;
-            // On macOS, check if we have microphone permission
-            if (Microphone.devices.Length == 0)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "No microphone devices found on macOS. This may indicate missing microphone permissions. - Stack trace: {System.Environment.StackTrace}");
-                return false;
-            }
-
-            if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range on macOS. Using default microphone. - Stack trace: {System.Environment.StackTrace}");
-                microphoneName = Microphone.devices[0];
-            }
-            else
-                microphoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-
-            // Get device capabilities to determine optimal microphone sample rate
-            int minFreq, maxFreq;
-            Microphone.GetDeviceCaps(microphoneName, out minFreq, out maxFreq);
-
-            // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
-            int unitySampleRate = AudioSettings.outputSampleRate;
-            if (minFreq == 0 && maxFreq == 0)
-            {
-                // Device supports any rate - prefer Unity's output rate, fallback to 48kHz
-                microphoneSampleRate = (unitySampleRate <= VoiceChatMicrophoneHandler.MAX_SAMPLE_RATE) ? unitySampleRate : VoiceChatMicrophoneHandler.MAX_SAMPLE_RATE;
-            }
-            else
-            {
-                microphoneSampleRate = Mathf.Min(maxFreq, VoiceChatMicrophoneHandler.MAX_SAMPLE_RATE); // Cap at 48kHz
-                // Ensure we don't go below the device minimum
-                microphoneSampleRate = Mathf.Max(microphoneSampleRate, minFreq);
-            }
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT,
-                $"Microphone device '{microphoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
-                $"Selected: {microphoneSampleRate}Hz (Unity output: {unitySampleRate}Hz) - Stack trace: {System.Environment.StackTrace}");
-
-            // On macOS, be more conservative with microphone settings
-            try
-            {
-                microphoneAudioClip = Microphone.Start(microphoneName, VoiceChatMicrophoneHandler.MICROPHONE_LOOP, VoiceChatMicrophoneHandler.MICROPHONE_LENGTH_SECONDS, microphoneSampleRate);
-                if (microphoneAudioClip == null)
-                {
-                    ReportHub.LogError(ReportCategory.VOICE_CHAT, "Failed to start microphone on macOS. This may indicate permission issues or device conflicts. - Stack trace: {System.Environment.StackTrace}");
-                    return false;
-                }
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started on macOS with sample rate: {microphoneSampleRate}Hz (device optimal) - Stack trace: {System.Environment.StackTrace}");
-
-                // Always use the actual microphone frequency for audio filter processing
-                actualSampleRate = microphoneAudioClip != null ? microphoneAudioClip.frequency : microphoneSampleRate;
-                return true;
-            }
-            catch (System.Exception ex)
-            {
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Microphone initialization failed on macOS: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
-                return false;
-            }
-#else
-            return false;
-#endif
-        }
-    }
-
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         internal const bool MICROPHONE_LOOP = true;
-        internal const int MICROPHONE_LENGTH_SECONDS = 1; // Unity minimum - cannot be less than 1 second
-        internal const int MAX_SAMPLE_RATE = 48000; // Cap sample rate for voice chat bandwidth efficiency
+        internal const int MICROPHONE_LENGTH_SECONDS = 1;
+        internal const int MAX_SAMPLE_RATE = 48000;
 
         private const float AUDIO_SOURCE_VOLUME = 1f;
-        private const float SPATIAL_BLEND_2D = 0f; // 2D audio (not spatial)
-        private const float CENTER_PAN = 0f; // Center pan (no stereo separation)
+        private const float SPATIAL_BLEND_2D = 0f;
+        private const float CENTER_PAN = 0f;
 
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
@@ -112,7 +39,6 @@ namespace DCL.VoiceChat
         private float buttonPressStartTime;
         private string microphoneName;
 
-        // Track previous microphone specs for comparison
         private int previousSampleRate = 0;
         private int previousChannels = 0;
 
@@ -165,13 +91,11 @@ namespace DCL.VoiceChat
             MicrophoneReady = null;
             RtcAudioSourceReconfigured = null;
 
-            // Stop and dispose LiveKit audio source
             if (rtcAudioSource != null)
             {
                 try
                 {
                     rtcAudioSource.Stop();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource stopped during dispose");
                 }
                 catch (Exception ex)
                 {
@@ -180,14 +104,12 @@ namespace DCL.VoiceChat
 
                 rtcAudioSource.Dispose();
                 rtcAudioSource = null;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource disposed - Remaining subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
             }
 
             if (isMicrophoneInitialized)
             {
                 if (audioSource != null)
                 {
-                    audioSource.mute = true;
                     StopAudioSource();
                     audioSource.clip = null;
                 }
@@ -288,96 +210,51 @@ namespace DCL.VoiceChat
             if (isMicrophoneInitialized)
                 return;
 
-            var actualConfig = AudioSettings.GetConfiguration();
+            if (Microphone.devices.Length == 0)
+            {
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, "No microphone devices found. Cannot initialize microphone.");
+                return;
+            }
+
+            if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range. Using default microphone.");
+                MicrophoneName = Microphone.devices[0];
+            }
+            else
+                MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
+
+            int minFreq, maxFreq;
+            Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
+
             int unitySampleRate = AudioSettings.outputSampleRate;
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT,
-                $"Unity audio config - Configured: {actualConfig.sampleRate}Hz, BufferSize: {actualConfig.dspBufferSize}, " +
-                $"Actual Output: {unitySampleRate}Hz - Stack trace: {System.Environment.StackTrace}");
-
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            if (actualConfig.sampleRate != unitySampleRate)
+            int requestedSampleRate;
+            if (minFreq == 0 && maxFreq == 0)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"macOS Core Audio override detected - Unity configured: {actualConfig.sampleRate}Hz, " +
-                    $"but Core Audio using: {unitySampleRate}Hz. Using actual rate for LiveKit compatibility. - Stack trace: {System.Environment.StackTrace}");
+                requestedSampleRate = (unitySampleRate <= MAX_SAMPLE_RATE) ? unitySampleRate : MAX_SAMPLE_RATE;
             }
             else
             {
-            ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"macOS Core Audio matches Unity config: {unitySampleRate}Hz - Stack trace: {System.Environment.StackTrace}");
+                requestedSampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE);
+                requestedSampleRate = Mathf.Max(requestedSampleRate, minFreq);
             }
-#endif
 
-            // Try macOS-specific initialization first
-            bool macOSSuccess = MacOSMicrophoneHelper.TryInitializeMicrophone(voiceChatSettings, out string tempMicrophoneName, out microphoneAudioClip, out int actualSampleRate);
+            microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, requestedSampleRate);
 
-            if (macOSSuccess)
+            int actualSampleRate;
+            if (microphoneAudioClip != null)
             {
-                // Set the microphone name property for macOS success path
-                MicrophoneName = tempMicrophoneName;
+                if (microphoneAudioClip.frequency != requestedSampleRate)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
+                        $"Sample rate mismatch! Requested: {requestedSampleRate}Hz, Microphone actual: {microphoneAudioClip.frequency}Hz. Using actual microphone frequency for audio processing.");
+                }
+
+                actualSampleRate = microphoneAudioClip.frequency;
             }
             else
             {
-                // Non-macOS initialization
-                if (Microphone.devices.Length == 0)
-                {
-                    ReportHub.LogError(ReportCategory.VOICE_CHAT, "No microphone devices found. Cannot initialize microphone.");
-                    return;
-                }
-
-                if (voiceChatSettings.SelectedMicrophoneIndex >= Microphone.devices.Length)
-                {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Selected microphone index {voiceChatSettings.SelectedMicrophoneIndex} is out of range. Using default microphone. - Stack trace: {System.Environment.StackTrace}");
-                    MicrophoneName = Microphone.devices[0];
-                }
-                else
-                    MicrophoneName = Microphone.devices[voiceChatSettings.SelectedMicrophoneIndex];
-
-                // Get device capabilities to determine optimal microphone sample rate
-                int minFreq, maxFreq;
-                Microphone.GetDeviceCaps(MicrophoneName, out minFreq, out maxFreq);
-
-                // Use device's preferred sample rate, but cap at 48kHz for voice chat efficiency
-                int requestedSampleRate;
-                if (minFreq == 0 && maxFreq == 0)
-                {
-                    // Device supports any rate - prefer Unity's output rate, fallback to 48kHz
-                    requestedSampleRate = (unitySampleRate <= MAX_SAMPLE_RATE) ? unitySampleRate : MAX_SAMPLE_RATE;
-                }
-                else
-                {
-                    requestedSampleRate = Mathf.Min(maxFreq, MAX_SAMPLE_RATE); // Cap at 48kHz
-                    // Ensure we don't go below the device minimum
-                    requestedSampleRate = Mathf.Max(requestedSampleRate, minFreq);
-                }
-
-                ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"Microphone device '{MicrophoneName}' capabilities - MinFreq: {minFreq}Hz, MaxFreq: {maxFreq}Hz, " +
-                    $"Selected: {requestedSampleRate}Hz (Unity output: {unitySampleRate}Hz) - Stack trace: {System.Environment.StackTrace}");
-
-                microphoneAudioClip = Microphone.Start(MicrophoneName, MICROPHONE_LOOP, MICROPHONE_LENGTH_SECONDS, requestedSampleRate);
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone started with sample rate: {requestedSampleRate}Hz (device optimal) - Stack trace: {System.Environment.StackTrace}");
-
-                if (microphoneAudioClip != null)
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Microphone AudioClip created - Actual Frequency: {microphoneAudioClip.frequency}Hz, " +
-                        $"Channels: {microphoneAudioClip.channels}, Length: {microphoneAudioClip.length}s - Stack trace: {System.Environment.StackTrace}");
-
-                    if (microphoneAudioClip.frequency != requestedSampleRate)
-                    {
-                        ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
-                            $"Sample rate mismatch! Requested: {requestedSampleRate}Hz, Microphone actual: {microphoneAudioClip.frequency}Hz. " +
-                            $"Using actual microphone frequency for audio processing. - Stack trace: {System.Environment.StackTrace}");
-                    }
-
-                    actualSampleRate = microphoneAudioClip.frequency;
-                }
-                else
-                {
-                    actualSampleRate = requestedSampleRate;
-                }
+                actualSampleRate = requestedSampleRate;
             }
 
             if (microphoneAudioClip == null)
@@ -392,27 +269,20 @@ namespace DCL.VoiceChat
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
             audioSource.volume = AUDIO_SOURCE_VOLUME;
-            audioSource.mute = true; // Start muted
             audioSource.spatialBlend = SPATIAL_BLEND_2D;
             audioSource.panStereo = CENTER_PAN;
 
-
-            // Initialize RtcAudioSource if needed
             if (initializeRtcAudioSource)
                 InitializeOrStartRtcAudioSource(actualSampleRate);
 
-            // Set initial audio filter processing state to disabled
             audioFilter.SetProcessingEnabled(false);
 
             isMicrophoneInitialized = true;
 
-            // Track initial microphone specs for future comparisons
             if (microphoneAudioClip != null)
             {
                 previousSampleRate = microphoneAudioClip.frequency;
                 previousChannels = microphoneAudioClip.channels;
-                ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"Initial microphone specs tracked - SampleRate: {previousSampleRate}Hz, Channels: {previousChannels}");
             }
         }
 
@@ -422,49 +292,38 @@ namespace DCL.VoiceChat
             {
                 try
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Creating new RtcAudioSource - Current AudioFilter subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
                     rtcAudioSource = RtcAudioSource.CreateCustom(audioSource, audioFilter, (uint)sampleRate, 1);
-
                     rtcAudioSource.Start();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {sampleRate}Hz - Subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
-
                     MicrophoneReady?.Invoke();
                 }
                 catch (System.Exception ex)
                 {
-                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to create LiveKit RtcAudioSource: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to create LiveKit RtcAudioSource: {ex.Message}");
                 }
             }
             else if (!isReconfigure)
             {
                 try
                 {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Starting existing RtcAudioSource - Current AudioFilter subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
                     rtcAudioSource.Start();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Existing RtcAudioSource started after microphone reinitialization - Subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
-
                     MicrophoneReady?.Invoke();
                 }
                 catch (System.Exception ex)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to start existing RtcAudioSource: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to start existing RtcAudioSource: {ex.Message}");
                 }
             }
         }
 
         private void EnableMicrophone()
         {
-            // Use mute/enable for temporary microphone control during calls
-            audioSource.mute = false;  // Allow audio processing - mute state controls local playback
-            audioFilter.SetProcessingEnabled(true);  // Enable processing while preserving LiveKit subscribers
+            audioFilter.SetProcessingEnabled(true);
 
-            // Start RtcAudioSource if it exists
             if (rtcAudioSource != null)
             {
                 try
                 {
                     rtcAudioSource.Start();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource started for microphone enable");
                 }
                 catch (Exception ex)
                 {
@@ -477,17 +336,13 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophone()
         {
-            // Use mute/disable for temporary microphone control during calls
-            audioSource.mute = true;
-            audioFilter.SetProcessingEnabled(false);  // Disable processing while preserving LiveKit subscribers
+            audioFilter.SetProcessingEnabled(false);
 
-            // Stop RtcAudioSource if it exists
             if (rtcAudioSource != null)
             {
                 try
                 {
                     rtcAudioSource.Stop();
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource stopped for microphone disable");
                 }
                 catch (Exception ex)
                 {
@@ -521,8 +376,6 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone change - Current subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
-
                 audioFilter.ResetProcessor();
                 audioFilter.SetProcessingEnabled(false);
 
@@ -532,20 +385,15 @@ namespace DCL.VoiceChat
                 isMicrophoneInitialized = false;
             }
 
-            // Initialize microphone, skipping RtcAudioSource creation if we're going to reconfigure
             bool willReconfigure = rtcAudioSource != null;
             InitializeMicrophone(initializeRtcAudioSource: !willReconfigure);
 
-            // Update audio filter with new microphone information after reinitialization
             if (isMicrophoneInitialized && microphoneAudioClip != null)
             {
                 audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneAudioClip.frequency, MICROPHONE_LENGTH_SECONDS);
                 audioFilter.SetMicrophoneClip(microphoneAudioClip);
-                ReportHub.Log(ReportCategory.VOICE_CHAT,
-                    $"Audio filter updated with new microphone info - Name: '{MicrophoneName}', SampleRate: {microphoneAudioClip.frequency}Hz");
             }
 
-            // Handle RtcAudioSource reconfiguration if needed
             if (willReconfigure && isMicrophoneInitialized && microphoneAudioClip != null)
             {
                 try
@@ -553,69 +401,49 @@ namespace DCL.VoiceChat
                     int newSampleRate = microphoneAudioClip.frequency;
                     int newChannels = microphoneAudioClip.channels;
 
-                    // Check if sample rate or channels changed
                     bool specsChanged = (newSampleRate != previousSampleRate) || (newChannels != previousChannels);
 
                     if (specsChanged)
                     {
-                        // Dispose and recreate RtcAudioSource due to spec changes
-                        ReportHub.Log(ReportCategory.VOICE_CHAT,
-                            $"Microphone specs changed (SampleRate: {previousSampleRate}→{newSampleRate}Hz, Channels: {previousChannels}→{newChannels}) - disposing and recreating RtcAudioSource");
-
                         rtcAudioSource.Stop();
                         rtcAudioSource.Dispose();
                         rtcAudioSource = null;
 
-                        // Create new RtcAudioSource with new specs
                         InitializeOrStartRtcAudioSource(newSampleRate);
 
-                        // Update tracked specs
                         previousSampleRate = newSampleRate;
                         previousChannels = newChannels;
                     }
                     else
                     {
-                        // Same specs - just restart the existing RtcAudioSource
-                        ReportHub.Log(ReportCategory.VOICE_CHAT,
-                            $"Microphone device changed but specs remain the same ({newSampleRate}Hz, {newChannels}ch) - restarting existing RtcAudioSource");
-
                         rtcAudioSource.Stop();
                         rtcAudioSource.Start();
                     }
 
-                    // Only invoke reconfigured event if we actually recreated the RtcAudioSource
                     if (specsChanged)
                     {
                         RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
                     }
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource updated for new microphone '{MicrophoneName}' at {newSampleRate}Hz");
                     MicrophoneReady?.Invoke();
                 }
                 catch (System.Exception ex)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to update RtcAudioSource for new microphone: {ex.Message} - Stack trace: {System.Environment.StackTrace}");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to update RtcAudioSource for new microphone: {ex.Message}");
                     rtcAudioSource?.Stop();
                     rtcAudioSource?.Dispose();
                     rtcAudioSource = null;
 
                     InitializeOrStartRtcAudioSource(microphoneAudioClip.frequency);
 
-                    // Update tracked specs on fallback
                     previousSampleRate = microphoneAudioClip.frequency;
                     previousChannels = microphoneAudioClip.channels;
                 }
             }
 
-            // Restore previous talking state if in call
             if (isInCall && wasTalking)
             {
                 EnableMicrophone();
             }
-        }
-
-        private int GetAudioFilterSubscriberCount()
-        {
-            return audioFilter?.GetSubscriberCount() ?? 0;
         }
     }
 }
