@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
         private float[] realtimeAudioBuffer;
         private float[] processingSamplesBuffer;
         private const int REALTIME_CHUNK_SIZE = 256;
-        private bool useRealtimeProcessing = true;
+        private bool useRealtimeProcessing = false;
 
         private CancellationTokenSource realtimeProcessingCts;
         private bool isRealtimeThreadRunning = false;

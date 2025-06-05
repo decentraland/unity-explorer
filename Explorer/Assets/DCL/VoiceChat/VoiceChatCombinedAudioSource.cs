@@ -188,7 +188,7 @@ namespace DCL.VoiceChat
             }
 
             // Throttled logging every 180 frames (roughly every 3-4 seconds)
-            if (shouldCalculateRms && activeStreams > 0)
+            if (shouldCalculateRms && activeStreams > 0 && hasAudioNow)
             {
                 float dbLevel = totalRms > 0f ? 20f * Mathf.Log10(totalRms) : -100f;
                 ReportHub.Log(ReportCategory.VOICE_CHAT,
