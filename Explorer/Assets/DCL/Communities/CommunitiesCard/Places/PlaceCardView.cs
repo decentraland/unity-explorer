@@ -26,9 +26,9 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private TMP_Text placeDescriptionText;
 
         [Header("Buttons")]
-        [SerializeField] private Toggle likeToggle;
-        [SerializeField] private Toggle dislikeToggle;
-        [SerializeField] private Toggle favoriteToggle;
+        [SerializeField] private ToggleView likeToggle;
+        [SerializeField] private ToggleView dislikeToggle;
+        [SerializeField] private ToggleView favoriteToggle;
         [SerializeField] private Button shareButton;
         [SerializeField] private Button infoButton;
         [SerializeField] private Button jumpInButton;
@@ -54,9 +54,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
 
-            likeToggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value));
-            dislikeToggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value));
-            favoriteToggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value));
+            likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value));
+            dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value));
+            favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value));
             shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo));
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
@@ -73,7 +73,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             imageController.RequestImage(placeInfo.image);
 
-            placeNameText.text = placeInfo.world_name;
+            placeNameText.text = placeInfo.title;
             placeDescriptionText.text = placeInfo.description;
             onlineMembersText.text = $"{placeInfo.user_count}";
 
@@ -82,9 +82,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             DislikeToggleChanged = null;
             FavoriteToggleChanged = null;
 
-            likeToggle.isOn = placeInfo.user_like;
-            dislikeToggle.isOn = placeInfo.user_dislike;
-            favoriteToggle.isOn = placeInfo.user_favorite;
+            likeToggle.Toggle.isOn = placeInfo.user_like;
+            dislikeToggle.Toggle.isOn = placeInfo.user_dislike;
+            favoriteToggle.Toggle.isOn = placeInfo.user_favorite;
         }
 
         public void SubscribeToInteractions(Action<PlaceInfo, bool> likeToggleChanged,
