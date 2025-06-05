@@ -58,7 +58,7 @@ namespace DCL.VoiceChat
                 if (audioFrameCounter % 300 == 0)
                 {
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
-                        $"[CombinedAudioSource] No audio streams - isPlaying: {isPlaying}, streams.Count: {streams.Count}, frame: {audioFrameCounter}");
+                        $"[CombinedAudioSource] No audio streams - isPlaying: {isPlaying}, streams.Count: {streams.Count}");
                 }
                 Array.Clear(data, 0, data.Length);
                 processingStopwatch.Stop();
