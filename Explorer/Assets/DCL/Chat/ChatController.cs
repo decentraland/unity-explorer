@@ -251,14 +251,10 @@ namespace DCL.Chat
 
             memberListHelper.StartUpdating();
 
-            // TODO: Make all the code below async
-
-            InitializeChannelsAndConversationsAsync().Forget();
-
             IsUnfolded = inputData.Unfold;
             viewInstance.Blur();
 
-            AddCommunityCoversationsAsync().Forget();
+            InitializeChannelsAndConversationsAsync().Forget();
         }
 
         private async void OpenContextMenuAsync(GenericContextMenuParameter parameter, Action onClosed, CancellationToken ct)
@@ -267,7 +263,7 @@ namespace DCL.Chat
             onClosed();
         }
 
-        private async UniTaskVoid AddCommunityCoversationsAsync()
+        private async UniTask AddCommunityCoversationsAsync()
         {
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
             GetUserCommunitiesCompactResponse response = await communitiesDataProvider.GetUserCommunitiesCompactAsync(communitiesServiceCts.Token);
@@ -306,6 +302,8 @@ namespace DCL.Chat
 
             await UniTask.SwitchToMainThread();
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
+
+            await AddCommunityCoversationsAsync();
         }
 
         protected override void OnViewClose()

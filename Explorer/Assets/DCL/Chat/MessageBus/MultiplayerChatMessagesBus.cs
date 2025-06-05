@@ -38,6 +38,7 @@ namespace DCL.Chat.MessageBus
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
 
+            // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandUrlsSource.Environment == DecentralandEnvironment.Org ? "prd" :
                                decentralandUrlsSource.Environment == DecentralandEnvironment.Zone ? "dev" :
                                "local";

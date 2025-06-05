@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiles;
-using DCL.UI;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -9,6 +8,9 @@ using Utility;
 
 namespace DCL.UI.Communities
 {
+    /// <summary>
+    /// A small piece of UI that asynchronously gets the sprite of the thumbnail of a community and shows it.
+    /// </summary>
     public class CommunityThumbnailView : MonoBehaviour, IDisposable
     {
         [SerializeField] private ImageView thumbnailImageView;

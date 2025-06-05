@@ -20,26 +20,26 @@ namespace DCL.Chat.History
         private const string COMMUNITY_PREFIX = "community:";
 
         /// <summary>
-        ///
+        /// Creates a channel Id with the format expected for a community channel.
         /// </summary>
-        /// <param name="communityId"></param>
-        /// <returns></returns>
+        /// <param name="communityId">The UUID of the community as it is stored in the database.</param>
+        /// <returns>The new channel Id.</returns>
         public static ChannelId NewCommunityChannelId(string communityId) =>
             new (COMMUNITY_PREFIX + communityId);
 
         /// <summary>
-        ///
+        /// Checks if a channel Id belongs to a community channel or not.
         /// </summary>
-        /// <param name="channelId"></param>
-        /// <returns></returns>
+        /// <param name="channelId">The channel id to check.</param>
+        /// <returns>True if it belongs to a community channel; False otherwise.</returns>
         public static bool IsCommunityChannelId(ChannelId channelId) =>
             channelId.Id.StartsWith(COMMUNITY_PREFIX);
 
         /// <summary>
-        ///
+        /// Checks if a channel Id belongs to a community channel or not.
         /// </summary>
-        /// <param name="channelId"></param>
-        /// <returns></returns>
+        /// <param name="channelId">The channel id to check.</param>
+        /// <returns>True if it belongs to a community channel; False otherwise.</returns>
         public static bool IsCommunityChannelId(string channelId) =>
             channelId.StartsWith(COMMUNITY_PREFIX);
 

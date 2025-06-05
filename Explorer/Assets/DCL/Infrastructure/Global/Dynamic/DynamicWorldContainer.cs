@@ -591,7 +591,7 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
-            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource, thumbnailCache);
+            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,

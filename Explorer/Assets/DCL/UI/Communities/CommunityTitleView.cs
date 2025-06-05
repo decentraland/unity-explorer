@@ -11,6 +11,9 @@ using System;
 
 namespace DCL.UI.Communities
 {
+    /// <summary>
+    /// A small UI panel that shows basic info about a community, like its thumbnail and its name.
+    /// </summary>
     public class CommunityTitleView : MonoBehaviour
     {
         public delegate void OpenContextMenuDelegate(GenericContextMenuParameter parameter, Action onClosed, CancellationToken ct);
