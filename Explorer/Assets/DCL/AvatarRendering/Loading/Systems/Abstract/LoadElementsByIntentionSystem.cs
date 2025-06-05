@@ -22,8 +22,10 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
     {
         private readonly IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage;
         private readonly IWebRequestController webRequestController;
-        private readonly IRealmData realmData;
         private readonly string? builderContentURL;
+        private readonly string? expectedBuilderItemType;
+
+        protected readonly IRealmData realmData;
 
         protected LoadElementsByIntentionSystem(
             World world,
@@ -31,13 +33,15 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
             IAvatarElementStorage<TAvatarElement, TAvatarElementDTO> avatarElementStorage,
             IWebRequestController webRequestController,
             IRealmData realmData,
-            string? builderContentURL = null
+            string? builderContentURL = null,
+            string? expectedBuilderItemType = null
         ) : base(world, cache)
         {
             this.avatarElementStorage = avatarElementStorage;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
             this.builderContentURL = builderContentURL;
+            this.expectedBuilderItemType = expectedBuilderItemType;
         }
 
         protected sealed override async UniTask<StreamableLoadingResult<TAsset>> FlowInternalAsync(TIntention intention,
@@ -119,12 +123,21 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
         {
             if (string.IsNullOrEmpty(builderContentURL)) return;
 
-            intention.SetTotal(lambdaResponse.WearablesCollection.Count);
-
-            foreach (var element in lambdaResponse.WearablesCollection)
+            if (lambdaResponse.CollectionElements is { Count: > 0 })
             {
-                var wearable = avatarElementStorage.GetOrAddByDTO(element.BuildWearableDTO(builderContentURL), false);
-                intention.AppendToResult(wearable);
+                int totalCount = 0;
+                foreach (var element in lambdaResponse.CollectionElements)
+                {
+                    var elementDTO = element.BuildElementDTO(builderContentURL);
+
+                    if (!string.IsNullOrEmpty(expectedBuilderItemType) && elementDTO.type != expectedBuilderItemType)
+                        continue;
+
+                    var avatarElement = avatarElementStorage.GetOrAddByDTO(elementDTO, false);
+                    intention.AppendToResult(avatarElement);
+                    totalCount++;
+                }
+                intention.SetTotal(totalCount);
             }
         }
 
