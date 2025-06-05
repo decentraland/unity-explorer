@@ -111,7 +111,7 @@ namespace DCL.VoiceChat
         private bool isInCall;
         private float buttonPressStartTime;
         private string microphoneName;
-        
+
         // Track previous microphone specs for comparison
         private int previousSampleRate = 0;
         private int previousChannels = 0;
@@ -177,7 +177,7 @@ namespace DCL.VoiceChat
                 {
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource during dispose: {ex.Message}");
                 }
-                
+
                 rtcAudioSource.Dispose();
                 rtcAudioSource = null;
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"RtcAudioSource disposed - Remaining subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
@@ -405,13 +405,13 @@ namespace DCL.VoiceChat
             audioFilter.SetProcessingEnabled(false);
 
             isMicrophoneInitialized = true;
-            
+
             // Track initial microphone specs for future comparisons
             if (microphoneAudioClip != null)
             {
                 previousSampleRate = microphoneAudioClip.frequency;
                 previousChannels = microphoneAudioClip.channels;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
                     $"Initial microphone specs tracked - SampleRate: {previousSampleRate}Hz, Channels: {previousChannels}");
             }
         }
@@ -423,7 +423,7 @@ namespace DCL.VoiceChat
                 try
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"Creating new RtcAudioSource - Current AudioFilter subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
-                    rtcAudioSource = RtcAudioSource.CreateForVoiceChat(audioSource, audioFilter, (uint)sampleRate);
+                    rtcAudioSource = RtcAudioSource.CreateCustom(audioSource, audioFilter, (uint)sampleRate, 1);
 
                     rtcAudioSource.Start();
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"LiveKit RtcAudioSource created and started successfully for voice chat at {sampleRate}Hz - Subscribers: {GetAudioFilterSubscriberCount()} - Stack trace: {System.Environment.StackTrace}");
@@ -457,7 +457,7 @@ namespace DCL.VoiceChat
             // Use mute/enable for temporary microphone control during calls
             audioSource.mute = false;  // Allow audio processing - mute state controls local playback
             audioFilter.SetProcessingEnabled(true);  // Enable processing while preserving LiveKit subscribers
-            
+
             // Start RtcAudioSource if it exists
             if (rtcAudioSource != null)
             {
@@ -471,7 +471,7 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to start RtcAudioSource: {ex.Message}");
                 }
             }
-            
+
             EnabledMicrophone?.Invoke();
         }
 
@@ -480,7 +480,7 @@ namespace DCL.VoiceChat
             // Use mute/disable for temporary microphone control during calls
             audioSource.mute = true;
             audioFilter.SetProcessingEnabled(false);  // Disable processing while preserving LiveKit subscribers
-            
+
             // Stop RtcAudioSource if it exists
             if (rtcAudioSource != null)
             {
@@ -494,7 +494,7 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource: {ex.Message}");
                 }
             }
-            
+
             DisabledMicrophone?.Invoke();
         }
 
@@ -536,6 +536,15 @@ namespace DCL.VoiceChat
             bool willReconfigure = rtcAudioSource != null;
             InitializeMicrophone(initializeRtcAudioSource: !willReconfigure);
 
+            // Update audio filter with new microphone information after reinitialization
+            if (isMicrophoneInitialized && microphoneAudioClip != null)
+            {
+                audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneAudioClip.frequency, MICROPHONE_LENGTH_SECONDS);
+                audioFilter.SetMicrophoneClip(microphoneAudioClip);
+                ReportHub.Log(ReportCategory.VOICE_CHAT,
+                    $"Audio filter updated with new microphone info - Name: '{MicrophoneName}', SampleRate: {microphoneAudioClip.frequency}Hz");
+            }
+
             // Handle RtcAudioSource reconfiguration if needed
             if (willReconfigure && isMicrophoneInitialized && microphoneAudioClip != null)
             {
@@ -550,16 +559,16 @@ namespace DCL.VoiceChat
                     if (specsChanged)
                     {
                         // Dispose and recreate RtcAudioSource due to spec changes
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                        ReportHub.Log(ReportCategory.VOICE_CHAT,
                             $"Microphone specs changed (SampleRate: {previousSampleRate}→{newSampleRate}Hz, Channels: {previousChannels}→{newChannels}) - disposing and recreating RtcAudioSource");
-                        
+
                         rtcAudioSource.Stop();
                         rtcAudioSource.Dispose();
                         rtcAudioSource = null;
 
                         // Create new RtcAudioSource with new specs
                         InitializeOrStartRtcAudioSource(newSampleRate);
-                        
+
                         // Update tracked specs
                         previousSampleRate = newSampleRate;
                         previousChannels = newChannels;
@@ -567,9 +576,9 @@ namespace DCL.VoiceChat
                     else
                     {
                         // Same specs - just restart the existing RtcAudioSource
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, 
+                        ReportHub.Log(ReportCategory.VOICE_CHAT,
                             $"Microphone device changed but specs remain the same ({newSampleRate}Hz, {newChannels}ch) - restarting existing RtcAudioSource");
-                        
+
                         rtcAudioSource.Stop();
                         rtcAudioSource.Start();
                     }
@@ -590,7 +599,7 @@ namespace DCL.VoiceChat
                     rtcAudioSource = null;
 
                     InitializeOrStartRtcAudioSource(microphoneAudioClip.frequency);
-                    
+
                     // Update tracked specs on fallback
                     previousSampleRate = microphoneAudioClip.frequency;
                     previousChannels = microphoneAudioClip.channels;
