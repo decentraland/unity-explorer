@@ -324,7 +324,7 @@ namespace Global.Dynamic
 
             //TODO should be unified with LaunchMode
             bool localSceneDevelopment = dynamicWorldParams.LocalSceneDevelopmentRealm != null;
-            bool builderWearablesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
+            bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
             var realmContainer = RealmContainer.Create(
                 staticContainer,

@@ -11,7 +11,9 @@ using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.GLTF;
 using System;
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
@@ -43,15 +45,15 @@ namespace DCL.AvatarRendering.Emotes.Load
         protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParseResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
             await adapter.CreateFromJsonAsync<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, ct);
 
-        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<BuilderEmoteDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
+        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJsonAsync<BuilderEmoteDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft, ct);
 
-        protected override URLAddress BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention)
+        protected override Uri BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention)
         {
             if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
             {
                 urlBuilder.Clear();
-                var url = new Uri(intention.CommonArguments.URL);
+                Uri url = intention.CommonArguments.URL;
                 urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))
                           .AppendSubDirectory(URLSubdirectory.FromString(url.AbsolutePath));
                 return urlBuilder.Build();
@@ -135,7 +137,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                     var audioType = content.file.ToAudioType();
                     urlBuilder.Clear();
                     urlBuilder.AppendDomain(URLDomain.FromString(emote.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
-                    URLAddress url = urlBuilder.Build();
+                    Uri url = urlBuilder.Build();
 
                     for (int i = 0; i < ALL_BODYSHAPES.Length; i++)
                     {
@@ -143,7 +145,7 @@ namespace DCL.AvatarRendering.Emotes.Load
                         if (!emote.IsUnisex() && !bodyShape.Equals(targetBodyShape))
                             continue;
 
-                        var audioPromise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, PartitionComponent.TOP_PRIORITY);
+                        AssetPromise<AudioClipData, GetAudioClipIntention> audioPromise = AudioUtils.CreateAudioClipPromise(World, url, audioType, PartitionComponent.TOP_PRIORITY);
                         World.Create(audioPromise, emote, bodyShape);
                     }
 
