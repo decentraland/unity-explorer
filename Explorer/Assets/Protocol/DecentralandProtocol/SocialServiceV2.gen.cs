@@ -177,7 +177,7 @@ namespace Decentraland.SocialService.V2 {
             "ZXN0GAMgASgLMi4uZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLklu",
             "dmFsaWRSZXF1ZXN0SABCCgoIcmVzcG9uc2UiVwohR2V0UHJpdmF0ZU1lc3Nh",
             "Z2VzU2V0dGluZ3NQYXlsb2FkEjIKBHVzZXIYASADKAsyJC5kZWNlbnRyYWxh",
-            "bmQuc29jaWFsX3NlcnZpY2UudjIuVXNlciKYBQoiR2V0UHJpdmF0ZU1lc3Nh",
+            "bmQuc29jaWFsX3NlcnZpY2UudjIuVXNlciKrBQoiR2V0UHJpdmF0ZU1lc3Nh",
             "Z2VzU2V0dGluZ3NSZXNwb25zZRJTCgJvaxgBIAEoCzJFLmRlY2VudHJhbGFu",
             "ZC5zb2NpYWxfc2VydmljZS52Mi5HZXRQcml2YXRlTWVzc2FnZXNTZXR0aW5n",
             "c1Jlc3BvbnNlLk9rSAASVAoVaW50ZXJuYWxfc2VydmVyX2Vycm9yGAIgASgL",
@@ -185,79 +185,79 @@ namespace Decentraland.SocialService.V2 {
             "dmVyRXJyb3JIABJJCg9pbnZhbGlkX3JlcXVlc3QYAyABKAsyLi5kZWNlbnRy",
             "YWxhbmQuc29jaWFsX3NlcnZpY2UudjIuSW52YWxpZFJlcXVlc3RIABJMChFw",
             "cm9maWxlX25vdF9mb3VuZBgEIAEoCzIvLmRlY2VudHJhbGFuZC5zb2NpYWxf",
-            "c2VydmljZS52Mi5Qcm9maWxlTm90Rm91bmRIABqtAQoXUHJpdmF0ZU1lc3Nh",
+            "c2VydmljZS52Mi5Qcm9maWxlTm90Rm91bmRIABrAAQoXUHJpdmF0ZU1lc3Nh",
             "Z2VzU2V0dGluZ3MSMgoEdXNlchgBIAEoCzIkLmRlY2VudHJhbGFuZC5zb2Np",
             "YWxfc2VydmljZS52Mi5Vc2VyEl4KGHByaXZhdGVfbWVzc2FnZXNfcHJpdmFj",
             "eRgCIAEoDjI8LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5Qcml2",
-            "YXRlTWVzc2FnZVByaXZhY3lTZXR0aW5nGnIKAk9rEmwKCHNldHRpbmdzGAEg",
-            "AygLMlouZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldFByaXZh",
-            "dGVNZXNzYWdlc1NldHRpbmdzUmVzcG9uc2UuUHJpdmF0ZU1lc3NhZ2VzU2V0",
-            "dGluZ3NCCgoIcmVzcG9uc2UibAoWR2V0QmxvY2tlZFVzZXJzUGF5bG9hZBJD",
-            "CgpwYWdpbmF0aW9uGAEgASgLMiouZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2",
-            "aWNlLnYyLlBhZ2luYXRpb25IAIgBAUINCgtfcGFnaW5hdGlvbiKrAQoXR2V0",
-            "QmxvY2tlZFVzZXJzUmVzcG9uc2USRAoIcHJvZmlsZXMYASADKAsyMi5kZWNl",
-            "bnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuQmxvY2tlZFVzZXJQcm9maWxl",
-            "EkoKD3BhZ2luYXRpb25fZGF0YRgCIAEoCzIxLmRlY2VudHJhbGFuZC5zb2Np",
-            "YWxfc2VydmljZS52Mi5QYWdpbmF0ZWRSZXNwb25zZSJMChlHZXRCbG9ja2lu",
-            "Z1N0YXR1c1Jlc3BvbnNlEhUKDWJsb2NrZWRfdXNlcnMYASADKAkSGAoQYmxv",
-            "Y2tlZF9ieV91c2VycxgCIAMoCSIyCgtCbG9ja1VwZGF0ZRIPCgdhZGRyZXNz",
-            "GAEgASgJEhIKCmlzX2Jsb2NrZWQYAiABKAgqNwoSQ29ubmVjdGl2aXR5U3Rh",
-            "dHVzEgoKBk9OTElORRAAEgsKB09GRkxJTkUQARIICgRBV0FZEAIqmAEKEEZy",
-            "aWVuZHNoaXBTdGF0dXMSEAoMUkVRVUVTVF9TRU5UEAASFAoQUkVRVUVTVF9S",
-            "RUNFSVZFRBABEgwKCENBTkNFTEVEEAISDAoIQUNDRVBURUQQAxIMCghSRUpF",
-            "Q1RFRBAEEgsKB0RFTEVURUQQBRILCgdCTE9DS0VEEAYSCAoETk9ORRAHEg4K",
-            "CkJMT0NLRURfQlkQCCo5ChxQcml2YXRlTWVzc2FnZVByaXZhY3lTZXR0aW5n",
-            "EgcKA0FMTBAAEhAKDE9OTFlfRlJJRU5EUxABKlQKJUJsb2NrZWRVc2Vyc01l",
-            "c3NhZ2VzVmlzaWJpbGl0eVNldHRpbmcSEQoNU0hPV19NRVNTQUdFUxAAEhgK",
-            "FERPX05PVF9TSE9XX01FU1NBR0VTEAEy5BAKDVNvY2lhbFNlcnZpY2USgwEK",
-            "CkdldEZyaWVuZHMSMS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIu",
-            "R2V0RnJpZW5kc1BheWxvYWQaQC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZp",
-            "Y2UudjIuUGFnaW5hdGVkRnJpZW5kc1Byb2ZpbGVzUmVzcG9uc2UiABKPAQoQ",
-            "R2V0TXV0dWFsRnJpZW5kcxI3LmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vydmlj",
-            "ZS52Mi5HZXRNdXR1YWxGcmllbmRzUGF5bG9hZBpALmRlY2VudHJhbGFuZC5z",
-            "b2NpYWxfc2VydmljZS52Mi5QYWdpbmF0ZWRGcmllbmRzUHJvZmlsZXNSZXNw",
-            "b25zZSIAEqMBChxHZXRQZW5kaW5nRnJpZW5kc2hpcFJlcXVlc3RzEjwuZGVj",
-            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldEZyaWVuZHNoaXBSZXF1",
-            "ZXN0c1BheWxvYWQaQy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIu",
-            "UGFnaW5hdGVkRnJpZW5kc2hpcFJlcXVlc3RzUmVzcG9uc2UiABKgAQoZR2V0",
-            "U2VudEZyaWVuZHNoaXBSZXF1ZXN0cxI8LmRlY2VudHJhbGFuZC5zb2NpYWxf",
-            "c2VydmljZS52Mi5HZXRGcmllbmRzaGlwUmVxdWVzdHNQYXlsb2FkGkMuZGVj",
-            "ZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRlZEZyaWVuZHNo",
-            "aXBSZXF1ZXN0c1Jlc3BvbnNlIgAShwEKEFVwc2VydEZyaWVuZHNoaXASNy5k",
-            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXBzZXJ0RnJpZW5kc2hp",
-            "cFBheWxvYWQaOC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuVXBz",
-            "ZXJ0RnJpZW5kc2hpcFJlc3BvbnNlIgASbAocU3Vic2NyaWJlVG9GcmllbmRz",
-            "aGlwVXBkYXRlcxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRowLmRlY2VudHJh",
-            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5GcmllbmRzaGlwVXBkYXRlIgAwARKQ",
-            "AQoTR2V0RnJpZW5kc2hpcFN0YXR1cxI6LmRlY2VudHJhbGFuZC5zb2NpYWxf",
-            "c2VydmljZS52Mi5HZXRGcmllbmRzaGlwU3RhdHVzUGF5bG9hZBo7LmRlY2Vu",
-            "dHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5HZXRGcmllbmRzaGlwU3RhdHVz",
-            "UmVzcG9uc2UiABJ8CiRTdWJzY3JpYmVUb0ZyaWVuZENvbm5lY3Rpdml0eVVw",
-            "ZGF0ZXMSFi5nb29nbGUucHJvdG9idWYuRW1wdHkaOC5kZWNlbnRyYWxhbmQu",
-            "c29jaWFsX3NlcnZpY2UudjIuRnJpZW5kQ29ubmVjdGl2aXR5VXBkYXRlIgAw",
-            "ARJyCglCbG9ja1VzZXISMC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
-            "djIuQmxvY2tVc2VyUGF5bG9hZBoxLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
-            "dmljZS52Mi5CbG9ja1VzZXJSZXNwb25zZSIAEngKC1VuYmxvY2tVc2VyEjIu",
-            "ZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVuYmxvY2tVc2VyUGF5",
-            "bG9hZBozLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5VbmJsb2Nr",
-            "VXNlclJlc3BvbnNlIgAShAEKD0dldEJsb2NrZWRVc2VycxI2LmRlY2VudHJh",
-            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5HZXRCbG9ja2VkVXNlcnNQYXlsb2Fk",
-            "GjcuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldEJsb2NrZWRV",
-            "c2Vyc1Jlc3BvbnNlIgASaAoRR2V0QmxvY2tpbmdTdGF0dXMSFi5nb29nbGUu",
+            "YXRlTWVzc2FnZVByaXZhY3lTZXR0aW5nEhEKCWlzX2ZyaWVuZBgDIAEoCBpy",
+            "CgJPaxJsCghzZXR0aW5ncxgBIAMoCzJaLmRlY2VudHJhbGFuZC5zb2NpYWxf",
+            "c2VydmljZS52Mi5HZXRQcml2YXRlTWVzc2FnZXNTZXR0aW5nc1Jlc3BvbnNl",
+            "LlByaXZhdGVNZXNzYWdlc1NldHRpbmdzQgoKCHJlc3BvbnNlImwKFkdldEJs",
+            "b2NrZWRVc2Vyc1BheWxvYWQSQwoKcGFnaW5hdGlvbhgBIAEoCzIqLmRlY2Vu",
+            "dHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5QYWdpbmF0aW9uSACIAQFCDQoL",
+            "X3BhZ2luYXRpb24iqwEKF0dldEJsb2NrZWRVc2Vyc1Jlc3BvbnNlEkQKCHBy",
+            "b2ZpbGVzGAEgAygLMjIuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
+            "LkJsb2NrZWRVc2VyUHJvZmlsZRJKCg9wYWdpbmF0aW9uX2RhdGEYAiABKAsy",
+            "MS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUGFnaW5hdGVkUmVz",
+            "cG9uc2UiTAoZR2V0QmxvY2tpbmdTdGF0dXNSZXNwb25zZRIVCg1ibG9ja2Vk",
+            "X3VzZXJzGAEgAygJEhgKEGJsb2NrZWRfYnlfdXNlcnMYAiADKAkiMgoLQmxv",
+            "Y2tVcGRhdGUSDwoHYWRkcmVzcxgBIAEoCRISCgppc19ibG9ja2VkGAIgASgI",
+            "KjcKEkNvbm5lY3Rpdml0eVN0YXR1cxIKCgZPTkxJTkUQABILCgdPRkZMSU5F",
+            "EAESCAoEQVdBWRACKpgBChBGcmllbmRzaGlwU3RhdHVzEhAKDFJFUVVFU1Rf",
+            "U0VOVBAAEhQKEFJFUVVFU1RfUkVDRUlWRUQQARIMCghDQU5DRUxFRBACEgwK",
+            "CEFDQ0VQVEVEEAMSDAoIUkVKRUNURUQQBBILCgdERUxFVEVEEAUSCwoHQkxP",
+            "Q0tFRBAGEggKBE5PTkUQBxIOCgpCTE9DS0VEX0JZEAgqOQocUHJpdmF0ZU1l",
+            "c3NhZ2VQcml2YWN5U2V0dGluZxIHCgNBTEwQABIQCgxPTkxZX0ZSSUVORFMQ",
+            "ASpUCiVCbG9ja2VkVXNlcnNNZXNzYWdlc1Zpc2liaWxpdHlTZXR0aW5nEhEK",
+            "DVNIT1dfTUVTU0FHRVMQABIYChRET19OT1RfU0hPV19NRVNTQUdFUxABMuQQ",
+            "Cg1Tb2NpYWxTZXJ2aWNlEoMBCgpHZXRGcmllbmRzEjEuZGVjZW50cmFsYW5k",
+            "LnNvY2lhbF9zZXJ2aWNlLnYyLkdldEZyaWVuZHNQYXlsb2FkGkAuZGVjZW50",
+            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRlZEZyaWVuZHNQcm9m",
+            "aWxlc1Jlc3BvbnNlIgASjwEKEEdldE11dHVhbEZyaWVuZHMSNy5kZWNlbnRy",
+            "YWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0TXV0dWFsRnJpZW5kc1BheWxv",
+            "YWQaQC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuUGFnaW5hdGVk",
+            "RnJpZW5kc1Byb2ZpbGVzUmVzcG9uc2UiABKjAQocR2V0UGVuZGluZ0ZyaWVu",
+            "ZHNoaXBSZXF1ZXN0cxI8LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
+            "Mi5HZXRGcmllbmRzaGlwUmVxdWVzdHNQYXlsb2FkGkMuZGVjZW50cmFsYW5k",
+            "LnNvY2lhbF9zZXJ2aWNlLnYyLlBhZ2luYXRlZEZyaWVuZHNoaXBSZXF1ZXN0",
+            "c1Jlc3BvbnNlIgASoAEKGUdldFNlbnRGcmllbmRzaGlwUmVxdWVzdHMSPC5k",
+            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0RnJpZW5kc2hpcFJl",
+            "cXVlc3RzUGF5bG9hZBpDLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52",
+            "Mi5QYWdpbmF0ZWRGcmllbmRzaGlwUmVxdWVzdHNSZXNwb25zZSIAEocBChBV",
+            "cHNlcnRGcmllbmRzaGlwEjcuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNl",
+            "LnYyLlVwc2VydEZyaWVuZHNoaXBQYXlsb2FkGjguZGVjZW50cmFsYW5kLnNv",
+            "Y2lhbF9zZXJ2aWNlLnYyLlVwc2VydEZyaWVuZHNoaXBSZXNwb25zZSIAEmwK",
+            "HFN1YnNjcmliZVRvRnJpZW5kc2hpcFVwZGF0ZXMSFi5nb29nbGUucHJvdG9i",
+            "dWYuRW1wdHkaMC5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuRnJp",
+            "ZW5kc2hpcFVwZGF0ZSIAMAESkAEKE0dldEZyaWVuZHNoaXBTdGF0dXMSOi5k",
+            "ZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0RnJpZW5kc2hpcFN0",
+            "YXR1c1BheWxvYWQaOy5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIu",
+            "R2V0RnJpZW5kc2hpcFN0YXR1c1Jlc3BvbnNlIgASfAokU3Vic2NyaWJlVG9G",
+            "cmllbmRDb25uZWN0aXZpdHlVcGRhdGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVt",
+            "cHR5GjguZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkZyaWVuZENv",
+            "bm5lY3Rpdml0eVVwZGF0ZSIAMAEScgoJQmxvY2tVc2VyEjAuZGVjZW50cmFs",
+            "YW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkJsb2NrVXNlclBheWxvYWQaMS5kZWNl",
+            "bnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuQmxvY2tVc2VyUmVzcG9uc2Ui",
+            "ABJ4CgtVbmJsb2NrVXNlchIyLmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vydmlj",
+            "ZS52Mi5VbmJsb2NrVXNlclBheWxvYWQaMy5kZWNlbnRyYWxhbmQuc29jaWFs",
+            "X3NlcnZpY2UudjIuVW5ibG9ja1VzZXJSZXNwb25zZSIAEoQBCg9HZXRCbG9j",
+            "a2VkVXNlcnMSNi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0",
+            "QmxvY2tlZFVzZXJzUGF5bG9hZBo3LmRlY2VudHJhbGFuZC5zb2NpYWxfc2Vy",
+            "dmljZS52Mi5HZXRCbG9ja2VkVXNlcnNSZXNwb25zZSIAEmgKEUdldEJsb2Nr",
+            "aW5nU3RhdHVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GjkuZGVjZW50cmFs",
+            "YW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkdldEJsb2NraW5nU3RhdHVzUmVzcG9u",
+            "c2UiABJiChdTdWJzY3JpYmVUb0Jsb2NrVXBkYXRlcxIWLmdvb2dsZS5wcm90",
+            "b2J1Zi5FbXB0eRorLmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5C",
+            "bG9ja1VwZGF0ZSIAMAESaAoRR2V0U29jaWFsU2V0dGluZ3MSFi5nb29nbGUu",
             "cHJvdG9idWYuRW1wdHkaOS5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2Uu",
-            "djIuR2V0QmxvY2tpbmdTdGF0dXNSZXNwb25zZSIAEmIKF1N1YnNjcmliZVRv",
-            "QmxvY2tVcGRhdGVzEhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5GisuZGVjZW50",
-            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLkJsb2NrVXBkYXRlIgAwARJoChFH",
-            "ZXRTb2NpYWxTZXR0aW5ncxIWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eRo5LmRl",
-            "Y2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5HZXRTb2NpYWxTZXR0aW5n",
-            "c1Jlc3BvbnNlIgASkwEKFFVwc2VydFNvY2lhbFNldHRpbmdzEjsuZGVjZW50",
-            "cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYyLlVwc2VydFNvY2lhbFNldHRpbmdz",
-            "UGF5bG9hZBo8LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5VcHNl",
-            "cnRTb2NpYWxTZXR0aW5nc1Jlc3BvbnNlIgASpQEKGkdldFByaXZhdGVNZXNz",
-            "YWdlc1NldHRpbmdzEkEuZGVjZW50cmFsYW5kLnNvY2lhbF9zZXJ2aWNlLnYy",
-            "LkdldFByaXZhdGVNZXNzYWdlc1NldHRpbmdzUGF5bG9hZBpCLmRlY2VudHJh",
-            "bGFuZC5zb2NpYWxfc2VydmljZS52Mi5HZXRQcml2YXRlTWVzc2FnZXNTZXR0",
-            "aW5nc1Jlc3BvbnNlIgBiBnByb3RvMw=="));
+            "djIuR2V0U29jaWFsU2V0dGluZ3NSZXNwb25zZSIAEpMBChRVcHNlcnRTb2Np",
+            "YWxTZXR0aW5ncxI7LmRlY2VudHJhbGFuZC5zb2NpYWxfc2VydmljZS52Mi5V",
+            "cHNlcnRTb2NpYWxTZXR0aW5nc1BheWxvYWQaPC5kZWNlbnRyYWxhbmQuc29j",
+            "aWFsX3NlcnZpY2UudjIuVXBzZXJ0U29jaWFsU2V0dGluZ3NSZXNwb25zZSIA",
+            "EqUBChpHZXRQcml2YXRlTWVzc2FnZXNTZXR0aW5ncxJBLmRlY2VudHJhbGFu",
+            "ZC5zb2NpYWxfc2VydmljZS52Mi5HZXRQcml2YXRlTWVzc2FnZXNTZXR0aW5n",
+            "c1BheWxvYWQaQi5kZWNlbnRyYWxhbmQuc29jaWFsX3NlcnZpY2UudjIuR2V0",
+            "UHJpdmF0ZU1lc3NhZ2VzU2V0dGluZ3NSZXNwb25zZSIAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.EmptyReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.SocialService.V2.ConnectivityStatus), typeof(global::Decentraland.SocialService.V2.FriendshipStatus), typeof(global::Decentraland.SocialService.V2.PrivateMessagePrivacySetting), typeof(global::Decentraland.SocialService.V2.BlockedUsersMessagesVisibilitySetting), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -301,7 +301,7 @@ namespace Decentraland.SocialService.V2 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertSocialSettingsPayload), global::Decentraland.SocialService.V2.UpsertSocialSettingsPayload.Parser, new[]{ "PrivateMessagesPrivacy", "BlockedUsersMessagesVisibility" }, new[]{ "PrivateMessagesPrivacy", "BlockedUsersMessagesVisibility" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.UpsertSocialSettingsResponse), global::Decentraland.SocialService.V2.UpsertSocialSettingsResponse.Parser, new[]{ "Ok", "InternalServerError", "InvalidRequest" }, new[]{ "Response" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsPayload), global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsPayload.Parser, new[]{ "User" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse), global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Parser, new[]{ "Ok", "InternalServerError", "InvalidRequest", "ProfileNotFound" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Types.PrivateMessagesSettings), global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Types.PrivateMessagesSettings.Parser, new[]{ "User", "PrivateMessagesPrivacy" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse), global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Parser, new[]{ "Ok", "InternalServerError", "InvalidRequest", "ProfileNotFound" }, new[]{ "Response" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Types.PrivateMessagesSettings), global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Types.PrivateMessagesSettings.Parser, new[]{ "User", "PrivateMessagesPrivacy", "IsFriend" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Types.Ok), global::Decentraland.SocialService.V2.GetPrivateMessagesSettingsResponse.Types.Ok.Parser, new[]{ "Settings" }, null, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetBlockedUsersPayload), global::Decentraland.SocialService.V2.GetBlockedUsersPayload.Parser, new[]{ "Pagination" }, new[]{ "Pagination" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.SocialService.V2.GetBlockedUsersResponse), global::Decentraland.SocialService.V2.GetBlockedUsersResponse.Parser, new[]{ "Profiles", "PaginationData" }, null, null, null, null),
@@ -12586,6 +12586,7 @@ namespace Decentraland.SocialService.V2 {
         public PrivateMessagesSettings(PrivateMessagesSettings other) : this() {
           user_ = other.user_ != null ? other.user_.Clone() : null;
           privateMessagesPrivacy_ = other.privateMessagesPrivacy_;
+          isFriend_ = other.isFriend_;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
 
@@ -12619,6 +12620,18 @@ namespace Decentraland.SocialService.V2 {
           }
         }
 
+        /// <summary>Field number for the "is_friend" field.</summary>
+        public const int IsFriendFieldNumber = 3;
+        private bool isFriend_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool IsFriend {
+          get { return isFriend_; }
+          set {
+            isFriend_ = value;
+          }
+        }
+
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public override bool Equals(object other) {
@@ -12636,6 +12649,7 @@ namespace Decentraland.SocialService.V2 {
           }
           if (!object.Equals(User, other.User)) return false;
           if (PrivateMessagesPrivacy != other.PrivateMessagesPrivacy) return false;
+          if (IsFriend != other.IsFriend) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
 
@@ -12645,6 +12659,7 @@ namespace Decentraland.SocialService.V2 {
           int hash = 1;
           if (user_ != null) hash ^= User.GetHashCode();
           if (PrivateMessagesPrivacy != global::Decentraland.SocialService.V2.PrivateMessagePrivacySetting.All) hash ^= PrivateMessagesPrivacy.GetHashCode();
+          if (IsFriend != false) hash ^= IsFriend.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
           }
@@ -12671,6 +12686,10 @@ namespace Decentraland.SocialService.V2 {
             output.WriteRawTag(16);
             output.WriteEnum((int) PrivateMessagesPrivacy);
           }
+          if (IsFriend != false) {
+            output.WriteRawTag(24);
+            output.WriteBool(IsFriend);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(output);
           }
@@ -12689,6 +12708,10 @@ namespace Decentraland.SocialService.V2 {
             output.WriteRawTag(16);
             output.WriteEnum((int) PrivateMessagesPrivacy);
           }
+          if (IsFriend != false) {
+            output.WriteRawTag(24);
+            output.WriteBool(IsFriend);
+          }
           if (_unknownFields != null) {
             _unknownFields.WriteTo(ref output);
           }
@@ -12704,6 +12727,9 @@ namespace Decentraland.SocialService.V2 {
           }
           if (PrivateMessagesPrivacy != global::Decentraland.SocialService.V2.PrivateMessagePrivacySetting.All) {
             size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) PrivateMessagesPrivacy);
+          }
+          if (IsFriend != false) {
+            size += 1 + 1;
           }
           if (_unknownFields != null) {
             size += _unknownFields.CalculateSize();
@@ -12725,6 +12751,9 @@ namespace Decentraland.SocialService.V2 {
           }
           if (other.PrivateMessagesPrivacy != global::Decentraland.SocialService.V2.PrivateMessagePrivacySetting.All) {
             PrivateMessagesPrivacy = other.PrivateMessagesPrivacy;
+          }
+          if (other.IsFriend != false) {
+            IsFriend = other.IsFriend;
           }
           _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
         }
@@ -12752,6 +12781,10 @@ namespace Decentraland.SocialService.V2 {
                 PrivateMessagesPrivacy = (global::Decentraland.SocialService.V2.PrivateMessagePrivacySetting) input.ReadEnum();
                 break;
               }
+              case 24: {
+                IsFriend = input.ReadBool();
+                break;
+              }
             }
           }
         #endif
@@ -12776,6 +12809,10 @@ namespace Decentraland.SocialService.V2 {
               }
               case 16: {
                 PrivateMessagesPrivacy = (global::Decentraland.SocialService.V2.PrivateMessagePrivacySetting) input.ReadEnum();
+                break;
+              }
+              case 24: {
+                IsFriend = input.ReadBool();
                 break;
               }
             }

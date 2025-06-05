@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Optimization.Pools;
+using Global.AppArgs;
 using UnityEngine;
 
 namespace DCL.CharacterPreview
@@ -16,13 +17,15 @@ namespace DCL.CharacterPreview
     public class CharacterPreviewFactory : ICharacterPreviewFactory
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IAppArgs appArgs;
 
         private IComponentPool<CharacterPreviewAvatarContainer>? characterPreviewComponentPool;
         private IComponentPool<Transform>? transformPool;
 
-        public CharacterPreviewFactory(IComponentPoolsRegistry poolsRegistry)
+        public CharacterPreviewFactory(IComponentPoolsRegistry poolsRegistry, IAppArgs appArgs)
         {
             componentPoolsRegistry = poolsRegistry;
+            this.appArgs = appArgs;
         }
 
         public CharacterPreviewController Create(World world, RenderTexture targetTexture, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewCameraSettings cameraSettings)
@@ -31,7 +34,7 @@ namespace DCL.CharacterPreview
             transformPool ??= componentPoolsRegistry.GetReferenceTypePool<Transform>();
             CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get();
             container.Initialize(targetTexture);
-            return new CharacterPreviewController(world, container, inputEventBus, characterPreviewComponentPool, cameraSettings, transformPool);
+            return new CharacterPreviewController(world, container, inputEventBus, characterPreviewComponentPool, cameraSettings, transformPool, appArgs);
         }
     }
 }
