@@ -2,7 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 using DCL.WebRequests;
 using ECS;
 using Newtonsoft.Json;

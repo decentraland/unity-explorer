@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Friends.UI.FriendPanel;
@@ -15,12 +16,14 @@ using DCL.Multiplayer.Connectivity;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.SocialService;
 using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -29,10 +32,12 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.PluginSystem.Global
 {
-    public class FriendsPlugin : IDCLGlobalPlugin<FriendsPluginSettings>
+    // TODO it should not be a plugin as it should expose dependencies to other parts but we have a mess with responsibilities of Static and World containers
+    public class FriendsContainer : IDCLGlobalPlugin<FriendsPluginSettings>
     {
         private readonly MainUIView mainUIView;
         private readonly IMVCManager mvcManager;
@@ -42,36 +47,29 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
         private readonly DCLInput dclInput;
-        private readonly ISelfProfile selfProfile;
-        private readonly IPassportBridge passportBridge;
-        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
-        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly ObjectProxy<FriendsCache> friendCacheProxy;
-        private readonly IOnlineUsersProvider onlineUsersProvider;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly INotificationsBusController notificationsBusController;
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly IAnalyticsController? analyticsController;
         private readonly ViewDependencies viewDependencies;
-        private readonly bool useAnalytics;
-        private readonly IChatEventBus chatEventBus;
-        private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IRPCSocialServices rpcSocialServices;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
+        private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
-        private CancellationTokenSource friendServiceSubscriptionCancellationToken = new ();
-        private RPCFriendsService? friendsService;
-        private FriendsPanelController? friendsPanelController;
+        private CancellationTokenSource friendServiceSubscriptionCts = new ();
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
         private CancellationTokenSource? prewarmFriendsCancellationToken;
         private CancellationTokenSource? syncBlockingStatusOnRpcConnectionCts;
-        private UserBlockingCache? userBlockingCache;
 
-        public FriendsPlugin(
+        private UserBlockingCache? userBlockingCache;
+        private readonly RPCFriendsService rpcFriendsService;
+
+        private readonly FriendsPanelController friendsPanelController;
+        private readonly IFriendsService friendsService;
+        private readonly FriendsCache friendsCache;
+        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+
+        public FriendsContainer(
             MainUIView mainUIView,
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
@@ -82,9 +80,6 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
-            ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
@@ -97,8 +92,12 @@ namespace DCL.PluginSystem.Global
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
-            IRPCSocialServices rpcSocialServices,
-            ObjectProxy<FriendsCache> friendCacheProxy, IFriendsEventBus friendsEventBus)
+            IRPCSocialServices socialServicesRPC,
+            IFriendsEventBus friendsEventBus,
+            ObjectProxy<IFriendsService> friendServiceProxy,
+            ObjectProxy<IFriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
+            ObjectProxy<FriendsCache> friendsCacheProxy,
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ProfileRepositoryWrapper profileDataProvider)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -108,62 +107,25 @@ namespace DCL.PluginSystem.Global
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
             this.dclInput = dclInput;
-            this.selfProfile = selfProfile;
-            this.passportBridge = passportBridge;
-            this.friendServiceProxy = friendServiceProxy;
-            this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
-            this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.onlineUsersProvider = onlineUsersProvider;
-            this.realmNavigator = realmNavigator;
-            this.notificationsBusController = notificationsBusController;
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
-            this.useAnalytics = useAnalytics;
-            this.analyticsController = analyticsController;
             this.viewDependencies = viewDependencies;
-            this.chatEventBus = chatEventBus;
-            this.sharedSpaceManager = sharedSpaceManager;
             this.socialServiceEventBus = socialServiceEventBus;
-            this.rpcSocialServices = rpcSocialServices;
-            this.friendCacheProxy = friendCacheProxy;
             this.friendsEventBus = friendsEventBus;
-        }
+            this.userBlockingCacheProxy = userBlockingCacheProxy;
+            this.profileRepositoryWrapper = profileDataProvider;
 
-        public void Dispose()
-        {
-            friendsPanelController?.Dispose();
-            friendServiceSubscriptionCancellationToken.SafeCancelAndDispose();
-            prewarmFriendsCancellationToken.SafeCancelAndDispose();
-            socialServiceEventBus.RPCClientReconnected -= OnRPCClientReconnected;
-            syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
-        }
+            friendsCache = new FriendsCache();
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+            rpcFriendsService = new RPCFriendsService(friendsEventBus, friendsCache, selfProfile, socialServicesRPC);
+            friendsService = useAnalytics ? new FriendServiceAnalyticsDecorator(rpcFriendsService, analyticsController!) : rpcFriendsService;
 
-        public async UniTask InitializeAsync(FriendsPluginSettings settings, CancellationToken ct)
-        {
-            var friendsCache = new FriendsCache();
-            friendCacheProxy.SetObject(friendsCache);
-
-            friendsService = new RPCFriendsService(friendsEventBus, friendsCache, selfProfile, rpcSocialServices, socialServiceEventBus);
-
-            IFriendsService injectableFriendService = useAnalytics ? new FriendServiceAnalyticsDecorator(friendsService, analyticsController!) : friendsService;
-
-            friendServiceProxy.SetObject(injectableFriendService);
+            this.socialServiceEventBus.TransportClosed += OnTransportClosed;
 
             bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
 
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
-            friendOnlineStatusCacheProxy.SetObject(friendsConnectivityStatusTracker);
-
-            if (includeUserBlocking)
-            {
-                userBlockingCache = new UserBlockingCache(friendsEventBus);
-                userBlockingCacheProxy.SetObject(userBlockingCache);
-
-                friendsService.WebSocketConnectionEstablished += SyncBlockingStatus;
-            }
+            friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
 
             friendsPanelController = new FriendsPanelController(() =>
                 {
@@ -173,7 +135,7 @@ namespace DCL.PluginSystem.Global
                 },
                 mainUIView.FriendsPanelViewView,
                 mainUIView.SidebarView.FriendRequestNotificationIndicator,
-                injectableFriendService,
+                friendsService,
                 friendsEventBus,
                 mvcManager,
                 profileRepository,
@@ -186,7 +148,8 @@ namespace DCL.PluginSystem.Global
                 viewDependencies,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
-                sharedSpaceManager
+                sharedSpaceManager,
+                profileRepositoryWrapper
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
@@ -197,23 +160,43 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 notificationsBusController,
                 passportBridge,
-                injectableFriendService,
+                friendsService,
                 sharedSpaceManager,
                 friendsPanelController);
 
             mvcManager.RegisterController(persistentFriendsOpenerController);
 
+            friendServiceProxy.SetObject(friendsService);
+            friendsConnectivityStatusTrackerProxy.SetObject(friendsConnectivityStatusTracker);
+            friendsCacheProxy.SetObject(friendsCache);
+        }
+
+        public void Dispose()
+        {
+            friendsPanelController.Dispose();
+            friendServiceSubscriptionCts.SafeCancelAndDispose();
+            prewarmFriendsCancellationToken.SafeCancelAndDispose();
+            socialServiceEventBus.RPCClientReconnected -= OnRPCClientReconnected;
+            socialServiceEventBus.TransportClosed -= OnTransportClosed;
+            socialServiceEventBus.WebSocketConnectionEstablished -= SyncBlockingStatus;
+            syncBlockingStatusOnRpcConnectionCts.SafeCancelAndDispose();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        public async UniTask InitializeAsync(FriendsPluginSettings settings, CancellationToken ct)
+        {
             FriendRequestView friendRequestPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.FriendRequestPrefab, ct)).Value;
 
             var friendRequestController = new FriendRequestController(
                 FriendRequestController.CreateLazily(friendRequestPrefab, null),
-                web3IdentityCache, injectableFriendService, profileRepository,
-                inputBlock, viewDependencies);
+                web3IdentityCache, friendsService, profileRepository,
+                inputBlock, profileRepositoryWrapper);
 
             mvcManager.RegisterController(friendRequestController);
 
             var friendPushNotificationController = new FriendPushNotificationController(() => mainUIView.FriendPushNotificationView,
-                friendsConnectivityStatusTracker, viewDependencies, loadingStatus);
+                friendsConnectivityStatusTracker, profileRepositoryWrapper, loadingStatus);
 
             mvcManager.RegisterController(friendPushNotificationController);
 
@@ -221,7 +204,7 @@ namespace DCL.PluginSystem.Global
 
             unfriendConfirmationPopupController = new UnfriendConfirmationPopupController(
                 UnfriendConfirmationPopupController.CreateLazily(unfriendConfirmationPopupPrefab, null),
-                injectableFriendService, profileRepository, viewDependencies);
+                friendsService, profileRepository, profileRepositoryWrapper);
 
             mvcManager.RegisterController(unfriendConfirmationPopupController);
 
@@ -230,12 +213,21 @@ namespace DCL.PluginSystem.Global
             loadingStatus.CurrentStage.Subscribe(PreWarmFriends);
 
             if (includeUserBlocking)
+                await InitUserBlockingAsync();
+
+            return;
+
+            async UniTask InitUserBlockingAsync()
             {
+                userBlockingCache = new UserBlockingCache(friendsEventBus);
+                userBlockingCacheProxy.SetObject(userBlockingCache);
+                socialServiceEventBus.WebSocketConnectionEstablished += SyncBlockingStatus;
+
                 BlockUserPromptView blockUserPromptPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.BlockUserPromptPrefab, ct)).Value;
 
                 var blockUserPromptController = new BlockUserPromptController(
                     BlockUserPromptController.CreateLazily(blockUserPromptPrefab, null),
-                    injectableFriendService,
+                    friendsService,
                     dclInput);
 
                 mvcManager.RegisterController(blockUserPromptController);
@@ -246,16 +238,9 @@ namespace DCL.PluginSystem.Global
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
 
-            friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
+            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
 
-            // Fire and forget as this task will never finish
-            friendsService!.SubscribeToIncomingFriendshipEventsAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
-
-            if (IsConnectivityStatusEnabled())
-                friendsService.SubscribeToConnectivityStatusAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
-
-            if (includeUserBlocking)
-                friendsService.SubscribeToUserBlockUpdatersAsync(friendServiceSubscriptionCancellationToken.Token).Forget();
+            LaunchSubscriptions(friendServiceSubscriptionCts.Token);
 
             prewarmFriendsCancellationToken = prewarmFriendsCancellationToken.SafeRestart();
             PrewarmAsync(prewarmFriendsCancellationToken.Token).Forget();
@@ -263,12 +248,15 @@ namespace DCL.PluginSystem.Global
 
             async UniTaskVoid PrewarmAsync(CancellationToken ct)
             {
-                if (friendsPanelController != null)
-                    await friendsPanelController.InitAsync(ct);
+                await friendsPanelController.InitAsync(ct);
 
+                // TODO should not unsubscribe as the user can re-login with another account, and thus, pre-warming will be skipped
                 loadingStatus.CurrentStage.Unsubscribe(PreWarmFriends);
             }
         }
+
+        private void OnTransportClosed() =>
+            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
 
         private void SyncBlockingStatus()
         {
@@ -276,10 +264,13 @@ namespace DCL.PluginSystem.Global
             SyncBlockingStatusAsync(syncBlockingStatusOnRpcConnectionCts.Token).Forget();
             return;
 
-            async UniTask SyncBlockingStatusAsync(CancellationToken ct)
+            async UniTaskVoid SyncBlockingStatusAsync(CancellationToken ct)
             {
-                UserBlockingStatus blockingStatus = await friendsService!.GetUserBlockingStatusAsync(ct);
-                userBlockingCache!.Reset(blockingStatus);
+                Result<UserBlockingStatus> result = await friendsService.GetUserBlockingStatusAsync(ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+
+                // TODO What to do if the result is not successful?
+                if (result.Success)
+                    userBlockingCache!.Reset(result.Value);
             }
         }
 
@@ -289,37 +280,41 @@ namespace DCL.PluginSystem.Global
 
         private void OnRPCClientReconnected()
         {
-            friendServiceSubscriptionCancellationToken = friendServiceSubscriptionCancellationToken.SafeRestart();
-            ReconnectFriendServiceAsync(friendServiceSubscriptionCancellationToken.Token);
+            friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
+            ReconnectFriendServiceAsync(friendServiceSubscriptionCts.Token);
             return;
 
             void ReconnectFriendServiceAsync(CancellationToken ct)
             {
-                if (friendsService == null) return;
-
-                friendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
-
-                if (IsConnectivityStatusEnabled())
-                    friendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
-
-                if (includeUserBlocking && userBlockingCache != null)
-                    friendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
+                LaunchSubscriptions(ct);
 
                 friendsPanelController?.Reset();
             }
         }
+
+        private void LaunchSubscriptions(CancellationToken ct)
+        {
+            rpcFriendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
+
+            if (IsConnectivityStatusEnabled())
+                rpcFriendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
+
+            if (includeUserBlocking)
+                rpcFriendsService.SubscribeToUserBlockUpdatersAsync(ct).Forget();
+        }
     }
 
+    [Serializable]
     public class FriendsPluginSettings : IDCLPluginSettings
     {
         [field: SerializeField]
-        public FriendRequestAssetReference FriendRequestPrefab { get; set; }
+        public FriendRequestAssetReference FriendRequestPrefab { get; private set; }
 
         [field: SerializeField]
-        public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; set; }
+        public UnfriendConfirmationPopupAssetReference UnfriendConfirmationPrefab { get; private set; }
 
         [field: SerializeField]
-        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; set; }
+        public BlockUserPromptPopupAssetReference BlockUserPromptPrefab { get; private set; }
 
         [Serializable]
         public class FriendRequestAssetReference : ComponentReference<FriendRequestView>
