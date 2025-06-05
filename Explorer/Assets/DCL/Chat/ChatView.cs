@@ -6,6 +6,7 @@ using DCL.Communities;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.UI;
+using DCL.UI.Communities;
 using DCL.Web3;
 using MVC;
 using DG.Tweening;
@@ -206,6 +207,7 @@ namespace DCL.Chat
         private bool isPointerOverChat;
 
         private IThumbnailCache thumbnailCache;
+        private CommunityTitleView.OpenContextMenuDelegate openContextMenuAction;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -275,7 +277,7 @@ namespace DCL.Chat
                         case ChatChannel.ChatChannelType.COMMUNITY:
                             SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             GetUserCommunitiesCompactResponse.CommunityData communityData = communitiesData[currentChannel.Id];
-                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.smallThumbnail, CancellationToken.None); // TODO: Add a cancelation token
+                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.smallThumbnail, openContextMenuAction, CancellationToken.None); // TODO: Add a cancelation token
                             break;
                     }
 
@@ -464,9 +466,11 @@ namespace DCL.Chat
             ChatSettingsAsset chatSettings,
             GetParticipantProfilesDelegate getParticipantProfilesDelegate,
             ILoadingStatus loadingStatus,
-            IThumbnailCache thumbnailCache)
+            IThumbnailCache thumbnailCache,
+            CommunityTitleView.OpenContextMenuDelegate openContextMenuAction)
         {
             this.thumbnailCache = thumbnailCache;
+            this.openContextMenuAction = openContextMenuAction;
             channels = chatChannels;
 
             chatTitleBar.Initialize();

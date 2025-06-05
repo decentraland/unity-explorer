@@ -408,8 +408,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   thumbnailView: {fileID: 874982976998544289}
-  openProfileButton: {fileID: 8404404177922087950}
+  openTitleButton: {fileID: 8404404177922087950}
   userNameElement: {fileID: 887170052482478408}
+  contextMenuSettings: {fileID: 11400000, guid: f0417a22b41fa694aa86da5a95090393, type: 2}
+  contextMenuWidth: 210
+  contextMenuElementsSpacing: 8
+  contextMenuOffset: {x: 0, y: 100}
+  horizontalPadding: 15
+  verticalPadding: 15
 --- !u!1001 &7858872255811826341
 PrefabInstance:
   m_ObjectHideFlags: 0

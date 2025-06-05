@@ -191,11 +191,11 @@ PrefabInstance:
     - target: {fileID: 8403886969632430484, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: PointerExited.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 4111530681574439981}
     - target: {fileID: 8403886969632430484, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
       propertyPath: PointerEntered.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 4111530681574439981}
     m_RemovedComponents:
     - {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
     m_RemovedGameObjects: []

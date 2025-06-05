@@ -19,6 +19,7 @@ using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
 using DCL.UI.InputFieldFormatting;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
@@ -65,6 +66,7 @@ namespace DCL.Chat
         private readonly IRoomHub roomHub;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IThumbnailCache thumbnailCache;
+        private readonly IMVCManager mvcManager;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -111,7 +113,8 @@ namespace DCL.Chat
             ChatHistoryStorage chatStorage,
             ObjectProxy<IFriendsService> friendsService,
             ICommunitiesDataProvider communitiesDataProvider,
-            IThumbnailCache thumbnailCache)
+            IThumbnailCache thumbnailCache,
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
@@ -131,6 +134,7 @@ namespace DCL.Chat
             this.chatStorage = chatStorage;
             this.communitiesDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
+            this.mvcManager = mvcManager;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -238,7 +242,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
-            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus, thumbnailCache);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus, thumbnailCache, OpenContextMenuAsync);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -255,6 +259,12 @@ namespace DCL.Chat
             viewInstance.Blur();
 
             AddCommunityCoversationsAsync().Forget();
+        }
+
+        private async void OpenContextMenuAsync(GenericContextMenuParameter parameter, Action onClosed, CancellationToken ct)
+        {
+            await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(parameter), ct);
+            onClosed();
         }
 
         private async UniTaskVoid AddCommunityCoversationsAsync()

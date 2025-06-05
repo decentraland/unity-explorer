@@ -170,7 +170,8 @@ namespace DCL.PluginSystem.Global
                 chatStorage,
                 friendsServiceProxy,
                 communityDataProvider,
-                thumbnailCache
+                thumbnailCache,
+                mvcManager
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
