@@ -8,6 +8,7 @@ using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 using UnityEngine;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
@@ -44,13 +45,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
                 SubscriberKey key = new (message.Payload.SceneId, msgType);
 
-                ISceneCommunicationPipe.SceneMessageHandler handler;
-
-                lock (sceneMessageHandlers)
-                    if (!sceneMessageHandlers.TryGetValue(key, out handler))
-                        return;
-
-                handler(new ISceneCommunicationPipe.DecodedMessage(decodedMessage, message.FromWalletId));
+                if (sceneMessageHandlers.SyncTryGetValue(key, out ISceneCommunicationPipe.SceneMessageHandler? handler))
+                    handler(new ISceneCommunicationPipe.DecodedMessage(decodedMessage, message.FromWalletId));
             }
         }
 
@@ -64,17 +60,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         public void AddSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
         {
             SubscriberKey key = new (sceneId, msgType);
-
-            lock (sceneMessageHandlers)
-                sceneMessageHandlers.Add(key, onSceneMessage);
+            sceneMessageHandlers.SyncTryAdd(key, onSceneMessage);
         }
 
         public void RemoveSceneMessageHandler(string sceneId, ISceneCommunicationPipe.MsgType msgType, ISceneCommunicationPipe.SceneMessageHandler onSceneMessage)
         {
             SubscriberKey key = new (sceneId, msgType);
-
-            lock (sceneMessageHandlers)
-                sceneMessageHandlers.Remove(key);
+            sceneMessageHandlers.SyncRemove(key);
         }
 
         public void SendMessage(ReadOnlySpan<byte> message, string sceneId, ISceneCommunicationPipe.ConnectivityAssertiveness assertiveness, CancellationToken ct, string? specialRecipient = null)

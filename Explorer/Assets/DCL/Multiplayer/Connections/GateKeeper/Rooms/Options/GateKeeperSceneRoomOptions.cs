@@ -9,7 +9,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms.Options
     {
         public ISceneRoomMetaDataSource SceneRoomMetaDataSource { get; }
 
-        public string AdapterUrl { get; }
+        public Uri AdapterUrl { get; }
 
         public GateKeeperSceneRoomOptions(
             ILaunchMode launchMode,

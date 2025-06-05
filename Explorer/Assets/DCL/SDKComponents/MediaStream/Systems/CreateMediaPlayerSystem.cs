@@ -117,10 +117,10 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (!isValidStreamUrl)
                 {
-                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out Uri mediaUrl);
 
                     if (isValidLocalPath)
-                        url = mediaUrl;
+                        url = mediaUrl.OriginalString;
                 }
             }
 

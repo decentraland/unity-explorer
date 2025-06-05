@@ -7,6 +7,7 @@ using ECS;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -33,8 +34,7 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
-        public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory,
-            IWebJsSources webJsSources)
+        public SceneRuntimeFactory(IRealmData realmData, V8EngineFactory engineFactory, IWebJsSources webJsSources)
         {
             this.realmData = realmData;
             this.engineFactory = engineFactory;
@@ -91,7 +91,7 @@ namespace SceneRuntime.Factory
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
-            
+
             return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, sceneShortInfo,
                 engineFactory);
         }
@@ -100,7 +100,7 @@ namespace SceneRuntime.Factory
         ///     Must be called on the main thread
         /// </summary>
         public async UniTask<SceneRuntimeImpl> CreateByPathAsync(
-            URLAddress path,
+            Uri path,
             IInstancePoolsProvider instancePoolsProvider,
             SceneShortInfo sceneShortInfo,
             CancellationToken ct,

@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.GLTF.DownloadProvider
             return new Uri(contentSourceUrl + uri);
         }
 
-        protected override string GetErrorMessage(Uri downloadUri, UnityWebRequestException e)
+        protected override string GetErrorMessage(Uri downloadUri, WebRequestException e)
         {
             return $"Error on GLTF download ({downloadUri}): {e.Error} - {e.Message}";
         }

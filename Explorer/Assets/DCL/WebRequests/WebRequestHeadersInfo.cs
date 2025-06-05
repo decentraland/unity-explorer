@@ -1,20 +1,20 @@
 ﻿using DCL.Optimization.Pools;
-using DCL.WebRequests.CustomDownloadHandlers;
+using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using static DCL.WebRequests.WebRequestHeaders;
 
 namespace DCL.WebRequests
 {
     public struct WebRequestHeadersInfo : IDisposable
     {
-        private const string RANGE_HEADER = "Range";
         private const string EMPTY_HEADER = "";
 
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
 
-        private static readonly ListObjectPool<WebRequestHeader> POOL = new (listInstanceDefaultCapacity: 4);
+        private static readonly ThreadSafeListPool<WebRequestHeader> POOL = new (4, 10);
 
         private List<WebRequestHeader>? values;
 
@@ -113,6 +113,6 @@ namespace DCL.WebRequests
     public static class WebRequestHeadersInfoExtensions
     {
         public static string HeaderContentType(this WebRequestHeadersInfo webRequestHeadersInfo) =>
-            webRequestHeadersInfo.HeaderOrDefault("content-type", true);
+            webRequestHeadersInfo.HeaderOrDefault(CONTENT_TYPE_HEADER, true);
     }
 }

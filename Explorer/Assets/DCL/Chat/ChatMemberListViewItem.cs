@@ -69,7 +69,7 @@ namespace DCL.Chat
                 contextMenuButton.gameObject.SetActive(false);
         }
 
-        public void SetupProfilePicture(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
+        public void SetupProfilePicture(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string userId)
         {
             profilePictureView.SetupWithDependencies(profileDataProvider, userColor, faceSnapshotUrl, userId);
         }

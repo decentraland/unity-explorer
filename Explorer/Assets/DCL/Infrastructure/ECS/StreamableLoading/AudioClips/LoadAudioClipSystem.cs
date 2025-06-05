@@ -30,9 +30,8 @@ namespace ECS.StreamableLoading.AudioClips
             AudioClip? result = await webRequestController.GetAudioClipAsync(
                 intention.CommonArguments,
                 new GetAudioClipArguments(intention.AudioType),
-                new GetAudioClipWebRequest.CreateAudioClipOp(),
-                ct,
-                GetReportData());
+                GetReportData())
+                                                          .CreateAudioClipAsync(ct);
 
             return new StreamableLoadingResult<AudioClipData>(new AudioClipData(result));
         }

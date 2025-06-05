@@ -1,6 +1,7 @@
 #nullable enable
 
 using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -17,7 +18,7 @@ namespace DCL.WebRequests.WebContentSizes
             this.list = list;
         }
 
-        public async UniTask<bool> IsOkSizeAsync(string url, CancellationToken cancellationToken)
+        public async UniTask<bool> IsOkSizeAsync(Uri url, CancellationToken cancellationToken)
         {
             foreach (var webContentSizes in list)
             {

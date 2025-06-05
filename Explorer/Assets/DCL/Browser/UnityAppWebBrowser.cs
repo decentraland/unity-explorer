@@ -13,9 +13,9 @@ namespace DCL.Browser
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
-        public void OpenUrl(string url)
+        public void OpenUrl(Uri url)
         {
-            Application.OpenURL(Uri.EscapeUriString(url));
+            Application.OpenURL(Uri.EscapeUriString(url.OriginalString));
         }
 
         public void OpenUrl(DecentralandUrl url)

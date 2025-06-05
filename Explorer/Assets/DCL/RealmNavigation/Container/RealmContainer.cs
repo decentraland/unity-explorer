@@ -16,6 +16,7 @@ using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using Global.AppArgs;
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility.Storage;
@@ -47,10 +48,10 @@ namespace DCL.RealmNavigation
 
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
-            var assetBundleRegistry =
+            Uri? assetBundleRegistry =
                 featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && !localSceneDevelopment
-                    ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
-                    : URLDomain.EMPTY;
+                    ? urlsSource.Url(DecentralandUrl.AssetBundleRegistry)
+                    : null;
 
             var realmController = new RealmController(
                 identityCache,

@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using JetBrains.Annotations;
 using System;
 
 namespace DCL.InWorldCamera.PhotoDetail
@@ -11,14 +12,15 @@ namespace DCL.InWorldCamera.PhotoDetail
         ///     Extracts the marketplace link from a wearable.
         ///     Taken from the old renderer.
         /// </summary>
-        public static string GetMarketplaceLink(this IWearable wearable, IDecentralandUrlsSource decentralandUrlsSource)
+        [CanBeNull]
+        public static Uri GetMarketplaceLink(this IWearable wearable, IDecentralandUrlsSource decentralandUrlsSource)
         {
-            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market).OriginalString}/contracts/{{0}}/items/{{1}}";
             ReadOnlySpan<char> idSpan = wearable.GetUrn().ToString().AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
             if (lastColonIndex == -1)
-                return "";
+                return null;
 
             var item = idSpan.Slice(lastColonIndex + 1).ToString();
             idSpan = idSpan.Slice(0, lastColonIndex);
@@ -27,9 +29,9 @@ namespace DCL.InWorldCamera.PhotoDetail
 
             // If this is not correct, we could retrieve the marketplace link by checking TheGraph, but that's super slow
             if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
-                return "";
+                return null;
 
-            return string.Format(marketplace, contract, item);
+            return new Uri(string.Format(marketplace, contract, item));
         }
     }
 }

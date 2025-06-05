@@ -9,6 +9,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources.Tests
@@ -33,10 +34,10 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             ISceneData sceneData = Substitute.For<ISceneData>();
 
-            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<URLAddress>())
+            sceneData.TryGetContentUrl(Arg.Any<string>(), out Arg.Any<Uri>())
                      .Returns(args =>
                       {
-                          args[1] = URLAddress.FromString(args.ArgAt<string>(0));
+                          args[1] = new Uri(args.ArgAt<string>(0));
                           return true;
                       });
 
@@ -61,7 +62,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             Assert.That(audioSourceComponent.ClipPromise, Is.Not.EqualTo(AssetPromise<AudioClipData, GetAudioClipIntention>.NULL));
             AssetPromise<AudioClipData, GetAudioClipIntention> promiseValue = audioSourceComponent.ClipPromise;
             Assert.That(world.TryGet(promiseValue.Entity, out GetAudioClipIntention intention), Is.True);
-            Assert.That(intention.CommonArguments.URL, Is.EqualTo(pbAudioSource.AudioClipUrl));
+            Assert.That(intention.CommonArguments.URL.OriginalString, Is.EqualTo(pbAudioSource.AudioClipUrl));
             Assert.That(intention.AudioType, Is.EqualTo(pbAudioSource.AudioClipUrl.ToAudioType()));
         }
     }

@@ -39,12 +39,12 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             catch (ObjectDisposedException) { }
         }
 
-        public async UniTask ConnectToServerAsync(string url, CancellationToken ct)
+        public async UniTask ConnectToServerAsync(Uri url, CancellationToken ct)
         {
             await ConnectToServerAsync(url, new WsSceneMessage(), new byte[1024], ct);
         }
 
-        private async UniTask ConnectToServerAsync(string localSceneWebsocketServer,
+        private async UniTask ConnectToServerAsync(Uri localSceneWebsocketServer,
             WsSceneMessage wsSceneMessage, byte[] receiveBuffer, CancellationToken ct)
         {
             await UniTask.SwitchToThreadPool();
@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Trying to connect to: {localSceneWebsocketServer}");
 
             webSocket = new ClientWebSocket();
-            await webSocket.ConnectAsync(new Uri(localSceneWebsocketServer), ct);
+            await webSocket.ConnectAsync(localSceneWebsocketServer, ct);
 
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection state: {webSocket.State}");
 

@@ -26,9 +26,9 @@ namespace DCL.FeatureFlags
         {
             urlBuilder.Clear();
 
-            URLAddress fetchUrl = urlBuilder.AppendDomain(options.URL)
-                                            .AppendPath(URLPath.FromString($"{options.AppName}.json"))
-                                            .Build();
+            var fetchUrl = urlBuilder.AppendDomain(options.URL)
+                                     .AppendPath(URLPath.FromString($"{options.AppName}.json"))
+                                     .Build();
 
             headers.Clear();
             headers["X-Debug"] = options.Debug ? "true" : "false";
@@ -37,10 +37,10 @@ namespace DCL.FeatureFlags
             if (options.UserId.HasValue)
                 headers["X-Address-Hash"] = options.UserId;
 
-            var result = webRequestController.GetAsync(new CommonArguments(fetchUrl), ct, ReportCategory.FEATURE_FLAGS,
+            var result = webRequestController.GetAsync(new CommonArguments(fetchUrl), ReportCategory.FEATURE_FLAGS,
                 new WebRequestHeadersInfo(headers));
 
-            FeatureFlagsResultDto response = await result.CreateFromJson<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft);
+            FeatureFlagsResultDto response = await result.CreateFromJsonAsync<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft, ct);
 
             response = StripAppNameFromKeys(options.AppName, response);
 

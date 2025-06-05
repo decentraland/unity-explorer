@@ -88,7 +88,7 @@ namespace DCL.Navmap
 
             if (view.CameraReelGalleryView != null)
             {
-                this.cameraReelGalleryController = new CameraReelGalleryController(view.CameraReelGalleryView, cameraReelStorageService!, cameraReelScreenshotsStorage!, reelGalleryConfigParams!.Value, reelUseSignedRequest!.Value);
+                cameraReelGalleryController = new CameraReelGalleryController(view.CameraReelGalleryView, cameraReelStorageService!, cameraReelScreenshotsStorage!, reelGalleryConfigParams!.Value, reelUseSignedRequest!.Value, webRequestController);
                 this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
                 this.cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
             }
@@ -289,7 +289,7 @@ namespace DCL.Navmap
         }
 
         private void OpenUrl(string url) =>
-            webBrowser.OpenUrl(url);
+            webBrowser.OpenUrl(new Uri(url));
 
         private void OnLikeButtonClick(bool isEnabled)
         {

@@ -9,8 +9,8 @@ namespace DCL.WebRequests.Analytics
 {
     public class WebRequestStressTestUtility
     {
-        private static readonly URLAddress SUCCESS = URLAddress.FromString("https://res.soulmagic.online/v093/ui_atlas_5.png");
-        private static readonly URLAddress FAIL = URLAddress.FromString("https://ab-cdn.decentraland.org/LOD/1/bafkreibkkn6xli3w7dhfk6adaj3bi2xa5a4lk35anv2hwx6bddnjcpbbzi_1_mac");
+        private static readonly Uri SUCCESS = URLAddress.FromString("https://res.soulmagic.online/v093/ui_atlas_5.png");
+        private static readonly Uri FAIL = URLAddress.FromString("https://ab-cdn.decentraland.org/LOD/1/bafkreibkkn6xli3w7dhfk6adaj3bi2xa5a4lk35anv2hwx6bddnjcpbbzi_1_mac");
 
         private readonly IWebRequestController webRequestController;
 
@@ -59,19 +59,17 @@ namespace DCL.WebRequests.Analytics
                     await webRequestController.GetTextureAsync(
                         new CommonArguments(FAIL, attemptsCount: retriesCount),
                         new GetTextureArguments(TextureType.Albedo),
-                        new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
-                        CancellationToken.None,
                         reportData: ReportCategory.DEBUG
-                    );
+                                               )
+                                              .CreateTextureAsync(TextureWrapMode.Clamp, FilterMode.Bilinear, CancellationToken.None);
                 else
 
                     // binary data
                     await webRequestController.GetAsync(
                                                    new CommonArguments(SUCCESS, attemptsCount: retriesCount),
-                                                   CancellationToken.None,
                                                    reportData: ReportCategory.DEBUG
                                                )
-                                              .WithNoOpAsync();
+                                              .SendAndForgetAsync(CancellationToken.None);
 
                 ReportHub.Log(ReportCategory.DEBUG, $"Request #{requestNumber} successfully completed");
             }

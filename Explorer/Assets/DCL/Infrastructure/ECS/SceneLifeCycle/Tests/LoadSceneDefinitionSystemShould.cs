@@ -1,22 +1,25 @@
 ﻿using DCL.Ipfs;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
-using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.HTTP2)]
+    [TestFixture(WebRequestsMode.UNITY)]
+    [TestFixture(WebRequestsMode.YET_ANOTHER)]
     public class LoadSceneDefinitionSystemShould : LoadSystemBaseShould<LoadSceneDefinitionSystem, SceneEntityDefinition, GetSceneDefinition>
     {
-        private string successPath => $"file://{Application.dataPath + "/../TestResources/Content/bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"}";
-        private string failPath => $"file://{Application.dataPath + "/../TestResources/Content/non_existing"}";
-        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        public LoadSceneDefinitionSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
+
+        private Uri successPath => new ($"file://{Application.dataPath + "/../TestResources/Content/bafkreibjkvobh26w7quie46edcwgpngs2lctfgvq26twinfh4aepeehno4"}");
+        private Uri failPath => new ($"file://{Application.dataPath + "/../TestResources/Content/non_existing"}");
+        private Uri wrongTypePath => new ($"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}");
 
         protected override GetSceneDefinition CreateSuccessIntention() =>
             new (new CommonLoadingArguments(successPath), new IpfsPath());
@@ -27,8 +30,8 @@ namespace ECS.SceneLifeCycle.Tests
         protected override GetSceneDefinition CreateWrongTypeIntention() =>
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
-        protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestSuite.TestWebRequestController.INSTANCE, cache);
+        protected override LoadSceneDefinitionSystem CreateSystem(IWebRequestController webRequestController) =>
+            new (world, webRequestController, cache);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {
