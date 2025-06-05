@@ -22,6 +22,12 @@ namespace DCL.AvatarRendering.Loading.Assets
             else
             {
                 var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
+
+                //A wearable cannot have a MeshRenderer, only SkinnedMeshRenderer.
+                //We need to destroy it if thats the case
+                foreach (MeshRenderer? mr in instantiatedWearable.GetComponentsInChildren<MeshRenderer>(includeInactive: true))
+                    Object.DestroyImmediate(mr.gameObject);
+
                 instantiatedWearable.name = originalAsset.GetInstanceName();
                 cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible);
             }
