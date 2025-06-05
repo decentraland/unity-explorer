@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <VoiceChatCanvasGroup>k__BackingField: {fileID: 1500625878595052749}
-  VoiceChatContainer: {fileID: 0}
+  VoiceChatContainer: {fileID: 5194753869922647235}
   InCallView: {fileID: 7720559182070351556}
   IncomingCallView: {fileID: 7130602595238643013}
   OutgoingCallView: {fileID: 8738720022471105927}
