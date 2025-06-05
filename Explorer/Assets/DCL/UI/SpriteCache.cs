@@ -8,9 +8,9 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Profiles
+namespace DCL.UI
 {
-    public class ThumbnailCache : IThumbnailCache
+    public class SpriteCache : ISpriteCache
     {
         private struct RequestAttempts
         {
@@ -44,57 +44,60 @@ namespace DCL.Profiles
         private const int PIXELS_PER_UNIT = 50;
 
         private readonly IWebRequestController webRequestController;
-        private readonly Dictionary<string, Sprite> thumbnails = new ();
-        private readonly Dictionary<string, RequestAttempts> failedThumbnails = new ();
-        private readonly Dictionary<string, UniTaskCompletionSource<Sprite?>> currentThumbnailTasks = new ();
-        private readonly HashSet<string> unsolvableThumbnails = new ();
+        private readonly Dictionary<string, Sprite> cachedSprites = new ();
+        private readonly Dictionary<string, RequestAttempts> failedSprites = new ();
+        private readonly Dictionary<string, UniTaskCompletionSource<Sprite?>> currentSpriteTasks = new ();
+        private readonly HashSet<string> unsolvableSprites = new ();
 
-        public ThumbnailCache(IWebRequestController webRequestController)
+        public SpriteCache(IWebRequestController webRequestController)
         {
             this.webRequestController = webRequestController;
         }
 
-        public Sprite? GetThumbnail(string userId) =>
-            thumbnails.GetValueOrDefault(userId);
+        public Sprite? GetCachedSprite(string imageUrl) =>
+            cachedSprites.GetValueOrDefault(imageUrl);
 
-        public async UniTask<Sprite?> GetThumbnailAsync(string id, string thumbnailUrl, CancellationToken ct)
+        public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, CancellationToken ct) =>
+            await GetSpriteAsync(imageUrl, false, ct);
+
+        public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, bool useKtx, CancellationToken ct)
         {
-            Sprite? sprite = GetThumbnail(id);
+            Sprite? sprite = GetCachedSprite(imageUrl);
             if (sprite != null)
                 return sprite;
 
             //Avoid multiple requests for the same thumbnail
-            if (currentThumbnailTasks.TryGetValue(id, out UniTaskCompletionSource<Sprite?> thumbnailTask))
+            if (currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?> thumbnailTask))
                 return await thumbnailTask.Task;
 
             UniTaskCompletionSource<Sprite?> spriteTaskCompletionSource = new UniTaskCompletionSource<Sprite?>();
-            if (currentThumbnailTasks.TryAdd(id, spriteTaskCompletionSource))
-                DownloadThumbnailAsync(id, thumbnailUrl, spriteTaskCompletionSource, ct).Forget();
+            if (currentSpriteTasks.TryAdd(imageUrl, spriteTaskCompletionSource))
+                DownloadSpriteAsync(imageUrl, useKtx, spriteTaskCompletionSource, ct).Forget();
 
             return await spriteTaskCompletionSource.Task;
         }
 
-        private async UniTaskVoid DownloadThumbnailAsync(string id, string thumbnailUrl, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
+        private async UniTaskVoid DownloadSpriteAsync(string imageUrl, bool useKtx, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
         {
             Sprite? result = null;
 
-            if (URLAddress.EMPTY.Equals(thumbnailUrl))
+            if (URLAddress.EMPTY.Equals(imageUrl))
             {
-                FinalizeTask(tcs, result, id);
+                FinalizeTask(tcs, result, imageUrl);
                 return;
             }
 
-            if (unsolvableThumbnails.Contains(id) || !TestCooldownCondition(id))
+            if (unsolvableSprites.Contains(imageUrl) || !TestCooldownCondition(imageUrl))
             {
-                FinalizeTask(tcs, result, id);
+                FinalizeTask(tcs, result, imageUrl);
                 return;
             }
 
             try
             {
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(thumbnailUrl)),
-                    new GetTextureArguments(TextureType.Albedo),
+                    new CommonArguments(URLAddress.FromString(imageUrl)),
+                    new GetTextureArguments(TextureType.Albedo, useKtx),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
                     ReportCategory.UI,
@@ -107,48 +110,48 @@ namespace DCL.Profiles
                 result = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
 
-                SetThumbnailIntoCache(id, result);
-                failedThumbnails.Remove(id);
+                SetSpriteIntoCache(imageUrl, result);
+                failedSprites.Remove(imageUrl);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e) { HandleCooldownOnException(id, e); }
+            catch (Exception e) { HandleCooldownOnException(imageUrl, e); }
             finally
             {
-                FinalizeTask(tcs, result, id);
+                FinalizeTask(tcs, result, imageUrl);
             }
         }
 
-        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string id)
+        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string imageUrl)
         {
-            currentThumbnailTasks.Remove(id);
+            currentSpriteTasks.Remove(imageUrl);
             tcs.TrySetResult(result);
         }
 
-        private void HandleCooldownOnException(string id, Exception e)
+        private void HandleCooldownOnException(string imageUrl, Exception e)
         {
-            if (failedThumbnails.TryGetValue(id, out RequestAttempts requestAttempts))
+            if (failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts))
                 if (requestAttempts.CanIncreaseCooldown())
                 {
                     requestAttempts.IncreaseCooldown();
-                    failedThumbnails[id] = requestAttempts;
+                    failedSprites[imageUrl] = requestAttempts;
                 }
                 else
                 {
                     ReportData reportData = new ReportData(ReportCategory.PROFILE);
-                    ReportHub.LogError(reportData, $"Failed to fetch user thumbnail for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for wallet {id}");
+                    ReportHub.LogError(reportData, $"Failed to fetch user thumbnail for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for image '{imageUrl}'");
                     ReportHub.LogException(e, reportData);
 
-                    unsolvableThumbnails.Add(id);
-                    failedThumbnails.Remove(id);
+                    unsolvableSprites.Add(imageUrl);
+                    failedSprites.Remove(imageUrl);
                 }
             else
-                failedThumbnails[id] = RequestAttempts.FirstAttempt();
+                failedSprites[imageUrl] = RequestAttempts.FirstAttempt();
         }
 
-        private bool TestCooldownCondition(string id) =>
-            !failedThumbnails.TryGetValue(id, out RequestAttempts requestAttempts) || requestAttempts.CanRetry();
+        private bool TestCooldownCondition(string imageUrl) =>
+            !failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts) || requestAttempts.CanRetry();
 
-        private void SetThumbnailIntoCache(string id, Sprite sprite) =>
-            thumbnails[id] = sprite;
+        private void SetSpriteIntoCache(string imageUrl, Sprite sprite) =>
+            cachedSprites[imageUrl] = sprite;
     }
 }

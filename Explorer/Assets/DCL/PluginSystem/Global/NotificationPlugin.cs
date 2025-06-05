@@ -5,8 +5,8 @@ using DCL.Backpack;
 using DCL.Notifications;
 using DCL.Notifications.NewNotification;
 using DCL.NotificationsBusController.NotificationsBus;
+using DCL.UI;
 using DCL.UI.SharedSpaceManager;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -19,20 +19,20 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly INotificationsBusController notificationsBusController;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             INotificationsBusController notificationsBusController,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
             this.notificationsBusController = notificationsBusController;
             this.sharedSpaceManager = sharedSpaceManager;
         }
@@ -49,7 +49,7 @@ namespace DCL.PluginSystem.Global
                     notificationsBusController,
                     notificationIconTypes,
                     rarityBackgroundMapping,
-                    webRequestController
+                    spriteCache
                 );
 
             mvcManager.RegisterController(newNotificationController);

@@ -5,6 +5,7 @@ using DCL.Backpack;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.RewardPanel;
+using DCL.UI;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -19,14 +20,14 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly INotificationsBusController notificationsBusController;
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
 
-        public RewardPanelPlugin(IMVCManager mvcManager, IAssetsProvisioner assetsProvisioner, INotificationsBusController notificationsBusController, IWebRequestController webRequestController)
+        public RewardPanelPlugin(IMVCManager mvcManager, IAssetsProvisioner assetsProvisioner, INotificationsBusController notificationsBusController, ISpriteCache spriteCache)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.notificationsBusController = notificationsBusController;
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
 
             this.notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_IN_PROGRESS, OnNewRewardReceived);
         }
@@ -51,7 +52,7 @@ namespace DCL.PluginSystem.Global
             NftTypeIconSO rarityBackgroundsMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct);
             NftTypeIconSO categoryIconsMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct);
             RewardPanelView rewardPanelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.RewardPanelView, ct: ct)).Value.GetComponent<RewardPanelView>();
-            RewardPanelController rewardPanelController = new RewardPanelController(RewardPanelController.CreateLazily(rewardPanelView, null), webRequestController, nftRarityColors, rarityBackgroundsMapping, categoryIconsMapping);
+            RewardPanelController rewardPanelController = new RewardPanelController(RewardPanelController.CreateLazily(rewardPanelView, null), spriteCache, nftRarityColors, rarityBackgroundsMapping, categoryIconsMapping);
             mvcManager.RegisterController(rewardPanelController);
         }
 

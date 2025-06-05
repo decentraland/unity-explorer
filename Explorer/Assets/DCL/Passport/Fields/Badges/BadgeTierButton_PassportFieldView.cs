@@ -40,12 +40,12 @@ namespace DCL.Passport.Fields.Badges
 
         private ImageController? imageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ISpriteCache spriteCache)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(TierImage, webRequestController);
+            imageController = new ImageController(TierImage, spriteCache);
         }
 
         public void StopLoadingImage() =>

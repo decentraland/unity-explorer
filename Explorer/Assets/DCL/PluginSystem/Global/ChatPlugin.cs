@@ -20,6 +20,7 @@ using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
@@ -62,7 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ICommunitiesDataProvider communityDataProvider;
-        private readonly IThumbnailCache thumbnailCache;
+        private readonly ISpriteCache thumbnailCache;
 
         private ChatController chatController;
 
@@ -77,7 +78,6 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
@@ -93,7 +93,7 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             ICommunitiesDataProvider communityDataProvider,
-            IThumbnailCache thumbnailCache)
+            ISpriteCache thumbnailCache)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -104,7 +104,6 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.viewDependencies = viewDependencies;
-            this.chatCommandsBus = chatCommandsBus;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;

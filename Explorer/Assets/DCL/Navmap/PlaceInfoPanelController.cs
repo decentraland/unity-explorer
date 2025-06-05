@@ -29,7 +29,7 @@ namespace DCL.Navmap
     public class PlaceInfoPanelController : IDisposable
     {
         private readonly PlaceInfoPanelView view;
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly INavmapBus navmapBus;
@@ -57,7 +57,7 @@ namespace DCL.Navmap
         private Section? currentSection;
 
         public PlaceInfoPanelController(PlaceInfoPanelView view,
-            IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             IPlacesAPIService placesAPIService,
             IMapPathEventBus mapPathEventBus,
             INavmapBus navmapBus,
@@ -73,7 +73,7 @@ namespace DCL.Navmap
             bool? reelUseSignedRequest = null)
         {
             this.view = view;
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
             this.navmapBus = navmapBus;
@@ -84,7 +84,7 @@ namespace DCL.Navmap
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
 
-            thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
+            thumbnailImage = new ImageController(view.Thumbnail, spriteCache);
 
             if (view.CameraReelGalleryView != null)
             {
@@ -341,7 +341,7 @@ namespace DCL.Navmap
                 foreach (EventDTO @event in events)
                 {
                     EventElementView element = eventElementPool.Get();
-                    element.Init(webRequestController);
+                    element.Init(spriteCache);
                     eventElements.Add(element);
 
                     var schedule = "";

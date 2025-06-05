@@ -51,6 +51,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
@@ -88,6 +89,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteStorage emoteStorage;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
@@ -183,13 +185,15 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
-            ICommunitiesDataProvider communitiesDataProvider)
+            ICommunitiesDataProvider communitiesDataProvider,
+            ISpriteCache spriteCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
             this.placesAPIService = placesAPIService;
             this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
             this.web3IdentityCache = web3IdentityCache;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
@@ -271,6 +275,7 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 assetBundleURL,
                 webRequestController,
+                spriteCache,
                 characterPreviewEventBus,
                 backpackEventBus,
                 thirdPartyNftProviderSource,
@@ -319,12 +324,12 @@ namespace DCL.PluginSystem.Global
                 navmapView.WorldsWarningNotificationView, clipboard, webBrowser);
 
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
-                webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                spriteCache, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(settings.PlaceGridLayoutFixedColumnCount, settings.PlaceThumbnailHeight, settings.PlaceThumbnailWidth, false, false), false);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
-                webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
+                spriteCache, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
                 userCalendar, shareContextMenu, webBrowser);
 
             placesAndEventsPanelController = new PlacesAndEventsPanelController(navmapView.PlacesAndEventsPanelView,
@@ -338,7 +343,7 @@ namespace DCL.PluginSystem.Global
 
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
-                    webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
+                    spriteCache, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
@@ -404,7 +409,7 @@ namespace DCL.PluginSystem.Global
             PlaceElementView CreatePoolElements(PlaceElementView asset)
             {
                 PlaceElementView placeElementView = Object.Instantiate(asset, view.searchResultsContainer);
-                placeElementView.ConfigurePlaceImageController(webRequestController);
+                placeElementView.ConfigurePlaceImageController(spriteCache);
                 return placeElementView;
             }
         }

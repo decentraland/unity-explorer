@@ -74,6 +74,7 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SocialService;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
@@ -580,7 +581,7 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
-            IThumbnailCache thumbnailCache = new ThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
+            ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
@@ -589,7 +590,7 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
-            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource, thumbnailCache);
+            ICommunitiesDataProvider communitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -697,7 +698,6 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     viewDependencies,
-                    chatCommandsBus,
                     roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter,
@@ -766,7 +766,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     profileChangesBus,
                     staticContainer.SceneLoadingLimit,
-                    communitiesDataProvider
+                    communitiesDataProvider,
+                    thumbnailCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -778,7 +779,7 @@ namespace Global.Dynamic
                 new TeleportPromptPlugin(
                     assetsProvisioner,
                     mvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController,
+                    thumbnailCache,
                     placesAPIService,
                     dclCursor,
                     chatMessagesBus
@@ -788,7 +789,7 @@ namespace Global.Dynamic
                     mvcManager,
                     dclCursor,
                     realmUrl => chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL, $"/{ChatCommandsUtils.COMMAND_GOTO} {realmUrl}", "RestrictedActionAPI")),
-                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
+                new NftPromptPlugin(assetsProvisioner, webBrowser, mvcManager, nftInfoAPIClient, thumbnailCache, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
                 new MultiplayerMovementPlugin(
@@ -808,10 +809,10 @@ namespace Global.Dynamic
                 new NotificationPlugin(
                     assetsProvisioner,
                     mvcManager,
-                    staticContainer.WebRequestsContainer.WebRequestController,
+                    thumbnailCache,
                     notificationsBusController,
                     sharedSpaceManager),
-                new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
+                new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, thumbnailCache),
                 new PassportPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -821,6 +822,7 @@ namespace Global.Dynamic
                     staticContainer.RealmData,
                     assetBundlesURL,
                     staticContainer.WebRequestsContainer.WebRequestController,
+                    thumbnailCache,
                     characterPreviewEventBus,
                     selfProfile,
                     webBrowser,

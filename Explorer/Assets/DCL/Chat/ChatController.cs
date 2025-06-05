@@ -64,7 +64,7 @@ namespace DCL.Chat
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
-        private readonly IThumbnailCache thumbnailCache;
+        private readonly ISpriteCache thumbnailCache;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -111,7 +111,7 @@ namespace DCL.Chat
             ChatHistoryStorage chatStorage,
             ObjectProxy<IFriendsService> friendsService,
             ICommunitiesDataProvider communitiesDataProvider,
-            IThumbnailCache thumbnailCache)
+            ISpriteCache thumbnailCache)
             : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;

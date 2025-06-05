@@ -1,7 +1,4 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
-using DCL.WebRequests;
 using System;
 using Utility;
 using System.Threading;
@@ -11,16 +8,16 @@ namespace DCL.UI
 {
     public class ImageController
     {
-        private const int PIXELS_PER_UNIT = 50;
+   //     private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private CancellationTokenSource cts;
         public event Action<Sprite>? SpriteLoaded;
 
-        public ImageController(ImageView view, IWebRequestController webRequestController)
+        public ImageController(ImageView view, ISpriteCache spriteCache)
         {
             this.view = view;
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
         }
 
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false)
@@ -47,6 +44,8 @@ namespace DCL.UI
             {
                 view.LoadingObject.SetActive(true);
 
+                Sprite? sprite = await spriteCache.GetSpriteAsync(uri, useKtx, ct);
+                /*
                 //TODO potential memory leak, due no CacheCleaner
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(uri)),
@@ -59,6 +58,7 @@ namespace DCL.UI
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
                 Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+                */
                 SetImage(sprite);
                 SpriteLoaded?.Invoke(sprite);
                 view.Image.enabled = true;

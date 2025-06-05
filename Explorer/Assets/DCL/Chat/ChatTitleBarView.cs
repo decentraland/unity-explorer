@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.Profiles;
+using DCL.UI;
 using DCL.UI.Communities;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
@@ -124,7 +124,7 @@ namespace DCL.Chat
             communityChannelContainer.gameObject.SetActive(false);
         }
 
-        public void SetupCommunityView(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CancellationToken ct)
+        public void SetupCommunityView(ISpriteCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CancellationToken ct)
         {
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(true);

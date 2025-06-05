@@ -95,7 +95,7 @@ namespace DCL.UI.ProfileElements
                 SetLoadingState(true);
                 thumbnailImageView.Alpha = 0f;
 
-                sprite = await viewDependencies!.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+                sprite = await viewDependencies!.GetProfileThumbnailAsync(faceSnapshotUrl, cts.Token);
 
                 if (sprite == null)
                     currentUserId = null;

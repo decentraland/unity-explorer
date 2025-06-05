@@ -4,6 +4,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.UI;
 using DCL.Utilities;
 using System.Threading;
 using UnityEngine;
@@ -23,21 +24,21 @@ namespace MVC
         public readonly ICursor Cursor;
         public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
 
-        private readonly IThumbnailCache thumbnailCache;
+        private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
-        public async UniTask<Sprite?> GetProfileThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
-            await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
+        public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
+            await thumbnailCache.GetSpriteAsync(thumbnailUrl, ct);
 
         public Sprite? GetProfileThumbnail(string userId) =>
-            thumbnailCache.GetThumbnail(userId);
+            thumbnailCache.GetCachedSprite(userId);
 
         public async UniTask<Profile?> GetProfileAsync(string walletId, CancellationToken ct) =>
             await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
 
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            ISpriteCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;

@@ -3,7 +3,7 @@ using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
 using DCL.Profiles;
-using DCL.WebRequests;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -30,7 +30,7 @@ namespace DCL.Passport.Modules.Badges
             BadgesOverview_PassportModuleView view,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            IWebRequestController webRequestController
+            ISpriteCache spriteCache
         )
         {
             this.view = view;
@@ -42,7 +42,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGES_OVERVIEW_MAX_COUNT,
                 actionOnGet: badgeOverviewItemView =>
                 {
-                    badgeOverviewItemView.ConfigureImageController(webRequestController);
+                    badgeOverviewItemView.ConfigureImageController(spriteCache);
                     badgeOverviewItemView.gameObject.SetActive(true);
                     badgeOverviewItemView.gameObject.transform.SetAsLastSibling();
                 },

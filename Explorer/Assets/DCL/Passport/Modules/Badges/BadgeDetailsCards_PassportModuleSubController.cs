@@ -1,6 +1,6 @@
 using DCL.BadgesAPIService;
 using DCL.Passport.Fields.Badges;
-using DCL.WebRequests;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -25,7 +25,7 @@ namespace DCL.Passport.Modules.Badges
 
         public BadgeDetailsCards_PassportModuleSubController(
             BadgesDetails_PassportModuleView view,
-            IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             BadgesCategories_PassportModuleSubController badgesCategoriesController,
             BadgeInfo_PassportModuleSubController badgeInfoController)
         {
@@ -38,7 +38,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGES_DETAIL_CARDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeDetailCardView =>
                 {
-                    badgeDetailCardView.ConfigureImageController(webRequestController);
+                    badgeDetailCardView.ConfigureImageController(spriteCache);
                     badgeDetailCardView.gameObject.SetActive(true);
                     badgeDetailCardView.SetAsSelected(false);
                 },

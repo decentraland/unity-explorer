@@ -1,5 +1,4 @@
 using DCL.UI;
-using DCL.WebRequests;
 using System;
 using TMPro;
 using UnityEngine;
@@ -43,8 +42,8 @@ namespace DCL.Navmap
 
         public event Action<bool, Vector2Int> OnMouseHover;
 
-        public void ConfigurePlaceImageController(IWebRequestController webRequestController) =>
-            imageController = new ImageController(placeImage, webRequestController);
+        public void ConfigurePlaceImageController(ISpriteCache spriteCache) =>
+            imageController = new ImageController(placeImage, spriteCache);
 
         public void SetPlaceImage(string imageUrl) =>
             imageController.RequestImage(imageUrl, true);

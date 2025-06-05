@@ -22,7 +22,7 @@ namespace DCL.UI.Communities
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
 
-        public async UniTaskVoid SetupAsync(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CancellationToken ct)
+        public async UniTaskVoid SetupAsync(ISpriteCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CancellationToken ct)
         {
             userNameElement.text = communityName;
             await thumbnailView.LoadThumbnailAsync(thumbnailCache, thumbnailUrl, communityId, ct);

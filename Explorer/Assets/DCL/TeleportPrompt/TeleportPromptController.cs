@@ -20,7 +20,7 @@ namespace DCL.TeleportPrompt
         private const string ORIGIN = "teleport prompt";
 
         private readonly ICursor cursor;
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IChatMessagesBus chatMessagesBus;
         private ImageController placeImageController;
@@ -31,20 +31,20 @@ namespace DCL.TeleportPrompt
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
-            IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             IPlacesAPIService placesAPIService,
             IChatMessagesBus chatMessagesBus
         ) : base(viewFactory)
         {
             this.cursor = cursor;
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
             this.placesAPIService = placesAPIService;
             this.chatMessagesBus = chatMessagesBus;
         }
 
         protected override void OnViewInstantiated()
         {
-            placeImageController = new ImageController(viewInstance.placeImage, webRequestController);
+            placeImageController = new ImageController(viewInstance.placeImage, spriteCache);
             viewInstance.cancelButton.onClick.AddListener(Dismiss);
             viewInstance.continueButton.onClick.AddListener(Approve);
         }

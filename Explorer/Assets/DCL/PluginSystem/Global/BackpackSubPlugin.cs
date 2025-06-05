@@ -52,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IInputBlock inputBlock;
         private readonly IAppArgs appArgs;
@@ -75,6 +76,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
@@ -99,6 +101,7 @@ namespace DCL.PluginSystem.Global
             this.forceRender = forceRender;
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
+            this.spriteCache = spriteCache;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.backpackEventBus = backpackEventBus;

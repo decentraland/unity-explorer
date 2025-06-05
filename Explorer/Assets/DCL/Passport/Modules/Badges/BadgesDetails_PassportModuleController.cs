@@ -40,6 +40,7 @@ namespace DCL.Passport.Modules.Badges
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
+            ISpriteCache spriteCache,
             IWebRequestController webRequestController,
             ISelfProfile selfProfile)
         {
@@ -49,8 +50,8 @@ namespace DCL.Passport.Modules.Badges
             this.selfProfile = selfProfile;
 
             badgesCategoriesController = new BadgesCategories_PassportModuleSubController(view);
-            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, badgesAPIClient, passportErrorsController);
-            badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, webRequestController, badgesCategoriesController, badgeInfoController);
+            badgeInfoController = new BadgeInfo_PassportModuleSubController(badgeInfoModuleView, webRequestController, spriteCache, badgesAPIClient, passportErrorsController);
+            badgeDetailsCardsController = new BadgeDetailsCards_PassportModuleSubController(view, spriteCache, badgesCategoriesController, badgeInfoController);
 
             badgeDetailsCardsController.OnBadgeSelected += BadgeSelected;
             badgesCategoriesController.OnBadgesFilterButtonClicked += OnBadgesCategoryButtonClicked;

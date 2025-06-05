@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
@@ -12,11 +11,8 @@ namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
-        private IThumbnailCache thumbnailCache;
-
-        public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource, IThumbnailCache thumbnailCache)
+        public FakeCommunitiesDataProvider(IWebRequestController webRequestController, IWeb3IdentityCache web3IdentityCache, IDecentralandUrlsSource urlsSource)
         {
-            this.thumbnailCache = thumbnailCache;
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
@@ -78,11 +74,5 @@ namespace DCL.Communities
 
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
-
-        public async UniTask<Sprite> GetCommunityThumbnailAsync(string communityId, string thumbnailUrl, CancellationToken ct)
-        {
-            await UniTask.Delay(500, DelayType.DeltaTime, PlayerLoopTiming.Update, ct);
-            return await thumbnailCache.GetThumbnailAsync(communityId, thumbnailUrl, ct);
-        }
     }
 }

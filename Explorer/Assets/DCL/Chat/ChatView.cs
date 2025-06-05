@@ -205,7 +205,7 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
 
-        private IThumbnailCache thumbnailCache;
+        private ISpriteCache thumbnailCache;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -464,7 +464,7 @@ namespace DCL.Chat
             ChatSettingsAsset chatSettings,
             GetParticipantProfilesDelegate getParticipantProfilesDelegate,
             ILoadingStatus loadingStatus,
-            IThumbnailCache thumbnailCache)
+            ISpriteCache thumbnailCache)
         {
             this.thumbnailCache = thumbnailCache;
             channels = chatChannels;
@@ -751,7 +751,7 @@ namespace DCL.Chat
         /// </summary>
         /// <param name="channelToAdd">The channel for which the item will be created.</param>
         /// <param name="thumbnailCache">A reference to the thumbnail cache to get the icon of the toolbar.</param>
-        public void AddCommunityConversation(ChatChannel channelToAdd, IThumbnailCache thumbnailCache)
+        public void AddCommunityConversation(ChatChannel channelToAdd, ISpriteCache thumbnailCache)
         {
             conversationsToolbar.AddConversation(channelToAdd);
             GetUserCommunitiesCompactResponse.CommunityData communityData = communitiesData[channelToAdd.Id];

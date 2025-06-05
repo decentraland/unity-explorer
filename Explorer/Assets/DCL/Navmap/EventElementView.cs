@@ -50,9 +50,9 @@ namespace DCL.Navmap
 
         public MultiStateButtonController? InterestedButton { get; private set; }
 
-        public void Init(IWebRequestController webRequestController)
+        public void Init(ISpriteCache spriteCache)
         {
-            Thumbnail = new ImageController(thumbnailView, webRequestController);
+            Thumbnail = new ImageController(thumbnailView, spriteCache);
             InterestedButton = new MultiStateButtonController(interestedButtonView, true);
         }
 

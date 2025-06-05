@@ -9,6 +9,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.Buttons;
 using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
@@ -44,7 +45,7 @@ namespace DCL.MarketplaceCredits
         private readonly HoverableAndSelectableButtonWithAnimator sidebarButton;
         private readonly MarketplaceCreditsAPIClient marketplaceCreditsAPIClient;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly IMVCManager mvcManager;
@@ -88,7 +89,7 @@ namespace DCL.MarketplaceCredits
             this.inputBlock = inputBlock;
             this.marketplaceCreditsAPIClient = marketplaceCreditsAPIClient;
             this.selfProfile = selfProfile;
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
             this.mvcManager = mvcManager;
             this.sidebarCreditsButtonAnimator = sidebarCreditsButtonAnimator;
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
@@ -112,7 +113,7 @@ namespace DCL.MarketplaceCredits
             marketplaceCreditsGoalsOfTheWeekSubController = new MarketplaceCreditsGoalsOfTheWeekSubController(
                 viewInstance.GoalsOfTheWeekSubView,
                 marketplaceCreditsAPIClient,
-                webRequestController,
+                spriteCache,
                 viewInstance.TotalCreditsWidget,
                 this);
 

@@ -9,7 +9,7 @@ namespace DCL.RewardPanel
 {
     public class RewardPanelController : ControllerBase<RewardPanelView, RewardPanelParameter>
     {
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly NFTColorsSO nftRarityColors;
         private readonly NftTypeIconSO nftRarityBackgrounds;
         private readonly NftTypeIconSO nftCategoryIcons;
@@ -18,13 +18,13 @@ namespace DCL.RewardPanel
 
         public RewardPanelController(
             ViewFactoryMethod viewFactory,
-            IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             NFTColorsSO nftRarityColors,
             NftTypeIconSO nftRarityBackgrounds,
             NftTypeIconSO nftCategoryIcons
         ) : base(viewFactory)
         {
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
             this.nftRarityColors = nftRarityColors;
             this.nftRarityBackgrounds = nftRarityBackgrounds;
             this.nftCategoryIcons = nftCategoryIcons;
@@ -32,7 +32,7 @@ namespace DCL.RewardPanel
 
         protected override void OnViewInstantiated()
         {
-            imageController = new ImageController(viewInstance.ThumbnailImage, webRequestController);
+            imageController = new ImageController(viewInstance.ThumbnailImage, spriteCache);
         }
 
         protected override void OnBeforeViewShow()

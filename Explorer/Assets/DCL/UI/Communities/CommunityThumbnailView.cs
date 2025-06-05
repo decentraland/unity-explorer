@@ -35,7 +35,7 @@ namespace DCL.UI.Communities
             currentCommunityId = null;
         }
 
-        public async UniTask LoadThumbnailAsync(IThumbnailCache thumbnailCache, string imageUrl, string communityId,  CancellationToken ct = default)
+        public async UniTask LoadThumbnailAsync(ISpriteCache thumbnailCache, string imageUrl, string communityId,  CancellationToken ct = default)
         {
             if (communityId.Equals(currentCommunityId)) return;
 
@@ -46,7 +46,7 @@ namespace DCL.UI.Communities
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = thumbnailCache.GetThumbnail(communityId);
+                Sprite? sprite = thumbnailCache.GetCachedSprite(communityId);
 
                 if (sprite != null)
                 {
@@ -59,7 +59,7 @@ namespace DCL.UI.Communities
                 SetLoadingState(true);
                 thumbnailImageView.Alpha = 0f;
 
-                sprite = await thumbnailCache!.GetThumbnailAsync(communityId, imageUrl, cts.Token);
+                sprite = await thumbnailCache!.GetSpriteAsync(imageUrl, cts.Token);
 
                 if (sprite == null)
                     currentCommunityId = null;

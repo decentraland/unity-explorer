@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.MarketplaceCredits.Fields;
 using DCL.MarketplaceCreditsAPIService;
-using DCL.WebRequests;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -32,7 +32,7 @@ namespace DCL.MarketplaceCredits.Sections
         public MarketplaceCreditsGoalsOfTheWeekSubController(
             MarketplaceCreditsGoalsOfTheWeekSubView subView,
             MarketplaceCreditsAPIClient marketplaceCreditsAPIClient,
-            IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             MarketplaceCreditsTotalCreditsWidgetView totalCreditsWidgetView,
             MarketplaceCreditsMenuController marketplaceCreditsMenuController)
         {
@@ -52,7 +52,7 @@ namespace DCL.MarketplaceCredits.Sections
                 defaultCapacity: GOALS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: goalRowView =>
                 {
-                    goalRowView.ConfigureImageController(webRequestController);
+                    goalRowView.ConfigureImageController(spriteCache);
                     goalRowView.gameObject.SetActive(true);
                     goalRowView.transform.SetAsLastSibling();
                 },

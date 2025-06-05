@@ -24,7 +24,7 @@ namespace DCL.Notifications.NewNotification
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NftTypeIconSO rarityBackgroundMapping;
-        private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
         private ImageController thumbnailImageController;
@@ -39,12 +39,12 @@ namespace DCL.Notifications.NewNotification
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController) : base(viewFactory)
+            ISpriteCache spriteCache) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
-            this.webRequestController = webRequestController;
+            this.spriteCache = spriteCache;
             notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
@@ -52,15 +52,15 @@ namespace DCL.Notifications.NewNotification
 
         protected override void OnViewInstantiated()
         {
-            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, webRequestController);
+            thumbnailImageController = new ImageController(viewInstance!.NotificationView.NotificationImage, spriteCache);
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
             viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
-            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, webRequestController);
+            badgeThumbnailImageController = new ImageController(viewInstance.BadgeNotificationView.NotificationImage, spriteCache);
             viewInstance.BadgeNotificationView.NotificationClicked += ClickedNotification;
-            friendsThumbnailImageController = new ImageController(viewInstance.FriendsNotificationView.NotificationImage, webRequestController);
+            friendsThumbnailImageController = new ImageController(viewInstance.FriendsNotificationView.NotificationImage, spriteCache);
             viewInstance.FriendsNotificationView.NotificationClicked += ClickedNotification;
-            marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, webRequestController);
+            marketplaceCreditsThumbnailImageController = new ImageController(viewInstance.MarketplaceCreditsNotificationView.NotificationImage, spriteCache);
             viewInstance.MarketplaceCreditsNotificationView.NotificationClicked += ClickedNotification;
         }
 

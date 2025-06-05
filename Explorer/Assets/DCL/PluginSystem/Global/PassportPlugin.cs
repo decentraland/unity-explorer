@@ -19,6 +19,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isNameEditorEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ISpriteCache spriteCache;
 
         private PassportController? passportController;
 
@@ -81,6 +83,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
@@ -140,6 +143,7 @@ namespace DCL.PluginSystem.Global
             this.isNameEditorEnabled = isNameEditorEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.spriteCache = spriteCache;
         }
 
         public void Dispose()
@@ -178,6 +182,7 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 decentralandUrlsSource,
                 badgesAPIClient,
+                spriteCache,
                 webRequestController,
                 inputBlock,
                 notificationsBusController,

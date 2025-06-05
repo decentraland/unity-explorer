@@ -36,7 +36,7 @@ namespace DCL.Navmap
         private CancellationTokenSource? updateLayoutCancellationToken;
 
         public EventInfoPanelController(EventInfoPanelView view,
-            IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             INavmapBus navmapBus,
             IChatMessagesBus chatMessagesBus,
             IEventsApiService eventsApiService,
@@ -53,7 +53,7 @@ namespace DCL.Navmap
             this.userCalendar = userCalendar;
             this.shareContextMenu = shareContextMenu;
             this.webBrowser = webBrowser;
-            thumbnailController = new ImageController(view.Thumbnail, webRequestController);
+            thumbnailController = new ImageController(view.Thumbnail, spriteCache);
             interestedButtonController = new MultiStateButtonController(view.InterestedButton, true);
             interestedButtonController.OnButtonClicked += SetInterested;
             view.ShareButton.onClick.AddListener(Share);

@@ -1,5 +1,4 @@
 using DCL.UI;
-using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -52,12 +51,12 @@ namespace DCL.MarketplaceCredits.Fields
 
         private ImageController imageController;
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ISpriteCache spriteCache)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(GoalImage, webRequestController);
+            imageController = new ImageController(GoalImage, spriteCache);
         }
 
         public void StopLoadingImage() =>

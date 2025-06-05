@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields.Badges;
+using DCL.UI;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace DCL.Passport.Modules.Badges
 
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly IWebRequestController webRequestController;
+        private readonly ISpriteCache spriteCache;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<BadgeTierButton_PassportFieldView> badgeTierButtonsPool;
@@ -38,10 +40,12 @@ namespace DCL.Passport.Modules.Badges
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             IWebRequestController webRequestController,
+            ISpriteCache spriteCache,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
+            this.spriteCache = spriteCache;
             this.webRequestController = webRequestController;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
@@ -51,7 +55,7 @@ namespace DCL.Passport.Modules.Badges
                 defaultCapacity: BADGE_TIER_BUTTON_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeTierButton =>
                 {
-                    badgeTierButton.ConfigureImageController(webRequestController);
+                    badgeTierButton.ConfigureImageController(spriteCache);
                     badgeTierButton.gameObject.SetActive(true);
                     badgeTierButton.SetAsSelected(false);
                     badgeTierButton.transform.SetAsLastSibling();
