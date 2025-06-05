@@ -16,7 +16,7 @@ namespace DCL.UI.ProfileElements
 
         private ViewDependencies? viewDependencies;
         private CancellationTokenSource? cts;
-        private string? currentUserId;
+        private string? currentThumbnailUrl;
 
         public void InjectDependencies(ViewDependencies dependencies)
         {
@@ -31,14 +31,14 @@ namespace DCL.UI.ProfileElements
         public void Setup(Color userColor, string faceSnapshotUrl, string userId)
         {
             SetupOnlyColor(userColor);
-            LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
+            LoadThumbnailAsync(faceSnapshotUrl).Forget();
         }
 
         public async UniTask SetupWithDependenciesAsync(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
         {
             InjectDependencies(dependencies);
             SetupOnlyColor(userColor);
-            await LoadThumbnailAsync(faceSnapshotUrl, userId, ct);
+            await LoadThumbnailAsync(faceSnapshotUrl, ct);
         }
 
         public void SetupWithDependencies(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId)
@@ -61,7 +61,7 @@ namespace DCL.UI.ProfileElements
         public void SetDefaultThumbnail()
         {
             thumbnailImageView.SetImage(defaultEmptyThumbnail);
-            currentUserId = null;
+            currentThumbnailUrl = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
@@ -71,18 +71,18 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, CancellationToken ct = default)
         {
-            if (userId.Equals(currentUserId)) return;
+            if (faceSnapshotUrl.Equals(currentThumbnailUrl)) return;
 
             cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
-            currentUserId = userId;
+            currentThumbnailUrl = faceSnapshotUrl;
 
             try
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = viewDependencies!.GetProfileThumbnail(userId);
+                Sprite? sprite = viewDependencies!.GetCachedProfileThumbnail(faceSnapshotUrl);
 
                 if (sprite != null)
                 {
@@ -98,17 +98,17 @@ namespace DCL.UI.ProfileElements
                 sprite = await viewDependencies!.GetProfileThumbnailAsync(faceSnapshotUrl, cts.Token);
 
                 if (sprite == null)
-                    currentUserId = null;
+                    currentThumbnailUrl = null;
 
                 await SetThumbnailImageWithAnimationAsync(sprite ? sprite! : defaultEmptyThumbnail, cts.Token);
             }
             catch (OperationCanceledException)
             {
-                currentUserId = null;
+                currentThumbnailUrl = null;
             }
             catch (Exception)
             {
-                currentUserId = null;
+                currentThumbnailUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }
         }

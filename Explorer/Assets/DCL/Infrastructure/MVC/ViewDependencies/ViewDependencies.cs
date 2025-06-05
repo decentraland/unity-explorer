@@ -31,8 +31,8 @@ namespace MVC
         public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
             await thumbnailCache.GetSpriteAsync(thumbnailUrl, ct);
 
-        public Sprite? GetProfileThumbnail(string userId) =>
-            thumbnailCache.GetCachedSprite(userId);
+        public Sprite? GetCachedProfileThumbnail(string thumbnailUrl) =>
+            thumbnailCache.GetCachedSprite(thumbnailUrl);
 
         public async UniTask<Profile?> GetProfileAsync(string walletId, CancellationToken ct) =>
             await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
