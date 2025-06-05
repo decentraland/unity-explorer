@@ -11,7 +11,6 @@ using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;

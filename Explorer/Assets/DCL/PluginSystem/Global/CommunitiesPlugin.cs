@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Communities.CommunityCreation;
+using DCL.Input;
 using MVC;
 using System;
 using System.Threading;
@@ -16,16 +17,19 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebBrowser webBrowser;
+        private readonly IInputBlock inputBlock;
 
         private CommunityCreationEditionController? communityCreationEditionController;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IInputBlock inputBlock)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
+            this.inputBlock = inputBlock;
         }
 
         public void Dispose()
@@ -41,7 +45,7 @@ namespace DCL.PluginSystem.Global
         {
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
-            communityCreationEditionController = new CommunityCreationEditionController(communityCreationEditionViewFactoryMethod, webBrowser);
+            communityCreationEditionController = new CommunityCreationEditionController(communityCreationEditionViewFactoryMethod, webBrowser, inputBlock);
             mvcManager.RegisterController(communityCreationEditionController);
         }
     }
