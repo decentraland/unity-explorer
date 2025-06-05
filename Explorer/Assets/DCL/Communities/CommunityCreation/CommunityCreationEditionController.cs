@@ -4,7 +4,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using MVC;
-using System;
 using System.Threading;
 
 namespace DCL.Communities.CommunityCreation

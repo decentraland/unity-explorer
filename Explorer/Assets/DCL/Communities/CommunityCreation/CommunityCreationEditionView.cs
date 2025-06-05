@@ -32,11 +32,13 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private Button creationPanelEditProfilePictureButton;
         [SerializeField] private Image creationPanelProfileSelectedImage;
         [SerializeField] private TMP_InputField creationPanelCommunityNameInputField;
+        [SerializeField] private TMP_Text creationPanelCommunityNameCharCounter;
         [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField;
+        [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter;
         [SerializeField] private TMP_Dropdown creationPanelPlacesDropdown;
         [SerializeField] private Button creationPanelAddPlaceButton;
         [SerializeField] private Button creationPanelCancelButton;
-        [SerializeField] private Button creationPanelSaveButton;
+        [SerializeField] private Button creationPanelCreateButton;
 
         private void Awake()
         {
@@ -45,6 +47,8 @@ namespace DCL.Communities.CommunityCreation
             getNamePanelGetNameButton.onClick.AddListener(() => GetNameButtonClicked?.Invoke());
             creationPanelCancelButton.onClick.AddListener(() => CancelButtonClicked?.Invoke());
             creationPanelEditProfilePictureButton.onClick.AddListener(() => SelectProfilePictureButtonClicked?.Invoke());
+            creationPanelCommunityNameInputField.onValueChanged.AddListener(CreationPanelCommunityNameInputChanged);
+            creationPanelCommunityDescriptionInputField.onValueChanged.AddListener(CreationPanelCommunityDescriptionInputChanged);
         }
 
         private void OnDestroy()
@@ -53,6 +57,8 @@ namespace DCL.Communities.CommunityCreation
             getNamePanelGetNameButton.onClick.RemoveAllListeners();
             creationPanelCancelButton.onClick.RemoveAllListeners();
             creationPanelEditProfilePictureButton.onClick.RemoveAllListeners();
+            creationPanelCommunityNameInputField.onValueChanged.RemoveAllListeners();
+            creationPanelCommunityDescriptionInputField.onValueChanged.RemoveAllListeners();
         }
 
         public void SetAccess(bool canCreate)
@@ -79,11 +85,17 @@ namespace DCL.Communities.CommunityCreation
             creationPanelProfileSelectedImage.sprite = sprite;
         }
 
-        public void SetCommunityName(string text) =>
+        public void SetCommunityName(string text)
+        {
             creationPanelCommunityNameInputField.text = text;
+            CheckForCreateButtonAvailability();
+        }
 
-        public void SetCommunityDescription(string text) =>
+        public void SetCommunityDescription(string text)
+        {
             creationPanelCommunityDescriptionInputField.text = text;
+            CheckForCreateButtonAvailability();
+        }
 
         public void SetPlacesSelector(List<string> options)
         {
@@ -102,6 +114,25 @@ namespace DCL.Communities.CommunityCreation
             SetCommunityDescription(string.Empty);
             SetPlacesSelector(new List<string>());
             creationPanelScrollRect.verticalNormalizedPosition = 1f;
+        }
+
+        private void CreationPanelCommunityNameInputChanged(string text)
+        {
+            creationPanelCommunityNameCharCounter.text = $"{text.Length}/{creationPanelCommunityNameInputField.characterLimit}";
+            CheckForCreateButtonAvailability();
+        }
+
+        private void CreationPanelCommunityDescriptionInputChanged(string text)
+        {
+            creationPanelCommunityDescriptionCharCounter.text = $"{text.Length}/{creationPanelCommunityDescriptionInputField.characterLimit}";
+            CheckForCreateButtonAvailability();
+        }
+
+        private void CheckForCreateButtonAvailability()
+        {
+            creationPanelCreateButton.interactable =
+                !string.IsNullOrEmpty(creationPanelCommunityNameInputField.text) &&
+                !string.IsNullOrEmpty(creationPanelCommunityDescriptionInputField.text);
         }
     }
 }
