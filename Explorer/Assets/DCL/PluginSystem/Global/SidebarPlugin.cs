@@ -10,6 +10,7 @@ using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
@@ -52,7 +53,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeFriends;
         private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IProfileChangesBus profileChangesBus;
         private readonly ISelfProfile selfProfile;
@@ -79,7 +80,7 @@ namespace DCL.PluginSystem.Global
             bool includeFriends,
             bool includeMarketplaceCredits,
             IChatHistory chatHistory,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
@@ -105,7 +106,7 @@ namespace DCL.PluginSystem.Global
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.chatHistory = chatHistory;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
@@ -134,8 +135,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 notificationsBusController,
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
-                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies, profileChangesBus),
-                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
+                new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
+                new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager, input),
                 webBrowser,

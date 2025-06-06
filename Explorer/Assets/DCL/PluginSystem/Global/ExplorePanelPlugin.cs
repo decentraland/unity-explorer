@@ -49,6 +49,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
 using DCL.UI;
@@ -134,6 +135,7 @@ namespace DCL.PluginSystem.Global
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
         private ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private CommunitiesBrowserController? communitiesBrowserController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -187,6 +189,7 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
+            ProfileRepositoryWrapper profileDataProvider,
             ICommunitiesDataProvider communitiesDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -241,6 +244,7 @@ namespace DCL.PluginSystem.Global
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.communitiesDataProvider = communitiesDataProvider;
         }
 
@@ -399,8 +403,8 @@ namespace DCL.PluginSystem.Global
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
-                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, viewDependencies, profileChangesBus),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, viewDependencies),
+                    new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                     communitiesBrowserController, dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, includeCommunities, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
