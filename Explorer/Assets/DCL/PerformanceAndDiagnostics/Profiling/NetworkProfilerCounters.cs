@@ -9,7 +9,7 @@ namespace DCL.Profiling
 
         public static readonly ProfilerCategory CATEGORY = new (CATEGORY_NAME);
 
-        // Wifi IPv4
+        // full OS traffic for Wifi IPv4
         public const string WIFI_IPV4_BYTES_SENT_NAME = "Wifi IPv4 Sent";
         public const string WIFI_IPV4_BYTES_RECEIVED_NAME = "Wifi IPv4 Received";
         public const string WIFI_IPV4_BYTES_SENT_FRAME_NAME = "Wifi IPv4 Frame Sent";
@@ -35,7 +35,7 @@ namespace DCL.Profiling
         public static readonly ProfilerCounterValue<float> WIFI_IPV4_MBPS_RECEIVED
             = new (CATEGORY, WIFI_IPV4_MBPS_RECEIVED_NAME, ProfilerMarkerDataUnit.Count, ProfilerCounterOptions.FlushOnEndOfFrame);
 
-        // LiveKit
+        // only LiveKit payloads (headers are not tracked)
         public const string LIVEKIT_ISLAND_SEND_NAME = "LiveKit Island Sent";
         public const string LIVEKIT_SCENE_SEND_NAME = "LiveKit Scene Sent";
         public const string LIVEKIT_ISLAND_RECEIVED_NAME = "LiveKit Island Received";
