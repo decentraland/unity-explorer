@@ -298,7 +298,13 @@ MonoBehaviour:
         <PlaceThumbnailWidth>k__BackingField: 404
     - rid: 1766526334245273896
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data: 
+      data:
+        <CommunityCardPrefab>k__BackingField:
+          m_AssetGUID: 4f900819503d2412194e6de3e5a95ba0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:

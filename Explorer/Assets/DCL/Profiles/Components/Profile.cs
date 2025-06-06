@@ -13,7 +13,7 @@ namespace DCL.Profiles
 {
     public class Profile : IDirtyMarker, IDisposable
     {
-        private static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
+        public static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
         private static readonly ThreadSafeObjectPool<Profile> POOL = new (
             () => new Profile(),
             actionOnRelease: profile => profile.Clear());

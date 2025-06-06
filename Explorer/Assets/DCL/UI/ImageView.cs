@@ -13,6 +13,8 @@ namespace DCL.UI
         [field: SerializeField]
         internal Image Image { get; private set; }
 
+        public Sprite ImageSprite => Image.sprite;
+
         public bool IsLoading
         {
             get => LoadingObject.activeSelf;

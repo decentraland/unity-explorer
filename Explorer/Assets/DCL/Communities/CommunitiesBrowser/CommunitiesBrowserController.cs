@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -33,6 +34,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly IInputBlock inputBlock;
         private readonly ViewDependencies viewDependencies;
         private readonly WarningNotificationView warningNotificationView;
+        private readonly IMVCManager mvcManager;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -55,7 +57,8 @@ namespace DCL.Communities.CommunitiesBrowser
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
-            WarningNotificationView warningNotificationView)
+            WarningNotificationView warningNotificationView,
+            IMVCManager mvcManager)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -65,6 +68,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.inputBlock = inputBlock;
             this.viewDependencies = viewDependencies;
             this.warningNotificationView = warningNotificationView;
+            this.mvcManager = mvcManager;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -324,10 +328,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.UpdateJoinedCommunity(index, result.Value);
         }
 
-        private void OpenCommunityProfile(string communityId)
-        {
-            // TODO: Open community profile (currently implemented by Lorenzo)
-        }
+        private void OpenCommunityProfile(string communityId) =>
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId))).Forget();
 
         private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
         {

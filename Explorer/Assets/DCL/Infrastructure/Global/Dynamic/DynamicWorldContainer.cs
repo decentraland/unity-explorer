@@ -946,7 +946,15 @@ namespace Global.Dynamic
             }
 
             if (includeCommunities)
-                globalPlugins.Add(new CommunitiesPlugin(mvcManager));
+                globalPlugins.Add(new CommunitiesPlugin(mvcManager,
+                    assetsProvisioner,
+                    cameraReelStorageService,
+                    cameraReelScreenshotsStorage,
+                    viewDependencies,
+                    friendServiceProxy,
+                    communitiesDataProvider,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    mainUIView.WarningNotification));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
