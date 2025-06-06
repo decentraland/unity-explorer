@@ -86,25 +86,6 @@ namespace DCL.VoiceChat
             DisabledMicrophone = null;
             MicrophoneReady = null;
 
-            if (isMicrophoneInitialized)
-            {
-                if (audioFilter != null)
-                {
-                    audioFilter.SetProcessingEnabled(false);
-                    
-                    System.Threading.Thread.Sleep(10);
-                    
-                    audioFilter.ResetProcessor();
-                }
-
-                if (audioSource != null)
-                {
-                    StopAudioSource();
-                    audioSource.clip = null;
-                }
-                Microphone.End(MicrophoneName);
-            }
-
             if (rtcAudioSource != null)
             {
                 try
@@ -117,6 +98,25 @@ namespace DCL.VoiceChat
                 }
 
                 rtcAudioSource = null;
+            }
+
+            if (isMicrophoneInitialized)
+            {
+                if (audioFilter != null)
+                {
+                    audioFilter.SetProcessingEnabled(false);
+                    
+                    System.Threading.Thread.Sleep(50);
+                    
+                    audioFilter.ResetProcessor();
+                }
+
+                if (audioSource != null)
+                {
+                    StopAudioSource();
+                    audioSource.clip = null;
+                }
+                Microphone.End(MicrophoneName);
             }
 
         }
@@ -309,17 +309,20 @@ namespace DCL.VoiceChat
                 catch (Exception ex)
                 {
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to start RtcAudioSource: {ex.Message}");
+                    return; // Don't enable processing if RtcAudioSource failed
                 }
             }
 
+            // Small delay to ensure RtcAudioSource is fully started
+            System.Threading.Thread.Sleep(10);
+
             audioFilter.SetProcessingEnabled(true);
+
             EnabledMicrophone?.Invoke();
         }
 
         private void DisableMicrophone()
         {
-            audioFilter.SetProcessingEnabled(false);
-
             if (rtcAudioSource != null)
             {
                 try
@@ -331,6 +334,8 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource: {ex.Message}");
                 }
             }
+
+            audioFilter.SetProcessingEnabled(false);
 
             DisabledMicrophone?.Invoke();
         }
