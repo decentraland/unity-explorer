@@ -89,9 +89,9 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
+            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor);
 
-            ProfilePictureView.Setup(settings.userColor, settings.userThumbnailAddress, settings.userAddress);
+            ProfilePictureView.Setup(settings.userData.userColor, settings.userData.userThumbnailAddress, settings.userData.userAddress);
             ProfilePictureView.SetProfileDataProvider(profileRepositoryWrapper);
             ConfigureFriendshipButton(settings);
 
@@ -104,11 +104,11 @@ namespace DCL.UI.GenericContextMenu.Controls
         }
 
         private void InvokeSettingsAction(UserProfileContextMenuControlSettings settings) =>
-            settings.friendButtonClickAction(settings.userAddress, settings.friendshipStatus);
+            settings.friendButtonClickAction(settings.userData, settings.friendshipStatus);
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            viewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
+            viewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.userName : settings.userData.userAddress);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)
