@@ -20,7 +20,7 @@ namespace DCL.Communities
             public string name;
             public string description;
             public string ownerAddress;
-            public int memberCount;
+            public int membersCount;
             public bool isLive;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;

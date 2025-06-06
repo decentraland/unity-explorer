@@ -41,7 +41,7 @@ namespace DCL.Communities
                     privacy = communityData.privacy,
                     role = communityData.role,
                     places = new [] { "land1", "land2" },
-                    membersCount = communityData.memberCount,
+                    membersCount = communityData.membersCount,
                 }
             };
         }
@@ -92,7 +92,7 @@ namespace DCL.Communities
         {
             GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
-            int totalMembers = communityData.memberCount;
+            int totalMembers = communityData.membersCount;
 
             List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
 
@@ -230,7 +230,7 @@ namespace DCL.Communities
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
-                    memberCount = UnityEngine.Random.Range(1, 101),
+                    membersCount = UnityEngine.Random.Range(1, 101),
                     isLive = UnityEngine.Random.Range(0, 5) == 0,
                     friends = mutualFriends.ToArray(),
                 });

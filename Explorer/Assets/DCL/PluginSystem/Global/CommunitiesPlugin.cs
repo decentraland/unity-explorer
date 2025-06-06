@@ -1,8 +1,12 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
+using DCL.Input;
+using DCL.UI;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunityCreation;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.UI;
@@ -21,6 +25,8 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWebBrowser webBrowser;
+        private readonly IInputBlock inputBlock;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ViewDependencies viewDependencies;
@@ -28,9 +34,15 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        
 
-        public CommunitiesPlugin(IMVCManager mvcManager,
+        private CommunityCreationEditionController? communityCreationEditionController;
+        
+        public CommunitiesPlugin(
+            IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
+            IWebBrowser webBrowser,
+            IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ViewDependencies viewDependencies,
@@ -41,6 +53,8 @@ namespace DCL.PluginSystem.Global
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
+            this.webBrowser = webBrowser;
+            this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.viewDependencies = viewDependencies;
@@ -52,6 +66,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            communityCreationEditionController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -72,6 +87,11 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 webRequestController,
                 inWorldWarningNotificationView));
+
+            CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
+            ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
+            communityCreationEditionController = new CommunityCreationEditionController(communityCreationEditionViewFactoryMethod, webBrowser, inputBlock, communitiesDataProvider, inWorldWarningNotificationView);
+            mvcManager.RegisterController(communityCreationEditionController);
         }
     }
 
@@ -80,5 +100,8 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header("Community Card")]
         [field: SerializeField] internal AssetReferenceGameObject CommunityCardPrefab { get; private set; }
+
+        [field: Header("Community Creation Edition Wizard")]
+        [field: SerializeField] internal AssetReferenceGameObject CommunityCreationEditionPrefab { get; private set; }
     }
 }

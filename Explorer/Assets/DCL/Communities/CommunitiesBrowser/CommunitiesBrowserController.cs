@@ -1,10 +1,14 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunityCreation;
 using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
+using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -35,11 +39,14 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ViewDependencies viewDependencies;
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
+        private readonly ISelfProfile selfProfile;
+        private readonly INftNamesProvider nftNamesProvider;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
         private CancellationTokenSource searchCancellationCts;
         private CancellationTokenSource showErrorCts;
+        private CancellationTokenSource openCommunityCreationCts;
 
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
@@ -58,7 +65,9 @@ namespace DCL.Communities.CommunitiesBrowser
             IInputBlock inputBlock,
             ViewDependencies viewDependencies,
             WarningNotificationView warningNotificationView,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            ISelfProfile selfProfile,
+            INftNamesProvider nftNamesProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -69,6 +78,8 @@ namespace DCL.Communities.CommunitiesBrowser
             this.viewDependencies = viewDependencies;
             this.warningNotificationView = warningNotificationView;
             this.mvcManager = mvcManager;
+            this.selfProfile = selfProfile;
+            this.nftNamesProvider = nftNamesProvider;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -82,6 +93,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SearchBarClearButtonClicked += SearchBarCleared;
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
+            view.CreateCommunityButtonClicked += CreateCommunity;
         }
 
         public void Activate()
@@ -102,6 +114,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
+            openCommunityCreationCts?.SafeCancelAndDispose();
         }
 
         public void Animate(int triggerId) =>
@@ -125,10 +138,12 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SearchBarClearButtonClicked -= SearchBarCleared;
             view.CommunityProfileOpened -= OpenCommunityProfile;
             view.CommunityJoined -= JoinCommunity;
+            view.CreateCommunityButtonClicked -= CreateCommunity;
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
+            openCommunityCreationCts?.SafeCancelAndDispose();
         }
 
         private void ConfigureMyCommunitiesList() =>
@@ -155,7 +170,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                ShowErrorNotificationAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                await warningNotificationView.AnimatedShowAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
 
@@ -232,7 +247,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                ShowErrorNotificationAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                await warningNotificationView.AnimatedShowAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
 
@@ -322,7 +337,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success || !result.Value)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                ShowErrorNotificationAsync(JOIN_COMMUNITY_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                await warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
             }
 
             view.UpdateJoinedCommunity(index, result.Value);
@@ -331,14 +346,27 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OpenCommunityProfile(string communityId) =>
             mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId))).Forget();
 
-        private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
+        private void CreateCommunity()
         {
-            warningNotificationView.SetText(errorMessage);
-            warningNotificationView.Show(ct);
+            openCommunityCreationCts = openCommunityCreationCts.SafeRestart();
+            CreateCommunityAsync(openCommunityCreationCts.Token).Forget();
+        }
 
-            await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
+        private async UniTaskVoid CreateCommunityAsync(CancellationToken ct)
+        {
+            var canCreate = false;
+            var ownProfile = await selfProfile.ProfileAsync(ct);
 
-            warningNotificationView.Hide(ct: ct);
+            if (ownProfile != null)
+            {
+                INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1, ct);
+                canCreate = names.TotalAmount > 0;
+            }
+
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    canCreateCommunities: canCreate,
+                    communityId: string.Empty)), ct).Forget();
         }
     }
 }

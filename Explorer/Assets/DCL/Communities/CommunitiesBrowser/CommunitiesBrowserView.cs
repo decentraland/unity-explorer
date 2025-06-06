@@ -26,6 +26,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action<Vector2> ResultsLoopGridScrollChanged;
         public event Action<string> CommunityProfileOpened;
         public event Action<int, string> CommunityJoined;
+        public event Action CreateCommunityButtonClicked;
 
         public bool IsResultsScrollPositionAtBottom =>
             resultLoopGrid.ScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
@@ -78,6 +79,7 @@ namespace DCL.Communities.CommunitiesBrowser
             });
             searchBar.inputField.onSubmit.AddListener(text => SearchBarSubmit?.Invoke(text));
             searchBar.clearSearchButton.onClick.AddListener(() => SearchBarClearButtonClicked?.Invoke());
+            createCommunityButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke());
         }
 
         private void Start() =>
@@ -93,6 +95,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchBar.inputField.onSubmit.RemoveAllListeners();
             searchBar.clearSearchButton.onClick.RemoveAllListeners();
             resultLoopGrid.ScrollRect.onValueChanged.RemoveAllListeners();
+            createCommunityButton.onClick.RemoveAllListeners();
         }
 
         public void SetViewActive(bool isActive) =>
@@ -202,7 +205,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 // Change the role and increment the members amount
                 currentResults[index].role = CommunityMemberRole.member;
-                currentResults[index].memberCount++;
+                currentResults[index].membersCount++;
 
                 // Add the joined community to My Communities
                 currentMyCommunities.Add(currentResults[index]);
@@ -249,7 +252,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
-            cardView.SetMembersCount(communityData.memberCount);
+            cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);

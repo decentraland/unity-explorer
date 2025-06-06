@@ -759,7 +759,8 @@ namespace Global.Dynamic
                     profileChangesBus,
                     staticContainer.SceneLoadingLimit,
                     mainUIView.WarningNotification,
-                    communitiesDataProvider
+                    communitiesDataProvider,
+                    realmNftNamesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -946,8 +947,11 @@ namespace Global.Dynamic
             }
 
             if (includeCommunities)
-                globalPlugins.Add(new CommunitiesPlugin(mvcManager,
+                globalPlugins.Add(new CommunitiesPlugin(
+                    mvcManager,
                     assetsProvisioner,
+                    webBrowser,
+                    staticContainer.InputBlock,
                     cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     viewDependencies,
