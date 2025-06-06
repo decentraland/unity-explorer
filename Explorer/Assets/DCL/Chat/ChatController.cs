@@ -246,12 +246,16 @@ namespace DCL.Chat
 
             AddNearbyChannelAndSendWelcomeMessage();
 
-            memberListHelper.StartUpdating();
-
-            InitializeChannelsAndConversationsAsync().Forget();
-
             IsUnfolded = inputData.Unfold;
             viewInstance.Blur();
+
+            //We need the friends service enabled to be able to interact with them via chat.
+            //If there is no friends service (like in LSD) these two methods should not be invoked
+            if (friendsServiceProxy.Configured)
+            {
+                memberListHelper.StartUpdating();
+                InitializeChannelsAndConversationsAsync().Forget();
+            }
         }
 
         private void AddNearbyChannelAndSendWelcomeMessage()
