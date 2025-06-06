@@ -86,25 +86,6 @@ namespace DCL.VoiceChat
             DisabledMicrophone = null;
             MicrophoneReady = null;
 
-            if (isMicrophoneInitialized)
-            {
-                if (audioFilter != null)
-                {
-                    audioFilter.SetProcessingEnabled(false);
-                    
-                    System.Threading.Thread.Sleep(10);
-                    
-                    audioFilter.ResetProcessor();
-                }
-
-                if (audioSource != null)
-                {
-                    StopAudioSource();
-                    audioSource.clip = null;
-                }
-                Microphone.End(MicrophoneName);
-            }
-
             if (rtcAudioSource != null)
             {
                 try
@@ -116,9 +97,24 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource during dispose: {ex.Message}");
                 }
 
+                //rtcAudioSource.Dispose();
                 rtcAudioSource = null;
             }
 
+            if (isMicrophoneInitialized)
+            {
+                if (audioSource != null)
+                {
+                    StopAudioSource();
+                    audioSource.clip = null;
+                }
+                Microphone.End(MicrophoneName);
+
+                if (audioFilter != null)
+                {
+                    audioFilter.ResetProcessor();
+                }
+            }
         }
 
         private void StopAudioSource()
@@ -300,6 +296,8 @@ namespace DCL.VoiceChat
 
         private void EnableMicrophone()
         {
+            audioFilter.SetProcessingEnabled(true);
+
             if (rtcAudioSource != null)
             {
                 try
@@ -312,7 +310,6 @@ namespace DCL.VoiceChat
                 }
             }
 
-            audioFilter.SetProcessingEnabled(true);
             EnabledMicrophone?.Invoke();
         }
 
@@ -358,11 +355,8 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                audioFilter.SetProcessingEnabled(false);
-                
-                System.Threading.Thread.Sleep(10);
-                
                 audioFilter.ResetProcessor();
+                audioFilter.SetProcessingEnabled(false);
 
                 audioSource.Stop();
                 audioSource.clip = null;
