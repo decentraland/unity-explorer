@@ -21,7 +21,7 @@ namespace DCL.VoiceChat
         private VoiceChatAudioProcessor audioProcessor;
 
         private bool processingEnabled = true;
-        private int cachedSampleRate;
+        private int cachedSampleRate = 48000;
         private bool isProcessingEnabled = true; // Used for macOS to disable processing if exceptions occur, cannot be readonly
         private float[] silenceBuffer;
 
@@ -54,7 +54,7 @@ namespace DCL.VoiceChat
         private float[] stereoBuffer;
         private void Awake()
         {
-            cachedSampleRate = AudioSettings.outputSampleRate;
+            //cachedSampleRate = AudioSettings.outputSampleRate;
 
             if (voiceChatConfiguration != null)
             {
@@ -181,7 +181,7 @@ namespace DCL.VoiceChat
             {
                 Span<float> silenceSpan = GetSilenceSpan(data.Length / channels);
                 Span<float> silenceStereoSpan = ConvertMonoToStereo(silenceSpan);
-                audioReadEvent?.Invoke(silenceStereoSpan.ToArray(), 2, GetEffectiveSampleRate());
+                audioReadEvent?.Invoke(silenceStereoSpan.ToArray(), 2, cachedSampleRate);
                 return;
             }
 
@@ -238,7 +238,7 @@ namespace DCL.VoiceChat
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
-            cachedSampleRate = AudioSettings.outputSampleRate;
+            //cachedSampleRate = AudioSettings.outputSampleRate;
         }
 
         public void Initialize(VoiceChatConfiguration configuration)
