@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes
         public GameObject prefab;
         public GameObject male;
         public GameObject female;
-        public EmoteDTO.Metadata.Data entity;
+        public EmoteDTO.EmoteMetadataDto.Data entity;
     }
 
     [CreateAssetMenu(menuName = "DCL/Avatar/Embedded Emotes Data")]
@@ -55,7 +55,7 @@ namespace DCL.AvatarRendering.Emotes
                 model.pointers = new[] { embeddedEmote.id };
                 model.type = "emote";
                 model.version = "v3";
-                model.metadata = new EmoteDTO.Metadata();
+                model.metadata = new EmoteDTO.EmoteMetadataDto();
                 model.metadata.id = embeddedEmote.id;
                 model.metadata.name = embeddedEmote.name;
 
