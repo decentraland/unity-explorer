@@ -20,5 +20,7 @@ namespace DCL.CharacterCamera.Components
         internal ICinemachineFreeCameraData InWorldCameraData { get; }
 
         internal int ShoulderChangeSpeed { get; }
+
+        CameraFarClipPlaneSettings FarClipPlaneSettings { get; set; }
     }
 }
