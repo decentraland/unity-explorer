@@ -310,6 +310,8 @@ namespace DCL.VoiceChat
                 }
             }
 
+            audioSource.Play();
+
             EnabledMicrophone?.Invoke();
         }
 
@@ -328,6 +330,8 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource: {ex.Message}");
                 }
             }
+
+            audioSource.Stop();
 
             DisabledMicrophone?.Invoke();
         }
