@@ -1,14 +1,14 @@
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DCL.WebRequests;
-using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using CommunityData = DCL.Communities.GetUserCommunitiesResponse.CommunityData;
+using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -63,7 +63,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private IWebRequestController webRequestController;
-        private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private void Awake()
         {
@@ -174,12 +174,12 @@ namespace DCL.Communities.CommunitiesBrowser
             SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
-        public void InitializeResultsGrid(int itemTotalCount, IWebRequestController webRequestCtrl, ViewDependencies viewDep)
+        public void InitializeResultsGrid(int itemTotalCount, IWebRequestController webRequestCtrl, ProfileRepositoryWrapper profileDataProvider)
         {
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             webRequestController ??= webRequestCtrl;
-            viewDependencies ??= viewDep;
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         public void ClearResultsItems()
@@ -196,17 +196,21 @@ namespace DCL.Communities.CommunitiesBrowser
             SetResultsAsEmpty(currentResults.Count == 0);
         }
 
-        public void SetResultCommunityAsJoined(int index)
+        public void UpdateJoinedCommunity(int index, bool isSuccess)
         {
-            // Change the role and increment the members amount
-            currentResults[index].role = CommunityMemberRole.member;
-            currentResults[index].memberCount++;
-            resultLoopGrid.RefreshItemByItemIndex(index);
+            if (isSuccess)
+            {
+                // Change the role and increment the members amount
+                currentResults[index].role = CommunityMemberRole.member;
+                currentResults[index].memberCount++;
 
-            // Add the joined community to My Communities
-            currentMyCommunities.Add(currentResults[index]);
-            myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
-            SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+                // Add the joined community to My Communities
+                currentMyCommunities.Add(currentResults[index]);
+                myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
+                SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+            }
+
+            resultLoopGrid.RefreshItemByItemIndex(index);
         }
 
         private void SetSearchBarClearButtonActive(bool isActive) =>
@@ -224,7 +228,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
+            cardView.SetCommunityThumbnail(communityData.thumbnails is { Length: > 0 } ? communityData.thumbnails[0] : null);
 
             // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
@@ -249,7 +253,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(communityData.thumbnails[0]);
+            cardView.SetCommunityThumbnail(communityData.thumbnails is { Length: > 0 } ? communityData.thumbnails[0] : null);
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events
@@ -261,7 +265,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.JoinCommunityButtonClicked += OnCommunityJoined;
 
             // Setup mutual friends
-            cardView.SetupMutualFriends(viewDependencies, communityData);
+            cardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
 
             return gridItem;
         }

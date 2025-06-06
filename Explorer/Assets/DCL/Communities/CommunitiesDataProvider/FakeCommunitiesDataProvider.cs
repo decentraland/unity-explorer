@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -14,10 +13,9 @@ namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
-        private readonly List<GetUserCommunitiesResponse.CommunityData> currentCommunities;
+        private readonly List<GetUserCommunitiesData.CommunityData> currentCommunities;
 
         public FakeCommunitiesDataProvider(IWebRequestController webRequestController,
-            IWeb3IdentityCache web3IdentityCache,
             IDecentralandUrlsSource urlsSource)
         {
             currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 1);
@@ -27,18 +25,17 @@ namespace DCL.Communities
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
-            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
+            GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
             return new GetCommunityResponse()
             {
-                community = new GetCommunityResponse.CommunityData()
+                data = new GetCommunityResponse.CommunityData()
                 {
                     id = communityData.id,
                     thumbnails = communityData.thumbnails,
                     name = communityData.name,
                     description = communityData.description,
-                    ownerId = communityData.ownerId,
-                    memberCount = communityData.memberCount,
+                    ownerId = "test",
                     privacy = communityData.privacy,
                     role = communityData.role,
                     places = new [] { "land1", "land2" },
@@ -47,18 +44,18 @@ namespace DCL.Communities
             };
         }
 
-        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            List<GetUserCommunitiesResponse.CommunityData> filteredCommunities = currentCommunities
-                                                                                .Where(x => (
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.owner) && x.role == CommunityMemberRole.owner) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.moderator) && x.role == CommunityMemberRole.moderator) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.member) && x.role == CommunityMemberRole.member) ||
-                                                                                                (memberRolesIncluded.ToList().Contains(CommunityMemberRole.none) && x.role == CommunityMemberRole.none)) &&
-                                                                                            (x.name.ToLower().Contains(name.ToLower()) || x.description.ToLower().Contains(name.ToLower())))
-                                                                                .ToList();
+            List<GetUserCommunitiesData.CommunityData> filteredCommunities = currentCommunities
+                                                                            .Where(x => (
+                                                                                            (onlyMemberOf && x.role == CommunityMemberRole.owner) ||
+                                                                                            (onlyMemberOf && x.role == CommunityMemberRole.moderator) ||
+                                                                                            (onlyMemberOf && x.role == CommunityMemberRole.member) ||
+                                                                                            (!onlyMemberOf && x.role == CommunityMemberRole.none)) &&
+                                                                                        (x.name.ToLower().Contains(name.ToLower()) || x.description.ToLower().Contains(name.ToLower())))
+                                                                            .ToList();
 
-            List<GetUserCommunitiesResponse.CommunityData> paginatedCommunities = new();
+            List<GetUserCommunitiesData.CommunityData> paginatedCommunities = new();
             for (var i = 0; i < filteredCommunities.Count; i++)
             {
                 if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
@@ -67,8 +64,11 @@ namespace DCL.Communities
 
             GetUserCommunitiesResponse result = new GetUserCommunitiesResponse
             {
-                communities = paginatedCommunities.ToArray(),
-                totalAmount = filteredCommunities.Count,
+                data = new GetUserCommunitiesData
+                {
+                    results = paginatedCommunities.ToArray(),
+                    total = filteredCommunities.Count,
+                },
             };
 
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
@@ -86,15 +86,11 @@ namespace DCL.Communities
             List<string> worlds, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+            GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
-            GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
-
-            const int BANNED_MEMBERS = 5;
-
-            int totalMembers = areBanned ? BANNED_MEMBERS : communityData.memberCount;
+            int totalMembers = communityData.memberCount;
 
             List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
 
@@ -104,8 +100,35 @@ namespace DCL.Communities
                 {
                     GetCommunityMembersResponse.MemberData member = GetRandomMember();
 
-                    if (areBanned)
-                        member.role = CommunityMemberRole.none;
+                    paginatedData.Add(member);
+                }
+            }
+
+            GetCommunityMembersResponse result = new GetCommunityMembersResponse
+            {
+                data = new ()
+                {
+                    total = totalMembers,
+                    results = paginatedData.ToArray(),
+                }
+            };
+
+            return result;
+        }
+
+        public async UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            const int BANNED_MEMBERS = 5;
+
+            List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
+
+            for (var i = 0; i < BANNED_MEMBERS; i++)
+            {
+                if (i >= (pageNumber - 1) * elementsPerPage && i < pageNumber * elementsPerPage)
+                {
+                    GetCommunityMembersResponse.MemberData member = GetRandomMember();
+
+                    member.role = CommunityMemberRole.none;
 
                     paginatedData.Add(member);
                 }
@@ -113,8 +136,11 @@ namespace DCL.Communities
 
             GetCommunityMembersResponse result = new GetCommunityMembersResponse
             {
-                totalAmount = totalMembers,
-                members = paginatedData.ToArray(),
+                data = new ()
+                {
+                    total = BANNED_MEMBERS,
+                    results = paginatedData.ToArray(),
+                }
             };
 
             return result;
@@ -139,7 +165,7 @@ namespace DCL.Communities
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
-            foreach (GetUserCommunitiesResponse.CommunityData community in currentCommunities)
+            foreach (GetUserCommunitiesData.CommunityData community in currentCommunities)
             {
                 if (community.id == communityId)
                 {
@@ -155,7 +181,7 @@ namespace DCL.Communities
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
-            foreach (GetUserCommunitiesResponse.CommunityData community in currentCommunities)
+            foreach (GetUserCommunitiesData.CommunityData community in currentCommunities)
             {
                 if (community.id == communityId)
                 {
@@ -173,31 +199,31 @@ namespace DCL.Communities
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId,  CommunityMemberRole newRole, CancellationToken ct) =>
             true;
 
-        private List<GetUserCommunitiesResponse.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsModerator, int communitiesAsMember)
+        private List<GetUserCommunitiesData.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsModerator, int communitiesAsMember)
         {
-            List<GetUserCommunitiesResponse.CommunityData> communities = new List<GetUserCommunitiesResponse.CommunityData>();
+            List<GetUserCommunitiesData.CommunityData> communities = new List<GetUserCommunitiesData.CommunityData>();
 
             for (var i = 0; i < 100; i++)
             {
-                List<GetUserCommunitiesResponse.FriendInCommunity> mutualFriends = new ();
+                List<GetUserCommunitiesData.FriendInCommunity> mutualFriends = new ();
                 int amountMutualFriends = UnityEngine.Random.Range(0, 4);
                 for (var j = 0; j < amountMutualFriends; j++)
                 {
-                    mutualFriends.Add(new GetUserCommunitiesResponse.FriendInCommunity
+                    mutualFriends.Add(new GetUserCommunitiesData.FriendInCommunity
                     {
-                        id = $"test{i + 1}",
+                        address = $"test{i + 1}",
                         name = $"testUser{i + 1}",
                         profilePictureUrl = "https://picsum.photos/20/20",
                     });
                 }
 
-                communities.Add(new GetUserCommunitiesResponse.CommunityData
+                communities.Add(new GetUserCommunitiesData.CommunityData
                 {
                     id = (i + 1).ToString(),
                     thumbnails = new[] { "https://picsum.photos/280/280" },
                     name = $"Community {i + 1}",
                     description = $"Test description for Community {i + 1}. This is only a fake text to test this awesome feature!! This is the card that represent a community in Decentraland.",
-                    ownerId = string.Empty,
+                    ownerAddress = string.Empty,
                     privacy = i is 3 or 5 ? CommunityPrivacy.@private : CommunityPrivacy.@public,
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
@@ -234,13 +260,14 @@ namespace DCL.Communities
             for (int i = 0; i < 40; i++)
                 sb.Append(HEX_CHARS[UnityEngine.Random.Range(0, HEX_CHARS.Length)]);
 
-            return new GetCommunityMembersResponse.MemberData(sb.ToString(),
-                "",
-                $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
-                UnityEngine.Random.Range(0, 100) > 50,
-                ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
-                UnityEngine.Random.Range(0, 10),
-                FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]);
+            return new GetCommunityMembersResponse.MemberData()
+            {
+                memberAddress = sb.ToString(),
+                name = $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
+                hasClaimedName = UnityEngine.Random.Range(0, 100) > 50,
+                role = ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
+                friendshipStatus = FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]
+            };
         }
     }
 }

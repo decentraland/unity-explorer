@@ -8,6 +8,7 @@ using DCL.Passport;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
@@ -64,7 +65,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
         public MembersListController(MembersListView view,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
@@ -99,7 +100,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.KickUserRequested += OnKickUser;
             this.view.BanUserRequested += OnBanUser;
 
-            this.view.InjectDependencies(viewDependencies);
+            this.view.SetProfileDataProvider(profileDataProvider);
         }
 
         public override void Dispose()
@@ -147,7 +148,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private void BlockUserClicked(MemberData profile) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.id), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), cancellationToken).Forget();
+            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.memberAddress), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), cancellationToken).Forget();
 
         private void OnBanUser(MemberData profile)
         {
@@ -157,7 +158,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid BanUserAsync(CancellationToken token)
             {
-                Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.id, communityData?.id, token)
+                Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!result.Success || !result.Value)
@@ -186,7 +187,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid KickUserAsync(CancellationToken token)
             {
-                Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.id, communityData?.id, token)
+                Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!result.Success || !result.Value)
@@ -208,7 +209,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid AddModeratorAsync(CancellationToken token)
             {
-                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.moderator, token)
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.moderator, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!result.Success || !result.Value)
@@ -220,7 +221,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 List<MemberData> memberList = allMembersFetchData.members;
 
                 foreach (MemberData member in memberList)
-                    if (member.id.Equals(profile.id))
+                    if (member.memberAddress.Equals(profile.memberAddress))
                     {
                         member.role = CommunityMemberRole.moderator;
                         break;
@@ -241,7 +242,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             async UniTaskVoid RemoveModeratorAsync(CancellationToken token)
             {
 
-                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.id, communityData?.id, CommunityMemberRole.member, token)
+                Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.member, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!result.Success || !result.Value)
@@ -252,7 +253,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 List<MemberData> memberList = allMembersFetchData.members;
                 foreach (MemberData member in memberList)
-                    if (member.id.Equals(profile.id))
+                    if (member.memberAddress.Equals(profile.memberAddress))
                     {
                         member.role = CommunityMemberRole.member;
                         break;
@@ -275,7 +276,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private void OpenProfilePassport(MemberData profile) =>
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.id)), cancellationToken).Forget();
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.memberAddress)), cancellationToken).Forget();
 
         public override void Reset()
         {
@@ -340,8 +341,11 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             SectionFetchData<MemberData> membersData = currentSectionFetchData;
 
-            Result<GetCommunityMembersResponse> response = await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, currentSection == MembersListView.MemberListSections.BANNED, membersData.pageNumber, PAGE_SIZE, ct)
-                                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<GetCommunityMembersResponse> response = currentSection == MembersListView.MemberListSections.ALL
+                ? await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
+                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES)
+                : await communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
+                                               .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!response.Success)
             {
@@ -350,13 +354,13 @@ namespace DCL.Communities.CommunitiesCard.Members
                 return membersData.totalToFetch;
             }
 
-            foreach (var member in response.Value.members)
+            foreach (var member in response.Value.data.results)
                 if (!membersData.members.Contains(member))
                     membersData.members.Add(member);
 
             MembersSorter.SortMembersList(membersData.members);
 
-            return response.Value.totalAmount;
+            return response.Value.data.total;
         }
 
         public void ShowMembersList(GetCommunityResponse.CommunityData community, CancellationToken ct)
@@ -424,7 +428,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             async UniTaskVoid UnbanUserAsync(CancellationToken ct)
             {
 
-                Result<bool> result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.id, communityData?.id, ct)
+                Result<bool> result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.memberAddress, communityData?.id, ct)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!result.Success || !result.Value)

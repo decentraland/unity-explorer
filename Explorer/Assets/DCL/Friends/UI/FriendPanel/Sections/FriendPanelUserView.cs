@@ -1,5 +1,5 @@
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
-using MVC;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace DCL.Friends.UI.FriendPanel.Sections
 {
-    public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IViewWithGlobalDependencies
+    public class FriendPanelUserView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         protected readonly List<Button> buttons = new ();
 
@@ -61,7 +61,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             MainButtonClicked = null;
         }
 
-        public virtual void Configure(FriendProfile friendProfile)
+        public virtual void Configure(FriendProfile friendProfile, ProfileRepositoryWrapper profileDataProvider)
         {
             UnHover();
             UserProfile = friendProfile;
@@ -74,6 +74,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
             ProfilePicture.Setup(friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
+            ProfilePicture.SetProfileDataProvider(profileDataProvider);
         }
 
         protected virtual void ToggleButtonView(bool isActive)
@@ -101,11 +102,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections
         {
             if (canUnHover)
                 UnHover();
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            ProfilePicture.InjectDependencies(dependencies);
         }
     }
 }

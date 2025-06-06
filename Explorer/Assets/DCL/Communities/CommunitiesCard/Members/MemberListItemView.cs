@@ -1,4 +1,5 @@
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Globalization;
@@ -10,7 +11,7 @@ using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MemberListItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IViewWithGlobalDependencies
+    public class MemberListItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const string MUTUAL_FRIENDS_FORMAT = "{0} Mutual Friends";
 
@@ -92,14 +93,14 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             userName.text = memberProfile.name;
             userName.color = userColor;
-            userNameTag.text = $"#{memberProfile.id[^4..]}";
+            userNameTag.text = $"#{memberProfile.memberAddress[^4..]}";
             userNameTag.gameObject.SetActive(!memberProfile.hasClaimedName);
             verifiedIcon.SetActive(memberProfile.hasClaimedName);
             mutualFriendsText.text = string.Format(MUTUAL_FRIENDS_FORMAT, memberProfile.mutualFriends);
-            mutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend);
+            mutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend && memberProfile.mutualFriends > 0);
             roleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
             roleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            profilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePicture, memberProfile.id);
+            profilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePictureUrl, memberProfile.memberAddress);
 
             currentSection = section;
 
@@ -146,9 +147,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 UnHover();
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            profilePicture.InjectDependencies(dependencies);
+            profilePicture.SetProfileDataProvider(profileDataProvider);
         }
     }
 }

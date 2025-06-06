@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.Web3;
+using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -44,7 +45,9 @@ namespace DCL.AvatarRendering.Emotes
             Web3Address userId,
             CancellationToken ct,
             OwnedEmotesRequestOptions requestOptions,
-            List<IEmote> output
+            List<IEmote>? results = null,
+            CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false
         );
 
         UniTask GetEmotesAsync(

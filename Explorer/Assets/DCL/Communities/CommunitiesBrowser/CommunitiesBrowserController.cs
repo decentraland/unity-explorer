@@ -1,13 +1,14 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
-using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -21,23 +22,25 @@ namespace DCL.Communities.CommunitiesBrowser
         private const string MY_GENERAL_RESULTS_TITLE = "Decentraland Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
+        private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";
+        private const string ALL_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading Communities. Please try again.";
+        private const string JOIN_COMMUNITY_ERROR_MESSAGE = "There was an error joining community. Please try again.";
+        private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
         private readonly ICommunitiesDataProvider dataProvider;
-        private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
-        private readonly ViewDependencies viewDependencies;
+        private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
-        private readonly List<CommunityMemberRole> currentMemberRolesIncluded = new ();
-        private readonly CommunityMemberRole[] rolesIncludedForMyCommunities = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member };
-        private readonly CommunityMemberRole[] rolesIncludedForGenericSearch = { CommunityMemberRole.owner, CommunityMemberRole.moderator, CommunityMemberRole.member, CommunityMemberRole.none };
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
         private CancellationTokenSource searchCancellationCts;
+        private CancellationTokenSource showErrorCts;
 
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
@@ -45,26 +48,27 @@ namespace DCL.Communities.CommunitiesBrowser
         private int currentPageNumberFilter = 1;
         private int currentResultsTotalAmount;
         private string currentSearchText = string.Empty;
+        private bool currentOnlyMemberOf;
         private bool isGridResultsLoadingItems;
 
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
             ICursor cursor,
             ICommunitiesDataProvider dataProvider,
-            ISelfProfile selfProfile,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies,
-            IMVCManager mvcManager)
+            WarningNotificationView warningNotificationView,
+            IMVCManager mvcManager,
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.dataProvider = dataProvider;
-            this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.warningNotificationView = warningNotificationView;
             this.mvcManager = mvcManager;
 
             ConfigureMyCommunitiesList();
@@ -98,6 +102,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
+            showErrorCts?.SafeCancelAndDispose();
         }
 
         public void Animate(int triggerId) =>
@@ -124,6 +129,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
             searchCancellationCts?.SafeCancelAndDispose();
+            showErrorCts?.SafeCancelAndDispose();
         }
 
         private void ConfigureMyCommunitiesList() =>
@@ -131,7 +137,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ConfigureResultsGrid()
         {
-            view.InitializeResultsGrid(0, webRequestController, viewDependencies);
+            view.InitializeResultsGrid(0, webRequestController, profileRepositoryWrapper);
             view.ResultsLoopGridScrollChanged += LoadMoreResults;
         }
 
@@ -140,19 +146,21 @@ namespace DCL.Communities.CommunitiesBrowser
             view.ClearMyCommunitiesItems();
             view.SetMyCommunitiesAsLoading(true);
 
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile == null)
+            var result = await dataProvider.GetUserCommunitiesAsync(
+                                                name: string.Empty,
+                                                onlyMemberOf: true,
+                                                pageNumber: 1,
+                                                elementsPerPage: 1000,
+                                                ct: ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!result.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                ShowErrorNotificationAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
                 return;
+            }
 
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
-                userId: ownProfile.UserId,
-                name: string.Empty,
-                memberRolesIncluded: rolesIncludedForMyCommunities,
-                pageNumber: 1,
-                elementsPerPage: 1000,
-                ct: ct);
-
-            view.AddMyCommunitiesItems(userCommunitiesResponse.communities, true);
+            view.AddMyCommunitiesItems(result.Value.data.results, true);
             view.SetMyCommunitiesAsLoading(false);
         }
 
@@ -165,7 +173,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
                 name: string.Empty,
-                memberRolesIncluded: rolesIncludedForMyCommunities,
+                onlyMemberOf: true,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
@@ -178,7 +186,7 @@ namespace DCL.Communities.CommunitiesBrowser
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
                 name: string.Empty,
-                memberRolesIncluded: rolesIncludedForGenericSearch,
+                onlyMemberOf: false,
                 pageNumber: 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
@@ -197,13 +205,13 @@ namespace DCL.Communities.CommunitiesBrowser
             loadResultsCts = loadResultsCts.SafeRestart();
             LoadResultsAsync(
                 name: currentNameFilter,
-                memberRolesIncluded: currentMemberRolesIncluded.ToArray(),
+                currentOnlyMemberOf,
                 pageNumber: currentPageNumberFilter + 1,
                 elementsPerPage: COMMUNITIES_PER_PAGE,
                 ct: loadResultsCts.Token).Forget();
         }
 
-        private async UniTaskVoid LoadResultsAsync(string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct)
+        private async UniTaskVoid LoadResultsAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
             isGridResultsLoadingItems = true;
 
@@ -215,25 +223,27 @@ namespace DCL.Communities.CommunitiesBrowser
             else
                 view.SetResultsLoadingMoreActive(true);
 
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile == null)
-                return;
-
-            var userCommunitiesResponse = await dataProvider.GetUserCommunitiesAsync(
-                ownProfile.UserId,
+            var result = await dataProvider.GetUserCommunitiesAsync(
                 name,
-                memberRolesIncluded,
+                onlyMemberOf,
                 pageNumber,
                 elementsPerPage,
-                ct);
+                ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (userCommunitiesResponse.communities.Length > 0)
+            if (!result.Success)
             {
-                currentPageNumberFilter = pageNumber;
-                view.AddResultsItems(userCommunitiesResponse.communities, pageNumber == 1);
+                showErrorCts = showErrorCts.SafeRestart();
+                ShowErrorNotificationAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                return;
             }
 
-            currentResultsTotalAmount = userCommunitiesResponse.totalAmount;
+            if (result.Value.data.results.Length > 0)
+            {
+                currentPageNumberFilter = pageNumber;
+                view.AddResultsItems(result.Value.data.results, pageNumber == 1);
+            }
+
+            currentResultsTotalAmount = result.Value.data.total;
 
             if (pageNumber == 1)
                 view.SetResultsAsLoading(false);
@@ -242,9 +252,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetResultsCountText(currentResultsTotalAmount);
 
             currentNameFilter = name;
-            currentMemberRolesIncluded.Clear();
-            foreach (CommunityMemberRole memberRole in memberRolesIncluded)
-                currentMemberRolesIncluded.Add(memberRole);
+            currentOnlyMemberOf = onlyMemberOf;
             isGridResultsLoadingItems = false;
         }
 
@@ -284,7 +292,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 loadResultsCts = loadResultsCts.SafeRestart();
                 LoadResultsAsync(
                     name: searchText,
-                    memberRolesIncluded: rolesIncludedForGenericSearch,
+                    onlyMemberOf: false,
                     pageNumber: 1,
                     elementsPerPage: COMMUNITIES_PER_PAGE,
                     ct: loadResultsCts.Token).Forget();
@@ -310,12 +318,28 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private async UniTaskVoid JoinCommunityAsync(int index, string communityId, CancellationToken ct)
         {
-            bool joinedSuccess = await dataProvider.JoinCommunityAsync(communityId, ct);
-            if (joinedSuccess)
-                view.SetResultCommunityAsJoined(index);
+            var result = await dataProvider.JoinCommunityAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!result.Success || !result.Value)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                ShowErrorNotificationAsync(JOIN_COMMUNITY_ERROR_MESSAGE, showErrorCts.Token).Forget();
+            }
+
+            view.UpdateJoinedCommunity(index, result.Value);
         }
 
         private void OpenCommunityProfile(string communityId) =>
             mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId))).Forget();
+
+        private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
+        {
+            warningNotificationView.SetText(errorMessage);
+            warningNotificationView.Show(ct);
+
+            await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
+
+            warningNotificationView.Hide(ct: ct);
+        }
     }
 }

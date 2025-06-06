@@ -1,17 +1,17 @@
 using DCL.Profiles;
-using MVC;
+using DCL.UI.Profiles.Helpers;
 
 namespace DCL.UI.SuggestionPanel
 {
     public readonly struct ProfileInputSuggestionData : IInputSuggestionElementData
     {
         public Profile ProfileData { get; }
-        public ViewDependencies ViewDependencies { get; }
+        public ProfileRepositoryWrapper ProfileDataProvider { get; }
 
-        public ProfileInputSuggestionData(Profile profileData, ViewDependencies viewDependencies)
+        public ProfileInputSuggestionData(Profile profileData, ProfileRepositoryWrapper profileDataProvider)
         {
             ProfileData = profileData;
-            ViewDependencies = viewDependencies;
+            ProfileDataProvider = profileDataProvider;
         }
 
         public string GetId() =>

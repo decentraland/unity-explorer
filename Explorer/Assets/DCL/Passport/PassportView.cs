@@ -3,6 +3,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using MVC;
@@ -14,7 +15,7 @@ using UnityEngine.UI;
 
 namespace DCL.Passport
 {
-    public class PassportView : ViewBase, IView, IViewWithGlobalDependencies
+    public class PassportView : ViewBase, IView
     {
         [field: SerializeField]
         public Button CloseButton { get; private set; }
@@ -191,10 +192,10 @@ namespace DCL.Passport
             CharacterPreviewView.gameObject.SetActive(true);
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
             foreach (MutualFriendsConfig.MutualThumbnail thumbnail in MutualFriends.Thumbnails)
-                thumbnail.Picture.InjectDependencies(dependencies);
+                thumbnail.Picture.SetProfileDataProvider(profileDataProvider);
         }
     }
 }

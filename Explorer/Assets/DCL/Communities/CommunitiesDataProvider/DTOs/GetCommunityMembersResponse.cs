@@ -1,12 +1,9 @@
 
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
-using System.Text;
+using DCL.Profiles.Helpers;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using Utility;
 using System;
-using System.Linq;
 
 namespace DCL.Communities
 {
@@ -16,35 +13,17 @@ namespace DCL.Communities
         [Serializable]
         public class MemberData
         {
-            public readonly string id;
-            public readonly string profilePicture;
-            public readonly string name;
-            public readonly bool hasClaimedName;
+            public string communityId;
+            public string memberAddress;
             public CommunityMemberRole role;
+            public string joinedAt;
+            public string profilePictureUrl;
+            public bool hasClaimedName;
+            public string name;
             public int mutualFriends;
             public FriendshipStatus friendshipStatus;
 
             private Color userNameColor;
-
-            public MemberData(string id, string profilePicture, string name, bool hasClaimedName)
-            {
-                this.id = id;
-                this.profilePicture = profilePicture;
-                this.name = name;
-                this.hasClaimedName = hasClaimedName;
-            }
-
-            public MemberData(string id, string profilePicture, string name, bool hasClaimedName, CommunityMemberRole role,
-                int mutualFriends, FriendshipStatus friendshipStatus)
-            {
-                this.id = id;
-                this.profilePicture = profilePicture;
-                this.name = name;
-                this.hasClaimedName = hasClaimedName;
-                this.role = role;
-                this.mutualFriends = mutualFriends;
-                this.friendshipStatus = friendshipStatus;
-            }
 
             public Color GetUserNameColor()
             {
@@ -69,17 +48,17 @@ namespace DCL.Communities
 
                 displayName = result;
 
-                if (!hasClaimedName && !string.IsNullOrEmpty(id) && id.Length > 4)
-                    displayName = $"{result}{id}";
+                if (!hasClaimedName && !string.IsNullOrEmpty(memberAddress) && memberAddress.Length > 4)
+                    displayName = $"{result}{memberAddress}";
 
                 return ProfileNameColorHelper.GetNameColor(displayName);
             }
 
             public override int GetHashCode() =>
-                id.GetHashCode();
+                memberAddress.GetHashCode();
 
             private bool Equals(MemberData other) =>
-                id.Equals(other.id);
+                memberAddress.Equals(other.memberAddress);
 
             public override bool Equals(object? obj)
             {
@@ -90,8 +69,17 @@ namespace DCL.Communities
             }
         }
 
-        public MemberData[] members;
-        public int totalAmount;
+        [Serializable]
+        public class GetCommunityMembersResponseData
+        {
+            public MemberData[] results;
+            public int total;
+            public int page;
+            public int pages;
+            public int limit;
+        }
+
+        public GetCommunityMembersResponseData data;
     }
 }
 

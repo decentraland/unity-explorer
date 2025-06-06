@@ -11,6 +11,7 @@ using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -38,11 +39,11 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private readonly ViewDependencies viewDependencies;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
@@ -62,11 +63,11 @@ namespace DCL.Communities.CommunitiesCard
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ViewDependencies viewDependencies,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             WarningNotificationView inWorldWarningNotificationView,
+            ProfileRepositoryWrapper profileDataProvider,
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
@@ -76,11 +77,11 @@ namespace DCL.Communities.CommunitiesCard
             this.mvcManager = mvcManager;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.viewDependencies = viewDependencies;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
@@ -121,7 +122,8 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView,
-                viewDependencies,mvcManager,
+                profileRepositoryWrapper,
+                mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
                 inWorldWarningNotificationView);
@@ -151,7 +153,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance!.SetLoadingState(true);
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
-                communityData = response.community;
+                communityData = response.data;
 
                 viewInstance.SetLoadingState(false);
 

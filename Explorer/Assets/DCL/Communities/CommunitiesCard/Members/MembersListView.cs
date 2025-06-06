@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using UnityEngine;
 using DCL.UI.Utilities;
-using MVC;
 using System;
 using System.Threading;
 using UnityEngine.UI;
@@ -11,7 +11,7 @@ using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MembersListView : MonoBehaviour, IViewWithGlobalDependencies, ICommunityFetchingView
+    public class MembersListView : MonoBehaviour, ICommunityFetchingView
     {
         public enum MemberListSections
         {
@@ -53,9 +53,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         private float scrollViewMaxHeight;
         private float scrollViewHeight;
         private MemberListSections currentSection;
-        private ViewDependencies viewDependencies;
-        private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData;
         private CancellationTokenSource confirmationDialogCts = new ();
+        private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private void Awake()
         {
@@ -147,6 +147,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             getCurrentSectionFetchData = currentSectionDataFunc;
         }
 
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            this.profileRepositoryWrapper = profileDataProvider;
+        }
+
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
         {
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
@@ -154,7 +159,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
-            elementView.InjectDependencies(viewDependencies);
+            elementView.SetProfileDataProvider(profileRepositoryWrapper);
             elementView.Configure(membersData.members[index], currentSection);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
@@ -199,11 +204,6 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             [field: SerializeField]
             public GameObject UnselectedText { get; private set; }
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
         }
     }
 }

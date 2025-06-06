@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using DG.Tweening;
@@ -9,7 +10,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using CommunityData = DCL.Communities.GetUserCommunitiesResponse.CommunityData;
+using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -45,6 +46,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button joinCommunityButton;
         [SerializeField] private GameObject joiningLoading;
         [SerializeField] private MutualFriendsConfig mutualFriends;
+        [SerializeField] private Sprite defaultThumbnailSprite;
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -99,6 +101,8 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+            else
+                imageController.SetImage(defaultThumbnailSprite);
         }
 
         public void SetCommunityId(string id) =>
@@ -139,18 +143,18 @@ namespace DCL.Communities.CommunitiesBrowser
             buttonsContainer.SetActive(!isActive);
         }
 
-        public void SetupMutualFriends(ViewDependencies viewDependencies, CommunityData communityData)
+        public void SetupMutualFriends(ProfileRepositoryWrapper profileDataProvider, CommunityData communityData)
         {
             foreach (MutualFriendsConfig.MutualThumbnail thumbnail in mutualFriends.thumbnails)
-                thumbnail.picture.InjectDependencies(viewDependencies);
+                thumbnail.picture.SetProfileDataProvider(profileDataProvider);
 
             for (var i = 0; i < mutualFriends.thumbnails.Length; i++)
             {
                 bool friendExists = i < communityData.friends.Length;
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
-                GetUserCommunitiesResponse.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.id);
+                GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
+                mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.address);
             }
         }
 

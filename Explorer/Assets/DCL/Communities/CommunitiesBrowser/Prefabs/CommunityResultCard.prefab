@@ -1689,6 +1689,7 @@ MonoBehaviour:
       picture: {fileID: 2573895094594536804}
     - root: {fileID: 4816826890462254729}
       picture: {fileID: 873994822332494481}
+  defaultThumbnailSprite: {fileID: 21300000, guid: 2b752416b286d4fc5b1428a469c85712, type: 3}
 --- !u!1 &8345438408242346082
 GameObject:
   m_ObjectHideFlags: 0
@@ -2159,7 +2160,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_AnchorMin.x
@@ -2167,7 +2168,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2211,7 +2212,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -26.835022
+      value: 35.164978
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

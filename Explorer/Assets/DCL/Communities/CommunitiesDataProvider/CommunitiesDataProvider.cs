@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -13,26 +12,38 @@ namespace DCL.Communities
     {
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IDecentralandUrlsSource urlsSource;
+
+        private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
 
         public CommunitiesDataProvider(
             ICommunitiesDataProvider fakeDataProvider,
             IWebRequestController webRequestController,
-            IWeb3IdentityCache web3IdentityCache,
             IDecentralandUrlsSource urlsSource)
         {
             this.fakeDataProvider = fakeDataProvider;
             this.webRequestController = webRequestController;
-            this.web3IdentityCache = web3IdentityCache;
             this.urlsSource = urlsSource;
         }
 
-        public UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityAsync(communityId, ct);
+        public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}";
 
-        public UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string userId, string name, CommunityMemberRole[] memberRolesIncluded, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetUserCommunitiesAsync(userId, name, memberRolesIncluded, pageNumber, elementsPerPage, ct);
+            GetCommunityResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                      .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft);
+            return response;
+        }
+
+        public async UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/communities?search={name}&onlyMemberOf={onlyMemberOf.ToString().ToLower()}&offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+
+            GetUserCommunitiesResponse creditsProgramProgressResponse = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                                                  .CreateFromJson<GetUserCommunitiesResponse>(WRJsonParser.Newtonsoft);
+
+            return creditsProgramProgressResponse;
+        }
 
         public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetUserLandsAsync(userId, pageNumber, elementsPerPage, ct);
@@ -43,8 +54,23 @@ namespace DCL.Communities
         public UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands, List<string> worlds, CancellationToken ct) =>
             fakeDataProvider.CreateOrUpdateCommunityAsync(communityId, name, description, thumbnail, lands, worlds, ct);
 
-        public UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityMembersAsync(communityId, areBanned, pageNumber, elementsPerPage, ct);
+        public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+
+            GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                           .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+            return response;
+        }
+
+        public async UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/bans?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+
+            GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                             .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+            return response;
+        }
 
         public UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct) =>
             fakeDataProvider.GetUserCommunitiesCompactAsync(ct);
