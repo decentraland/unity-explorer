@@ -50,12 +50,12 @@ namespace DCL.VoiceChat
 
         private float[] resamplingBuffer;
         private const int MAX_RESAMPLING_BUFFER_SIZE = 8192;
-        
-        private float[] stereoBuffer; 
+
+        private float[] stereoBuffer;
         private void Awake()
         {
             cachedSampleRate = AudioSettings.outputSampleRate;
-            
+
             if (voiceChatConfiguration != null)
             {
                 audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
@@ -285,7 +285,7 @@ namespace DCL.VoiceChat
             if (isRealtimeThreadRunning)
                 return;
 
-            realtimeProcessingCts = new CancellationTokenSource();
+            realtimeProcessingCts = realtimeProcessingCts.SafeRestart();
             isRealtimeThreadRunning = true;
 
             RealtimeAudioProcessingLoopAsync(realtimeProcessingCts.Token).Forget();
@@ -530,21 +530,21 @@ namespace DCL.VoiceChat
         private Span<float> ConvertMonoToStereo(ReadOnlySpan<float> monoData)
         {
             int stereoSampleCount = monoData.Length * 2;
-            
+
             if (stereoBuffer == null || stereoBuffer.Length < stereoSampleCount)
             {
                 stereoBuffer = new float[Mathf.Max(stereoSampleCount, 2048)];
             }
-            
+
             Span<float> stereoSpan = stereoBuffer.AsSpan(0, stereoSampleCount);
-            
+
             for (int i = 0; i < monoData.Length; i++)
             {
                 float sample = monoData[i];
                 stereoSpan[i * 2] = sample;     // Left channel
                 stereoSpan[i * 2 + 1] = sample; // Right channel
             }
-            
+
             return stereoSpan;
         }
 
