@@ -964,7 +964,6 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     communitiesDataProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    mainUIView.WarningNotification,
                     placesAPIService,
                     realmNavigator,
                     clipboard,

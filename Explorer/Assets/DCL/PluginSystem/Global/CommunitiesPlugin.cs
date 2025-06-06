@@ -31,7 +31,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
@@ -45,7 +44,6 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView,
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
@@ -59,7 +57,6 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
@@ -86,7 +83,6 @@ namespace DCL.PluginSystem.Global
                 friendServiceProxy,
                 communitiesDataProvider,
                 webRequestController,
-                inWorldWarningNotificationView,
                 profileRepositoryWrapper,
                 placesAPIService,
                 realmNavigator,

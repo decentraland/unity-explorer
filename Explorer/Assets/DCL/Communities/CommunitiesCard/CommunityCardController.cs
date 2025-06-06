@@ -42,7 +42,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
@@ -66,7 +65,6 @@ namespace DCL.Communities.CommunitiesCard
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
@@ -80,7 +78,6 @@ namespace DCL.Communities.CommunitiesCard
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
@@ -126,12 +123,12 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                inWorldWarningNotificationView);
+                viewInstance.warningNotificationView);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 webRequestController,
                 placesAPIService,
-                inWorldWarningNotificationView,
+                viewInstance.warningNotificationView,
                 realmNavigator,
                 mvcManager,
                 clipboard,
@@ -212,7 +209,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
                     return;
                 }
 
@@ -233,7 +230,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
                     return;
                 }
 
