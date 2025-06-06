@@ -36,7 +36,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 24aec0b5ead4ec44081cf47744a7a268
-    m_Address: CommunityCreationEdition
+    m_Address: CommunityCreationWizard
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

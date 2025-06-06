@@ -41,7 +41,7 @@ namespace DCL.Communities
                     privacy = communityData.privacy,
                     role = communityData.role,
                     places = new [] { "land1", "land2" },
-                    membersCount = communityData.memberCount,
+                    membersCount = communityData.membersCount,
                 }
             };
         }
@@ -92,7 +92,7 @@ namespace DCL.Communities
         {
             GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
-            int totalMembers = communityData.memberCount;
+            int totalMembers = communityData.membersCount;
 
             List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
 
