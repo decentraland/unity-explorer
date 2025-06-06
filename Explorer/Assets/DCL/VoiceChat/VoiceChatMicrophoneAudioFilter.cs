@@ -49,8 +49,14 @@ namespace DCL.VoiceChat
         private readonly Queue<float[]> audioDataQueue = new Queue<float[]>();
         private readonly object queueLock = new object();
 
+        private float[] resamplingBuffer;
+        private const int MAX_RESAMPLING_BUFFER_SIZE = 8192;
+        
+        private float[] stereoBuffer; 
         private void Awake()
         {
+            cachedSampleRate = AudioSettings.outputSampleRate;
+            
             if (voiceChatConfiguration != null)
             {
                 audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
@@ -160,6 +166,8 @@ namespace DCL.VoiceChat
             audioProcessor = null;
             tempBuffer = null;
             silenceBuffer = null;
+            resamplingBuffer = null;
+            stereoBuffer = null;
         }
 
         /// <summary>
@@ -173,7 +181,8 @@ namespace DCL.VoiceChat
             if (!processingEnabled)
             {
                 Span<float> silenceSpan = GetSilenceSpan(data.Length / channels);
-                audioReadEvent?.Invoke(silenceSpan, 1, GetEffectiveSampleRate());
+                Span<float> stereoSilenceSpan = ConvertMonoToStereo(silenceSpan);
+                audioReadEvent?.Invoke(stereoSilenceSpan, 2, GetEffectiveSampleRate());
                 return;
             }
 
@@ -187,7 +196,9 @@ namespace DCL.VoiceChat
                 try
                 {
                     Span<float> processedSpan = ProcessAudioToSpan(data.AsSpan(), channels);
-                    audioReadEvent?.Invoke(processedSpan, 1, GetEffectiveSampleRate());
+                    Span<float> resampledSpan = ResampleToUnityOutputRate(processedSpan, GetEffectiveSampleRate(), cachedSampleRate);
+                    Span<float> stereoSpan = ConvertMonoToStereo(resampledSpan);
+                    audioReadEvent?.Invoke(stereoSpan, 2, cachedSampleRate);
                     return;
                 }
                 catch (Exception ex)
@@ -202,7 +213,9 @@ namespace DCL.VoiceChat
             }
 
             Span<float> monoSpan = ConvertToMonoSpan(data.AsSpan(), channels);
-            audioReadEvent?.Invoke(monoSpan, 1, GetEffectiveSampleRate());
+            Span<float> resampledMonoSpan = ResampleToUnityOutputRate(monoSpan, GetEffectiveSampleRate(), cachedSampleRate);
+            Span<float> stereoSpan = ConvertMonoToStereo(resampledMonoSpan);
+            audioReadEvent?.Invoke(stereoSpan, 2, cachedSampleRate);
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead
@@ -388,7 +401,9 @@ namespace DCL.VoiceChat
                 Span<float> audioSpan = audioChunk.AsSpan(0, sampleCount);
                 audioProcessor.ProcessAudio(audioSpan, microphoneSampleRate);
 
-                audioReadEvent?.Invoke(audioSpan, 1, microphoneSampleRate);
+                Span<float> resampledSpan = ResampleToUnityOutputRate(audioSpan, microphoneSampleRate, cachedSampleRate);
+                Span<float> stereoSpan = ConvertMonoToStereo(resampledSpan);
+                audioReadEvent?.Invoke(stereoSpan, 2, cachedSampleRate);
             }
             catch (Exception ex)
             {
@@ -506,6 +521,84 @@ namespace DCL.VoiceChat
 
             Span<float> outputSpan = tempBuffer.AsSpan(0, samplesPerChannel);
             ConvertToMono(data, outputSpan, channels);
+
+            return outputSpan;
+        }
+
+        /// <summary>
+        /// Convert mono audio to stereo by duplicating the channel
+        /// </summary>
+        private Span<float> ConvertMonoToStereo(ReadOnlySpan<float> monoData)
+        {
+            int stereoSampleCount = monoData.Length * 2;
+            
+            if (stereoBuffer == null || stereoBuffer.Length < stereoSampleCount)
+            {
+                stereoBuffer = new float[Mathf.Max(stereoSampleCount, 2048)];
+            }
+            
+            Span<float> stereoSpan = stereoBuffer.AsSpan(0, stereoSampleCount);
+            
+            for (int i = 0; i < monoData.Length; i++)
+            {
+                float sample = monoData[i];
+                stereoSpan[i * 2] = sample;     // Left channel
+                stereoSpan[i * 2 + 1] = sample; // Right channel
+            }
+            
+            return stereoSpan;
+        }
+
+        /// <summary>
+        /// Resample audio from input sample rate to Unity's output sample rate using linear interpolation
+        /// </summary>
+        private Span<float> ResampleToUnityOutputRate(ReadOnlySpan<float> inputData, int inputSampleRate, int outputSampleRate)
+        {
+            // If sample rates are the same, no resampling needed
+            if (inputSampleRate == outputSampleRate || inputSampleRate <= 0 || outputSampleRate <= 0)
+            {
+                if (tempBuffer == null || tempBuffer.Length < inputData.Length)
+                {
+                    tempBuffer = new float[inputData.Length];
+                }
+                Span<float> directSpan = tempBuffer.AsSpan(0, inputData.Length);
+                inputData.CopyTo(directSpan);
+                return directSpan;
+            }
+
+            float resampleRatio = (float)inputSampleRate / outputSampleRate;
+            int outputSampleCount = Mathf.CeilToInt(inputData.Length / resampleRatio);
+
+            // Ensure we don't exceed buffer limits
+            outputSampleCount = Mathf.Min(outputSampleCount, MAX_RESAMPLING_BUFFER_SIZE);
+
+            if (resamplingBuffer == null || resamplingBuffer.Length < outputSampleCount)
+            {
+                resamplingBuffer = new float[Mathf.Max(outputSampleCount, 1024)];
+            }
+
+            Span<float> outputSpan = resamplingBuffer.AsSpan(0, outputSampleCount);
+
+            // Linear interpolation resampling
+            for (int outputIndex = 0; outputIndex < outputSampleCount; outputIndex++)
+            {
+                float inputPosition = outputIndex * resampleRatio;
+                int inputIndex = Mathf.FloorToInt(inputPosition);
+                float fraction = inputPosition - inputIndex;
+
+                if (inputIndex >= inputData.Length - 1)
+                {
+                    // Use last sample if we're at the end
+                    outputSpan[outputIndex] = inputData[inputData.Length - 1];
+                }
+                else
+                {
+                    // Linear interpolation between adjacent samples
+                    float sample1 = inputData[inputIndex];
+                    float sample2 = inputData[inputIndex + 1];
+                    outputSpan[outputIndex] = sample1 + (sample2 - sample1) * fraction;
+                }
+            }
 
             return outputSpan;
         }

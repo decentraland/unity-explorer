@@ -52,7 +52,6 @@ namespace DCL.VoiceChat
             this.microphoneHandler = microphoneHandler;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
-            microphoneHandler.RtcAudioSourceReconfigured += OnRtcAudioSourceReconfigured;
             microphoneHandler.MicrophoneReady += OnMicrophoneReady;
         }
 
@@ -62,7 +61,6 @@ namespace DCL.VoiceChat
             disposed = true;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
-            microphoneHandler.RtcAudioSourceReconfigured -= OnRtcAudioSourceReconfigured;
             microphoneHandler.MicrophoneReady -= OnMicrophoneReady;
             CloseMedia();
             activeStreams.Clear();
@@ -159,26 +157,6 @@ namespace DCL.VoiceChat
                 {
                     pendingTrackPublish = false;
                 }
-            }
-        }
-
-        /// <summary>
-        /// Called when the RtcAudioSource is reconfigured due to sample rate changes
-        /// </summary>
-        private void OnRtcAudioSourceReconfigured(RtcAudioSource newRtcAudioSource)
-        {
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "RtcAudioSource reconfigured - updating track if published");
-
-            // If we have an active track, we need to republish with the new RtcAudioSource
-            if (microphoneTrack != null && isMediaOpen && cts != null && !cts.Token.IsCancellationRequested)
-            {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Republishing track with reconfigured RtcAudioSource");
-
-                // Unpublish the old track
-                voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
-
-                // Publish new track with reconfigured RtcAudioSource
-                TryPublishTrack(cts.Token);
             }
         }
 

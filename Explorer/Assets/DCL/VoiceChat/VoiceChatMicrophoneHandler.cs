@@ -22,7 +22,6 @@ namespace DCL.VoiceChat
         public event Action EnabledMicrophone;
         public event Action DisabledMicrophone;
         public event Action MicrophoneReady;
-        public event Action<RtcAudioSource> RtcAudioSourceReconfigured;
 
         private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
@@ -38,9 +37,6 @@ namespace DCL.VoiceChat
         private bool isInCall;
         private float buttonPressStartTime;
         private string microphoneName;
-
-        private int previousSampleRate = 0;
-        private int previousChannels = 0;
 
         public bool IsTalking { get; private set; }
 
@@ -89,7 +85,6 @@ namespace DCL.VoiceChat
             EnabledMicrophone = null;
             DisabledMicrophone = null;
             MicrophoneReady = null;
-            RtcAudioSourceReconfigured = null;
 
             if (rtcAudioSource != null)
             {
@@ -207,7 +202,7 @@ namespace DCL.VoiceChat
             IsTalking = !IsTalking;
         }
 
-        private void InitializeMicrophone(bool initializeRtcAudioSource = true)
+        private void InitializeMicrophone()
         {
             if (isMicrophoneInitialized)
                 return;
@@ -274,46 +269,28 @@ namespace DCL.VoiceChat
             audioSource.spatialBlend = SPATIAL_BLEND_2D;
             audioSource.panStereo = CENTER_PAN;
 
-            if (initializeRtcAudioSource)
-                InitializeOrStartRtcAudioSource(actualSampleRate);
+            InitializeRtcAudioSource();
 
             audioFilter.SetProcessingEnabled(false);
 
             isMicrophoneInitialized = true;
-
-            if (microphoneAudioClip != null)
-            {
-                previousSampleRate = microphoneAudioClip.frequency;
-                previousChannels = microphoneAudioClip.channels;
-            }
         }
 
-        private void InitializeOrStartRtcAudioSource(int sampleRate, bool isReconfigure = false)
+        private void InitializeRtcAudioSource()
         {
-            if (rtcAudioSource == null)
+            if (rtcAudioSource != null)
+                return;
+
+            try
             {
-                try
-                {
-                    rtcAudioSource = RtcAudioSource.CreateCustom(audioSource, audioFilter, (uint)sampleRate, 1, new AudioProcessingOptions(false, false, false, false));
-                    rtcAudioSource.Start();
-                    MicrophoneReady?.Invoke();
-                }
-                catch (System.Exception ex)
-                {
-                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to create LiveKit RtcAudioSource: {ex.Message}");
-                }
+                int unitySampleRate = AudioSettings.outputSampleRate;
+                rtcAudioSource = RtcAudioSource.CreateCustom(audioSource, audioFilter, (uint)unitySampleRate, 2, new AudioProcessingOptions(false, false, false, false));
+                rtcAudioSource.Start();
+                MicrophoneReady?.Invoke();
             }
-            else if (!isReconfigure)
+            catch (System.Exception ex)
             {
-                try
-                {
-                    rtcAudioSource.Start();
-                    MicrophoneReady?.Invoke();
-                }
-                catch (System.Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to start existing RtcAudioSource: {ex.Message}");
-                }
+                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to create LiveKit RtcAudioSource: {ex.Message}");
             }
         }
 
@@ -387,60 +364,22 @@ namespace DCL.VoiceChat
                 isMicrophoneInitialized = false;
             }
 
-            bool willReconfigure = rtcAudioSource != null;
-            InitializeMicrophone(initializeRtcAudioSource: !willReconfigure);
-
-            if (isMicrophoneInitialized && microphoneAudioClip != null)
-            {
-                audioFilter.SetMicrophoneInfo(MicrophoneName, microphoneAudioClip.frequency, MICROPHONE_LENGTH_SECONDS);
-                audioFilter.SetMicrophoneClip(microphoneAudioClip);
-            }
-
-            if (willReconfigure && isMicrophoneInitialized && microphoneAudioClip != null)
+            if (rtcAudioSource != null)
             {
                 try
                 {
-                    int newSampleRate = microphoneAudioClip.frequency;
-                    int newChannels = microphoneAudioClip.channels;
-
-                    bool specsChanged = (newSampleRate != previousSampleRate) || (newChannels != previousChannels);
-
-                    if (specsChanged)
-                    {
-                        rtcAudioSource.Stop();
-                        rtcAudioSource.Dispose();
-                        rtcAudioSource = null;
-
-                        InitializeOrStartRtcAudioSource(newSampleRate);
-
-                        previousSampleRate = newSampleRate;
-                        previousChannels = newChannels;
-                    }
-                    else
-                    {
-                        rtcAudioSource.Stop();
-                        rtcAudioSource.Start();
-                    }
-
-                    if (specsChanged)
-                    {
-                        RtcAudioSourceReconfigured?.Invoke(rtcAudioSource);
-                    }
-                    MicrophoneReady?.Invoke();
+                    rtcAudioSource.Stop();
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to update RtcAudioSource for new microphone: {ex.Message}");
-                    rtcAudioSource?.Stop();
-                    rtcAudioSource?.Dispose();
-                    rtcAudioSource = null;
-
-                    InitializeOrStartRtcAudioSource(microphoneAudioClip.frequency);
-
-                    previousSampleRate = microphoneAudioClip.frequency;
-                    previousChannels = microphoneAudioClip.channels;
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource during microphone change: {ex.Message}");
                 }
+
+                rtcAudioSource.Dispose();
+                rtcAudioSource = null;
             }
+
+            InitializeMicrophone();
 
             if (isInCall && wasTalking)
             {
