@@ -44,11 +44,8 @@ namespace DCL.Profiles
         private URLAddress? bodySnapshotUrl;
         private URLAddress? faceSnapshotUrl;
 
-        public ProfileBuilder From(Profile? profile)
+        public ProfileBuilder From(Profile profile)
         {
-            if (profile == null)
-                return From(Build());
-
             wearables = profile.Avatar.wearables;
             bodyShape = profile.Avatar.BodyShape;
             eyesColor = profile.Avatar.EyesColor;

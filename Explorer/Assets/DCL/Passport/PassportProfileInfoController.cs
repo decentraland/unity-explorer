@@ -46,6 +46,7 @@ namespace DCL.Passport
                 }
             }
             catch (OperationCanceledException) { }
+            catch (IdenticalProfileUpdateException) { }
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";

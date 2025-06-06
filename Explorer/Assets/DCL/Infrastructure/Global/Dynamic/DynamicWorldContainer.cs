@@ -537,11 +537,7 @@ namespace Global.Dynamic
                 : coreBackpackEventBus;
 
             var profileBroadcast = new DebounceProfileBroadcast(
-                new EnsureSelfPublishedProfileBroadcast(
-                    new ProfileBroadcast(messagePipesHub, selfProfile),
-                    selfProfile,
-                    staticContainer.RealmData
-                )
+                new ProfileBroadcast(messagePipesHub, selfProfile)
             );
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings, userBlockingCacheProxy);

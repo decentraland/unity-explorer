@@ -171,7 +171,10 @@ namespace DCL.Backpack
 
                 // Skip publishing the same profile
                 if (newProfile.IsSameProfile(oldProfile))
+                {
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
                     return;
+                }
 
                 profileCache.Set(newProfile.UserId, newProfile);
                 UpdateAvatarInWorld(newProfile);
@@ -184,6 +187,10 @@ namespace DCL.Backpack
                 MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
             }
             catch (OperationCanceledException) { }
+            catch (IdenticalProfileUpdateException)
+            {
+                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
+            }
             catch (Exception e)
             {
                 ReportHub.LogException(e, ReportCategory.PROFILE);

@@ -27,6 +27,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IReadOnlyList<string> forceRender;
+        private Profile? copyOfOwnProfile;
 
         public SelfProfile(
             IProfileRepository profileRepository,
@@ -79,6 +80,12 @@ namespace DCL.Profiles.Self
             if (OwnProfile == null || profile.Version > OwnProfile.Version)
                 OwnProfile = profile;
 
+            if (copyOfOwnProfile == null || profile.Version > copyOfOwnProfile.Version)
+            {
+                copyOfOwnProfile?.Dispose();
+                copyOfOwnProfile = profileBuilder.From(profile).Build();
+            }
+
             return profile;
         }
 
@@ -105,20 +112,19 @@ namespace DCL.Profiles.Self
 
         public async UniTask<Profile?> UpdateProfileAsync(Profile newProfile, CancellationToken ct, bool updateAvatarInWorld = true)
         {
-            Profile? profile = await ProfileAsync(ct);
-
             if (web3IdentityCache.Identity == null)
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
-            if (profile == null)
-                throw new Exception("Self profile not found");
-
             // Skip publishing the same profile
-            if (newProfile.IsSameProfile(profile)) return profile;
+            // We need to keep a copy of the last fetched/updated profile, since many update operations modify the original profile
+            // outside of this class, and so this check fails
+            if (copyOfOwnProfile != null)
+                if (newProfile.IsSameProfile(copyOfOwnProfile))
+                    throw new IdenticalProfileUpdateException();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.Version++;
-            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+            newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(newProfile.DisplayName);
 
             OwnProfile = newProfile;
 
@@ -127,9 +133,6 @@ namespace DCL.Profiles.Self
                 await profileRepository.SetAsync(newProfile, ct);
                 return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
             }
-
-            // Clone the old profile since the original will be disposed when its replaced in the cache
-            var oldProfile = profileBuilder.From(profile).Build();
 
             // Update profile immediately to prevent UI inconsistencies
             // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
@@ -145,12 +148,15 @@ namespace DCL.Profiles.Self
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
                 UpdateAvatarInWorld(savedProfile!);
-                oldProfile.Dispose();
+                copyOfOwnProfile?.Dispose();
+                copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
                 return savedProfile;
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
                 // Revert to the old profile so we are aligned to the catalyst's version
+                // copyOfOwnProfile should never be null at this point
+                Profile oldProfile = profileBuilder.From(copyOfOwnProfile!).Build();
                 profileCache.Set(oldProfile.UserId, oldProfile);
                 UpdateAvatarInWorld(oldProfile);
                 OwnProfile = oldProfile;
@@ -161,7 +167,6 @@ namespace DCL.Profiles.Self
         private void UpdateAvatarInWorld(Profile profile)
         {
             profile.IsDirty = true;
-
             // We assume that the profile already exists at this point, so we don't add it but update it
             world.Set(playerEntity, profile);
         }
