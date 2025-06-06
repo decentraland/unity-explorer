@@ -14,6 +14,11 @@ namespace DCL.VoiceChat
 
         }
 
+        public void StartCall()
+        {
+            UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
+        }
+
         public void StartCall(Web3Address walletId)
         {
             //We can start a call only if we are not connected or trying to start a call

@@ -11,6 +11,7 @@ namespace DCL.VoiceChat
         public Web3Address CurrentTargetWallet { get; }
 
         void StartCall(Web3Address userAddress);
+        void StartCall();
         void StopCall();
     }
 }

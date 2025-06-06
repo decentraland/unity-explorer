@@ -294,7 +294,7 @@ namespace DCL.VoiceChat
             {
                 try
                 {
-                    rtcAudioSource = RtcAudioSource.CreateCustom(audioSource, audioFilter, (uint)sampleRate, 1);
+                    rtcAudioSource = RtcAudioSource.CreateCustom(audioSource, audioFilter, (uint)sampleRate, 1, new AudioProcessingOptions(false, false, false, false));
                     rtcAudioSource.Start();
                     MicrophoneReady?.Invoke();
                 }
