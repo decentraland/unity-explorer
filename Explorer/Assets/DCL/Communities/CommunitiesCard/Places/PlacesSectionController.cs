@@ -212,6 +212,9 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
+            if (communityData!.Value.places == null || communityData.Value.places.Length == 0)
+                return 0;
+
             int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
             int total = communityData!.Value.places.Length;
 
