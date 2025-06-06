@@ -215,8 +215,6 @@ namespace DCL.VoiceChat
                 $"AudioSource Volume: {microphoneAudioSource.volume}, " +
                 $"AudioSource Pitch: {microphoneAudioSource.pitch}");
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Using existing RtcAudioSource - IsRunning: {rtcAudioSource.IsRunning}");
-
             microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource);
 
             var options = new TrackPublishOptions
