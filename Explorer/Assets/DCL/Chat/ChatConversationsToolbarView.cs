@@ -2,9 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DG.Tweening;
-using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,10 +12,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Button = UnityEngine.UI.Button;
+using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatConversationsToolbarView : MonoBehaviour, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler
+    public class ChatConversationsToolbarView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
@@ -44,9 +45,8 @@ namespace DCL.Chat
         [SerializeField]
         private Button scrollDownButton;
 
-        private ViewDependencies viewDependencies;
-
         private Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         /// <summary>
         /// Raised when a different conversation item is selected.
@@ -81,7 +81,12 @@ namespace DCL.Chat
             if (items.TryGetValue(channel.Id, out var item))
                 return;
 
-            ChatConversationsToolbarViewItem newItem;
+            ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
+            newItem.Initialize();
+            newItem.OpenButtonClicked += OpenButtonClicked;
+            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
+            newItem.TooltipShown += OnItemTooltipShown;
+            newItem.Id = channel.Id;
 
             switch (channel.ChannelType)
             {
@@ -97,10 +102,7 @@ namespace DCL.Chat
                 default: throw new ArgumentOutOfRangeException();
             }
 
-            newItem.OpenButtonClicked += OpenButtonClicked;
-            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
-            newItem.TooltipShown += OnItemTooltipShown;
-            newItem.Id = channel.Id;
+            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
 
             items.Add(channel.Id, newItem);
 
@@ -147,7 +149,7 @@ namespace DCL.Chat
         public void RemoveAllConversations()
         {
             foreach (var itemsValue in items.Values)
-                Destroy(itemsValue.gameObject);
+                UnityObjectUtils.SafeDestroyGameObject(itemsValue);
             items.Clear();
             UpdateScrollButtonsVisibility();
         }
@@ -173,9 +175,13 @@ namespace DCL.Chat
                 items[destinationChannel].SetConnectionStatus(connectionStatus);
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="profileRepositoryWrapper"></param>
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            viewDependencies = dependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         /// <summary>
@@ -282,11 +288,11 @@ namespace DCL.Chat
 
         private async UniTaskVoid SetupPrivateConversationItemAsync(PrivateChatConversationsToolbarViewItem newItem)
         {
-            Profile? profile = await viewDependencies.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
+            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
 
             if (profile != null)
             {
-                newItem.SetProfileData(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
                 newItem.SetConversationName(profile.ValidatedName);
                 newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
             }

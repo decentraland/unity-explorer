@@ -6,6 +6,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
@@ -16,6 +17,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.UI;
@@ -24,6 +26,7 @@ using DCL.UI.InputFieldFormatting;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
@@ -33,6 +36,7 @@ using System.Threading;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
+using Utility.Types;
 
 namespace DCL.Chat
 {
@@ -64,6 +68,7 @@ namespace DCL.Chat
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IThumbnailCache thumbnailCache;
         private readonly IMVCManager mvcManager;
@@ -112,10 +117,10 @@ namespace DCL.Chat
             IFriendsEventBus friendsEventBus,
             ChatHistoryStorage chatStorage,
             ObjectProxy<IFriendsService> friendsService,
+            ProfileRepositoryWrapper profileDataProvider,
             ICommunitiesDataProvider communitiesDataProvider,
             IThumbnailCache thumbnailCache,
-            IMVCManager mvcManager)
-            : base(viewFactory)
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -132,6 +137,7 @@ namespace DCL.Chat
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.communitiesDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
@@ -242,6 +248,7 @@ namespace DCL.Chat
             cameraEntity = world.CacheCamera();
 
             viewInstance!.InjectDependencies(viewDependencies);
+            viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus, thumbnailCache, OpenContextMenuAsync);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
@@ -391,7 +398,10 @@ namespace DCL.Chat
             if(!IsViewReady)
                 return;
 
-            var userState = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct);
+            Result<ChatUserStateUpdater.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+            if (result.Success == false) return;
+
+            ChatUserStateUpdater.ChatUserState userState = result.Value;
 
             viewInstance!.SetInputWithUserState(userState);
 

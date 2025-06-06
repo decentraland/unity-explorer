@@ -4,6 +4,8 @@ using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -90,7 +92,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void BlockUserClicked(FriendProfile profile) =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, profile.Address, profile.Name);
 
-        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
@@ -103,14 +105,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.CancelFriendshipAsync(userId, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.CancelFriendshipAsync(userData.userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -143,14 +138,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid RejectFriendshipAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.RejectFriendshipAsync(request.From.Address, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.RejectFriendshipAsync(request.From.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -162,14 +150,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.CancelFriendshipAsync(request.To.Address, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
+                await friendsService.CancelFriendshipAsync(request.To.Address, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -183,10 +164,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, RequestUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                friendProfile.UserNameColor,
-                elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
-                friendProfile.FacePictureUrl);
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.ToUserData(),
+                elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                 actionOnHide: () => elementView.CanUnHover = true,
@@ -194,26 +173,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
                       .Forget();
         }
 
-        public override async UniTask InitAsync(CancellationToken ct)
+        protected override void OnLoopListInitialized()
         {
-            view.SetLoadingState(true);
-            view.SetScrollViewState(false);
-
-            await requestManager.InitAsync(ct);
-
-            view.SetLoadingState(false);
-            view.SetScrollViewState(true);
-
-            RefreshLoopList();
-            requestManager.FirstFolderClicked += FolderClicked;
-            requestManager.SecondFolderClicked += FolderClicked;
-
             PropagateReceivedRequestsCountChanged();
         }
+
+        protected override bool ShouldShowScrollView() =>
+            true; // the request section should always present 2 lists (sent/received), even if it's empty
 
         protected override void ElementClicked(FriendProfile profile)
         {
         }
-
     }
 }

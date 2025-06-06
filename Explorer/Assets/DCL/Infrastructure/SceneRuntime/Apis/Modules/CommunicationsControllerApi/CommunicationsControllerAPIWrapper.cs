@@ -1,15 +1,14 @@
 using CrdtEcsBridge.PoolsProviders;
-using DCL.Diagnostics;
 using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8.SplitProxy;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
-    public class CommunicationsControllerAPIWrapper : JsApiWrapperBase<ICommunicationsControllerAPI>,
-        IV8HostObject
+    public class CommunicationsControllerAPIWrapper : JsApiWrapper<ICommunicationsControllerAPI>, IV8HostObject
     {
         private readonly IInstancePoolsProvider instancePoolsProvider;
         private readonly List<PoolableByteArray> lastInput = new (10);
@@ -17,7 +16,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, bool isLocalSceneDevelopment) : base(api, isLocalSceneDevelopment)
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler, CancellationTokenSource disposeCts) : base(api, disposeCts)
         {
             this.instancePoolsProvider = instancePoolsProvider;
             this.sceneExceptionsHandler = sceneExceptionsHandler;

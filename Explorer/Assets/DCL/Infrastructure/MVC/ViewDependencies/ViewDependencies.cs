@@ -1,12 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Clipboard;
+﻿using DCL.Clipboard;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
-using DCL.Multiplayer.Profiles.Poses;
-using DCL.Profiles;
 using DCL.Utilities;
-using System.Threading;
-using UnityEngine;
 
 namespace MVC
 {
@@ -21,32 +16,18 @@ namespace MVC
         public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
+
+        // TODO: Remove this from here
         public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
 
-        private readonly IThumbnailCache thumbnailCache;
-        private readonly IProfileRepository profileRepository;
-        private readonly IRemoteMetadata remoteMetadata;
-
-        public async UniTask<Sprite?> GetProfileThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
-            await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
-
-        public Sprite? GetProfileThumbnail(string userId) =>
-            thumbnailCache.GetThumbnail(userId);
-
-        public async UniTask<Profile?> GetProfileAsync(string walletId, CancellationToken ct) =>
-            await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), ct);
-
         public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            IThumbnailCache thumbnailCache, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             DclInput = dclInput;
             EventSystem = eventSystem;
             GlobalUIViews = globalUIViews;
             ClipboardManager = clipboardManager;
             Cursor = cursor;
-            this.thumbnailCache = thumbnailCache;
-            this.profileRepository = profileRepository;
-            this.remoteMetadata = remoteMetadata;
             this.UserBlockingCacheProxy = userBlockingCacheProxy;
         }
 

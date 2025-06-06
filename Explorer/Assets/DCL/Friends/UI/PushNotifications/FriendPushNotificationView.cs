@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
@@ -9,7 +10,7 @@ using UnityEngine;
 
 namespace DCL.Friends.UI.PushNotifications
 {
-    public class FriendPushNotificationView : ViewBase, IView, IViewWithGlobalDependencies
+    public class FriendPushNotificationView : ViewBase, IView
     {
         [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
         [field: SerializeField] public TMP_Text UserNameText { get; private set; }
@@ -54,9 +55,9 @@ namespace DCL.Friends.UI.PushNotifications
             await PanelCanvasGroup.DOFade(0f, toastVFadeOutDuration).ToUniTask(cancellationToken: ct);
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            ProfilePictureView.InjectDependencies(dependencies);
+            ProfilePictureView.SetProfileDataProvider(profileDataProvider);
         }
     }
 }

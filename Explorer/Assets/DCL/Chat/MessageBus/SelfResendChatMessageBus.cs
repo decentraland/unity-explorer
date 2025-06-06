@@ -1,9 +1,7 @@
-using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using System;
-using System.Threading;
 
 namespace DCL.Chat.MessageBus
 {
@@ -41,10 +39,10 @@ namespace DCL.Chat.MessageBus
         public void Send(ChatChannel channel, string message, string origin, string topic)
         {
             this.origin.Send(channel, message, origin, topic);
-            SendSelfAsync(channel.Id, message, topic).Forget();
+            SendSelf(channel.Id, message, topic);
         }
 
-        private async UniTaskVoid SendSelfAsync(ChatChannel.ChannelId channelId, string chatMessage, string topic)
+        private void SendSelf(ChatChannel.ChannelId channelId, string chatMessage, string topic)
         {
             IWeb3Identity identity = web3IdentityCache.Identity;
 
@@ -54,7 +52,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(identity.Address, true, chatMessage, null, topic, CancellationToken.None);
+            ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null, topic);
 
             MessageAdded?.Invoke(channelId, newMessage);
         }

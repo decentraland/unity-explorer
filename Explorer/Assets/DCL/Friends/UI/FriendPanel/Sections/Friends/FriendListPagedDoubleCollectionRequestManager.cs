@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI;
-using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -35,10 +35,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IProfileRepository profileRepository,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             LoopListView2 loopListView,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             int pageSize,
             int elementsMissingThreshold
-        ) : base(friendsService, friendEventBus, viewDependencies, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+        ) : base(friendsService, friendEventBus, profileDataProvider, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
@@ -68,6 +68,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendBecameOnline;
             friendsConnectivityStatusTracker.OnFriendBecameAway -= FriendBecameAway;
             friendsConnectivityStatusTracker.OnFriendBecameOffline -= FriendBecameOffline;
+
+            base.Dispose();
         }
 
         private void AddNewFriendProfile(FriendProfile friendProfile, OnlineStatus onlineStatus)
@@ -188,7 +190,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.SetOnlineStatus(friendsConnectivityStatusTracker.GetFriendStatus(elementView.UserProfile.Address));
         }
 
-        protected override void ResetCollections()
+        protected sealed override void ResetCollection()
         {
             onlineFriends.Clear();
             offlineFriends.Clear();

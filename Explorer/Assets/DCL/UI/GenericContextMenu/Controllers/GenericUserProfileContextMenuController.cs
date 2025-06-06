@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
+using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Multiplayer.Connectivity;
@@ -14,6 +15,7 @@ using DCL.Profiles;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -128,8 +130,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                                                   friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
             }
 
-            userProfileControlSettings.SetInitialData(profile.ValidatedName, profile.UserId,
-                profile.HasClaimedName, profile.UserNameColor, contextMenuFriendshipStatus, profile.Avatar.FaceSnapshotUrl);
+            userProfileControlSettings.SetInitialData(profile.ToUserData(), contextMenuFriendshipStatus);
 
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
@@ -159,21 +160,21 @@ namespace DCL.UI.GenericContextMenu.Controllers
                    };
         }
 
-        private void OnFriendsButtonClicked(string userAddress, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void OnFriendsButtonClicked(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    SendFriendRequest(userAddress);
+                    SendFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    RemoveFriend(userAddress);
+                    RemoveFriend(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendRequest(userAddress);
+                    CancelFriendRequest(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    AcceptFriendship(userAddress);
+                    AcceptFriendship(userData.userAddress);
                     break;
                 case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED: break;
                 default: throw new ArgumentOutOfRangeException(nameof(friendshipStatus), friendshipStatus, null);
@@ -204,7 +205,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.CancelFriendshipAsync(userAddress, ct);
+                await friendService.CancelFriendshipAsync(userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 

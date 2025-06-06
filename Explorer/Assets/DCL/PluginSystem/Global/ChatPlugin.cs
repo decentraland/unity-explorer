@@ -17,6 +17,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
@@ -58,9 +59,10 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
-        private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
+        private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ICommunitiesDataProvider communityDataProvider;
         private readonly IThumbnailCache thumbnailCache;
 
@@ -87,11 +89,12 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ObjectProxy<IRPCSocialServices> socialServiceProxy,
+            IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
+            ProfileRepositoryWrapper profileDataProvider,
             ICommunitiesDataProvider communityDataProvider,
             IThumbnailCache thumbnailCache)
         {
@@ -121,6 +124,7 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
         }
@@ -169,6 +173,7 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 chatStorage,
                 friendsServiceProxy,
+                profileRepositoryWrapper,
                 communityDataProvider,
                 thumbnailCache,
                 mvcManager

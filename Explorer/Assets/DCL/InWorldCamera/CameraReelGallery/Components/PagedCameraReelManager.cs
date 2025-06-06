@@ -46,6 +46,9 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
 
         private async UniTask<CameraReelResponsesCompact> FetchResponseAsync(CancellationToken ct)
         {
+            if (parameters.PlaceIds != null)
+                return await cameraReelStorageService.GetCompactCommunityScreenshotGalleryAsync(parameters.PlaceIds, pageSize, currentOffset, ct);
+
             if (parameters.PlaceId != null)
                 return await cameraReelStorageService.GetCompactPlaceScreenshotGalleryAsync(parameters.PlaceId, pageSize, currentOffset, ct);
 
@@ -93,12 +96,14 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         public readonly string? WalletAddress;
         public readonly bool? UseSignedRequest;
         public readonly string? PlaceId;
+        public readonly string[]? PlaceIds;
 
         public PagedCameraReelManagerParameters(string walletAddress, bool useSignedRequest)
         {
             this.WalletAddress = walletAddress;
             this.UseSignedRequest = useSignedRequest;
             this.PlaceId = null;
+            this.PlaceIds = null;
         }
 
         public PagedCameraReelManagerParameters(string placeId)
@@ -106,6 +111,15 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
             this.WalletAddress = null;
             this.UseSignedRequest = null;
             this.PlaceId = placeId;
+            this.PlaceIds = null;
+        }
+
+        public PagedCameraReelManagerParameters(string[] placeIds)
+        {
+            this.WalletAddress = null;
+            this.UseSignedRequest = null;
+            this.PlaceId = null;
+            this.PlaceIds = placeIds;
         }
     }
 }

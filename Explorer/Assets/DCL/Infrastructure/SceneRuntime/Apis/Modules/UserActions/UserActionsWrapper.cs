@@ -2,34 +2,28 @@ using DCL.Diagnostics;
 using JetBrains.Annotations;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.UserActions
 {
-    public class UserActionsWrapper : IJsApiWrapper
+    public class UserActionsWrapper : JsApiWrapper
     {
         private readonly IRestrictedActionsAPI restrictedActionsAPI;
-        private readonly Action<string> logWarning;
 
-        public UserActionsWrapper(IRestrictedActionsAPI restrictedActionsAPI) : this(
-            restrictedActionsAPI,
-            m => ReportHub.LogWarning(ReportCategory.ENGINE, m)
-        ) { }
-
-        public UserActionsWrapper(IRestrictedActionsAPI restrictedActionsAPI, Action<string> logWarning)
+        public UserActionsWrapper(IRestrictedActionsAPI restrictedActionsAPI, CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.restrictedActionsAPI = restrictedActionsAPI;
-            this.logWarning = logWarning;
         }
 
-        public void Dispose() { }
+        public override void Dispose() { }
 
         [UsedImplicitly]
         public void RequestTeleport(string destination)
         {
             if (destination is "magic" or "crowd")
             {
-                logWarning($"Destination to {destination} is outdated");
+                ReportHub.LogWarning(ReportCategory.ENGINE, $"Destination to {destination} is outdated");
                 return;
             }
 
@@ -38,7 +32,7 @@ namespace SceneRuntime.Apis.Modules.UserActions
                 var coordinates = new ParcelCoordinates(destination);
                 restrictedActionsAPI.TryTeleportTo(coordinates.AsVector2Int());
             }
-            catch (Exception e) { logWarning($"Error while trying to teleport to {destination}: {e.Message} {e}"); }
+            catch (Exception e) { ReportHub.LogWarning(ReportCategory.ENGINE, $"Error while trying to teleport to {destination}: {e.Message} {e}"); }
         }
 
         private readonly struct ParcelCoordinates

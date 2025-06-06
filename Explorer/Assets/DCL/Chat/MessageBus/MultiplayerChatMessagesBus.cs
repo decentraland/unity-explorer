@@ -120,7 +120,7 @@ namespace DCL.Chat.MessageBus
                     walletId = receivedMessage.Topic.Substring(walletPartLength);
                 }
 
-                ChatMessage newMessage = await messageFactory.CreateChatMessageAsync(walletId, false, receivedMessage.Payload.Message, null, topic, cancellationTokenSource.Token);
+                ChatMessage newMessage = messageFactory.CreateChatMessage(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, topic);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
             }

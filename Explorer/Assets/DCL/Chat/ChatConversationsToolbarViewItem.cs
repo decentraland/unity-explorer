@@ -1,4 +1,5 @@
 using DCL.Chat.History;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
 using DG.Tweening;
@@ -196,10 +197,11 @@ namespace DCL.Chat
             }
         }
 
-        private void Awake()
+        public void Initialize()
         {
             openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
-            removeButton.onClick.AddListener(() => {
+            removeButton.onClick.AddListener(() =>
+            {
                 HideTooltip(true);
                 RemoveButtonClicked?.Invoke(this);
             });

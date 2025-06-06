@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
@@ -53,6 +54,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private CancellationTokenSource copyAnimationCts = new ();
         private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public override void UnregisterListeners()
         {
@@ -76,16 +78,21 @@ namespace DCL.UI.GenericContextMenu.Controls
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
-            ProfilePictureView.InjectDependencies(dependencies);
+        }
+
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         public void Configure(UserProfileContextMenuControlSettings settings)
         {
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
 
-            ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
+            ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor);
 
-            ProfilePictureView.Setup(settings.userColor, settings.userThumbnailAddress, settings.userAddress);
+            ProfilePictureView.Setup(settings.userData.userColor, settings.userData.userThumbnailAddress, settings.userData.userAddress);
+            ProfilePictureView.SetProfileDataProvider(profileRepositoryWrapper);
             ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
@@ -97,11 +104,11 @@ namespace DCL.UI.GenericContextMenu.Controls
         }
 
         private void InvokeSettingsAction(UserProfileContextMenuControlSettings settings) =>
-            settings.friendButtonClickAction(settings.userAddress, settings.friendshipStatus);
+            settings.friendButtonClickAction(settings.userData, settings.friendshipStatus);
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            viewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
+            viewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.userName : settings.userData.userAddress);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)

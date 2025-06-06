@@ -1,4 +1,5 @@
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
+using DCL.UI.Profiles.Helpers;
 using System;
 using TMPro;
 using UnityEngine;
@@ -24,12 +25,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
             }
         }
 
-        public override void Configure(FriendProfile profile)
+        public override void Configure(FriendProfile profile, ProfileRepositoryWrapper profileDataProvider)
         {
             buttons.Clear();
             buttons.Add(UnblockButton);
             buttons.Add(ContextMenuButton);
-            base.Configure(profile);
+            base.Configure(profile, profileDataProvider);
         }
 
         protected override void ToggleButtonView(bool isActive)

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles;
 using DCL.UI.Communities;
 using DCL.UI.ProfileElements;
@@ -119,11 +120,11 @@ namespace DCL.Chat
             communityChannelContainer.gameObject.SetActive(false);
         }
 
-        public void SetupProfileView(Web3Address userId)
+        public void SetupProfileView(Web3Address userId, ProfileRepositoryWrapper profileDataProvider)
         {
             cts = cts.SafeRestart();
             profileView.gameObject.SetActive(true);
-            profileView.SetupAsync(userId, cts.Token).Forget();
+            profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
             communityChannelContainer.gameObject.SetActive(false);
