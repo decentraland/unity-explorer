@@ -34,6 +34,15 @@ namespace DCL.PluginSystem.Global
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
         private VoiceChatController controller;
 
+        private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
+        private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
+        private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
+        private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
+        private ProvidedInstance<VoiceChatCombinedAudioSource> audioSource;
+        private VoiceChatMicrophoneHandler? voiceChatHandler;
+        private VoiceChatLivekitRoomHandler? livekitRoomHandler;
+        private VoiceChatController controller;
+
         public VoiceChatPlugin(
             ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
             IAssetsProvisioner assetsProvisioner,
@@ -92,7 +101,6 @@ namespace DCL.PluginSystem.Global
             audioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
-
 
             livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatHandler);
 

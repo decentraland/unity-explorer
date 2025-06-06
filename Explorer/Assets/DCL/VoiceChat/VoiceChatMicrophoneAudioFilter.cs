@@ -386,7 +386,6 @@ namespace DCL.VoiceChat
             try
             {
                 Span<float> audioSpan = audioChunk.AsSpan(0, sampleCount);
-
                 audioProcessor.ProcessAudio(audioSpan, microphoneSampleRate);
 
                 audioReadEvent?.Invoke(audioSpan, 1, microphoneSampleRate);
@@ -420,7 +419,6 @@ namespace DCL.VoiceChat
             }
 
             int samplesPerChannel = inputData.Length / channels;
-
             for (var sampleIndex = 0; sampleIndex < samplesPerChannel; sampleIndex++)
             {
                 var sum = 0f;
@@ -451,7 +449,6 @@ namespace DCL.VoiceChat
         private Span<float> ProcessAudioToSpan(ReadOnlySpan<float> data, int channels)
         {
             Span<float> workingSpan;
-
             if (channels == 1)
             {
                 if (tempBuffer == null || tempBuffer.Length < data.Length)
@@ -462,7 +459,6 @@ namespace DCL.VoiceChat
                     tempBuffer = new float[data.Length];
 #endif
                 }
-
                 workingSpan = tempBuffer.AsSpan(0, data.Length);
                 data.CopyTo(workingSpan);
             }
@@ -496,7 +492,6 @@ namespace DCL.VoiceChat
                 {
                     tempBuffer = new float[data.Length];
                 }
-
                 Span<float> monoSpan = tempBuffer.AsSpan(0, data.Length);
                 data.CopyTo(monoSpan);
                 return monoSpan;
