@@ -133,6 +133,7 @@ namespace DCL.Chat
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
             this.profileRepositoryWrapper = profileDataProvider;
+            friendsServiceProxy = friendsService;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
