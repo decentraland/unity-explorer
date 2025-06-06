@@ -200,7 +200,7 @@ namespace DCL.VoiceChat
             if (!isInCall) return;
 
             if(IsTalking)
-                EnableMicrophone();
+                DisableMicrophone();
             else
                 EnableMicrophone();
 

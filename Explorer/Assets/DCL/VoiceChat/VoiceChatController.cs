@@ -27,11 +27,9 @@ namespace DCL.VoiceChat
             view.IncomingCallView.RefuseCallButton.onClick.AddListener(RefuseCall);
             view.IncomingCallView.ProfileView.InjectDependencies(dependencies);
 
-            view.OutgoingCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.OutgoingCallView.HangUpButton.onClick.AddListener(HangUp);
             view.OutgoingCallView.ProfileView.InjectDependencies(dependencies);
 
-            view.InCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
             view.InCallView.ProfileView.InjectDependencies(dependencies);
 
