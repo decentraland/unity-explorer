@@ -131,7 +131,7 @@ namespace DCL.Passport.Modules
                 SetInfoSectionAsSavingStatus(true);
                 descriptionController.SaveDataIntoProfile();
                 additionalFieldsController.SaveDataIntoProfile();
-                await passportProfileInfoController.UpdateProfileAsync(ct);
+                await passportProfileInfoController.UpdateProfileAsync(currentProfile, ct);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

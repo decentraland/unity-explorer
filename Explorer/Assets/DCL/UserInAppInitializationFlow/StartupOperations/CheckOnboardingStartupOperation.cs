@@ -55,7 +55,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             {
                 // Update profile data
                 ownProfile.TutorialStep = TUTORIAL_STEP_DONE_MARK;
-                Profile? profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
+
+                Profile? profile = await selfProfile.UpdateProfileAsync(ownProfile, ct,
+                    // No need to update avatar, since we only modify the tutorial step, not wearables nor emotes
+                    updateAvatarInWorld: false);
 
                 if (profile != null)
                 {

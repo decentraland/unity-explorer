@@ -1,4 +1,5 @@
-﻿using CommunicationData.URLHelpers;
+﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
@@ -56,7 +57,7 @@ namespace DCL.InWorldCamera.Playground
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
-            Profile profile = await CreateProfile().ProfileAsync(CancellationToken.None);
+            Profile? profile = await CreateProfile().ProfileAsync(CancellationToken.None);
 
             var builder = new ScreenshotMetadataBuilder(null, null, null, null);
             builder.FillMetadata(profile, null, Vector2Int.one, "Test Playground", "Test place id", Array.Empty<VisiblePerson>());
@@ -82,6 +83,9 @@ namespace DCL.InWorldCamera.Playground
                 )
             );
 
+            var world = World.Create();
+            Entity playerEntity = world.Create();
+
             return new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
@@ -92,7 +96,10 @@ namespace DCL.InWorldCamera.Playground
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
                 new List<string>(),
-                null
+                null,
+                new DefaultProfileCache(),
+                world,
+                playerEntity
             );
         }
     }

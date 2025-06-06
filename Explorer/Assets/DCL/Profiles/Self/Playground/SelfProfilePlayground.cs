@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
@@ -29,6 +30,9 @@ namespace DCL.Profiles.Self.Playground
         {
             var web3IdentityCache = new IWeb3IdentityCache.Default();
 
+            var world = World.Create();
+            var playerEntity = world.Create();
+
             SelfProfile selfProfile = new SelfProfile(
                 new LogProfileRepository(
                     new RealmProfileRepository(
@@ -54,12 +58,15 @@ namespace DCL.Profiles.Self.Playground
                 new MemoryEmotesStorage(),
                 new EquippedEmotes(),
                 new List<string>(),
-                null
+                null,
+                new DefaultProfileCache(),
+                world,
+                playerEntity
             );
 
             var profile = await selfProfile.ProfileAsync(ct);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is found {profile != null}");
-            await selfProfile.UpdateProfileAsync(ct);
+            await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: false);
             ReportHub.Log(ReportData.UNSPECIFIED, $"Profile is published successfully");
         }
     }
