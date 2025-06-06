@@ -60,7 +60,7 @@ namespace DCL.LOD.Systems
                     lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
                 }
 
-                if (!sceneLODInfo.HasLOD(lodForAcquisition) && lodForAcquisition == 0)
+                if (!sceneLODInfo.HasLOD(lodForAcquisition))
                     StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
         }

@@ -18,7 +18,6 @@ namespace DCL.LOD.Systems
     public static class LODUtils
     {
         public static readonly URLSubdirectory LOD_EMBEDDED_SUBDIRECTORIES = URLSubdirectory.FromString("lods");
-        private static readonly Shader sceneShader = Shader.Find("DCL/Scene");
 
         public static IReadOnlyList<SceneAssetBundleManifest> LODManifests(IDecentralandUrlsSource decentralandUrlsSource) =>
             Enumerable
@@ -62,10 +61,8 @@ namespace DCL.LOD.Systems
                                 continue;
                             }
 
-                            TEMP_MATERIALS[j].shader = sceneShader;
-
-                            //newSlots.AddRange(lodTextureArrayContainer.SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], pooledList.Value[i].materials[j]));
-                            //TEMP_MATERIALS[j].mainTexture = null;
+                            newSlots.AddRange(lodTextureArrayContainer.SetTexturesFromOriginalMaterial(pooledList.Value[i].materials[j], pooledList.Value[i].materials[j]));
+                            TEMP_MATERIALS[j].mainTexture = null;
                         }
                     }
                 }
