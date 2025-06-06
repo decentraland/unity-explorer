@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 
@@ -140,10 +141,45 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void OnJumpInClicked(FriendProfile profile)
         {
-            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
-            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpInClicked?.Invoke(profile.Address, parcel));
+            jumpToFriendLocationCts = jumpToFriendLocationCts
+                .SafeRestart();
+            
+            FriendListSectionUtilities
+                .JumpToFriendLocation(profile.Address,
+                    jumpToFriendLocationCts,
+                    getUserPositionBuffer,
+                    onlineUsersProvider,
+                    realmNavigator,
+                    parcel => JumpInClicked?.Invoke(profile.Address, parcel),
+                    onError: HandleJumpToFriendError);
         }
 
+        private void HandleJumpToFriendError(JumpToFriendErrorInfo info)
+        {
+            switch (info.Kind)
+            {
+                case JumpToFriendErrorKind.ChangeRealm:
+                    sharedSpaceManager.ShowAsync(
+                        PanelsSharingSpace.Chat,
+                        new ChatControllerShowParams(true, true)
+                    );
+                    chatEventBus.InsertSystemMessage(info.RealmErrorMessage);
+                    break;
+
+                case JumpToFriendErrorKind.TeleportParcel:
+                    sharedSpaceManager.ShowAsync(
+                        PanelsSharingSpace.Chat,
+                        new ChatControllerShowParams(true, true)
+                    );
+                    chatEventBus.InsertSystemMessage(info.TeleportErrorMessage);
+                    break;
+
+                default:
+                    chatEventBus.InsertSystemMessage($"Unexpected error: {info.Kind}");
+                    break;
+            }
+        }
+        
         private void OnChatButtonClicked(FriendProfile elementViewUserProfile)
         {
             OnOpenConversationAsync(elementViewUserProfile).Forget();
