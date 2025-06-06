@@ -243,6 +243,17 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
 
+            //TODO: remove this once we have real data
+            if (community.places == null || community.places.Length == 0)
+            {
+                string[] fakePlaces = new string[PAGE_SIZE + 5];
+                for (int i = 0; i < fakePlaces.Length; i++)
+                {
+                    fakePlaces[i] = $"fake-place-id-{i + 1}";
+                }
+                community.places = fakePlaces;
+            }
+
             communityData = community;
             userCanModify = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
             view.SetCanModify(userCanModify);

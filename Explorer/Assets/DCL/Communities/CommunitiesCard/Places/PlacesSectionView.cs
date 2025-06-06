@@ -1,11 +1,13 @@
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Utilities;
 using DCL.WebRequests;
 using MVC;
 using SuperScrollView;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.UI;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
 namespace DCL.Communities.CommunitiesCard.Places
@@ -18,6 +20,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
 
         [field: SerializeField] private LoopGridView loopGrid { get; set; }
+        [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; }
         [field: SerializeField] private GameObject emptyState { get; set; }
         [field: SerializeField] private GameObject loadingObject { get; set; }
         [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; }
@@ -44,6 +47,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void Awake()
         {
+            loopGridScrollRect.SetScrollSensitivityBasedOnPlatform();
+
             contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: new (15, 15, 20, 25), elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.ShareText, contextMenuConfiguration.ShareSprite, () => ElementShareButtonClicked?.Invoke(lastClickedPlaceCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.CopyLinkText, contextMenuConfiguration.CopyLinkSprite, () => ElementCopyLinkButtonClicked?.Invoke(lastClickedPlaceCtx)));
