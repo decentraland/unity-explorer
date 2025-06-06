@@ -4,6 +4,9 @@
     {
         bool HasKey(string key);
 
+        void SetStringValue(string key, string value, bool save = false);
+        string GetStringValue(string key);
+
         void SetToggleValue(string key, bool value, bool save = false);
         bool GetToggleValue(string key);
 

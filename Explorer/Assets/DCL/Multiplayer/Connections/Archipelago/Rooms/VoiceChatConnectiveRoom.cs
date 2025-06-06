@@ -28,13 +28,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
     public class VoiceChatConnectiveRoom : IActivatableConnectiveRoom
     {
+        private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_UPDATE_INTERVAL = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
-        private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IRoom roomInstance;
         private readonly ObjectProxy<VoiceChatSettingsAsset> settings;
@@ -43,9 +43,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private string connectionString = string.Empty;
         public bool Activated { get; private set; }
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
-        public IConnectiveRoom.State CurrentState() => roomState.Value();
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
-        public IRoom Room() => room;
 
         public VoiceChatConnectiveRoom(ObjectProxy<VoiceChatSettingsAsset> settings)
         {
@@ -54,25 +52,39 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             var videoStreams = new VideoStreams(hub);
 
-            var audioRemixConveyor = new ThreadedAudioRemixConveyor();
+            var audioRemixConveyor = new OptimizedThreadedAudioRemixConveyor();
             var audioStreams = new AudioStreams(hub, audioRemixConveyor);
+            var tracksFactory = new TracksFactory();
 
-            roomInstance = new LogRoom(
-                new Room(
-                    new ArrayMemoryPool(),
-                    new DefaultActiveSpeakers(),
-                    hub,
-                    new TracksFactory(),
-                    new FfiHandleFactory(),
-                    new ParticipantFactory(),
-                    new TrackPublicationFactory(),
-                    new DataPipe(),
-                    new MemoryRoomInfo(),
-                    videoStreams,
-                    audioStreams
-                )
+            var room = new Room(
+                new ArrayMemoryPool(),
+                new DefaultActiveSpeakers(),
+                hub,
+                tracksFactory,
+                new FfiHandleFactory(),
+                new ParticipantFactory(),
+                new TrackPublicationFactory(),
+                new DataPipe(),
+                new MemoryRoomInfo(),
+                videoStreams,
+                audioStreams,
+                null!
             );
+
+            roomInstance = new LogRoom(room);
         }
+
+        public void Dispose()
+        {
+            cts.SafeCancelAndDispose();
+            cts = null;
+        }
+
+        public IConnectiveRoom.State CurrentState() =>
+            roomState.Value();
+
+        public IRoom Room() =>
+            room;
 
         public async UniTask SetConnectionStringAndActivateAsync(string connectionString)
         {
@@ -83,31 +95,20 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public async UniTask ActivateAsync()
         {
-            if (Activated)
-            {
-                return;
-            }
+            if (Activated) { return; }
 
             Activated = true;
-            connectionString = settings.StrictObject.ConnectionString;
+            //TODO FRAN: Replace this with proper connection string when we have BE working.
+            connectionString = string.Concat("livekit:wss://dcl.livekit.cloud?access_token=", settings.StrictObject.ConnectionString);
             await this.StartIfNotAsync();
         }
 
         public async UniTask DeactivateAsync()
         {
-            if (!Activated)
-            {
-                return;
-            }
+            if (!Activated) { return; }
 
             Activated = false;
             await this.StopIfNotAsync();
-        }
-
-        public void Dispose()
-        {
-            cts.SafeCancelAndDispose();
-            cts = null;
         }
 
         public async UniTask<bool> StartAsync()
@@ -116,7 +117,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 throw new WarningException("Room is already running");
 
             cts = cts.SafeRestart();
-            attemptToConnectState.Set(AttemptToConnectState.None);
+            attemptToConnectState.Set(AttemptToConnectState.NONE);
 
             if (connectionString == string.Empty)
             {
@@ -126,8 +127,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
-            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
-            return attemptToConnectState.Value() is not AttemptToConnectState.Error;
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
+            return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
         }
 
         public async UniTask StopAsync()
@@ -203,7 +204,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
 
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
+            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
             if (connectResult)

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcc266991aac5dd4d8eefcb174ba92dd, type: 3}
+  m_Name: VoiceChatConfiguration
+  m_EditorClassIdentifier: 
+  HoldThresholdInSeconds: 0.5
+  EnableNoiseGate: 1
+  NoiseGateThreshold: 0.0015
+  NoiseGateHoldTime: 2
+  NoiseGateAttackTime: 0.05
+  NoiseGateReleaseTime: 0.1
+  EnableBandPassFilter: 1
+  HighPassCutoffFreq: 80
+  LowPassCutoffFreq: 8000
+  EnableAutoGainControl: 0
+  AGCTargetLevel: 0.5
+  AGCResponseSpeed: 1
+  EnableNoiseReduction: 1
+  NoiseReductionStrength: 1
+  EnableDeEsser: 1
+  DeEsserThreshold: 0.282
+  DeEsserRatio: 3
+  EnableGateFadeIn: 1
+  FadeInBufferSize: 64
+  PreGateAttenuation: 0.1

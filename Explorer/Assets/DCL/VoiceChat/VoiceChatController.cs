@@ -63,7 +63,7 @@ namespace DCL.VoiceChat
 
         private void ToggleMicrophone()
         {
-
+            microphoneHandler.ToggleMicrophone();
         }
 
         private void RefuseCall()
@@ -73,7 +73,7 @@ namespace DCL.VoiceChat
 
         private void AcceptCall()
         {
-
+            voiceChatCallStatusService.StartCall("");
         }
 
         public void Dispose()

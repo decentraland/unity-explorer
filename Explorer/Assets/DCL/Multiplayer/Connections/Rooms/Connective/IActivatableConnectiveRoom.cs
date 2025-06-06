@@ -18,5 +18,17 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         /// </summary>
         /// <returns></returns>
         UniTask DeactivateAsync();
+
+
+        class Fake : Null, IActivatableConnectiveRoom
+        {
+            public bool Activated => true;
+
+            public UniTask ActivateAsync() =>
+                UniTask.CompletedTask;
+
+            public UniTask DeactivateAsync() =>
+                UniTask.CompletedTask;
+        }
     }
 }

@@ -28,7 +28,6 @@ using DCL.Web3;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;

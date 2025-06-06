@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IRoom ChatRoom() => chatRoom.Room();
 
-        public IRoom VoiceChatRoom() => voiceChatRoom.Room();
+        public IActivatableConnectiveRoom VoiceChatRoom() => voiceChatRoom;
 
         /// <summary>
         /// Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going

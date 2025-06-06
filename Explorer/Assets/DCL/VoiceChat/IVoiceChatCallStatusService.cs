@@ -5,7 +5,8 @@ namespace DCL.VoiceChat
 {
     public interface IVoiceChatCallStatusService
     {
-        event Action<VoiceChatStatus, Web3Address> StatusChanged;
+        public delegate void VoiceChatStatusChangeDelegate(VoiceChatStatus newStatus);
+        event VoiceChatStatusChangeDelegate StatusChanged;
         VoiceChatStatus Status { get; }
         public Web3Address CurrentTargetWallet { get; }
 

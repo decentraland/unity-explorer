@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using LiveKit.Rooms.Streaming.Audio;
+using Utility.Multithreading;
+using Cysharp.Threading.Tasks;
 
 namespace DCL.VoiceChat
 {
@@ -10,8 +12,9 @@ namespace DCL.VoiceChat
         [field: SerializeField] private AudioSource audioSource;
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
-        private int sampleRate;
+        private int sampleRate = 48000;
         private float[] tempBuffer;
+        private int lastDataLength = 0;
 
         private void OnEnable()
         {
@@ -24,7 +27,6 @@ namespace DCL.VoiceChat
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
         }
 
-        // Called by Unity on the Audio thread
         private void OnAudioFilterRead(float[] data, int channels)
         {
             if (!isPlaying || streams.Count == 0)
@@ -33,7 +35,11 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            if (tempBuffer == null || tempBuffer.Length != data.Length) { tempBuffer = new float[data.Length]; }
+            if (tempBuffer == null || lastDataLength != data.Length)
+            {
+                tempBuffer = new float[data.Length];
+                lastDataLength = data.Length;
+            }
 
             Array.Clear(data, 0, data.Length);
             var activeStreams = 0;
@@ -43,7 +49,7 @@ namespace DCL.VoiceChat
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
-                    stream.ReadAudio(tempBuffer, channels, sampleRate);
+                    stream.ReadAudio(tempBuffer, 1, sampleRate);
 
                     for (var i = 0; i < tempBuffer.Length; i++)
                         data[i] += tempBuffer[i];
@@ -52,10 +58,10 @@ namespace DCL.VoiceChat
                 }
             }
 
+            // Normalize only if multiple streams (avoid unnecessary computation)
             if (activeStreams > 1)
             {
                 float norm = 1f / activeStreams;
-
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
             }
@@ -79,12 +85,38 @@ namespace DCL.VoiceChat
         public void Play()
         {
             isPlaying = true;
+
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                PlayAsync().Forget();
+                return;
+            }
+
+            audioSource.Play();
+        }
+
+        private async UniTaskVoid PlayAsync()
+        {
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
             audioSource.Play();
         }
 
         public void Stop()
         {
             isPlaying = false;
+
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                StopAsync().Forget();
+                return;
+            }
+
+            audioSource.Stop();
+        }
+
+        private async UniTaskVoid StopAsync()
+        {
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
             audioSource.Stop();
         }
 
