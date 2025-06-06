@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
@@ -96,8 +97,10 @@ namespace DCL.UI.ProfileElements
             {
                 currentUserId = null;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
+
                 currentUserId = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }
