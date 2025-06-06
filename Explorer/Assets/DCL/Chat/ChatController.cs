@@ -330,10 +330,9 @@ namespace DCL.Chat
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
         }
 
-        private void OnStartCall()
+        private void OnStartCall(string userId)
         {
-            //This is a placeholder, need to provide the wallet id of the chat context
-            voiceChatCallStatusService.StartCall(new Web3Address());
+            voiceChatCallStatusService.StartCall(new Web3Address(userId));
         }
 
         public void OnSelectConversation(ChatChannel.ChannelId channelId)

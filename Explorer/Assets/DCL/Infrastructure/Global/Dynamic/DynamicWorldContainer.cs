@@ -845,7 +845,8 @@ namespace Global.Dynamic
                     isNameEditorEnabled,
                     includeCall,
                     chatEventBus,
-                    sharedSpaceManager
+                    sharedSpaceManager,
+                    voiceChatCallStatusService
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies),
