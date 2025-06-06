@@ -39,6 +39,9 @@ namespace DCL.Profiling.ECS
                     lastBandwidthCheck = UnityEngine.Time.unscaledTime;
                     break;
                 }
+
+            // NetworkInterface.GetAllNetworkInterfaces() call is expensive (~5 ms). So it is used only for debug purposes.
+            UnityEngine.Profiling.Profiler.SetCategoryEnabled(NetworkProfilerCounters.CATEGORY, false);
         }
 
         protected override void Update(float t)
