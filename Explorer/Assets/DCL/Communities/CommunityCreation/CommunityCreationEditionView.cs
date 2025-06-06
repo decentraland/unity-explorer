@@ -12,10 +12,13 @@ namespace DCL.Communities.CommunityCreation
 {
     public class CommunityCreationEditionView : ViewBase, IView
     {
+        private const string DEFAULT_PLACES_DROPDOWN_OPTION = "-- Select an option --";
+
         public Action CancelButtonClicked;
         public Action GetNameButtonClicked;
         public Action SelectProfilePictureButtonClicked;
         public Action<string, string> CreateCommunityButtonClicked;
+        public Action<int> AddPlaceButtonClicked;
 
         [SerializeField] public Button backgroundCloseButton;
 
@@ -38,10 +41,14 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter;
         [SerializeField] private TMP_Dropdown creationPanelPlacesDropdown;
         [SerializeField] private Button creationPanelAddPlaceButton;
+        [SerializeField] private Transform placeTagsContainer;
+        [SerializeField] private GameObject placeTagPrefab;
         [SerializeField] private Button creationPanelCancelButton;
         [SerializeField] private Button creationPanelCreateButton;
         [SerializeField] private GameObject creationPanelCreateButtonText;
         [SerializeField] private GameObject creationPanelCreateLoading;
+
+        private readonly List<GameObject> currentPlaceTags = new();
 
         private void Awake()
         {
@@ -55,6 +62,8 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCreateButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke(
                 creationPanelCommunityNameInputField.text,
                 creationPanelCommunityDescriptionInputField.text));
+            creationPanelPlacesDropdown.onValueChanged.AddListener(index => creationPanelAddPlaceButton.interactable = index > 0);
+            creationPanelAddPlaceButton.onClick.AddListener(() => AddPlaceButtonClicked?.Invoke(creationPanelPlacesDropdown.value));
         }
 
         private void OnDestroy()
@@ -65,6 +74,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelEditProfilePictureButton.onClick.RemoveAllListeners();
             creationPanelCommunityNameInputField.onValueChanged.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onValueChanged.RemoveAllListeners();
+            creationPanelPlacesDropdown.onValueChanged.RemoveAllListeners();
         }
 
         public void SetAccess(bool canCreate)
@@ -85,7 +95,7 @@ namespace DCL.Communities.CommunityCreation
         public void SetCreationPanelTitle(string title) =>
             creationPanelTitleText.text = title;
 
-        public void SetCreationCommunityAsLoading(bool isLoading)
+        public void SetCreationPanelAsLoading(bool isLoading)
         {
             creationPanelCreateLoading.SetActive(isLoading);
             creationPanelCreateButtonText.SetActive(!isLoading);
@@ -93,9 +103,7 @@ namespace DCL.Communities.CommunityCreation
             if (isLoading)
                 creationPanelCreateButton.interactable = false;
             else
-            {
                 CheckForCreateButtonAvailability();
-            }
         }
 
         public void SetProfileSelectedImage(Sprite sprite)
@@ -119,20 +127,43 @@ namespace DCL.Communities.CommunityCreation
         public void SetPlacesSelector(List<string> options)
         {
             creationPanelPlacesDropdown.ClearOptions();
+            creationPanelPlacesDropdown.options.Add(new TMP_Dropdown.OptionData(DEFAULT_PLACES_DROPDOWN_OPTION));
+            creationPanelAddPlaceButton.interactable = false;
+
             if (options.Count > 0)
             {
                 creationPanelPlacesDropdown.AddOptions(options);
                 creationPanelPlacesDropdown.value = 0;
             }
         }
+        public void AddPlaceTag(string placeName)
+        {
+            GameObject placeTag = Instantiate(placeTagPrefab, placeTagsContainer);
+            placeTag.GetComponentInChildren<TMP_Text>().text = placeName;
+            placeTag.GetComponentInChildren<Button>().onClick.AddListener(() =>
+            {
+                if (!currentPlaceTags.Contains(placeTag))
+                    return;
+
+                currentPlaceTags.Remove(placeTag);
+                Destroy(placeTag);
+            });
+            currentPlaceTags.Add(placeTag);
+            creationPanelScrollRect.verticalNormalizedPosition = 0f;
+        }
 
         private void CleanCreationPanel()
         {
-            SetCreationCommunityAsLoading(false);
+            SetCreationPanelAsLoading(false);
             SetProfileSelectedImage(null);
             SetCommunityName(string.Empty);
             SetCommunityDescription(string.Empty);
             SetPlacesSelector(new List<string>());
+
+            foreach (GameObject placeTag in currentPlaceTags)
+                Destroy(placeTag);
+            currentPlaceTags.Clear();
+
             creationPanelScrollRect.verticalNormalizedPosition = 1f;
         }
 

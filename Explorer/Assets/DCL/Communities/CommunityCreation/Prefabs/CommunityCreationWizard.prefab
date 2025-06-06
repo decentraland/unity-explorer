@@ -255,6 +255,8 @@ MonoBehaviour:
   creationPanelCommunityDescriptionCharCounter: {fileID: 3788980449318604006}
   creationPanelPlacesDropdown: {fileID: 2089798970030989633}
   creationPanelAddPlaceButton: {fileID: 8377134968439250937}
+  placeTagsContainer: {fileID: 7556609997558448888}
+  placeTagPrefab: {fileID: 288283129959185078, guid: a9cbb8e8148fce2438b42e92f9b8bf22, type: 3}
   creationPanelCancelButton: {fileID: 2428634819478053848}
   creationPanelCreateButton: {fileID: 3026729670463483168}
   creationPanelCreateButtonText: {fileID: 3122269740363934201}
@@ -862,7 +864,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7891702222690418044, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
       propertyPath: m_Size
-      value: 0.6036218
+      value: 0.66371685
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -972,6 +974,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!224 &7556609997558448888 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 4481745970114865271, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+  m_PrefabInstance: {fileID: 6263421827064736399}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &7863611624615513122 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4309115723449902765, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}

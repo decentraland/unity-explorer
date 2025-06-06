@@ -4,9 +4,14 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PlacesAPIService;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities.Extensions;
+using DCL.Web3;
 using MVC;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -24,24 +29,43 @@ namespace DCL.Communities.CommunityCreation
         private readonly IInputBlock inputBlock;
         private readonly ICommunitiesDataProvider dataProvider;
         private readonly WarningNotificationView warningNotificationView;
+        private readonly INftNamesProvider nftNamesProvider;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly ISelfProfile selfProfile;
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource createCommunityCts;
+        private CancellationTokenSource loadLandsAndWorldsCts;
         private CancellationTokenSource showErrorCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+
+        private struct CommunityPlace
+        {
+            public string Id;
+            public string Name;
+        }
+
+        private readonly List<CommunityPlace> currentCommunityPlaces = new ();
+        private readonly List<CommunityPlace> addedCommunityPlaces = new ();
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
             ICommunitiesDataProvider dataProvider,
-            WarningNotificationView warningNotificationView) : base(viewFactory)
+            WarningNotificationView warningNotificationView,
+            INftNamesProvider nftNamesProvider,
+            IPlacesAPIService placesAPIService,
+            ISelfProfile selfProfile) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.dataProvider = dataProvider;
             this.warningNotificationView = warningNotificationView;
+            this.nftNamesProvider = nftNamesProvider;
+            this.placesAPIService = placesAPIService;
+            this.selfProfile = selfProfile;
         }
 
         protected override void OnViewInstantiated()
@@ -51,6 +75,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.CancelButtonClicked += OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked += OpenImageSelection;
             viewInstance.CreateCommunityButtonClicked += CreateCommunity;
+            viewInstance.AddPlaceButtonClicked += AddCommunityPlace;
         }
 
         protected override void OnBeforeViewShow()
@@ -58,6 +83,9 @@ namespace DCL.Communities.CommunityCreation
             closeTaskCompletionSource = new UniTaskCompletionSource();
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetCreationPanelTitle(string.IsNullOrEmpty(inputData.CommunityId) ? CREATE_COMMUNITY_TITLE : EDIT_COMMUNITY_TITLE);
+
+            loadLandsAndWorldsCts = loadLandsAndWorldsCts.SafeRestart();
+            LoadLandsAndWorldsAsync(loadLandsAndWorldsCts.Token).Forget();
         }
 
         protected override void OnViewShow() =>
@@ -68,6 +96,7 @@ namespace DCL.Communities.CommunityCreation
             RestoreInput();
 
             createCommunityCts?.SafeCancelAndDispose();
+            loadLandsAndWorldsCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
         }
 
@@ -80,8 +109,10 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.CancelButtonClicked -= OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked -= OpenImageSelection;
             viewInstance.CreateCommunityButtonClicked -= CreateCommunity;
+            viewInstance.AddPlaceButtonClicked -= AddCommunityPlace;
 
             createCommunityCts?.SafeCancelAndDispose();
+            loadLandsAndWorldsCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
         }
 
@@ -124,7 +155,7 @@ namespace DCL.Communities.CommunityCreation
 
         private async UniTaskVoid CreateCommunityAsync(string name, string description, CancellationToken ct)
         {
-            viewInstance!.SetCreationCommunityAsLoading(true);
+            viewInstance!.SetCreationPanelAsLoading(true);
             var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, null, null, null, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -132,11 +163,64 @@ namespace DCL.Communities.CommunityCreation
             {
                 showErrorCts = showErrorCts.SafeRestart();
                 await warningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
-                viewInstance.SetCreationCommunityAsLoading(false);
+                viewInstance.SetCreationPanelAsLoading(false);
                 return;
             }
 
             closeTaskCompletionSource.TrySetResult();
+        }
+
+        private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
+        {
+            currentCommunityPlaces.Clear();
+            addedCommunityPlaces.Clear();
+            List<string> placesToAdd = new();
+
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile != null)
+            {
+                // Lands owned or managed by the user
+                PlacesData.IPlacesAPIResponse placesResponse = await placesAPIService.SearchPlacesAsync(0, 1000, ct, "santi");
+
+                foreach (PlacesData.PlaceInfo placeInfo in placesResponse.Data)
+                {
+                    placesToAdd.Add($"{placeInfo.title} ({placeInfo.base_position})");
+                    currentCommunityPlaces.Add(new CommunityPlace
+                    {
+                        Id = placeInfo.id,
+                        Name = placeInfo.title,
+                    });
+                }
+
+                // Worlds
+                INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1000, ct);
+
+                foreach (string name in names.Names)
+                {
+                    placesToAdd.Add($"{name}.dcl.eth");
+                    currentCommunityPlaces.Add(new CommunityPlace
+                    {
+                        Id = $"{name}.dcl.eth",
+                        Name = $"{name}.dcl.eth",
+                    });
+                }
+            }
+
+            viewInstance.SetPlacesSelector(placesToAdd);
+        }
+
+        private void AddCommunityPlace(int index)
+        {
+            int realIndex = index - 1; // The first option is the default one, so we need to subtract 1
+            if (realIndex >= currentCommunityPlaces.Count)
+                return;
+
+            CommunityPlace selectedPlace = currentCommunityPlaces[realIndex];
+            if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
+                return;
+
+            viewInstance!.AddPlaceTag(selectedPlace.Name);
+            addedCommunityPlaces.Add(selectedPlace);
         }
     }
 }

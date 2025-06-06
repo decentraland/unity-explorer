@@ -9,6 +9,9 @@ using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunityCreation;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.PlacesAPIService;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -34,10 +37,12 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
-        
+        private readonly INftNamesProvider nftNamesProvider;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly ISelfProfile selfProfile;
 
         private CommunityCreationEditionController? communityCreationEditionController;
-        
+
         public CommunitiesPlugin(
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
@@ -49,7 +54,10 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView inWorldWarningNotificationView,
+            INftNamesProvider nftNamesProvider,
+            IPlacesAPIService placesAPIService,
+            ISelfProfile selfProfile)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -62,6 +70,9 @@ namespace DCL.PluginSystem.Global
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.nftNamesProvider = nftNamesProvider;
+            this.placesAPIService = placesAPIService;
+            this.selfProfile = selfProfile;
         }
 
         public void Dispose()
@@ -90,7 +101,15 @@ namespace DCL.PluginSystem.Global
 
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
-            communityCreationEditionController = new CommunityCreationEditionController(communityCreationEditionViewFactoryMethod, webBrowser, inputBlock, communitiesDataProvider, inWorldWarningNotificationView);
+            communityCreationEditionController = new CommunityCreationEditionController(
+                communityCreationEditionViewFactoryMethod,
+                webBrowser,
+                inputBlock,
+                communitiesDataProvider,
+                inWorldWarningNotificationView,
+                nftNamesProvider,
+                placesAPIService,
+                selfProfile);
             mvcManager.RegisterController(communityCreationEditionController);
         }
     }
