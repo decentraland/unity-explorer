@@ -6,7 +6,6 @@ using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.Utilities;
 using DCL.VoiceChat;
-using LiveKit;
 using MVC;
 using System;
 using System.Threading;
@@ -24,15 +23,6 @@ namespace DCL.PluginSystem.Global
         private readonly MainUIView mainUIView;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ViewDependencies dependencies;
-
-        private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
-        private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
-        private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
-        private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
-        private ProvidedInstance<VoiceChatCombinedAudioSource> audioSource;
-        private VoiceChatMicrophoneHandler? voiceChatHandler;
-        private VoiceChatLivekitRoomHandler? livekitRoomHandler;
-        private VoiceChatController controller;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
