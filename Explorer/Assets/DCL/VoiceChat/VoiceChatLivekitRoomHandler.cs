@@ -27,15 +27,13 @@ namespace DCL.VoiceChat
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
+        private readonly Dictionary<string, WeakReference<IAudioStream>> activeStreams = new ();
+
         private bool disposed;
         private ITrack microphoneTrack;
         private CancellationTokenSource cts;
         private bool isMediaOpen;
-        private bool pendingTrackPublish = false;
-
-        private readonly Dictionary<string, WeakReference<IAudioStream>> activeStreams = new();
-
-        private static string GetStreamKey(string participantIdentity, string trackSid) => $"{participantIdentity}:{trackSid}";
+        private bool pendingTrackPublish;
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedAudioSource combinedAudioSource,
@@ -59,6 +57,21 @@ namespace DCL.VoiceChat
             microphoneHandler.MicrophoneReady += OnMicrophoneReady;
         }
 
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+            voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
+            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
+            microphoneHandler.RtcAudioSourceReconfigured -= OnRtcAudioSourceReconfigured;
+            microphoneHandler.MicrophoneReady -= OnMicrophoneReady;
+            CloseMedia();
+            activeStreams.Clear();
+        }
+
+        private static string GetStreamKey(string participantIdentity, string trackSid) =>
+            $"{participantIdentity}:{trackSid}";
+
         private void OnCallStatusChanged(VoiceChatStatus newStatus)
         {
             switch (newStatus)
@@ -76,18 +89,6 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_ENDED_CALL: break;
                 default: throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
             }
-        }
-
-        public void Dispose()
-        {
-            if (disposed) return;
-            disposed = true;
-            voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
-            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
-            microphoneHandler.RtcAudioSourceReconfigured -= OnRtcAudioSourceReconfigured;
-            microphoneHandler.MicrophoneReady -= OnMicrophoneReady;
-            CloseMedia();
-            activeStreams.Clear();
         }
 
         private async UniTaskVoid ConnectToRoomAsync()
@@ -111,6 +112,7 @@ namespace DCL.VoiceChat
                         OpenMedia();
                         TryPublishTrack(cts.Token);
                     }
+
                     break;
                 case ConnectionUpdate.Disconnected:
                     cts.SafeCancelAndDispose();
@@ -125,20 +127,15 @@ namespace DCL.VoiceChat
                     break;
                 case ConnectionUpdate.Reconnected:
                     // Media should already be open, just retry publishing if needed
-                    if (isMediaOpen && pendingTrackPublish && cts != null && !cts.Token.IsCancellationRequested)
-                    {
-                        TryPublishTrack(cts.Token);
-                    }
+                    if (isMediaOpen && pendingTrackPublish && cts != null && !cts.Token.IsCancellationRequested) { TryPublishTrack(cts.Token); }
+
                     break;
             }
         }
 
         private void TryPublishTrack(CancellationToken ct)
         {
-            if (PublishTrack(ct))
-            {
-                pendingTrackPublish = false;
-            }
+            if (PublishTrack(ct)) { pendingTrackPublish = false; }
             else
             {
                 pendingTrackPublish = true;
@@ -146,23 +143,18 @@ namespace DCL.VoiceChat
             }
         }
 
-        /// <summary>
-        /// Call this when microphone becomes available to retry publishing if needed
-        /// </summary>
-        public void OnMicrophoneReady()
+        private void OnMicrophoneReady()
         {
             if (pendingTrackPublish && cts != null && !cts.Token.IsCancellationRequested)
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone ready - attempting to publish track");
-                if (PublishTrack(cts.Token))
-                {
-                    pendingTrackPublish = false;
-                }
+
+                if (PublishTrack(cts.Token)) { pendingTrackPublish = false; }
             }
         }
 
         /// <summary>
-        /// Called when the RtcAudioSource is reconfigured due to sample rate changes
+        ///     Called when the RtcAudioSource is reconfigured due to sample rate changes
         /// </summary>
         private void OnRtcAudioSourceReconfigured(RtcAudioSource newRtcAudioSource)
         {
@@ -183,7 +175,6 @@ namespace DCL.VoiceChat
 
         private bool PublishTrack(CancellationToken ct)
         {
-            // Get RtcAudioSource from MicrophoneHandler (single source of truth)
             RtcAudioSource rtcAudioSource = microphoneHandler.RtcAudioSource;
 
             if (rtcAudioSource == null)
@@ -192,7 +183,6 @@ namespace DCL.VoiceChat
                 return false;
             }
 
-            // Ensure microphone AudioSource and AudioClip are ready
             if (microphoneAudioSource == null)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot publish track: microphone AudioSource is null. Microphone may not be initialized yet.");
@@ -205,8 +195,7 @@ namespace DCL.VoiceChat
                 return false;
             }
 
-            // Log microphone and audio configuration details
-            ReportHub.LogError(ReportCategory.VOICE_CHAT,
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
                 $"Creating LiveKit audio track with existing RtcAudioSource - Microphone: {microphoneAudioSource.clip.name}, " +
                 $"SampleRate: {microphoneAudioSource.clip.frequency}Hz, " +
                 $"Channels: {microphoneAudioSource.clip.channels}, " +
@@ -215,15 +204,13 @@ namespace DCL.VoiceChat
                 $"AudioSource Volume: {microphoneAudioSource.volume}, " +
                 $"AudioSource Pitch: {microphoneAudioSource.pitch}");
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Using existing RtcAudioSource - IsRunning: {rtcAudioSource.IsRunning}");
-
             microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource);
 
             var options = new TrackPublishOptions
             {
                 AudioEncoding = new AudioEncoding
                 {
-                    MaxBitrate = 128000, // 128 kbps - proper bitrate for voice chat (was 48kbps causing massive delays!)
+                    MaxBitrate = 128000,
                 },
                 Source = TrackSource.SourceMicrophone,
             };
@@ -250,6 +237,7 @@ namespace DCL.VoiceChat
                     if (value.Kind == TrackKind.KindAudio)
                     {
                         WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity, sid);
+
                         if (stream != null)
                         {
                             string streamKey = GetStreamKey(remoteParticipantIdentity, sid);
@@ -279,10 +267,7 @@ namespace DCL.VoiceChat
                     activeStreams[streamKey] = stream;
                     combinedAudioSource.AddStream(stream);
                 }
-                else
-                {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to get audio stream for participant: {participant.Identity}, track: {publication.Sid}");
-                }
+                else { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to get audio stream for participant: {participant.Identity}, track: {publication.Sid}"); }
             }
         }
 
@@ -291,15 +276,13 @@ namespace DCL.VoiceChat
             if (publication.Kind == TrackKind.KindAudio)
             {
                 string streamKey = GetStreamKey(participant.Identity, publication.Sid);
+
                 if (activeStreams.TryGetValue(streamKey, out WeakReference<IAudioStream> stream))
                 {
                     combinedAudioSource.RemoveStream(stream);
                     activeStreams.Remove(streamKey);
                 }
-                else
-                {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to find audio stream to remove for participant: {participant.Identity}, track: {publication.Sid}");
-                }
+                else { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to find audio stream to remove for participant: {participant.Identity}, track: {publication.Sid}"); }
             }
         }
 
@@ -310,6 +293,7 @@ namespace DCL.VoiceChat
                 CloseMediaAsync().Forget();
                 return;
             }
+
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
 
@@ -326,7 +310,6 @@ namespace DCL.VoiceChat
         private async UniTaskVoid CloseMediaAsync()
         {
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
-
 
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;

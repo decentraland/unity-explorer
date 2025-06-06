@@ -17,11 +17,12 @@ using Object = UnityEngine.Object;
 namespace DCL.Settings.Configuration
 {
     [Serializable]
-    public class TextModuleBinding : SettingsModuleBinding<SettingsTextModuleView, SettingsTextModuleView.Config, TextModuleBinding.TextFeatures>
+    public class DELETE_ME_TextModuleBinding : SettingsModuleBinding<DELETE_ME_SettingsTextModuleView, DELETE_ME_SettingsTextModuleView.Config, DELETE_ME_TextModuleBinding.TextFeatures>
     {
         public enum TextFeatures
         {
             VOICECHAT_CONNECTION_STRING,
+
             // add other text features...
         }
 
@@ -41,18 +42,19 @@ namespace DCL.Settings.Configuration
             VoiceChatSettingsAsset voiceChatSettings,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
-            var viewInstance = Object.Instantiate(View, parent);
+            DELETE_ME_SettingsTextModuleView viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
                                                    {
-                                                       TextFeatures.VOICECHAT_CONNECTION_STRING => new ConnectionStringController(viewInstance, voiceChatSettings),
+                                                       TextFeatures.VOICECHAT_CONNECTION_STRING => new DELETE_ME_ConnectionStringController(viewInstance, voiceChatSettings),
+
                                                        // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(Feature))
+                                                       _ => throw new ArgumentOutOfRangeException(nameof(Feature)),
                                                    };
 
             controller.SetView(viewInstance);
             return controller;
         }
     }
-} 
+}
