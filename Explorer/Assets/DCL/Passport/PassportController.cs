@@ -43,6 +43,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Chat.History;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -268,12 +269,11 @@ namespace DCL.Passport
             viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings)
-                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
-                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                              () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                                  parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
-                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+                .AddControl(userProfileContextMenuControlSettings)
+                .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
+                .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
+                    OnJumpToFriendButtonClicked), false))
+                .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
         }
 
         private void OnChatButtonClicked()
@@ -289,8 +289,47 @@ namespace DCL.Passport
 
         private void OnJumpToFriendButtonClicked()
         {
-            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel));
+            FriendListSectionUtilities
+                .JumpToFriendLocation(inputData.UserId,
+                    jumpToFriendLocationCts,
+                    getUserPositionBuffer,
+                    onlineUsersProvider,
+                    realmNavigator,
+                    parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel),
+                    onError: HandleJumpToFriendError);
+        }
+
+        /// <summary>
+        /// Prints out the error message in the chat and shows the chat panel if needed.
+        /// if teleporting failed
+        /// </summary>
+        /// <param name="info"></param>
+        private void HandleJumpToFriendError(JumpToFriendErrorInfo info)
+        {
+            switch (info.Kind)
+            {
+                case JumpToFriendErrorKind.ChangeRealm:
+                    // NOTE: is this correct way to show the chat panel?
+                    sharedSpaceManager.ShowAsync(
+                        PanelsSharingSpace.Chat,
+                        new ChatControllerShowParams(true, true)
+                    );
+                    chatEventBus.InsertSystemMessage(info.RealmErrorMessage);
+                    break;
+
+                case JumpToFriendErrorKind.TeleportParcel:
+                    // NOTE: is this correct way to show the chat panel?
+                    sharedSpaceManager.ShowAsync(
+                        PanelsSharingSpace.Chat,
+                        new ChatControllerShowParams(true, true)
+                    );
+                    chatEventBus.InsertSystemMessage(info.TeleportErrorMessage);
+                    break;
+
+                default:
+                    chatEventBus.InsertSystemMessage($"Unexpected error: {info.Kind}");
+                    break;
+            }
         }
 
         private void OnNameClaimRequested() =>

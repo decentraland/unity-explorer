@@ -14,9 +14,29 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
+    // TODO: move to realm navigator
+    public enum JumpToFriendErrorKind
+    {
+        ChangeRealm,
+        TeleportParcel
+    }
+
+    // TODO: move to realm navigator?
+    public struct JumpToFriendErrorInfo
+    {
+        public JumpToFriendErrorKind Kind;
+        public ChangeRealmError? RealmError;
+        public string Origin { get; set; }
+        public string RealmErrorMessage { get; set; }
+        public string TeleportErrorMessage { get; set; }
+        
+        public Utility.Types.TaskError? TeleportError;
+    }
+    
     public static class FriendListSectionUtilities
     {
         private const string WORLDS_BASE_URL = "https://worlds-content-server.decentraland.org/world/";
@@ -29,7 +49,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             string[] getUserPositionBuffer,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            Action<Vector2Int>? parcelCalculatedCallback = null)
+            Action<Vector2Int>? parcelCalculatedCallback = null,
+            Action<JumpToFriendErrorInfo>?  onError = null)
         {
             jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
             JumpToFriendLocationAsync(jumpToFriendLocationCts.Token).Forget();
@@ -38,8 +59,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             async UniTaskVoid JumpToFriendLocationAsync(CancellationToken ct = default)
             {
                 getUserPositionBuffer[0] = targetUserAddress;
-
-                IReadOnlyCollection<OnlineUserData> onlineData = await onlineUsersProvider.GetAsync(getUserPositionBuffer, ct);
+                IReadOnlyCollection<OnlineUserData> onlineData = 
+                    await onlineUsersProvider.GetAsync(getUserPositionBuffer, ct);
 
                 if (onlineData.Count == 0)
                     return;
@@ -48,17 +69,72 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
                 if (userData.IsInWorld)
                 {
-                    realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(userData.worldName).ConvertEnsToWorldUrl()), ct).Forget();
+                    var result  = await realmNavigator
+                        .TryChangeRealmAsync(
+                            URLDomain.FromString(new ENS(userData.worldName).ConvertEnsToWorldUrl()),
+                            ct);
+                    
+                    if (!result.Success && result.Error.HasValue)
+                    {
+                        // TODO create error info somewhere else
+                        // TODO maybe in realm navigator?
+                        onError?.Invoke(new JumpToFriendErrorInfo
+                        {
+                            Kind = JumpToFriendErrorKind.ChangeRealm,
+                            RealmError = result.Error.Value.State,
+                            RealmErrorMessage = GetRealmErrorMessage(result.Error.Value, userData.worldName),
+                            TeleportError = null,
+                            TeleportErrorMessage = string.Empty
+                        });
+                    }
                 }
                 else
                 {
-                    Vector2Int parcel = userData.position.ToParcel();
-                    realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
+                    var parcel = userData.position.ToParcel();
+                    var result = await realmNavigator.TeleportToParcelAsync(parcel, ct, false);
+                    if (!result.Success && result.Error.HasValue)
+                    {
+                        // TODO create error info somewhere else
+                        // TODO maybe in realm navigator?
+                        onError?.Invoke(new JumpToFriendErrorInfo
+                        {
+                            Kind = JumpToFriendErrorKind.TeleportParcel,
+                            RealmError = null,
+                            RealmErrorMessage = string.Empty,
+                            TeleportError = result.Error.Value.State,
+                            TeleportErrorMessage = GetTeleportErrorMessage(result.Error.Value, parcel.ToString())
+                        });
+                    }
+
                     parcelCalculatedCallback?.Invoke(parcel);
                 }
             }
         }
 
+        private static string GetTeleportErrorMessage((TaskError State, string Message, Exception Exception) error, string destination)
+        {
+            return error.State switch
+            {
+                TaskError.MessageError => $"🔴 Error. Teleport to parcel {destination} failed",
+                TaskError.Timeout => "🔴 Error. Timeout",
+                TaskError.Cancelled => "🔴 Error. The operation was canceled!",
+                TaskError.UnexpectedException => $"🔴 Error. Teleport to {destination} failed",
+                _ => "🔴 Unknown Error. The operation was canceled!"
+            };
+        }
+
+        private static string GetRealmErrorMessage((ChangeRealmError State, string Message, Exception Exception) error,string destination)
+        {
+            return error.State switch
+            {
+                ChangeRealmError.MessageError => $"🔴 Teleport was not fully successful to {destination} world!",
+                ChangeRealmError.SameRealm => $"🟡 You are already in {destination}!",
+                ChangeRealmError.NotReachable => $"🔴 Error. The world {destination} doesn't exist or not reachable!",
+                ChangeRealmError.ChangeCancelled => "🔴 Error. The operation was canceled!",
+                _ => "🔴 Unknown Error. The operation was canceled!"
+            };
+        }
+        
         internal static (GenericContextMenu, GenericContextMenuElement) BuildContextMenu(
             FriendListContextMenuConfiguration contextMenuSettings,
             UserProfileContextMenuControlSettings userProfileContextMenuControlSettings,

@@ -7,6 +7,7 @@ using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
+using DCL.Diagnostics;
 using UnityEngine;
 using Utility;
 
@@ -70,8 +71,27 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
-        private void JumpInClicked(FriendProfile profile) =>
-            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
+        private void JumpInClicked(FriendProfile profile)
+        {
+            FriendListSectionUtilities.JumpToFriendLocation(profile.Address,
+                jumpToFriendLocationCts,
+                getUserPositionBuffer,
+                onlineUsersProvider,
+                realmNavigator,
+                parcelCalculatedCallback: parcel => { },
+                onError: info =>
+                {
+                    switch (info.Kind)
+                    {
+                        case JumpToFriendErrorKind.ChangeRealm:
+                            ReportHub.Log(ReportCategory.UNSPECIFIED,$"Jumping to friend's realm {profile.Name} failed: {info.Kind}");
+                            break;
+                        case JumpToFriendErrorKind.TeleportParcel:
+                            ReportHub.Log(ReportCategory.UNSPECIFIED,$"Jumping to friend's position {profile.Name} failed: {info.Kind}");
+                            break;
+                    }
+                });   
+        }
 
         protected override void ElementClicked(FriendProfile profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);
