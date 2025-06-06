@@ -66,7 +66,7 @@ namespace DCL.ECSComponents {
 
   #region Messages
   /// <summary>
-  /// The PBPrimaryPointerInfo component provides information about the current state of the primary
+  /// The PBPrimaryPointerInfo component provides information about the current state of the primary 
   /// pointer input device (mouse, touch, gamepad, or VR controller). It tracks the pointer's position,
   /// movement, and interaction capabilities in both 2D screen space and 3D world space.
   ///
@@ -83,7 +83,7 @@ namespace DCL.ECSComponents {
   /// - Enable VR controller interactions
   /// - Convert screen coordinates to world space rays for 3D interactions
   ///
-  /// Note: Touch, Pad and Wand support will be added later
+  /// Note: Touch, Pad, and Wand support, as well as dragging, will be added later.
   /// </summary>
   public sealed partial class PBPrimaryPointerInfo : pb::IMessage<PBPrimaryPointerInfo>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
