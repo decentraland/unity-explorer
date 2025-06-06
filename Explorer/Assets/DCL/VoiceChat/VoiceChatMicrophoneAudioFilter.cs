@@ -74,7 +74,15 @@ namespace DCL.VoiceChat
         {
             if (processingEnabled && useRealtimeProcessing && !string.IsNullOrEmpty(currentMicrophoneName))
             {
-                ProcessRealtimeMicrophoneInput();
+                try
+                {
+                    ProcessRealtimeMicrophoneInput();
+                }
+                catch (System.Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"ProcessRealtimeMicrophoneInput failed: {ex.Message}");
+                    // Don't disable real-time processing here, just skip this frame
+                }
             }
         }
 
@@ -84,10 +92,18 @@ namespace DCL.VoiceChat
         /// </summary>
         private void ProcessRealtimeMicrophoneInput()
         {
-            if (microphoneClip == null)
+            if (microphoneClip == null || string.IsNullOrEmpty(currentMicrophoneName))
                 return;
 
-            currentMicrophonePosition = Microphone.GetPosition(currentMicrophoneName);
+            try
+            {
+                currentMicrophonePosition = Microphone.GetPosition(currentMicrophoneName);
+            }
+            catch (System.Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to get microphone position: {ex.Message}");
+                return;
+            }
 
             if (currentMicrophonePosition == lastMicrophonePosition)
                 return;
@@ -114,7 +130,17 @@ namespace DCL.VoiceChat
                 }
 
                 Span<float> audioSpan = realtimeAudioBuffer.AsSpan(0, chunkSize);
-                bool success = microphoneClip.GetData(audioSpan, lastMicrophonePosition);
+                
+                bool success;
+                try
+                {
+                    success = microphoneClip.GetData(audioSpan, lastMicrophonePosition);
+                }
+                catch (System.Exception ex)
+                {
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"AudioClip.GetData failed (possibly disposed): {ex.Message}");
+                    break;
+                }
 
                 if (!success)
                 {
@@ -254,6 +280,15 @@ namespace DCL.VoiceChat
         public void SetProcessingEnabled(bool enabled)
         {
             processingEnabled = enabled;
+            
+            if (enabled && useRealtimeProcessing)
+            {
+                StartRealtimeProcessingThread();
+            }
+            else if (!enabled)
+            {
+                StopRealtimeProcessingThread();
+            }
         }
 
         public void SetMicrophoneInfo(string microphoneName, int sampleRate, int bufferLengthSeconds)
@@ -274,6 +309,7 @@ namespace DCL.VoiceChat
 
         public void ResetProcessor()
         {
+            StopRealtimeProcessingThread();
             audioProcessor?.Reset();
         }
 
