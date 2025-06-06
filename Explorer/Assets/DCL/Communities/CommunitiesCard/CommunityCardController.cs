@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
@@ -43,6 +45,8 @@ namespace DCL.Communities.CommunitiesCard
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly ISystemClipboard clipboard;
+        private readonly IWebBrowser webBrowser;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -64,7 +68,9 @@ namespace DCL.Communities.CommunitiesCard
             IWebRequestController webRequestController,
             WarningNotificationView inWorldWarningNotificationView,
             IPlacesAPIService placesAPIService,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            ISystemClipboard clipboard,
+            IWebBrowser webBrowser)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -77,6 +83,8 @@ namespace DCL.Communities.CommunitiesCard
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
+            this.clipboard = clipboard;
+            this.webBrowser = webBrowser;
         }
 
         public override void Dispose()
@@ -122,7 +130,10 @@ namespace DCL.Communities.CommunitiesCard
                 webRequestController,
                 placesAPIService,
                 inWorldWarningNotificationView,
-                realmNavigator);
+                realmNavigator,
+                mvcManager,
+                clipboard,
+                webBrowser);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 

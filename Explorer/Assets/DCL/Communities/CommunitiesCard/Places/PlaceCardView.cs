@@ -46,9 +46,24 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo, bool, PlaceCardView> LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView> DislikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView> FavoriteToggleChanged;
-        public event Action<PlaceInfo> ShareButtonClicked;
+        public event Action<PlaceInfo, Vector2, PlaceCardView> ShareButtonClicked;
         public event Action<PlaceInfo> InfoButtonClicked;
         public event Action<PlaceInfo> JumpInButtonClicked;
+
+        private bool canUnHover = true;
+        internal bool CanUnHover
+        {
+            get => canUnHover;
+            set
+            {
+                if (!canUnHover && value)
+                {
+                    canUnHover = value;
+                    PlayHoverExitAnimation();
+                }
+                canUnHover = value;
+            }
+        }
 
         private void Awake()
         {
@@ -58,7 +73,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value, this));
             dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value, this));
             favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value, this));
-            shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo));
+            shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo, shareButton.transform.position, this));
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
         }
@@ -92,7 +107,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void SubscribeToInteractions(Action<PlaceInfo, bool, PlaceCardView> likeToggleChanged,
             Action<PlaceInfo, bool, PlaceCardView> dislikeToggleChanged,
             Action<PlaceInfo, bool, PlaceCardView> favoriteToggleChanged,
-            Action<PlaceInfo> shareButtonClicked,
+            Action<PlaceInfo, Vector2, PlaceCardView> shareButtonClicked,
             Action<PlaceInfo> infoButtonClicked,
             Action<PlaceInfo> jumpInButtonClicked)
         {
@@ -132,8 +147,11 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void OnPointerEnter(PointerEventData eventData) =>
             PlayHoverAnimation();
 
-        public void OnPointerExit(PointerEventData eventData) =>
-            PlayHoverExitAnimation();
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (canUnHover)
+                PlayHoverExitAnimation();
+        }
 
         private void PlayHoverAnimation()
         {

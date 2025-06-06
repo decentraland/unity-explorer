@@ -956,7 +956,9 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     mainUIView.WarningNotification,
                     placesAPIService,
-                    realmNavigator));
+                    realmNavigator,
+                    clipboard,
+                    webBrowser));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

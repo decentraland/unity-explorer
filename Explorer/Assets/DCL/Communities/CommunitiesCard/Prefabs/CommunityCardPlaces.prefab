@@ -180,6 +180,7 @@ MonoBehaviour:
   <loopGrid>k__BackingField: {fileID: 5638549834860346216}
   <emptyState>k__BackingField: {fileID: 1720708892090664944}
   <loadingObject>k__BackingField: {fileID: 8084883053233899077}
+  <contextMenuConfiguration>k__BackingField: {fileID: 11400000, guid: ca02eb1ec7d6947c1b6683ad3e847437, type: 2}
 --- !u!1 &1720708892090664944
 GameObject:
   m_ObjectHideFlags: 0

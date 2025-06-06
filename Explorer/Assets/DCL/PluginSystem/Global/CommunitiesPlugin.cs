@@ -1,6 +1,8 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser;
+using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
 using DCL.Friends;
@@ -32,6 +34,8 @@ namespace DCL.PluginSystem.Global
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
+        private readonly ISystemClipboard clipboard;
+        private readonly IWebBrowser webBrowser;
 
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
@@ -43,7 +47,9 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             WarningNotificationView inWorldWarningNotificationView,
             IPlacesAPIService placesAPIService,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            ISystemClipboard clipboard,
+            IWebBrowser webBrowser)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -56,6 +62,8 @@ namespace DCL.PluginSystem.Global
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
+            this.clipboard = clipboard;
+            this.webBrowser = webBrowser;
         }
 
         public void Dispose()
@@ -81,7 +89,9 @@ namespace DCL.PluginSystem.Global
                 webRequestController,
                 inWorldWarningNotificationView,
                 placesAPIService,
-                realmNavigator));
+                realmNavigator,
+                clipboard,
+                webBrowser));
         }
     }
 

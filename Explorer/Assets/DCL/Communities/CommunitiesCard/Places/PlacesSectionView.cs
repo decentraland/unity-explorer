@@ -1,6 +1,11 @@
+using Cysharp.Threading.Tasks;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.WebRequests;
+using MVC;
 using SuperScrollView;
 using System;
+using System.Threading;
 using UnityEngine;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
@@ -11,10 +16,12 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const int ADD_PLACE_PREFAB_INDEX = 0;
         private const int PLACE_PREFAB_INDEX = 1;
+        private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
 
         [field: SerializeField] private LoopGridView loopGrid { get; set; }
         [field: SerializeField] private GameObject emptyState { get; set; }
         [field: SerializeField] private GameObject loadingObject { get; set; }
+        [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; }
 
         public event Action? NewDataRequested;
         public event Action? AddPlaceRequested;
@@ -23,12 +30,25 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo, bool, PlaceCardView> ElementDislikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView> ElementFavoriteToggleChanged;
         public event Action<PlaceInfo> ElementShareButtonClicked;
+        public event Action<PlaceInfo> ElementCopyLinkButtonClicked;
         public event Action<PlaceInfo> ElementInfoButtonClicked;
         public event Action<PlaceInfo> ElementJumpInButtonClicked;
 
         private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData;
         private bool canModify;
         private IWebRequestController webRequestController;
+        private IMVCManager mvcManager;
+        private GenericContextMenu contextMenu;
+        private CancellationToken cancellationToken;
+
+        private PlaceInfo lastClickedPlaceCtx;
+
+        private void Awake()
+        {
+            contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: new (15, 15, 20, 25), elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.ShareText, contextMenuConfiguration.ShareSprite, () => ElementShareButtonClicked?.Invoke(lastClickedPlaceCtx)))
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.CopyLinkText, contextMenuConfiguration.CopyLinkSprite, () => ElementCopyLinkButtonClicked?.Invoke(lastClickedPlaceCtx)));
+        }
 
         public void SetActive(bool active) => gameObject.SetActive(active);
 
@@ -43,11 +63,16 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.canModify = canModify;
         }
 
-        public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc, IWebRequestController webRequestController)
+        public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
+            IWebRequestController webRequestController,
+            IMVCManager mvcManager,
+            CancellationToken panelCancellationToken)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getPlacesFetchData = placesDataFunc;
             this.webRequestController = webRequestController;
+            this.mvcManager = mvcManager;
+            cancellationToken = panelCancellationToken;
         }
 
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
@@ -72,7 +97,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementFavoriteToggleChanged?.Invoke(placeInfo, value, cardView),
-                placeInfo => ElementShareButtonClicked?.Invoke(placeInfo),
+                OpenCardContextMenu,
                 placeInfo => ElementInfoButtonClicked?.Invoke(placeInfo),
                 placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo));
 
@@ -80,6 +105,15 @@ namespace DCL.Communities.CommunitiesCard.Places
                 NewDataRequested?.Invoke();
 
             return listItem;
+        }
+
+        private void OpenCardContextMenu(PlaceInfo placeInfo, Vector2 position, PlaceCardView placeCardView)
+        {
+            lastClickedPlaceCtx = placeInfo;
+            placeCardView.CanUnHover = false;
+
+            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
+                actionOnHide: () => placeCardView.CanUnHover = true)), cancellationToken);
         }
 
         public void RefreshGrid()

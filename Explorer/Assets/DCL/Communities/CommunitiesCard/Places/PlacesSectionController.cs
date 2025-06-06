@@ -1,5 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.PlacesAPIService;
@@ -7,6 +9,7 @@ using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
+using MVC;
 using System;
 using System.Threading;
 using Utility;
@@ -25,11 +28,17 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
 
+        private const string JUMP_IN_LINK = " https://decentraland.org/jump/?position={0},{1}";
+        private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
+        private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
+
         private readonly PlacesSectionView view;
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly IRealmNavigator realmNavigator;
+        private readonly ISystemClipboard clipboard;
+        private readonly IWebBrowser webBrowser;
 
         protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
 
@@ -41,14 +50,19 @@ namespace DCL.Communities.CommunitiesCard.Places
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
-            IRealmNavigator realmNavigator) : base (view, PAGE_SIZE)
+            IRealmNavigator realmNavigator,
+            IMVCManager mvcManager,
+            ISystemClipboard clipboard,
+            IWebBrowser webBrowser) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.realmNavigator = realmNavigator;
+            this.clipboard = clipboard;
+            this.webBrowser = webBrowser;
 
-            view.InitGrid(() => currentSectionFetchData, webRequestController);
+            view.InitGrid(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
@@ -56,6 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementDislikeToggleChanged += OnElementDislikeToggleChanged;
             view.ElementFavoriteToggleChanged += OnElementFavoriteToggleChanged;
             view.ElementShareButtonClicked += OnElementShareButtonClicked;
+            view.ElementCopyLinkButtonClicked += OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked += OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked += OnElementJumpInButtonClicked;
         }
@@ -66,6 +81,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementDislikeToggleChanged -= OnElementDislikeToggleChanged;
             view.ElementFavoriteToggleChanged -= OnElementFavoriteToggleChanged;
             view.ElementShareButtonClicked -= OnElementShareButtonClicked;
+            view.ElementCopyLinkButtonClicked -= OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked -= OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked -= OnElementJumpInButtonClicked;
 
@@ -73,7 +89,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             base.Dispose();
         }
-        
+
         private void OnAddPlaceClicked()
         {
             throw new NotImplementedException();
@@ -90,14 +106,25 @@ namespace DCL.Communities.CommunitiesCard.Places
                 realmNavigator.TeleportToParcelAsync(placeInfo.base_position_processed, placeCardOperationsCts.Token, false).Forget();
         }
 
-        private void OnElementInfoButtonClicked(PlaceInfo obj)
+        private void OnElementInfoButtonClicked(PlaceInfo place)
         {
             throw new NotImplementedException();
         }
 
-        private void OnElementShareButtonClicked(PlaceInfo obj)
+        private void OnElementShareButtonClicked(PlaceInfo place)
         {
-            throw new NotImplementedException();
+            VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
+            string copyLink = string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
+            string description = string.Format(TWITTER_PLACE_DESCRIPTION, place.title);
+            string twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", copyLink);
+            webBrowser.OpenUrl(twitterLink);
+        }
+
+        private void OnElementCopyLinkButtonClicked(PlaceInfo place)
+        {
+            VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
+            string copyLink = string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
+            clipboard.Set(copyLink);
         }
 
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
