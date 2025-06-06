@@ -149,6 +149,7 @@ namespace DCL.PlacesAPIService
                     user_like = userLike,
                     user_dislike = userDislike,
                     user_favorite = Random.Range(0, 100) > 50,
+                    world_name = Random.Range(0, 100) > 50 ? $"WorldName{i}.dcl.eth" : string.Empty,
                 });
             }
 

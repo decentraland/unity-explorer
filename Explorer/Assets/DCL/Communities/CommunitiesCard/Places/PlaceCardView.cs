@@ -13,7 +13,7 @@ namespace DCL.Communities.CommunitiesCard.Places
     public class PlaceCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const float HOVER_ANIMATION_DURATION = 0.3f;
-        private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 106f;
+        private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 112f;
 
         [SerializeField] private RectTransform headerContainer;
         [SerializeField] private RectTransform footerContainer;
@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private TMP_Text onlineMembersText;
         [SerializeField] private TMP_Text placeNameText;
         [SerializeField] private TMP_Text placeDescriptionText;
+        [SerializeField] private TMP_Text placeCoordsText;
 
         [Header("Buttons")]
         [SerializeField] private ToggleView likeToggle;
@@ -76,6 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = placeInfo.description;
             onlineMembersText.text = $"{placeInfo.user_count}";
+            placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
 
             //Make sure to remove listeners before setting values in order to avoid unwanted calls to previously subscribed methods
             LikeToggleChanged = null;
