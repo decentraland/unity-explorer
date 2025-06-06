@@ -34,7 +34,6 @@ namespace DCL.VoiceChat
         private int microphoneSampleRate = 48000;
         private int microphoneBufferLengthSeconds = 1;
         private string currentMicrophoneName;
-        private bool useMicrophonePositionOptimization = true;
 
         private AudioClip microphoneClip;
         private float[] realtimeAudioBuffer;
@@ -181,12 +180,12 @@ namespace DCL.VoiceChat
             if (!processingEnabled)
             {
                 Span<float> silenceSpan = GetSilenceSpan(data.Length / channels);
-                Span<float> stereoSilenceSpan = ConvertMonoToStereo(silenceSpan);
-                audioReadEvent?.Invoke(stereoSilenceSpan, 2, GetEffectiveSampleRate());
+                Span<float> silenceStereoSpan = ConvertMonoToStereo(silenceSpan);
+                audioReadEvent?.Invoke(silenceStereoSpan, 2, GetEffectiveSampleRate());
                 return;
             }
 
-            if (useRealtimeProcessing && useMicrophonePositionOptimization && !string.IsNullOrEmpty(currentMicrophoneName) && isRealtimeThreadRunning)
+            if (useRealtimeProcessing && !string.IsNullOrEmpty(currentMicrophoneName) && isRealtimeThreadRunning)
             {
                 return;
             }
@@ -197,8 +196,8 @@ namespace DCL.VoiceChat
                 {
                     Span<float> processedSpan = ProcessAudioToSpan(data.AsSpan(), channels);
                     Span<float> resampledSpan = ResampleToUnityOutputRate(processedSpan, GetEffectiveSampleRate(), cachedSampleRate);
-                    Span<float> stereoSpan = ConvertMonoToStereo(resampledSpan);
-                    audioReadEvent?.Invoke(stereoSpan, 2, cachedSampleRate);
+                    Span<float> processedStereoSpan = ConvertMonoToStereo(resampledSpan);
+                    audioReadEvent?.Invoke(processedStereoSpan, 2, cachedSampleRate);
                     return;
                 }
                 catch (Exception ex)
@@ -214,8 +213,8 @@ namespace DCL.VoiceChat
 
             Span<float> monoSpan = ConvertToMonoSpan(data.AsSpan(), channels);
             Span<float> resampledMonoSpan = ResampleToUnityOutputRate(monoSpan, GetEffectiveSampleRate(), cachedSampleRate);
-            Span<float> stereoSpan = ConvertMonoToStereo(resampledMonoSpan);
-            audioReadEvent?.Invoke(stereoSpan, 2, cachedSampleRate);
+            Span<float> fallbackStereoSpan = ConvertMonoToStereo(resampledMonoSpan);
+            audioReadEvent?.Invoke(fallbackStereoSpan, 2, cachedSampleRate);
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead
@@ -402,8 +401,8 @@ namespace DCL.VoiceChat
                 audioProcessor.ProcessAudio(audioSpan, microphoneSampleRate);
 
                 Span<float> resampledSpan = ResampleToUnityOutputRate(audioSpan, microphoneSampleRate, cachedSampleRate);
-                Span<float> stereoSpan = ConvertMonoToStereo(resampledSpan);
-                audioReadEvent?.Invoke(stereoSpan, 2, cachedSampleRate);
+                Span<float> realtimeStereoSpan = ConvertMonoToStereo(resampledSpan);
+                audioReadEvent?.Invoke(realtimeStereoSpan, 2, cachedSampleRate);
             }
             catch (Exception ex)
             {
