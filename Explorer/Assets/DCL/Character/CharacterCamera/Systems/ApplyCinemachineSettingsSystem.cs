@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
+using DCL.CharacterCamera.Settings;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Settings.Settings;
@@ -19,6 +20,10 @@ namespace DCL.Character.CharacterCamera.Systems
 
         private readonly ElementBinding<float> sensitivitySlider;
         private readonly ElementBinding<float> noiseSlider;
+        private readonly ElementBinding<float> minAltitude;
+        private readonly ElementBinding<float> maxAltitude;
+        private readonly ElementBinding<float> minDistance;
+        private readonly ElementBinding<float> maxDistance;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
 
         private float currentSens;
@@ -27,14 +32,37 @@ namespace DCL.Character.CharacterCamera.Systems
         public ApplyCinemachineSettingsSystem(World world, IDebugContainerBuilder debugBuilder, ControlsSettingsAsset controlsSettingsAsset) : base(world)
         {
             currentSens = PlayerPrefs.GetFloat(PPREF_SENS, 10);
+
             sensitivitySlider = new ElementBinding<float>(currentSens);
             noiseSlider = new ElementBinding<float>(0.5f);
+            minAltitude = new ElementBinding<float>(0);
+            maxAltitude = new ElementBinding<float>(0);
+            minDistance = new ElementBinding<float>(0);
+            maxDistance = new ElementBinding<float>(0);
+
             this.controlsSettingsAsset = controlsSettingsAsset;
 
             debugBuilder.TryAddWidget("Camera")
-                        ?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
+                       ?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
                         .AddToggleField("Enable Noise", OnNoiseChange, false)
-                        .AddFloatSliderField("Noise Value", noiseSlider, 0, 20);
+                        .AddFloatSliderField("Noise Value", noiseSlider, 0, 20)
+                        .AddFloatField("Min Draw Dist. Altitude", minAltitude)
+                        .AddFloatField("Max Draw Dist. Altitude", maxAltitude)
+                        .AddFloatField("Min Draw Dist.", minDistance)
+                        .AddFloatField("Max Draw Dist.", maxDistance);
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+
+            var cinemachinePreset = World.Get<ICinemachinePreset>(World.CacheCamera());
+
+            var farClipSettings = cinemachinePreset.FarClipPlaneSettings;
+            minAltitude.Value = farClipSettings.MinFarClipPlaneAltitude;
+            maxAltitude.Value = farClipSettings.MaxFarClipPlaneAltitude;
+            minDistance.Value = farClipSettings.MinFarClipPlane;
+            maxDistance.Value = farClipSettings.MaxFarClipPlane;
         }
 
         private void OnNoiseChange(ChangeEvent<bool> evt)
@@ -62,10 +90,18 @@ namespace DCL.Character.CharacterCamera.Systems
             cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
             cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
             cinemachinePreset.FirstPersonCameraData.Noise.m_AmplitudeGain = cameraNoise ? noiseSlider.Value : 0;
+
             cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
             cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
+
             cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
             cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
+
+            CameraFarClipPlaneSettings farClipSettings = cinemachinePreset.FarClipPlaneSettings;
+            farClipSettings.MinFarClipPlaneAltitude = minAltitude.Value;
+            farClipSettings.MaxFarClipPlaneAltitude = maxAltitude.Value;
+            farClipSettings.MinFarClipPlane = minDistance.Value;
+            farClipSettings.MaxFarClipPlane = maxDistance.Value;
         }
     }
 }
