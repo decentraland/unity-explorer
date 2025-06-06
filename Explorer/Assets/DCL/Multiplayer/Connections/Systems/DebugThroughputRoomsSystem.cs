@@ -76,15 +76,18 @@ namespace DCL.Multiplayer.Connections.Systems
                 return;
 
 #if ENABLE_PROFILER
-            (ulong incoming, ulong outgoing) = island.CollectAndClear();
+            if (UnityEngine.Profiling.Profiler.enabled && UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
+            {
+                (ulong incoming, ulong outgoing) = island.CollectAndClear();
 
-            NetworkProfilerCounters.LIVEKIT_ISLAND_RECEIVED.Value = incoming;
-            NetworkProfilerCounters.LIVEKIT_ISLAND_SEND.Value = outgoing;
+                NetworkProfilerCounters.LIVEKIT_ISLAND_RECEIVED.Value = incoming;
+                NetworkProfilerCounters.LIVEKIT_ISLAND_SEND.Value = outgoing;
 
-            (incoming, outgoing) = scene.CollectAndClear();
+                (incoming, outgoing) = scene.CollectAndClear();
 
-            NetworkProfilerCounters.LIVEKIT_SCENE_RECEIVED.Value = incoming;
-            NetworkProfilerCounters.LIVEKIT_SCENE_SEND.Value = outgoing;
+                NetworkProfilerCounters.LIVEKIT_SCENE_RECEIVED.Value = incoming;
+                NetworkProfilerCounters.LIVEKIT_SCENE_SEND.Value = outgoing;
+            }
 #endif
 
             current += t;
@@ -180,8 +183,6 @@ namespace DCL.Multiplayer.Connections.Systems
                 buffer.Clear();
                 binding.Value = incomingBytes;
             }
-
-
         }
     }
 }

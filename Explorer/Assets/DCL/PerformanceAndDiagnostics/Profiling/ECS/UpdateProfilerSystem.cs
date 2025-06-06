@@ -6,9 +6,7 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner;
 using SceneRunner.Scene;
-using System.Linq;
 using System.Net.NetworkInformation;
-using UnityEngine;
 
 namespace DCL.Profiling.ECS
 {
@@ -18,52 +16,33 @@ namespace DCL.Profiling.ECS
         private readonly IProfiler profiler;
         private readonly IScenesCache scenesCache;
 
+        private readonly ulong startBytesSent;
+        private readonly ulong startBytesReceived;
+        private ulong prevBytesSent;
+        private ulong prevBytesReceived;
+        private ulong lastSecondBytesSent;
+        private ulong lastSecondBytesReceived;
+        private float lastBandwidthCheck;
+
         private UpdateProfilerSystem(World world, IProfiler profiler, IScenesCache scenesCache)
             : base(world)
         {
             this.profiler = profiler;
             this.scenesCache = scenesCache;
 
-            foreach (var ns in NetworkInterface.GetAllNetworkInterfaces())
-            {
+            foreach (NetworkInterface? ns in NetworkInterface.GetAllNetworkInterfaces())
                 if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
                 {
-                    var stats = ns.GetIPv4Statistics();
-                    startBytesSent = prevBytesSent = (ulong)stats.BytesSent;
-                    startBytesRecieved = prevBytesRecieved = (ulong)stats.BytesReceived;
+                    var netStats = ns.GetIPv4Statistics();
+                    startBytesSent = prevBytesSent = lastSecondBytesSent = (ulong)netStats.BytesSent;
+                    startBytesReceived = prevBytesReceived = lastSecondBytesReceived = (ulong)netStats.BytesReceived;
+                    lastBandwidthCheck = UnityEngine.Time.unscaledTime;
                     break;
                 }
-            }
         }
-
-        ulong startBytesSent = 0;
-        ulong startBytesRecieved = 0;
-
-        ulong prevBytesSent = 0;
-        ulong prevBytesRecieved = 0;
 
         protected override void Update(float t)
         {
-#if ENABLE_PROFILER
-            foreach (var ns in NetworkInterface.GetAllNetworkInterfaces())
-            {
-                if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
-                {
-                    var stats = ns.GetIPv4Statistics();
-
-                    NetworkProfilerCounters.TOTAL_BYTES_SENT.Value = (ulong)stats.BytesSent - startBytesSent;
-                    NetworkProfilerCounters.TOTAL_BYTES_RECEIVED.Value = (ulong)stats.BytesReceived - startBytesRecieved;
-
-                    NetworkProfilerCounters.TOTAL_FRAME_BYTES_SENT.Value = (ulong)stats.BytesSent - prevBytesSent;
-                    NetworkProfilerCounters.TOTAL_FRAME_BYTES_RECEIVED.Value = (ulong)stats.BytesReceived - prevBytesRecieved;
-
-                    prevBytesSent = (ulong)stats.BytesSent;
-                    prevBytesRecieved = (ulong)stats.BytesReceived;
-                    break;
-                }
-            }
-#endif
-
             profiler.AllScenesTotalHeapSize = 0ul;
             profiler.AllScenesTotalHeapSizeExecutable = 0ul;
             profiler.AllScenesTotalPhysicalSize = 0ul;
@@ -94,12 +73,48 @@ namespace DCL.Profiling.ECS
             }
 
 #if ENABLE_PROFILER
-            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE.Sample(profiler.AllScenesTotalHeapSize);
-            JavaScriptProfilerCounters.TOTAL_HEAP_SIZE_EXECUTABLE.Sample(profiler.AllScenesTotalHeapSizeExecutable);
-            JavaScriptProfilerCounters.TOTAL_PHYSICAL_SIZE.Sample(profiler.AllScenesTotalPhysicalSize);
-            JavaScriptProfilerCounters.USED_HEAP_SIZE.Sample(profiler.AllScenesUsedHeapSize);
-            JavaScriptProfilerCounters.TOTAL_EXTERNAL_SIZE.Sample(profiler.AllScenesTotalExternalSize);
-            JavaScriptProfilerCounters.ACTIVE_ENGINES.Sample(profiler.ActiveEngines);
+            if (!UnityEngine.Profiling.Profiler.enabled)
+                return;
+
+            if (UnityEngine.Profiling.Profiler.IsCategoryEnabled(JavaScriptProfilerCounters.CATEGORY))
+            {
+                JavaScriptProfilerCounters.TOTAL_HEAP_SIZE.Sample(profiler.AllScenesTotalHeapSize);
+                JavaScriptProfilerCounters.TOTAL_HEAP_SIZE_EXECUTABLE.Sample(profiler.AllScenesTotalHeapSizeExecutable);
+                JavaScriptProfilerCounters.TOTAL_PHYSICAL_SIZE.Sample(profiler.AllScenesTotalPhysicalSize);
+                JavaScriptProfilerCounters.USED_HEAP_SIZE.Sample(profiler.AllScenesUsedHeapSize);
+                JavaScriptProfilerCounters.TOTAL_EXTERNAL_SIZE.Sample(profiler.AllScenesTotalExternalSize);
+                JavaScriptProfilerCounters.ACTIVE_ENGINES.Sample(profiler.ActiveEngines);
+            }
+
+            if (UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
+            {
+                foreach (NetworkInterface? ns in NetworkInterface.GetAllNetworkInterfaces())
+                    if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
+                    {
+                        var netStats = ns.GetIPv4Statistics();
+                        var currentSent = (ulong)netStats.BytesSent;
+                        var currentReceived = (ulong)netStats.BytesReceived;
+
+                        NetworkProfilerCounters.WIFI_IPV4_BYTES_SENT.Value = currentSent - startBytesSent;
+                        NetworkProfilerCounters.WIFI_IPV4_BYTES_RECEIVED.Value = currentReceived - startBytesReceived;
+
+                        NetworkProfilerCounters.WIFI_IPV4_BYTES_FRAME_SENT.Value = currentSent - prevBytesSent;
+                        NetworkProfilerCounters.WIFI_IPV4_BYTES_FRAME_RECEIVED.Value = currentReceived - prevBytesReceived;
+
+                        prevBytesSent = currentSent;
+                        prevBytesReceived = currentReceived;
+
+                        if (UnityEngine.Time.unscaledTime - lastBandwidthCheck > 1f)
+                        {
+                            lastBandwidthCheck = UnityEngine.Time.unscaledTime;
+
+                            NetworkProfilerCounters.WIFI_IPV4_MBPS_SENT.Value = (currentSent - lastSecondBytesSent) * 8f / 1_000_000f;
+                            NetworkProfilerCounters.WIFI_IPV4_MBPS_RECEIVED.Value = (currentReceived - lastSecondBytesReceived) * 8f / 1_000_000f;
+                            lastSecondBytesSent = currentSent;
+                            lastSecondBytesReceived = currentReceived;
+                        }
+                    }
+            }
 #endif
         }
 

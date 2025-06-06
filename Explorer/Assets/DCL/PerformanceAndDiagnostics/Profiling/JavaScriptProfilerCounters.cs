@@ -8,12 +8,12 @@ namespace DCL.Profiling
         public const string CATEGORY_NAME = "JavaScript";
         public static readonly ProfilerCategory CATEGORY = new (CATEGORY_NAME);
 
-        public static readonly string TOTAL_HEAP_SIZE_NAME = "Total Heap Size";
-        public static readonly string TOTAL_HEAP_SIZE_EXECUTABLE_NAME = "Total Executable Heap Size";
-        public static readonly string TOTAL_PHYSICAL_SIZE_NAME = "Total Physical Memory Size";
-        public static readonly string USED_HEAP_SIZE_NAME = "Used Heap Size";
-        public static readonly string TOTAL_EXTERNAL_SIZE_NAME = "Total External Memory Size";
-        public static readonly string ACTIVE_ENGINES_NAME = "Active Engines";
+        public const string TOTAL_HEAP_SIZE_NAME = "Total Heap Size";
+        public const string TOTAL_HEAP_SIZE_EXECUTABLE_NAME = "Total Executable Heap Size";
+        public const string TOTAL_PHYSICAL_SIZE_NAME = "Total Physical Memory Size";
+        public const string USED_HEAP_SIZE_NAME = "Used Heap Size";
+        public const string TOTAL_EXTERNAL_SIZE_NAME = "Total External Memory Size";
+        public const string ACTIVE_ENGINES_NAME = "Active Engines";
 
         public static readonly ProfilerCounter<ulong> TOTAL_HEAP_SIZE
             = new (CATEGORY, TOTAL_HEAP_SIZE_NAME, ProfilerMarkerDataUnit.Bytes);
@@ -34,5 +34,4 @@ namespace DCL.Profiling
             = new (CATEGORY, ACTIVE_ENGINES_NAME, ProfilerMarkerDataUnit.Count);
     }
 }
-
 #endif
