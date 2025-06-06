@@ -204,7 +204,7 @@ namespace DCL.VoiceChat
             else
                 EnableMicrophone();
 
-            isTalking = !isTalking;
+            IsTalking = !IsTalking;
         }
 
         private void InitializeMicrophone(bool initializeRtcAudioSource = true)

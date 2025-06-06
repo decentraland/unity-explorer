@@ -46,12 +46,12 @@ namespace DCL.VoiceChat
             this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
         }
 
-        private void OnVoiceChatStatusChanged(VoiceChatStatus status, Web3Address walletId)
+        private void OnVoiceChatStatusChanged(VoiceChatStatus status)
         {
             if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
-                view.Hide(status, walletId);
+                view.Hide(status, this.voiceChatCallStatusService.CurrentTargetWallet);
             else
-                view.Show(status, walletId);
+                view.Show(status, this.voiceChatCallStatusService.CurrentTargetWallet);
 
         }
 
@@ -73,7 +73,7 @@ namespace DCL.VoiceChat
 
         private void AcceptCall()
         {
-            voiceChatCallStatusService.StartCall("");
+            voiceChatCallStatusService.StartCall(new Web3Address());
         }
 
         public void Dispose()

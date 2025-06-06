@@ -22,7 +22,7 @@ namespace DCL.VoiceChat
 
         private bool processingEnabled = true;
         private int cachedSampleRate;
-        private readonly bool isProcessingEnabled = true; // Used for macOS to disable processing if exceptions occur, cannot be readonly
+        private bool isProcessingEnabled = true; // Used for macOS to disable processing if exceptions occur, cannot be readonly
         private float[] silenceBuffer;
 
         private float[] tempBuffer;
@@ -110,10 +110,10 @@ namespace DCL.VoiceChat
 
                 Span<float> audioSpan = realtimeAudioBuffer.AsSpan(0, chunkSize);
                 bool success = microphoneClip.GetData(audioSpan, lastMicrophonePosition);
-                
+
                 if (!success)
                 {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, 
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT,
                         $"Failed to get microphone data at position {lastMicrophonePosition}, chunkSize: {chunkSize}");
                     break;
                 }
@@ -386,7 +386,7 @@ namespace DCL.VoiceChat
             try
             {
                 Span<float> audioSpan = audioChunk.AsSpan(0, sampleCount);
-                
+
                 audioProcessor.ProcessAudio(audioSpan, microphoneSampleRate);
 
                 audioReadEvent?.Invoke(audioSpan, 1, microphoneSampleRate);
@@ -420,7 +420,7 @@ namespace DCL.VoiceChat
             }
 
             int samplesPerChannel = inputData.Length / channels;
-            
+
             for (var sampleIndex = 0; sampleIndex < samplesPerChannel; sampleIndex++)
             {
                 var sum = 0f;
@@ -437,9 +437,9 @@ namespace DCL.VoiceChat
 
         private Span<float> GetSilenceSpan(int length)
         {
-            if (silenceBuffer == null || silenceBuffer.Length < length) 
-            { 
-                silenceBuffer = new float[Mathf.Max(length, 1024)]; 
+            if (silenceBuffer == null || silenceBuffer.Length < length)
+            {
+                silenceBuffer = new float[Mathf.Max(length, 1024)];
             }
 
             Span<float> bufferSpan = silenceBuffer.AsSpan(0, length);
@@ -451,7 +451,7 @@ namespace DCL.VoiceChat
         private Span<float> ProcessAudioToSpan(ReadOnlySpan<float> data, int channels)
         {
             Span<float> workingSpan;
-            
+
             if (channels == 1)
             {
                 if (tempBuffer == null || tempBuffer.Length < data.Length)
@@ -462,7 +462,7 @@ namespace DCL.VoiceChat
                     tempBuffer = new float[data.Length];
 #endif
                 }
-                
+
                 workingSpan = tempBuffer.AsSpan(0, data.Length);
                 data.CopyTo(workingSpan);
             }
@@ -482,9 +482,9 @@ namespace DCL.VoiceChat
                 workingSpan = tempBuffer.AsSpan(0, samplesPerChannel);
                 ConvertToMono(data, workingSpan, channels);
             }
-            
+
             audioProcessor.ProcessAudio(workingSpan, GetEffectiveSampleRate());
-            
+
             return workingSpan;
         }
 
@@ -496,7 +496,7 @@ namespace DCL.VoiceChat
                 {
                     tempBuffer = new float[data.Length];
                 }
-                
+
                 Span<float> monoSpan = tempBuffer.AsSpan(0, data.Length);
                 data.CopyTo(monoSpan);
                 return monoSpan;

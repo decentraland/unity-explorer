@@ -34,7 +34,7 @@ namespace DCL.VoiceChat
         private void UpdateStatus(VoiceChatStatus newStatus)
         {
             Status = newStatus;
-            StatusChanged?.Invoke(Status, CurrentTargetWallet);
+            StatusChanged?.Invoke(Status);
         }
     }
 }
