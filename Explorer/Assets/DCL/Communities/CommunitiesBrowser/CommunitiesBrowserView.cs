@@ -1,7 +1,7 @@
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DCL.WebRequests;
-using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -63,7 +63,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private IWebRequestController webRequestController;
-        private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private void Awake()
         {
@@ -174,12 +174,12 @@ namespace DCL.Communities.CommunitiesBrowser
             SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
         }
 
-        public void InitializeResultsGrid(int itemTotalCount, IWebRequestController webRequestCtrl, ViewDependencies viewDep)
+        public void InitializeResultsGrid(int itemTotalCount, IWebRequestController webRequestCtrl, ProfileRepositoryWrapper profileDataProvider)
         {
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             webRequestController ??= webRequestCtrl;
-            viewDependencies ??= viewDep;
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         public void ClearResultsItems()
@@ -265,7 +265,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.JoinCommunityButtonClicked += OnCommunityJoined;
 
             // Setup mutual friends
-            cardView.SetupMutualFriends(viewDependencies, communityData);
+            cardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
 
             return gridItem;
         }

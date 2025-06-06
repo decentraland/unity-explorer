@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using DG.Tweening;
@@ -142,10 +143,10 @@ namespace DCL.Communities.CommunitiesBrowser
             buttonsContainer.SetActive(!isActive);
         }
 
-        public void SetupMutualFriends(ViewDependencies viewDependencies, CommunityData communityData)
+        public void SetupMutualFriends(ProfileRepositoryWrapper profileDataProvider, CommunityData communityData)
         {
             foreach (MutualFriendsConfig.MutualThumbnail thumbnail in mutualFriends.thumbnails)
-                thumbnail.picture.InjectDependencies(viewDependencies);
+                thumbnail.picture.SetProfileDataProvider(profileDataProvider);
 
             for (var i = 0; i < mutualFriends.thumbnails.Length; i++)
             {

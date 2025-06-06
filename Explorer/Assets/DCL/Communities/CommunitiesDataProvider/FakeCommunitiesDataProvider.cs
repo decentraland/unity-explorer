@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -17,7 +16,6 @@ namespace DCL.Communities
         private readonly List<GetUserCommunitiesData.CommunityData> currentCommunities;
 
         public FakeCommunitiesDataProvider(IWebRequestController webRequestController,
-            IWeb3IdentityCache web3IdentityCache,
             IDecentralandUrlsSource urlsSource)
         {
             currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 1);

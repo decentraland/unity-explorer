@@ -8,6 +8,7 @@ using DCL.Passport;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
@@ -66,7 +67,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
         public MembersListController(MembersListView view,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
@@ -102,7 +103,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.KickUserRequested += OnKickUser;
             this.view.BanUserRequested += OnBanUser;
 
-            this.view.InjectDependencies(viewDependencies);
+            this.view.SetProfileDataProvider(profileDataProvider);
         }
 
         public void Dispose()

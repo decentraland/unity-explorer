@@ -587,8 +587,8 @@ namespace Global.Dynamic
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
             // TODO: Remove fakeCommunitiesDataProvider when all the whole communitiesDataProvider implementation is ready.
-            ICommunitiesDataProvider fakeCommunitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource);
-            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, identityCache, bootstrapContainer.DecentralandUrlsSource);
+            ICommunitiesDataProvider fakeCommunitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -960,7 +960,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     cameraReelStorageService,
                     cameraReelScreenshotsStorage,
-                    viewDependencies,
+                    profileRepositoryWrapper,
                     friendServiceProxy,
                     communitiesDataProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
