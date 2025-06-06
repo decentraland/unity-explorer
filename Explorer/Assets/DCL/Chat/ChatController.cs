@@ -85,6 +85,8 @@ namespace DCL.Chat
         public event ConversationClosedDelegate? ConversationClosed;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
+        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+
         public bool TryGetView(out ChatView view)
         {
             view = viewInstance!;
