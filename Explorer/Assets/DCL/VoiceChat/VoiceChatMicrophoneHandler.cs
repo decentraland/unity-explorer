@@ -97,7 +97,7 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource during dispose: {ex.Message}");
                 }
 
-                rtcAudioSource.Dispose();
+                //rtcAudioSource.Dispose();
                 rtcAudioSource = null;
             }
 
@@ -284,7 +284,7 @@ namespace DCL.VoiceChat
             try
             {
                 int unitySampleRate = AudioSettings.outputSampleRate;
-                rtcAudioSource = RtcAudioSource.CreateCustom(audioSource, audioFilter, (uint)unitySampleRate, 2, new AudioProcessingOptions(false, false, false, false));
+                rtcAudioSource = new RtcAudioSource(audioSource, audioFilter);//RtcAudioSource(audioSource, audioFilter, (uint)unitySampleRate, 2, new AudioProcessingOptions(false, false, false, false));
                 rtcAudioSource.Start();
                 MicrophoneReady?.Invoke();
             }
@@ -375,7 +375,7 @@ namespace DCL.VoiceChat
                     ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Failed to stop RtcAudioSource during microphone change: {ex.Message}");
                 }
 
-                rtcAudioSource.Dispose();
+                //rtcAudioSource.Dispose();
                 rtcAudioSource = null;
             }
 
