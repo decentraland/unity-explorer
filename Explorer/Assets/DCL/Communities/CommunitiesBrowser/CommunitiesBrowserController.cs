@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunityCreation;
+using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -342,10 +343,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.UpdateJoinedCommunity(index, result.Value);
         }
 
-        private void OpenCommunityProfile(string communityId)
-        {
-            // TODO: Open community profile (currently implemented by Lorenzo)
-        }
+        private void OpenCommunityProfile(string communityId) =>
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId))).Forget();
 
         private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
         {

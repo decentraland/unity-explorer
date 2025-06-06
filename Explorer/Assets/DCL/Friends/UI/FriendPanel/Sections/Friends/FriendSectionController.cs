@@ -64,11 +64,11 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             jumpToFriendLocationCts.SafeCancelAndDispose();
         }
 
-        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
                        {
-                           UserId = new Web3Address(userId),
+                           UserId = new Web3Address(userData.userAddress),
                        }))
                       .Forget();
         }

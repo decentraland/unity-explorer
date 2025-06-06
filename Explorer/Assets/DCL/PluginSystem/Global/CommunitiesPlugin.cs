@@ -2,10 +2,17 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
-using DCL.Communities;
-using DCL.Communities.CommunityCreation;
 using DCL.Input;
 using DCL.UI;
+using DCL.Communities;
+using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunityCreation;
+using DCL.Friends;
+using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.UI;
+using DCL.Utilities;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Threading;
@@ -20,23 +27,40 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
+        private readonly ICameraReelStorageService cameraReelStorageService;
+        private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly ViewDependencies viewDependencies;
+        private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        
 
         private CommunityCreationEditionController? communityCreationEditionController;
-
-        public CommunitiesPlugin(IMVCManager mvcManager,
+        
+        public CommunitiesPlugin(
+            IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
+            ICameraReelStorageService cameraReelStorageService,
+            ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            ViewDependencies viewDependencies,
+            ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
+            IWebRequestController webRequestController,
             WarningNotificationView inWorldWarningNotificationView)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
+            this.cameraReelStorageService = cameraReelStorageService;
+            this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.viewDependencies = viewDependencies;
+            this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
         }
 
@@ -51,6 +75,19 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(CommunitiesPluginSettings settings, CancellationToken ct)
         {
+            CommunityCardView communityCardViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCardPrefab, ct: ct)).GetComponent<CommunityCardView>();
+            ControllerBase<CommunityCardView, CommunityCardParameter>.ViewFactoryMethod viewFactoryMethod = CommunityCardController.Preallocate(communityCardViewAsset, null, out CommunityCardView communityCardView);
+
+            mvcManager.RegisterController(new CommunityCardController(viewFactoryMethod,
+                mvcManager,
+                cameraReelStorageService,
+                cameraReelScreenshotsStorage,
+                viewDependencies,
+                friendServiceProxy,
+                communitiesDataProvider,
+                webRequestController,
+                inWorldWarningNotificationView));
+
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
             communityCreationEditionController = new CommunityCreationEditionController(communityCreationEditionViewFactoryMethod, webBrowser, inputBlock, communitiesDataProvider, inWorldWarningNotificationView);
@@ -61,6 +98,9 @@ namespace DCL.PluginSystem.Global
     [Serializable]
     public class CommunitiesPluginSettings : IDCLPluginSettings
     {
+        [field: Header("Community Card")]
+        [field: SerializeField] internal AssetReferenceGameObject CommunityCardPrefab { get; private set; }
+
         [field: Header("Community Creation Edition Wizard")]
         [field: SerializeField] internal AssetReferenceGameObject CommunityCreationEditionPrefab { get; private set; }
     }

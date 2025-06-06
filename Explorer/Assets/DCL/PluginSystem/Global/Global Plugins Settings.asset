@@ -299,8 +299,8 @@ MonoBehaviour:
     - rid: 1766526334245273896
       type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <CommunityCreationEditionPrefab>k__BackingField:
-          m_AssetGUID: 24aec0b5ead4ec44081cf47744a7a268
+        <CommunityCardPrefab>k__BackingField:
+          m_AssetGUID: 4f900819503d2412194e6de3e5a95ba0
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

@@ -114,6 +114,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
+                DecentralandUrl.CameraReelCommunity => $"https://camera-reel-service.decentraland.{ENV}/api/community",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
