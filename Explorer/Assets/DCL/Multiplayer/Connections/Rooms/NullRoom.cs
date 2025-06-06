@@ -1,5 +1,4 @@
 using DCL.Multiplayer.Connections.Rooms.Nulls;
-using LiveKit;
 using LiveKit.Rooms;
 using LiveKit.Rooms.ActiveSpeakers;
 using LiveKit.Rooms.DataPipes;
@@ -9,7 +8,6 @@ using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,6 +23,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
         public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
+        public IAudioTracks AudioTracks  => NullAudioTracks.INSTANCE;
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;
@@ -52,8 +51,5 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public Task DisconnectAsync(CancellationToken cancellationToken) =>
             Task.CompletedTask;
-
-        public ITrack CreateAudioTrack(string name, RtcAudioSource source) => null;
-
     }
 }

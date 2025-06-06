@@ -756,7 +756,7 @@ namespace DCL.Chat
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
-            chatTitleBar.SetCallButtonStatus(isOtherUserConnected && currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            chatTitleBar.SetCallButtonStatus(true);//isOtherUserConnected && currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
             SetupViewWithUserStateAsync(userState, isOtherUserConnected).Forget();
         }
 
