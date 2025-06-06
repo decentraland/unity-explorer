@@ -40,7 +40,7 @@ namespace DCL.UI.ProfileElements
 
             currentWalledId = playerId;
             userNameElement.Setup(profile);
-            await profilePictureView.SetupWithDependenciesAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
+            await profilePictureView.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)
