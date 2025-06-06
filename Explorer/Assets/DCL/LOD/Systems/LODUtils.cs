@@ -40,7 +40,6 @@ namespace DCL.LOD.Systems
             {
                 for (int i = 0; i < pooledList.Value.Count; i++)
                 {
-
                     pooledList.Value[i].SafeGetMaterials(TEMP_MATERIALS);
 
                     for (int j = 0; j < TEMP_MATERIALS.Count; j++)

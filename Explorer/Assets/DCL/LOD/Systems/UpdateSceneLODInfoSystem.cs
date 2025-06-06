@@ -59,7 +59,6 @@ namespace DCL.LOD.Systems
                     // to height and dither the transition.
                     lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo);
                 }
-
                 if (!sceneLODInfo.HasLOD(lodForAcquisition))
                     StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
