@@ -170,7 +170,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                ShowErrorNotificationAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                await warningNotificationView.AnimatedShowAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
 
@@ -247,7 +247,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                ShowErrorNotificationAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                await warningNotificationView.AnimatedShowAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
 
@@ -337,7 +337,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success || !result.Value)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                ShowErrorNotificationAsync(JOIN_COMMUNITY_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                await warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
             }
 
             view.UpdateJoinedCommunity(index, result.Value);
@@ -345,16 +345,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OpenCommunityProfile(string communityId) =>
             mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId))).Forget();
-
-        private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
-        {
-            warningNotificationView.SetText(errorMessage);
-            warningNotificationView.Show(ct);
-
-            await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
-
-            warningNotificationView.Hide(ct: ct);
-        }
 
         private void CreateCommunity()
         {

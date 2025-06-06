@@ -131,22 +131,12 @@ namespace DCL.Communities.CommunityCreation
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                ShowErrorNotificationAsync(CREATE_COMMUNITY_ERROR_MESSAGE, showErrorCts.Token).Forget();
+                await warningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 viewInstance.SetCreationCommunityAsLoading(false);
                 return;
             }
 
             closeTaskCompletionSource.TrySetResult();
-        }
-
-        private async UniTask ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
-        {
-            warningNotificationView.SetText(errorMessage);
-            warningNotificationView.Show(ct);
-
-            await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
-
-            warningNotificationView.Hide(ct: ct);
         }
     }
 }
