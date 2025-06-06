@@ -88,6 +88,8 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, bool areBanned, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+
             GetUserCommunitiesResponse.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
             const int BANNED_MEMBERS = 5;

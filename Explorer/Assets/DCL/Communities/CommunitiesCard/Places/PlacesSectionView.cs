@@ -14,6 +14,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         [field: SerializeField] private LoopGridView loopGrid { get; set; }
         [field: SerializeField] private GameObject emptyState { get; set; }
+        [field: SerializeField] private GameObject loadingObject { get; set; }
 
         public event Action? NewDataRequested;
         public event Action? AddPlaceRequested;
@@ -31,10 +32,11 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public void SetActive(bool active) => gameObject.SetActive(active);
 
-        public void SetEmptyStateActive(bool active)
-        {
-            emptyState.SetActive(active);
-        }
+        public void SetEmptyStateActive(bool active) =>
+            emptyState.SetActive(active && !canModify);
+
+        public void SetLoadingStateActive(bool active) =>
+            loadingObject.SetActive(active);
 
         public void SetCanModify(bool canModify)
         {

@@ -175,13 +175,6 @@ namespace DCL.Communities.CommunitiesCard.Places
             base.Reset();
         }
 
-        protected override async UniTask FetchNewDataAsync(CancellationToken ct)
-        {
-            await base.FetchNewDataAsync(ct);
-
-            view.SetEmptyStateActive(placesFetchData.totalToFetch == 0 && !userCanModify);
-        }
-
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
             int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;

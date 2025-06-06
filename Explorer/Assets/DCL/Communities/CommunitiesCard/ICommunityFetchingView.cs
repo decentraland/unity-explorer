@@ -8,5 +8,6 @@ namespace DCL.Communities.CommunitiesCard
         void RefreshGrid();
 
         void SetEmptyStateActive(bool active);
+        void SetLoadingStateActive(bool active);
     }
 }

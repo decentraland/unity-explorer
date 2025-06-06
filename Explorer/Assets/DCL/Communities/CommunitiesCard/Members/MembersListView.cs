@@ -33,6 +33,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private RectTransform sectionButtons { get; set; }
         [field: SerializeField] private RectTransform scrollViewRect { get; set; }
         [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; }
+        [field: SerializeField] private GameObject loadingObject { get; set; }
 
         [field: Header("Assets")]
         [field: SerializeField] public CommunityMemberListContextMenuConfiguration ContextMenuSettings { get; private set; }
@@ -174,6 +175,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         public void SetEmptyStateActive(bool active) { }
+
+        public void SetLoadingStateActive(bool active) =>
+            loadingObject.SetActive(active);
 
         [Serializable]
         public struct MemberListSectionMapping

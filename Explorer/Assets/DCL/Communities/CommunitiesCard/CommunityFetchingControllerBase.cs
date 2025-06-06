@@ -35,15 +35,24 @@ namespace DCL.Communities.CommunitiesCard
             FetchNewDataAsync(cancellationToken).Forget();
         }
 
-        protected virtual async UniTask FetchNewDataAsync(CancellationToken ct)
+        protected async UniTaskVoid FetchNewDataAsync(CancellationToken ct)
         {
             isFetching = true;
 
             SectionFetchData<T> membersData = currentSectionFetchData;
 
+            view.SetEmptyStateActive(false);
+
+            if (membersData.pageNumber == 0)
+                view.SetLoadingStateActive(true);
+
             membersData.pageNumber++;
             membersData.totalToFetch = await FetchDataAsync(ct);
             membersData.totalFetched = membersData.pageNumber * pageSize;
+
+            view.SetLoadingStateActive(false);
+
+            view.SetEmptyStateActive(membersData.totalToFetch == 0);
 
             view.RefreshGrid();
 
