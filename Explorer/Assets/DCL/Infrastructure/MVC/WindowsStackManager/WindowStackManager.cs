@@ -73,9 +73,13 @@ namespace MVC
         {
             popupStack.Remove(controller);
 
-            foreach (var persistant in persistentStack)
-                if (persistant.State == ControllerState.ViewBlurred)
-                    persistant.Focus();
+            if (popupStack.Count == 0)
+            {
+                foreach (var persistant in persistentStack)
+                    if (persistant.State == ControllerState.ViewBlurred)
+                        persistant.Focus();
+            }
+            
             
             return new PopupPopInfo(
                 new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, ((popupStack.Count - 1) * 2) - 1),
