@@ -200,9 +200,11 @@ namespace DCL.VoiceChat
             if (!isInCall) return;
 
             if(IsTalking)
-                EnableMicrophone();
-            else
                 DisableMicrophone();
+            else
+                EnableMicrophone();
+
+            IsTalking = !IsTalking;
         }
 
         private void InitializeMicrophone(bool initializeRtcAudioSource = true)

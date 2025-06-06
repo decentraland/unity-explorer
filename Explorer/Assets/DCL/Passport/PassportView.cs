@@ -5,6 +5,7 @@ using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.UI;
 using DCL.UI.ProfileElements;
+using DCL.VoiceChat;
 using MVC;
 using SoftMasking;
 using System;
@@ -107,7 +108,7 @@ namespace DCL.Passport
         public Button JumpInButton { get; private set; }
 
         [field: SerializeField]
-        public Button VoiceChatButton { get; private set; }
+        public CallButtonView VoiceChatButton { get; private set; }
 
         [field: SerializeField]
         public Button ChatButton { get; private set; }

@@ -22,6 +22,7 @@ using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -70,6 +71,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private PassportController? passportController;
 
@@ -108,7 +110,8 @@ namespace DCL.PluginSystem.Global
             bool isNameEditorEnabled,
             bool isCallEnabled,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -145,6 +148,7 @@ namespace DCL.PluginSystem.Global
             this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
         }
 
         public void Dispose()
@@ -205,7 +209,8 @@ namespace DCL.PluginSystem.Global
                 isNameEditorEnabled,
                 isCallEnabled,
                 chatEventBus,
-                sharedSpaceManager
+                sharedSpaceManager,
+                voiceChatCallStatusService
             );
 
             mvcManager.RegisterController(passportController);

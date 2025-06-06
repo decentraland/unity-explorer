@@ -24,6 +24,7 @@ using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.Web3;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
@@ -64,6 +65,7 @@ namespace DCL.Chat
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
+        private CallButtonController callButtonController;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -239,6 +241,7 @@ namespace DCL.Chat
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
+            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -326,10 +329,9 @@ namespace DCL.Chat
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
         }
 
-        private void OnStartCall()
+        private void OnStartCall(string userId)
         {
-            //This is a placeholder, need to provide the wallet id of the chat context
-            voiceChatCallStatusService.StartCall("");
+            voiceChatCallStatusService.StartCall(new Web3Address(userId));
         }
 
         public void OnSelectConversation(ChatChannel.ChannelId channelId)
@@ -668,6 +670,7 @@ namespace DCL.Chat
 
             chatEventBus.InsertTextInChat += OnTextInserted;
             chatEventBus.OpenConversation += OnOpenConversation;
+            callButtonController.StartCall += OnStartCall;
 
             if (TryGetView(out var view))
             {
@@ -685,7 +688,6 @@ namespace DCL.Chat
                 view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
                 view.ConversationSelected += OnSelectConversation;
                 view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
-                view.StartCall += OnStartCall;
             }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
@@ -720,6 +722,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatEventBus.InsertTextInChat -= OnTextInserted;
+            callButtonController.StartCall -= OnStartCall;
 
             if (viewInstance != null)
             {
@@ -736,7 +739,6 @@ namespace DCL.Chat
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.ConversationSelected -= OnSelectConversation;
                 viewInstance.DeleteChatHistoryRequested -= OnViewDeleteChatHistoryRequested;
-                viewInstance.StartCall -= OnStartCall;
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }
