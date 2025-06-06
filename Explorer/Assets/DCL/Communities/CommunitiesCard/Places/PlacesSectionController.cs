@@ -50,6 +50,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             view.InitGrid(() => currentSectionFetchData, webRequestController);
 
+            view.AddPlaceRequested += OnAddPlaceClicked;
+
             view.ElementLikeToggleChanged += OnElementLikeToggleChanged;
             view.ElementDislikeToggleChanged += OnElementDislikeToggleChanged;
             view.ElementFavoriteToggleChanged += OnElementFavoriteToggleChanged;
@@ -70,6 +72,12 @@ namespace DCL.Communities.CommunitiesCard.Places
             placeCardOperationsCts.SafeCancelAndDispose();
 
             base.Dispose();
+        }
+        
+        private void OnAddPlaceClicked()
+        {
+            throw new NotImplementedException();
+            //TODO: open wizard
         }
 
         private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)
