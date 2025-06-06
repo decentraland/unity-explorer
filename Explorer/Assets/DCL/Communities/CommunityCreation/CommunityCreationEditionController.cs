@@ -56,7 +56,7 @@ namespace DCL.Communities.CommunityCreation
         protected override void OnBeforeViewShow()
         {
             closeTaskCompletionSource = new UniTaskCompletionSource();
-            viewInstance!.SetAccess( /*inputData.CanCreateCommunities*/ true);
+            viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetCreationPanelTitle(string.IsNullOrEmpty(inputData.CommunityId) ? CREATE_COMMUNITY_TITLE : EDIT_COMMUNITY_TITLE);
         }
 
