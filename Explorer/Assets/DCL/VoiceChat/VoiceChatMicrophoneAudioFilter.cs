@@ -200,15 +200,14 @@ namespace DCL.VoiceChat
         /// </summary>
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            if (data == null || audioReadEvent == null)
+            if (data == null)
                 return;
 
             if (!processingEnabled)
             {
                 Span<float> silenceSpan = GetSilenceSpan(data.Length / channels);
                 Span<float> silenceStereoSpan = ConvertMonoToStereo(silenceSpan);
-                if (audioReadEvent != null)
-                    audioReadEvent.Invoke(silenceStereoSpan.ToArray(), 2, GetEffectiveSampleRate());
+                audioReadEvent?.Invoke(silenceStereoSpan.ToArray(), 2, GetEffectiveSampleRate());
                 return;
             }
 
@@ -224,8 +223,7 @@ namespace DCL.VoiceChat
                     Span<float> processedSpan = ProcessAudioToSpan(data.AsSpan(), channels);
                     Span<float> resampledSpan = ResampleToUnityOutputRate(processedSpan, GetEffectiveSampleRate(), cachedSampleRate);
                     Span<float> processedStereoSpan = ConvertMonoToStereo(resampledSpan);
-                    if (audioReadEvent != null) // Check before invoke
-                        audioReadEvent.Invoke(processedStereoSpan.ToArray(), 2, cachedSampleRate);
+                    audioReadEvent?.Invoke(processedStereoSpan.ToArray(), 2, cachedSampleRate);
                     return;
                 }
                 catch (Exception ex)
@@ -242,8 +240,7 @@ namespace DCL.VoiceChat
             Span<float> monoSpan = ConvertToMonoSpan(data.AsSpan(), channels);
             Span<float> resampledMonoSpan = ResampleToUnityOutputRate(monoSpan, GetEffectiveSampleRate(), cachedSampleRate);
             Span<float> fallbackStereoSpan = ConvertMonoToStereo(resampledMonoSpan);
-            if (audioReadEvent != null) // Check before invoke
-                audioReadEvent.Invoke(fallbackStereoSpan.ToArray(), 2, cachedSampleRate);
+            audioReadEvent?.Invoke(fallbackStereoSpan.ToArray(), 2, cachedSampleRate);
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead
@@ -434,10 +431,6 @@ namespace DCL.VoiceChat
             if (!processingEnabled || audioProcessor == null || voiceChatConfiguration == null)
                 return;
 
-            // Additional safety check for disposed objects
-            if (audioReadEvent == null)
-                return;
-
             try
             {
                 Span<float> audioSpan = audioChunk.AsSpan(0, sampleCount);
@@ -445,12 +438,7 @@ namespace DCL.VoiceChat
 
                 Span<float> resampledSpan = ResampleToUnityOutputRate(audioSpan, microphoneSampleRate, cachedSampleRate);
                 Span<float> realtimeStereoSpan = ConvertMonoToStereo(resampledSpan);
-                
-                // Check again before invoking - audioReadEvent could become null during processing
-                if (audioReadEvent != null)
-                {
-                    audioReadEvent.Invoke(realtimeStereoSpan.ToArray(), 2, cachedSampleRate);
-                }
+                audioReadEvent?.Invoke(realtimeStereoSpan.ToArray(), 2, cachedSampleRate);
             }
             catch (Exception ex)
             {
