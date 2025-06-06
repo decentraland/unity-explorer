@@ -7,7 +7,7 @@
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
     "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git#feat/add_create_track_to_room",
+    "com.decentraland.livekit-sdk": "file:C:/DCL/Livekit/Assets/client-sdk-unity",
     "com.decentraland.rpc-csharp": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
     "com.mackysoft.serializereference-extensions": "1.3.1",
     "com.olegknyazev.softmask": "git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask",

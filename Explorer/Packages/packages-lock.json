@@ -57,11 +57,10 @@
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git#feat/add_create_track_to_room",
+      "version": "file:C:/DCL/Livekit/Assets/client-sdk-unity",
       "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "84b36dd3b658003b0293d16bd0674b82804c56ca"
+      "source": "local",
+      "dependencies": {}
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
