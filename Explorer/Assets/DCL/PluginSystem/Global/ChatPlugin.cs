@@ -27,6 +27,8 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -64,7 +66,9 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ChatController chatController;
-
+        private IRealmData realmData;
+        private IRealmNavigator realmNavigator;
+        
         public ChatPlugin(
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
@@ -90,8 +94,10 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
+            ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            ProfileRepositoryWrapper profileDataProvider)
+            IRealmData realmData,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -120,6 +126,8 @@ namespace DCL.PluginSystem.Global
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.realmData = realmData;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose()
@@ -176,6 +184,31 @@ namespace DCL.PluginSystem.Global
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+
+            realmData.RealmType.OnUpdate += OnRealmChange;
+            realmNavigator.NavigationExecuted += OnNavigationExecuted;
+        }
+
+        /// <summary>
+        /// TODO: This is a temporary solution to show the chat when the user navigates to a parcel.
+        /// NOTE: check this PR for more details:
+        /// https://github.com/decentraland/unity-explorer/issues/4324
+        /// </summary>
+        /// <param name="parcel"></param>
+        private void OnNavigationExecuted(Vector2Int parcel)
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
+        }
+
+        /// <summary>
+        /// TODO: This is a temporary solution to show the chat when the user changes realm.
+        /// NOTE: check this PR for more details:
+        /// https://github.com/decentraland/unity-explorer/issues/4324
+        /// </summary>
+        /// <param name="realmKind"></param>
+        private void OnRealmChange(RealmKind realmKind)
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
         }
 
         private void OnIdentityCleared()

@@ -174,7 +174,7 @@ namespace DCL.Friends.UI.Requests
                 config.UserNameHash.gameObject.SetActive(!profile.HasClaimedName);
                 config.UserNameHash.text = $"#{user.ToString()[^4..]}";
 
-                await config.UserThumbnail.SetupWithDependenciesAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, user, ct);
+                await config.UserThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, user, ct);
             }
         }
 
@@ -229,7 +229,7 @@ namespace DCL.Friends.UI.Requests
             config.UserNameHash.gameObject.SetActive(!user.HasClaimedName);
             config.UserNameHash.text = $"#{user.Address.ToString()[^4..]}";
 
-            await UniTask.WhenAll(config.UserThumbnail.SetupWithDependenciesAsync(profileRepositoryWrapper, user.UserNameColor, user.FacePictureUrl, user.Address, ct),
+            await UniTask.WhenAll(config.UserThumbnail.SetupAsync(profileRepositoryWrapper, user.UserNameColor, user.FacePictureUrl, user.Address, ct),
                 LoadMutualFriendsAsync(config, user.Address, ct));
         }
 
@@ -256,7 +256,7 @@ namespace DCL.Friends.UI.Requests
                 if (!friendExists) continue;
                 FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
                 ProfilePictureView view = mutualConfig[i].Image;
-                view.SetupWithDependenciesAsync(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address, ct).Forget();
+                view.SetupAsync(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address, ct).Forget();
             }
         }
 
@@ -388,14 +388,14 @@ namespace DCL.Friends.UI.Requests
             FriendProfile profile, string textWithUserNameParam, CancellationToken ct)
         {
             config.Label.text = string.Format(textWithUserNameParam, ToHexStr(profile.UserNameColor), profile.Name);
-            config.FriendThumbnail.SetupWithDependenciesAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FacePictureUrl, profile.Address, ct).Forget();
+            config.FriendThumbnail.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.FacePictureUrl, profile.Address, ct).Forget();
 
             if (config.MyThumbnail != null)
             {
                 Profile? myProfile = await profileRepository.GetAsync(identityCache.EnsuredIdentity().Address, ct);
 
                 if (myProfile != null)
-                    config.MyThumbnail.SetupWithDependenciesAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Avatar.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
+                    config.MyThumbnail.SetupAsync(profileRepositoryWrapper, myProfile.UserNameColor, myProfile.Avatar.FaceSnapshotUrl, myProfile.UserId, ct).Forget();
             }
 
             Toggle(state);
