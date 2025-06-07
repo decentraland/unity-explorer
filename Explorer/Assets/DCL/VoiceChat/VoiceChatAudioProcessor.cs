@@ -17,55 +17,17 @@ namespace DCL.VoiceChat
 
         private float dcBlockPrevInput;
         private float dcBlockPrevOutput;
-
         private float peakLevel;
         private bool gateIsOpen;
         private float lastSpeechTime;
-
         private float[] fadeInBuffer;
-        private int fadeInBufferIndex = 0;
-        private bool isGateOpening = false;
-        private float gateOpenFadeProgress = 0f;
+        private int fadeInBufferIndex;
+        private bool isGateOpening;
+        private float gateOpenFadeProgress;
 
-        /// <summary>
-        ///     Get the current noise gate status for UI feedback
-        /// </summary>
-        public bool IsGateOpen => GateSmoothing > 0.5f;
+        private float currentGain;
 
-        /// <summary>
-        ///     Get the current gain level for UI feedback
-        /// </summary>
-        public float CurrentGain { get; private set; } = 1f;
-
-        /// <summary>
-        ///     Get the current gate smoothing value for debugging
-        /// </summary>
-        public float GateSmoothing { get; private set; }
-
-        /// <summary>
-        ///     Get debug information about the current audio processing state
-        /// </summary>
-        public string GetDebugInfo()
-        {
-            return $"Gate: {(IsGateOpen ? "OPEN" : "CLOSED")} ({GateSmoothing:F3}), " +
-                   $"Gain: {CurrentGain:F2}x, " +
-                   $"Peak: {peakLevel:F3}, " +
-                   $"FadeIn: {(isGateOpening ? $"ACTIVE ({gateOpenFadeProgress:F2})" : "IDLE")}, " +
-                   $"BufferSize: {(fadeInBuffer?.Length ?? 0)}/{configuration.FadeInBufferSize}";
-        }
-
-        /// <summary>
-        ///     Get detailed fade-in configuration for debugging
-        /// </summary>
-        public string GetFadeInDebugInfo()
-        {
-            return $"FadeIn Enabled: {configuration.EnableGateFadeIn}, " +
-                   $"Buffer Size: {configuration.FadeInBufferSize} (actual: {(fadeInBuffer?.Length ?? 0)}), " +
-                   $"Pre-Gate Attenuation: {configuration.PreGateAttenuation:F3}, " +
-                   $"Attack Time: {configuration.NoiseGateAttackTime:F3}s, " +
-                   $"Is Opening: {isGateOpening}, " +
-                   $"Progress: {gateOpenFadeProgress:F3}";
-        }
+        private float gateSmoothing;
 
         public VoiceChatAudioProcessor(VoiceChatConfiguration configuration)
         {
@@ -86,13 +48,13 @@ namespace DCL.VoiceChat
                 lowPassPrevInputs[i] = 0f;
                 lowPassPrevOutputs[i] = 0f;
             }
-            
+
             dcBlockPrevInput = 0f;
             dcBlockPrevOutput = 0f;
-            
-            CurrentGain = 1f;
+
+            currentGain = 1f;
             peakLevel = 0f;
-            GateSmoothing = 0f;
+            gateSmoothing = 0f;
             gateIsOpen = false;
             lastSpeechTime = 0f;
 
@@ -100,7 +62,7 @@ namespace DCL.VoiceChat
             {
                 fadeInBuffer = new float[configuration.FadeInBufferSize];
             }
-            
+
             for (int i = 0; i < fadeInBuffer.Length; i++)
             {
                 fadeInBuffer[i] = 0f;
@@ -133,19 +95,19 @@ namespace DCL.VoiceChat
 
         private float ApplyBandPassFilter(float input, int sampleRate)
         {
-            float sample = ApplyDCBlockingFilter(input, sampleRate);
-            sample = ApplyHighPassFilter2ndOrder(sample, sampleRate);
-            sample = ApplyLowPassFilter2ndOrder(sample, sampleRate);
-            
+            float sample = ApplyDcBlockingFilter(input, sampleRate);
+            sample = ApplyHighPassFilter2NdOrder(sample, sampleRate);
+            sample = ApplyLowPassFilter2NdOrder(sample, sampleRate);
+
             return sample;
         }
 
-        private float ApplyDCBlockingFilter(float input, int sampleRate)
+        private float ApplyDcBlockingFilter(float input, int sampleRate)
         {
             float rc = 1f / (2f * Mathf.PI * 20f);
             float dt = 1f / sampleRate;
             float alpha = rc / (rc + dt);
-            
+
             alpha = Mathf.Clamp(alpha, 0.9f, 0.999f);
 
             float output = alpha * (dcBlockPrevOutput + input - dcBlockPrevInput);
@@ -158,15 +120,15 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private float ApplyHighPassFilter2ndOrder(float input, int sampleRate)
+        private float ApplyHighPassFilter2NdOrder(float input, int sampleRate)
         {
             float w = 2f * Mathf.PI * configuration.HighPassCutoffFreq / sampleRate;
             w = Mathf.Clamp(w, 0.01f, Mathf.PI * 0.95f);
-            
+
             float cosw = Mathf.Cos(w);
             float sinw = Mathf.Sin(w);
             float alpha = sinw / (2f * 0.7071f);
-            
+
             float b0 = (1f + cosw) / 2f;
             float b1 = -(1f + cosw);
             float b2 = (1f + cosw) / 2f;
@@ -176,8 +138,8 @@ namespace DCL.VoiceChat
 
             b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
 
-            float output = b0 * input + b1 * highPassPrevInputs[0] + b2 * highPassPrevInputs[1] 
-                         - a1 * highPassPrevOutputs[0] - a2 * highPassPrevOutputs[1];
+            float output = (b0 * input) + (b1 * highPassPrevInputs[0]) + (b2 * highPassPrevInputs[1])
+                         - (a1 * highPassPrevOutputs[0]) - (a2 * highPassPrevOutputs[1]);
 
             if (Mathf.Abs(output) < 1e-10f) output = 0f;
 
@@ -189,15 +151,15 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private float ApplyLowPassFilter2ndOrder(float input, int sampleRate)
+        private float ApplyLowPassFilter2NdOrder(float input, int sampleRate)
         {
             float w = 2f * Mathf.PI * configuration.LowPassCutoffFreq / sampleRate;
             w = Mathf.Clamp(w, 0.01f, Mathf.PI * 0.95f);
-            
+
             float cosw = Mathf.Cos(w);
             float sinw = Mathf.Sin(w);
             float alpha = sinw / (2f * 0.7071f);
-            
+
             float b0 = (1f - cosw) / 2f;
             float b1 = 1f - cosw;
             float b2 = (1f - cosw) / 2f;
@@ -207,8 +169,8 @@ namespace DCL.VoiceChat
 
             b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
 
-            float output = b0 * input + b1 * lowPassPrevInputs[0] + b2 * lowPassPrevInputs[1] 
-                         - a1 * lowPassPrevOutputs[0] - a2 * lowPassPrevOutputs[1];
+            float output = (b0 * input) + (b1 * lowPassPrevInputs[0]) + (b2 * lowPassPrevInputs[1])
+                         - (a1 * lowPassPrevOutputs[0]) - (a2 * lowPassPrevOutputs[1]);
 
             if (Mathf.Abs(output) < 1e-10f) output = 0f;
 
@@ -260,7 +222,7 @@ namespace DCL.VoiceChat
 
             float gateSpeed;
 
-            if (targetGate > GateSmoothing)
+            if (targetGate > gateSmoothing)
             {
                 gateSpeed = 1f / Mathf.Max(configuration.NoiseGateAttackTime * 100f, 10f);
             }
@@ -270,11 +232,11 @@ namespace DCL.VoiceChat
             }
 
             float smoothingFactor = Mathf.Clamp01(gateSpeed);
-            GateSmoothing = GateSmoothing + (targetGate - GateSmoothing) * smoothingFactor;
-            GateSmoothing = Mathf.Clamp01(GateSmoothing);
+            gateSmoothing = gateSmoothing + (targetGate - gateSmoothing) * smoothingFactor;
+            gateSmoothing = Mathf.Clamp01(gateSmoothing);
 
             float processedSample = sample;
-            
+
             if (configuration.EnableGateFadeIn && isGateOpening && gateOpenFadeProgress < 1f)
             {
                 float fadeInSpeed = 1f / (configuration.NoiseGateAttackTime * 48000f);
@@ -295,15 +257,15 @@ namespace DCL.VoiceChat
                 }
             }
 
-            if (!gateIsOpen && GateSmoothing < 0.01f)
+            if (!gateIsOpen && gateSmoothing < 0.01f)
             {
                 ResetFilterStates();
             }
 
-            float gateMultiplier = GateSmoothing;
-            if (GateSmoothing > 0.1f && GateSmoothing < 0.9f)
+            float gateMultiplier = gateSmoothing;
+            if (gateSmoothing > 0.1f && gateSmoothing < 0.9f)
             {
-                float ratio = (GateSmoothing - 0.1f) / 0.8f; 
+                float ratio = (gateSmoothing - 0.1f) / 0.8f;
                 gateMultiplier = 0.1f + 0.8f * (ratio * ratio * (3f - 2f * ratio));
             }
 
@@ -325,7 +287,7 @@ namespace DCL.VoiceChat
                     lowPassPrevOutputs[i] = 0f;
                 }
             }
-            
+
             if (Mathf.Abs(dcBlockPrevInput) < 0.001f && Mathf.Abs(dcBlockPrevOutput) < 0.001f)
             {
                 dcBlockPrevInput = 0f;
@@ -339,7 +301,7 @@ namespace DCL.VoiceChat
 
             var peakDecay = 0.9995f;
             var peakAttack = 0.1f;
-            
+
             if (sampleAbs > peakLevel)
             {
                 peakLevel = Mathf.Lerp(peakLevel, sampleAbs, peakAttack);
@@ -354,23 +316,23 @@ namespace DCL.VoiceChat
                 float targetGain = configuration.AGCTargetLevel / peakLevel;
                 targetGain = Mathf.Clamp(targetGain, 0.2f, 3f);
 
-                float gainDifference = Mathf.Abs(targetGain - CurrentGain);
+                float gainDifference = Mathf.Abs(targetGain - currentGain);
                 float baseSpeed = configuration.AGCResponseSpeed * 0.002f;
-                
+
                 float adaptiveSpeed = gainDifference > 0.5f ? baseSpeed * 0.3f : baseSpeed;
-                
+
                 float smoothingWindow = 0.95f;
-                CurrentGain = CurrentGain * smoothingWindow + targetGain * (1f - smoothingWindow) * adaptiveSpeed;
-                CurrentGain = Mathf.Clamp(CurrentGain, 0.2f, 3f);
+                currentGain = currentGain * smoothingWindow + targetGain * (1f - smoothingWindow) * adaptiveSpeed;
+                currentGain = Mathf.Clamp(currentGain, 0.2f, 3f);
             }
 
-            float processedSample = sample * CurrentGain;
-            
+            float processedSample = sample * currentGain;
+
             if (Mathf.Abs(processedSample) > 0.95f)
             {
                 float sign = Mathf.Sign(processedSample);
                 float magnitude = Mathf.Abs(processedSample);
-                
+
                 float compressedMagnitude = 0.95f + (magnitude - 0.95f) * 0.1f;
                 processedSample = sign * Mathf.Min(compressedMagnitude, 0.99f);
             }

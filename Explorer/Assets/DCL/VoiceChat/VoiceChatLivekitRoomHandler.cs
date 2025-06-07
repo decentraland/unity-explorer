@@ -23,6 +23,7 @@ namespace DCL.VoiceChat
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly VoiceChatConfiguration configuration;
 
         private bool disposed;
         private ITrack microphoneTrack;
@@ -36,7 +37,8 @@ namespace DCL.VoiceChat
             AudioSource microphoneAudioSource,
             IRoom voiceChatRoom,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            IRoomHub roomHub)
+            IRoomHub roomHub,
+            VoiceChatConfiguration configuration)
         {
             this.combinedAudioSource = combinedAudioSource;
             this.microphoneAudioFilter = microphoneAudioFilter;
@@ -44,7 +46,10 @@ namespace DCL.VoiceChat
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.roomHub = roomHub;
+            this.configuration = configuration;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
+            voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
+            voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
         }
 
@@ -72,6 +77,8 @@ namespace DCL.VoiceChat
             if (disposed) return;
             disposed = true;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
+            voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
+            voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
             voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
             CloseMedia();
         }
@@ -94,7 +101,7 @@ namespace DCL.VoiceChat
                     if (!isMediaOpen)
                     {
                         cts = cts.SafeRestart();
-                        OpenMedia();
+                        SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
                     break;
@@ -127,10 +134,11 @@ namespace DCL.VoiceChat
             };
 
             voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack, options, ct);
+
             isMediaOpen = true;
         }
 
-        private void OpenMedia()
+        private void SubscribeToRemoteTracks()
         {
             foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
@@ -172,6 +180,30 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
+                if (stream != null)
+                {
+                    combinedAudioSource.RemoveStream(stream);
+                }
+            }
+        }
+
+        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
+        {
+            if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
+            {
+                WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                if (stream != null)
+                {
+                    combinedAudioSource.AddStream(stream);
+                }
+            }
+        }
+
+        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        {
+            if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
+            {
+                WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
                 if (stream != null)
                 {
                     combinedAudioSource.RemoveStream(stream);

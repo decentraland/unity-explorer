@@ -5,16 +5,19 @@ namespace DCL.VoiceChat
     [CreateAssetMenu(fileName = "VoiceChatConfiguration", menuName = "DCL/Voice Chat/Voice Chat Configuration")]
     public class VoiceChatConfiguration : ScriptableObject
     {
+        [Header("Local Audio Feedback")]
+        [Tooltip("Enable to hear your own voice through the audio output (may cause echo)")]
+        public bool EnableLocalTrackPlayback = false;
+
+        [Header("Voice Detection Configurations")]
+        [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
+        public float HoldThresholdInSeconds = 0.5f;
+        
         [Header("General Settings")]
         [Tooltip("Enable or disable all audio processing (noise reduction, filters, etc.)")]
         public bool EnableAudioProcessing = true;
 
-        [Header("Voice Detection Configurations")]
-
-        [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
-        public float HoldThresholdInSeconds = 0.5f;
-
-        [Header("Noise Reduction & Audio Processing")]
+        [Header("Noise Reduction")]
         [Tooltip("Enable noise gate to cut off audio below a certain threshold")]
         public bool EnableNoiseGate = true;
 
@@ -44,8 +47,6 @@ namespace DCL.VoiceChat
         [Tooltip("Low-pass filter cutoff frequency in Hz (removes high-frequency noise like hiss)")]
         [Range(3000f, 12000f)]
         public float LowPassCutoffFreq = 8000f;
-
-
 
         [Tooltip("Enable automatic gain control to normalize volume")]
         public bool EnableAutoGainControl = true;

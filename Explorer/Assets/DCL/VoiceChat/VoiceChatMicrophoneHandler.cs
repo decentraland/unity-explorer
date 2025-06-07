@@ -204,7 +204,6 @@ namespace DCL.VoiceChat
 #endif
 
             audioSource.clip = microphoneAudioClip;
-            audioSource.loop = true;
             audioSource.volume = 0f;
 
             isMicrophoneInitialized = true;
@@ -215,7 +214,8 @@ namespace DCL.VoiceChat
         {
             if (!isMicrophoneInitialized)
                 InitializeMicrophone();
-
+            
+            audioSource.loop = true;
             audioSource.Play();
             audioSource.volume = 1f;
             audioFilter.SetFilterActive(true);
@@ -225,7 +225,8 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophone()
         {
-            audioSource.Stop();
+            audioSource.loop = false;
+            StopAudioSource();
             audioSource.volume = 0f;
             audioFilter.SetFilterActive(false);
             DisabledMicrophone?.Invoke();
@@ -236,15 +237,29 @@ namespace DCL.VoiceChat
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change dispatching to main thread (async)");
                 OnMicrophoneChangedAsync(newMicrophoneIndex).Forget();
                 return;
             }
 
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing on main thread (sync)");
+            HandleMicrophoneChange(newMicrophoneIndex);
+        }
+
+        private async UniTaskVoid OnMicrophoneChangedAsync(int newMicrophoneIndex)
+        {
+            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
+            HandleMicrophoneChange(newMicrophoneIndex);
+        }
+
+        private void HandleMicrophoneChange(int newMicrophoneIndex)
+        {
             bool wasTalking = IsTalking;
 
             if (isMicrophoneInitialized)
             {
-                DisableMicrophone();            
+                DisableMicrophone();
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
                 isMicrophoneInitialized = false;
@@ -257,43 +272,6 @@ namespace DCL.VoiceChat
                 if (wasTalking)
                 {
                     EnableMicrophone();
-                }
-                else
-                {
-                    audioFilter?.SetFilterActive(false);
-                }
-            }
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone restarted with new device: {Microphone.devices[newMicrophoneIndex]}");
-        }
-
-        private async UniTaskVoid OnMicrophoneChangedAsync(int newMicrophoneIndex)
-        {
-            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
-            
-            bool wasTalking = IsTalking;
-
-            if (isMicrophoneInitialized)
-            {
-                audioFilter?.SetFilterActive(false);
-                audioSource.Stop();
-                audioSource.clip = null;
-                Microphone.End(MicrophoneName);
-                isMicrophoneInitialized = false;
-            }
-
-            if (isInCall)
-            {
-                InitializeMicrophone();
-
-                if (wasTalking)
-                {
-                    audioSource.volume = 1f;
-                    audioFilter?.SetFilterActive(true);
-                }
-                else
-                {
-                    audioFilter?.SetFilterActive(false);
                 }
             }
 
