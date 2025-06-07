@@ -47,6 +47,23 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return;
 
             UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
+
+             bool zIndexChanged = false;
+             if (sdkModel.HasZIndex && uiTransformComponent.ZIndex != sdkModel.ZIndex)
+             {
+                 zIndexChanged = true;
+                 uiTransformComponent.ZIndex = sdkModel.ZIndex;
+             }
+
+             UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
+
+             // If zIndex changed, mark the parent layout as dirty. This is needed to trigger UITransformSortingSystem.ApplySorting
+             if (zIndexChanged && uiTransformComponent.RelationData.parent != Entity.Null && World.IsAlive(uiTransformComponent.RelationData.parent))
+             {
+                 ref var parentComponent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
+                 parentComponent.RelationData.layoutIsDirty = true;
+             }
+
             sdkModel.IsDirty = false;
         }
 
