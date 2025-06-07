@@ -59,6 +59,14 @@ namespace DCL.VoiceChat
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
             }
+
+            // Copy left channel to right channel for proper stereo output
+            // LiveKit audio is mono, so duplicate left channel to avoid single-ear audio
+            if (channels == 2)
+            {
+                for (var i = 0; i < data.Length; i += 2)
+                    data[i + 1] = data[i];
+            }
         }
 
         public void AddStream(WeakReference<IAudioStream> stream)

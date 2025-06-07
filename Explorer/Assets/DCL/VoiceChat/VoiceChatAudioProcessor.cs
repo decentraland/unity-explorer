@@ -86,7 +86,7 @@ namespace DCL.VoiceChat
                 float sample = audioData[i];
 
                 if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
-                if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime); }
+                if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime, sampleRate); }
                 if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
 
                 audioData[i] = Mathf.Clamp(sample, -1f, 1f);
@@ -120,69 +120,61 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private float ApplyHighPassFilter2NdOrder(float input, int sampleRate)
+        private enum FilterType { HighPass, LowPass }
+
+        private float ApplyBiquadFilter(float input, int sampleRate, float cutoffFreq, FilterType filterType, 
+            float[] prevInputs, float[] prevOutputs)
         {
-            float w = 2f * Mathf.PI * configuration.HighPassCutoffFreq / sampleRate;
+            float w = 2f * Mathf.PI * cutoffFreq / sampleRate;
             w = Mathf.Clamp(w, 0.01f, Mathf.PI * 0.95f);
 
             float cosw = Mathf.Cos(w);
             float sinw = Mathf.Sin(w);
             float alpha = sinw / (2f * 0.7071f);
 
-            float b0 = (1f + cosw) / 2f;
-            float b1 = -(1f + cosw);
-            float b2 = (1f + cosw) / 2f;
+            float b0, b1, b2;
+            
+            if (filterType == FilterType.HighPass)
+            {
+                b0 = (1f + cosw) / 2f;
+                b1 = -(1f + cosw);
+                b2 = (1f + cosw) / 2f;
+            }
+            else // LowPass
+            {
+                b0 = (1f - cosw) / 2f;
+                b1 = 1f - cosw;
+                b2 = (1f - cosw) / 2f;
+            }
+
             float a0 = 1f + alpha;
             float a1 = -2f * cosw;
             float a2 = 1f - alpha;
 
             b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
 
-            float output = (b0 * input) + (b1 * highPassPrevInputs[0]) + (b2 * highPassPrevInputs[1])
-                         - (a1 * highPassPrevOutputs[0]) - (a2 * highPassPrevOutputs[1]);
+            float output = (b0 * input) + (b1 * prevInputs[0]) + (b2 * prevInputs[1])
+                         - (a1 * prevOutputs[0]) - (a2 * prevOutputs[1]);
 
             if (Mathf.Abs(output) < 1e-10f) output = 0f;
 
-            highPassPrevInputs[1] = highPassPrevInputs[0];
-            highPassPrevInputs[0] = input;
-            highPassPrevOutputs[1] = highPassPrevOutputs[0];
-            highPassPrevOutputs[0] = output;
+            prevInputs[1] = prevInputs[0];
+            prevInputs[0] = input;
+            prevOutputs[1] = prevOutputs[0];
+            prevOutputs[0] = output;
 
             return output;
         }
 
-        private float ApplyLowPassFilter2NdOrder(float input, int sampleRate)
-        {
-            float w = 2f * Mathf.PI * configuration.LowPassCutoffFreq / sampleRate;
-            w = Mathf.Clamp(w, 0.01f, Mathf.PI * 0.95f);
+        private float ApplyHighPassFilter2NdOrder(float input, int sampleRate) =>
+            ApplyBiquadFilter(input, sampleRate, configuration.HighPassCutoffFreq, FilterType.HighPass, 
+                highPassPrevInputs, highPassPrevOutputs);
 
-            float cosw = Mathf.Cos(w);
-            float sinw = Mathf.Sin(w);
-            float alpha = sinw / (2f * 0.7071f);
+        private float ApplyLowPassFilter2NdOrder(float input, int sampleRate) =>
+            ApplyBiquadFilter(input, sampleRate, configuration.LowPassCutoffFreq, FilterType.LowPass, 
+                lowPassPrevInputs, lowPassPrevOutputs);
 
-            float b0 = (1f - cosw) / 2f;
-            float b1 = 1f - cosw;
-            float b2 = (1f - cosw) / 2f;
-            float a0 = 1f + alpha;
-            float a1 = -2f * cosw;
-            float a2 = 1f - alpha;
-
-            b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
-
-            float output = (b0 * input) + (b1 * lowPassPrevInputs[0]) + (b2 * lowPassPrevInputs[1])
-                         - (a1 * lowPassPrevOutputs[0]) - (a2 * lowPassPrevOutputs[1]);
-
-            if (Mathf.Abs(output) < 1e-10f) output = 0f;
-
-            lowPassPrevInputs[1] = lowPassPrevInputs[0];
-            lowPassPrevInputs[0] = input;
-            lowPassPrevOutputs[1] = lowPassPrevOutputs[0];
-            lowPassPrevOutputs[0] = output;
-
-            return output;
-        }
-
-        private float ApplyNoiseGateWithHold(float sample, float deltaTime)
+        private float ApplyNoiseGateWithHold(float sample, float deltaTime, int sampleRate)
         {
             float sampleAbs = Mathf.Abs(sample);
 
@@ -239,7 +231,7 @@ namespace DCL.VoiceChat
 
             if (configuration.EnableGateFadeIn && isGateOpening && gateOpenFadeProgress < 1f)
             {
-                float fadeInSpeed = 1f / (configuration.NoiseGateAttackTime * 48000f);
+                float fadeInSpeed = 1f / (configuration.NoiseGateAttackTime * sampleRate);
                 gateOpenFadeProgress += fadeInSpeed;
                 gateOpenFadeProgress = Mathf.Clamp01(gateOpenFadeProgress);
 
