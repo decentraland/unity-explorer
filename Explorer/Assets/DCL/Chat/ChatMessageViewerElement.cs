@@ -396,7 +396,7 @@ namespace DCL.Chat
                 if (profile != null)
                 {
                     itemView.usernameElement.userName.color = profile.UserNameColor;
-                    itemView.ProfilePictureView.SetupWithDependencies(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                    itemView.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
                 }
             }
 

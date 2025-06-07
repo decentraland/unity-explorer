@@ -20,8 +20,5 @@ namespace DCL.Friends.UI
 
         [field: SerializeField]
         public ProfilePictureView ProfilePicture { get; private set; }
-
-        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider) =>
-            ProfilePicture.SetProfileDataProvider(profileDataProvider);
     }
 }
