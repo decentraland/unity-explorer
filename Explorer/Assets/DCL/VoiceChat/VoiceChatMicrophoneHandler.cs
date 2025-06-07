@@ -220,7 +220,7 @@ namespace DCL.VoiceChat
             audioSource.volume = 1f;
             audioFilter.SetFilterActive(true);
             EnabledMicrophone?.Invoke();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Enabled microphone");
         }
 
         private void DisableMicrophone()
@@ -230,7 +230,7 @@ namespace DCL.VoiceChat
             audioSource.volume = 0f;
             audioFilter.SetFilterActive(false);
             DisabledMicrophone?.Invoke();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }
 
         private void OnMicrophoneChanged(int newMicrophoneIndex)
@@ -269,9 +269,12 @@ namespace DCL.VoiceChat
             {
                 InitializeMicrophone();
 
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone Initialized with new device: {Microphone.devices[newMicrophoneIndex]}");
+
                 if (wasTalking)
                 {
                     EnableMicrophone();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Microphone Enabled with new device: {Microphone.devices[newMicrophoneIndex]}");
                 }
             }
 
