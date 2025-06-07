@@ -15,7 +15,7 @@ namespace DCL.VoiceChat
     {
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
-        private int cachedSampleRate;
+        private int outputSampleRate;
         private bool isProcessingEnabled = true;
         private bool isFilterActive = true;
 
@@ -95,13 +95,13 @@ namespace DCL.VoiceChat
                     {
                         // Mono audio - process directly
                         Array.Copy(data, tempBuffer, data.Length);
-                        audioProcessor.ProcessAudio(tempBuffer, cachedSampleRate);
+                        audioProcessor.ProcessAudio(tempBuffer, outputSampleRate);
                         Array.Copy(tempBuffer, data, data.Length);
                     }
                     else
                     {
                         // Multi-channel audio - convert to mono, process, send on left channel only
-                        ConvertToMonoProcessAndSendSingleChannel(data, channels, cachedSampleRate);
+                        ConvertToMonoProcessAndSendSingleChannel(data, channels, outputSampleRate);
                     }
                 }
                 catch (Exception ex)
@@ -118,7 +118,7 @@ namespace DCL.VoiceChat
             }
 
             // This sends the processed audio data to LiveKit
-            AudioRead?.Invoke(data, channels, cachedSampleRate);
+            AudioRead?.Invoke(data, channels, outputSampleRate);
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead;
@@ -127,7 +127,7 @@ namespace DCL.VoiceChat
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
-            cachedSampleRate = AudioSettings.outputSampleRate;
+            outputSampleRate = AudioSettings.outputSampleRate;
         }
 
         public void Initialize(VoiceChatConfiguration configuration)
