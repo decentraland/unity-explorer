@@ -206,7 +206,6 @@ namespace DCL.VoiceChat
             audioSource.clip = microphoneAudioClip;
             audioSource.loop = true;
             audioSource.volume = 0f;
-            audioSource.Play();
 
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
@@ -217,6 +216,7 @@ namespace DCL.VoiceChat
             if (!isMicrophoneInitialized)
                 InitializeMicrophone();
 
+            audioSource.Play();
             audioSource.volume = 1f;
             audioFilter.SetFilterActive(true);
             EnabledMicrophone?.Invoke();
@@ -225,6 +225,7 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophone()
         {
+            audioSource.Stop();
             audioSource.volume = 0f;
             audioFilter.SetFilterActive(false);
             DisabledMicrophone?.Invoke();
@@ -243,9 +244,7 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
-                audioFilter?.SetFilterActive(false);
-                audioSource.volume = 0f;
-                audioSource.Stop();
+                DisableMicrophone();            
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
                 isMicrophoneInitialized = false;
@@ -257,8 +256,7 @@ namespace DCL.VoiceChat
 
                 if (wasTalking)
                 {
-                    audioSource.volume = 1f;
-                    audioFilter?.SetFilterActive(true);
+                    EnableMicrophone();
                 }
                 else
                 {

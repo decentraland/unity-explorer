@@ -5,6 +5,10 @@ namespace DCL.VoiceChat
     [CreateAssetMenu(fileName = "VoiceChatConfiguration", menuName = "DCL/Voice Chat/Voice Chat Configuration")]
     public class VoiceChatConfiguration : ScriptableObject
     {
+        [Header("General Settings")]
+        [Tooltip("Enable or disable all audio processing (noise reduction, filters, etc.)")]
+        public bool EnableAudioProcessing = true;
+
         [Header("Voice Detection Configurations")]
 
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]

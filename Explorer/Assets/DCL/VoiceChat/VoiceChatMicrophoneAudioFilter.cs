@@ -16,7 +16,7 @@ namespace DCL.VoiceChat
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
         private int cachedSampleRate;
-        private bool isProcessingEnabled = true;
+        private bool isProcessingEnabled = false;
         private bool isFilterActive = true;
 
         private float[] tempBuffer;
@@ -151,14 +151,15 @@ namespace DCL.VoiceChat
             voiceChatConfiguration = configuration;
             audioProcessor?.Dispose();
             audioProcessor = new VoiceChatAudioProcessor(configuration);
+            isProcessingEnabled = configuration.EnableAudioProcessing;
         }
 
         public void SetFilterActive(bool active)
         {
             isFilterActive = active;
-            isProcessingEnabled = active;
+            isProcessingEnabled = active && voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
             
-            if (!active)
+            if (!isProcessingEnabled)
             {
                 audioProcessor?.Reset();
                 if (tempBuffer != null)
