@@ -121,7 +121,7 @@ namespace DCL.VoiceChat
             {
                 AudioEncoding = new AudioEncoding
                 {
-                    MaxBitrate = 48000,
+                    MaxBitrate = 124000,
                 },
                 Source = TrackSource.SourceMicrophone,
             };
@@ -149,6 +149,7 @@ namespace DCL.VoiceChat
             }
 
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
+            voiceChatRoom.TrackUnsubscribed += OnTrackUnsubscribed;
             combinedAudioSource.Play();
         }
 
@@ -161,6 +162,19 @@ namespace DCL.VoiceChat
                 if (stream != null)
                 {
                     combinedAudioSource.AddStream(stream);
+                }
+            }
+        }
+
+        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        {
+            if (publication.Kind == TrackKind.KindAudio)
+            {
+                WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+
+                if (stream != null)
+                {
+                    combinedAudioSource.RemoveStream(stream);
                 }
             }
         }
@@ -181,6 +195,7 @@ namespace DCL.VoiceChat
 
             rtcAudioSource?.Stop();
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
+            voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
         }
 
         private async UniTaskVoid CloseMediaAsync()
@@ -195,6 +210,7 @@ namespace DCL.VoiceChat
 
             rtcAudioSource?.Stop();
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
+            voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
         }
     }
 }
