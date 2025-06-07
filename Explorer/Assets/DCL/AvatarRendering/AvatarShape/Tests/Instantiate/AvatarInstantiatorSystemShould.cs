@@ -160,7 +160,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
 
             mockWearable.DTO.Returns(dto);
 
-            var rendererInfo = new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
+            var rendererInfo = new AttachmentRegularAsset.RendererInfo(fakeABMaterial);
 
             var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, null);
             wearableAsset.AddReference();

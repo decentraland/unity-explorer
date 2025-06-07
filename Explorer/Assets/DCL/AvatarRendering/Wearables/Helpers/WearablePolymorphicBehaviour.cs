@@ -331,7 +331,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
             return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
         }
@@ -346,7 +346,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             using PoolExtensions.Scope<List<SkinnedMeshRenderer>> pooledList = go.GetComponentsInChildrenIntoPooledList<SkinnedMeshRenderer>();
 
             foreach (SkinnedMeshRenderer skinnedMeshRenderer in pooledList.Value)
-                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
 
             return new AttachmentRegularAsset(go, rendererInfos, result.Asset);
         }

@@ -22,6 +22,14 @@ namespace DCL.AvatarRendering.Loading.Assets
             else
             {
                 var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
+
+                using PoolExtensions.Scope<List<MeshRenderer>> meshRenderers = instantiatedWearable.GetComponentsInChildrenIntoPooledList<MeshRenderer>(true);
+
+                //A wearable cannot have a MeshRenderer, only SkinnedMeshRenderer.
+                //We need to destroy it form the source wearable
+                for (var i = 0; i < meshRenderers.Value.Count; i++)
+                    Object.DestroyImmediate(meshRenderers.Value[i].gameObject);
+
                 instantiatedWearable.name = originalAsset.GetInstanceName();
                 cachedWearable = new CachedAttachment(originalAsset, instantiatedWearable, outlineCompatible);
             }
