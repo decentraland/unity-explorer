@@ -182,13 +182,12 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.cloud.ktx": {
-      "version": "3.4.5",
+      "version": "file:com.unity.cloud.ktx@9cc7165d9d20",
       "depth": 0,
-      "source": "registry",
+      "source": "embedded",
       "dependencies": {
         "com.unity.modules.unitywebrequest": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.code-analysis": {
       "version": "0.1.2-preview",

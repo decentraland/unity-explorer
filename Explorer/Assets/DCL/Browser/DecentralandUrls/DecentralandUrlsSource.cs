@@ -121,7 +121,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
-                DecentralandUrl.MediaConverter => $"https://media-opticonverter.decentraland.{ENV}/convert?ktx2=true&fileUrl={{0}}",
+                DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.{ENV}/convert?url={{0}}",
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",

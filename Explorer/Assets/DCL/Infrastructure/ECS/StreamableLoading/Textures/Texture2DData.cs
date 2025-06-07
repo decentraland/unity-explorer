@@ -11,6 +11,7 @@ namespace ECS.StreamableLoading.Textures
     public class Texture2DData : StreamableRefCountData<Texture2D>, ISizedContent
     {
         private readonly IOwnedTexture2D? ownedTexture2D;
+        public string? VideoURL { get; set; }
 
         public long ByteSize => Asset.GetRawTextureData<byte>().Length;
 
@@ -21,10 +22,17 @@ namespace ECS.StreamableLoading.Textures
         protected override void DestroyObject()
         {
             ownedTexture2D?.Dispose();
-            UnityObjectUtils.SafeDestroy(Asset);
+
+            if (VideoURL == null)
+                UnityObjectUtils.SafeDestroy(Asset);
         }
 
         public Texture2DData(Texture2D texture) : base(texture, ReportCategory.TEXTURES) { }
+
+        public Texture2DData(Texture2D texture, string videoUrl) : base(texture, ReportCategory.TEXTURES)
+        {
+            VideoURL = videoUrl;
+        }
 
         public Texture2DData(IOwnedTexture2D asset) : base(asset.Texture, ReportCategory.TEXTURES)
         {
