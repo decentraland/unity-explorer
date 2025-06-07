@@ -208,10 +208,6 @@ namespace DCL.VoiceChat
             audioSource.volume = 0f;
             audioSource.Play();
 
-            if (audioFilter != null)
-                audioFilter.enabled = false;
-
-            EnabledMicrophone?.Invoke();
             isMicrophoneInitialized = true;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone initialized");
         }
@@ -222,8 +218,7 @@ namespace DCL.VoiceChat
                 InitializeMicrophone();
 
             audioSource.volume = 1f;
-            if (audioFilter != null)
-                audioFilter.enabled = true;
+            audioFilter.SetFilterActive(true);
             EnabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Enable microphone");
         }
@@ -231,8 +226,7 @@ namespace DCL.VoiceChat
         private void DisableMicrophone()
         {
             audioSource.volume = 0f;
-            if (audioFilter != null)
-                audioFilter.enabled = false;
+            audioFilter.SetFilterActive(false);
             DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disable microphone");
         }
@@ -249,13 +243,13 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
+                audioFilter?.SetFilterActive(false);
+                audioSource.volume = 0f;
                 audioSource.Stop();
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
                 isMicrophoneInitialized = false;
             }
-
-            audioFilter?.ResetProcessor();
 
             if (isInCall)
             {
@@ -264,14 +258,11 @@ namespace DCL.VoiceChat
                 if (wasTalking)
                 {
                     audioSource.volume = 1f;
-
-                    if (audioFilter != null)
-                        audioFilter.enabled = true;
+                    audioFilter?.SetFilterActive(true);
                 }
                 else
                 {
-                    if (audioFilter != null)
-                        audioFilter.enabled = false;
+                    audioFilter?.SetFilterActive(false);
                 }
             }
 
@@ -286,13 +277,12 @@ namespace DCL.VoiceChat
 
             if (isMicrophoneInitialized)
             {
+                audioFilter?.SetFilterActive(false);
                 audioSource.Stop();
                 audioSource.clip = null;
                 Microphone.End(MicrophoneName);
                 isMicrophoneInitialized = false;
             }
-
-            audioFilter?.ResetProcessor();
 
             if (isInCall)
             {
@@ -301,14 +291,11 @@ namespace DCL.VoiceChat
                 if (wasTalking)
                 {
                     audioSource.volume = 1f;
-
-                    if (audioFilter != null)
-                        audioFilter.enabled = true;
+                    audioFilter?.SetFilterActive(true);
                 }
                 else
                 {
-                    if (audioFilter != null)
-                        audioFilter.enabled = false;
+                    audioFilter?.SetFilterActive(false);
                 }
             }
 

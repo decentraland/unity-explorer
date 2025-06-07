@@ -16,7 +16,8 @@ namespace DCL.VoiceChat
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
         private int cachedSampleRate;
-        private readonly bool isProcessingEnabled = true; //Used for macOS to disable processing if exceptions occur, cannot be readonly
+        private bool isProcessingEnabled = true;
+        private bool isFilterActive = true;
 
         private float[] tempBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
@@ -68,6 +69,9 @@ namespace DCL.VoiceChat
         /// </summary>
         private void OnAudioFilterRead(float[] data, int channels)
         {
+            if (!isFilterActive)
+                return;
+
             if (data == null)
                 return;
 
@@ -149,9 +153,17 @@ namespace DCL.VoiceChat
             audioProcessor = new VoiceChatAudioProcessor(configuration);
         }
 
-        public void ResetProcessor()
+        public void SetFilterActive(bool active)
         {
-            audioProcessor?.Reset();
+            isFilterActive = active;
+            isProcessingEnabled = active;
+            
+            if (!active)
+            {
+                audioProcessor?.Reset();
+                if (tempBuffer != null)
+                    Array.Clear(tempBuffer, 0, tempBuffer.Length);
+            }
         }
 
         private void ProcessStereoAudio(float[] data, int sampleRate)
