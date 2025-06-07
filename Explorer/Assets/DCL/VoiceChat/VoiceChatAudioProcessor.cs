@@ -8,6 +8,12 @@ namespace DCL.VoiceChat
     /// </summary>
     public class VoiceChatAudioProcessor
     {
+        private enum FilterType
+        {
+            HIGH_PASS,
+            LOW_PASS,
+        }
+
         private readonly VoiceChatConfiguration configuration;
 
         private readonly float[] highPassPrevInputs = new float[2];
@@ -35,13 +41,11 @@ namespace DCL.VoiceChat
             Reset();
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         public void Reset()
         {
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 2; i++)
             {
                 highPassPrevInputs[i] = 0f;
                 highPassPrevOutputs[i] = 0f;
@@ -58,15 +62,10 @@ namespace DCL.VoiceChat
             gateIsOpen = false;
             lastSpeechTime = 0f;
 
-            if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize)
-            {
-                fadeInBuffer = new float[configuration.FadeInBufferSize];
-            }
+            if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize) { fadeInBuffer = new float[configuration.FadeInBufferSize]; }
 
-            for (int i = 0; i < fadeInBuffer.Length; i++)
-            {
-                fadeInBuffer[i] = 0f;
-            }
+            for (var i = 0; i < fadeInBuffer.Length; i++) { fadeInBuffer[i] = 0f; }
+
             fadeInBufferIndex = 0;
             isGateOpening = false;
             gateOpenFadeProgress = 0f;
@@ -86,7 +85,9 @@ namespace DCL.VoiceChat
                 float sample = audioData[i];
 
                 if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
+
                 if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime, sampleRate); }
+
                 if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
 
                 audioData[i] = Mathf.Clamp(sample, -1f, 1f);
@@ -120,9 +121,7 @@ namespace DCL.VoiceChat
             return output;
         }
 
-        private enum FilterType { HighPass, LowPass }
-
-        private float ApplyBiquadFilter(float input, int sampleRate, float cutoffFreq, FilterType filterType, 
+        private float ApplyBiquadFilter(float input, int sampleRate, float cutoffFreq, FilterType filterType,
             float[] prevInputs, float[] prevOutputs)
         {
             float w = 2f * Mathf.PI * cutoffFreq / sampleRate;
@@ -133,8 +132,8 @@ namespace DCL.VoiceChat
             float alpha = sinw / (2f * 0.7071f);
 
             float b0, b1, b2;
-            
-            if (filterType == FilterType.HighPass)
+
+            if (filterType == FilterType.HIGH_PASS)
             {
                 b0 = (1f + cosw) / 2f;
                 b1 = -(1f + cosw);
@@ -151,10 +150,14 @@ namespace DCL.VoiceChat
             float a1 = -2f * cosw;
             float a2 = 1f - alpha;
 
-            b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
+            b0 /= a0;
+            b1 /= a0;
+            b2 /= a0;
+            a1 /= a0;
+            a2 /= a0;
 
             float output = (b0 * input) + (b1 * prevInputs[0]) + (b2 * prevInputs[1])
-                         - (a1 * prevOutputs[0]) - (a2 * prevOutputs[1]);
+                           - (a1 * prevOutputs[0]) - (a2 * prevOutputs[1]);
 
             if (Mathf.Abs(output) < 1e-10f) output = 0f;
 
@@ -167,11 +170,11 @@ namespace DCL.VoiceChat
         }
 
         private float ApplyHighPassFilter2NdOrder(float input, int sampleRate) =>
-            ApplyBiquadFilter(input, sampleRate, configuration.HighPassCutoffFreq, FilterType.HighPass, 
+            ApplyBiquadFilter(input, sampleRate, configuration.HighPassCutoffFreq, FilterType.HIGH_PASS,
                 highPassPrevInputs, highPassPrevOutputs);
 
         private float ApplyLowPassFilter2NdOrder(float input, int sampleRate) =>
-            ApplyBiquadFilter(input, sampleRate, configuration.LowPassCutoffFreq, FilterType.LowPass, 
+            ApplyBiquadFilter(input, sampleRate, configuration.LowPassCutoffFreq, FilterType.LOW_PASS,
                 lowPassPrevInputs, lowPassPrevOutputs);
 
         private float ApplyNoiseGateWithHold(float sample, float deltaTime, int sampleRate)
@@ -184,11 +187,11 @@ namespace DCL.VoiceChat
             float effectiveThreshold = configuration.NoiseGateThreshold;
 
             bool speechDetected = sampleAbs > effectiveThreshold;
-            bool wasGateOpen = gateIsOpen;
 
             if (speechDetected)
             {
                 lastSpeechTime = 0f;
+
                 if (!gateIsOpen)
                 {
                     gateIsOpen = true;
@@ -196,10 +199,7 @@ namespace DCL.VoiceChat
                     gateOpenFadeProgress = 0f;
                 }
             }
-            else
-            {
-                lastSpeechTime += deltaTime;
-            }
+            else { lastSpeechTime += deltaTime; }
 
             bool shouldGateBeOpen = speechDetected || (gateIsOpen && lastSpeechTime < configuration.NoiseGateHoldTime);
 
@@ -214,17 +214,11 @@ namespace DCL.VoiceChat
 
             float gateSpeed;
 
-            if (targetGate > gateSmoothing)
-            {
-                gateSpeed = 1f / Mathf.Max(configuration.NoiseGateAttackTime * 100f, 10f);
-            }
-            else
-            {
-                gateSpeed = 1f / Mathf.Max(configuration.NoiseGateReleaseTime * 50f, 5f);
-            }
+            if (targetGate > gateSmoothing) { gateSpeed = 1f / Mathf.Max(configuration.NoiseGateAttackTime * 100f, 10f); }
+            else { gateSpeed = 1f / Mathf.Max(configuration.NoiseGateReleaseTime * 50f, 5f); }
 
             float smoothingFactor = Mathf.Clamp01(gateSpeed);
-            gateSmoothing = gateSmoothing + (targetGate - gateSmoothing) * smoothingFactor;
+            gateSmoothing += smoothingFactor * (targetGate - gateSmoothing);
             gateSmoothing = Mathf.Clamp01(gateSmoothing);
 
             float processedSample = sample;
@@ -235,7 +229,7 @@ namespace DCL.VoiceChat
                 gateOpenFadeProgress += fadeInSpeed;
                 gateOpenFadeProgress = Mathf.Clamp01(gateOpenFadeProgress);
 
-                float fadeCurve = gateOpenFadeProgress * gateOpenFadeProgress * (3f - 2f * gateOpenFadeProgress);
+                float fadeCurve = gateOpenFadeProgress * gateOpenFadeProgress * (3f - (2f * gateOpenFadeProgress));
 
                 int bufferLookback = Mathf.Min(configuration.FadeInBufferSize / 2, fadeInBuffer.Length - 1);
                 int lookbackIndex = (fadeInBufferIndex - bufferLookback + fadeInBuffer.Length) % fadeInBuffer.Length;
@@ -243,22 +237,17 @@ namespace DCL.VoiceChat
 
                 processedSample = Mathf.Lerp(preGateSample, sample, fadeCurve);
 
-                if (gateOpenFadeProgress >= 1f)
-                {
-                    isGateOpening = false;
-                }
+                if (gateOpenFadeProgress >= 1f) { isGateOpening = false; }
             }
 
-            if (!gateIsOpen && gateSmoothing < 0.01f)
-            {
-                ResetFilterStates();
-            }
+            if (!gateIsOpen && gateSmoothing < 0.01f) { ResetFilterStates(); }
 
             float gateMultiplier = gateSmoothing;
-            if (gateSmoothing > 0.1f && gateSmoothing < 0.9f)
+
+            if (gateSmoothing is > 0.1f and < 0.9f)
             {
                 float ratio = (gateSmoothing - 0.1f) / 0.8f;
-                gateMultiplier = 0.1f + 0.8f * (ratio * ratio * (3f - 2f * ratio));
+                gateMultiplier = 0.1f + (0.8f * (ratio * ratio * (3f - (2f * ratio))));
             }
 
             return processedSample * gateMultiplier;
@@ -266,13 +255,14 @@ namespace DCL.VoiceChat
 
         private void ResetFilterStates()
         {
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 2; i++)
             {
                 if (Mathf.Abs(highPassPrevInputs[i]) < 0.001f && Mathf.Abs(highPassPrevOutputs[i]) < 0.001f)
                 {
                     highPassPrevInputs[i] = 0f;
                     highPassPrevOutputs[i] = 0f;
                 }
+
                 if (Mathf.Abs(lowPassPrevInputs[i]) < 0.001f && Mathf.Abs(lowPassPrevOutputs[i]) < 0.001f)
                 {
                     lowPassPrevInputs[i] = 0f;
@@ -294,14 +284,8 @@ namespace DCL.VoiceChat
             var peakDecay = 0.9995f;
             var peakAttack = 0.1f;
 
-            if (sampleAbs > peakLevel)
-            {
-                peakLevel = Mathf.Lerp(peakLevel, sampleAbs, peakAttack);
-            }
-            else
-            {
-                peakLevel = peakLevel * peakDecay;
-            }
+            if (sampleAbs > peakLevel) { peakLevel = Mathf.Lerp(peakLevel, sampleAbs, peakAttack); }
+            else { peakLevel = peakLevel * peakDecay; }
 
             if (peakLevel > 0.001f)
             {
@@ -313,8 +297,8 @@ namespace DCL.VoiceChat
 
                 float adaptiveSpeed = gainDifference > 0.5f ? baseSpeed * 0.3f : baseSpeed;
 
-                float smoothingWindow = 0.95f;
-                currentGain = currentGain * smoothingWindow + targetGain * (1f - smoothingWindow) * adaptiveSpeed;
+                var smoothingWindow = 0.95f;
+                currentGain = (currentGain * smoothingWindow) + (targetGain * (1f - smoothingWindow) * adaptiveSpeed);
                 currentGain = Mathf.Clamp(currentGain, 0.2f, 3f);
             }
 
@@ -325,7 +309,7 @@ namespace DCL.VoiceChat
                 float sign = Mathf.Sign(processedSample);
                 float magnitude = Mathf.Abs(processedSample);
 
-                float compressedMagnitude = 0.95f + (magnitude - 0.95f) * 0.1f;
+                float compressedMagnitude = 0.95f + ((magnitude - 0.95f) * 0.1f);
                 processedSample = sign * Mathf.Min(compressedMagnitude, 0.99f);
             }
 
