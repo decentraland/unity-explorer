@@ -26,7 +26,7 @@ namespace DCL.ECSComponents {
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdWlfdHJhbnNmb3JtLnBy",
             "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJhbGFu",
-            "ZC9jb21tb24vY29sb3JzLnByb3RvIpIgCg1QQlVpVHJhbnNmb3JtEg4KBnBh",
+            "ZC9jb21tb24vY29sb3JzLnByb3RvIrQgCg1QQlVpVHJhbnNmb3JtEg4KBnBh",
             "cmVudBgBIAEoBRIQCghyaWdodF9vZhgCIAEoBRJACg1hbGlnbl9jb250ZW50",
             "GAMgASgOMiQuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHQWxpZ25I",
             "AIgBARI+CgthbGlnbl9pdGVtcxgEIAEoDjIkLmRlY2VudHJhbGFuZC5zZGsu",
@@ -104,45 +104,46 @@ namespace DCL.ECSComponents {
             "bW9uLkNvbG9yNEgWiAEBEjsKEWJvcmRlcl9sZWZ0X2NvbG9yGEcgASgLMhsu",
             "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjRIF4gBARI8ChJib3JkZXJfcmln",
             "aHRfY29sb3IYSCABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNEgY",
-            "iAEBQhAKDl9hbGlnbl9jb250ZW50Qg4KDF9hbGlnbl9pdGVtc0IMCgpfZmxl",
-            "eF93cmFwQg4KDF9mbGV4X3Nocmlua0IRCg9fcG9pbnRlcl9maWx0ZXJCGQoX",
-            "X2JvcmRlcl9sZWZ0X3dpZHRoX3VuaXRCFAoSX2JvcmRlcl9sZWZ0X3dpZHRo",
-            "QhgKFl9ib3JkZXJfdG9wX3dpZHRoX3VuaXRCEwoRX2JvcmRlcl90b3Bfd2lk",
-            "dGhCGgoYX2JvcmRlcl9yaWdodF93aWR0aF91bml0QhUKE19ib3JkZXJfcmln",
-            "aHRfd2lkdGhCGwoZX2JvcmRlcl9ib3R0b21fd2lkdGhfdW5pdEIWChRfYm9y",
-            "ZGVyX2JvdHRvbV93aWR0aEIeChxfYm9yZGVyX3RvcF9sZWZ0X3JhZGl1c191",
-            "bml0QhkKF19ib3JkZXJfdG9wX2xlZnRfcmFkaXVzQh8KHV9ib3JkZXJfdG9w",
-            "X3JpZ2h0X3JhZGl1c191bml0QhoKGF9ib3JkZXJfdG9wX3JpZ2h0X3JhZGl1",
-            "c0IhCh9fYm9yZGVyX2JvdHRvbV9sZWZ0X3JhZGl1c191bml0QhwKGl9ib3Jk",
-            "ZXJfYm90dG9tX2xlZnRfcmFkaXVzQiIKIF9ib3JkZXJfYm90dG9tX3JpZ2h0",
-            "X3JhZGl1c191bml0Qh0KG19ib3JkZXJfYm90dG9tX3JpZ2h0X3JhZGl1c0IT",
-            "ChFfYm9yZGVyX3RvcF9jb2xvckIWChRfYm9yZGVyX2JvdHRvbV9jb2xvckIU",
-            "ChJfYm9yZGVyX2xlZnRfY29sb3JCFQoTX2JvcmRlcl9yaWdodF9jb2xvcio2",
-            "Cg5ZR1Bvc2l0aW9uVHlwZRIRCg1ZR1BUX1JFTEFUSVZFEAASEQoNWUdQVF9B",
-            "QlNPTFVURRABKp0BCgdZR0FsaWduEgwKCFlHQV9BVVRPEAASEgoOWUdBX0ZM",
-            "RVhfU1RBUlQQARIOCgpZR0FfQ0VOVEVSEAISEAoMWUdBX0ZMRVhfRU5EEAMS",
-            "DwoLWUdBX1NUUkVUQ0gQBBIQCgxZR0FfQkFTRUxJTkUQBRIVChFZR0FfU1BB",
-            "Q0VfQkVUV0VFThAGEhQKEFlHQV9TUEFDRV9BUk9VTkQQBypJCgZZR1VuaXQS",
-            "EQoNWUdVX1VOREVGSU5FRBAAEg0KCVlHVV9QT0lOVBABEg8KC1lHVV9QRVJD",
-            "RU5UEAISDAoIWUdVX0FVVE8QAypfCg9ZR0ZsZXhEaXJlY3Rpb24SDAoIWUdG",
-            "RF9ST1cQABIPCgtZR0ZEX0NPTFVNThABEhcKE1lHRkRfQ09MVU1OX1JFVkVS",
-            "U0UQAhIUChBZR0ZEX1JPV19SRVZFUlNFEAMqPQoGWUdXcmFwEg8KC1lHV19O",
-            "T19XUkFQEAASDAoIWUdXX1dSQVAQARIUChBZR1dfV1JBUF9SRVZFUlNFEAIq",
-            "hAEKCVlHSnVzdGlmeRISCg5ZR0pfRkxFWF9TVEFSVBAAEg4KCllHSl9DRU5U",
-            "RVIQARIQCgxZR0pfRkxFWF9FTkQQAhIVChFZR0pfU1BBQ0VfQkVUV0VFThAD",
-            "EhQKEFlHSl9TUEFDRV9BUk9VTkQQBBIUChBZR0pfU1BBQ0VfRVZFTkxZEAUq",
-            "PQoKWUdPdmVyZmxvdxIPCgtZR09fVklTSUJMRRAAEg4KCllHT19ISURERU4Q",
-            "ARIOCgpZR09fU0NST0xMEAIqJwoJWUdEaXNwbGF5EgwKCFlHRF9GTEVYEAAS",
-            "DAoIWUdEX05PTkUQASqRAQoGWUdFZGdlEgwKCFlHRV9MRUZUEAASCwoHWUdF",
-            "X1RPUBABEg0KCVlHRV9SSUdIVBACEg4KCllHRV9CT1RUT00QAxINCglZR0Vf",
-            "U1RBUlQQBBILCgdZR0VfRU5EEAUSEgoOWUdFX0hPUklaT05UQUwQBhIQCgxZ",
-            "R0VfVkVSVElDQUwQBxILCgdZR0VfQUxMEAgqMAoRUG9pbnRlckZpbHRlck1v",
-            "ZGUSDAoIUEZNX05PTkUQABINCglQRk1fQkxPQ0sQAUIUqgIRRENMLkVDU0Nv",
-            "bXBvbmVudHNiBnByb3RvMw=="));
+            "iAEBEhQKB3pfaW5kZXgYTSABKAVIGYgBAUIQCg5fYWxpZ25fY29udGVudEIO",
+            "CgxfYWxpZ25faXRlbXNCDAoKX2ZsZXhfd3JhcEIOCgxfZmxleF9zaHJpbmtC",
+            "EQoPX3BvaW50ZXJfZmlsdGVyQhkKF19ib3JkZXJfbGVmdF93aWR0aF91bml0",
+            "QhQKEl9ib3JkZXJfbGVmdF93aWR0aEIYChZfYm9yZGVyX3RvcF93aWR0aF91",
+            "bml0QhMKEV9ib3JkZXJfdG9wX3dpZHRoQhoKGF9ib3JkZXJfcmlnaHRfd2lk",
+            "dGhfdW5pdEIVChNfYm9yZGVyX3JpZ2h0X3dpZHRoQhsKGV9ib3JkZXJfYm90",
+            "dG9tX3dpZHRoX3VuaXRCFgoUX2JvcmRlcl9ib3R0b21fd2lkdGhCHgocX2Jv",
+            "cmRlcl90b3BfbGVmdF9yYWRpdXNfdW5pdEIZChdfYm9yZGVyX3RvcF9sZWZ0",
+            "X3JhZGl1c0IfCh1fYm9yZGVyX3RvcF9yaWdodF9yYWRpdXNfdW5pdEIaChhf",
+            "Ym9yZGVyX3RvcF9yaWdodF9yYWRpdXNCIQofX2JvcmRlcl9ib3R0b21fbGVm",
+            "dF9yYWRpdXNfdW5pdEIcChpfYm9yZGVyX2JvdHRvbV9sZWZ0X3JhZGl1c0Ii",
+            "CiBfYm9yZGVyX2JvdHRvbV9yaWdodF9yYWRpdXNfdW5pdEIdChtfYm9yZGVy",
+            "X2JvdHRvbV9yaWdodF9yYWRpdXNCEwoRX2JvcmRlcl90b3BfY29sb3JCFgoU",
+            "X2JvcmRlcl9ib3R0b21fY29sb3JCFAoSX2JvcmRlcl9sZWZ0X2NvbG9yQhUK",
+            "E19ib3JkZXJfcmlnaHRfY29sb3JCCgoIX3pfaW5kZXgqNgoOWUdQb3NpdGlv",
+            "blR5cGUSEQoNWUdQVF9SRUxBVElWRRAAEhEKDVlHUFRfQUJTT0xVVEUQASqd",
+            "AQoHWUdBbGlnbhIMCghZR0FfQVVUTxAAEhIKDllHQV9GTEVYX1NUQVJUEAES",
+            "DgoKWUdBX0NFTlRFUhACEhAKDFlHQV9GTEVYX0VORBADEg8KC1lHQV9TVFJF",
+            "VENIEAQSEAoMWUdBX0JBU0VMSU5FEAUSFQoRWUdBX1NQQUNFX0JFVFdFRU4Q",
+            "BhIUChBZR0FfU1BBQ0VfQVJPVU5EEAcqSQoGWUdVbml0EhEKDVlHVV9VTkRF",
+            "RklORUQQABINCglZR1VfUE9JTlQQARIPCgtZR1VfUEVSQ0VOVBACEgwKCFlH",
+            "VV9BVVRPEAMqXwoPWUdGbGV4RGlyZWN0aW9uEgwKCFlHRkRfUk9XEAASDwoL",
+            "WUdGRF9DT0xVTU4QARIXChNZR0ZEX0NPTFVNTl9SRVZFUlNFEAISFAoQWUdG",
+            "RF9ST1dfUkVWRVJTRRADKj0KBllHV3JhcBIPCgtZR1dfTk9fV1JBUBAAEgwK",
+            "CFlHV19XUkFQEAESFAoQWUdXX1dSQVBfUkVWRVJTRRACKoQBCglZR0p1c3Rp",
+            "ZnkSEgoOWUdKX0ZMRVhfU1RBUlQQABIOCgpZR0pfQ0VOVEVSEAESEAoMWUdK",
+            "X0ZMRVhfRU5EEAISFQoRWUdKX1NQQUNFX0JFVFdFRU4QAxIUChBZR0pfU1BB",
+            "Q0VfQVJPVU5EEAQSFAoQWUdKX1NQQUNFX0VWRU5MWRAFKj0KCllHT3ZlcmZs",
+            "b3cSDwoLWUdPX1ZJU0lCTEUQABIOCgpZR09fSElEREVOEAESDgoKWUdPX1ND",
+            "Uk9MTBACKicKCVlHRGlzcGxheRIMCghZR0RfRkxFWBAAEgwKCFlHRF9OT05F",
+            "EAEqkQEKBllHRWRnZRIMCghZR0VfTEVGVBAAEgsKB1lHRV9UT1AQARINCglZ",
+            "R0VfUklHSFQQAhIOCgpZR0VfQk9UVE9NEAMSDQoJWUdFX1NUQVJUEAQSCwoH",
+            "WUdFX0VORBAFEhIKDllHRV9IT1JJWk9OVEFMEAYSEAoMWUdFX1ZFUlRJQ0FM",
+            "EAcSCwoHWUdFX0FMTBAIKjAKEVBvaW50ZXJGaWx0ZXJNb2RlEgwKCFBGTV9O",
+            "T05FEAASDQoJUEZNX0JMT0NLEAFCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZw",
+            "cm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.YGPositionType), typeof(global::DCL.ECSComponents.YGAlign), typeof(global::DCL.ECSComponents.YGUnit), typeof(global::DCL.ECSComponents.YGFlexDirection), typeof(global::DCL.ECSComponents.YGWrap), typeof(global::DCL.ECSComponents.YGJustify), typeof(global::DCL.ECSComponents.YGOverflow), typeof(global::DCL.ECSComponents.YGDisplay), typeof(global::DCL.ECSComponents.YGEdge), typeof(global::DCL.ECSComponents.PointerFilterMode), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiTransform), global::DCL.ECSComponents.PBUiTransform.Parser, new[]{ "Parent", "RightOf", "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PositionType", "AlignSelf", "FlexDirection", "JustifyContent", "Overflow", "Display", "FlexBasisUnit", "FlexBasis", "FlexGrow", "WidthUnit", "Width", "HeightUnit", "Height", "MinWidthUnit", "MinWidth", "MinHeightUnit", "MinHeight", "MaxWidthUnit", "MaxWidth", "MaxHeightUnit", "MaxHeight", "PositionLeftUnit", "PositionLeft", "PositionTopUnit", "PositionTop", "PositionRightUnit", "PositionRight", "PositionBottomUnit", "PositionBottom", "MarginLeftUnit", "MarginLeft", "MarginTopUnit", "MarginTop", "MarginRightUnit", "MarginRight", "MarginBottomUnit", "MarginBottom", "PaddingLeftUnit", "PaddingLeft", "PaddingTopUnit", "PaddingTop", "PaddingRightUnit", "PaddingRight", "PaddingBottomUnit", "PaddingBottom", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor" }, new[]{ "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiTransform), global::DCL.ECSComponents.PBUiTransform.Parser, new[]{ "Parent", "RightOf", "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PositionType", "AlignSelf", "FlexDirection", "JustifyContent", "Overflow", "Display", "FlexBasisUnit", "FlexBasis", "FlexGrow", "WidthUnit", "Width", "HeightUnit", "Height", "MinWidthUnit", "MinWidth", "MinHeightUnit", "MinHeight", "MaxWidthUnit", "MaxWidth", "MaxHeightUnit", "MaxHeight", "PositionLeftUnit", "PositionLeft", "PositionTopUnit", "PositionTop", "PositionRightUnit", "PositionRight", "PositionBottomUnit", "PositionBottom", "MarginLeftUnit", "MarginLeft", "MarginTopUnit", "MarginTop", "MarginRightUnit", "MarginRight", "MarginBottomUnit", "MarginBottom", "PaddingLeftUnit", "PaddingLeft", "PaddingTopUnit", "PaddingTop", "PaddingRightUnit", "PaddingRight", "PaddingBottomUnit", "PaddingBottom", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor", "ZIndex" }, new[]{ "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor", "ZIndex" }, null, null, null)
           }));
     }
     #endregion
@@ -333,6 +334,7 @@ namespace DCL.ECSComponents {
       borderBottomColor_ = other.borderBottomColor_ != null ? other.borderBottomColor_.Clone() : null;
       borderLeftColor_ = other.borderLeftColor_ != null ? other.borderLeftColor_.Clone() : null;
       borderRightColor_ = other.borderRightColor_ != null ? other.borderRightColor_.Clone() : null;
+      zIndex_ = other.zIndex_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1596,6 +1598,34 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "z_index" field.</summary>
+    public const int ZIndexFieldNumber = 77;
+    private int zIndex_;
+    /// <summary>
+    /// default 0 — controls render stacking order. Higher values appear in front of lower values.
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int ZIndex {
+      get { if ((_hasBits0 & 2097152) != 0) { return zIndex_; } else { return 0; } }
+      set {
+        _hasBits0 |= 2097152;
+        zIndex_ = value;
+      }
+    }
+    /// <summary>Gets whether the "z_index" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasZIndex {
+      get { return (_hasBits0 & 2097152) != 0; }
+    }
+    /// <summary>Clears the value of the "z_index" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearZIndex() {
+      _hasBits0 &= ~2097152;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1683,6 +1713,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(BorderBottomColor, other.BorderBottomColor)) return false;
       if (!object.Equals(BorderLeftColor, other.BorderLeftColor)) return false;
       if (!object.Equals(BorderRightColor, other.BorderRightColor)) return false;
+      if (ZIndex != other.ZIndex) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1762,6 +1793,7 @@ namespace DCL.ECSComponents {
       if (borderBottomColor_ != null) hash ^= BorderBottomColor.GetHashCode();
       if (borderLeftColor_ != null) hash ^= BorderLeftColor.GetHashCode();
       if (borderRightColor_ != null) hash ^= BorderRightColor.GetHashCode();
+      if (HasZIndex) hash ^= ZIndex.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2068,6 +2100,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(194, 4);
         output.WriteMessage(BorderRightColor);
       }
+      if (HasZIndex) {
+        output.WriteRawTag(232, 4);
+        output.WriteInt32(ZIndex);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2366,6 +2402,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(194, 4);
         output.WriteMessage(BorderRightColor);
       }
+      if (HasZIndex) {
+        output.WriteRawTag(232, 4);
+        output.WriteInt32(ZIndex);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2591,6 +2631,9 @@ namespace DCL.ECSComponents {
       }
       if (borderRightColor_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(BorderRightColor);
+      }
+      if (HasZIndex) {
+        size += 2 + pb::CodedOutputStream.ComputeInt32Size(ZIndex);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2831,6 +2874,9 @@ namespace DCL.ECSComponents {
           BorderRightColor = new global::Decentraland.Common.Color4();
         }
         BorderRightColor.MergeFrom(other.BorderRightColor);
+      }
+      if (other.HasZIndex) {
+        ZIndex = other.ZIndex;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -3147,6 +3193,10 @@ namespace DCL.ECSComponents {
             input.ReadMessage(BorderRightColor);
             break;
           }
+          case 616: {
+            ZIndex = input.ReadInt32();
+            break;
+          }
         }
       }
     #endif
@@ -3460,6 +3510,10 @@ namespace DCL.ECSComponents {
               BorderRightColor = new global::Decentraland.Common.Color4();
             }
             input.ReadMessage(BorderRightColor);
+            break;
+          }
+          case 616: {
+            ZIndex = input.ReadInt32();
             break;
           }
         }
