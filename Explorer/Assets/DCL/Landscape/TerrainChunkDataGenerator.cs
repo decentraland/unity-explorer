@@ -342,7 +342,7 @@ namespace DCL.Landscape
                                 for (int x = (-chunkMinParcel.x + parcel.x) * parcelSize; x < (-chunkMinParcel.x + parcel.x + 1) * parcelSize; x++)
                                     detailLayer[y, x] = 0;
 
-                        terrainData.SetDetailLayer(0, 0, i, detailLayer);
+                        //terrainData.SetDetailLayer(0, 0, i, detailLayer);
 
                         if (useCache)
                             localCache.SaveDetailLayer(offsetX, offsetZ, i, detailLayer);
