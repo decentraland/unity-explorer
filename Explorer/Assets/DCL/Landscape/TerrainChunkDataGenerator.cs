@@ -169,11 +169,11 @@ namespace DCL.Landscape
         {
             if (useCache && localCache.IsValid())
             {
-                /*using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
                 {
                     var array = await localCache.GetTreesAsync(chunkMinParcel.x, chunkMinParcel.y);
                     terrainData.SetTreeInstances(array, true);
-                }*/
+                }
             }
             else
             {

@@ -28,7 +28,7 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 14;
+        private const int CACHE_VERSION = 15;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -404,6 +404,8 @@ namespace DCL.Landscape
                         {
                             using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
                             {
+                                if (chunkModel.OutOfTerrainParcels.Count == 0) return;
+
                                 chunkModel.TerrainData.SetHoles(0, 0,
                                     await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
                                 await UniTask.Yield(cancellationToken);
@@ -411,6 +413,8 @@ namespace DCL.Landscape
                         }
                         else
                         {
+                            if (chunkModel.OutOfTerrainParcels.Count == 0) return;
+
                             bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
                             chunkModel.TerrainData.SetHoles(0, 0, holes);
                             localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
