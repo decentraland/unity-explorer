@@ -169,11 +169,11 @@ namespace DCL.Landscape
         {
             if (useCache && localCache.IsValid())
             {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
+                /*using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetTreesAsync from Cache {t}ms")))
                 {
                     var array = await localCache.GetTreesAsync(chunkMinParcel.x, chunkMinParcel.y);
                     terrainData.SetTreeInstances(array, true);
-                }
+                }*/
             }
             else
             {
@@ -279,12 +279,12 @@ namespace DCL.Landscape
 
             if (useCache && localCache.IsValid())
             {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetDetails from Cache {t}ms")))
+                /*using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetDetails from Cache {t}ms")))
                     for (var i = 0; i < terrainGenData.detailAssets.Length; i++)
                     {
                         var detailLayer = await localCache.GetDetailLayerAsync(offsetX, offsetZ, i);
                         terrainData.SetDetailLayer(0, 0, i, detailLayer);
-                    }
+                    }*/
             }
             else
             {

@@ -102,8 +102,6 @@ namespace DCL.PluginSystem.Global
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
 
-            gpuiWrapper?.Initialize(landscapeData.Value);
-
             floor = new SatelliteFloor(realmData, landscapeData.Value);
 
             if (!enableLandscape) return;
@@ -130,6 +128,9 @@ namespace DCL.PluginSystem.Global
             terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
                 parcelChecksum, isZone);
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
+
+            gpuiWrapper?.Initialize(landscapeData.Value, terrainGenerator.localCache);
+
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
