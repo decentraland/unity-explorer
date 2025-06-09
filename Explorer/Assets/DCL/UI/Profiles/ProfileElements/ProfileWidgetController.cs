@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
@@ -13,8 +14,8 @@ namespace DCL.UI.ProfileElements
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ViewDependencies viewDependencies;
         private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private CancellationTokenSource? loadProfileCts;
 
@@ -23,14 +24,14 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            ViewDependencies viewDependencies,
-            IProfileChangesBus profileChangesBus
+            IProfileChangesBus profileChangesBus,
+            ProfileRepositoryWrapper profileDataProvider
         ) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
-            this.viewDependencies = viewDependencies;
             this.profileChangesBus = profileChangesBus;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public override void Dispose()
@@ -59,7 +60,7 @@ namespace DCL.UI.ProfileElements
         private void ProfileNameChanged(Profile profile)
         {
             SetupProfileData(profile);
-            viewInstance!.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
 
         private async UniTaskVoid LoadAsync(CancellationToken ct)
@@ -70,7 +71,7 @@ namespace DCL.UI.ProfileElements
 
             SetupProfileData(profile);
 
-            await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
+            await viewInstance.ProfilePictureView.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }
 
         private void SetupProfileData(Profile profile)

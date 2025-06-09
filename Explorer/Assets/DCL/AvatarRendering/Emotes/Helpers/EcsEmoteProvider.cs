@@ -33,47 +33,50 @@ namespace DCL.AvatarRendering.Emotes
             Web3Address userId,
             CancellationToken ct,
             IEmoteProvider.OwnedEmotesRequestOptions requestOptions,
-            List<IEmote> output
+            List<IEmote>? results = null,
+            CommonLoadingArguments? loadingArguments = null,
+            bool needsBuilderAPISigning = false
         )
         {
-            output.Clear();
-
-            urlBuilder.Clear();
-
-            urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
-                      .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
-                      .AppendParameter(new URLParameter("includeEntities", "true"));
-
-            int? pageNum = requestOptions.pageNum;
-            int? pageSize = requestOptions.pageSize;
-            URN? collectionId = requestOptions.collectionId;
-            IEmoteProvider.OrderOperation? orderOperation = requestOptions.orderOperation;
-            string? name = requestOptions.name;
-
-            if (pageNum != null)
-                urlBuilder.AppendParameter(new URLParameter("pageNum", pageNum.ToString()));
-
-            if (pageSize != null)
-                urlBuilder.AppendParameter(new URLParameter("pageSize", pageSize.ToString()));
-
-            if (collectionId != null)
-                urlBuilder.AppendParameter(new URLParameter("collectionId", collectionId));
-
-            if (orderOperation.HasValue)
+            if (!loadingArguments.HasValue)
             {
-                urlBuilder.AppendParameter(new URLParameter("orderBy", orderOperation.Value.By));
-                urlBuilder.AppendParameter(new URLParameter("direction", orderOperation.Value.IsAscendent ? "asc" : "desc"));
+                results?.Clear();
+                urlBuilder.Clear();
+
+                urlBuilder.AppendDomain(realmData.Ipfs.LambdasBaseUrl)
+                          .AppendPath(URLPath.FromString($"/users/{userId}/emotes"))
+                          .AppendParameter(new URLParameter("includeEntities", "true"));
+
+                int? pageNum = requestOptions.pageNum;
+                int? pageSize = requestOptions.pageSize;
+                URN? collectionId = requestOptions.collectionId;
+                IEmoteProvider.OrderOperation? orderOperation = requestOptions.orderOperation;
+                string? name = requestOptions.name;
+
+                if (pageNum != null)
+                    urlBuilder.AppendParameter(new URLParameter("pageNum", pageNum.ToString()));
+
+                if (pageSize != null)
+                    urlBuilder.AppendParameter(new URLParameter("pageSize", pageSize.ToString()));
+
+                if (collectionId != null)
+                    urlBuilder.AppendParameter(new URLParameter("collectionId", collectionId));
+
+                if (orderOperation.HasValue)
+                {
+                    urlBuilder.AppendParameter(new URLParameter("orderBy", orderOperation.Value.By));
+                    urlBuilder.AppendParameter(new URLParameter("direction", orderOperation.Value.IsAscendent ? "asc" : "desc"));
+                }
+
+                if (name != null)
+                    urlBuilder.AppendParameter(new URLParameter("name", name));
+
+                URLAddress url = urlBuilder.Build();
+                loadingArguments = new CommonLoadingArguments(url);
             }
 
-            if (name != null)
-                urlBuilder.AppendParameter(new URLParameter("name", name));
-
-            URLAddress url = urlBuilder.Build();
-
-            var intention = new GetOwnedEmotesFromRealmIntention(new CommonLoadingArguments(url));
-
-            OwnedEmotesPromise promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY)
-                                                                 .ToUniTaskAsync(world, cancellationToken: ct);
+            var intention = new GetOwnedEmotesFromRealmIntention(loadingArguments.Value, needsBuilderAPISigning);
+            var promise = await OwnedEmotesPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY).ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!promise.Result.HasValue)
                 return 0;
@@ -82,7 +85,9 @@ namespace DCL.AvatarRendering.Emotes
                 throw promise.Result.Value.Exception!;
 
             using var emotes = promise.Result.Value.Asset.ConsumeEmotes();
-            output.AddRange(emotes.Value);
+
+            results?.AddRange(emotes.Value);
+
             return promise.Result.Value.Asset.TotalAmount;
         }
 

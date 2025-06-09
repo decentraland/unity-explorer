@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Utilities;
 using MVC;
@@ -12,19 +13,19 @@ namespace DCL.Friends.UI.PushNotifications
         private const int SUBSCRIPTION_DELAY_MS = 5000;
 
         private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
-        private readonly ViewDependencies viewDependencies;
         private readonly ILoadingStatus loadingStatus;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private CancellationTokenSource toastAnimationCancellationTokenSource = new ();
         private CancellationTokenSource? subscribeCancellationTokenSource;
 
         public FriendPushNotificationController(ViewFactoryMethod viewFactory,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.loadingStatus = loadingStatus;
 
             loadingStatus.CurrentStage.Subscribe(OnLoadingStatusChanged);
@@ -35,13 +36,6 @@ namespace DCL.Friends.UI.PushNotifications
             base.Dispose();
             friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendConnected;
             toastAnimationCancellationTokenSource.SafeCancelAndDispose();
-        }
-
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-
-            viewInstance!.InjectDependencies(viewDependencies);
         }
 
         private void OnLoadingStatusChanged(LoadingStatus.LoadingStage stage)
@@ -72,7 +66,7 @@ namespace DCL.Friends.UI.PushNotifications
                 if (viewInstance == null) return;
 
                 viewInstance.HideToast();
-                viewInstance.ConfigureForFriend(friendProfile);
+                viewInstance.ConfigureForFriend(friendProfile, profileRepositoryWrapper);
 
                 await viewInstance.ShowToastAsync(ct);
             }

@@ -1,5 +1,4 @@
-﻿using DCL.Character.CharacterCamera.Settings;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace DCL.InWorldCamera.Settings
 {
@@ -17,8 +16,12 @@ namespace DCL.InWorldCamera.Settings
         [field: SerializeField] public float MinFOV { get; private set; } = 0;
         [field: SerializeField] public float MaxFOV { get; private set; } = 170;
 
-        [field: Header("POV")]
-        [field: SerializeField] public CameraMovementPOVSettings PovSettings { get; private set; }
+        [field: Header("AIM")]
+        [field: SerializeField] public float RotationSpeed { get; private set; } = 2;
+        [field: SerializeField] public float MaxRotationPerFrame { get; private set; } = 10f;
+        [field: SerializeField] public float RotationDamping { get; private set; } = 0.1f;
+        [field: SerializeField] public float MinVerticalAngle { get; private set; } = -90f;
+        [field: SerializeField] public float MaxVerticalAngle { get; private set; } = 90f;
 
         [field: Header("TILT")]
         [field: SerializeField] public float TiltSpeed { get; private set; } = 30;

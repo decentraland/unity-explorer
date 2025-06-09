@@ -23,7 +23,7 @@ namespace DCL.Friends.UI.FriendPanel
         [field: Space(10)]
         [field: SerializeField] public float FoldingAnimationDuration { get; private set; } = 0.3f;
 
-        public event Action<bool, FriendPanelStatus>? FolderButtonClicked;
+        public Action<bool, FriendPanelStatus>? FolderButtonClicked;
 
         private bool isFolderOpen = true;
         private FriendPanelStatus panelStatus;
@@ -58,11 +58,6 @@ namespace DCL.Friends.UI.FriendPanel
         private void SetFolderDirection(bool isOpen)
         {
             FolderButtonGraphics.DOScale(isOpen ? Vector3.one : new Vector3(1f, -1f, 1f), FoldingAnimationDuration);
-        }
-
-        public void ResetCallback()
-        {
-            FolderButtonClicked = null;
         }
     }
 }

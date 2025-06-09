@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Cinemachine;
-using DCL.Character.CharacterCamera;
-using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
@@ -62,7 +60,7 @@ namespace DCL.InWorldCamera.Systems
                 bool cursorIsLocked = cursor.IsLocked();
 
                 if (cursorIsLocked || input.MouseIsDragging)
-                    CameraMovementUtils.Rotate(ref World.Get<CameraDampedPOV>(camera), followTarget.transform, input.Aim, settings.PovSettings, t);
+                    Rotate(ref World.Get<CameraDampedAim>(camera), followTarget.transform, input.Aim, t);
 
                 Tilt(ref World.Get<CameraDampedTilt>(camera), followTarget.transform, input.Tilting, resetTilt: cursorIsLocked != cursorWasLocked, t);
 
@@ -79,6 +77,23 @@ namespace DCL.InWorldCamera.Systems
             fov.Current = Mathf.SmoothDamp(fov.Current, fov.Target, ref fov.Velocity, settings.FOVDamping);
 
             virtualCamera.m_Lens.FieldOfView = fov.Current;
+        }
+
+        private void Rotate(ref CameraDampedAim aim, Transform target, Vector2 lookInput, float deltaTime)
+        {
+            Vector2 targetRotation = lookInput * settings.RotationSpeed;
+            aim.Current = Vector2.SmoothDamp(aim.Current, targetRotation, ref aim.Velocity, settings.RotationDamping);
+
+            float horizontalRotation = Mathf.Clamp(aim.Current.x * deltaTime, -settings.MaxRotationPerFrame, settings.MaxRotationPerFrame);
+            float verticalRotation = Mathf.Clamp(aim.Current.y * deltaTime, -settings.MaxRotationPerFrame, settings.MaxRotationPerFrame);
+
+            target.Rotate(Vector3.up, horizontalRotation, Space.World);
+
+            float newVerticalAngle = target.eulerAngles.x - verticalRotation;
+            if (newVerticalAngle > 180f) newVerticalAngle -= 360f;
+            newVerticalAngle = Mathf.Clamp(newVerticalAngle, settings.MinVerticalAngle, settings.MaxVerticalAngle);
+
+            target.localRotation = Quaternion.Euler(newVerticalAngle, target.eulerAngles.y, target.eulerAngles.z);
         }
 
         private void Tilt(ref CameraDampedTilt tilt, Transform target, float tiltInput, bool resetTilt, float deltaTime)
