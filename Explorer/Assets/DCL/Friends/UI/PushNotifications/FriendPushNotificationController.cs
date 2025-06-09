@@ -38,13 +38,6 @@ namespace DCL.Friends.UI.PushNotifications
             toastAnimationCancellationTokenSource.SafeCancelAndDispose();
         }
 
-        protected override void OnViewInstantiated()
-        {
-            base.OnViewInstantiated();
-
-            viewInstance!.SetProfileDataProvider(profileRepositoryWrapper);
-        }
-
         private void OnLoadingStatusChanged(LoadingStatus.LoadingStage stage)
         {
             if (stage != LoadingStatus.LoadingStage.Completed) return;
@@ -73,7 +66,7 @@ namespace DCL.Friends.UI.PushNotifications
                 if (viewInstance == null) return;
 
                 viewInstance.HideToast();
-                viewInstance.ConfigureForFriend(friendProfile);
+                viewInstance.ConfigureForFriend(friendProfile, profileRepositoryWrapper);
 
                 await viewInstance.ShowToastAsync(ct);
             }
