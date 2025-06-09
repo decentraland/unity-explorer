@@ -31,7 +31,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
-        private const string JUMP_IN_LINK = " https://decentraland.org/jump/?position={0},{1}";
+        private const string JUMP_IN_GC_LINK = " https://decentraland.org/jump/?position={0},{1}";
+        private const string JUMP_IN_WORLD_LINK = " https://decentraland.org/jump/?realm={0}";
         private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
 
@@ -134,9 +135,11 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private static string GetPlaceCopyLink(PlaceInfo place)
         {
-            //TODO: handle worlds if possible
+            if (!string.IsNullOrEmpty(place.world_name))
+                return string.Format(JUMP_IN_WORLD_LINK, place.world_name);
+
             VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-            return string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
+            return string.Format(JUMP_IN_GC_LINK, coordinates.x, coordinates.y);
         }
 
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
