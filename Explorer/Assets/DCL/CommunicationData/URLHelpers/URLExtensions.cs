@@ -13,7 +13,21 @@ namespace CommunicationData.URLHelpers
         public static URLDomain Append(in this URLDomain address, in URLSubdirectory subdirectory) =>
             URLBuilder.Combine(address, subdirectory);
 
-        public static Uri Append(this Uri uri, in string subdirectory) =>
-            new (uri, subdirectory);
+        /// <summary>
+        ///     This method allocates heavily so the result must be cached
+        /// </summary>
+        public static Uri Append(this Uri uri, string subdirectory)
+        {
+            if (uri == null)
+                throw new ArgumentNullException(nameof(uri));
+
+            if (string.IsNullOrWhiteSpace(subdirectory))
+                return uri;
+
+            if (subdirectory.StartsWith("/"))
+                subdirectory = subdirectory[1..];
+
+            return new Uri($"{uri.OriginalString.TrimEnd('/')}/{subdirectory}");
+        }
     }
 }
