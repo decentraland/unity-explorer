@@ -261,6 +261,16 @@ namespace DCL.Chat
             }
         }
 
+        protected override void OnBlur()
+        {
+            viewInstance?.UnsubscribeToSubmitEvent();
+        }
+
+        protected override void OnFocus()
+        {
+            viewInstance?.SubscribeToSubmitEvent();
+        }
+
         private void AddNearbyChannelAndSendWelcomeMessage()
         {
             chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
@@ -699,6 +709,7 @@ namespace DCL.Chat
                 view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
                 view.ConversationSelected += OnSelectConversation;
                 view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
+                
             }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
