@@ -50,8 +50,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88538076b054b4504b11b87773e7393f
+    m_Address: VoiceChatSettings
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 96f7b8dc6c27e3047a1b56bcf3779c47
-    m_Address: Assets/DCL/VoiceChat/VoiceChatConfiguration.asset
+    m_Address: VoiceChatConfiguration
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -66,7 +71,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: dc4b9a0eb614c2c45a09fa14de92fcd8
-    m_Address: VoiceChatPluginSettings.asset
+    m_Address: VoiceChatPluginSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

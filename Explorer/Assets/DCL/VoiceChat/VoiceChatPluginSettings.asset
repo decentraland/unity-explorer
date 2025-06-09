@@ -17,7 +17,7 @@ MonoBehaviour:
     m_SubObjectName: 
     m_SubObjectType: 
     m_SubObjectGUID: 
-    m_EditorAssetChanged: 0
+    m_EditorAssetChanged: 1
   <MicrophoneAudioFilter>k__BackingField:
     m_AssetGUID: fa9a67059d8a204408ce435cc8827612
     m_SubObjectName: 
