@@ -95,9 +95,9 @@ MonoBehaviour:
   m_fontSize: 16
   m_fontSizeBase: 16
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 10
+  m_fontSizeMax: 16
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 677302244347562019}
   - component: {fileID: 8832623039404450805}
   - component: {fileID: 5902376632327636488}
+  - component: {fileID: 3725212863499460695}
   m_Layer: 5
   m_Name: PlaceTag
   m_TagString: Untagged
@@ -213,6 +214,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
+--- !u!114 &3725212863499460695
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 288283129959185078}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eae2e2b2dd3497c8c84f4540e525626, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tagText: {fileID: 6555109184114173320}
+  removeButton: {fileID: 4547437306164256742}
 --- !u!1001 &3754240429023202314
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -398,6 +413,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+--- !u!114 &4547437306164256742 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 793200768551293932, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+  m_PrefabInstance: {fileID: 3754240429023202314}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &8494510836744117012 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4754443713931925278, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}

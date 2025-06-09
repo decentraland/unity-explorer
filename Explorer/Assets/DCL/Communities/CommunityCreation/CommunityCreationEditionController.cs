@@ -76,6 +76,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SelectProfilePictureButtonClicked += OpenImageSelection;
             viewInstance.CreateCommunityButtonClicked += CreateCommunity;
             viewInstance.AddPlaceButtonClicked += AddCommunityPlace;
+            viewInstance.RemovePlaceButtonClicked += RemoveCommunityPlace;
         }
 
         protected override void OnBeforeViewShow()
@@ -110,6 +111,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SelectProfilePictureButtonClicked -= OpenImageSelection;
             viewInstance.CreateCommunityButtonClicked -= CreateCommunity;
             viewInstance.AddPlaceButtonClicked -= AddCommunityPlace;
+            viewInstance.RemovePlaceButtonClicked -= RemoveCommunityPlace;
 
             createCommunityCts?.SafeCancelAndDispose();
             loadLandsAndWorldsCts?.SafeCancelAndDispose();
@@ -184,11 +186,12 @@ namespace DCL.Communities.CommunityCreation
 
                 foreach (PlacesData.PlaceInfo placeInfo in placesResponse.Data)
                 {
-                    placesToAdd.Add($"{placeInfo.title} ({placeInfo.base_position})");
+                    var placeText = $"{placeInfo.title} ({placeInfo.base_position})";
+                    placesToAdd.Add(placeText);
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
                         Id = placeInfo.id,
-                        Name = placeInfo.title,
+                        Name = placeText,
                     });
                 }
 
@@ -211,16 +214,24 @@ namespace DCL.Communities.CommunityCreation
 
         private void AddCommunityPlace(int index)
         {
-            int realIndex = index - 1; // The first option is the default one, so we need to subtract 1
-            if (realIndex >= currentCommunityPlaces.Count)
+            if (index >= currentCommunityPlaces.Count)
                 return;
 
-            CommunityPlace selectedPlace = currentCommunityPlaces[realIndex];
+            CommunityPlace selectedPlace = currentCommunityPlaces[index];
             if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
                 return;
 
-            viewInstance!.AddPlaceTag(selectedPlace.Name);
+            viewInstance!.AddPlaceTag(selectedPlace.Id, selectedPlace.Name);
             addedCommunityPlaces.Add(selectedPlace);
+        }
+
+        private void RemoveCommunityPlace(int index)
+        {
+            if (index >= addedCommunityPlaces.Count)
+                return;
+
+            viewInstance!.RemovePlaceTag(addedCommunityPlaces[index].Id);
+            addedCommunityPlaces.RemoveAt(index);
         }
     }
 }

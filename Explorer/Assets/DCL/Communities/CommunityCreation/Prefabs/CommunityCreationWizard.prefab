@@ -256,7 +256,7 @@ MonoBehaviour:
   creationPanelPlacesDropdown: {fileID: 2089798970030989633}
   creationPanelAddPlaceButton: {fileID: 8377134968439250937}
   placeTagsContainer: {fileID: 7556609997558448888}
-  placeTagPrefab: {fileID: 288283129959185078, guid: a9cbb8e8148fce2438b42e92f9b8bf22, type: 3}
+  placeTagPrefab: {fileID: 3725212863499460695, guid: a9cbb8e8148fce2438b42e92f9b8bf22, type: 3}
   creationPanelCancelButton: {fileID: 2428634819478053848}
   creationPanelCreateButton: {fileID: 3026729670463483168}
   creationPanelCreateButtonText: {fileID: 3122269740363934201}
