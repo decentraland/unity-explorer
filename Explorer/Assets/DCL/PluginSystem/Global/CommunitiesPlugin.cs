@@ -39,6 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
+        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
 
         private CommunityCreationEditionController? communityCreationEditionController;
 
@@ -56,7 +57,8 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView inWorldWarningNotificationView,
             INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            CommunityCreationEditionEventBus communityCreationEditionEventBus)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -72,6 +74,7 @@ namespace DCL.PluginSystem.Global
             this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
+            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
         }
 
         public void Dispose()
@@ -108,7 +111,8 @@ namespace DCL.PluginSystem.Global
                 inWorldWarningNotificationView,
                 nftNamesProvider,
                 placesAPIService,
-                selfProfile);
+                selfProfile,
+                communityCreationEditionEventBus);
             mvcManager.RegisterController(communityCreationEditionController);
         }
     }

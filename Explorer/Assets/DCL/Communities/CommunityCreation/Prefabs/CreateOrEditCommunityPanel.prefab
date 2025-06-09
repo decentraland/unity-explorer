@@ -4316,6 +4316,14 @@ PrefabInstance:
       value: CANCEL
       objectReference: {fileID: 0}
     - target: {fileID: 2372645419648989351, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+      propertyPath: m_fontSize
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 2372645419648989351, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 2372645419648989351, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_HorizontalAlignment
       value: 2
       objectReference: {fileID: 0}
@@ -4508,6 +4516,14 @@ PrefabInstance:
     - target: {fileID: 2372645419648989351, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_text
       value: CREATE
+      objectReference: {fileID: 0}
+    - target: {fileID: 2372645419648989351, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+      propertyPath: m_fontSize
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 2372645419648989351, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 2372645419648989351, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_HorizontalAlignment

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -165,8 +166,10 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnOpenCommunityWizard()
         {
-            //TODO: Open the community wizard
-            throw new NotImplementedException();
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    canCreateCommunities: true,
+                    communityId: communityData.id)));
         }
 
         private void JoinCommunity()

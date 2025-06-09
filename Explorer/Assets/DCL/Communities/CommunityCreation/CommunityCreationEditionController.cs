@@ -32,6 +32,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
+        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource createCommunityCts;
@@ -57,7 +58,8 @@ namespace DCL.Communities.CommunityCreation
             WarningNotificationView warningNotificationView,
             INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile) : base(viewFactory)
+            ISelfProfile selfProfile,
+            CommunityCreationEditionEventBus communityCreationEditionEventBus) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
@@ -66,6 +68,7 @@ namespace DCL.Communities.CommunityCreation
             this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
+            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
         }
 
         protected override void OnViewInstantiated()
@@ -170,6 +173,7 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
+            communityCreationEditionEventBus.OnCommunityCreated();
         }
 
         private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
