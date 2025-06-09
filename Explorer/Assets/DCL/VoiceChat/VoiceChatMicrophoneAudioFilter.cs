@@ -10,24 +10,20 @@ namespace DCL.VoiceChat
     ///     to the microphone input using Unity's OnAudioFilterRead callback.
     ///     Compatible with LiveKit's AudioFilter interface.
     /// </summary>
-    [RequireComponent(typeof(AudioSource))]
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
         private const int DEFAULT_BUFFER_SIZE = 8192;
 
         private VoiceChatAudioProcessor audioProcessor;
-        private AudioSource audioSource;
         private bool isFilterActive = true;
-        private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
         private int outputSampleRate;
 
         private float[] tempBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
+        private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
 
         private void Awake()
         {
-            audioSource = GetComponent<AudioSource>();
-
             if (voiceChatConfiguration != null) audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
         }
 
@@ -77,7 +73,7 @@ namespace DCL.VoiceChat
 
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
-        public bool IsValid => audioSource != null && audioProcessor != null && voiceChatConfiguration != null;
+        public bool IsValid => audioProcessor != null && voiceChatConfiguration != null;
 
         private void ProcessAudioData(Span<float> data, int channels, int sampleRate)
         {

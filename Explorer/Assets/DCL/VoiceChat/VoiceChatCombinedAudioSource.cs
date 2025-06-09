@@ -10,6 +10,7 @@ namespace DCL.VoiceChat
     public class VoiceChatCombinedAudioSource : MonoBehaviour
     {
         [field: SerializeField] private AudioSource audioSource;
+
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
         private int lastDataLength;
@@ -128,11 +129,6 @@ namespace DCL.VoiceChat
         {
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
             audioSource.Stop();
-        }
-
-        public void SetVolume(float target)
-        {
-            audioSource.volume = target;
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
