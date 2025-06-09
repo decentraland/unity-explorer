@@ -131,7 +131,7 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
-        private CallButtonController callButtonController;
+        private CallButtonController? callButtonController;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -408,7 +408,9 @@ namespace DCL.Passport
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
-            callButtonController.StartCall -= OnStartCall;
+            
+            if(callButtonController != null)
+                callButtonController.StartCall -= OnStartCall;
 
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Dispose();
