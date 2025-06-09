@@ -6,6 +6,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
 using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.VoiceChat;
 using DCL.Web3;
@@ -25,7 +26,7 @@ namespace DCL.Friends.UI.FriendPanel
         {
             FRIENDS,
             REQUESTS,
-            BLOCKED
+            BLOCKED,
         }
 
         private const int FRIENDS_PAGE_SIZE = 50;
@@ -71,6 +72,7 @@ namespace DCL.Friends.UI.FriendPanel
             bool includeCall,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
@@ -85,38 +87,44 @@ namespace DCL.Friends.UI.FriendPanel
                     friendsService,
                     friendEventBus,
                     mvcManager,
-                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListPagedDoubleCollectionRequestManager(friendsService, friendEventBus, profileRepository, friendsConnectivityStatusTracker, instantiatedView.FriendsSection.LoopList, profileDataProvider, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
                     friendsConnectivityStatusTracker,
-                    voiceChatCallStatusService,
-                    includeUserBlocking,
-                    includeCall);
+                    chatEventBus,
+                    sharedSpaceManager,
+                    viewDependencies,
+                    includeCall,
+                    voiceChatCallStatusService);
+
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
                 friendSectionControllerConnectivity.OpenConversationClicked += OnOpenConversationClicked;
             }
             else
                 friendSectionController = new FriendSectionController(instantiatedView.FriendsSection,
-                    mvcManager,
-                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, viewDependencies, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                    new FriendListRequestManager(friendsService, friendEventBus, profileRepository, instantiatedView.FriendsSection.LoopList, profileDataProvider, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    includeUserBlocking,
+                    viewDependencies,
+                    chatEventBus,
+                    sharedSpaceManager,
                     includeCall,
                     voiceChatCallStatusService);
+
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
                 friendEventBus,
                 mvcManager,
-                new RequestsRequestManager(friendsService, friendEventBus, viewDependencies, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
+                new RequestsRequestManager(friendsService, friendEventBus, profileDataProvider, FRIENDS_REQUEST_PAGE_SIZE, instantiatedView.RequestsSection.LoopList),
                 passportBridge,
                 includeUserBlocking);
+
             blockedSectionController = new BlockedSectionController(instantiatedView.BlockedSection,
                 mvcManager,
-                new BlockedPanelList(friendsService, friendEventBus, viewDependencies, instantiatedView.BlockedSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
+                new BlockedPanelList(friendsService, friendEventBus, profileDataProvider, instantiatedView.BlockedSection.LoopList, FRIENDS_PAGE_SIZE, FRIENDS_FETCH_ELEMENTS_THRESHOLD),
                 passportBridge);
 
             requestsSectionController.ReceivedRequestsCountChanged += FriendRequestCountChanged;
@@ -161,7 +169,6 @@ namespace DCL.Friends.UI.FriendPanel
             closeTaskCompletionSource.TrySetResult();
             JumpToFriendClicked?.Invoke(targetAddress, parcel);
         }
-
 
         public UniTask InitAsync(CancellationToken ct) =>
             requestsSectionController.InitAsync(ct);

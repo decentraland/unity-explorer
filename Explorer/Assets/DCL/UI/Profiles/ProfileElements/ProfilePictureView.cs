@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
-using MVC;
+using DCL.Diagnostics;
+using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -8,43 +9,33 @@ using Utility;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfilePictureView : MonoBehaviour, IViewWithGlobalDependencies, IDisposable
+    public class ProfilePictureView : MonoBehaviour, IDisposable
     {
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
 
-        private ViewDependencies? viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
         private CancellationTokenSource? cts;
         private string? currentUserId;
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-        }
 
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
         }
 
-        public void Setup(Color userColor, string faceSnapshotUrl, string userId)
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
         {
-            SetupOnlyColor(userColor);
-            LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
-        }
-
-        public async UniTask SetupWithDependenciesAsync(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
-        {
-            InjectDependencies(dependencies);
+            this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
             await LoadThumbnailAsync(faceSnapshotUrl, userId, ct);
         }
 
-        public void SetupWithDependencies(ViewDependencies dependencies, Color userColor, string faceSnapshotUrl, string userId)
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
         {
-            InjectDependencies(dependencies);
-            Setup(userColor, faceSnapshotUrl, userId);
+            this.profileRepositoryWrapper = profileDataProvider;
+            SetupOnlyColor(userColor);
+            LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
         }
 
         public void SetupOnlyColor(Color userColor)
@@ -82,7 +73,7 @@ namespace DCL.UI.ProfileElements
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = viewDependencies!.GetProfileThumbnail(userId);
+                Sprite? sprite = profileRepositoryWrapper.GetProfileThumbnail(userId);
 
                 if (sprite != null)
                 {
@@ -95,7 +86,7 @@ namespace DCL.UI.ProfileElements
                 SetLoadingState(true);
                 thumbnailImageView.Alpha = 0f;
 
-                sprite = await viewDependencies!.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+                sprite = await profileRepositoryWrapper.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
 
                 if (sprite == null)
                     currentUserId = null;
@@ -106,8 +97,10 @@ namespace DCL.UI.ProfileElements
             {
                 currentUserId = null;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
+
                 currentUserId = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }

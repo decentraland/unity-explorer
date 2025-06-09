@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
@@ -16,6 +17,7 @@ using ECS.SceneLifeCycle;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine;
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
@@ -42,6 +44,8 @@ namespace DCL.PluginSystem.Global
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
+        private readonly GPUIWrapper? gpuiWrapper;
+
         public LandscapePlugin(IRealmData realmData,
             ILoadingStatus loadingStatus,
             IScenesCache sceneCache,
@@ -52,7 +56,8 @@ namespace DCL.PluginSystem.Global
             MapRendererTextureContainer textureContainer,
             IWebRequestController webRequestController,
             bool enableLandscape,
-            bool isZone)
+            bool isZone,
+            bool isGPUIEnabledFF)
         {
             this.realmData = realmData;
             this.loadingStatus = loadingStatus;
@@ -66,6 +71,22 @@ namespace DCL.PluginSystem.Global
             this.worldTerrainGenerator = worldTerrainGenerator;
 
             parcelService = new LandscapeParcelService(webRequestController, isZone);
+
+            //HACK to be removed
+            //This if should go when we decide to keep GPUI enabled or not.
+            //As of now, if we have to turn it off because of an emergency situation, we need to regenerate the cache.
+            //GPUI cache and regular terrain cache are not compatible
+            //Also, when decision is taken, make `forceCacheRegen` private again
+            int storedGPUIValue = PlayerPrefs.GetInt(FeatureFlagsStrings.GPUI_ENABLED, 0);
+            bool wasEnabled = storedGPUIValue == 1;
+
+            if (isGPUIEnabledFF != wasEnabled)
+                terrainGenerator.forceCacheRegen = true;
+
+            PlayerPrefs.SetInt(FeatureFlagsStrings.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
+
+            if (isGPUIEnabledFF)
+                gpuiWrapper = new GPUIWrapper();
         }
 
         public void Dispose()
@@ -80,6 +101,8 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+
+            gpuiWrapper?.Initialize(landscapeData.Value);
 
             floor = new SatelliteFloor(realmData, landscapeData.Value);
 
@@ -119,6 +142,8 @@ namespace DCL.PluginSystem.Global
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
+
+            gpuiWrapper?.Inject(terrainGenerator, ref builder, debugContainerBuilder);
         }
     }
 }

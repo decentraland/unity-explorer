@@ -10,10 +10,10 @@ namespace DCL.Interaction.Raycast.Components
     {
         private bool isEnabled;
         private bool isAtDistance;
-        private EntityReference currentEntity;
-        private EntityReference nextEntity;
+        private Entity currentEntity;
+        private Entity nextEntity;
 
-        public HighlightComponent(bool isEnabled, bool isAtDistance, EntityReference currentEntity, EntityReference nextEntity) : this()
+        public HighlightComponent(bool isEnabled, bool isAtDistance, Entity currentEntity, Entity nextEntity) : this()
         {
             this.isEnabled = isEnabled;
             this.isAtDistance = isAtDistance;
@@ -21,7 +21,7 @@ namespace DCL.Interaction.Raycast.Components
             this.nextEntity = nextEntity;
         }
 
-        public static HighlightComponent NewEntityHighlightComponent(bool isAtDistance, EntityReference entityRef) =>
+        public static HighlightComponent NewEntityHighlightComponent(bool isAtDistance, Entity entityRef) =>
             new (
                 true,
                 isAtDistance,
@@ -29,7 +29,7 @@ namespace DCL.Interaction.Raycast.Components
                 entityRef
             );
 
-        public void Setup(bool atDistance, EntityReference newNextEntity)
+        public void Setup(bool atDistance, Entity newNextEntity)
         {
             isEnabled = true;
             isAtDistance = atDistance;
@@ -41,13 +41,13 @@ namespace DCL.Interaction.Raycast.Components
         {
             isEnabled = false;
             isAtDistance = false;
-            nextEntity = EntityReference.Null;
+            nextEntity = Entity.Null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Disable()
         {
-            nextEntity = EntityReference.Null;
+            nextEntity = Entity.Null;
             isEnabled = false;
         }
 
@@ -62,12 +62,12 @@ namespace DCL.Interaction.Raycast.Components
             isAtDistance;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly EntityReference CurrentEntityOrNull() =>
+        public readonly Entity CurrentEntityOrNull() =>
             currentEntity;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool IsEmpty() =>
-            currentEntity == EntityReference.Null;
+            currentEntity == Entity.Null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool CanPassAnUpdate() =>
@@ -75,7 +75,7 @@ namespace DCL.Interaction.Raycast.Components
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool ReadyForMaterial(World world) =>
-            isEnabled && nextEntity != EntityReference.Null && nextEntity.IsAlive(world);
+            isEnabled && nextEntity != Entity.Null && world.IsAlive(nextEntity);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SwitchEntity()
@@ -85,6 +85,6 @@ namespace DCL.Interaction.Raycast.Components
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasToResetLastEntity(World world) =>
-            isEnabled && currentEntity != nextEntity && currentEntity != EntityReference.Null && currentEntity.IsAlive(world);
+            isEnabled && currentEntity != nextEntity && currentEntity != Entity.Null && world.IsAlive(currentEntity);
     }
 }

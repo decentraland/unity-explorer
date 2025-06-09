@@ -6,6 +6,7 @@ using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -21,6 +22,16 @@ namespace DCL.PluginSystem.Global
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly ViewDependencies dependencies;
+
+        private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
+        private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
+        private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
+        private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
+        private ProvidedInstance<VoiceChatCombinedAudioSource> audioSource;
+        private VoiceChatMicrophoneHandler? voiceChatHandler;
+        private VoiceChatLivekitRoomHandler? livekitRoomHandler;
+        private VoiceChatController controller;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
@@ -37,7 +48,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IRoomHub roomHub,
             MainUIView mainUIView,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            ViewDependencies dependencies)
         {
             this.voiceChatSettingsProxy = voiceChatSettingsProxy;
             this.assetsProvisioner = assetsProvisioner;
@@ -45,6 +57,7 @@ namespace DCL.PluginSystem.Global
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.dependencies = dependencies;
         }
 
         public void Dispose()
@@ -54,7 +67,7 @@ namespace DCL.PluginSystem.Global
                 // Attempted to dispose before initialization - this is expected in some scenarios
                 return;
             }
-
+<
             voiceChatHandler.Dispose();
             livekitRoomHandler.Dispose();
 
@@ -73,10 +86,10 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
-            var configurations = voiceChatConfigurations.Value;
+            VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
 
             microphoneAudioFilter = await assetsProvisioner.ProvideInstanceAsync(configurations.MicrophoneAudioFilter, ct: ct);
-            var microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
+            AudioSource? microphoneAudioSource = microphoneAudioFilter.Value.GetComponent<AudioSource>();
 
             voiceChatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatSettings, ct: ct);
             var voiceChatSettings = voiceChatSettingsAsset.Value;
@@ -84,14 +97,16 @@ namespace DCL.PluginSystem.Global
 
             voiceChatConfigurationAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatConfiguration, ct: ct);
             var voiceChatConfiguration = voiceChatConfigurationAsset.Value;
+            VoiceChatConfiguration voiceChatConfiguration = voiceChatConfiguration;
 
             microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
             audioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration);
-
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
-            controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler);
+
+            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatHandler, voiceChatConfiguration);
+
+            controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, dependencies);
         }
 
         [Serializable]

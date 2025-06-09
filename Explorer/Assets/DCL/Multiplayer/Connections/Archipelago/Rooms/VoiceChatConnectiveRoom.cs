@@ -52,11 +52,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             var videoStreams = new VideoStreams(hub);
 
-            var audioRemixConveyor = new ThreadedAudioRemixConveyor();
+            var audioRemixConveyor = new OptimizedThreadedAudioRemixConveyor();
             var audioStreams = new AudioStreams(hub, audioRemixConveyor);
             var tracksFactory = new TracksFactory();
 
-            // Pass null for AudioTracks - Room constructor will create it automatically
             var room = new Room(
                 new ArrayMemoryPool(),
                 new DefaultActiveSpeakers(),

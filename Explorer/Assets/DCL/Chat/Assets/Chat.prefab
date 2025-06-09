@@ -1408,13 +1408,14 @@ MonoBehaviour:
   messagesPanel: {fileID: 3553545222316724595}
   chatAndConversationsPanel: {fileID: 8095301637773766841}
   memberListView: {fileID: 6899813477994807541}
-  chatTitleBar: {fileID: 2500753520900311977}
+  <chatTitleBar>k__BackingField: {fileID: 2500753520900311977}
   titlebarCanvasGroup: {fileID: 2957141579367184861}
   scrollToBottomButton: {fileID: 905818817793794684}
   scrollToBottomNumberText: {fileID: 1163320548587618039}
   scrollToBottomCanvasGroup: {fileID: 1816663618216097524}
   conversationsToolbar: {fileID: 5507091777745029389}
   conversationsToolbarCanvasGroup: {fileID: 3898375867954426524}
+  voiceChatTransform: {fileID: 3617744132193179929}
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
   IsMaskActive: 0
@@ -1602,10 +1603,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: VoiceChatTitleBarsContainer
       objectReference: {fileID: 0}
-    - target: {fileID: 5220831835979811257, guid: d863791227c6640739243f8c4cf57b56, type: 3}
-      propertyPath: VoiceChatContainer
-      value: 
-      objectReference: {fileID: 7363346495720809904}
     - target: {fileID: 5575090747823428928, guid: d863791227c6640739243f8c4cf57b56, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2181,6 +2178,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1300557755116459844}
     m_Modifications:
+    - target: {fileID: 1086776549892939732, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1086776549892939732, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1086776549892939732, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1086776549892939732, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1197160937912480662, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
@@ -2401,22 +2414,6 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8252046298835601429, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 8900561152139656757, guid: 59623bf8df2e8c147b5b255b7256f444, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2597,10 +2594,6 @@ PrefabInstance:
     - target: {fileID: 7301239302916120637, guid: ee73406bf16a6fe4b9d216a8a192a765, type: 3}
       propertyPath: m_Size
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8646576932515811346, guid: ee73406bf16a6fe4b9d216a8a192a765, type: 3}
-      propertyPath: m_Enabled
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

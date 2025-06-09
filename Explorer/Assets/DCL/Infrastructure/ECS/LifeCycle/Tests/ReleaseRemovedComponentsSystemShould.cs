@@ -29,7 +29,7 @@ namespace ECS.LifeCycle.Tests
             world.Get<RemovedComponents>(e).Set.Add(typeof(TestComponent1));
             Assert.That(world.Get<RemovedComponents>(e).Set.Count, Is.EqualTo(1));
 
-            system.FinalizeComponents(new Query());
+            system.FinalizeComponents(world.Query(QueryDescription.Null));
 
             Assert.That(world.Get<RemovedComponents>(e).Set.Count, Is.EqualTo(0));
         }

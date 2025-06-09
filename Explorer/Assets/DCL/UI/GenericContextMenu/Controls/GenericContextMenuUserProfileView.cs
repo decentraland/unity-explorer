@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
@@ -53,6 +54,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private CancellationTokenSource copyAnimationCts = new ();
         private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public override void UnregisterListeners()
         {
@@ -76,7 +78,11 @@ namespace DCL.UI.GenericContextMenu.Controls
         public void InjectDependencies(ViewDependencies dependencies)
         {
             viewDependencies = dependencies;
-            ProfilePictureView.InjectDependencies(dependencies);
+        }
+
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         public void Configure(UserProfileContextMenuControlSettings settings)
@@ -85,7 +91,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
 
-            ProfilePictureView.Setup(settings.userColor, settings.userThumbnailAddress, settings.userAddress);
+            ProfilePictureView.Setup(profileRepositoryWrapper, settings.userColor, settings.userThumbnailAddress, settings.userAddress);
             ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());

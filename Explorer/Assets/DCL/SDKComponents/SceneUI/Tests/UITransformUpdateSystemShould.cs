@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             sceneStateProvider.IsCurrent = isCurrentScene;
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             uiTransformComponent.IsHidden = isCurrentScene;
-            uiTransformComponent.RelationData.parent = world.Reference(sceneRoot);
+            uiTransformComponent.RelationData.parent = sceneRoot;
 
             // Act
             system.Update(0);

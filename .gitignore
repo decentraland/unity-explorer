@@ -65,5 +65,4 @@ Explorer/UserSettings
 .DS_Store?
 
 # Cursor Rules
-/Explorer/.cursor
-/Explorer/Assets/DCL/.cursor
+**/.cursor/

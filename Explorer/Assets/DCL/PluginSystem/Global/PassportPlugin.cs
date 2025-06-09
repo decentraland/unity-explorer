@@ -18,10 +18,12 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -70,6 +72,8 @@ namespace DCL.PluginSystem.Global
         private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private PassportController? passportController;
 
@@ -108,7 +112,9 @@ namespace DCL.PluginSystem.Global
             bool isNameEditorEnabled,
             bool isCallEnabled,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -145,6 +151,8 @@ namespace DCL.PluginSystem.Global
             this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
         }
 
         public void Dispose()
@@ -205,7 +213,9 @@ namespace DCL.PluginSystem.Global
                 isNameEditorEnabled,
                 isCallEnabled,
                 chatEventBus,
-                sharedSpaceManager
+                sharedSpaceManager,
+                profileRepositoryWrapper,
+                voiceChatCallStatusService
             );
 
             mvcManager.RegisterController(passportController);

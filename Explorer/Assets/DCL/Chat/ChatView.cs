@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.Web3;
@@ -11,6 +12,7 @@ using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -85,8 +87,8 @@ namespace DCL.Chat
 
         [Header("Title bar")]
 
-        [SerializeField]
-        private ChatTitleBarView chatTitleBar;
+        [field: SerializeField]
+        public ChatTitleBarView chatTitleBar { get; private set; }
 
         [SerializeField]
         private CanvasGroup titlebarCanvasGroup;
@@ -109,6 +111,11 @@ namespace DCL.Chat
 
         [SerializeField]
         private CanvasGroup conversationsToolbarCanvasGroup;
+
+        [Header("Voice chat")]
+
+        [SerializeField]
+        private RectTransform voiceChatTransform;
 
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
@@ -179,9 +186,8 @@ namespace DCL.Chat
         /// </summary>
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
-        public event Action StartCall;
-
         private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
@@ -205,6 +211,7 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
+        private Vector2 voiceChatSizeDelta;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -269,7 +276,7 @@ namespace DCL.Chat
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
-                            chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
+                            chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
                     }
 
@@ -342,6 +349,15 @@ namespace DCL.Chat
                     OnlineStatus.ONLINE :
                     OnlineStatus.OFFLINE);
             }
+        }
+
+        public void SetProfileDataPovider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            conversationsToolbar.SetProfileDataProvider(profileDataProvider);
+            memberListView.SetProfileDataProvider(profileDataProvider);
+            chatMessageViewer.SetProfileDataProvider(profileDataProvider);
+            chatInputBox.SetProfileDataProvider(profileDataProvider);
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         private void Start()
@@ -436,7 +452,6 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
             return base.HideAsync(ct, isInstant);
         }
 
@@ -447,7 +462,6 @@ namespace DCL.Chat
             chatMessageViewer.InjectDependencies(dependencies);
             memberListView.InjectDependencies(dependencies);
             chatTitleBar.InjectDependencies(dependencies);
-            conversationsToolbar.InjectDependencies(dependencies);
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
@@ -461,7 +475,6 @@ namespace DCL.Chat
             chatTitleBar.CloseChatButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.CloseMemberListButtonClicked += OnCloseChatButtonClicked;
             chatTitleBar.ShowMemberListButtonClicked += OnMemberListOpeningButtonClicked;
-            chatTitleBar.StartCall += OnStartCall;
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
@@ -481,10 +494,10 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
             viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
-
+            SubscribeToSubmitEvent();
+            
             closePopupTask = new UniTaskCompletionSource();
 
             conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
@@ -493,11 +506,6 @@ namespace DCL.Chat
             // Initializes the conversations toolbar
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
                 AddConversation(channelPair.Value);
-        }
-
-        private void OnStartCall()
-        {
-            StartCall?.Invoke();
         }
 
         private void OnDeleteChatHistoryRequested()
@@ -785,7 +793,7 @@ namespace DCL.Chat
             else
                 chatMessageViewer.StartChatEntriesFadeout();
         }
-
+        
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
             if (isChatFocused)
@@ -798,7 +806,7 @@ namespace DCL.Chat
                 // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
                 if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
-
+        
                 Focus();
             }
         }
@@ -969,12 +977,18 @@ namespace DCL.Chat
                     messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
                     conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    voiceChatSizeDelta = voiceChatTransform.sizeDelta;
+                    voiceChatSizeDelta.x = 0;
+                    voiceChatTransform.DOSizeDelta(voiceChatSizeDelta, BackgroundFadeTime);
                 }
                 else
                 {
                     messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
                     conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                    voiceChatSizeDelta = voiceChatTransform.sizeDelta;
+                    voiceChatSizeDelta.x = -40;
+                    voiceChatTransform.DOSizeDelta(voiceChatSizeDelta, BackgroundFadeTime);
                 }
             }
             else
@@ -985,6 +999,9 @@ namespace DCL.Chat
                 conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
                 titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
                 titlebarCanvasGroup.gameObject.SetActive(isVisible);
+                voiceChatSizeDelta = voiceChatTransform.sizeDelta;
+                voiceChatSizeDelta.x = isVisible ? 0 : -40;
+                voiceChatTransform.sizeDelta = voiceChatSizeDelta;
             }
         }
 
@@ -1008,6 +1025,31 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
+        }
+
+        private bool isSubmitHooked;
+        public void SubscribeToSubmitEvent()
+        {
+            if (isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to subscribe to submit event when it was already hooked");
+                return;
+            }
+
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
+            isSubmitHooked = true;
+        }
+
+        public void UnsubscribeToSubmitEvent()
+        {
+            if (!isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to unsubscribe from submit event when it was not hooked");
+                return;
+            }
+
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            isSubmitHooked = false;
         }
     }
 }

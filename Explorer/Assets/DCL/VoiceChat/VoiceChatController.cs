@@ -1,3 +1,6 @@
+using DCL.Audio;
+using DCL.Web3;
+using MVC;
 using System;
 using System.Collections.Generic;
 
@@ -10,7 +13,11 @@ namespace DCL.VoiceChat
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly MicrophoneButtonController micController;
 
-        public VoiceChatController(VoiceChatView view, IVoiceChatCallStatusService voiceChatCallStatusService, VoiceChatMicrophoneHandler microphoneHandler)
+        public VoiceChatController(
+            VoiceChatView view,
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            VoiceChatMicrophoneHandler microphoneHandler,
+            ViewDependencies dependencies)
         {
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
@@ -18,12 +25,13 @@ namespace DCL.VoiceChat
 
             view.IncomingCallView.AcceptCallButton.onClick.AddListener(AcceptCall);
             view.IncomingCallView.RefuseCallButton.onClick.AddListener(RefuseCall);
+            view.IncomingCallView.ProfileView.InjectDependencies(dependencies);
 
-            view.OutgoingCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.OutgoingCallView.HangUpButton.onClick.AddListener(HangUp);
+            view.OutgoingCallView.ProfileView.InjectDependencies(dependencies);
 
-            view.InCallView.MicrophoneButton.MicButton.onClick.AddListener(ToggleMicrophone);
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
+            view.InCallView.ProfileView.InjectDependencies(dependencies);
 
             var list = new List<MicrophoneButton>
             {
@@ -31,7 +39,7 @@ namespace DCL.VoiceChat
                 view.InCallView.MicrophoneButton,
             };
 
-            micController = new MicrophoneButtonController(list, microphoneHandler);
+            micController = new MicrophoneButtonController(list, microphoneHandler, view.MuteMicrophoneAudio, view.UnMuteMicrophoneAudio);
 
             this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
         }
@@ -39,25 +47,15 @@ namespace DCL.VoiceChat
         private void OnVoiceChatStatusChanged(VoiceChatStatus status)
         {
             if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
-                Hide();
+                view.Hide(status, this.voiceChatCallStatusService.CurrentTargetWallet);
             else
-                Show();
+                view.Show(status, this.voiceChatCallStatusService.CurrentTargetWallet);
 
-            view.SetActiveSection(status);
-        }
-
-        public void Show()
-        {
-            view.VoiceChatContainer.SetActive(true);
-        }
-
-        public void Hide()
-        {
-            view.VoiceChatContainer.SetActive(false);
         }
 
         private void HangUp()
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.LeaveCallAudio);
             voiceChatCallStatusService.StopCall();
         }
 
@@ -73,7 +71,7 @@ namespace DCL.VoiceChat
 
         private void AcceptCall()
         {
-            voiceChatCallStatusService.StartCall("");
+            voiceChatCallStatusService.StartCall(new Web3Address());
         }
 
         public void Dispose()

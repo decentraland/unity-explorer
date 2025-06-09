@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
+using DCL.VoiceChat;
 using DCL.Web3;
 using MVC;
 using System;
@@ -20,7 +22,6 @@ namespace DCL.Chat
         public event Action? CloseMemberListButtonClicked;
         public event Action? HideMemberListButtonClicked;
         public event Action? ShowMemberListButtonClicked;
-        public event Action? StartCall;
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
@@ -30,7 +31,8 @@ namespace DCL.Chat
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
-        [SerializeField] private Button callButton;
+        [field: SerializeField]
+        public CallButtonView CallButton { get; private set; }
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
@@ -84,7 +86,6 @@ namespace DCL.Chat
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
             profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
             profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
-            callButton.onClick.AddListener(OnStartCall);
             isInitialized = true;
         }
 
@@ -108,7 +109,7 @@ namespace DCL.Chat
 
         public void SetCallButtonStatus(bool isActive)
         {
-            callButton.gameObject.SetActive(isActive);
+            CallButton.gameObject.SetActive(isActive);
         }
 
         public void SetNearbyChannelImage()
@@ -118,11 +119,11 @@ namespace DCL.Chat
             profileView.gameObject.SetActive(false);
         }
 
-        public void SetupProfileView(Web3Address userId)
+        public void SetupProfileView(Web3Address userId, ProfileRepositoryWrapper profileDataProvider)
         {
             cts = cts.SafeRestart();
             profileView.gameObject.SetActive(true);
-            profileView.SetupAsync(userId, cts.Token).Forget();
+            profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
         }
@@ -175,11 +176,6 @@ namespace DCL.Chat
         private void OnProfileContextMenuOpened()
         {
             ContextMenuVisibilityChanged?.Invoke(true);
-        }
-
-        private void OnStartCall()
-        {
-            StartCall?.Invoke();
         }
 
         private void OnDisable()

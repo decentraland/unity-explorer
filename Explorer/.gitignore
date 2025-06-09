@@ -78,3 +78,7 @@ Assets/AddressableAssetsData/ProfileDataSourceSettings.asset.meta
 
 # Disk caching
 DiskCache/
+
+#GPUI PRO
+Assets/GPUInstancerPro/
+Assets/GPUInstancerPro.meta

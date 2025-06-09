@@ -12,7 +12,7 @@ namespace DCL.VoiceChat
         [Header("Voice Detection Configurations")]
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
         public float HoldThresholdInSeconds = 0.5f;
-        
+
         [Header("General Settings")]
         [Tooltip("Enable or disable all audio processing (noise reduction, filters, etc.)")]
         public bool EnableAudioProcessing = true;
