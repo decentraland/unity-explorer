@@ -238,6 +238,14 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
+            diagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                diagnosticsContainer.Sentry?.AddRealmInfoToScope(scope,
+                    container.RealmData.Ipfs.CatalystBaseUrl.Value,
+                    container.RealmData.Ipfs.ContentBaseUrl.Value,
+                    container.RealmData.Ipfs.LambdasBaseUrl.Value);
+            });
+
             var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
             if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {

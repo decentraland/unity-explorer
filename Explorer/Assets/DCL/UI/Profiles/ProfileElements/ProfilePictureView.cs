@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
@@ -23,23 +24,18 @@ namespace DCL.UI.ProfileElements
             cts.SafeCancelAndDispose();
         }
 
-        public void Setup(Color userColor, Uri faceSnapshotUrl, string userId)
-        {
-            SetupOnlyColor(userColor);
-            LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
-        }
-
-        public async UniTask SetupWithDependenciesAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string userId, CancellationToken ct)
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string userId, CancellationToken ct)
         {
             this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
             await LoadThumbnailAsync(faceSnapshotUrl, userId, ct);
         }
 
-        public void SetupWithDependencies(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string userId)
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string userId)
         {
             this.profileRepositoryWrapper = profileDataProvider;
-            Setup(userColor, faceSnapshotUrl, userId);
+            SetupOnlyColor(userColor);
+            LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
         }
 
         public void SetupOnlyColor(Color userColor)
@@ -57,11 +53,6 @@ namespace DCL.UI.ProfileElements
         {
             thumbnailImageView.SetImage(defaultEmptyThumbnail);
             currentUserId = null;
-        }
-
-        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
-        {
-            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
@@ -106,8 +97,10 @@ namespace DCL.UI.ProfileElements
             {
                 currentUserId = null;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
+
                 currentUserId = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }

@@ -87,7 +87,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             if (profile is not null)
             {
                 view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
-                await view.profilePictureView.SetupWithDependenciesAsync(profileRepositoryWrapper, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
+                await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
             }
             else
             {

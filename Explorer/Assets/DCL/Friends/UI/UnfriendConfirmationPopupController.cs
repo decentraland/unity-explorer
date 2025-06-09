@@ -50,7 +50,6 @@ namespace DCL.Friends.UI
         {
             base.OnViewInstantiated();
 
-            viewInstance!.SetProfileDataProvider(profileRepositoryWrapper);
             viewInstance!.CancelButton.onClick.AddListener(Close);
             viewInstance.ConfirmButton.onClick.AddListener(Unfriend);
         }
@@ -73,8 +72,7 @@ namespace DCL.Friends.UI
                 if (profile == null) return;
 
                 viewInstance!.DescriptionLabel.text = $"Are you sure you want to unfriend {profile.Name}?";
-                viewInstance!.ProfilePicture.Setup(profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, inputData.UserId);
-                viewInstance!.ProfilePicture.SetProfileDataProvider(profileRepositoryWrapper);
+                viewInstance!.ProfilePicture.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, inputData.UserId);
             }
         }
 

@@ -155,7 +155,7 @@ namespace DCL.Chat
         {
             customIcon.gameObject.SetActive(false);
             profilePictureView.gameObject.SetActive(true);
-            profilePictureView.SetupWithDependencies(profileDataProvider, userColor, faceSnapshotUrl, userId);
+            profilePictureView.Setup(profileDataProvider, userColor, faceSnapshotUrl, userId);
             tooltipText.color = userColor;
         }
 
