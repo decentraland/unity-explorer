@@ -91,7 +91,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             foreach (var skinnedMeshRenderer in emptyDefaultWearable.GetComponentsInChildren<SkinnedMeshRenderer>())
             {
                 skinnedMeshRenderer.sharedMesh = mesh;
-                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, skinnedMeshRenderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer.sharedMaterial));
             }
 
             IWearable emptyWearable = wearableStorage.GetOrAddByDTO(wearableDTO, false);
