@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
@@ -84,6 +85,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
         [field: SerializeField] public MembersListView MembersListView { get; private set; }
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; }
+        [field: SerializeField] public EventListView EventListView { get; private set; }
 
         private readonly UniTask[] closingTasks = new UniTask[2];
         private CancellationTokenSource confirmationDialogCts = new ();

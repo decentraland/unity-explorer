@@ -275,6 +275,7 @@ MonoBehaviour:
     ThumbnailWidth: 272
   <MembersListView>k__BackingField: {fileID: 4230793288233944100}
   <PlacesSectionView>k__BackingField: {fileID: 3484876337616357202}
+  <EventListView>k__BackingField: {fileID: 5847551431108673237}
 --- !u!1 &1695563204552479908
 GameObject:
   m_ObjectHideFlags: 0
@@ -894,6 +895,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 270324596577273709}
     m_Modifications:
+    - target: {fileID: 2693400425937275912, guid: e4edf3a7bf4ec44daada2bfe4ce5edb0, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2693400425937275912, guid: e4edf3a7bf4ec44daada2bfe4ce5edb0, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4790585047474772874, guid: e4edf3a7bf4ec44daada2bfe4ce5edb0, type: 3}
       propertyPath: m_Name
       value: Events
@@ -988,6 +997,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5019862291193874967, guid: e4edf3a7bf4ec44daada2bfe4ce5edb0, type: 3}
   m_PrefabInstance: {fileID: 655799890762218701}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5847551431108673237 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6358928249062425112, guid: e4edf3a7bf4ec44daada2bfe4ce5edb0, type: 3}
+  m_PrefabInstance: {fileID: 655799890762218701}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e525005e3fac42a0a131ed6e51331cc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1626465448791032582
 PrefabInstance:
   m_ObjectHideFlags: 0

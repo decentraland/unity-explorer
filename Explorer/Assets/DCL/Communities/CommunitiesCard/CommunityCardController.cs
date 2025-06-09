@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
@@ -52,6 +53,7 @@ namespace DCL.Communities.CommunitiesCard
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
+        private EventListController? eventListController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
@@ -104,6 +106,7 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController?.Dispose();
             membersListController?.Dispose();
             placesSectionController?.Dispose();
+            eventListController?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -134,6 +137,8 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 clipboard,
                 webBrowser);
+
+            eventListController = new EventListController(viewInstance.EventListView);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
