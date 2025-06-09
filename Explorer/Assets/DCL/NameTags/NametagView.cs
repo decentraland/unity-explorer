@@ -19,6 +19,7 @@ namespace DCL.Nametags
         private static AnimationCurveEvaluator curveEvaluator;
         private static float verifiedIconWidth;
         private static float privateMessageIconWidth;
+        private static float isTalkingIconWidth;
         private static Material? opaqueMaterial;
         private static Material? transparentMaterial;
         private static Vector2 claimedNameInitialPosition;
@@ -45,6 +46,8 @@ namespace DCL.Nametags
         private static float animationOutDurationTenth = NametagViewConstants.DEFAULT_BUBBLE_ANIMATION_OUT_DURATION / 10f;
         private static float bubbleMarginOffsetHeightThird = NametagViewConstants.DEFAULT_BUBBLE_MARGIN_OFFSET_HEIGHT / 3f;
 
+        private bool isTalking;
+
         [field: SerializeField] public SpriteRenderer BackgroundSprite { get; private set; }
         [field: SerializeField] internal TMP_Text usernameText { get; private set; }
         [field: SerializeField] internal RectTransform verifiedIcon { get; private set; }
@@ -57,6 +60,8 @@ namespace DCL.Nametags
         [field: SerializeField] internal AnimationCurve alphaOverDistanceCurve { get; private set; }
         [field: SerializeField] internal RectTransform privateMessageIcon { get; private set; }
         [field: SerializeField] internal SpriteRenderer privateMessageIconRenderer { get; private set; }
+        [field: SerializeField] internal RectTransform voiceChatIcon { get; private set; }
+        [field: SerializeField] internal SpriteRenderer voiceChatIconRenderer { get; private set; }
         [field: SerializeField] internal TMP_Text privateMessageText { get; private set; }
 
         private enum AnimationState
@@ -116,6 +121,7 @@ namespace DCL.Nametags
 
             privateMessageIconWidth = privateMessageIcon.sizeDelta.x;
             verifiedIconWidth = verifiedIcon.sizeDelta.x;
+            isTalkingIconWidth = voiceChatIcon.sizeDelta.x;
 
             claimedNameInitialPosition = new Vector2(-verifiedIconWidth / 2, 0);
             messageContentAnchoredPosition = new Vector2(0, bubbleMarginOffsetHeight / 3);
@@ -298,6 +304,19 @@ namespace DCL.Nametags
             }
 
             StartChatBubbleFlowAsync(chatMessage, cts.Token).Forget();
+        }
+
+        public void ToggleIsTalking(bool isTalking)
+        {
+            this.isTalking = isTalking;
+            if (isTalking)
+            {
+
+            }
+            else
+            {
+
+            }
         }
 
         private void ResetElement()
@@ -532,15 +551,15 @@ namespace DCL.Nametags
         }
 
         private Vector2 CalculatePreferredSize(out float availableWidthForPrivateMessage) =>
-            CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
+            CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, isTalkingIconWidth, isTalking, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
                 additionalHeight, messageContent.preferredHeight, isClaimedName, isPrivateMessage,
                 privateMessageText.preferredWidth, privateMessageIconWidth, out availableWidthForPrivateMessage);
 
         [BurstCompile]
-        private static float2 CalculatePreferredSize(float2 preferredSize, float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float messageWidth, float maxWidth,
+        private static float2 CalculatePreferredSize(float2 preferredSize, float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float isTalkingIconWidth, bool isTalking, float messageWidth, float maxWidth,
             float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, float privateMessageTextWidth, float privateMessageIconWidth, out float availableWidthForPrivateMessage)
         {
-            float baseWidth = usernameWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageIconWidth : 0);
+            float baseWidth = usernameWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageIconWidth : 0) + (isTalking ? isTalkingIconWidth : 0);
 
             availableWidthForPrivateMessage = maxWidth - baseWidth;
             float adjustedPrivateMessageWidth = hasPrivateMessageIcon ? Mathf.Min(privateMessageTextWidth, availableWidthForPrivateMessage) : 0;
