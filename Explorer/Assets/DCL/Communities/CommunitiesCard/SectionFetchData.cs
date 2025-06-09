@@ -10,7 +10,7 @@ namespace DCL.Communities.CommunitiesCard
         public int totalFetched;
         public int totalToFetch;
 
-        public readonly List<T> members;
+        public readonly List<T> items;
 
         public SectionFetchData(int pageSize)
         {
@@ -18,7 +18,7 @@ namespace DCL.Communities.CommunitiesCard
             pageNumber = 0;
             totalFetched = 0;
             totalToFetch = 0;
-            members = new List<T>(pageSize);
+            items = new List<T>(pageSize);
         }
 
         public void Reset()
@@ -26,7 +26,7 @@ namespace DCL.Communities.CommunitiesCard
             pageNumber = 0;
             totalFetched = 0;
             totalToFetch = 0;
-            members.Clear();
+            items.Clear();
         }
     }
 }

@@ -124,6 +124,7 @@ namespace DCL.PlacesAPIService
             return response.data;
         }
 
+        //TODO: This method currently return made up data: fetch actual data from the endpoint when it is available
         public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
         {
             await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
