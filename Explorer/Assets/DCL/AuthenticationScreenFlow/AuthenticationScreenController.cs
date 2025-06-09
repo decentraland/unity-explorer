@@ -17,7 +17,6 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
@@ -26,6 +25,8 @@ using Utility;
 #if !UNITY_EDITOR
 using DCL.Web3;
 using System.Collections.Generic;
+#else
+using UnityEditor;
 #endif
 
 namespace DCL.AuthenticationScreenFlow
