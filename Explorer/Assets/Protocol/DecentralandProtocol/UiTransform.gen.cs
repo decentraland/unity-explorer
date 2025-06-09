@@ -26,7 +26,7 @@ namespace DCL.ECSComponents {
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvdWlfdHJhbnNmb3JtLnBy",
             "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJhbGFu",
-            "ZC9jb21tb24vY29sb3JzLnByb3RvIrQgCg1QQlVpVHJhbnNmb3JtEg4KBnBh",
+            "ZC9jb21tb24vY29sb3JzLnByb3RvItYgCg1QQlVpVHJhbnNmb3JtEg4KBnBh",
             "cmVudBgBIAEoBRIQCghyaWdodF9vZhgCIAEoBRJACg1hbGlnbl9jb250ZW50",
             "GAMgASgOMiQuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLllHQWxpZ25I",
             "AIgBARI+CgthbGlnbl9pdGVtcxgEIAEoDjIkLmRlY2VudHJhbGFuZC5zZGsu",
@@ -104,46 +104,46 @@ namespace DCL.ECSComponents {
             "bW9uLkNvbG9yNEgWiAEBEjsKEWJvcmRlcl9sZWZ0X2NvbG9yGEcgASgLMhsu",
             "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjRIF4gBARI8ChJib3JkZXJfcmln",
             "aHRfY29sb3IYSCABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNvbG9yNEgY",
-            "iAEBEhQKB3pfaW5kZXgYTSABKAVIGYgBAUIQCg5fYWxpZ25fY29udGVudEIO",
-            "CgxfYWxpZ25faXRlbXNCDAoKX2ZsZXhfd3JhcEIOCgxfZmxleF9zaHJpbmtC",
-            "EQoPX3BvaW50ZXJfZmlsdGVyQhkKF19ib3JkZXJfbGVmdF93aWR0aF91bml0",
-            "QhQKEl9ib3JkZXJfbGVmdF93aWR0aEIYChZfYm9yZGVyX3RvcF93aWR0aF91",
-            "bml0QhMKEV9ib3JkZXJfdG9wX3dpZHRoQhoKGF9ib3JkZXJfcmlnaHRfd2lk",
-            "dGhfdW5pdEIVChNfYm9yZGVyX3JpZ2h0X3dpZHRoQhsKGV9ib3JkZXJfYm90",
-            "dG9tX3dpZHRoX3VuaXRCFgoUX2JvcmRlcl9ib3R0b21fd2lkdGhCHgocX2Jv",
-            "cmRlcl90b3BfbGVmdF9yYWRpdXNfdW5pdEIZChdfYm9yZGVyX3RvcF9sZWZ0",
-            "X3JhZGl1c0IfCh1fYm9yZGVyX3RvcF9yaWdodF9yYWRpdXNfdW5pdEIaChhf",
-            "Ym9yZGVyX3RvcF9yaWdodF9yYWRpdXNCIQofX2JvcmRlcl9ib3R0b21fbGVm",
-            "dF9yYWRpdXNfdW5pdEIcChpfYm9yZGVyX2JvdHRvbV9sZWZ0X3JhZGl1c0Ii",
-            "CiBfYm9yZGVyX2JvdHRvbV9yaWdodF9yYWRpdXNfdW5pdEIdChtfYm9yZGVy",
-            "X2JvdHRvbV9yaWdodF9yYWRpdXNCEwoRX2JvcmRlcl90b3BfY29sb3JCFgoU",
-            "X2JvcmRlcl9ib3R0b21fY29sb3JCFAoSX2JvcmRlcl9sZWZ0X2NvbG9yQhUK",
-            "E19ib3JkZXJfcmlnaHRfY29sb3JCCgoIX3pfaW5kZXgqNgoOWUdQb3NpdGlv",
-            "blR5cGUSEQoNWUdQVF9SRUxBVElWRRAAEhEKDVlHUFRfQUJTT0xVVEUQASqd",
-            "AQoHWUdBbGlnbhIMCghZR0FfQVVUTxAAEhIKDllHQV9GTEVYX1NUQVJUEAES",
-            "DgoKWUdBX0NFTlRFUhACEhAKDFlHQV9GTEVYX0VORBADEg8KC1lHQV9TVFJF",
-            "VENIEAQSEAoMWUdBX0JBU0VMSU5FEAUSFQoRWUdBX1NQQUNFX0JFVFdFRU4Q",
-            "BhIUChBZR0FfU1BBQ0VfQVJPVU5EEAcqSQoGWUdVbml0EhEKDVlHVV9VTkRF",
-            "RklORUQQABINCglZR1VfUE9JTlQQARIPCgtZR1VfUEVSQ0VOVBACEgwKCFlH",
-            "VV9BVVRPEAMqXwoPWUdGbGV4RGlyZWN0aW9uEgwKCFlHRkRfUk9XEAASDwoL",
-            "WUdGRF9DT0xVTU4QARIXChNZR0ZEX0NPTFVNTl9SRVZFUlNFEAISFAoQWUdG",
-            "RF9ST1dfUkVWRVJTRRADKj0KBllHV3JhcBIPCgtZR1dfTk9fV1JBUBAAEgwK",
-            "CFlHV19XUkFQEAESFAoQWUdXX1dSQVBfUkVWRVJTRRACKoQBCglZR0p1c3Rp",
-            "ZnkSEgoOWUdKX0ZMRVhfU1RBUlQQABIOCgpZR0pfQ0VOVEVSEAESEAoMWUdK",
-            "X0ZMRVhfRU5EEAISFQoRWUdKX1NQQUNFX0JFVFdFRU4QAxIUChBZR0pfU1BB",
-            "Q0VfQVJPVU5EEAQSFAoQWUdKX1NQQUNFX0VWRU5MWRAFKj0KCllHT3ZlcmZs",
-            "b3cSDwoLWUdPX1ZJU0lCTEUQABIOCgpZR09fSElEREVOEAESDgoKWUdPX1ND",
-            "Uk9MTBACKicKCVlHRGlzcGxheRIMCghZR0RfRkxFWBAAEgwKCFlHRF9OT05F",
-            "EAEqkQEKBllHRWRnZRIMCghZR0VfTEVGVBAAEgsKB1lHRV9UT1AQARINCglZ",
-            "R0VfUklHSFQQAhIOCgpZR0VfQk9UVE9NEAMSDQoJWUdFX1NUQVJUEAQSCwoH",
-            "WUdFX0VORBAFEhIKDllHRV9IT1JJWk9OVEFMEAYSEAoMWUdFX1ZFUlRJQ0FM",
-            "EAcSCwoHWUdFX0FMTBAIKjAKEVBvaW50ZXJGaWx0ZXJNb2RlEgwKCFBGTV9O",
-            "T05FEAASDQoJUEZNX0JMT0NLEAFCFKoCEURDTC5FQ1NDb21wb25lbnRzYgZw",
-            "cm90bzM="));
+            "iAEBEhQKB29wYWNpdHkYSSABKAJIGYgBARIUCgd6X2luZGV4GE0gASgFSBqI",
+            "AQFCEAoOX2FsaWduX2NvbnRlbnRCDgoMX2FsaWduX2l0ZW1zQgwKCl9mbGV4",
+            "X3dyYXBCDgoMX2ZsZXhfc2hyaW5rQhEKD19wb2ludGVyX2ZpbHRlckIZChdf",
+            "Ym9yZGVyX2xlZnRfd2lkdGhfdW5pdEIUChJfYm9yZGVyX2xlZnRfd2lkdGhC",
+            "GAoWX2JvcmRlcl90b3Bfd2lkdGhfdW5pdEITChFfYm9yZGVyX3RvcF93aWR0",
+            "aEIaChhfYm9yZGVyX3JpZ2h0X3dpZHRoX3VuaXRCFQoTX2JvcmRlcl9yaWdo",
+            "dF93aWR0aEIbChlfYm9yZGVyX2JvdHRvbV93aWR0aF91bml0QhYKFF9ib3Jk",
+            "ZXJfYm90dG9tX3dpZHRoQh4KHF9ib3JkZXJfdG9wX2xlZnRfcmFkaXVzX3Vu",
+            "aXRCGQoXX2JvcmRlcl90b3BfbGVmdF9yYWRpdXNCHwodX2JvcmRlcl90b3Bf",
+            "cmlnaHRfcmFkaXVzX3VuaXRCGgoYX2JvcmRlcl90b3BfcmlnaHRfcmFkaXVz",
+            "QiEKH19ib3JkZXJfYm90dG9tX2xlZnRfcmFkaXVzX3VuaXRCHAoaX2JvcmRl",
+            "cl9ib3R0b21fbGVmdF9yYWRpdXNCIgogX2JvcmRlcl9ib3R0b21fcmlnaHRf",
+            "cmFkaXVzX3VuaXRCHQobX2JvcmRlcl9ib3R0b21fcmlnaHRfcmFkaXVzQhMK",
+            "EV9ib3JkZXJfdG9wX2NvbG9yQhYKFF9ib3JkZXJfYm90dG9tX2NvbG9yQhQK",
+            "El9ib3JkZXJfbGVmdF9jb2xvckIVChNfYm9yZGVyX3JpZ2h0X2NvbG9yQgoK",
+            "CF9vcGFjaXR5QgoKCF96X2luZGV4KjYKDllHUG9zaXRpb25UeXBlEhEKDVlH",
+            "UFRfUkVMQVRJVkUQABIRCg1ZR1BUX0FCU09MVVRFEAEqnQEKB1lHQWxpZ24S",
+            "DAoIWUdBX0FVVE8QABISCg5ZR0FfRkxFWF9TVEFSVBABEg4KCllHQV9DRU5U",
+            "RVIQAhIQCgxZR0FfRkxFWF9FTkQQAxIPCgtZR0FfU1RSRVRDSBAEEhAKDFlH",
+            "QV9CQVNFTElORRAFEhUKEVlHQV9TUEFDRV9CRVRXRUVOEAYSFAoQWUdBX1NQ",
+            "QUNFX0FST1VORBAHKkkKBllHVW5pdBIRCg1ZR1VfVU5ERUZJTkVEEAASDQoJ",
+            "WUdVX1BPSU5UEAESDwoLWUdVX1BFUkNFTlQQAhIMCghZR1VfQVVUTxADKl8K",
+            "D1lHRmxleERpcmVjdGlvbhIMCghZR0ZEX1JPVxAAEg8KC1lHRkRfQ09MVU1O",
+            "EAESFwoTWUdGRF9DT0xVTU5fUkVWRVJTRRACEhQKEFlHRkRfUk9XX1JFVkVS",
+            "U0UQAyo9CgZZR1dyYXASDwoLWUdXX05PX1dSQVAQABIMCghZR1dfV1JBUBAB",
+            "EhQKEFlHV19XUkFQX1JFVkVSU0UQAiqEAQoJWUdKdXN0aWZ5EhIKDllHSl9G",
+            "TEVYX1NUQVJUEAASDgoKWUdKX0NFTlRFUhABEhAKDFlHSl9GTEVYX0VORBAC",
+            "EhUKEVlHSl9TUEFDRV9CRVRXRUVOEAMSFAoQWUdKX1NQQUNFX0FST1VORBAE",
+            "EhQKEFlHSl9TUEFDRV9FVkVOTFkQBSo9CgpZR092ZXJmbG93Eg8KC1lHT19W",
+            "SVNJQkxFEAASDgoKWUdPX0hJRERFThABEg4KCllHT19TQ1JPTEwQAionCglZ",
+            "R0Rpc3BsYXkSDAoIWUdEX0ZMRVgQABIMCghZR0RfTk9ORRABKpEBCgZZR0Vk",
+            "Z2USDAoIWUdFX0xFRlQQABILCgdZR0VfVE9QEAESDQoJWUdFX1JJR0hUEAIS",
+            "DgoKWUdFX0JPVFRPTRADEg0KCVlHRV9TVEFSVBAEEgsKB1lHRV9FTkQQBRIS",
+            "Cg5ZR0VfSE9SSVpPTlRBTBAGEhAKDFlHRV9WRVJUSUNBTBAHEgsKB1lHRV9B",
+            "TEwQCCowChFQb2ludGVyRmlsdGVyTW9kZRIMCghQRk1fTk9ORRAAEg0KCVBG",
+            "TV9CTE9DSxABQhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.YGPositionType), typeof(global::DCL.ECSComponents.YGAlign), typeof(global::DCL.ECSComponents.YGUnit), typeof(global::DCL.ECSComponents.YGFlexDirection), typeof(global::DCL.ECSComponents.YGWrap), typeof(global::DCL.ECSComponents.YGJustify), typeof(global::DCL.ECSComponents.YGOverflow), typeof(global::DCL.ECSComponents.YGDisplay), typeof(global::DCL.ECSComponents.YGEdge), typeof(global::DCL.ECSComponents.PointerFilterMode), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiTransform), global::DCL.ECSComponents.PBUiTransform.Parser, new[]{ "Parent", "RightOf", "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PositionType", "AlignSelf", "FlexDirection", "JustifyContent", "Overflow", "Display", "FlexBasisUnit", "FlexBasis", "FlexGrow", "WidthUnit", "Width", "HeightUnit", "Height", "MinWidthUnit", "MinWidth", "MinHeightUnit", "MinHeight", "MaxWidthUnit", "MaxWidth", "MaxHeightUnit", "MaxHeight", "PositionLeftUnit", "PositionLeft", "PositionTopUnit", "PositionTop", "PositionRightUnit", "PositionRight", "PositionBottomUnit", "PositionBottom", "MarginLeftUnit", "MarginLeft", "MarginTopUnit", "MarginTop", "MarginRightUnit", "MarginRight", "MarginBottomUnit", "MarginBottom", "PaddingLeftUnit", "PaddingLeft", "PaddingTopUnit", "PaddingTop", "PaddingRightUnit", "PaddingRight", "PaddingBottomUnit", "PaddingBottom", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor", "ZIndex" }, new[]{ "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor", "ZIndex" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBUiTransform), global::DCL.ECSComponents.PBUiTransform.Parser, new[]{ "Parent", "RightOf", "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PositionType", "AlignSelf", "FlexDirection", "JustifyContent", "Overflow", "Display", "FlexBasisUnit", "FlexBasis", "FlexGrow", "WidthUnit", "Width", "HeightUnit", "Height", "MinWidthUnit", "MinWidth", "MinHeightUnit", "MinHeight", "MaxWidthUnit", "MaxWidth", "MaxHeightUnit", "MaxHeight", "PositionLeftUnit", "PositionLeft", "PositionTopUnit", "PositionTop", "PositionRightUnit", "PositionRight", "PositionBottomUnit", "PositionBottom", "MarginLeftUnit", "MarginLeft", "MarginTopUnit", "MarginTop", "MarginRightUnit", "MarginRight", "MarginBottomUnit", "MarginBottom", "PaddingLeftUnit", "PaddingLeft", "PaddingTopUnit", "PaddingTop", "PaddingRightUnit", "PaddingRight", "PaddingBottomUnit", "PaddingBottom", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor", "Opacity", "ZIndex" }, new[]{ "AlignContent", "AlignItems", "FlexWrap", "FlexShrink", "PointerFilter", "BorderLeftWidthUnit", "BorderLeftWidth", "BorderTopWidthUnit", "BorderTopWidth", "BorderRightWidthUnit", "BorderRightWidth", "BorderBottomWidthUnit", "BorderBottomWidth", "BorderTopLeftRadiusUnit", "BorderTopLeftRadius", "BorderTopRightRadiusUnit", "BorderTopRightRadius", "BorderBottomLeftRadiusUnit", "BorderBottomLeftRadius", "BorderBottomRightRadiusUnit", "BorderBottomRightRadius", "BorderTopColor", "BorderBottomColor", "BorderLeftColor", "BorderRightColor", "Opacity", "ZIndex" }, null, null, null)
           }));
     }
     #endregion
@@ -334,6 +334,7 @@ namespace DCL.ECSComponents {
       borderBottomColor_ = other.borderBottomColor_ != null ? other.borderBottomColor_.Clone() : null;
       borderLeftColor_ = other.borderLeftColor_ != null ? other.borderLeftColor_.Clone() : null;
       borderRightColor_ = other.borderRightColor_ != null ? other.borderRightColor_.Clone() : null;
+      opacity_ = other.opacity_;
       zIndex_ = other.zIndex_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -1598,18 +1599,46 @@ namespace DCL.ECSComponents {
       }
     }
 
+    /// <summary>Field number for the "opacity" field.</summary>
+    public const int OpacityFieldNumber = 73;
+    private float opacity_;
+    /// <summary>
+    /// default: 1
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Opacity {
+      get { if ((_hasBits0 & 2097152) != 0) { return opacity_; } else { return 0F; } }
+      set {
+        _hasBits0 |= 2097152;
+        opacity_ = value;
+      }
+    }
+    /// <summary>Gets whether the "opacity" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasOpacity {
+      get { return (_hasBits0 & 2097152) != 0; }
+    }
+    /// <summary>Clears the value of the "opacity" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearOpacity() {
+      _hasBits0 &= ~2097152;
+    }
+
     /// <summary>Field number for the "z_index" field.</summary>
     public const int ZIndexFieldNumber = 77;
     private int zIndex_;
     /// <summary>
-    /// default 0 — controls render stacking order. Higher values appear in front of lower values.
+    /// default: 0 — controls render stacking order. Higher values appear in front of lower values.
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int ZIndex {
-      get { if ((_hasBits0 & 2097152) != 0) { return zIndex_; } else { return 0; } }
+      get { if ((_hasBits0 & 4194304) != 0) { return zIndex_; } else { return 0; } }
       set {
-        _hasBits0 |= 2097152;
+        _hasBits0 |= 4194304;
         zIndex_ = value;
       }
     }
@@ -1617,13 +1646,13 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public bool HasZIndex {
-      get { return (_hasBits0 & 2097152) != 0; }
+      get { return (_hasBits0 & 4194304) != 0; }
     }
     /// <summary>Clears the value of the "z_index" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public void ClearZIndex() {
-      _hasBits0 &= ~2097152;
+      _hasBits0 &= ~4194304;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1713,6 +1742,7 @@ namespace DCL.ECSComponents {
       if (!object.Equals(BorderBottomColor, other.BorderBottomColor)) return false;
       if (!object.Equals(BorderLeftColor, other.BorderLeftColor)) return false;
       if (!object.Equals(BorderRightColor, other.BorderRightColor)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Opacity, other.Opacity)) return false;
       if (ZIndex != other.ZIndex) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -1793,6 +1823,7 @@ namespace DCL.ECSComponents {
       if (borderBottomColor_ != null) hash ^= BorderBottomColor.GetHashCode();
       if (borderLeftColor_ != null) hash ^= BorderLeftColor.GetHashCode();
       if (borderRightColor_ != null) hash ^= BorderRightColor.GetHashCode();
+      if (HasOpacity) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Opacity);
       if (HasZIndex) hash ^= ZIndex.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -2100,6 +2131,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(194, 4);
         output.WriteMessage(BorderRightColor);
       }
+      if (HasOpacity) {
+        output.WriteRawTag(205, 4);
+        output.WriteFloat(Opacity);
+      }
       if (HasZIndex) {
         output.WriteRawTag(232, 4);
         output.WriteInt32(ZIndex);
@@ -2402,6 +2437,10 @@ namespace DCL.ECSComponents {
         output.WriteRawTag(194, 4);
         output.WriteMessage(BorderRightColor);
       }
+      if (HasOpacity) {
+        output.WriteRawTag(205, 4);
+        output.WriteFloat(Opacity);
+      }
       if (HasZIndex) {
         output.WriteRawTag(232, 4);
         output.WriteInt32(ZIndex);
@@ -2631,6 +2670,9 @@ namespace DCL.ECSComponents {
       }
       if (borderRightColor_ != null) {
         size += 2 + pb::CodedOutputStream.ComputeMessageSize(BorderRightColor);
+      }
+      if (HasOpacity) {
+        size += 2 + 4;
       }
       if (HasZIndex) {
         size += 2 + pb::CodedOutputStream.ComputeInt32Size(ZIndex);
@@ -2874,6 +2916,9 @@ namespace DCL.ECSComponents {
           BorderRightColor = new global::Decentraland.Common.Color4();
         }
         BorderRightColor.MergeFrom(other.BorderRightColor);
+      }
+      if (other.HasOpacity) {
+        Opacity = other.Opacity;
       }
       if (other.HasZIndex) {
         ZIndex = other.ZIndex;
@@ -3193,6 +3238,10 @@ namespace DCL.ECSComponents {
             input.ReadMessage(BorderRightColor);
             break;
           }
+          case 589: {
+            Opacity = input.ReadFloat();
+            break;
+          }
           case 616: {
             ZIndex = input.ReadInt32();
             break;
@@ -3510,6 +3559,10 @@ namespace DCL.ECSComponents {
               BorderRightColor = new global::Decentraland.Common.Color4();
             }
             input.ReadMessage(BorderRightColor);
+            break;
+          }
+          case 589: {
+            Opacity = input.ReadFloat();
             break;
           }
           case 616: {
