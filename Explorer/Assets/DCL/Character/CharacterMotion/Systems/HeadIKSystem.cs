@@ -94,10 +94,21 @@ namespace DCL.CharacterMotion.Systems
             var mousePos = Mouse.current.position.value;
             var ray = cameraComponent.Camera.ScreenPointToRay(mousePos);
 
-            Vector3 targetDirection = ray.GetPoint(10);
+            Vector3 headPosition = avatarBase.HeadPositionConstraint.position;
+            Plane plane = new Plane(cameraComponent.Camera.transform.forward, headPosition);
+            if (!plane.Raycast(ray, out float distance))
+                return;
 
+            Vector3 targetPosition = ray.GetPoint(distance);
+            Vector3 targetDirection = (targetPosition - headPosition).normalized;
+            //
+            // Vector3 targetPosition = ray.GetPoint(10f);
+            // Vector3 targetDirection = (targetPosition - avatarBase.HeadPositionConstraint.position).normalized;
+
+            UnityEngine.Debug.Log($"VVV M:{mousePos} -> SC:{targetPosition} - AV: {avatarBase.HeadPositionConstraint.position} = {targetDirection}");
             ApplyHeadLookAt.Execute(targetDirection, avatarBase, dt, settings);
-            // Debug.Log($"VVV {a.x}");
+
+
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
