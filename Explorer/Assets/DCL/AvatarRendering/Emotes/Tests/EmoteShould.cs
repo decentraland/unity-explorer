@@ -11,7 +11,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             var model = new EmoteDTO
             {
-                metadata = new EmoteDTO.Metadata
+                metadata = new EmoteDTO.EmoteMetadataDto
                 {
                     id = urn,
                 },
@@ -28,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
         {
             var model = new EmoteDTO
             {
-                metadata = new EmoteDTO.Metadata
+                metadata = new EmoteDTO.EmoteMetadataDto
                 {
                     id = urn,
                 },

@@ -2,18 +2,13 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.UI.Profiles.Helpers;
-using DCL.Utilities.Extensions;
+using DCL.Profiles.Helpers;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using UnityEngine.Pool;
 
 namespace DCL.Profiles.Self
 {
@@ -21,13 +16,13 @@ namespace DCL.Profiles.Self
     {
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IEquippedWearables equippedWearables;
         private readonly IWearableStorage wearableStorage;
-        private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteStorage emoteStorage;
-        private readonly IReadOnlyList<string> forceRender;
         private readonly IReadOnlyList<URN>? forcedEmotes;
         private readonly ProfileBuilder profileBuilder = new ();
+        private readonly IEquippedWearables equippedWearables;
+        private readonly IEquippedEmotes equippedEmotes;
+        private readonly IReadOnlyList<string> forceRender;
 
         public SelfProfile(
             IProfileRepository profileRepository,
@@ -77,7 +72,7 @@ namespace DCL.Profiles.Self
             return profile;
         }
 
-        public async UniTask<Profile?> UpdateProfileAsync(bool publish, CancellationToken ct)
+        public async UniTask<Profile?> UpdateProfileAsync(CancellationToken ct)
         {
             Profile? profile = await ProfileAsync(ct);
 
@@ -87,24 +82,7 @@ namespace DCL.Profiles.Self
             if (profile == null)
                 throw new Exception("Self profile not found");
 
-            using PooledObject<HashSet<URN>> _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
-
-            uniqueWearables = uniqueWearables.EnsureNotNull();
-            ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
-
-            var uniqueEmotes = new URN[profile.Avatar?.Emotes?.Count ?? 0];
-            ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
-
-            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
-
-            Profile newProfile = profileBuilder.From(profile)
-                                               .WithBodyShape(bodyShape)
-                                               .WithWearables(uniqueWearables)
-                                               .WithColors(equippedWearables.GetColors())
-                                               .WithEmotes(uniqueEmotes)
-                                               .WithForceRender(forceRender)
-                                               .WithVersion(profile!.Version + 1)
-                                               .Build();
+            Profile newProfile = profile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables, forceRender, emoteStorage, wearableStorage);
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 
@@ -115,7 +93,7 @@ namespace DCL.Profiles.Self
             newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
             OwnProfile = newProfile;
 
-            await profileRepository.SetAsync(newProfile, publish, ct);
+            await profileRepository.SetAsync(newProfile, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
@@ -125,14 +103,14 @@ namespace DCL.Profiles.Self
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
             Profile newProfile = profileBuilder.From(profile)
-                                               .WithVersion(profile!.Version + 1)
+                                               .WithVersion(profile.Version + 1)
                                                .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
             newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
             OwnProfile = newProfile;
 
-            await profileRepository.SetAsync(newProfile, true, ct);
+            await profileRepository.SetAsync(newProfile, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
@@ -154,53 +132,8 @@ namespace DCL.Profiles.Self
             newProfile.UserNameColor = ProfileNameColorHelper.GetNameColor(profile.DisplayName);
             OwnProfile = newProfile;
 
-            await profileRepository.SetAsync(newProfile, publish: true, ct);
+            await profileRepository.SetAsync(newProfile, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
-        }
-
-        private void ConvertEquippedWearablesIntoUniqueUrns(Profile? profile, ISet<URN> uniqueWearables)
-        {
-            foreach ((string category, IWearable? w) in equippedWearables.Items())
-            {
-                if (w == null) continue;
-                if (category == WearablesConstants.Categories.BODY_SHAPE) continue;
-
-                URN uniqueUrn = w.GetUrn();
-
-                if (wearableStorage.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                    uniqueUrn = registry.First().Value.Urn;
-                else
-                {
-                    foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
-                        if (profileWearable.Shorten() == uniqueUrn)
-                            uniqueUrn = profileWearable;
-                }
-
-                uniqueWearables.Add(uniqueUrn);
-            }
-        }
-
-        private void ConvertEquippedEmotesIntoUniqueUrns(Profile? profile, IList<URN> uniqueEmotes)
-        {
-            for (var i = 0; i < equippedEmotes.SlotCount; i++)
-            {
-                IEmote? w = equippedEmotes.EmoteInSlot(i);
-
-                if (w == null) continue;
-
-                URN uniqueUrn = w.GetUrn();
-
-                if (emoteStorage.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                    uniqueUrn = registry.First().Value.Urn;
-                else
-                {
-                    foreach (URN urn in profile?.Avatar.Emotes ?? Array.Empty<URN>())
-                        if (urn.Shorten() == uniqueUrn)
-                            uniqueUrn = urn;
-                }
-
-                uniqueEmotes[i] = uniqueUrn;
-            }
         }
     }
 }

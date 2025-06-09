@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using MVC;
+using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -22,10 +22,10 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
         public BlockedPanelList(
             IFriendsService friendsService,
             IFriendsEventBus friendsEventBus,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             LoopListView2 loopListView,
             int pageSize,
-            int elementsMissingThreshold) : base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
+            int elementsMissingThreshold) : base(profileDataProvider, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendsEventBus = friendsEventBus;
@@ -67,7 +67,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
                 NoUserInCollection?.Invoke();
         }
 
-        public override int GetCollectionCount() =>
+        protected override int GetCollectionsDataCount() =>
             blockedProfiles.Count;
 
         protected override FriendProfile GetCollectionElement(int index) =>

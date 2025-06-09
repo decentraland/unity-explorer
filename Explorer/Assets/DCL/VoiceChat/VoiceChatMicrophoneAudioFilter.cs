@@ -173,7 +173,7 @@ namespace DCL.VoiceChat
             if (!processingEnabled)
             {
                 Span<float> silenceSpan = GetSilenceSpan(data.Length / channels);
-                audioReadEvent?.Invoke(silenceSpan, 1, GetEffectiveSampleRate());
+                //audioReadEvent?.Invoke(silenceSpan, 1, GetEffectiveSampleRate());
                 return;
             }
 
@@ -187,7 +187,7 @@ namespace DCL.VoiceChat
                 try
                 {
                     Span<float> processedSpan = ProcessAudioToSpan(data.AsSpan(), channels);
-                    audioReadEvent?.Invoke(processedSpan, 1, GetEffectiveSampleRate());
+                    //audioReadEvent?.Invoke(processedSpan, 1, GetEffectiveSampleRate());
                     return;
                 }
                 catch (Exception ex)
@@ -202,7 +202,7 @@ namespace DCL.VoiceChat
             }
 
             Span<float> monoSpan = ConvertToMonoSpan(data.AsSpan(), channels);
-            audioReadEvent?.Invoke(monoSpan, 1, GetEffectiveSampleRate());
+            //audioReadEvent?.Invoke(monoSpan, 1, GetEffectiveSampleRate());
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead
@@ -388,7 +388,7 @@ namespace DCL.VoiceChat
                 Span<float> audioSpan = audioChunk.AsSpan(0, sampleCount);
                 audioProcessor.ProcessAudio(audioSpan, microphoneSampleRate);
 
-                audioReadEvent?.Invoke(audioSpan, 1, microphoneSampleRate);
+                //audioReadEvent?.Invoke(audioSpan, 1, microphoneSampleRate);
             }
             catch (Exception ex)
             {

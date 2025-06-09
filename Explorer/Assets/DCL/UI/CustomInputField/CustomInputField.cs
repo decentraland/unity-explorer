@@ -41,8 +41,6 @@ namespace DCL.UI.CustomInputField
             base.OnDeselect(eventData);
         }
 
-        private readonly Event processingEvent = new ();
-
         public override void OnUpdateSelected(BaseEventData eventData)
         {
             if (!isFocused)
@@ -67,6 +65,9 @@ namespace DCL.UI.CustomInputField
             //refactored when we move this functionality to other input fields.
             if (Keyboard.current.leftCommandKey.wasPressedThisFrame || Keyboard.current.leftCtrlKey.wasPressedThisFrame)
                 isControlPressed = true;
+
+            if (Keyboard.current.tabKey.wasPressedThisFrame)
+                return true;
 
             if (isControlPressed && Keyboard.current.vKey.wasPressedThisFrame)
             {
@@ -146,7 +147,8 @@ namespace DCL.UI.CustomInputField
                          .Append(" ")
                          .Append(text.AsSpan(replaceAt + replaceAmount));
 
-            if (notify) text = stringBuilder.ToString();
+            if (notify)
+                text = stringBuilder.ToString();
             else
                 SetTextWithoutNotify(stringBuilder.ToString());
 

@@ -13,7 +13,7 @@ namespace DCL.Profiles
             this.profileCache = profileCache;
         }
 
-        public async UniTask SetAsync(Profile profile, bool publish, CancellationToken ct) =>
+        public async UniTask SetAsync(Profile profile, CancellationToken ct) =>
             profileCache.Set(profile.UserId, profile);
 
         public async UniTask<Profile?> GetAsync(string id, int version, URLDomain? fromCatalyst, CancellationToken ct) =>

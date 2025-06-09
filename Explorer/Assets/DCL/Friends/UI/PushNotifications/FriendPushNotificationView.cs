@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using MVC;
@@ -9,7 +10,7 @@ using UnityEngine;
 
 namespace DCL.Friends.UI.PushNotifications
 {
-    public class FriendPushNotificationView : ViewBase, IView, IViewWithGlobalDependencies
+    public class FriendPushNotificationView : ViewBase, IView
     {
         [field: SerializeField] public ProfilePictureView ProfilePictureView { get; private set; }
         [field: SerializeField] public TMP_Text UserNameText { get; private set; }
@@ -35,7 +36,7 @@ namespace DCL.Friends.UI.PushNotifications
             PanelCanvasGroup.alpha = 0f;
         }
 
-        internal void ConfigureForFriend(FriendProfile friendProfile)
+        internal void ConfigureForFriend(FriendProfile friendProfile, ProfileRepositoryWrapper profileDataProvider)
         {
             Color userColor = friendProfile.UserNameColor;
             UserNameText.color = userColor;
@@ -43,7 +44,7 @@ namespace DCL.Friends.UI.PushNotifications
             UserAddressText.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserAddressText.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
-            ProfilePictureView.Setup(friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
+            ProfilePictureView.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
 
         internal async UniTask ShowToastAsync(CancellationToken ct)
@@ -52,11 +53,6 @@ namespace DCL.Friends.UI.PushNotifications
             await PanelCanvasGroup.DOFade(1f, toastFadeInDuration).ToUniTask(cancellationToken: ct);
             await UniTask.Delay((int)(toastVisibleDuration * 1000), cancellationToken: ct);
             await PanelCanvasGroup.DOFade(0f, toastVFadeOutDuration).ToUniTask(cancellationToken: ct);
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            ProfilePictureView.InjectDependencies(dependencies);
         }
     }
 }

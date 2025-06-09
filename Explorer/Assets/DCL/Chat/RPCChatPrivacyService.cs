@@ -13,11 +13,11 @@ namespace DCL.Chat
 {
     public class RPCChatPrivacyService
     {
-        private readonly ObjectProxy<IRPCSocialServices> socialServiceRPCProxy;
+        private readonly IRPCSocialServices socialServiceRPCProxy;
         private readonly ChatSettingsAsset settingsAsset;
 
         public RPCChatPrivacyService(
-            ObjectProxy<IRPCSocialServices> socialServiceRPCProxy,
+            IRPCSocialServices socialServiceRPCProxy,
             ChatSettingsAsset settingsAsset)
         {
             this.socialServiceRPCProxy = socialServiceRPCProxy;
@@ -28,14 +28,14 @@ namespace DCL.Chat
 
         public async UniTaskVoid UpsertSocialSettingsAsync(bool receiveAllMessages, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var payload = new UpsertSocialSettingsPayload
             {
                 PrivateMessagesPrivacy = receiveAllMessages? PrivateMessagePrivacySetting.All : PrivateMessagePrivacySetting.OnlyFriends
             };
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
+            var response = await socialServiceRPCProxy.Module()!
                                                       .CallUnaryProcedure<UpsertSocialSettingsResponse>("UpsertSocialSettings", payload)
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -47,9 +47,9 @@ namespace DCL.Chat
 
         public async UniTask GetOwnSocialSettingsAsync(CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
+            var response = await socialServiceRPCProxy.Module()!
                                                       .CallUnaryProcedure<GetSocialSettingsResponse>("GetSocialSettings", new Empty())
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));
@@ -59,7 +59,7 @@ namespace DCL.Chat
 
         public async UniTask<PrivacySettingsForUsersPayload> GetPrivacySettingForUsersAsync(HashSet<string> walletIds, CancellationToken ct)
         {
-            await socialServiceRPCProxy.StrictObject.EnsureRpcConnectionAsync(ct);
+            await socialServiceRPCProxy.EnsureRpcConnectionAsync(ct);
 
             var users = new RepeatedField<User>();
 
@@ -71,7 +71,7 @@ namespace DCL.Chat
                 User = {users},
             };
 
-            var response = await socialServiceRPCProxy.StrictObject.Module()!
+            var response = await socialServiceRPCProxy.Module()!
                                                       .CallUnaryProcedure<GetPrivateMessagesSettingsResponse>("GetPrivateMessagesSettings", payload)
                                                       .AttachExternalCancellation(ct)
                                                       .Timeout(TimeSpan.FromSeconds(TIMEOUT_SECONDS));

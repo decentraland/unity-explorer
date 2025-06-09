@@ -4,8 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Settings;
-using DCL.Rendering.Highlight;
-using DCL.Rendering.Highlight.HighlightedObject;
+using DCL.Rendering.RenderGraphs.RenderFeatures.ObjectHighlight;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -42,7 +41,6 @@ namespace DCL.Interaction.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            HighlightRendererFeature.HighlightedObjects.DisparageAll();
             UpdateHighlightsQuery(World);
         }
 
@@ -57,7 +55,7 @@ namespace DCL.Interaction.Systems
             if (highlightComponent.IsEmpty())
                 return;
 
-            if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null && highlightComponent.CurrentEntityOrNull().IsAlive(World))
+            if (highlightComponent.CurrentEntityOrNull() != Entity.Null && World.IsAlive(highlightComponent.CurrentEntityOrNull()))
                 RemoveHighlight(highlightComponent.CurrentEntityOrNull());
 
             highlightComponent.MoveNextAndRemoveMaterial();
@@ -67,8 +65,8 @@ namespace DCL.Interaction.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
-            if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
-                && (!highlightComponent.CurrentEntityOrNull().IsAlive(World) || World!.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull())))
+            if (highlightComponent.CurrentEntityOrNull() != Entity.Null
+                && (!World.IsAlive(highlightComponent.CurrentEntityOrNull()) || World!.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull())))
                 highlightComponent.Disable();
 
             if (highlightComponent.ReadyForMaterial(World))
@@ -83,7 +81,7 @@ namespace DCL.Interaction.Systems
                 ResetHighlight(ref highlightComponent);
         }
 
-        private void AddOrUpdateHighlight(in EntityReference entity, bool isAtDistance)
+        private void AddOrUpdateHighlight(in Entity entity, bool isAtDistance)
         {
             using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers)!;
 
@@ -95,14 +93,14 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers!);
-                HighlightRendererFeature.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
+                RenderFeature_ObjectHighlight.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
             }
         }
 
         private Color GetColor(bool isAtDistance) =>
             isAtDistance ? settingsData.ValidColor : settingsData.InvalidColor;
 
-        private void RemoveHighlight(in EntityReference entity)
+        private void RemoveHighlight(in Entity entity)
         {
             using var scope = ListPool<Renderer>.Get(out var renderers)!;
 
@@ -114,13 +112,13 @@ namespace DCL.Interaction.Systems
             if (containsTransform)
             {
                 GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-                HighlightRendererFeature.HighlightedObjects.Disparage(renderers);
+                RenderFeature_ObjectHighlight.HighlightedObjects.Disparage(renderers);
             }
         }
 
         private void GetRenderersFromChildrenRecursive(ref TransformComponent entityTransform, List<Renderer> outputList)
         {
-            foreach (EntityReference child in entityTransform.Children)
+            foreach (Entity child in entityTransform.Children)
             {
                 AddRenderersFromEntity(child, outputList);
 
@@ -131,7 +129,7 @@ namespace DCL.Interaction.Systems
             }
         }
 
-        private void AddRenderersFromEntity(EntityReference child, List<Renderer> renderers)
+        private void AddRenderersFromEntity(Entity child, List<Renderer> renderers)
         {
             if (World!.TryGet(child, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
                 renderers.Add(primitiveMeshRendererComponent.MeshRenderer);

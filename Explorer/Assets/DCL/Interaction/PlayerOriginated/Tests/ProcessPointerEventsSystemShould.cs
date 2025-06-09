@@ -135,7 +135,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
         private GlobalColliderSceneEntityInfo CreateColliderInfo() =>
             new (new SceneEcsExecutor(world),
-                new ColliderSceneEntityInfo(world.Reference(world.Create(new CRDTEntity(123))), 123, ColliderLayer.ClPhysics));
+                new ColliderSceneEntityInfo(world.Create(new CRDTEntity(123)), 123, ColliderLayer.ClPhysics));
 
         private static PlayerOriginRaycastResultForSceneEntities GetRaycastAt(float distance)
         {
