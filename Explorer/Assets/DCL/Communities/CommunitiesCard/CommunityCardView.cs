@@ -53,6 +53,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject headerObject { get; set; }
         [field: SerializeField] private GameObject contentObject { get; set; }
         [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; }
+        [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; }
 
         [field: Header("Community interactions")]
         [field: SerializeField] private Button openWizardButton { get; set; }

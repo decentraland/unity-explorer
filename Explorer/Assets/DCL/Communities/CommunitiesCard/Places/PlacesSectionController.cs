@@ -16,6 +16,7 @@ using Utility;
 using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -28,6 +29,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
 
+        private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
+
         private const string JUMP_IN_LINK = " https://decentraland.org/jump/?position={0},{1}";
         private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
@@ -36,6 +39,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly WarningNotificationView inWorldSuccessNotificationView;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
@@ -50,6 +54,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
+            WarningNotificationView inWorldSuccessNotificationView,
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
@@ -58,6 +63,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.view = view;
             this.placesAPIService = placesAPIService;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
@@ -125,6 +131,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
             string copyLink = string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
             clipboard.Set(copyLink);
+
+            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken).Forget();
         }
 
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
@@ -143,6 +151,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
                     await inWorldWarningNotificationView.AnimatedShowAsync(FAVORITE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
                 }
+
+                placeInfo.user_favorite = favoriteValue;
             }
         }
 
@@ -244,7 +254,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
 
             //TODO: remove this once we have real data
-            if (community.places == null || community.places.Length == 0)
+            if ((community.places == null || community.places.Length == 0) && Random.Range(0, 100) < 50)
             {
                 string[] fakePlaces = new string[PAGE_SIZE + 5];
                 for (int i = 0; i < fakePlaces.Length; i++)

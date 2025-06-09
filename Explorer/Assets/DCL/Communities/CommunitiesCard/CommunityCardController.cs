@@ -129,6 +129,7 @@ namespace DCL.Communities.CommunitiesCard
                 webRequestController,
                 placesAPIService,
                 viewInstance.warningNotificationView,
+                viewInstance.successNotificationView,
                 realmNavigator,
                 mvcManager,
                 clipboard,
