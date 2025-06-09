@@ -23,6 +23,7 @@ namespace ECS.StreamableLoading.Tests.URNs
                 expectedUrl,
                 new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))
                    .UrlOrEmpty(urn)
+                   .OriginalString
             );
         }
     }
