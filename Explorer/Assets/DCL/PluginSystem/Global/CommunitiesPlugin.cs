@@ -13,8 +13,8 @@ using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -32,7 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
@@ -50,7 +50,7 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
@@ -93,7 +93,6 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
-                viewDependencies,
                 friendServiceProxy,
                 communitiesDataProvider,
                 webRequestController,
@@ -108,6 +107,7 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 inWorldWarningNotificationView,
                 nftNamesProvider,
+                profileRepositoryWrapper,
                 placesAPIService,
                 selfProfile);
             mvcManager.RegisterController(communityCreationEditionController);

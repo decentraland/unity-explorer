@@ -31,8 +31,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics = analyticsService;
             Configuration = configuration;
 
-            Configuration.Initialize();
-
             SessionID = !string.IsNullOrEmpty(launcherTraits.SessionId) ? launcherTraits.SessionId : SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
             analytics.AddPlugin(new StaticCommonTraitsPlugin(appArgs, SessionID, launcherTraits.LauncherAnonymousId, buildData, dclVersion));
@@ -57,9 +55,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Track(string eventName, JsonObject? properties = null, bool isInstant = false)
         {
-            if (!Configuration.EventIsEnabled(eventName))
-                return;
-
             if (!isInstant)
                 analytics.Track(eventName, properties);
             else

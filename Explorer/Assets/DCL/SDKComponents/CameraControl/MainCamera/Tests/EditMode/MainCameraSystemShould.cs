@@ -381,9 +381,53 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             Assert.AreNotEqual(CameraMode.SDKCamera, globalWorld.Get<CameraComponent>(globalWorldCameraEntity).Mode);
         }
 
+        [Test]
+        public void RetryApplyingVirtualCameraWhenComponentNotInitiallyAvailable()
+        {
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            // Create a virtual camera entity with CRDT entity but WITHOUT VirtualCameraComponent initially
+            var vCamCRDTEntity = new CRDTEntity(555);
+            var incompleteVirtualCameraEntity = world.Create(vCamCRDTEntity, new TransformComponent());
+            entitiesMap[vCamCRDTEntity] = incompleteVirtualCameraEntity;
+
+            // Set the incomplete virtual camera as active in MainCamera
+            var pbMainCameraComponent = new PBMainCamera() { VirtualCameraEntity = (uint)vCamCRDTEntity.Id };
+            world.Set(mainCameraEntity, pbMainCameraComponent);
+
+            // First update should not apply the virtual camera since VirtualCameraComponent is missing
+            SystemUpdate();
+            var mainCameraComponent = world.Get<MainCameraComponent>(mainCameraEntity);
+            Assert.IsNull(mainCameraComponent.virtualCameraCRDTEntity, "Virtual camera CRDT entity should not be set when component is missing");
+            Assert.IsNull(mainCameraComponent.virtualCameraInstance, "Virtual camera instance should not be set when component is missing");
+
+            // Now add the missing VirtualCameraComponent and PBVirtualCamera
+            var sdkCinemachineCam = new GameObject("RetryTestVirtualCamera").AddComponent<CinemachineFreeLook>();
+            sdkCinemachineCam.enabled = false;
+            sdkCinemachineCam.transform.position = Vector3.one * 10f;
+            var vCamComponent = new VirtualCameraComponent(sdkCinemachineCam, -1);
+            var pbVCamComponent = new PBVirtualCamera() { DefaultTransition = new CameraTransition() { Speed = 25 } };
+
+            world.Add(incompleteVirtualCameraEntity, vCamComponent, pbVCamComponent);
+
+            // Second update should now successfully apply the virtual camera
+            SystemUpdate();
+
+            mainCameraComponent = world.Get<MainCameraComponent>(mainCameraEntity);
+            Assert.IsNotNull(mainCameraComponent.virtualCameraCRDTEntity, "Virtual camera CRDT entity should be set after component is available");
+            Assert.AreEqual(vCamCRDTEntity.Id, mainCameraComponent.virtualCameraCRDTEntity.Value.Id, "Virtual camera CRDT entity should match the target entity");
+            Assert.IsNotNull(mainCameraComponent.virtualCameraInstance, "Virtual camera instance should be set after component is available");
+            Assert.AreSame(sdkCinemachineCam, mainCameraComponent.virtualCameraInstance, "Virtual camera instance should match the created camera");
+            Assert.IsTrue(sdkCinemachineCam.enabled, "Virtual camera should be enabled after successful application");
+            Assert.AreSame(sdkCinemachineCam.gameObject, cinemachineBrain.ActiveVirtualCamera.VirtualCameraGameObject, "Virtual camera should be the active camera");
+
+            // Cleanup
+            GameObject.DestroyImmediate(sdkCinemachineCam.gameObject);
+        }
+
         private void SystemUpdate()
         {
-            system.Update(1f);
+            system!.Update(1f);
             cinemachineBrain.ManualUpdate();
         }
     }

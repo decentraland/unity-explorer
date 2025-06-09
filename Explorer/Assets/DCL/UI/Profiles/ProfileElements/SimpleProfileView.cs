@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using MVC;
 using System;
@@ -25,19 +26,21 @@ namespace DCL.UI.ProfileElements
         private Web3Address currentWalledId;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
-        public async UniTaskVoid SetupAsync(Web3Address playerId, CancellationToken ct)
+        public async UniTaskVoid SetupAsync(Web3Address playerId, ProfileRepositoryWrapper profileDataProvider, CancellationToken ct)
         {
             if (viewDependencies == null) return;
 
+            this.profileRepositoryWrapper = profileDataProvider;
             currentWalledId = new Web3Address("");
-            Profile profile = await viewDependencies.GetProfileAsync(playerId, ct);
+            Profile profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct);
 
             if (profile == null) return;
 
             currentWalledId = playerId;
             userNameElement.Setup(profile);
-            await profilePictureView.SetupWithDependenciesAsync(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
+            await profilePictureView.SetupWithDependenciesAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }
 
         public void InjectDependencies(ViewDependencies dependencies)

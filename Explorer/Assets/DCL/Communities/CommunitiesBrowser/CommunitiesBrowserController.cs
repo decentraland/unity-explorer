@@ -7,6 +7,7 @@ using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.WebRequests;
@@ -36,9 +37,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ICommunitiesDataProvider dataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
-        private readonly ViewDependencies viewDependencies;
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
 
@@ -63,9 +64,9 @@ namespace DCL.Communities.CommunitiesBrowser
             ICommunitiesDataProvider dataProvider,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies,
             WarningNotificationView warningNotificationView,
             IMVCManager mvcManager,
+            ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider)
         {
@@ -75,7 +76,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.dataProvider = dataProvider;
             this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.warningNotificationView = warningNotificationView;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
@@ -151,7 +152,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void ConfigureResultsGrid()
         {
-            view.InitializeResultsGrid(0, webRequestController, viewDependencies);
+            view.InitializeResultsGrid(0, webRequestController, profileRepositoryWrapper);
             view.ResultsLoopGridScrollChanged += LoadMoreResults;
         }
 

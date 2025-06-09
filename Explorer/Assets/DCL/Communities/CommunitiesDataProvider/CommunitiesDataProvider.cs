@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System.Collections.Generic;
 using System.Threading;
@@ -12,7 +11,6 @@ namespace DCL.Communities
     {
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IDecentralandUrlsSource urlsSource;
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
@@ -20,12 +18,10 @@ namespace DCL.Communities
         public CommunitiesDataProvider(
             ICommunitiesDataProvider fakeDataProvider,
             IWebRequestController webRequestController,
-            IWeb3IdentityCache web3IdentityCache,
             IDecentralandUrlsSource urlsSource)
         {
             this.fakeDataProvider = fakeDataProvider;
             this.webRequestController = webRequestController;
-            this.web3IdentityCache = web3IdentityCache;
             this.urlsSource = urlsSource;
         }
 

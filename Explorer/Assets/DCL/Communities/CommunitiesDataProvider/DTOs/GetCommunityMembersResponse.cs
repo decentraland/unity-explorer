@@ -1,6 +1,6 @@
 
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using System;

@@ -7,6 +7,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
@@ -33,11 +34,11 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IMVCManager mvcManager;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
-        private readonly ViewDependencies viewDependencies;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -52,21 +53,21 @@ namespace DCL.Communities.CommunitiesCard
             IMVCManager mvcManager,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
-            ViewDependencies viewDependencies,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView inWorldWarningNotificationView,
+            ProfileRepositoryWrapper profileDataProvider)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.viewDependencies = viewDependencies;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         public override void Dispose()
@@ -102,7 +103,8 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView,
-                viewDependencies,mvcManager,
+                profileRepositoryWrapper,
+                mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
                 inWorldWarningNotificationView);

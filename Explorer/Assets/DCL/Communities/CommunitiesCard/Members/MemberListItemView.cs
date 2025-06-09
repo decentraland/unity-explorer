@@ -1,4 +1,5 @@
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Globalization;
@@ -10,7 +11,7 @@ using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MemberListItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IViewWithGlobalDependencies
+    public class MemberListItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const string MUTUAL_FRIENDS_FORMAT = "{0} Mutual Friends";
 
@@ -146,9 +147,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 UnHover();
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            profilePicture.InjectDependencies(dependencies);
+            profilePicture.SetProfileDataProvider(profileDataProvider);
         }
     }
 }
