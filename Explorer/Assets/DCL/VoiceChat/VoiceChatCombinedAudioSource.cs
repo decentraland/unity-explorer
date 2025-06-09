@@ -49,7 +49,7 @@ namespace DCL.VoiceChat
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
-                    stream.ReadAudio(tempBuffer, 1, sampleRate);
+                    stream.ReadAudio(tempBuffer, channels, sampleRate);
 
                     for (var i = 0; i < tempBuffer.Length; i++)
                         data[i] += tempBuffer[i];
