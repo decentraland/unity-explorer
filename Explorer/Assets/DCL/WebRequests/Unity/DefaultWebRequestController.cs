@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
+using Sentry;
 using System;
 using System.Threading;
 using UnityEngine.Assertions;
@@ -77,6 +78,8 @@ namespace DCL.WebRequests
 
                     if (exception.IsIrrecoverableError(adapter!, attemptsLeft))
                     {
+                        SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with {envelope}", level: BreadcrumbLevel.Info);
+
                         var adaptedException = new DefaultWebRequestException(adapter!, exception);
                         adapter!.Dispose();
                         throw adaptedException;
