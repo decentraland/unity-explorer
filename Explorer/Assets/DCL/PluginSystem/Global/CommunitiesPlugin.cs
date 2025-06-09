@@ -12,7 +12,6 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
@@ -96,7 +95,8 @@ namespace DCL.PluginSystem.Global
                 friendServiceProxy,
                 communitiesDataProvider,
                 webRequestController,
-                inWorldWarningNotificationView));
+                inWorldWarningNotificationView,
+                profileRepositoryWrapper));
 
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
@@ -107,7 +107,6 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 inWorldWarningNotificationView,
                 nftNamesProvider,
-                profileRepositoryWrapper,
                 placesAPIService,
                 selfProfile);
             mvcManager.RegisterController(communityCreationEditionController);
