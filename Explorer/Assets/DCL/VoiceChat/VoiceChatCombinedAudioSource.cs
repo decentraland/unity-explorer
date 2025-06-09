@@ -31,27 +31,30 @@ namespace DCL.VoiceChat
         {
             if (!isPlaying || streams.Count == 0)
             {
-                Array.Clear(data, 0, data.Length);
+                data.AsSpan().Clear();
                 return;
             }
 
-            if (tempBuffer == null || lastDataLength != data.Length)
+            if (tempBuffer == null || tempBuffer.Length != data.Length)
             {
                 tempBuffer = new float[data.Length];
                 lastDataLength = data.Length;
             }
 
-            Array.Clear(data, 0, data.Length);
+            Span<float> dataSpan = data.AsSpan();
+            dataSpan.Clear();
             var activeStreams = 0;
 
             foreach (WeakReference<IAudioStream> weakStream in streams)
             {
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
+                    // Clear tempBuffer before each stream read to avoid stale data
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
                     stream.ReadAudio(tempBuffer, channels, sampleRate);
 
-                    for (var i = 0; i < tempBuffer.Length; i++)
+                    // Add stream audio to mix
+                    for (var i = 0; i < data.Length; i++)
                         data[i] += tempBuffer[i];
 
                     activeStreams++;

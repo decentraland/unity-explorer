@@ -86,22 +86,28 @@ namespace DCL.VoiceChat
                     tempBuffer = new float[Mathf.Max(data.Length, 8192)];
                 }
 #else
-                if (tempBuffer == null || tempBuffer.Length != data.Length) { tempBuffer = new float[data.Length]; }
+                // Ensure tempBuffer is large enough for the original data
+                // For mono conversion, we only need samplesPerChannel = data.Length / channels
+                // Since samplesPerChannel <= data.Length, allocating data.Length is always sufficient
+                if (tempBuffer == null || tempBuffer.Length < data.Length) 
+                { 
+                    tempBuffer = new float[Mathf.Max(data.Length, 8192)]; 
+                }
 #endif
 
                 try
                 {
+                    Span<float> audioSpan = data.AsSpan();
+                    
                     if (channels == 1)
                     {
-                        // Mono audio - process directly
-                        Array.Copy(data, tempBuffer, data.Length);
-                        audioProcessor.ProcessAudio(tempBuffer, outputSampleRate);
-                        Array.Copy(tempBuffer, data, data.Length);
+                        // Mono audio - process directly in-place
+                        audioProcessor.ProcessAudio(audioSpan, outputSampleRate);
                     }
                     else
                     {
                         // Multi-channel audio - convert to mono, process, send on left channel only
-                        ConvertToMonoProcessAndSendSingleChannel(data, channels, outputSampleRate);
+                        ConvertToMonoProcessAndSendSingleChannel(audioSpan, channels, outputSampleRate);
                     }
                 }
                 catch (Exception ex)
@@ -151,9 +157,12 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void ConvertToMonoProcessAndSendSingleChannel(float[] data, int channels, int sampleRate)
+        private void ConvertToMonoProcessAndSendSingleChannel(Span<float> data, int channels, int sampleRate)
         {
             int samplesPerChannel = data.Length / channels;
+
+
+            Span<float> monoSpan = tempBuffer.AsSpan(0, samplesPerChannel);
 
             // Convert multi-channel to mono by averaging all channels
             for (int i = 0; i < samplesPerChannel; i++)
@@ -163,18 +172,16 @@ namespace DCL.VoiceChat
                 {
                     sum += data[i * channels + ch];
                 }
-                tempBuffer[i] = sum / channels; // Average all channels
+                monoSpan[i] = sum / channels; // Average all channels
             }
 
-            // Process the mono audio
-            float[] monoBuffer = new float[samplesPerChannel];
-            Array.Copy(tempBuffer, monoBuffer, samplesPerChannel);
-            audioProcessor.ProcessAudio(monoBuffer, sampleRate);
+            // Process the mono audio in-place
+            audioProcessor.ProcessAudio(monoSpan, sampleRate);
 
             // Send processed audio on left channel only, silence other channels
             for (int i = 0; i < samplesPerChannel; i++)
             {
-                data[i * channels] = monoBuffer[i];
+                data[i * channels] = monoSpan[i];
 
                 for (int ch = 1; ch < channels; ch++)
                 {

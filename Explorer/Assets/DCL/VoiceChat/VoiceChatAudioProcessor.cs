@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 namespace DCL.VoiceChat
 {
@@ -74,9 +75,9 @@ namespace DCL.VoiceChat
         /// <summary>
         ///     Process audio samples with noise reduction and other effects
         /// </summary>
-        public void ProcessAudio(float[] audioData, int sampleRate)
+        public void ProcessAudio(Span<float> audioData, int sampleRate)
         {
-            if (audioData == null || audioData.Length == 0) return;
+            if (audioData.Length == 0) return;
 
             float deltaTime = (float)audioData.Length / sampleRate;
 
