@@ -13,11 +13,13 @@ namespace DCL.VoiceChat
     [RequireComponent(typeof(AudioSource))]
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
+        private const int DEFAULT_BUFFER_SIZE = 8192;
+
         private VoiceChatAudioProcessor audioProcessor;
         private AudioSource audioSource;
-        private int outputSampleRate;
-        private bool isProcessingEnabled = true;
         private bool isFilterActive = true;
+        private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
+        private int outputSampleRate;
 
         private float[] tempBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
@@ -27,15 +29,6 @@ namespace DCL.VoiceChat
             audioSource = GetComponent<AudioSource>();
 
             if (voiceChatConfiguration != null) audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
-        }
-
-        private void Start()
-        {
-            // Pre-allocate buffer on macOS to avoid allocations in audio thread
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            if (tempBuffer == null)
-                tempBuffer = new float[8192]; // Pre-allocate large buffer for macOS Core Audio compatibility
-#endif
         }
 
         private void OnEnable()
@@ -69,67 +62,62 @@ namespace DCL.VoiceChat
             if (data == null)
                 return;
 
-            if (isProcessingEnabled && audioProcessor != null && voiceChatConfiguration != null && data.Length > 0)
+            if (isProcessingEnabled && audioProcessor != null && data.Length > 0)
             {
-                // On macOS, avoid allocations in audio thread due to Core Audio sensitivity
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-                if (tempBuffer == null)
-                {
-                    // Pre-allocate a reasonably large buffer to avoid reallocations
-                    tempBuffer = new float[8192];
-                }
+                if (tempBuffer == null || tempBuffer.Length < data.Length)
+                    tempBuffer = new float[Mathf.Max(data.Length, DEFAULT_BUFFER_SIZE)];
 
-                if (tempBuffer.Length < data.Length)
-                {
-                    // If we absolutely must reallocate, do it but log a warning
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio buffer reallocation on macOS (from {tempBuffer.Length} to {data.Length}). This may cause audio glitches.");
-                    tempBuffer = new float[Mathf.Max(data.Length, 8192)];
-                }
-#else
-                // Ensure tempBuffer is large enough for the original data
-                // For mono conversion, we only need samplesPerChannel = data.Length / channels
-                // Since samplesPerChannel <= data.Length, allocating data.Length is always sufficient
-                if (tempBuffer == null || tempBuffer.Length < data.Length) 
-                { 
-                    tempBuffer = new float[Mathf.Max(data.Length, 8192)]; 
-                }
-#endif
-
-                try
-                {
-                    Span<float> audioSpan = data.AsSpan();
-                    
-                    if (channels == 1)
-                    {
-                        // Mono audio - process directly in-place
-                        audioProcessor.ProcessAudio(audioSpan, outputSampleRate);
-                    }
-                    else
-                    {
-                        // Multi-channel audio - convert to mono, process, send on left channel only
-                        ConvertToMonoProcessAndSendSingleChannel(audioSpan, channels, outputSampleRate);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // On macOS, Core Audio is very sensitive to exceptions in audio callbacks
-                    // Disable processing to prevent further issues
-#if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error on macOS: {ex.Message}. Disabling processing to prevent audio system instability.");
-                    isProcessingEnabled = false;
-#else
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error: {ex.Message}");
-#endif
-                }
+                try { ProcessAudioData(data.AsSpan(), channels, outputSampleRate); }
+                catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error: {ex.Message}"); }
             }
 
             // This sends the processed audio data to LiveKit
-            AudioRead?.Invoke(data, channels, outputSampleRate);
+            AudioRead?.Invoke(data.AsSpan(), channels, outputSampleRate);
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
         public bool IsValid => audioSource != null && audioProcessor != null && voiceChatConfiguration != null;
+
+        private void ProcessAudioData(Span<float> data, int channels, int sampleRate)
+        {
+            if (channels == 1)
+            {
+                // Mono audio - process directly in-place
+                audioProcessor.ProcessAudio(data, sampleRate);
+            }
+            else
+            {
+                // Multi-channel audio - convert to mono, process, then send on left channel only
+                ConvertToMonoProcessAndSendLeftChannel(data, channels, sampleRate);
+            }
+        }
+
+        private void ConvertToMonoProcessAndSendLeftChannel(Span<float> data, int channels, int sampleRate)
+        {
+            int samplesPerChannel = data.Length / channels;
+
+            Span<float> monoSpan = tempBuffer.AsSpan(0, samplesPerChannel);
+
+            for (var i = 0; i < samplesPerChannel; i++)
+            {
+                var sum = 0f;
+
+                for (var ch = 0; ch < channels; ch++) { sum += data[(i * channels) + ch]; }
+
+                monoSpan[i] = sum / channels; // Average all channels
+            }
+
+            audioProcessor.ProcessAudio(monoSpan, sampleRate);
+
+            for (var i = 0; i < samplesPerChannel; i++)
+            {
+                data[i * channels] = monoSpan[i]; // Processed mono on left channel
+
+                // Zero out all other channels
+                for (var ch = 1; ch < channels; ch++) { data[(i * channels) + ch] = 0f; }
+            }
+        }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
         {
@@ -141,53 +129,15 @@ namespace DCL.VoiceChat
             voiceChatConfiguration = configuration;
             audioProcessor?.Dispose();
             audioProcessor = new VoiceChatAudioProcessor(configuration);
-            isProcessingEnabled = configuration.EnableAudioProcessing;
         }
 
         public void SetFilterActive(bool active)
         {
             isFilterActive = active;
-            isProcessingEnabled = active && voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
+            audioProcessor?.Reset();
 
-            if (!isProcessingEnabled)
-            {
-                audioProcessor?.Reset();
-                if (tempBuffer != null)
-                    Array.Clear(tempBuffer, 0, tempBuffer.Length);
-            }
-        }
-
-        private void ConvertToMonoProcessAndSendSingleChannel(Span<float> data, int channels, int sampleRate)
-        {
-            int samplesPerChannel = data.Length / channels;
-
-
-            Span<float> monoSpan = tempBuffer.AsSpan(0, samplesPerChannel);
-
-            // Convert multi-channel to mono by averaging all channels
-            for (int i = 0; i < samplesPerChannel; i++)
-            {
-                float sum = 0f;
-                for (int ch = 0; ch < channels; ch++)
-                {
-                    sum += data[i * channels + ch];
-                }
-                monoSpan[i] = sum / channels; // Average all channels
-            }
-
-            // Process the mono audio in-place
-            audioProcessor.ProcessAudio(monoSpan, sampleRate);
-
-            // Send processed audio on left channel only, silence other channels
-            for (int i = 0; i < samplesPerChannel; i++)
-            {
-                data[i * channels] = monoSpan[i];
-
-                for (int ch = 1; ch < channels; ch++)
-                {
-                    data[i * channels + ch] = 0f;
-                }
-            }
+            if (tempBuffer != null)
+                Array.Clear(tempBuffer, 0, tempBuffer.Length);
         }
     }
 }

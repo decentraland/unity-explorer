@@ -12,9 +12,9 @@ namespace DCL.VoiceChat
         [field: SerializeField] private AudioSource audioSource;
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
+        private int lastDataLength;
         private int sampleRate = 48000;
         private float[] tempBuffer;
-        private int lastDataLength = 0;
 
         private void OnEnable()
         {
@@ -49,11 +49,9 @@ namespace DCL.VoiceChat
             {
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
-                    // Clear tempBuffer before each stream read to avoid stale data
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
                     stream.ReadAudio(tempBuffer, channels, sampleRate);
 
-                    // Add stream audio to mix
                     for (var i = 0; i < data.Length; i++)
                         data[i] += tempBuffer[i];
 
@@ -61,16 +59,17 @@ namespace DCL.VoiceChat
                 }
             }
 
-            // Normalize only if multiple streams (avoid unnecessary computation)
+            // Normalize only if multiple streams
             if (activeStreams > 1)
             {
                 float norm = 1f / activeStreams;
+
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
             }
 
             // Copy left channel to right channel for proper stereo output
-            // LiveKit audio is mono, so duplicate left channel to avoid single-ear audio
+            // Because LiveKit audio arrives with audio only on the left channel
             if (channels == 2)
             {
                 for (var i = 0; i < data.Length; i += 2)
