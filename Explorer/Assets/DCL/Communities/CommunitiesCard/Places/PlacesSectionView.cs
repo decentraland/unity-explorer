@@ -17,7 +17,6 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const int ADD_PLACE_PREFAB_INDEX = 0;
         private const int PLACE_PREFAB_INDEX = 1;
-        private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
 
         [field: SerializeField] private LoopGridView loopGrid { get; set; }
         [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; }
@@ -49,7 +48,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             loopGridScrollRect.SetScrollSensitivityBasedOnPlatform();
 
-            contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: new (15, 15, 20, 25), elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
+            contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: contextMenuConfiguration.VerticalPadding, elementsSpacing: contextMenuConfiguration.ElementsSpacing)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.ShareText, contextMenuConfiguration.ShareSprite, () => ElementShareButtonClicked?.Invoke(lastClickedPlaceCtx)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.CopyLinkText, contextMenuConfiguration.CopyLinkSprite, () => ElementCopyLinkButtonClicked?.Invoke(lastClickedPlaceCtx)));
         }

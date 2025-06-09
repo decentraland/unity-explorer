@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: CommunityPlaceContextMenuSettings
   m_EditorClassIdentifier: 
   contextMenuWidth: 250
+  elementsSpacing: 5
+  verticalPadding:
+    m_Left: 15
+    m_Right: 15
+    m_Top: 20
+    m_Bottom: 25
   shareSprite: {fileID: 21300000, guid: 4c97cd3c67403471d8fe75c5fc348e58, type: 3}
   shareText: Share on X
   copyLinkSprite: {fileID: 21300000, guid: 3bffb1589fb814c70b23fbce43ba6736, type: 3}

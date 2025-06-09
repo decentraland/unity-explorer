@@ -8,6 +8,8 @@ namespace DCL.Communities.CommunitiesCard.Places
     public class CommunityPlaceContextMenuConfiguration : ScriptableObject
     {
         [SerializeField] private int contextMenuWidth = 250;
+        [SerializeField] private int elementsSpacing = 5;
+        [SerializeField] private RectOffset verticalPadding;
         [Space(10)]
         [SerializeField] private Sprite shareSprite;
         [SerializeField] private string shareText = "Share on X";
@@ -16,6 +18,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private string copyLinkText = "Copy link";
 
         public int ContextMenuWidth => contextMenuWidth;
+        public int ElementsSpacing => elementsSpacing;
+        public RectOffset VerticalPadding => verticalPadding;
 
         public Sprite ShareSprite => shareSprite;
         public string ShareText => shareText;
