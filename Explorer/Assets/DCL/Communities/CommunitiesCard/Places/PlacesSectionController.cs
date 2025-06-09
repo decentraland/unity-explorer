@@ -134,6 +134,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private static string GetPlaceCopyLink(PlaceInfo place)
         {
+            //TODO: handle worlds if possible
             VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
             return string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
         }
