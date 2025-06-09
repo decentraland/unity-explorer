@@ -8,13 +8,16 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.IK;
 using DCL.CharacterMotion.Settings;
+using DCL.CharacterPreview.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.InWorldCamera;
+using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.InputSystem;
 #if UNITY_EDITOR
 using DCL.AvatarRendering.DemoScripts.Components;
 #endif
@@ -33,9 +36,14 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> horizontalReset;
         private readonly ElementBinding<float> speed;
         private SingleInstanceEntity settingsEntity;
+        private readonly ObjectProxy<DCLInput> inputProxy;
+        private readonly ICharacterControllerSettings settings;
 
-        private HeadIKSystem(World world, IDebugContainerBuilder builder) : base(world)
+        private HeadIKSystem(World world, IDebugContainerBuilder builder, ObjectProxy<DCLInput> inputProxy, ICharacterControllerSettings settings) : base(world)
         {
+            this.inputProxy = inputProxy;
+            this.settings = settings;
+
             verticalLimit = new ElementBinding<float>(0);
             horizontalLimit = new ElementBinding<float>(0);
             horizontalReset = new ElementBinding<float>(0);
@@ -65,9 +73,31 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateDebugValues();
-
+            UpdatePreviewAvatarIKQuery(World, t, in camera.GetCameraComponent(World));
             if (!World.Has<InWorldCameraComponent>(camera))
                 UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+        }
+
+        [Query]
+        [All(typeof(CharacterPreviewComponent))]
+        private void UpdatePreviewAvatarIK(
+            [Data] float dt,
+            [Data] in CameraComponent cameraComponent,
+            ref HeadIKComponent headIK,
+            ref AvatarBase avatarBase
+        )
+        {
+            headIK.IsDisabled = !this.headIKIsEnabled;
+            avatarBase.HeadIKRig.weight = 1;
+
+            // Vector3 targetDirection = cameraComponent.Camera.transform.forward;
+            var mousePos = Mouse.current.position.value;
+            var ray = cameraComponent.Camera.ScreenPointToRay(mousePos);
+
+            Vector3 targetDirection = ray.GetPoint(10);
+
+            ApplyHeadLookAt.Execute(targetDirection, avatarBase, dt, settings);
+            // Debug.Log($"VVV {a.x}");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

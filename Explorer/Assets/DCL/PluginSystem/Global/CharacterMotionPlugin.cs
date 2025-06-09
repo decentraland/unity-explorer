@@ -10,6 +10,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
@@ -20,6 +21,7 @@ namespace DCL.PluginSystem.Global
 {
     public class CharacterMotionPlugin : IDCLGlobalPlugin<CharacterMotionSettings>
     {
+        private readonly ObjectProxy<DCLInput> inputProxy;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
@@ -28,12 +30,15 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
-        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner,
+        public CharacterMotionPlugin(
+            IAssetsProvisioner assetsProvisioner,
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
-            ISceneReadinessReportQueue sceneReadinessReportQueue)
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            ObjectProxy<DCLInput> inputProxy)
         {
+            this.inputProxy = inputProxy;
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -80,7 +85,7 @@ namespace DCL.PluginSystem.Global
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, inputProxy, (ICharacterControllerSettings)settings.Value);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
         }

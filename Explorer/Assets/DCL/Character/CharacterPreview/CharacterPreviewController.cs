@@ -2,12 +2,14 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
@@ -53,6 +55,7 @@ namespace DCL.CharacterPreview
                 new CharacterTransform(parent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
                 new CharacterPreviewComponent(),
+                new HeadIKComponent(),
                 new CharacterEmoteComponent());
         }
 
@@ -112,6 +115,12 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
+            if (world.TryGet(avatarEntity, out AvatarBase avatarBase))
+            {
+                avatarBase.RigBuilder.enabled = true;
+                avatarBase.RigBuilder.Build();
+                avatarBase.HeadIKRig.weight = 1f;
+            }
             return;
 
             bool IsAvatarLoaded()
