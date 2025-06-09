@@ -202,7 +202,7 @@ RectTransform:
   m_GameObject: {fileID: 2556739136634570533}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 0.2, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 407507127688075238}
@@ -418,6 +418,8 @@ MonoBehaviour:
   <voiceChatIcon>k__BackingField: {fileID: 407507127688075238}
   <voiceChatIconRenderer>k__BackingField: {fileID: 6493516169890296030}
   <voiceChatIconOuterRenderer>k__BackingField: {fileID: 5304425934672700721}
+  <voiceChatIconRect>k__BackingField: {fileID: 977382119942593327}
+  <voiceChatIconOuterRect>k__BackingField: {fileID: 1966775455348051753}
   <privateMessageText>k__BackingField: {fileID: 4907543279996336927}
 --- !u!210 &317692783042627670
 SortingGroup:

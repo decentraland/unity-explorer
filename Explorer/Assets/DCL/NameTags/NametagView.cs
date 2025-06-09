@@ -61,6 +61,8 @@ namespace DCL.Nametags
         [field: SerializeField] internal RectTransform voiceChatIcon { get; private set; }
         [field: SerializeField] internal SpriteRenderer voiceChatIconRenderer { get; private set; }
         [field: SerializeField] internal SpriteRenderer voiceChatIconOuterRenderer { get; private set; }
+        [field: SerializeField] internal RectTransform voiceChatIconRect { get; private set; }
+        [field: SerializeField] internal RectTransform voiceChatIconOuterRect { get; private set; }
 
         [field: SerializeField] internal TMP_Text privateMessageText { get; private set; }
 
@@ -73,6 +75,7 @@ namespace DCL.Nametags
         private AnimationState animationState = AnimationState.IDLE;
 
         private bool isClaimedName;
+        private bool isUsingVerifiedIcon;
         private bool isMention;
         private bool isTransparent;
         private bool isPrivateMessage;
@@ -97,6 +100,7 @@ namespace DCL.Nametags
         private Vector2 tempSizeDelta;
         private CancellationTokenSource? cts;
         private Sequence? currentSequence;
+        private Sequence? isTalkingCurrentSequence;
         private Color currentSpritesColor = new (1, 1, 1,1 );
         private Color currentBubbleTailSpriteColor;
         private Color currentIsTalkingSpriteColor;
@@ -114,6 +118,18 @@ namespace DCL.Nametags
         public float LastSqrDistance { get; set; } = 0f;
         public string Id { set; get; } = string.Empty;
         public int ProfileVersion { set; get; } = -1;
+
+        private async UniTaskVoid ToggleAsync()
+        {
+            do
+            {
+                ToggleIsTalking(true);
+                await UniTask.Delay(2000);
+                ToggleIsTalking(false);
+                await UniTask.Delay(2000);
+            }
+            while (true);
+        }
 
         private void Awake()
         {
@@ -149,6 +165,7 @@ namespace DCL.Nametags
             verifiedIconRenderer.sharedMaterial = sharedMaterial;
             voiceChatIconRenderer.sharedMaterial = sharedMaterial;
             voiceChatIconOuterRenderer.sharedMaterial = sharedMaterial;
+            ToggleAsync().Forget();
         }
 
         private void OnEnable()
@@ -214,6 +231,7 @@ namespace DCL.Nametags
             cts = new CancellationTokenSource();
 
             isClaimedName = hasClaimedName;
+            isUsingVerifiedIcon = useVerifiedIcon;
             verifiedIcon.gameObject.SetActive(useVerifiedIcon);
 
             privateMessageIcon.gameObject.SetActive(false);
@@ -229,7 +247,12 @@ namespace DCL.Nametags
             isTalkingIconInitialPosition = CalculateTalkingIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, hasClaimedName, nametagMarginOffsetHeight);
             voiceChatIcon.anchoredPosition = isTalkingIconInitialPosition;
 
-            if (hasClaimedName && useVerifiedIcon)
+            SetInitialPositions(hasClaimedName);
+        }
+
+        private void SetInitialPositions(bool hasClaimedName)
+        {
+            if (hasClaimedName && isUsingVerifiedIcon)
             {
                 usernamePos.x = usernameText.rectTransform.anchoredPosition.x;
                 verifiedIconInitialPosition = CalculateVerifiedIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, isTalkingIconWidth, nametagMarginOffsetHeight, isTalking);
@@ -327,13 +350,27 @@ namespace DCL.Nametags
         public void ToggleIsTalking(bool isTalking)
         {
             this.isTalking = isTalking;
+
+            voiceChatIcon.gameObject.SetActive(isTalking);
+            if (animationState == AnimationState.IDLE)
+            {
+                usernameText.rectTransform.anchoredPosition = Vector2.zero;
+                SetInitialPositions(isClaimedName);
+            }
+
             if (isTalking)
             {
-
+                isTalkingCurrentSequence = DOTween.Sequence();
+                isTalkingCurrentSequence.Append(voiceChatIconRect.DOScaleY(0.2f, animationInDuration));
+                isTalkingCurrentSequence.Join(voiceChatIconOuterRect.DOScaleY(1, animationInDuration));
+                isTalkingCurrentSequence.Append(voiceChatIconOuterRect.DOScaleY(0.2f, animationInDuration));
+                isTalkingCurrentSequence.Join(voiceChatIconRect.DOScaleY(1, animationInDuration));
+                isTalkingCurrentSequence.SetLoops(-1);
+                isTalkingCurrentSequence.Play();
             }
             else
             {
-
+                isTalkingCurrentSequence?.Kill();
             }
         }
 
