@@ -78,20 +78,20 @@ namespace DCL.VoiceChat
                     InCallView.gameObject.SetActive(true);
                     IncomingCallView.SetActive(false);
                     OutgoingCallView.gameObject.SetActive(false);
-                    InCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
+                    //InCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
                     InCallView.gameObject.SetActive(false);
                     IncomingCallView.SetActive(true);
                     OutgoingCallView.gameObject.SetActive(false);
-                    IncomingCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
+                    //IncomingCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                     case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
                         InCallView.gameObject.SetActive(false);
                         IncomingCallView.SetActive(false);
                         OutgoingCallView.gameObject.SetActive(true);
-                        OutgoingCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
+                        //OutgoingCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
                         break;
                 default:
                     InCallView.gameObject.SetActive(false);

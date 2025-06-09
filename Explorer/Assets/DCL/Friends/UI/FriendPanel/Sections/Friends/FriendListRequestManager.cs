@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
-using MVC;
+using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -21,14 +21,16 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
         public event Action<FriendProfile>? JumpInClicked;
+        public event Action<FriendProfile>? ChatClicked;
 
         public FriendListRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
             LoopListView2 loopListView,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             int pageSize,
-            int elementsMissingThreshold) : base(viewDependencies, loopListView, pageSize, elementsMissingThreshold)
+            int elementsMissingThreshold) :
+            base(profileDataProvider, loopListView, pageSize, elementsMissingThreshold)
         {
             this.friendsService = friendsService;
             this.friendEventBus = friendEventBus;
@@ -89,7 +91,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 RefreshLoopList();
         }
 
-        public override int GetCollectionCount() =>
+        protected override int GetCollectionsDataCount() =>
             friends.Count;
 
         protected override FriendProfile GetCollectionElement(int index) =>
@@ -120,6 +122,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             elementView.JumpInButton.onClick.RemoveAllListeners();
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
+
+            elementView.ChatButton.onClick.RemoveAllListeners();
+            elementView.ChatButton.onClick.AddListener(() => ChatClicked?.Invoke(elementView.UserProfile));
 
             elementView.ToggleOnlineStatus(false);
         }

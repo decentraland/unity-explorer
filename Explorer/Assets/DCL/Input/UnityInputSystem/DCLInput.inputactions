@@ -36,7 +36,7 @@
                     "name": "Sprint",
                     "type": "Button",
                     "id": "b97def14-0c7a-4e22-b282-22cba6574905",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -51,10 +51,19 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "RightPointer",
+                    "type": "PassThrough",
+                    "id": "c7b8c650-9d0b-480b-9849-051eb5b511e4",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "Primary",
                     "type": "Button",
                     "id": "38147d5e-c8e9-481f-b640-a485a6c6b6ae",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -90,7 +99,7 @@
                     "name": "ActionButton5",
                     "type": "Button",
                     "id": "3ee343b7-e0ac-4862-8538-435bff12a50b",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -136,6 +145,15 @@
                     "type": "Button",
                     "id": "a3ed5c0d-172e-4ab9-a535-f8e98033e3e9",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Any",
+                    "type": "Button",
+                    "id": "8b77b21d-efa3-4349-9296-665bb829d784",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -447,6 +465,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pointer",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c5833e7e-047c-4d46-af04-cbbe7a3d67b0",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RightPointer",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -1353,7 +1382,7 @@
                     "name": "Submit",
                     "type": "Button",
                     "id": "71506014-7297-4064-8fa5-cbf7ff21d68e",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -1480,6 +1509,15 @@
                     "type": "Button",
                     "id": "88b91896-4abe-4728-b828-0e6a082b00f7",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Tab",
+                    "type": "Button",
+                    "id": "d2214e71-9264-42e6-bf3b-bb20c1d57ad0",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -1763,6 +1801,17 @@
                 },
                 {
                     "name": "",
+                    "id": "68736c60-8e28-4f69-918b-3b4c3dbb24ff",
+                    "path": "<Keyboard>/numpadEnter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse;Gamepad;Touch;Joystick;XR",
+                    "action": "Submit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "189346e5-9eff-42e6-ad3d-f686936c3416",
                     "path": "*/{Cancel}",
                     "interactions": "",
@@ -2022,6 +2071,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ActionDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "03b828e1-ae5d-496f-a570-0f53946f190c",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Tab",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

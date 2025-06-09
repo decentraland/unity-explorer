@@ -18,8 +18,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
-        [SerializeField] public List<AnalyticsGroup> groups;
-
         [SerializeField]
         [Tooltip("If true, the AnalyticsConfiguration will attempt to use the local environment variable as a fallback if the write key is not set.")]
         private bool useLocalEnvVariableFallback;
@@ -43,8 +41,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         [field: SerializeField]
         public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
-
-        private Dictionary<string, AnalyticsEventToggle> eventToggles;
 
         private Configuration segmentConfiguration;
 
@@ -101,33 +97,5 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void SetWriteKey(string writeKey) =>
             segmentWriteKey = writeKey;
-
-        public void Initialize()
-        {
-            if (eventToggles == null)
-                eventToggles = new Dictionary<string, AnalyticsEventToggle>();
-
-            foreach (AnalyticsGroup group in groups)
-            foreach (AnalyticsEventToggle eventToggle in group.events)
-                if (eventToggles.TryAdd(eventToggle.eventName, eventToggle))
-                    eventToggles[eventToggle.eventName].isEnabled = true;
-        }
-
-        public bool EventIsEnabled(string eventName) =>
-            eventToggles.TryGetValue(eventName, out AnalyticsEventToggle toggle) && toggle.isEnabled;
-
-        [Serializable]
-        public class AnalyticsEventToggle
-        {
-            public string eventName;
-            public bool isEnabled;
-        }
-
-        [Serializable]
-        public class AnalyticsGroup
-        {
-            public string groupName;
-            public List<AnalyticsEventToggle> events = new ();
-        }
     }
 }

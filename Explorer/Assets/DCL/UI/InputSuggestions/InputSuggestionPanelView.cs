@@ -240,6 +240,7 @@ namespace DCL.UI.SuggestionPanel
                 viewDependencies.DclInput.UI.ActionUp.performed += OnArrowUp;
                 viewDependencies.DclInput.UI.ActionDown.performed += OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed += OnSubmit;
+                viewDependencies.DclInput.UI.Tab.performed += OnSubmit;
             }
             else
             {
@@ -248,6 +249,7 @@ namespace DCL.UI.SuggestionPanel
                 viewDependencies.DclInput.UI.ActionUp.performed -= OnArrowUp;
                 viewDependencies.DclInput.UI.ActionDown.performed -= OnArrowDown;
                 viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
+                viewDependencies.DclInput.UI.Tab.performed -= OnSubmit;
             }
 
             gameObject.SetActive(isVisible);

@@ -1,19 +1,20 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DG.Tweening;
-using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Button = UnityEngine.UI.Button;
+using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatConversationsToolbarView : MonoBehaviour, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler
+    public class ChatConversationsToolbarView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
@@ -36,9 +37,8 @@ namespace DCL.Chat
         [SerializeField]
         private Button scrollDownButton;
 
-        private ViewDependencies viewDependencies;
-
         private Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         /// <summary>
         /// Raised when a different conversation item is selected.
@@ -71,7 +71,10 @@ namespace DCL.Chat
         /// <param name="icon">An icon to show instead of a profile picture.</param>
         public void AddConversation(ChatChannel channel, Sprite icon = null)
         {
+            if (items.TryGetValue(channel.Id, out var item)) return;
+
             ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
+            newItem.Initialize();
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
             newItem.TooltipShown += OnItemTooltipShown;
@@ -98,7 +101,7 @@ namespace DCL.Chat
             }
 
             newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
-
+            
             items.Add(channel.Id, newItem);
 
             if(items.Count == 1)
@@ -124,7 +127,7 @@ namespace DCL.Chat
         public void RemoveAllConversations()
         {
             foreach (var itemsValue in items.Values)
-                Destroy(itemsValue.gameObject);
+                UnityObjectUtils.SafeDestroyGameObject(itemsValue);
             items.Clear();
             UpdateScrollButtonsVisibility();
         }
@@ -150,9 +153,13 @@ namespace DCL.Chat
                 items[destinationChannel].SetConnectionStatus(connectionStatus);
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="profileRepositoryWrapper"></param>
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            viewDependencies = dependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         /// <summary>
@@ -259,11 +266,11 @@ namespace DCL.Chat
 
         private async UniTaskVoid SetupUserConversationItemAsync(ChatConversationsToolbarViewItem newItem)
         {
-            Profile? profile = await viewDependencies.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
+            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
 
             if (profile != null)
             {
-                newItem.SetProfileData(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
                 newItem.SetConversationName(profile.ValidatedName);
                 newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
                 newItem.SetConversationType(true);

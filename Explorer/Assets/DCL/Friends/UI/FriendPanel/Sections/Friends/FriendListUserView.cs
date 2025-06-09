@@ -1,5 +1,6 @@
 using DCL.Profiles;
 using DCL.UI;
+using DCL.UI.Profiles.Helpers;
 using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
@@ -11,6 +12,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
     {
         [field: SerializeField] public Button ContextMenuButton { get; private set; }
         [field: SerializeField] public Button JumpInButton { get; private set; }
+        [field: SerializeField] public Button ChatButton { get; private set; }
+
 
         [field: Header("Online status")]
         [field: SerializeField] public GameObject OnlineStatusContainer { get; private set; }
@@ -19,12 +22,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [field: SerializeField] public Image OnlineStatusColorIndicator { get; private set; }
         [field: SerializeField] public OnlineStatusConfiguration OnlineStatusConfiguration { get; private set; }
 
-        public override void Configure(FriendProfile profile)
+        public override void Configure(FriendProfile profile, ProfileRepositoryWrapper profileDataProvider)
         {
             buttons.Clear();
             buttons.Add(JumpInButton);
             buttons.Add(ContextMenuButton);
-            base.Configure(profile);
+            buttons.Add(ChatButton);
+            base.Configure(profile, profileDataProvider);
             SetOnlineStatus(OnlineStatus.OFFLINE);
         }
 
@@ -36,6 +40,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             buttons.Clear();
             buttons.Add(ContextMenuButton);
+            buttons.Add(ChatButton);
 
             if (onlineStatus != OnlineStatus.OFFLINE)
                 buttons.Add(JumpInButton);
@@ -50,6 +55,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             {
                 buttons.Clear();
                 buttons.Add(ContextMenuButton);
+                buttons.Add(ChatButton);
             }
         }
     }

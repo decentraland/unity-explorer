@@ -27,12 +27,14 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -45,6 +47,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Passport
 {
@@ -102,10 +105,10 @@ namespace DCL.Passport
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ViewDependencies viewDependencies;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -128,7 +131,7 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
-        private CallButtonController callButtonController;
+        private CallButtonController? callButtonController;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -182,6 +185,7 @@ namespace DCL.Passport
             bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -208,7 +212,7 @@ namespace DCL.Passport
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -236,7 +240,6 @@ namespace DCL.Passport
         {
             Assert.IsNotNull(world);
 
-            viewInstance!.InjectDependencies(viewDependencies);
             callButtonController = new CallButtonController(viewInstance.VoiceChatButton);
             callButtonController.StartCall += OnStartCall;
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
@@ -405,7 +408,9 @@ namespace DCL.Passport
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
-            callButtonController.StartCall -= OnStartCall;
+            
+            if(callButtonController != null)
+                callButtonController.StartCall -= OnStartCall;
 
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Dispose();
@@ -673,8 +678,14 @@ namespace DCL.Passport
                 config.Root.SetActive(false);
 
                 // We only request the first page so we show a couple of mutual thumbnails. This is by design
-                PaginatedFriendsResult mutualFriendsResult = await friendService.GetMutualFriendsAsync(
-                    inputData.UserId, 0, MUTUAL_PAGE_SIZE, ct);
+                Result<PaginatedFriendsResult> promiseResult = await friendService.GetMutualFriendsAsync(
+                                                                                       inputData.UserId, 0, MUTUAL_PAGE_SIZE, ct)
+                                                                                  .SuppressToResultAsync(ReportCategory.FRIENDS);
+
+                if (!promiseResult.Success)
+                    return;
+
+                PaginatedFriendsResult mutualFriendsResult = promiseResult.Value;
 
                 config.Root.SetActive(mutualFriendsResult.Friends.Count > 0);
                 config.AmountLabel.text = $"{mutualFriendsResult.TotalAmount} Mutual";
@@ -687,7 +698,7 @@ namespace DCL.Passport
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
+                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
                 }
             }
         }
@@ -745,7 +756,7 @@ namespace DCL.Passport
 
             async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.CancelFriendshipAsync(inputData.UserId, ct);
+                await friendService.CancelFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 ShowFriendshipInteraction();
             }
