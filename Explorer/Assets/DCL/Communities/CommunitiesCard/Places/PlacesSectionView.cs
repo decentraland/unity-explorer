@@ -123,6 +123,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             int count = getPlacesFetchData().members.Count;
 
+            //Account for the "Add Place" button if the user can modify the places
             if (canModify)
                 count++;
 
