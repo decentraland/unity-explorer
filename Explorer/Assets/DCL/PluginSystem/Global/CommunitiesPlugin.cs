@@ -36,6 +36,8 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
 
+        private CommunityCardController? communityCardController;
+
         public CommunitiesPlugin(IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
             ICameraReelStorageService cameraReelStorageService,
@@ -65,6 +67,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
+            communityCardController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -76,7 +79,7 @@ namespace DCL.PluginSystem.Global
             CommunityCardView communityCardViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCardPrefab, ct: ct)).GetComponent<CommunityCardView>();
             ControllerBase<CommunityCardView, CommunityCardParameter>.ViewFactoryMethod viewFactoryMethod = CommunityCardController.Preallocate(communityCardViewAsset, null, out CommunityCardView communityCardView);
 
-            mvcManager.RegisterController(new CommunityCardController(viewFactoryMethod,
+            communityCardController = new CommunityCardController(viewFactoryMethod,
                 mvcManager,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
@@ -87,7 +90,9 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 realmNavigator,
                 clipboard,
-                webBrowser));
+                webBrowser);
+
+            mvcManager.RegisterController(communityCardController);
         }
     }
 
