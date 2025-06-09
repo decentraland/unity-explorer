@@ -46,8 +46,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
-
              bool zIndexChanged = false;
              if (sdkModel.HasZIndex && uiTransformComponent.ZIndex != sdkModel.ZIndex)
              {
