@@ -57,6 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             // If zIndex changed, mark the parent layout as dirty.
             // This is needed to trigger UITransformSortingSystem.ApplySorting
+            // Note: UITransformUpdateSystem executes after UITransformSortingSystem so there will be always one frame delay.
             if (zIndexChanged && uiTransformComponent.RelationData.parent != Entity.Null && World.IsAlive(uiTransformComponent.RelationData.parent))
             {
                 ref var parentComponent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
