@@ -12,6 +12,7 @@ using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -451,7 +452,6 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
             return base.HideAsync(ct, isInstant);
         }
 
@@ -494,10 +494,10 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
             viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
-
+            SubscribeToSubmitEvent();
+            
             closePopupTask = new UniTaskCompletionSource();
 
             conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
@@ -793,7 +793,7 @@ namespace DCL.Chat
             else
                 chatMessageViewer.StartChatEntriesFadeout();
         }
-
+        
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
             if (isChatFocused)
@@ -806,7 +806,7 @@ namespace DCL.Chat
                 // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
                 if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
-
+        
                 Focus();
             }
         }
@@ -1025,6 +1025,31 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
+        }
+
+        private bool isSubmitHooked;
+        public void SubscribeToSubmitEvent()
+        {
+            if (isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to subscribe to submit event when it was already hooked");
+                return;
+            }
+
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
+            isSubmitHooked = true;
+        }
+
+        public void UnsubscribeToSubmitEvent()
+        {
+            if (!isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to unsubscribe from submit event when it was not hooked");
+                return;
+            }
+
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            isSubmitHooked = false;
         }
     }
 }
