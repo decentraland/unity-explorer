@@ -119,20 +119,23 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void OnElementShareButtonClicked(PlaceInfo place)
         {
-            VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-            string copyLink = string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
             string description = string.Format(TWITTER_PLACE_DESCRIPTION, place.title);
-            string twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", copyLink);
+            string twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", GetPlaceCopyLink(place));
+
             webBrowser.OpenUrl(twitterLink);
         }
 
         private void OnElementCopyLinkButtonClicked(PlaceInfo place)
         {
-            VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
-            string copyLink = string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
-            clipboard.Set(copyLink);
+            clipboard.Set(GetPlaceCopyLink(place));
 
             inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken).Forget();
+        }
+
+        private static string GetPlaceCopyLink(PlaceInfo place)
+        {
+            VectorUtilities.TryParseVector2Int(place.base_position, out var coordinates);
+            return string.Format(JUMP_IN_LINK, coordinates.x, coordinates.y);
         }
 
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
