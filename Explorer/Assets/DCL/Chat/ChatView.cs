@@ -41,6 +41,7 @@ namespace DCL.Chat
         public delegate void ChannelRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void DeleteChatHistoryRequestedDelegate();
+        public delegate void ViewCommunityRequestedDelegate(string communityId);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -182,6 +183,11 @@ namespace DCL.Chat
         /// </summary>
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
+        /// <summary>
+        /// Raised when the user wants to see the community card for the current conversation.
+        /// </summary>
+        public event ViewCommunityRequestedDelegate ViewCommunityRequested;
+
         private ViewDependencies viewDependencies;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
@@ -210,6 +216,7 @@ namespace DCL.Chat
 
         private IThumbnailCache thumbnailCache;
         private CommunityTitleView.OpenContextMenuDelegate openContextMenuAction;
+        private Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communitiesData = new ();
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -278,8 +285,8 @@ namespace DCL.Chat
                             break;
                         case ChatChannel.ChatChannelType.COMMUNITY:
                             SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
-                            GetUserCommunitiesCompactResponse.CommunityData communityData = communitiesData[currentChannel.Id];
-                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.smallThumbnail, openContextMenuAction, CancellationToken.None); // TODO: Add a cancelation token
+                            GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
+                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails[0], openContextMenuAction, CancellationToken.None); // TODO: Add a cancelation token
                             break;
                     }
 
@@ -442,6 +449,7 @@ namespace DCL.Chat
             chatTitleBar.HideMemberListButtonClicked -= OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged -= OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested -= OnDeleteChatHistoryRequested;
+            chatTitleBar.ViewCommunityRequested -= OnTitleBarViewCommunityRequested;
 
             chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClickedAsync;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged -= OnChatMessageViewerScrollPositionChanged;
@@ -472,6 +480,15 @@ namespace DCL.Chat
             chatTitleBar.InjectDependencies(dependencies);
         }
 
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="communities"></param>
+        public void SetCommunitiesData(Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities)
+        {
+            communitiesData = communities;
+        }
+
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatSettingsAsset chatSettings,
             GetParticipantProfilesDelegate getParticipantProfilesDelegate,
@@ -490,6 +507,7 @@ namespace DCL.Chat
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
+            chatTitleBar.ViewCommunityRequested += OnTitleBarViewCommunityRequested;
 
             this.loadingStatus = loadingStatus;
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
@@ -523,6 +541,11 @@ namespace DCL.Chat
                 else if(channelPair.Value.ChannelType == ChatChannel.ChatChannelType.USER)
                     AddPrivateConversation(channelPair.Value);
             }
+        }
+
+        private void OnTitleBarViewCommunityRequested()
+        {
+            ViewCommunityRequested?.Invoke(communitiesData[CurrentChannelId].id);
         }
 
         private void OnDeleteChatHistoryRequested()
@@ -768,7 +791,7 @@ namespace DCL.Chat
         public void AddCommunityConversation(ChatChannel channelToAdd, IThumbnailCache thumbnailCache)
         {
             conversationsToolbar.AddConversation(channelToAdd);
-            GetUserCommunitiesCompactResponse.CommunityData communityData = communitiesData[channelToAdd.Id];
+            GetUserCommunitiesData.CommunityData communityData = communitiesData[channelToAdd.Id];
             conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData);
         }
 
@@ -794,6 +817,7 @@ namespace DCL.Chat
             conversationsToolbar.RemoveAllConversations();
             currentChannel = null;
         }
+
 #endregion
 
         public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
@@ -1051,13 +1075,6 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
-        }
-
-        Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData> communitiesData = new Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData>();
-
-        public void SetCommunitiesData(Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData> communities)
-        {
-            communitiesData = communities;
         }
     }
 }

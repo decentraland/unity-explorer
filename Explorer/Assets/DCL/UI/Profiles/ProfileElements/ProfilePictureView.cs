@@ -106,7 +106,7 @@ namespace DCL.UI.ProfileElements
             {
                 currentUserId = null;
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 currentUserId = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);

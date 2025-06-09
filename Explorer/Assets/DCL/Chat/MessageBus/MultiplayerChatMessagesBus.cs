@@ -31,7 +31,7 @@ namespace DCL.Chat.MessageBus
             ChatMessageFactory messageFactory,
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            DecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
@@ -120,7 +120,7 @@ namespace DCL.Chat.MessageBus
                     walletId = receivedMessage.Topic.Substring(walletPartLength);
                 }
 
-                ChatMessage newMessage = messageFactory.CreateChatMessage(receivedMessage.FromWalletId, false, receivedMessage.Payload.Message, null, topic);
+                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, topic);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
             }

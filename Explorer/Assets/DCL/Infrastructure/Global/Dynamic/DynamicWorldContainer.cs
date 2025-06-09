@@ -579,7 +579,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             IThumbnailCache thumbnailCache = new ThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
-            ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, profileThumbnailCache, remoteMetadata);
+            ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();

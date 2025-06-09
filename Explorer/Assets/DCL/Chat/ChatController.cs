@@ -8,6 +8,7 @@ using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Communities;
+using DCL.Communities.CommunitiesCard;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -75,6 +76,7 @@ namespace DCL.Chat
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
+        private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> userCommunities = new();
 
         private SingleInstanceEntity cameraEntity;
 
@@ -270,28 +272,6 @@ namespace DCL.Chat
             onClosed();
         }
 
-        private async UniTask AddCommunityCoversationsAsync()
-        {
-            communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            GetUserCommunitiesCompactResponse response = await communitiesDataProvider.GetUserCommunitiesCompactAsync(communitiesServiceCts.Token);
-
-            await UniTask.SwitchToMainThread();
-
-            Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData> newCommunities = new Dictionary<ChatChannel.ChannelId, GetUserCommunitiesCompactResponse.CommunityData>();
-
-            for (int i = 0; i < response.communities.Length; ++i)
-            {
-                newCommunities.Add(ChatChannel.NewCommunityChannelId(response.communities[i].id), response.communities[i]);
-            }
-
-            viewInstance.SetCommunitiesData(newCommunities);
-
-            for (int i = 0; i < response.communities.Length; ++i)
-            {
-                chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.communities[i].id), ChatChannel.ChatChannelType.COMMUNITY);
-            }
-        }
-
         private void AddNearbyChannelAndSendWelcomeMessage()
         {
             chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
@@ -310,7 +290,7 @@ namespace DCL.Chat
             await UniTask.SwitchToMainThread();
             viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
 
-            await AddCommunityCoversationsAsync();
+            await InitializeCommunityCoversationsAsync();
         }
 
         protected override void OnViewClose()
@@ -318,6 +298,67 @@ namespace DCL.Chat
             Blur();
             UnsubscribeFromEvents();
             Dispose();
+        }
+
+#endregion
+
+#region Communities
+
+        private async UniTask InitializeCommunityCoversationsAsync()
+        {
+            communitiesServiceCts = communitiesServiceCts.SafeRestart();
+            GetUserCommunitiesResponse response = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, 100, communitiesServiceCts.Token);
+
+            await UniTask.SwitchToMainThread();
+
+            userCommunities.Clear();
+
+            for (int i = 0; i < response.data.results.Length; ++i)
+            {
+                // TODO remove this
+                response.data.results[i].thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
+                userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.results[i].id), response.data.results[i]);
+            }
+
+            viewInstance.SetCommunitiesData(userCommunities);
+
+            for (int i = 0; i < response.data.results.Length; ++i)
+            {
+                chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.results[i].id), ChatChannel.ChatChannelType.COMMUNITY);
+            }
+        }
+
+        // TODO: Ready to be called by a notification
+        private async UniTask AddCommunityCoversationAsync(string communityId)
+        {
+            communitiesServiceCts = communitiesServiceCts.SafeRestart();
+            GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token);
+
+            await UniTask.SwitchToMainThread();
+
+            // TODO remove this
+            response.data.thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
+            userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.id), new GetUserCommunitiesData.CommunityData()
+                {
+                    id = response.data.id,
+                    thumbnails = response.data.thumbnails,
+                    name = response.data.name,
+                    privacy = response.data.privacy,
+                    role = response.data.role,
+                    ownerAddress = response.data.ownerId
+                });
+
+            viewInstance.SetCommunitiesData(userCommunities);
+
+            chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
+        }
+
+        // TODO: Ready to be called by a notification
+        private void RemoveCommunityConversation(string communityId)
+        {
+            ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(communityId);
+            userCommunities.Remove(communityChannelId);
+            chatHistory.RemoveChannel(communityChannelId);
         }
 
 #endregion
@@ -749,6 +790,7 @@ namespace DCL.Chat
             viewInstance.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
             viewInstance.ConversationSelected += OnSelectConversation;
             viewInstance.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
+            viewInstance.ViewCommunityRequested += OnViewViewCommunityRequested;
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
@@ -766,6 +808,12 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+        }
+
+        private void OnViewViewCommunityRequested(string communityId)
+        {
+            viewInstance!.Blur();
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId)));
         }
 
         private void OnViewDeleteChatHistoryRequested()

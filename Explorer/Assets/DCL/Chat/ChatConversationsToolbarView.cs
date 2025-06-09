@@ -78,15 +78,7 @@ namespace DCL.Chat
         /// <param name="channel">The channel the item will represent.</param>
         public void AddConversation(ChatChannel channel)
         {
-            if (items.TryGetValue(channel.Id, out var item))
-                return;
-
-            ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
-            newItem.Initialize();
-            newItem.OpenButtonClicked += OpenButtonClicked;
-            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
-            newItem.TooltipShown += OnItemTooltipShown;
-            newItem.Id = channel.Id;
+            ChatConversationsToolbarViewItem newItem;
 
             switch (channel.ChannelType)
             {
@@ -102,7 +94,11 @@ namespace DCL.Chat
                 default: throw new ArgumentOutOfRangeException();
             }
 
-            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
+            newItem.Initialize();
+            newItem.OpenButtonClicked += OpenButtonClicked;
+            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
+            newItem.TooltipShown += OnItemTooltipShown;
+            newItem.Id = channel.Id;
 
             items.Add(channel.Id, newItem);
 
@@ -120,7 +116,7 @@ namespace DCL.Chat
             conversationItem.SetClaimedNameIconVisibility(false);
         }
 
-        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, IThumbnailCache thumbnailCache, GetUserCommunitiesCompactResponse.CommunityData communityData)
+        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, IThumbnailCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData)
         {
             CommunityChatConversationsToolbarViewItem conversationItem = (CommunityChatConversationsToolbarViewItem)items[channelId];
             SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache);
@@ -298,9 +294,9 @@ namespace DCL.Chat
             }
         }
 
-        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesCompactResponse.CommunityData communityData, IThumbnailCache thumbnailCache)
+        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, IThumbnailCache thumbnailCache)
         {
-            newItem.SetThumbnailData(thumbnailCache, communityData.smallThumbnail, communityData.id);
+            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails[0], communityData.id);
             newItem.SetConversationName(communityData.name);
         }
     }
