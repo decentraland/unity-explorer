@@ -79,8 +79,8 @@ namespace DCL.WebRequests
                    };
         }
 
-        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
-            new (HttpMethod.Get, commonArguments.URL);
+        public override (HttpRequestMessage, ulong uploadPayloadSize) CreateYetAnotherHttpRequest() =>
+            new (new HttpRequestMessage(HttpMethod.Get, commonArguments.URL), 0);
 
         private async UniTask<PartialDownloadStream> GetStreamFromYetAnotherRequestAsync(CancellationToken ct)
         {

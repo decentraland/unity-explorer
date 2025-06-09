@@ -148,14 +148,14 @@
       "url": "https://package.openupm.com"
     },
     "com.tivadar.best.http": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/BestHTTP#besthttp-custom",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/BestHTTP",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.burst": "1.8.19",
         "com.unity.profiling.core": "1.0.0"
       },
-      "hash": "0195f6c6a9c6ac46311cdbc308d93186ea0b9f5f"
+      "hash": "c01adb6a2bd2cd7fbfb0a2658cb01ae9491171d8"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

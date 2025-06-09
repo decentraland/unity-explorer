@@ -40,8 +40,8 @@ namespace DCL.WebRequests
         public override HTTPRequest CreateHttp2Request() =>
             new (GetEffectiveUrl());
 
-        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
-            new (HttpMethod.Get, GetEffectiveUrl());
+        public override (HttpRequestMessage, ulong uploadPayloadSize) CreateYetAnotherHttpRequest() =>
+            new (new HttpRequestMessage(HttpMethod.Get, GetEffectiveUrl()), 0);
 
         private Uri GetEffectiveUrl() =>
             useKtx

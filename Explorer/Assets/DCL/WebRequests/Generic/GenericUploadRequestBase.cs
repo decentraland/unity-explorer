@@ -15,9 +15,11 @@ namespace DCL.WebRequests
         protected internal GenericUploadRequestBase(RequestEnvelope envelope, GenericUploadArguments args, IWebRequestController controller)
             : base(envelope, args, controller) { }
 
-        protected HttpRequestMessage CreateYetAnotherHttpRequest(HttpMethod method)
+        protected (HttpRequestMessage, ulong uploadPayloadSize) CreateYetAnotherHttpRequest(HttpMethod method)
         {
             var request = new HttpRequestMessage(method, Envelope.CommonArguments.URL);
+
+            var uploadSize = 0UL;
 
             if (Args.MultipartFormSections != null)
             {
@@ -25,7 +27,9 @@ namespace DCL.WebRequests
 
                 foreach (IMultipartFormSection? section in Args.MultipartFormSections)
                 {
-                    var content = new ByteArrayContent(section.sectionData);
+                    byte[]? sectionData = section.sectionData;
+                    uploadSize += (ulong)sectionData.Length;
+                    var content = new ByteArrayContent(sectionData);
                     content.Headers.TryAddWithoutValidation(WebRequestHeaders.CONTENT_TYPE_HEADER, section.contentType);
 
                     // There is validation in the constructor that may throw an exception
@@ -39,7 +43,9 @@ namespace DCL.WebRequests
             }
             else if (Args.WWWForm != null)
             {
-                var stream = new ByteArrayContent(Args.WWWForm.data);
+                byte[]? data = Args.WWWForm.data;
+                var stream = new ByteArrayContent(data);
+                uploadSize += (ulong)data.Length;
 
                 foreach (KeyValuePair<string, string> formHeader in Args.WWWForm.headers)
                     stream.Headers.TryAddWithoutValidation(formHeader.Key, formHeader.Value);
@@ -48,12 +54,14 @@ namespace DCL.WebRequests
             }
             else
             {
-                var content = new ByteArrayContent(Args.PostData == null ? Array.Empty<byte>() : Encoding.UTF8.GetBytes(Args.PostData));
+                byte[] data = Args.PostData == null ? Array.Empty<byte>() : Encoding.UTF8.GetBytes(Args.PostData);
+                uploadSize += (ulong)data.Length;
+                var content = new ByteArrayContent(data);
                 content.Headers.TryAddWithoutValidation(WebRequestHeaders.CONTENT_TYPE_HEADER, Args.ContentType);
                 request.Content = content;
             }
 
-            return request;
+            return (request, uploadSize);
         }
 
         protected HTTPRequest CreateHttp2Request(HTTPMethods method)

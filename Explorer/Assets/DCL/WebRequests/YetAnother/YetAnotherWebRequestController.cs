@@ -62,7 +62,7 @@ namespace DCL.WebRequests
                     if (delayBeforeRepeat != TimeSpan.Zero)
                         await UniTask.Delay(delayBeforeRepeat, cancellationToken: ct);
 
-                    HttpRequestMessage nativeRequest = requestWrap.CreateYetAnotherHttpRequest();
+                    (HttpRequestMessage nativeRequest, ulong uploadSize) = requestWrap.CreateYetAnotherHttpRequest();
 
                     // Some APIs require a User-Agent header to be set, hyper doesn't set it by default
                     nativeRequest.Headers.Add("User-Agent", USER_AGENT);
@@ -72,49 +72,59 @@ namespace DCL.WebRequests
 
                     envelope.InitializedWebRequest(identityCache, adapter);
 
+                    analyticsContainer.OnRequestStarted(requestWrap, adapter);
+
                     // TODO Timeout per request configuration: how to split it for Receiving headers and getting the body? Do we ever need it?
-                    // TODO analytics
-
-                    HttpResponseMessage response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
-
-                    // We must handle redirections manually as hyper doesn't support them automatically
-                    while (response.IsRedirected())
+                    try
                     {
-                        Uri? lastUri = nativeRequest.RequestUri;
+                        HttpResponseMessage response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
 
-                        nativeRequest.Dispose();
-                        response.Dispose();
+                        // We must handle redirections manually as hyper doesn't support them automatically
+                        while (response.IsRedirected())
+                        {
+                            Uri? lastUri = nativeRequest.RequestUri;
 
-                        nativeRequest = requestWrap.CreateYetAnotherHttpRequest();
-                        nativeRequest.RequestUri = response.Headers.Location;
-                        nativeRequest.Headers.Referrer = lastUri;
+                            nativeRequest.Dispose();
+                            response.Dispose();
 
-                        adapter.SetRedirected(nativeRequest);
+                            (nativeRequest, uploadSize) = requestWrap.CreateYetAnotherHttpRequest();
+                            nativeRequest.RequestUri = response.Headers.Location;
+                            nativeRequest.Headers.Referrer = lastUri;
 
-                        response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+                            adapter.SetRedirected(nativeRequest);
+
+                            response = await httpClient.SendAsync(nativeRequest, HttpCompletionOption.ResponseHeadersRead, ct);
+                        }
+
+                        adapter.UploadedBytes = uploadSize;
+
+                        Stream? stream = await response.Content.ReadAsStreamAsync();
+
+                        var headers = new WebRequestHeaders(response);
+
+                        // Adapt the stream for compatibility with the existing cache and logic
+                        var adaptedStream = new YetAnotherDownloadContentStream(stream);
+                        YetAnotherWebResponse adaptedResponse = adapter.SetResponse(response, headers, adaptedStream);
+
+                        // HttpClient will not throw an exception for non-success status codes, so we need to throw an exception manually
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            // Stream will contain the error response body
+                            string error = await adaptedResponse.GetTextAsync(ct);
+                            var exceptionMessage = $"{nativeRequest.Method} {nativeRequest.RequestUri}, {(int)response.StatusCode}: {response.ReasonPhrase}";
+
+                            adaptedResponse.Error = string.IsNullOrEmpty(error) ? exceptionMessage : error;
+
+                            throw new HttpRequestException($"{nativeRequest.Method} {nativeRequest.RequestUri}, {(int)response.StatusCode}: {response.ReasonPhrase}\n{error}");
+                        }
+
+                        adapter.successfullyExecutedByController = true;
                     }
-
-                    Stream? stream = await response.Content.ReadAsStreamAsync();
-
-                    var headers = new WebRequestHeaders(response);
-
-                    // Adapt the stream for compatibility with the existing cache and logic
-                    var adaptedStream = new YetAnotherDownloadContentStream(stream);
-                    YetAnotherWebResponse adaptedResponse = adapter.SetResponse(response, headers, adaptedStream);
-
-                    // HttpClient will not throw an exception for non-success status codes, so we need to throw an exception manually
-                    if (!response.IsSuccessStatusCode)
+                    finally
                     {
-                        // Stream will contain the error response body
-                        string error = await adaptedResponse.GetTextAsync(ct);
-                        var exceptionMessage = $"{nativeRequest.Method} {nativeRequest.RequestUri}, {(int)response.StatusCode}: {response.ReasonPhrase}";
-
-                        adaptedResponse.Error = string.IsNullOrEmpty(error) ? exceptionMessage : error;
-
-                        throw new HttpRequestException($"{nativeRequest.Method} {nativeRequest.RequestUri}, {(int)response.StatusCode}: {response.ReasonPhrase}\n{error}");
+                        // Analytics must be called when the object is not disposed
+                        analyticsContainer.OnRequestFinished(requestWrap, adapter);
                     }
-
-                    adapter.successfullyExecutedByController = true;
 
                     return adapter;
                 }
@@ -164,6 +174,7 @@ namespace DCL.WebRequests
                 }
                 finally
                 {
+
                     if (fromMainThread)
                         await UniTask.SwitchToMainThread();
                 }

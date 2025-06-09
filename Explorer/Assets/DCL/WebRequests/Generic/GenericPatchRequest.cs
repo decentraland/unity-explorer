@@ -16,7 +16,7 @@ namespace DCL.WebRequests
         public override UnityWebRequest CreateUnityWebRequest() =>
             CreateUnityWebRequest("PATCH");
 
-        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
+        public override (HttpRequestMessage, ulong uploadPayloadSize) CreateYetAnotherHttpRequest() =>
             CreateYetAnotherHttpRequest(HttpMethod.Patch);
     }
 }

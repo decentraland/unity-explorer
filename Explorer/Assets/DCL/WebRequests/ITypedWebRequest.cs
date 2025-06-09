@@ -45,7 +45,7 @@ namespace DCL.WebRequests
 
         HTTPRequest CreateHttp2Request();
 
-        HttpRequestMessage CreateYetAnotherHttpRequest();
+        (HttpRequestMessage, ulong uploadPayloadSize) CreateYetAnotherHttpRequest();
     }
 
     public interface ITypedWebRequest<out TArgs> : ITypedWebRequest where TArgs: struct

@@ -33,7 +33,7 @@ namespace DCL.WebRequests
         public virtual HTTPRequest CreateHttp2Request() =>
             throw new NotSupportedException($"{nameof(CreateHttp2Request)} is not supported by {GetType().Name}");
 
-        public virtual HttpRequestMessage CreateYetAnotherHttpRequest() =>
+        public virtual (HttpRequestMessage, ulong uploadPayloadSize) CreateYetAnotherHttpRequest() =>
             throw new NotSupportedException($"{nameof(CreateYetAnotherHttpRequest)} is not supported by {GetType().Name}");
 
         protected CommonArguments commonArguments => Envelope.CommonArguments;

@@ -16,7 +16,7 @@ namespace DCL.WebRequests
         public override UnityWebRequest CreateUnityWebRequest() =>
             UnityWebRequest.Head(Envelope.CommonArguments.URL);
 
-        public override HttpRequestMessage CreateYetAnotherHttpRequest() =>
-            new (HttpMethod.Head, Envelope.CommonArguments.URL);
+        public override (HttpRequestMessage, ulong uploadPayloadSize) CreateYetAnotherHttpRequest() =>
+            new (new HttpRequestMessage(HttpMethod.Head, Envelope.CommonArguments.URL), 0UL);
     }
 }
