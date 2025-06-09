@@ -51,13 +51,13 @@ namespace ECS.StreamableLoading.NFTShapes
 
             return contentInfo.Type switch
                    {
-                       WebContentInfo.ContentType.Image or WebContentInfo.ContentType.KTX2 => await HandleImage(imageUrl, ct),
+                       WebContentInfo.ContentType.Image or WebContentInfo.ContentType.KTX2 => await HandleImageAsync(imageUrl, ct),
                        WebContentInfo.ContentType.Video => HandleVideo(convertUrl),
                        _ => throw new NotSupportedException("Could not handle content type " + contentInfo.Type + " for url " + convertUrl)
                    };
         }
 
-        private async UniTask<StreamableLoadingResult<Texture2DData>> HandleImage(string url, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<Texture2DData>> HandleImageAsync(string url, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
