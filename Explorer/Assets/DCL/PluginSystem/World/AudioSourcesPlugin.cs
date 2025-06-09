@@ -26,6 +26,7 @@ namespace DCL.PluginSystem.World
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IAssetsProvisioner assetsProvisioner;
         private AudioMixer audioMixer;
+        private AudioSourcesPluginSettings settings;
 
         internal readonly AudioClipsCache audioClipsCache;
 
@@ -50,7 +51,7 @@ namespace DCL.PluginSystem.World
         {
             StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
-            UpdateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider, audioMixer, sharedDependencies.SceneStateProvider);
+            UpdateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider, audioMixer, sharedDependencies.SceneStateProvider, settings);
 
             finalizeWorldSystems.Add(CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry));
         }
@@ -58,8 +59,11 @@ namespace DCL.PluginSystem.World
         public void Dispose()
         { }
 
-        public async UniTask InitializeAsync(AudioSourcesPluginSettings settings, CancellationToken ct) =>
+        public async UniTask InitializeAsync(AudioSourcesPluginSettings settings, CancellationToken ct)
+        {
+            this.settings = settings;
             audioMixer = (await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct)).Value;
+        }
 
         [Serializable]
         public class AudioSourcesPluginSettings : IDCLPluginSettings
@@ -67,6 +71,7 @@ namespace DCL.PluginSystem.World
             [field: Header(nameof(AudioSourcesPlugin) + "." + nameof(AudioSourcesPluginSettings))]
             [field: Space]
             [field: SerializeField] internal AssetReferenceT<AudioMixer> GeneralAudioMixer;
+            [field: SerializeField] internal float FadeSpeed = 1f;
         }
 
     }

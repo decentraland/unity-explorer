@@ -5,9 +5,9 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.World;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
-using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -30,16 +30,19 @@ namespace DCL.SDKComponents.AudioSources
         private readonly ISceneData sceneData;
         private readonly AudioMixerGroup[]? worldGroup;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly AudioSourcesPlugin.AudioSourcesPluginSettings settings;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
-            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer, ISceneStateProvider sceneStateProvider) : base(world)
+            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer, ISceneStateProvider sceneStateProvider,
+            AudioSourcesPlugin.AudioSourcesPluginSettings settings) : base(world)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.sceneStateProvider = sceneStateProvider;
+            this.settings = settings;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
 
@@ -107,11 +110,11 @@ namespace DCL.SDKComponents.AudioSources
             switch (sceneStateProvider.IsCurrent)
             {
                 case true when audio.volume < sdkComponent.GetVolume():
-                    audio.volume += dt;
+                    audio.volume += dt * settings.FadeSpeed * sdkComponent.GetVolume();
                     audio.volume = Mathf.Min(audio.volume, sdkComponent.GetVolume());
                     return;
                 case false when audio.volume > 0:
-                    audio.volume -= dt;
+                    audio.volume -= dt * settings.FadeSpeed * sdkComponent.GetVolume();
                     audio.volume = Mathf.Max(audio.volume, 0);
                     break;
             }
