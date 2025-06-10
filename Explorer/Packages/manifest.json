@@ -7,7 +7,7 @@
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
     "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
+    "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#59a80b6515c9f42e3fa221f743949604497ff947",
     "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git",
     "com.decentraland.rpc-csharp": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
     "com.decentraland.unity-shared-dependencies": "https://github.com/decentraland/unity-shared-dependencies.git",
