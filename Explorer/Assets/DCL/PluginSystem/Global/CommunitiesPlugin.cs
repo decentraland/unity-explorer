@@ -108,7 +108,6 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inputBlock,
                 communitiesDataProvider,
-                inWorldWarningNotificationView,
                 nftNamesProvider,
                 placesAPIService,
                 selfProfile,

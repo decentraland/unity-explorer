@@ -1689,7 +1689,7 @@ MonoBehaviour:
       picture: {fileID: 2573895094594536804}
     - root: {fileID: 4816826890462254729}
       picture: {fileID: 873994822332494481}
-  defaultThumbnailSprite: {fileID: 21300000, guid: 2b752416b286d4fc5b1428a469c85712, type: 3}
+  defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
 --- !u!1 &8345438408242346082
 GameObject:
   m_ObjectHideFlags: 0

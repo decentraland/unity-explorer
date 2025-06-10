@@ -57,6 +57,9 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_Text creationPanelCreateButtonText;
         [SerializeField] private GameObject creationPanelCreateButtonLoading;
 
+        [field: Header("Common")]
+        [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; }
+
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
         private bool isEditionMode;

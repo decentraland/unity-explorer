@@ -1,3 +1,4 @@
+using Crosstales;
 using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
@@ -8,7 +9,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
@@ -25,13 +25,15 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
+        private const string INCOMPATIBLE_IMAGE_ERROR = "Invalid image file selected. Please check file type and size.";
         private const string FILE_BROWSER_TITLE = "Select image";
+        private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
+        private const int MAX_IMAGE_DIMENSION_PIXELS = 512;
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly ICommunitiesDataProvider dataProvider;
-        private readonly WarningNotificationView warningNotificationView;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
@@ -60,7 +62,6 @@ namespace DCL.Communities.CommunityCreation
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
             ICommunitiesDataProvider dataProvider,
-            WarningNotificationView warningNotificationView,
             INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
@@ -69,7 +70,6 @@ namespace DCL.Communities.CommunityCreation
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.dataProvider = dataProvider;
-            this.warningNotificationView = warningNotificationView;
             this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
@@ -165,8 +165,18 @@ namespace DCL.Communities.CommunityCreation
 
         private void OpenImageSelection()
         {
-            string path = FileBrowser.Instance.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
-            Debug.Log("SANTI LOG -> Selected file: " + path);
+            FileBrowser.Instance.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
+            byte[] data = FileBrowser.Instance.CurrentOpenSingleFileData;
+            Texture2D texture = data.CTToTexture();
+
+            if (texture.width > MAX_IMAGE_DIMENSION_PIXELS || texture.height > MAX_IMAGE_DIMENSION_PIXELS || data.Length > MAX_IMAGE_SIZE_BYTES)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                viewInstance!.WarningNotificationView.AnimatedShowAsync(INCOMPATIBLE_IMAGE_ERROR, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token).Forget();
+                return;
+            }
+
+            viewInstance!.SetProfileSelectedImage(data.CTToSprite());
         }
 
         private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
@@ -243,7 +253,7 @@ namespace DCL.Communities.CommunityCreation
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
 
@@ -255,19 +265,19 @@ namespace DCL.Communities.CommunityCreation
         private void CreateCommunity(string name, string description)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, createCommunityCts.Token).Forget();
+            CreateCommunityAsync(name, description, FileBrowser.Instance.CurrentOpenSingleFileData, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, CancellationToken ct)
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, byte[] thumbnail, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, null, null, null, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, thumbnail, null, null, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                await viewInstance.WarningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
             }
@@ -291,7 +301,7 @@ namespace DCL.Communities.CommunityCreation
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(UPDATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                await viewInstance.WarningNotificationView.AnimatedShowAsync(UPDATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
             }

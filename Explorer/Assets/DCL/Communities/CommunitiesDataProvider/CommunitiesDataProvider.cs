@@ -67,7 +67,7 @@ namespace DCL.Communities
                 };
 
                 if (thumbnail != null)
-                    formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/jpeg"));
+                    formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
 
                 response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
