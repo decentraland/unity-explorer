@@ -56,7 +56,6 @@ namespace DCL.UI.MainUI
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true)).Forget();
             mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
 
             if (isFriendsEnabled)

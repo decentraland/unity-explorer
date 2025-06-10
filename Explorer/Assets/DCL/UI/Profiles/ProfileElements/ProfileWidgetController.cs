@@ -60,7 +60,7 @@ namespace DCL.UI.ProfileElements
         private void ProfileNameChanged(Profile profile)
         {
             SetupProfileData(profile);
-            viewInstance!.ProfilePictureView.SetupWithDependencies(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
 
         private async UniTaskVoid LoadAsync(CancellationToken ct)
@@ -71,7 +71,7 @@ namespace DCL.UI.ProfileElements
 
             SetupProfileData(profile);
 
-            await viewInstance.ProfilePictureView.SetupWithDependenciesAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
+            await viewInstance.ProfilePictureView.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
         }
 
         private void SetupProfileData(Profile profile)
