@@ -3,9 +3,9 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
 using DCL.WebRequests;
-using DCL.WebRequests.WebContentSizes;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
@@ -15,6 +15,7 @@ using ECS.StreamableLoading.NFTShapes.DTOs;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Threading;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.NFTShapes
 {
@@ -22,50 +23,63 @@ namespace ECS.StreamableLoading.NFTShapes
     [LogCategory(ReportCategory.NFT_SHAPE_WEB_REQUEST)]
     public partial class LoadNFTShapeSystem : LoadSystemBase<Texture2DData, GetNFTShapeIntention>
     {
+        private const long MAX_PREVIEW_SIZE = 8388608;
+
         private readonly IWebRequestController webRequestController;
-        private readonly IWebContentSizes webContentSizes;
+        private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
+        private readonly IDecentralandUrlsSource urlsSource;
         private readonly bool ktxEnabled;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, IWebContentSizes webContentSizes,
-            bool ktxEnabled)
-            : base(
-                world, cache, new DiskCacheOptions<Texture2DData, GetNFTShapeIntention>(diskCache, GetNFTShapeIntention.DiskHashCompute.INSTANCE, "nft")
-            )
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, bool ktxEnabled,
+            ExtendedObjectPool<Texture2D> videoTexturePool, IDecentralandUrlsSource urlsSource)
+            : base(world, cache, new DiskCacheOptions<Texture2DData, GetNFTShapeIntention>(diskCache, GetNFTShapeIntention.DiskHashCompute.INSTANCE, "nft"))
         {
             this.webRequestController = webRequestController;
-            this.webContentSizes = webContentSizes;
+            this.videoTexturePool = videoTexturePool;
+            this.urlsSource = urlsSource;
             this.ktxEnabled = ktxEnabled;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             Uri imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
+            Uri convertUrl = ktxEnabled ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(imageUrl)) : imageUrl;
+            var contentInfo = await WebContentInfo.FetchAsync(convertUrl, ct);
 
-            if (!ktxEnabled)
-            {
-                bool isOkSize = await webContentSizes.IsOkSizeAsync(imageUrl, ct);
+            if (!ktxEnabled && contentInfo is { Type: WebContentInfo.ContentType.Image, SizeInBytes: > MAX_PREVIEW_SIZE })
+                return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
 
-                if (isOkSize == false)
-                    return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
-            }
+            return contentInfo.Type switch
+                   {
+                       WebContentInfo.ContentType.Image or WebContentInfo.ContentType.KTX2 => await HandleImageAsync(imageUrl, ct),
+                       WebContentInfo.ContentType.Video => HandleVideo(convertUrl),
+                       _ => throw new NotSupportedException("Could not handle content type " + contentInfo.Type + " for url " + convertUrl)
+                   };
+        }
 
-            // No need to check the size since we're using our converter so size will always be ok
-            // texture request
+        private async UniTask<StreamableLoadingResult<Texture2DData>> HandleImageAsync(Uri url, CancellationToken ct)
+        {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            IOwnedTexture2D? result = await webRequestController.GetTextureAsync(
-                                                                     new CommonLoadingArguments(imageUrl, attempts: 1),
-                                                                     new GetTextureArguments(TextureType.Albedo, true),
-                                                                     GetReportData())
-                                                                .CreateTextureAsync(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, ct);
+            var result = await webRequestController.GetTextureAsync(
+                new CommonLoadingArguments(url), attempts: 1),
+                new GetTextureArguments(TextureType.Albedo, true),
+                GetReportData())
+                    .CreateTextureAsync(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, ct);
 
 
             if (result == null)
                 return new StreamableLoadingResult<Texture2DData>(
                     GetReportData(),
-                    new Exception($"Error loading texture from url {intention.CommonArguments.URL}")
+                    new Exception($"Error loading texture from url {url}")
                 );
 
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
+        }
+
+        private StreamableLoadingResult<Texture2DData> HandleVideo(Uri url)
+        {
+            var texture2D = videoTexturePool.Get();
+            return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture2D, url));
         }
 
         private async UniTask<Uri> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
