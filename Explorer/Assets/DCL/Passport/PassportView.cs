@@ -191,11 +191,5 @@ namespace DCL.Passport
             MainScroll.verticalNormalizedPosition = 1;
             CharacterPreviewView.gameObject.SetActive(true);
         }
-
-        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
-        {
-            foreach (MutualFriendsConfig.MutualThumbnail thumbnail in MutualFriends.Thumbnails)
-                thumbnail.Picture.SetProfileDataProvider(profileDataProvider);
-        }
     }
 }

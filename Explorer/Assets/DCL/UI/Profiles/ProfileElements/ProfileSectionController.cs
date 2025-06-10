@@ -50,7 +50,7 @@ namespace DCL.UI.ProfileElements
 
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
-            viewInstance!.ProfilePictureView.SetupWithDependencies(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
