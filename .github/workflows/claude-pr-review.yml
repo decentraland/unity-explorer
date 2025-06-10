@@ -6,7 +6,7 @@ on:
 
 jobs:
   review-on-label:
-    if: github.event.label.name == 'ai_review'
+    if: github.event.label.name == 'ai-review'
     runs-on: ubuntu-latest
     permissions:
       contents: read
