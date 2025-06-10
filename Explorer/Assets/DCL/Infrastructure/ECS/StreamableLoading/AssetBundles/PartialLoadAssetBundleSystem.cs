@@ -53,30 +53,22 @@ namespace ECS.StreamableLoading.AssetBundles
 
             try
             {
-                ct.ThrowIfCancellationRequested();
-                assetBundle = await AssetBundle.LoadFromStreamAsync(stream).WithCancellation(ct);
+                assetBundle = await AssetBundle.LoadFromStreamAsync(stream);
             }
             catch (Exception e)
             {
                 stream.Dispose();
-
-                if (e is OperationCanceledException)
-                    throw;
-
                 throw new Exception($"Exception occured on loading AssetBundle {intention.Hash} from stream", e);
-            }
-
-            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-            state.AcquiredBudget!.Release();
-
-            if (assetBundle == null)
-            {
-                stream.Dispose();
-                throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
             }
 
             try
             {
+                // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+                state.AcquiredBudget!.Release();
+
+                if (!assetBundle)
+                    throw new NullReferenceException($"{intention.Hash} Asset Bundle is null");
+
                 // get metrics
                 string? metricsJSON;
                 string? metadataJSON;

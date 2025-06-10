@@ -95,10 +95,12 @@ namespace ECS.SceneLifeCycle.Systems
                 ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundle Version Mismatch for {sceneId}");
                 return SceneAssetBundleManifest.NULL;
             }
-            catch
+            catch (Exception e)
             {
                 // Don't block the scene if the loading manifest failed, just use NULL
-                ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
+                if (e is not OperationCanceledException)
+                    ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
+
                 return SceneAssetBundleManifest.NULL;
             }
         }

@@ -726,13 +726,24 @@ namespace DCL.WebRequests.HTTP2
             set => underlyingStream.Position = value;
         }
 
-        internal Stream underlyingStream => opMode switch
-                                            {
-                                                Mode.COMPLETE_DATA_CACHED => cachedPartialData.readHandler!.Value.stream,
-                                                Mode.COMPLETE_SEGMENTED_STREAM => memoryStreamPartialData.stream,
-                                                Mode.EMBEDDED_FILE_STREAM => fileStreamData.stream,
-                                                _ => throw new InvalidOperationException("The stream is not fully downloaded yet"),
-                                            };
+        internal Stream underlyingStream
+        {
+            get
+            {
+                Stream? stream = opMode switch
+                                 {
+                                     Mode.COMPLETE_DATA_CACHED => cachedPartialData.readHandler!.Value.stream,
+                                     Mode.COMPLETE_SEGMENTED_STREAM => memoryStreamPartialData.stream,
+                                     Mode.EMBEDDED_FILE_STREAM => fileStreamData.stream,
+                                     _ => throw new InvalidOperationException("The stream is not fully downloaded yet"),
+                                 };
+
+                if (stream == null)
+                    throw new InvalidOperationException($"The underlying stream created from {fromUrl} is `null` in the mode {opMode}");
+
+                return stream;
+            }
+        }
 
         public override void Flush()
         {
