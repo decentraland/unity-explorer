@@ -15,7 +15,7 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneHandler : IDisposable
     {
         private const bool MICROPHONE_LOOP = true;
-        private const int MICROPHONE_SAMPLE_RATE = 48000;
+        private const int MICROPHONE_SAMPLE_RATE = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
         private const int MICROPHONE_LENGTH_SECONDS = 1;
 
         private readonly DCLInput dclInput;
@@ -127,6 +127,7 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                 case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
                     isInCall = true;
+                    IsTalking = true;
                     EnableMicrophone();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL: break;

@@ -78,6 +78,11 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
+            
+            AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
+            audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
+            AudioSettings.Reset(audioConfig);
+
             voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
             VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
 
