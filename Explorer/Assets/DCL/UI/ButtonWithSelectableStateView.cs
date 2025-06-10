@@ -14,14 +14,20 @@ namespace DCL.UI
         [field: SerializeField] public Color UnselectedBackgroundColor { get; private set; }
         [field: SerializeField] public Color SelectedTextColor { get; private set; }
         [field: SerializeField] public Color UnselectedTextColor { get; private set; }
+        [field: SerializeField] public Sprite SelectedIconImage { get; private set; }
+        [field: SerializeField] public Sprite UnselectedIconImage { get; private set; }
 
         public void SetSelected(bool selected)
         {
             BackgroundImage.color = selected ? SelectedBackgroundColor : UnselectedBackgroundColor;
             Text.color = selected ? SelectedTextColor : UnselectedTextColor;
 
-            if (IconImage != null)
-                IconImage.color = selected ? SelectedTextColor : UnselectedTextColor;
+            if (IconImage == null) return;
+
+            IconImage.color = selected ? SelectedTextColor : UnselectedTextColor;
+
+            if (SelectedIconImage != null && UnselectedIconImage != null)
+                IconImage.sprite = selected ? SelectedIconImage : UnselectedIconImage;
         }
     }
 }

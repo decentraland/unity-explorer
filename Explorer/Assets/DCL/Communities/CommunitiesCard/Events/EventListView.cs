@@ -45,6 +45,8 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             SectionFetchData<EventDTO> eventData = getEventsFetchData();
 
+            //TODO: create element for every event
+
             if (index >= eventData.totalFetched - ELEMENT_MISSING_THRESHOLD && eventData.totalFetched < eventData.totalToFetch)
                 NewDataRequested?.Invoke();
             throw new NotImplementedException();
