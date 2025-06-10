@@ -16,6 +16,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
@@ -26,6 +27,8 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -57,12 +60,15 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
-        private readonly IRPCSocialServices rpcSocialService;
+        private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ChatController chatController;
-
+        private IRealmData realmData;
+        private IRealmNavigator realmNavigator;
+        
         public ChatPlugin(
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
@@ -84,11 +90,14 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IRPCSocialServices rpcSocialService,
+            IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy)
+            ProfileRepositoryWrapper profileDataProvider,
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IRealmData realmData,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -114,8 +123,11 @@ namespace DCL.PluginSystem.Global
             this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.rpcSocialService = rpcSocialService;
+            this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.realmData = realmData;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose()
@@ -128,7 +140,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(ChatPluginSettings settings, CancellationToken ct)
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
-            var privacySettings = new RPCChatPrivacyService(rpcSocialService, chatSettingsAsset.Value);
+            var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
             if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
@@ -161,7 +173,8 @@ namespace DCL.PluginSystem.Global
                 privacySettings,
                 friendsEventBus,
                 chatStorage,
-                friendsServiceProxy
+                friendsServiceProxy,
+                profileRepositoryWrapper
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
@@ -171,6 +184,31 @@ namespace DCL.PluginSystem.Global
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+
+            realmData.RealmType.OnUpdate += OnRealmChange;
+            realmNavigator.NavigationExecuted += OnNavigationExecuted;
+        }
+
+        /// <summary>
+        /// TODO: This is a temporary solution to show the chat when the user navigates to a parcel.
+        /// NOTE: check this PR for more details:
+        /// https://github.com/decentraland/unity-explorer/issues/4324
+        /// </summary>
+        /// <param name="parcel"></param>
+        private void OnNavigationExecuted(Vector2Int parcel)
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
+        }
+
+        /// <summary>
+        /// TODO: This is a temporary solution to show the chat when the user changes realm.
+        /// NOTE: check this PR for more details:
+        /// https://github.com/decentraland/unity-explorer/issues/4324
+        /// </summary>
+        /// <param name="realmKind"></param>
+        private void OnRealmChange(RealmKind realmKind)
+        {
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
         }
 
         private void OnIdentityCleared()

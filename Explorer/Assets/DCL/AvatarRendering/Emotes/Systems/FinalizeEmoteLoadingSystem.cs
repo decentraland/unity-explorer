@@ -128,6 +128,7 @@ namespace DCL.AvatarRendering.Emotes
             if (promise.IsCancellationRequested(World))
             {
                 ResetEmoteResultOnCancellation(emote, bodyShape);
+                promise.ForgetLoading(World);
                 World.Destroy(entity);
                 return;
             }

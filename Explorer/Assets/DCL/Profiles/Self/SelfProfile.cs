@@ -4,7 +4,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;

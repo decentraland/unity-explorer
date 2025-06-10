@@ -194,7 +194,7 @@ namespace DCL.Nametags
             return currentText.StartsWith(username, StringComparison.Ordinal);
         }
 
-        public void SetUsername(string username, string? walletId, bool hasClaimedName, Color usernameColor)
+        public void SetUsername(string username, string? walletId, bool hasClaimedName, bool useVerifiedIcon, Color usernameColor)
         {
             ResetElement();
 
@@ -202,7 +202,7 @@ namespace DCL.Nametags
             cts = new CancellationTokenSource();
 
             isClaimedName = hasClaimedName;
-            verifiedIcon.gameObject.SetActive(hasClaimedName);
+            verifiedIcon.gameObject.SetActive(useVerifiedIcon);
 
             privateMessageIcon.gameObject.SetActive(false);
             privateMessageText.gameObject.SetActive(false);
@@ -214,7 +214,7 @@ namespace DCL.Nametags
             cachedUsernameWidth = usernameText.preferredWidth;
             messageContent.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
 
-            if (hasClaimedName)
+            if (hasClaimedName && useVerifiedIcon)
             {
                 usernamePos.x = usernameText.rectTransform.anchoredPosition.x;
                 verifiedIconInitialPosition = CalculateVerifiedIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, nametagMarginOffsetHeight);
