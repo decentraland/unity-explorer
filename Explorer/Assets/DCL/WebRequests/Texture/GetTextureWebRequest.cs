@@ -139,8 +139,11 @@ namespace DCL.WebRequests
                 throw new Exception($"Failed to load ktx texture from data: {Envelope.CommonArguments.URL}");
 
             Texture2D? finalTex = result.texture;
-            ApplyTextureSettings(finalTex, wrapMode, filterMode);
-            return new IOwnedTexture2D.Const(finalTex);
+
+            if (finalTex)
+                ApplyTextureSettings(finalTex, wrapMode, filterMode);
+
+            return new IOwnedTexture2D.Const(finalTex!);
         }
 
         private void ApplyTextureSettings(Texture2D texture, TextureWrapMode wrapMode, FilterMode filterMode)
