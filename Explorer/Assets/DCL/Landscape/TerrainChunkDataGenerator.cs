@@ -273,18 +273,16 @@ namespace DCL.Landscape
         }
 
         public async UniTask SetDetailsAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken, bool nullifyDetailsOnOwned, int2 chunkMinParcel, IReadOnlyList<int2> chunkOccupiedParcels = null, bool useCache = true)
+            CancellationToken cancellationToken, bool nullifyDetailsOnOwned, int2 chunkMinParcel, TerrainDetailSetter terrainDetailSetter, IReadOnlyList<int2> chunkOccupiedParcels = null,
+            bool useCache = true)
         {
             terrainData.SetDetailScatterMode(terrainGenData.detailScatterMode);
 
             if (useCache && localCache.IsValid())
             {
-                /*using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetDetails from Cache {t}ms")))
+                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] SetDetails from Cache {t}ms")))
                     for (var i = 0; i < terrainGenData.detailAssets.Length; i++)
-                    {
-                        var detailLayer = await localCache.GetDetailLayerAsync(offsetX, offsetZ, i);
-                        terrainData.SetDetailLayer(0, 0, i, detailLayer);
-                    }*/
+                        await terrainDetailSetter.ReadApplyTerrainDetailAsync(terrainData, localCache, offsetX, offsetZ, i);
             }
             else
             {
@@ -342,7 +340,7 @@ namespace DCL.Landscape
                                 for (int x = (-chunkMinParcel.x + parcel.x) * parcelSize; x < (-chunkMinParcel.x + parcel.x + 1) * parcelSize; x++)
                                     detailLayer[y, x] = 0;
 
-                        //terrainData.SetDetailLayer(0, 0, i, detailLayer);
+                        terrainDetailSetter.ApplyDetailLayer(terrainData, i, detailLayer);
 
                         if (useCache)
                             localCache.SaveDetailLayer(offsetX, offsetZ, i, detailLayer);

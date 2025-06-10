@@ -80,6 +80,8 @@ namespace DCL.Landscape
 
         private TerrainModel terrainModel;
 
+        private TerrainDetailSetter terrainDetailSetter;
+
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
         {
@@ -133,6 +135,8 @@ namespace DCL.Landscape
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+
+            terrainDetailSetter = new TerrainDetailSetter();
 
             isInitialized = true;
         }
@@ -388,7 +392,7 @@ namespace DCL.Landscape
                     !hideDetails
                         ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize,
                             chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
-                            worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels)
+                            worldSeed, cancellationToken, true, chunkModel.MinParcel, terrainDetailSetter, chunkModel.OccupiedParcels)
                         : UniTask.CompletedTask,
                     !hideTrees
                         ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits,
