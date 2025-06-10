@@ -306,25 +306,38 @@ namespace DCL.Chat
 
         private async UniTask InitializeCommunityCoversationsAsync()
         {
+            // Obtains all the communities of the user
+            const int ALL_COMMUNITIES_OF_USER = 100;
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            GetUserCommunitiesResponse response = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, 100, communitiesServiceCts.Token);
+            Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync();
 
-            await UniTask.SwitchToMainThread();
-
-            userCommunities.Clear();
-
-            for (int i = 0; i < response.data.results.Length; ++i)
+            if (result.Success)
             {
-                // TODO remove this
-                response.data.results[i].thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
-                userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.results[i].id), response.data.results[i]);
+                await UniTask.SwitchToMainThread();
+
+                // Puts the results into a dictionary
+                userCommunities.Clear();
+                GetUserCommunitiesResponse response = result.Value;
+
+                for (int i = 0; i < response.data.results.Length; ++i)
+                {
+                    // TODO remove this when there are real thumbnails
+                    response.data.results[i].thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
+                    userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.results[i].id), response.data.results[i]);
+                }
+
+                // Gives the data to the view so it can fill the items UI when new conversations are added
+                viewInstance!.SetCommunitiesData(userCommunities);
+
+                // Creates one channel per community
+                for (int i = 0; i < response.data.results.Length; ++i)
+                {
+                    chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.results[i].id), ChatChannel.ChatChannelType.COMMUNITY);
+                }
             }
-
-            viewInstance.SetCommunitiesData(userCommunities);
-
-            for (int i = 0; i < response.data.results.Length; ++i)
+            else
             {
-                chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.results[i].id), ChatChannel.ChatChannelType.COMMUNITY);
+                ReportHub.LogError(ReportCategory.COMMUNITIES, "It was not possible to retrieve the communities of the user, their corresponding conversations will not appear in the chat toolbar. " + result.ErrorMessage?? string.Empty);
             }
         }
 
@@ -440,17 +453,17 @@ namespace DCL.Chat
                 return;
 
             Result<ChatUserStateUpdater.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
-            if (result.Success == false) return;
+            if (result.Success == false)
+                return;
 
             ChatUserStateUpdater.ChatUserState userState = result.Value;
 
             viewInstance!.SetInputWithUserState(userState);
 
-            if (!updateToolbar) return;
+            if (!updateToolbar)
+                return;
 
-            bool offline = userState == ChatUserStateUpdater.ChatUserState.DISCONNECTED
-                         || userState == ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-
+            bool offline = userState is ChatUserStateUpdater.ChatUserState.DISCONNECTED or ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
             viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
         }
 
@@ -669,18 +682,18 @@ namespace DCL.Chat
 
         private void OnChatHistoryChannelAdded(ChatChannel addedChannel)
         {
-            if (addedChannel.ChannelType == ChatChannel.ChatChannelType.USER)
+            switch (addedChannel.ChannelType)
             {
-                chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
-                viewInstance!.AddPrivateConversation(addedChannel);
-            }
-            else if (addedChannel.ChannelType == ChatChannel.ChatChannelType.NEARBY)
-            {
-                viewInstance!.AddNearbyConversation(addedChannel);
-            }
-            else if (addedChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
-            {
-                viewInstance!.AddCommunityConversation(addedChannel, thumbnailCache);
+                case ChatChannel.ChatChannelType.NEARBY:
+                    viewInstance!.AddNearbyConversation(addedChannel);
+                    break;
+                case ChatChannel.ChatChannelType.COMMUNITY:
+                    viewInstance!.AddCommunityConversation(addedChannel, thumbnailCache);
+                    break;
+                case ChatChannel.ChatChannelType.USER:
+                    chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
+                    viewInstance!.AddPrivateConversation(addedChannel);
+                    break;
             }
         }
 #endregion

@@ -45,6 +45,8 @@ namespace DCL.Chat
         [SerializeField]
         private Button scrollDownButton;
 
+        private const string NEARBY_CONVERSATION_NAME = "Nearby";
+
         private Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
 
@@ -112,7 +114,7 @@ namespace DCL.Chat
         {
             ChatConversationsToolbarViewItem conversationItem = items[ChatChannel.NEARBY_CHANNEL_ID];
             conversationItem.SetConversationIcon(icon);
-            conversationItem.SetConversationName("Nearby"); // TODO: Localization
+            conversationItem.SetConversationName(NEARBY_CONVERSATION_NAME); // TODO: Localization
             conversationItem.SetClaimedNameIconVisibility(false);
         }
 

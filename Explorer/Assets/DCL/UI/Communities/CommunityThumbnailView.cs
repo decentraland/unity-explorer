@@ -16,6 +16,7 @@ namespace DCL.UI.Communities
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
+        [SerializeField] private float fadingDuration = 0.5f;
 
         private CancellationTokenSource? cts;
         private string? currentCommunityId;
@@ -83,7 +84,7 @@ namespace DCL.UI.Communities
         {
             thumbnailImageView.SetImage(sprite);
             thumbnailImageView.ImageEnabled = true;
-            await thumbnailImageView.FadeInAsync(0.5f, ct);
+            await thumbnailImageView.FadeInAsync(fadingDuration, ct);
         }
     }
 }

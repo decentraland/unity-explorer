@@ -135,7 +135,7 @@ namespace DCL.Profiles
                 else
                 {
                     ReportData reportData = new ReportData(ReportCategory.PROFILE);
-                    ReportHub.LogError(reportData, $"Failed to fetch user thumbnail for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for wallet {id}");
+                    ReportHub.LogError(reportData, $"Failed to fetch user thumbnail for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for element {id}");
                     ReportHub.LogException(e, reportData);
 
                     unsolvableThumbnails.Add(id);

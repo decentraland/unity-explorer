@@ -38,21 +38,6 @@ namespace DCL.UI.Communities
         [SerializeField]
         private CommunityChatConversationContextMenuSettings contextMenuSettings;
 
-        [SerializeField]
-        private int contextMenuWidth = 210;
-
-        [SerializeField]
-        private int contextMenuElementsSpacing = 8;
-
-        [SerializeField]
-        private Vector2 contextMenuOffset = new (0, 110);
-
-        [SerializeField]
-        private int horizontalPadding = 15;
-
-        [SerializeField]
-        private int verticalPadding = 14;
-
         private OpenContextMenuDelegate openContextMenu;
         private CancellationTokenSource cts;
         private UniTaskCompletionSource contextMenuTask = new ();
@@ -60,8 +45,7 @@ namespace DCL.UI.Communities
 
         public async UniTaskVoid SetupAsync(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
         {
-            RectOffset verticalLayoutPadding = new (horizontalPadding, horizontalPadding, verticalPadding, verticalPadding); // Note: It's here because it can't be initialized during construction
-            contextMenuConfig = new GenericContextMenu.Controls.Configs.GenericContextMenu(contextMenuWidth, contextMenuOffset, verticalLayoutPadding, contextMenuElementsSpacing, ContextMenuOpenDirection.TOP_LEFT)
+            contextMenuConfig = new GenericContextMenu.Controls.Configs.GenericContextMenu(contextMenuSettings.Width, contextMenuSettings.Offset, contextMenuSettings.VerticalLayoutPadding, contextMenuSettings.ElementsSpacing, ContextMenuOpenDirection.TOP_LEFT)
                                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText, contextMenuSettings.ViewCommunitySprite, () => ViewCommunityRequested?.Invoke()));
 
             openContextMenu = openContextMenuAction;
