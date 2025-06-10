@@ -63,6 +63,13 @@
       "dependencies": {},
       "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
     },
+    "com.decentraland.filebrowserpro": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "1ea0ae7ae8b7f4e9c94b50577de6485fa95ab201"
+    },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,

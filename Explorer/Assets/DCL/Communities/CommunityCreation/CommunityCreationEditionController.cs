@@ -1,3 +1,4 @@
+using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
@@ -13,6 +14,7 @@ using DCL.Web3;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.CommunityCreation
@@ -23,6 +25,7 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
+        private const string FILE_BROWSER_TITLE = "Select image";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly IWebBrowser webBrowser;
@@ -33,6 +36,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
+        private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource createCommunityCts;
@@ -161,7 +165,8 @@ namespace DCL.Communities.CommunityCreation
 
         private void OpenImageSelection()
         {
-
+            string path = FileBrowser.Instance.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
+            Debug.Log("SANTI LOG -> Selected file: " + path);
         }
 
         private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
@@ -286,7 +291,7 @@ namespace DCL.Communities.CommunityCreation
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                await warningNotificationView.AnimatedShowAsync(UPDATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
             }
