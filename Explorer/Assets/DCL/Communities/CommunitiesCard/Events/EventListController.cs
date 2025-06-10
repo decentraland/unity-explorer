@@ -2,6 +2,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -23,20 +25,50 @@ namespace DCL.Communities.CommunitiesCard.Events
         protected override SectionFetchData<EventDTO> currentSectionFetchData => eventsFetchData;
 
         public EventListController(EventListView view,
-            IEventsApiService eventsApiService) : base(view, PAGE_SIZE)
+            IEventsApiService eventsApiService,
+            IWebRequestController webRequestController,
+            IMVCManager mvcManager) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.eventsApiService = eventsApiService;
-            view.InitList(() => currentSectionFetchData);
+            view.InitList(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
+            view.JumpInButtonClicked += OnJumpInButtonClicked;
+            view.InterestedButtonClicked += OnInterestedButtonClicked;
+            view.EventShareButtonClicked += OnEventShareButtonClicked;
+            view.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
 
         public override void Dispose()
         {
             view.OpenWizardRequested -= OnOpenWizardRequested;
+            view.JumpInButtonClicked -= OnJumpInButtonClicked;
+            view.InterestedButtonClicked -= OnInterestedButtonClicked;
+            view.EventShareButtonClicked -= OnEventShareButtonClicked;
+            view.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
 
             base.Dispose();
+        }
+
+        private void OnEventCopyLinkButtonClicked(EventDTO eventData)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnEventShareButtonClicked(EventDTO eventData)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnInterestedButtonClicked(EventDTO eventData)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnJumpInButtonClicked(EventDTO eventData)
+        {
+            throw new NotImplementedException();
         }
 
         public override void Reset()

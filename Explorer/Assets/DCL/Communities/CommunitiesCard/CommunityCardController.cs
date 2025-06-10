@@ -144,7 +144,9 @@ namespace DCL.Communities.CommunitiesCard
                 webBrowser);
 
             eventListController = new EventListController(viewInstance.EventListView,
-                eventsApiService);
+                eventsApiService,
+                webRequestController,
+                mvcManager);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
