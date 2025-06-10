@@ -41,11 +41,15 @@ namespace DCL.CharacterCamera
                 }
 
                 Vector3 desiredPosition = state.RawOrientation * this.offset;
-                float distance = desiredPosition.magnitude;
 
-                if (Physics.Raycast(new Ray(state.CorrectedPosition, desiredPosition.normalized),
-                        out RaycastHit hit, distance, collider.m_CollideAgainst))
-                    desiredPosition = desiredPosition.normalized * (hit.distance - minimumDistanceFromObstacle);
+                if (collider)
+                {
+                    float distance = desiredPosition.magnitude;
+
+                    if (Physics.Raycast(new Ray(state.CorrectedPosition, desiredPosition.normalized),
+                            out RaycastHit hit, distance, collider.m_CollideAgainst))
+                        desiredPosition = desiredPosition.normalized * (hit.distance - minimumDistanceFromObstacle);
+                }
 
                 state.PositionCorrection += desiredPosition;
 
