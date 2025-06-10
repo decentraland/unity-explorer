@@ -70,7 +70,7 @@ namespace DCL.VoiceChat
             }
 
             // This sends the processed audio data to LiveKit
-            AudioRead?.Invoke(data.AsSpan(), channels, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
+            AudioRead?.Invoke(data.AsSpan(), 2, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead;
