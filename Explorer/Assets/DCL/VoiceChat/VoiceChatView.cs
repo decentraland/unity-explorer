@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DG.Tweening;
 using System;
@@ -46,17 +47,17 @@ namespace DCL.VoiceChat
             cts = new CancellationTokenSource();
         }
 
-        public void Show(VoiceChatStatus status, Web3Address walletId)
+        public void Show(VoiceChatStatus status, Web3Address walletId, ProfileRepositoryWrapper profileDataProvider)
         {
             VoiceChatContainer.SetActive(true);
             VoiceChatCanvasGroup.alpha = 0;
             VoiceChatCanvasGroup
                 .DOFade(1, SHOW_HIDE_ANIMATION_DURATION)
                 .SetEase(Ease.Flash);
-            SetActiveSection(status, walletId);
+            SetActiveSection(status, walletId, profileDataProvider);
         }
 
-        public void Hide(VoiceChatStatus status, Web3Address walletId)
+        public void Hide(VoiceChatStatus status, Web3Address walletId, ProfileRepositoryWrapper profileDataProvider)
         {
             VoiceChatCanvasGroup.alpha = 1;
             VoiceChatCanvasGroup
@@ -65,11 +66,11 @@ namespace DCL.VoiceChat
                 .OnComplete(() =>
                 {
                     VoiceChatContainer.SetActive(false);
-                    SetActiveSection(status, walletId);
+                    SetActiveSection(status, walletId, profileDataProvider);
                 });
         }
 
-        private void SetActiveSection(VoiceChatStatus status, Web3Address walletId)
+        private void SetActiveSection(VoiceChatStatus status, Web3Address walletId, ProfileRepositoryWrapper profileDataProvider)
         {
             cts = cts.SafeRestart();
             switch (status)
@@ -78,20 +79,20 @@ namespace DCL.VoiceChat
                     InCallView.gameObject.SetActive(true);
                     IncomingCallView.SetActive(false);
                     OutgoingCallView.gameObject.SetActive(false);
-                    //InCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
+                    InCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
                     InCallView.gameObject.SetActive(false);
                     IncomingCallView.SetActive(true);
                     OutgoingCallView.gameObject.SetActive(false);
-                    //IncomingCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
+                    IncomingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                     case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
                         InCallView.gameObject.SetActive(false);
                         IncomingCallView.SetActive(false);
                         OutgoingCallView.gameObject.SetActive(true);
-                        //OutgoingCallView.ProfileView.SetupAsync(walletId, cts.Token).Forget();
+                        OutgoingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                         break;
                 default:
                     InCallView.gameObject.SetActive(false);
