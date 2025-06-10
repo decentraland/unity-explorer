@@ -29,6 +29,8 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HeadIKSystem : BaseUnityLoopSystem
     {
+        private const int AVATAR_DEPTH = 500;
+
         private bool headIKIsEnabled;
         private SingleInstanceEntity camera;
         private readonly ElementBinding<float> verticalLimit;
@@ -38,6 +40,7 @@ namespace DCL.CharacterMotion.Systems
         private SingleInstanceEntity settingsEntity;
         private readonly ObjectProxy<DCLInput> inputProxy;
         private readonly ICharacterControllerSettings settings;
+        private readonly Vector3[] previewImageCorners = new Vector3[4];
 
         private HeadIKSystem(World world, IDebugContainerBuilder builder, ObjectProxy<DCLInput> inputProxy, ICharacterControllerSettings settings) : base(world)
         {
@@ -73,80 +76,36 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateDebugValues();
-            UpdatePreviewAvatarIKQuery(World, t, in camera.GetCameraComponent(World));
+            UpdatePreviewAvatarIKQuery(World, t);
             if (!World.Has<InWorldCameraComponent>(camera))
                 UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
         }
 
         [Query]
         [All(typeof(CharacterPreviewComponent))]
-        private void UpdatePreviewAvatarIK(
-            [Data] float dt,
-            [Data] in CameraComponent cameraComponent,
-            in CharacterPreviewComponent previewComponent,
-            ref HeadIKComponent headIK,
-            ref AvatarBase avatarBase
-        )
+        private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK, ref AvatarBase avatarBase)
         {
             headIK.IsDisabled = !this.headIKIsEnabled;
             avatarBase.HeadIKRig.weight = 1;
 
             Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
 
-            Vector3[] corners = new Vector3[4];
-            previewComponent.RenderImageRect.GetWorldCorners(corners);
-            Vector3 bottomLeft = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
-            Vector3 topRight = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
+            previewComponent.RenderImageRect.GetWorldCorners(previewImageCorners);
+            Vector3 bottomLeft = RectTransformUtility.WorldToScreenPoint(null, previewImageCorners[0]);
+            Vector3 topRight = RectTransformUtility.WorldToScreenPoint(null, previewImageCorners[2]);
 
             Vector3 objectScreenPos = new Vector3(
                 Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
                 Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
-                300);
+                AVATAR_DEPTH);
 
             Vector2 mousePos = Mouse.current.position.value;
-            Vector3 endScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
+            Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
 
-            var screenVector = (objectScreenPos - endScreenPos);
+            var screenVector = objectScreenPos - mouseScreenPos;
             screenVector.y = -screenVector.y;
-            var targetDirection = screenVector.normalized;
 
-            Execute(targetDirection, avatarBase, dt, settings);
-        }
-
-        private static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
-        {
-            Transform reference = avatarBase.HeadPositionConstraint;
-            Vector3 referenceAngle = Quaternion.LookRotation(reference.forward).eulerAngles;
-            Vector3 targetAngle = Quaternion.LookRotation(targetDirection).eulerAngles;
-
-            float horizontalAngle = Mathf.DeltaAngle(referenceAngle.y, targetAngle.y);
-
-            Quaternion horizontalTargetRotation;
-            Quaternion verticalTargetRotation;
-
-            float rotationSpeed = settings.HeadIKRotationSpeed;
-
-            //otherwise, calculate rotation within constraints
-            {
-                //clamp horizontal angle and apply rotation
-                horizontalAngle = Mathf.Clamp(horizontalAngle, -settings.HeadIKHorizontalAngleLimit, settings.HeadIKHorizontalAngleLimit);
-                horizontalTargetRotation = Quaternion.AngleAxis(horizontalAngle, Vector3.up);
-
-                //calculate vertical angle difference between reference and target, clamped to maximum angle
-                float verticalAngle = Mathf.DeltaAngle(referenceAngle.x, targetAngle.x);
-                verticalAngle = Mathf.Clamp(verticalAngle, -settings.HeadIKVerticalAngleLimit, settings.HeadIKVerticalAngleLimit);
-
-                //calculate vertical rotation
-                verticalTargetRotation = horizontalTargetRotation * Quaternion.AngleAxis(verticalAngle, Vector3.right);
-            }
-
-            //apply horizontal rotation
-            Quaternion newHorizontalRotation = Quaternion.RotateTowards(avatarBase.HeadLookAtTargetHorizontal.localRotation, horizontalTargetRotation, dt * rotationSpeed);
-            avatarBase.HeadLookAtTargetHorizontal.localRotation = newHorizontalRotation;
-
-            //apply vertical rotation
-            Quaternion newVerticalRotation = Quaternion.RotateTowards(avatarBase.HeadLookAtTargetVertical.localRotation, verticalTargetRotation, dt * rotationSpeed);
-            avatarBase.HeadLookAtTargetVertical.localRotation = newVerticalRotation;
+            ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt, settings, useFrontalReset: false);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -9,7 +9,7 @@ namespace DCL.CharacterMotion.IK
     {
         // This method updates the head IK targets (horizontal and vertical) based on a target look-at direction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
+        public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings, bool useFrontalReset = true)
         {
             Transform reference = avatarBase.HeadPositionConstraint;
             Vector3 referenceAngle = Quaternion.LookRotation(reference.forward).eulerAngles;
@@ -23,7 +23,7 @@ namespace DCL.CharacterMotion.IK
             float rotationSpeed = settings.HeadIKRotationSpeed;
 
             //If the target horizonal angle is outside of the limits, reset the head location to look frontal
-            if (Mathf.Abs(horizontalAngle) > settings.HeadIKHorizontalAngleReset)
+            if (useFrontalReset && Mathf.Abs(horizontalAngle) > settings.HeadIKHorizontalAngleReset)
             {
                 //set horizontal rotation to 0
                 horizontalTargetRotation = Quaternion.AngleAxis(0, Vector3.up);
