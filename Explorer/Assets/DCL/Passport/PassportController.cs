@@ -45,6 +45,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.InputSystem;
 using Utility;
 using Utility.Types;
 
@@ -81,6 +82,7 @@ namespace DCL.Passport
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly IWebRequestController webRequestController;
+        private readonly DCLInput dclInput;
         private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> commonPassportModules = new ();
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
@@ -113,12 +115,16 @@ namespace DCL.Passport
         private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
+
         private CancellationTokenSource? openPassportFromBadgeNotificationCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
         private CancellationTokenSource? photoLoadingCts;
         private CancellationTokenSource? friendshipStatusCts;
         private CancellationTokenSource? friendshipOperationCts;
         private CancellationTokenSource? fetchMutualFriendsCts;
+        private CancellationTokenSource? jumpToFriendLocationCts;
+        private CancellationTokenSource? inputCloseCts;
+
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection currentSection;
@@ -131,7 +137,7 @@ namespace DCL.Passport
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
-        private CancellationTokenSource jumpToFriendLocationCts = new ();
+
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -159,6 +165,7 @@ namespace DCL.Passport
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             IWebRequestController webRequestController,
+            DCLInput dclInput,
             IInputBlock inputBlock,
             INotificationsBusController notificationBusController,
             IRemoteMetadata remoteMetadata,
@@ -169,7 +176,6 @@ namespace DCL.Passport
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
-            ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
@@ -197,6 +203,7 @@ namespace DCL.Passport
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.badgesAPIClient = badgesAPIClient;
             this.webRequestController = webRequestController;
+            this.dclInput = dclInput;
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -273,7 +280,13 @@ namespace DCL.Passport
                               () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
                                   parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+
+            passportCloseTask = new UniTaskCompletionSource();
+            inputCloseCts = new CancellationTokenSource();
+            inputCloseCts.Token.Register(()=> dclInput.UI.Close.performed -= OnInputClosePerformed);
         }
+
+        private void OnInputClosePerformed(InputAction.CallbackContext _) => passportCloseTask?.TrySetResult();
 
         private void OnChatButtonClicked()
         {
@@ -314,6 +327,8 @@ namespace DCL.Passport
 
         protected override void OnViewShow()
         {
+            dclInput.UI.Close.performed += OnInputClosePerformed;
+
             currentUserId = inputData.UserId;
             isOwnProfile = inputData.IsOwnProfile;
             alreadyLoadedSections = PassportSection.NONE;
@@ -341,6 +356,7 @@ namespace DCL.Passport
 
         protected override void OnViewClose()
         {
+            dclInput.UI.Close.performed -= OnInputClosePerformed;
             passportErrorsController!.Hide(true);
 
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
@@ -367,7 +383,8 @@ namespace DCL.Passport
                 viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance.BackgroundButton.OnClickAsync(ct),
                 viewInstance.JumpInButton.OnClickAsync(ct),
-                viewInstance.ChatButton.OnClickAsync(ct));
+                viewInstance.ChatButton.OnClickAsync(ct),
+                passportCloseTask!.Task);
 
         public override void Dispose()
         {
@@ -380,6 +397,7 @@ namespace DCL.Passport
             fetchMutualFriendsCts?.SafeCancelAndDispose();
             photoLoadingCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
+            inputCloseCts.SafeCancelAndDispose();
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;

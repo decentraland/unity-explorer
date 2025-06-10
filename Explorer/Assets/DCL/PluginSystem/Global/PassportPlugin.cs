@@ -52,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly IRemoteMetadata remoteMetadata;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly DCLInput dclInput;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
@@ -89,6 +90,7 @@ namespace DCL.PluginSystem.Global
             IDecentralandUrlsSource decentralandUrlsSource,
             BadgesAPIClient badgesAPIClient,
             INotificationsBusController notificationsBusController,
+            DCLInput dclInput,
             IInputBlock inputBlock,
             IRemoteMetadata remoteMetadata,
             ICameraReelStorageService cameraReelStorageService,
@@ -124,6 +126,7 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.remoteMetadata = remoteMetadata;
             this.notificationsBusController = notificationsBusController;
+            this.dclInput = dclInput;
             this.world = world;
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -182,6 +185,7 @@ namespace DCL.PluginSystem.Global
                 decentralandUrlsSource,
                 badgesAPIClient,
                 webRequestController,
+                dclInput,
                 inputBlock,
                 notificationsBusController,
                 remoteMetadata,
@@ -192,7 +196,6 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 web3IdentityCache,
-                viewDependencies,
                 nftNamesProvider,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,

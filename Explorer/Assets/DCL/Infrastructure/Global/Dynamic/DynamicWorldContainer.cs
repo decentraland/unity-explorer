@@ -817,6 +817,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource,
                     badgesAPIClient,
                     notificationsBusController,
+                    dclInput,
                     staticContainer.InputBlock,
                     remoteMetadata,
                     cameraReelStorageService,
