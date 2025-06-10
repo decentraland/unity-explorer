@@ -22,11 +22,19 @@ namespace DCL.VoiceChat
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
         }
 
+        public void SetCallButtonVisibility(bool isVisible)
+        {
+            view.gameObject.SetActive(isVisible);
+            view.TooltipParent.gameObject.SetActive(false);
+            isClickedOnce = false;
+        }
+
         public void SetCallStatusForUser(OtherUserCallStatus status, string userId)
         {
             currentUserId = userId;
             otherUserStatus = status;
             view.TooltipParent.gameObject.SetActive(false);
+            isClickedOnce = false;
         }
 
         private void OnCallButtonClicked()

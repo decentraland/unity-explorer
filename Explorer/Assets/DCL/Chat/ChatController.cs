@@ -365,7 +365,7 @@ namespace DCL.Chat
             if (TryGetView(out var view))
             {
                 view.CurrentChannelId = channelId;
-
+                callButtonController.SetCallButtonVisibility(!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID));
                 if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
                 {
                     view.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
@@ -396,6 +396,22 @@ namespace DCL.Chat
 
                 view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
             }
+
+            CallButtonController.OtherUserCallStatus callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
+
+            switch (userState)
+            {
+                case ChatUserStateUpdater.ChatUserState.CONNECTED:
+                    callStatus = CallButtonController.OtherUserCallStatus.USER_AVAILABLE;
+                    break;
+                case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
+                    callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
+                    break;
+                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
+                    callStatus = CallButtonController.OtherUserCallStatus.USER_REJECTS_CALLS;
+                    break;
+            }
+            callButtonController.SetCallStatusForUser(callStatus, userId);
         }
 
 #endregion

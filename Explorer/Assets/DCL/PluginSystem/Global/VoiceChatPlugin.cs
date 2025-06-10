@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
+using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.VoiceChat;
 using MVC;
@@ -23,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly MainUIView mainUIView;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ViewDependencies dependencies;
+        private readonly ProfileRepositoryWrapper profileDataProvider;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
@@ -40,7 +42,8 @@ namespace DCL.PluginSystem.Global
             IRoomHub roomHub,
             MainUIView mainUIView,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            ViewDependencies dependencies)
+            ViewDependencies dependencies,
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.voiceChatSettingsProxy = voiceChatSettingsProxy;
             this.assetsProvisioner = assetsProvisioner;
@@ -49,6 +52,7 @@ namespace DCL.PluginSystem.Global
             this.mainUIView = mainUIView;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.dependencies = dependencies;
+            this.profileDataProvider = profileDataProvider;
         }
 
         public void Dispose()
@@ -94,7 +98,7 @@ namespace DCL.PluginSystem.Global
 
             livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration);
 
-            controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, dependencies);
+            controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, dependencies, profileDataProvider);
         }
 
         [Serializable]
