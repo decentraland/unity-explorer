@@ -68,6 +68,9 @@ namespace DCL.EventsApi
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
 
+        public async UniTask<CommunityEventsDTO> GetEventsByCommunityAsync(string communityId, int pageNumber, int pageSize, CancellationToken ct) =>
+            throw new NotImplementedException();
+
         public async UniTask MarkAsInterestedAsync(string eventId, CancellationToken ct)
         {
             urlBuilder.Clear();

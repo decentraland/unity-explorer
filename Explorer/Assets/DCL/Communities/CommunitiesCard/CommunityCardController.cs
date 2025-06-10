@@ -5,6 +5,7 @@ using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
+using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -48,6 +49,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
+        private readonly IEventsApiService eventsApiService;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -71,7 +73,8 @@ namespace DCL.Communities.CommunitiesCard
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IEventsApiService eventsApiService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -85,6 +88,7 @@ namespace DCL.Communities.CommunitiesCard
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
+            this.eventsApiService = eventsApiService;
         }
 
         public override void Dispose()
@@ -139,7 +143,8 @@ namespace DCL.Communities.CommunitiesCard
                 clipboard,
                 webBrowser);
 
-            eventListController = new EventListController(viewInstance.EventListView);
+            eventListController = new EventListController(viewInstance.EventListView,
+                eventsApiService);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
