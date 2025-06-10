@@ -941,7 +941,7 @@ namespace DCL.Chat
 
         private void OnMemberListViewVisibilityChanged(bool isVisible)
         {
-            chatTitleBar.ChangeTitleBarVisibility(isVisible);
+            chatTitleBar.ChangeTitleBarVisibility(isVisible, currentChannel.ChannelType);
             chatInputBox.gameObject.SetActive(!isVisible);
             chatAndConversationsPanel.gameObject.SetActive(!isVisible);
             unfoldedPanelInteractableArea.enabled = !isVisible;

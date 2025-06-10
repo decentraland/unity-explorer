@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
@@ -37,7 +38,8 @@ namespace DCL.Chat
         [SerializeField] private TMP_Text memberListChannelNameText;
 
         [SerializeField] private GameObject defaultChatTitlebar;
-        [SerializeField] private GameObject memberListTitlebar;
+        [SerializeField] private GameObject nearbyMemberListTitlebar;
+        [SerializeField] private GameObject communitiesMemberListTitlebar;
 
         [SerializeField] private GameObject memberCountObject;
         [SerializeField] private GameObject nearbyChannelContainer;
@@ -86,10 +88,18 @@ namespace DCL.Chat
             isInitialized = true;
         }
 
-        public void ChangeTitleBarVisibility(bool isMemberListVisible)
+        public void ChangeTitleBarVisibility(bool isMemberListVisible, ChatChannel.ChatChannelType channelType)
         {
             defaultChatTitlebar.SetActive(!isMemberListVisible);
-            memberListTitlebar.SetActive(isMemberListVisible);
+
+            if (channelType == ChatChannel.ChatChannelType.NEARBY)
+            {
+                nearbyMemberListTitlebar.SetActive(isMemberListVisible);
+            }
+            else if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                communitiesMemberListTitlebar.SetActive(isMemberListVisible);
+            }
         }
 
         public void SetMemberListNumberText(string userAmount)
