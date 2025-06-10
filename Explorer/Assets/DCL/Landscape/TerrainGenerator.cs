@@ -11,7 +11,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
-using System.Linq;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -45,7 +44,7 @@ namespace DCL.Landscape
 
         private int parcelSize;
         private TerrainGenerationData terrainGenData;
-        public TerrainGeneratorLocalCache localCache;
+        private TerrainGeneratorLocalCache localCache;
         private TerrainChunkDataGenerator chunkDataGenerator;
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
@@ -76,11 +75,10 @@ namespace DCL.Landscape
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
-        public Action<List<ChunkModel>> GenesisTerrainGenerated;
-
         private TerrainModel terrainModel;
 
         private TerrainDetailSetter terrainDetailSetter;
+        private GPUIWrapper? gpuiWrapper;
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -122,7 +120,7 @@ namespace DCL.Landscape
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, bool hasGPUIEnabled)
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, GPUIWrapper? gpuiWrapper)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -136,7 +134,9 @@ namespace DCL.Landscape
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
 
-            terrainDetailSetter = new TerrainDetailSetter(hasGPUIEnabled);
+            this.gpuiWrapper = gpuiWrapper;
+            gpuiWrapper?.SetupLocalCache(localCache);
+            terrainDetailSetter = new TerrainDetailSetter(gpuiWrapper != null);
 
             isInitialized = true;
         }
@@ -297,7 +297,8 @@ namespace DCL.Landscape
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
 
-            GenesisTerrainGenerated?.Invoke(terrainModel.ChunkModels.ToList());
+            if (gpuiWrapper != null)
+                await gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -565,5 +566,7 @@ namespace DCL.Landscape
 
             noiseGenCache.Dispose();
         }
+
+
     }
 }
