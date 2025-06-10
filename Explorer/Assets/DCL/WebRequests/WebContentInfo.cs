@@ -20,7 +20,6 @@ namespace DCL.WebRequests
         {
             using IWebRequest? response = await webRequestController.HeadAsync(new CommonArguments(url, attemptsCount: 1), reportData)
                                                                     .SendAsync(ct);
-
             return await FetchAsync(response);
         }
 

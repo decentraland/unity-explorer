@@ -79,7 +79,7 @@ namespace DCL.WebRequests
                     // Streams are non-linear memory, not much we can do about it to avoid allocations
                     using Stream? stream = await wr.Response.GetCompleteStreamAsync(ct);
 
-                    using var nativeArray = new NativeArray<byte>((int)stream.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+                    using var nativeArray = new NativeArray<byte>((int)stream.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
                     stream.Read(nativeArray.AsSpan());
 
                     if (isKtx)
