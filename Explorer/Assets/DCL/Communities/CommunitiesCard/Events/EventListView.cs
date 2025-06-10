@@ -27,6 +27,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public event Action NewDataRequested;
         public event Action OpenWizardRequested;
 
+        public event Action<EventDTO> MainButtonClicked;
         public event Action<EventDTO> JumpInButtonClicked;
         public event Action<EventDTO> InterestedButtonClicked;
         public event Action<EventDTO> EventShareButtonClicked;
@@ -76,7 +77,8 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             itemView.Configure(eventData.members[index], webRequestController);
 
-            itemView.SubscribeToInteractions(data => JumpInButtonClicked?.Invoke(data),
+            itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
+                                             data => JumpInButtonClicked?.Invoke(data),
                                              data => InterestedButtonClicked?.Invoke(data),
                                              OpenCardContextMenu);
 

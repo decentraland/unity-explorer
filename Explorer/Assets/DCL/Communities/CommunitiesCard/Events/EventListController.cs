@@ -34,6 +34,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             view.InitList(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
+            view.MainButtonClicked += OnMainButtonClicked;
             view.JumpInButtonClicked += OnJumpInButtonClicked;
             view.InterestedButtonClicked += OnInterestedButtonClicked;
             view.EventShareButtonClicked += OnEventShareButtonClicked;
@@ -67,6 +68,11 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnJumpInButtonClicked(EventDTO eventData)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnMainButtonClicked(EventDTO eventData)
         {
             throw new NotImplementedException();
         }

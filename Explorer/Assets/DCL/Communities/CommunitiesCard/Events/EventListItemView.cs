@@ -14,6 +14,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         [SerializeField] private GameObject offlineInteractionContainer;
         [SerializeField] private GameObject liveInteractionContainer;
 
+        [SerializeField] private Button mainButton;
         [SerializeField] private Button jumpInButton;
         [SerializeField] private Button liveShareButton;
         [SerializeField] private Button interestedButton;
@@ -26,6 +27,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         [SerializeField] private TMP_Text eventOnlineUsersText;
         [SerializeField] private TMP_Text eventInterestedUsersText;
 
+        public event Action<EventDTO> MainButtonClicked;
         public event Action<EventDTO> JumpInButtonClicked;
         public event Action<EventDTO> InterestedButtonClicked;
         public event Action<EventDTO, Vector2, EventListItemView> ShareButtonClicked;
@@ -50,6 +52,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private void Awake()
         {
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(eventData!.Value));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventData!.Value));
             interestedButton.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventData!.Value));
             liveShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, liveShareButton.transform.position, this));
@@ -60,16 +63,21 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             eventData = data;
             imageController ??= new ImageController(eventThumbnailImage, webRequestController);
+
+            imageController.RequestImage(data.image);
         }
 
-        public void SubscribeToInteractions(Action<EventDTO> jumpInAction,
+        public void SubscribeToInteractions(Action<EventDTO> mainAction,
+                                            Action<EventDTO> jumpInAction,
                                             Action<EventDTO> interestedAction,
                                             Action<EventDTO, Vector2, EventListItemView> shareAction)
         {
+            MainButtonClicked = null;
             JumpInButtonClicked = null;
             InterestedButtonClicked = null;
             ShareButtonClicked = null;
 
+            MainButtonClicked += mainAction;
             JumpInButtonClicked += jumpInAction;
             InterestedButtonClicked += interestedAction;
             ShareButtonClicked += shareAction;
