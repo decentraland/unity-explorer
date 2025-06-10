@@ -91,8 +91,11 @@ namespace DCL.CharacterMotion.Systems
             headIK.IsDisabled = !this.headIKIsEnabled;
             avatarBase.HeadIKRig.weight = 1;
 
-            Vector3 objectScreenPos = new Vector3(1385, 780, 300);
-                // previewComponent.Camera.WorldToScreenPoint(avatarBase.HeadPositionConstraint.position);
+            Vector3 objectScreenPos = //new Vector3(1385, 780, 300);
+                 previewComponent.Camera.WorldToScreenPoint(avatarBase.HeadPositionConstraint.position);
+
+            objectScreenPos.z = 300;
+
             Vector2 mousePos = Mouse.current.position.value;
             Vector3 endScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
 
@@ -141,7 +144,7 @@ namespace DCL.CharacterMotion.Systems
 
         }
 
-         public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
+        public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
         {
             Transform reference = avatarBase.HeadPositionConstraint;
             Vector3 referenceAngle = Quaternion.LookRotation(reference.forward).eulerAngles;
