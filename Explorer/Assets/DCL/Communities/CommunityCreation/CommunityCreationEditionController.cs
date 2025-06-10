@@ -20,9 +20,9 @@ namespace DCL.Communities.CommunityCreation
     public class CommunityCreationEditionController : ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>
     {
         private const string WORLD_LINK_ID = "WORLD_LINK_ID";
-        private const string CREATE_COMMUNITY_TITLE = "Create a Community";
-        private const string EDIT_COMMUNITY_TITLE = "Edit Community";
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
+        private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
+        private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
         private const int WARNING_MESSAGE_DELAY_MS = 3000;
 
         private readonly IWebBrowser webBrowser;
@@ -37,6 +37,7 @@ namespace DCL.Communities.CommunityCreation
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource createCommunityCts;
         private CancellationTokenSource loadLandsAndWorldsCts;
+        private CancellationTokenSource loadCommunityDataCts;
         private CancellationTokenSource showErrorCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -78,6 +79,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.CancelButtonClicked += OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked += OpenImageSelection;
             viewInstance.CreateCommunityButtonClicked += CreateCommunity;
+            viewInstance.SaveCommunityButtonClicked += UpdateCommunity;
             viewInstance.AddPlaceButtonClicked += AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked += RemoveCommunityPlace;
         }
@@ -86,10 +88,17 @@ namespace DCL.Communities.CommunityCreation
         {
             closeTaskCompletionSource = new UniTaskCompletionSource();
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
-            viewInstance.SetCreationPanelTitle(string.IsNullOrEmpty(inputData.CommunityId) ? CREATE_COMMUNITY_TITLE : EDIT_COMMUNITY_TITLE);
+            viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
             loadLandsAndWorldsCts = loadLandsAndWorldsCts.SafeRestart();
             LoadLandsAndWorldsAsync(loadLandsAndWorldsCts.Token).Forget();
+
+            if (!string.IsNullOrEmpty(inputData.CommunityId))
+            {
+                // EDITION MODE
+                loadCommunityDataCts = loadCommunityDataCts.SafeRestart();
+                LoadCommunityDataAsync(loadCommunityDataCts.Token).Forget();
+            }
         }
 
         protected override void OnViewShow() =>
@@ -101,6 +110,7 @@ namespace DCL.Communities.CommunityCreation
 
             createCommunityCts?.SafeCancelAndDispose();
             loadLandsAndWorldsCts?.SafeCancelAndDispose();
+            loadCommunityDataCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
         }
 
@@ -113,11 +123,13 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.CancelButtonClicked -= OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked -= OpenImageSelection;
             viewInstance.CreateCommunityButtonClicked -= CreateCommunity;
+            viewInstance.SaveCommunityButtonClicked -= UpdateCommunity;
             viewInstance.AddPlaceButtonClicked -= AddCommunityPlace;
             viewInstance.RemovePlaceButtonClicked -= RemoveCommunityPlace;
 
             createCommunityCts?.SafeCancelAndDispose();
             loadLandsAndWorldsCts?.SafeCancelAndDispose();
+            loadCommunityDataCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
         }
 
@@ -152,32 +164,9 @@ namespace DCL.Communities.CommunityCreation
 
         }
 
-        private void CreateCommunity(string name, string description)
-        {
-            createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, createCommunityCts.Token).Forget();
-        }
-
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, CancellationToken ct)
-        {
-            viewInstance!.SetCreationPanelAsLoading(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, null, null, null, ct)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-            if (!result.Success)
-            {
-                showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
-                viewInstance.SetCreationPanelAsLoading(false);
-                return;
-            }
-
-            closeTaskCompletionSource.TrySetResult();
-            communityCreationEditionEventBus.OnCommunityCreated();
-        }
-
         private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
         {
+            viewInstance!.SetCreationPanelAsLoading(true);
             currentCommunityPlaces.Clear();
             addedCommunityPlaces.Clear();
             List<string> placesToAdd = new();
@@ -214,6 +203,7 @@ namespace DCL.Communities.CommunityCreation
             }
 
             viewInstance.SetPlacesSelector(placesToAdd);
+            viewInstance!.SetCreationPanelAsLoading(false);
         }
 
         private void AddCommunityPlace(int index)
@@ -236,6 +226,73 @@ namespace DCL.Communities.CommunityCreation
 
             viewInstance!.RemovePlaceTag(addedCommunityPlaces[index].Id);
             addedCommunityPlaces.RemoveAt(index);
+        }
+
+        private async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
+        {
+            viewInstance!.SetCreationPanelAsLoading(true);
+
+            var result = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!result.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                return;
+            }
+
+            viewInstance.SetCommunityName(result.Value.data.name);
+            viewInstance.SetCommunityDescription(result.Value.data.description);
+            viewInstance.SetCreationPanelAsLoading(false);
+        }
+
+        private void CreateCommunity(string name, string description)
+        {
+            createCommunityCts = createCommunityCts.SafeRestart();
+            CreateCommunityAsync(name, description, createCommunityCts.Token).Forget();
+        }
+
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, CancellationToken ct)
+        {
+            viewInstance!.SetCommunityCreationInProgress(true);
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, null, null, null, ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!result.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                viewInstance.SetCommunityCreationInProgress(false);
+                return;
+            }
+
+            closeTaskCompletionSource.TrySetResult();
+            communityCreationEditionEventBus.OnCommunityCreated();
+        }
+
+        private void UpdateCommunity(string name, string description)
+        {
+            createCommunityCts = createCommunityCts.SafeRestart();
+            UpdateCommunityAsync(inputData.CommunityId, name, description, createCommunityCts.Token).Forget();
+        }
+
+        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, CancellationToken ct)
+        {
+            viewInstance!.SetCommunityCreationInProgress(true);
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, null, null, null, ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!result.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await warningNotificationView.AnimatedShowAsync(CREATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                viewInstance.SetCommunityCreationInProgress(false);
+                return;
+            }
+
+            closeTaskCompletionSource.TrySetResult();
+            communityCreationEditionEventBus.OnCommunityCreated();
         }
     }
 }

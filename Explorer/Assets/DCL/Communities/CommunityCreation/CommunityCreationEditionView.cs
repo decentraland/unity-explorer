@@ -15,12 +15,15 @@ namespace DCL.Communities.CommunityCreation
 {
     public class CommunityCreationEditionView : ViewBase, IView
     {
+        private const string CREATE_COMMUNITY_TITLE = "Create a Community";
+        private const string EDIT_COMMUNITY_TITLE = "Edit Community";
         private const string DEFAULT_PLACES_DROPDOWN_OPTION = "-- Select an option --";
 
         public Action CancelButtonClicked;
         public Action GetNameButtonClicked;
         public Action SelectProfilePictureButtonClicked;
         public Action<string, string> CreateCommunityButtonClicked;
+        public Action<string, string> SaveCommunityButtonClicked;
         public Action<int> AddPlaceButtonClicked;
         public Action<int> RemovePlaceButtonClicked;
 
@@ -35,6 +38,8 @@ namespace DCL.Communities.CommunityCreation
 
         [Header("Creation / Edition Panel")]
         [SerializeField] private GameObject creationPanel;
+        [SerializeField] private GameObject creationPanelContent;
+        [SerializeField] private GameObject creationPanelMainLoadingSpinner;
         [SerializeField] private TMP_Text creationPanelTitleText;
         [SerializeField] private ScrollRect creationPanelScrollRect;
         [SerializeField] private Button creationPanelEditProfilePictureButton;
@@ -49,10 +54,12 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private CommunityPlaceTag placeTagPrefab;
         [SerializeField] private Button creationPanelCancelButton;
         [SerializeField] private Button creationPanelCreateButton;
-        [SerializeField] private GameObject creationPanelCreateButtonText;
-        [SerializeField] private GameObject creationPanelCreateLoading;
+        [SerializeField] private TMP_Text creationPanelCreateButtonText;
+        [SerializeField] private GameObject creationPanelCreateButtonLoading;
 
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
+
+        private bool isEditionMode;
 
         private CancellationTokenSource updateScrollPositionCts;
 
@@ -65,9 +72,13 @@ namespace DCL.Communities.CommunityCreation
             creationPanelEditProfilePictureButton.onClick.AddListener(() => SelectProfilePictureButtonClicked?.Invoke());
             creationPanelCommunityNameInputField.onValueChanged.AddListener(CreationPanelCommunityNameInputChanged);
             creationPanelCommunityDescriptionInputField.onValueChanged.AddListener(CreationPanelCommunityDescriptionInputChanged);
-            creationPanelCreateButton.onClick.AddListener(() => CreateCommunityButtonClicked?.Invoke(
-                creationPanelCommunityNameInputField.text,
-                creationPanelCommunityDescriptionInputField.text));
+            creationPanelCreateButton.onClick.AddListener(() =>
+            {
+                if (!isEditionMode)
+                    CreateCommunityButtonClicked?.Invoke(creationPanelCommunityNameInputField.text, creationPanelCommunityDescriptionInputField.text);
+                else
+                    SaveCommunityButtonClicked?.Invoke(creationPanelCommunityNameInputField.text, creationPanelCommunityDescriptionInputField.text);
+            });
             creationPanelPlacesDropdown.onValueChanged.AddListener(index => creationPanelAddPlaceButton.interactable = index > 0);
             creationPanelAddPlaceButton.onClick.AddListener(() => AddPlaceButtonClicked?.Invoke(creationPanelPlacesDropdown.value - 1)); // The first option is the default one, so we need to subtract 1 to the index
         }
@@ -85,6 +96,12 @@ namespace DCL.Communities.CommunityCreation
             updateScrollPositionCts.SafeCancelAndDispose();
         }
 
+        public void SetCreationPanelAsLoading(bool isLoading)
+        {
+            creationPanelMainLoadingSpinner.SetActive(isLoading);
+            creationPanelContent.SetActive(!isLoading);
+        }
+
         public void SetAccess(bool canCreate)
         {
             getNamePanel.SetActive(!canCreate);
@@ -100,15 +117,19 @@ namespace DCL.Communities.CommunityCreation
         public void PlayOnLinkClickAudio() =>
             UIAudioEventsBus.Instance.SendPlayAudioEvent(clickOnLinksAudio);
 
-        public void SetCreationPanelTitle(string title) =>
-            creationPanelTitleText.text = title;
-
-        public void SetCreationPanelAsLoading(bool isLoading)
+        public void SetAsEditionMode(bool isEditMode)
         {
-            creationPanelCreateLoading.SetActive(isLoading);
-            creationPanelCreateButtonText.SetActive(!isLoading);
+            isEditionMode = isEditMode;
+            creationPanelTitleText.text = isEditMode ? EDIT_COMMUNITY_TITLE : CREATE_COMMUNITY_TITLE;
+            creationPanelCreateButtonText.text = isEditMode ? "SAVE" : "CREATE";
+        }
 
-            if (isLoading)
+        public void SetCommunityCreationInProgress(bool isInProgress)
+        {
+            creationPanelCreateButtonLoading.SetActive(isInProgress);
+            creationPanelCreateButtonText.gameObject.SetActive(!isInProgress);
+
+            if (isInProgress)
                 creationPanelCreateButton.interactable = false;
             else
                 CheckForCreateButtonAvailability();
@@ -190,7 +211,7 @@ namespace DCL.Communities.CommunityCreation
 
         private void CleanCreationPanel()
         {
-            SetCreationPanelAsLoading(false);
+            SetCommunityCreationInProgress(false);
             SetProfileSelectedImage(null);
             SetCommunityName(string.Empty);
             SetCommunityDescription(string.Empty);

@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace DCL.Communities
 {
@@ -53,14 +55,28 @@ namespace DCL.Communities
         public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands, List<string> worlds, CancellationToken ct)
         {
             var url = $"{communitiesBaseUrl}/communities";
-            string jsonBody = JsonUtility.ToJson(new CreateCommunityBody
-            {
-                name = name,
-                description = description,
-            });
 
-            CreateOrUpdateCommunityResponse response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                                                                                 .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
+            CreateOrUpdateCommunityResponse response;
+            if (string.IsNullOrEmpty(communityId))
+            {
+                // Creating a new community
+                var formData = new List<IMultipartFormSection>
+                {
+                    new MultipartFormDataSection("name", name),
+                    new MultipartFormDataSection("description", description),
+                };
+
+                if (thumbnail != null)
+                    formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/jpeg"));
+
+                response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
+                                                     .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
+            }
+            else
+            {
+                // Updating an existing community
+                throw new NotImplementedException("Updating communities is not implemented yet.");
+            }
 
             return response;
         }
