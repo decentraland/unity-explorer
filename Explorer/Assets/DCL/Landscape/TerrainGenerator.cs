@@ -122,7 +122,7 @@ namespace DCL.Landscape
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone)
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, bool hasGPUIEnabled)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -136,7 +136,7 @@ namespace DCL.Landscape
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
 
-            terrainDetailSetter = new TerrainDetailSetter();
+            terrainDetailSetter = new TerrainDetailSetter(hasGPUIEnabled);
 
             isInitialized = true;
         }
@@ -408,20 +408,23 @@ namespace DCL.Landscape
                         {
                             using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
                             {
-                                if (chunkModel.OutOfTerrainParcels.Count == 0) return;
+                                if (chunkModel.OutOfTerrainParcels.Count != 0)
+                                {
+                                    chunkModel.TerrainData.SetHoles(0, 0,
+                                        await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
 
-                                chunkModel.TerrainData.SetHoles(0, 0,
-                                    await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
-                                await UniTask.Yield(cancellationToken);
+                                    await UniTask.Yield(cancellationToken);
+                                }
                             }
                         }
                         else
                         {
-                            if (chunkModel.OutOfTerrainParcels.Count == 0) return;
-
-                            bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
-                            chunkModel.TerrainData.SetHoles(0, 0, holes);
-                            localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
+                            if (chunkModel.OutOfTerrainParcels.Count == 0)
+                            {
+                                bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
+                                chunkModel.TerrainData.SetHoles(0, 0, holes);
+                                localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
+                            }
                         }
 
                         // await DigHolesAsync(terrainDataDictionary, cancellationToken);

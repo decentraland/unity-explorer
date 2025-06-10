@@ -126,7 +126,7 @@ namespace DCL.PluginSystem.Global
             }
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone);
+                parcelChecksum, isZone, gpuiWrapper != null);
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
 
             gpuiWrapper?.Initialize(landscapeData.Value, terrainGenerator.localCache);

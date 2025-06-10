@@ -73,7 +73,7 @@ namespace DCL.Landscape
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
             chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE);
 
-            terrainDetailSetter = new TerrainDetailSetter();
+            terrainDetailSetter = new TerrainDetailSetter(false);
             IsInitialized = true;
         }
 
