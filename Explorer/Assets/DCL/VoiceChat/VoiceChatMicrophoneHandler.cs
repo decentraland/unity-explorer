@@ -127,6 +127,7 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                 case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
                     isInCall = true;
+                    EnableMicrophone();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL: break;
                 default: throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
@@ -316,9 +317,7 @@ namespace DCL.VoiceChat
             if (microphoneAudioClip == null || !Microphone.IsRecording(MicrophoneName))
                 return;
 
-
-            //TODO FRAN: CHECK IF THIS IS NEEDED
-            if (audioSource != null && voiceChatConfiguration.EnableFreshDataWait)
+            if (audioSource != null)
             {
                 audioSource.time = 0f;
                 audioSource.timeSamples = 0;
@@ -346,8 +345,6 @@ namespace DCL.VoiceChat
                     break;
                 }
             }
-
-            //TODO FRAN: CHECK IF THIS IS NEEDED
             if (audioSource != null && !ct.IsCancellationRequested)
             {
                 audioSource.time = 0f;

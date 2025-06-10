@@ -34,7 +34,8 @@ MonoBehaviour:
   EnableGateFadeIn: 1
   FadeInBufferSize: 64
   PreGateAttenuation: 0.1
-  MicrophoneReinitDelayMs: 100
-  EnableFreshDataWait: 1
+  MicrophoneReinitDelayMs: 500
+  EnableFreshDataWait1: 1
+  EnableFreshDataWait2: 1
   MaxFreshDataWaitTimeMs: 1000
   FreshDataCheckDelayMs: 50

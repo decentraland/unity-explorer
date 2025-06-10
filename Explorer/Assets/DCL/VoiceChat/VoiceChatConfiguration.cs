@@ -95,9 +95,6 @@ namespace DCL.VoiceChat
         [Range(0, 1000)]
         public int MicrophoneReinitDelayMs = 500;
 
-        [Tooltip("Enable waiting for fresh microphone data after initialization")]
-        public bool EnableFreshDataWait = true;
-
         [Tooltip("Maximum time in milliseconds to wait for fresh microphone data")]
         [Range(0, 2000)]
         public int MaxFreshDataWaitTimeMs = 1000;

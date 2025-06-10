@@ -13,12 +13,14 @@ namespace DCL.VoiceChat
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
         private const int DEFAULT_BUFFER_SIZE = 8192;
+        private const int LIVEKIT_SAMPLE_RATE = 48000;
 
         private VoiceChatAudioProcessor audioProcessor;
         private bool isFilterActive = true;
-        private int outputSampleRate;
+        private int outputSampleRate = 48000;
 
         private float[] tempBuffer;
+        private float[] resampleBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
         private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
 
@@ -45,6 +47,7 @@ namespace DCL.VoiceChat
             audioProcessor?.Dispose();
             audioProcessor = null;
             tempBuffer = null;
+            resampleBuffer = null;
         }
 
         /// <summary>
@@ -67,8 +70,33 @@ namespace DCL.VoiceChat
                 catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error: {ex.Message}"); }
             }
 
+            if (outputSampleRate != LIVEKIT_SAMPLE_RATE)
+            {
+                ResampleToLiveKitRate(data.AsSpan());
+            }
+
             // This sends the processed audio data to LiveKit
-            AudioRead?.Invoke(data.AsSpan(), channels, outputSampleRate);
+            AudioRead?.Invoke(data.AsSpan(), channels, LIVEKIT_SAMPLE_RATE);
+        }
+
+        private void ResampleToLiveKitRate(Span<float> data)
+        {
+            int samplesPerChannel = data.Length / channels;
+            int targetSamplesPerChannel = (int)((float)samplesPerChannel * LIVEKIT_SAMPLE_RATE / outputSampleRate);
+
+            // Resample in-place, working backwards to avoid overwriting data we need
+            // Only use left channel data regardless of input channel count
+            for (int i = targetSamplesPerChannel - 1; i >= 0; i--)
+            {
+                float sourceIndex = (float)i * outputSampleRate / LIVEKIT_SAMPLE_RATE;
+                int sourceIndexFloor = Mathf.FloorToInt(sourceIndex);
+                int sourceIndexCeil = Mathf.Min(sourceIndexFloor + 1, samplesPerChannel - 1);
+                float fraction = sourceIndex - sourceIndexFloor;
+
+                float sample1 = data[sourceIndexFloor];
+                float sample2 = data[sourceIndexCeil];
+                data[i] = Mathf.Lerp(sample1, sample2, fraction);
+            }
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead;
@@ -134,6 +162,9 @@ namespace DCL.VoiceChat
 
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
+                
+            if (resampleBuffer != null)
+                Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
         }
     }
 }
