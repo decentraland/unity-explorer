@@ -91,10 +91,17 @@ namespace DCL.CharacterMotion.Systems
             headIK.IsDisabled = !this.headIKIsEnabled;
             avatarBase.HeadIKRig.weight = 1;
 
-            Vector3 objectScreenPos = //new Vector3(1385, 780, 300);
-                 previewComponent.Camera.WorldToScreenPoint(avatarBase.HeadPositionConstraint.position);
+            Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
 
-            objectScreenPos.z = 300;
+            Vector3[] corners = new Vector3[4];
+            previewComponent.RenderImageRect.GetWorldCorners(corners);
+            Vector3 bottomLeft = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
+            Vector3 topRight = RectTransformUtility.WorldToScreenPoint(null, corners[2]);
+
+            Vector3 objectScreenPos = new Vector3(
+                Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
+                Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
+                300);
 
             Vector2 mousePos = Mouse.current.position.value;
             Vector3 endScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
@@ -103,48 +110,10 @@ namespace DCL.CharacterMotion.Systems
             screenVector.y = -screenVector.y;
             var targetDirection = screenVector.normalized;
 
-            Debug.Log($"VVV M:{mousePos} - H:{objectScreenPos} = {screenVector} | nm:{targetDirection}");
             Execute(targetDirection, avatarBase, dt, settings);
-
-            // Vector3 startScreenPos = new Vector3(objectScreenPos.x, objectScreenPos.y, -10);
-            // Vector3 endScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
-
-            // Vector3 targetDirection = cameraComponent.Camera.transform.forward;
-            // var targetPosition = new Vector3(mousePos.x, mousePos.y, 0);
-            // var headPosition = new Vector3(1385, 780, 10);
-            // var headPos = ()Mouse.current.position.value); 1385, 780
-            // var ray = cameraComponent.Camera.ScreenPointToRay(mousePos);
-
-            //
-            // var mousePos = Mouse.current.position.value;
-            // var ray = previewComponent.Camera.ScreenPointToRay(mousePos);
-            // Vector3 headPosition = avatarBase.HeadPositionConstraint.position;
-            //
-            // // Создаем плоскость на уровне головы, перпендикулярную камере
-            // Plane plane = new Plane(previewComponent.Camera.transform.forward, headPosition);
-            //
-            // float distance;
-            // if (plane.Raycast(ray, out distance))
-            // {
-            //     Vector3 targetPosition = ray.GetPoint(distance-10);
-            //     Vector3 targetDirection = (targetPosition - headPosition).normalized;
-            //
-            //     Debug.Log($"VVV HP:{targetPosition} - TP:{headPosition} = {targetDirection}");
-            //     Execute(targetDirection, avatarBase, dt, settings);
-            // }
-
-            // Находим направление от головы к лучу
-            // Vector3 rayDirection = ray.direction;
-            // Vector3 cameraToHead = headPosition - ray.origin;
-            // Проецируем и нормализуем
-            // Vector3 targetDirection = (ray.origin + (rayDirection * Vector3.Dot(cameraToHead, rayDirection)) - headPosition).normalized;
-
-            // Debug.Log($"VVV rayOrigin:{ray.origin} - HP:{headPosition} | rayDir:{rayDirection} | camToHead:{cameraToHead} | targetDir:{cameraToHead.normalized}");
-            // Debug.Log($"VVV HP:{headPosition} - TP:{rayDirection} = {targetDirection}");
-
         }
 
-        public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
+        private static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings)
         {
             Transform reference = avatarBase.HeadPositionConstraint;
             Vector3 referenceAngle = Quaternion.LookRotation(reference.forward).eulerAngles;

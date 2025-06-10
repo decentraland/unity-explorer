@@ -84,15 +84,15 @@ namespace DCL.CharacterPreview
             var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
+                antiAliasing = 4,
+                useDynamicScale = true,
             };
 
-            newTexture.antiAliasing = 4;
-            newTexture.useDynamicScale = true;
             newTexture.Create();
 
             view.RawImage.texture = newTexture;
 
-            previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
+            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
             initialized = true;
 
             OnModelUpdated();

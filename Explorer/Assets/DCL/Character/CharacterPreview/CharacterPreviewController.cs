@@ -35,7 +35,7 @@ namespace DCL.CharacterPreview
         private readonly World globalWorld;
         private readonly bool builderEmotesPreview;
 
-        public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
+        public CharacterPreviewController(World world, RectTransform renderImage, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
             CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool, IAppArgs appArgs)
         {
@@ -54,7 +54,7 @@ namespace DCL.CharacterPreview
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
-                new CharacterPreviewComponent { Camera = avatarContainer.camera },
+                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage },
                 new HeadIKComponent(),
                 new CharacterEmoteComponent());
         }
