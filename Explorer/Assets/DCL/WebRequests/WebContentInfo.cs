@@ -1,50 +1,45 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
-using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
-    public class WebContentInfo
+    public readonly struct WebContentInfo
     {
         public readonly ContentType Type;
         public readonly long SizeInBytes;
 
-        public WebContentInfo(ContentType type, long sizeInBytes)
+        private WebContentInfo(ContentType type, long sizeInBytes)
         {
             Type = type;
             SizeInBytes = sizeInBytes;
         }
 
-        public static async Task<WebContentInfo> FetchAsync(string url, CancellationToken ct = default)
+        public static async UniTask<WebContentInfo> FetchAsync(IWebRequestController webRequestController, Uri url, ReportData reportData, CancellationToken ct)
         {
-            var request = UnityWebRequest.Head(url);
-            await request.SendWebRequest().WithCancellation(ct);
+            using IWebRequest? response = await webRequestController.HeadAsync(new CommonArguments(url, attemptsCount: 1), reportData)
+                                                                    .SendAsync(ct);
 
-            return await FetchAsync(request);
+            return await FetchAsync(response);
         }
 
-        public static Task<WebContentInfo> FetchAsync(UnityWebRequest request)
-        {
-            if (request.result != UnityWebRequest.Result.Success)
-                throw new Exception("Failed to fetch web content info: " + request.error);
-
-            return Task.FromResult(new WebContentInfo(
-                GetContentType(request),
-                GetSizeInBytes(request)
+        public static UniTask<WebContentInfo> FetchAsync(IWebRequest response) =>
+            UniTask.FromResult(new WebContentInfo(
+                GetContentType(response),
+                GetSizeInBytes(response)
             ));
-        }
 
-        private static ContentType GetContentType(UnityWebRequest request)
+        private static ContentType GetContentType(IWebRequest request)
         {
-            string? contentType = request.GetResponseHeader("Content-Type");
+            string? contentType = request.Response.GetHeader(WebRequestHeaders.CONTENT_TYPE_HEADER);
+            string uriString = request.Url.OriginalString;
 
             if (contentType == null)
             {
                 // For old converter only, which does not return content type
-                if(request.url.EndsWith(".ktx2")) return ContentType.KTX2;
-                if(request.url.EndsWith(".mp4")) return ContentType.Video;
+                if (uriString.EndsWith(".ktx2")) return ContentType.KTX2;
+                if (uriString.EndsWith(".mp4")) return ContentType.Video;
 
                 return ContentType.Unknown;
             }
@@ -57,12 +52,10 @@ namespace DCL.WebRequests
             return ContentType.Unknown;
         }
 
-        private static long GetSizeInBytes(UnityWebRequest request)
+        private static long GetSizeInBytes(IWebRequest request)
         {
-            if (long.TryParse(request.GetResponseHeader("Content-Length") ?? "NONE", out long length))
-            {
+            if (long.TryParse(request.Response.GetHeader(WebRequestHeaders.CONTENT_TYPE_HEADER) ?? "NONE", out long length))
                 return length;
-            }
 
             return -1;
         }

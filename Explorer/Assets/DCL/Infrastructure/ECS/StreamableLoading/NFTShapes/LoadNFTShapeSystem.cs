@@ -43,8 +43,8 @@ namespace ECS.StreamableLoading.NFTShapes
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             Uri imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
-            Uri convertUrl = ktxEnabled ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(imageUrl)) : imageUrl;
-            var contentInfo = await WebContentInfo.FetchAsync(convertUrl, ct);
+            Uri convertUrl = GetTextureWebRequest.GetEffectiveUrl(urlsSource, imageUrl, ktxEnabled);
+            WebContentInfo contentInfo = await WebContentInfo.FetchAsync(webRequestController, convertUrl, GetReportData(), ct);
 
             if (!ktxEnabled && contentInfo is { Type: WebContentInfo.ContentType.Image, SizeInBytes: > MAX_PREVIEW_SIZE })
                 return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
@@ -61,7 +61,7 @@ namespace ECS.StreamableLoading.NFTShapes
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
-                new CommonLoadingArguments(url), attempts: 1),
+                                                        new CommonLoadingArguments(url, attempts: 1),
                 new GetTextureArguments(TextureType.Albedo, true),
                 GetReportData())
                     .CreateTextureAsync(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, ct);

@@ -63,7 +63,7 @@ namespace DCL.SDKComponents.NFTShape.System
 
                         if (World.TryGet<PBVideoPlayer>(entity, out var videoPlayer))
                         {
-                            videoPlayer!.Src = result.Asset.VideoURL;
+                            videoPlayer!.Src = result.Asset.VideoURL.OriginalString;
                             videoPlayer.IsDirty = true;
 
                             World.Add(entity, vtc);
@@ -72,7 +72,7 @@ namespace DCL.SDKComponents.NFTShape.System
                         {
                             var pbVideo = new PBVideoPlayer
                             {
-                                Src = result.Asset.VideoURL,
+                                Src = result.Asset.VideoURL.OriginalString,
                                 Playing = true,
                                 Loop = true,
                             };
