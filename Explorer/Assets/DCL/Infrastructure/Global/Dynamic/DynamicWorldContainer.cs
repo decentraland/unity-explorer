@@ -858,7 +858,7 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
-                new VoiceChatPlugin(voiceChatSettingsAssetProxy, assetsProvisioner, dclInput, roomHub, mainUIView, voiceChatCallStatusService, viewDependencies)
+                new VoiceChatPlugin(voiceChatSettingsAssetProxy, assetsProvisioner, dclInput, roomHub, mainUIView, voiceChatCallStatusService, viewDependencies, profileRepositoryWrapper)
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

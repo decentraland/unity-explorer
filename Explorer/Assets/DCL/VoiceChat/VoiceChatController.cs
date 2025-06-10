@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using MVC;
 using System;
@@ -11,17 +12,20 @@ namespace DCL.VoiceChat
         private readonly VoiceChatView view;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
+        private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly MicrophoneButtonController micController;
 
         public VoiceChatController(
             VoiceChatView view,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             VoiceChatMicrophoneHandler microphoneHandler,
-            ViewDependencies dependencies)
+            ViewDependencies dependencies,
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.microphoneHandler = microphoneHandler;
+            this.profileDataProvider = profileDataProvider;
 
             view.IncomingCallView.AcceptCallButton.onClick.AddListener(AcceptCall);
             view.IncomingCallView.RefuseCallButton.onClick.AddListener(RefuseCall);
@@ -47,9 +51,9 @@ namespace DCL.VoiceChat
         private void OnVoiceChatStatusChanged(VoiceChatStatus status)
         {
             if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
-                view.Hide(status, this.voiceChatCallStatusService.CurrentTargetWallet);
+                view.Hide(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
             else
-                view.Show(status, this.voiceChatCallStatusService.CurrentTargetWallet);
+                view.Show(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
 
         }
 
