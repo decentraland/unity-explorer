@@ -45,7 +45,7 @@ namespace DCL.AvatarRendering.Emotes.Systems
         {
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
-                World!.Add(entity, new StreamableResult(GetReportCategory(), new Exception("Emotes request cancelled")));
+                World!.Add(entity, new StreamableResult(GetReportCategory(), new OperationCanceledException("Emotes request cancelled")));
                 return;
             }
 
