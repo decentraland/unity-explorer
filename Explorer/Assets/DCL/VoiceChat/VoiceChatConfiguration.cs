@@ -89,5 +89,21 @@ namespace DCL.VoiceChat
         [Tooltip("Pre-gate audio attenuation factor during crossfade")]
         [Range(0.01f, 0.5f)]
         public float PreGateAttenuation = 0.1f;
+
+        [Header("Microphone Initialization")]
+        [Tooltip("Delay in milliseconds before reinitializing microphone after device change")]
+        [Range(0, 1000)]
+        public int MicrophoneReinitDelayMs = 500;
+
+        [Tooltip("Enable waiting for fresh microphone data after initialization")]
+        public bool EnableFreshDataWait = true;
+
+        [Tooltip("Maximum time in milliseconds to wait for fresh microphone data")]
+        [Range(0, 2000)]
+        public int MaxFreshDataWaitTimeMs = 1000;
+
+        [Tooltip("Delay in milliseconds between checks for fresh microphone data")]
+        [Range(10, 200)]
+        public int FreshDataCheckDelayMs = 50;
     }
 }
