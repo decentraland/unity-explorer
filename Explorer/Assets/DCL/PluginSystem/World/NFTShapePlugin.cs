@@ -16,8 +16,6 @@ using DCL.SDKComponents.NFTShape.Renderer;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using DCL.SDKComponents.NFTShape.System;
 using DCL.WebRequests;
-using DCL.WebRequests.WebContentSizes;
-using DCL.WebRequests.WebContentSizes.Sizes.Lazy;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
@@ -28,6 +26,7 @@ using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
@@ -39,10 +38,9 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
-        private readonly IWebContentSizes webContentSizes;
-        private readonly ILazyMaxSize lazyMaxSize;
         private readonly IDiskCache<Texture2DData> diskCache;
         private readonly FeatureFlagsCache featureFlags;
+        private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
         static NFTShapePlugin()
@@ -58,7 +56,8 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IDiskCache<Texture2DData> diskCache,
-            FeatureFlagsCache featureFlags
+            FeatureFlagsCache featureFlags,
+            ExtendedObjectPool<Texture2D> videoTexturePool
         ) : this(
             decentralandUrlsSource,
             instantiationFrameTimeBudgetProvider,
@@ -67,10 +66,9 @@ namespace DCL.PluginSystem.World
             framePrefabs,
             webRequestController,
             cacheCleaner,
-            new IWebContentSizes.Default(LazyMaxSize(out var lazyMaxSize)),
-            lazyMaxSize,
             diskCache,
-            featureFlags
+            featureFlags,
+            videoTexturePool
         ) { }
 
         public NFTShapePlugin(
@@ -81,10 +79,9 @@ namespace DCL.PluginSystem.World
             IFramePrefabs framePrefabs,
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
-            IWebContentSizes webContentSizes,
-            ILazyMaxSize lazyMaxSize,
             IDiskCache<Texture2DData> diskCache,
-            FeatureFlagsCache featureFlags
+            FeatureFlagsCache featureFlags,
+            ExtendedObjectPool<Texture2D> videoTexturePool
         ) : this(
             decentralandUrlsSource,
             new PoolNFTShapeRendererFactory(componentPoolsRegistry, framesPool),
@@ -93,10 +90,9 @@ namespace DCL.PluginSystem.World
             webRequestController,
             cacheCleaner,
             framePrefabs,
-            webContentSizes,
-            lazyMaxSize,
             diskCache,
-            featureFlags
+            featureFlags,
+            videoTexturePool
         ) { }
 
         public NFTShapePlugin(
@@ -107,10 +103,9 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
-            IWebContentSizes webContentSizes,
-            ILazyMaxSize lazyMaxSize,
             IDiskCache<Texture2DData> diskCache,
-            FeatureFlagsCache featureFlags
+            FeatureFlagsCache featureFlags,
+            ExtendedObjectPool<Texture2D> videoTexturePool
         )
         {
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -119,10 +114,9 @@ namespace DCL.PluginSystem.World
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.webRequestController = webRequestController;
             this.framePrefabs = framePrefabs;
-            this.webContentSizes = webContentSizes;
-            this.lazyMaxSize = lazyMaxSize;
             this.diskCache = diskCache;
             this.featureFlags = featureFlags;
+            this.videoTexturePool = videoTexturePool;
             cacheCleaner.Register(cache);
         }
 
@@ -133,8 +127,6 @@ namespace DCL.PluginSystem.World
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
         {
-            lazyMaxSize.Initialize(settings.MaxSizeOfNftForDownload);
-
             return framePrefabs.InitializeAsync(
                 settings.Settings.FramePrefabs(),
                 settings.Settings.DefaultFrame(),
@@ -148,7 +140,7 @@ namespace DCL.PluginSystem.World
 
             bool isKtxEnabled = featureFlags.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, webContentSizes, isKtxEnabled);
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, videoTexturePool, decentralandUrlsSource);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
@@ -162,11 +154,6 @@ namespace DCL.PluginSystem.World
         private static IFramePrefabs NewFramePrefabs(IAssetsProvisioner assetsProvisioner, out IFramePrefabs framePrefabs)
         {
             return framePrefabs = new AssetProvisionerFramePrefabs(assetsProvisioner);
-        }
-
-        private static ILazyMaxSize LazyMaxSize(out ILazyMaxSize lazyMaxSize)
-        {
-            return lazyMaxSize = new LazyMaxSize();
         }
     }
 }
