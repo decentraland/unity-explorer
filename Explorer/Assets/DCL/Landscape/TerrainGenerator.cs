@@ -419,7 +419,7 @@ namespace DCL.Landscape
                         }
                         else
                         {
-                            if (chunkModel.OutOfTerrainParcels.Count == 0)
+                            if (chunkModel.OutOfTerrainParcels.Count != 0)
                             {
                                 bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
                                 chunkModel.TerrainData.SetHoles(0, 0, holes);

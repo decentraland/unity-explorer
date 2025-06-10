@@ -57,11 +57,11 @@
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
     "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets#21dd4b983b37990483b9ed08b1f3d9a38d3a145e",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "21dd4b983b37990483b9ed08b1f3d9a38d3a145e"
+      "hash": "18ebcf53609f02852d13df924049c93de36a5cb7"
     },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",

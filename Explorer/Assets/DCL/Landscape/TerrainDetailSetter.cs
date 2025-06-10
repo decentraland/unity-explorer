@@ -1,24 +1,26 @@
 using Cysharp.Threading.Tasks;
 using DCL.Landscape.Utils;
-using System;
 using UnityEngine;
 
 namespace DCL.Landscape
 {
+    /// <summary>
+    ///     Helper class to be used with GPUI. If we are using it, we want details to be applied only by the GPUIWrapper, not on the terrainData
+    /// </summary>
     public class TerrainDetailSetter
     {
-        private readonly bool avoidApplyingDetails;
+        private readonly bool isGPUIPresent;
 
-        public TerrainDetailSetter(bool avoidApplyingDetails)
+        public TerrainDetailSetter(bool isGpuiPresent)
         {
-            this.avoidApplyingDetails = avoidApplyingDetails;
+            isGPUIPresent = isGpuiPresent;
         }
 
 
         public async UniTask ReadApplyTerrainDetailAsync(TerrainData terrainData,
             TerrainGeneratorLocalCache localCache, int offsetX, int offsetZ, int i)
         {
-            if (avoidApplyingDetails) return;
+            if (isGPUIPresent) return;
 
             int[,]? detailLayer = await localCache.GetDetailLayerAsync(offsetX, offsetZ, i);
             ApplyDetailLayer(terrainData, i, detailLayer);
@@ -26,7 +28,8 @@ namespace DCL.Landscape
 
         public void ApplyDetailLayer(TerrainData terrainData, int i, int[,] detailLayer)
         {
-            if (avoidApplyingDetails) return;
+            if (isGPUIPresent) return;
+
             terrainData.SetDetailLayer(0, 0, i, detailLayer);
         }
     }
