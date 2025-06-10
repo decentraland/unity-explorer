@@ -1,0 +1,35 @@
+name: Claude Review (On Label)
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  review-on-label:
+    if: github.event.label.name == 'ai_review'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude Review (Label Triggered)
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          timeout_minutes: "60"
+          direct_prompt: |
+            Please provide a thorough review of this pull request.
+
+            This PR was labeled `ai_review`, meaning it is ready for automated analysis.
+            Please:
+            - Highlight any issues with code quality, bugs, or bad practices defined in CLAUDE.md
+
+            Keep feedback actionable and easy to follow.
+          allowed_tools: "mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__get_pull_request_diff"
