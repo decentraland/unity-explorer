@@ -55,7 +55,7 @@ namespace DCL.Communities.CommunitiesCard
         private PlacesSectionController? placesSectionController;
         private EventListController? eventListController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
-        private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
+        private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
@@ -98,6 +98,7 @@ namespace DCL.Communities.CommunitiesCard
             }
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
+            panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             if (cameraReelGalleryController != null)
@@ -147,8 +148,8 @@ namespace DCL.Communities.CommunitiesCard
 
         protected override void OnViewShow()
         {
-            loadCommunityDataCancellationTokenSource = loadCommunityDataCancellationTokenSource.SafeRestart();
-            LoadCommunityDataAsync(loadCommunityDataCancellationTokenSource.Token).Forget();
+            panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
+            LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
 
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
@@ -163,17 +164,20 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.ConfigureCommunity(communityData, imageController);
 
                 viewInstance.ResetToggle();
+
+                eventListController?.ShowEvents(communityData, ct);
             }
         }
 
         protected override void OnViewClose()
         {
             sectionCancellationTokenSource.SafeCancelAndDispose();
-            loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
+            panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             membersListController?.Reset();
             placesSectionController?.Reset();
+            eventListController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>

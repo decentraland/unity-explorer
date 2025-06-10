@@ -9,6 +9,8 @@ namespace DCL.Communities.CommunitiesCard.Events
 {
     public class EventListView : MonoBehaviour, ICommunityFetchingView
     {
+        private const int ELEMENT_MISSING_THRESHOLD = 5;
+
         [field: SerializeField] private LoopListView2 loopList { get; set; }
         [field: SerializeField] private ScrollRect loopListScrollRect { get; set; }
         [field: SerializeField] private GameObject loadingObject { get; set; }
@@ -19,7 +21,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public event Action NewDataRequested;
         public event Action OpenWizardRequested;
 
-        private Func<SectionFetchData<EventDTO>> getCurrentSectionFetchData;
+        private Func<SectionFetchData<EventDTO>> getEventsFetchData;
         private bool canModify;
 
         private void Awake()
@@ -36,26 +38,34 @@ namespace DCL.Communities.CommunitiesCard.Events
         public void InitList(Func<SectionFetchData<EventDTO>> currentSectionDataFunc)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
-            getCurrentSectionFetchData = currentSectionDataFunc;
+            getEventsFetchData = currentSectionDataFunc;
         }
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
+            SectionFetchData<EventDTO> eventData = getEventsFetchData();
+
+            if (index >= eventData.totalFetched - ELEMENT_MISSING_THRESHOLD && eventData.totalFetched < eventData.totalToFetch)
+                NewDataRequested?.Invoke();
             throw new NotImplementedException();
         }
 
         public void RefreshGrid()
         {
-            throw new NotImplementedException();
+            loopList.SetListItemCount(getEventsFetchData().members.Count, false);
+            loopList.RefreshAllShownItem();
         }
 
         public void SetEmptyStateActive(bool active)
         {
             emptyState.SetActive(active);
-            emptyStateAdminText.SetActive(canModify);
+            emptyStateAdminText.SetActive(active && canModify);
         }
 
-        public void SetLoadingStateActive(bool active) =>
+        public void SetLoadingStateActive(bool active)
+        {
             loadingObject.SetActive(active);
+            SetEmptyStateActive(!active);
+        }
     }
 }

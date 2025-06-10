@@ -151,6 +151,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             headerObject.SetActive(!isLoading);
             contentObject.SetActive(!isLoading);
+            EventListView.SetLoadingStateActive(isLoading);
 
             if (isLoading)
                 loadingObject?.Show();
