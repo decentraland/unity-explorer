@@ -566,7 +566,5 @@ namespace DCL.Landscape
 
             noiseGenCache.Dispose();
         }
-
-
     }
 }
