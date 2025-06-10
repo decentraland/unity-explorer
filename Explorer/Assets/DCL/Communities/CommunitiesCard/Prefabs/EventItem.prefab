@@ -955,8 +955,10 @@ MonoBehaviour:
   mainButton: {fileID: 5087602760573563177}
   jumpInButton: {fileID: 6124658969080785628}
   liveShareButton: {fileID: 8462107412257126423}
-  interestedButton: {fileID: 5584228740051416031}
+  interestedButton: {fileID: 3667130979709381892}
   offlineShareButton: {fileID: 7796272018042831747}
+  liveBadgeContainer: {fileID: 0}
+  interestedContainer: {fileID: 0}
   eventThumbnailImage: {fileID: 4875162771560992584}
   eventTimeText: {fileID: 6316897665412424019}
   eventNameText: {fileID: 256119827136602486}
@@ -2881,15 +2883,15 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
---- !u!114 &5584228740051416031 stripped
+--- !u!114 &3667130979709381892 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2609096750127201198, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
+  m_CorrespondingSourceObject: {fileID: 6606272585209996661, guid: a2ddc9ce89858b441953c8b428a72288, type: 3}
   m_PrefabInstance: {fileID: 7587006094791116913}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 9cc3ea198393cad4f9d9fa1dfda096d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &7408300755976069873 stripped

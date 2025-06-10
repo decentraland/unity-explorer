@@ -5,24 +5,24 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
+using PlaceAndEventDTO = DCL.EventsApi.CommunityEventsDTO.PlaceAndEventDTO;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
-    public class EventListController : CommunityFetchingControllerBase<EventDTO, EventListView>
+    public class EventListController : CommunityFetchingControllerBase<PlaceAndEventDTO, EventListView>
     {
         private const int PAGE_SIZE = 20;
 
         private readonly EventListView view;
         private readonly IEventsApiService eventsApiService;
-        private readonly SectionFetchData<EventDTO> eventsFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
 
         private CommunityData? communityData = null;
 
-        protected override SectionFetchData<EventDTO> currentSectionFetchData => eventsFetchData;
+        protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;
 
         public EventListController(EventListView view,
             IEventsApiService eventsApiService,

@@ -9,6 +9,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using PlaceAndEventDTO = DCL.EventsApi.CommunityEventsDTO.PlaceAndEventDTO;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
@@ -33,7 +34,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public event Action<EventDTO> EventShareButtonClicked;
         public event Action<EventDTO> EventCopyLinkButtonClicked;
 
-        private Func<SectionFetchData<EventDTO>> getEventsFetchData;
+        private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData;
         private bool canModify;
         private IWebRequestController webRequestController;
         private IMVCManager mvcManager;
@@ -56,7 +57,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.canModify = canModify;
         }
 
-        public void InitList(Func<SectionFetchData<EventDTO>> currentSectionDataFunc,
+        public void InitList(Func<SectionFetchData<PlaceAndEventDTO>> currentSectionDataFunc,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
             CancellationToken panelCancellationToken)
@@ -70,7 +71,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
-            SectionFetchData<EventDTO> eventData = getEventsFetchData();
+            SectionFetchData<PlaceAndEventDTO> eventData = getEventsFetchData();
 
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
