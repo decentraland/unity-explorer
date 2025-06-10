@@ -62,6 +62,12 @@ namespace ECS.Unity.Textures.Components
             renderers = new List<MeshRenderer>();
         }
 
+        public VideoTextureConsumer(Texture2DData t2dd)
+        {
+            Texture = t2dd;
+            renderers = new List<MeshRenderer>();
+        }
+
         public void Dispose()
         {
             // On Dispose video textures are dereferenced by material that acquired it

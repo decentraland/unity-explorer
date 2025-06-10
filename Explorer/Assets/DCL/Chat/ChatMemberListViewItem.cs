@@ -71,7 +71,7 @@ namespace DCL.Chat
 
         public void SetupProfilePicture(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
         {
-            profilePictureView.SetupWithDependencies(profileDataProvider, userColor, faceSnapshotUrl, userId);
+            profilePictureView.Setup(profileDataProvider, userColor, faceSnapshotUrl, userId);
         }
 
         private void Start()
