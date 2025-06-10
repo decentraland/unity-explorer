@@ -187,7 +187,7 @@ GameObject:
   - component: {fileID: 1966775455348051753}
   - component: {fileID: 5304425934672700721}
   m_Layer: 29
-  m_Name: VoiceChatIcon (1)
+  m_Name: IsTalkingOuterIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -415,11 +415,11 @@ MonoBehaviour:
     m_RotationOrder: 4
   <privateMessageIcon>k__BackingField: {fileID: 6150886871577296280}
   <privateMessageIconRenderer>k__BackingField: {fileID: 5844589265473337727}
-  <voiceChatIcon>k__BackingField: {fileID: 407507127688075238}
-  <voiceChatIconRenderer>k__BackingField: {fileID: 6493516169890296030}
-  <voiceChatIconOuterRenderer>k__BackingField: {fileID: 5304425934672700721}
-  <voiceChatIconRect>k__BackingField: {fileID: 977382119942593327}
-  <voiceChatIconOuterRect>k__BackingField: {fileID: 1966775455348051753}
+  <isTalkingIcon>k__BackingField: {fileID: 407507127688075238}
+  <isTalkingIconRenderer>k__BackingField: {fileID: 6493516169890296030}
+  <isTalkingIconOuterRenderer>k__BackingField: {fileID: 5304425934672700721}
+  <isTalkingIconRect>k__BackingField: {fileID: 977382119942593327}
+  <isTalkingIconOuterRect>k__BackingField: {fileID: 1966775455348051753}
   <privateMessageText>k__BackingField: {fileID: 4907543279996336927}
 --- !u!210 &317692783042627670
 SortingGroup:
@@ -1058,7 +1058,7 @@ GameObject:
   - component: {fileID: 977382119942593327}
   - component: {fileID: 6493516169890296030}
   m_Layer: 29
-  m_Name: VoiceChatIcon
+  m_Name: IsTalkingIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1148,7 +1148,7 @@ GameObject:
   m_Component:
   - component: {fileID: 407507127688075238}
   m_Layer: 29
-  m_Name: VoiceChatIconParent
+  m_Name: IsTalkingIconParent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
