@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -118,6 +119,9 @@ namespace DCL.PlacesAPIService
             places.AddRange(alreadyCachedPlaces);
             return rentedPlaces;
         }
+
+        public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false) =>
+            client.GetPlacesByIdsAsync(placeIds, ct);
 
         public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct) =>
             await client.GetOptimizedPlacesFromTheMapAsync(category, ct);

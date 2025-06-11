@@ -21,8 +21,21 @@ namespace DCL.Communities
             public bool hasClaimedName;
             public string name;
             public int mutualFriends;
-            public FriendshipStatus friendshipStatus;
 
+            public FriendshipStatus friendshipStatus
+            {
+                get
+                {
+                    if (friendStatus is FriendshipStatus.deleted or FriendshipStatus.canceled or FriendshipStatus.rejected)
+                        return FriendshipStatus.none;
+
+                    return friendStatus;
+                }
+
+                set => friendStatus = value;
+            }
+
+            private FriendshipStatus friendStatus;
             private Color userNameColor;
 
             public Color GetUserNameColor()
