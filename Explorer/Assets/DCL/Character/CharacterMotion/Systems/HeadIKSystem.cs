@@ -29,8 +29,6 @@ namespace DCL.CharacterMotion.Systems
     [UpdateAfter(typeof(ChangeCharacterPositionGroup))]
     public partial class HeadIKSystem : BaseUnityLoopSystem
     {
-        private const int AVATAR_DEPTH = 500;
-
         private bool headIKIsEnabled;
         private SingleInstanceEntity camera;
         private readonly ElementBinding<float> verticalLimit;
@@ -82,11 +80,9 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
-        [All(typeof(CharacterPreviewComponent))]
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK, ref AvatarBase avatarBase)
         {
             headIK.IsDisabled = !this.headIKIsEnabled;
-            avatarBase.HeadIKRig.weight = 1;
 
             Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
 
@@ -97,7 +93,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 objectScreenPos = new Vector3(
                 Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
                 Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
-                AVATAR_DEPTH);
+                previewComponent.Settings.AvatarDepth);
 
             Vector2 mousePos = Mouse.current.position.value;
             Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
@@ -105,7 +101,7 @@ namespace DCL.CharacterMotion.Systems
             var screenVector = objectScreenPos - mouseScreenPos;
             screenVector.y = -screenVector.y;
 
-            ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt, settings, useFrontalReset: false);
+            ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt * previewComponent.Settings.HeadMoveSpeed, settings, useFrontalReset: false);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

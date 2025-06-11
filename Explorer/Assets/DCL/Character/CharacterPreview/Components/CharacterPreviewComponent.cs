@@ -6,5 +6,6 @@ namespace DCL.CharacterPreview.Components
     {
         public Camera Camera;
         public RectTransform RenderImageRect;
+        public AvatarPreviewHeadIKSettings Settings;
     }
 }

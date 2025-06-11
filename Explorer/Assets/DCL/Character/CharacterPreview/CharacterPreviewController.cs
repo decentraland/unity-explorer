@@ -54,7 +54,7 @@ namespace DCL.CharacterPreview
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
-                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage },
+                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings},
                 new HeadIKComponent(),
                 new CharacterEmoteComponent());
         }
@@ -115,7 +115,7 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
-            if (world.TryGet(avatarEntity, out AvatarBase avatarBase))
+            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null)
             {
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.RigBuilder.Build();
