@@ -1,10 +1,12 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility.Times;
@@ -68,8 +70,65 @@ namespace DCL.EventsApi
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
 
-        public async UniTask<CommunityEventsDTO> GetEventsByCommunityAsync(string communityId, int pageNumber, int pageSize, CancellationToken ct) =>
-            throw new NotImplementedException();
+        //TODO: implement actual request when backend is ready
+        public async UniTask<CommunityEventsDTO> GetEventsByCommunityAsync(string communityId, int pageNumber, int pageSize, CancellationToken ct)
+        {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+
+            int totalAmount = UnityEngine.Random.Range(0, pageSize);
+            CommunityEventsDTO.PlaceAndEventDTO[] events = new CommunityEventsDTO.PlaceAndEventDTO[totalAmount];
+
+            for (int i = 0; i < totalAmount; i++)
+            {
+                bool userLike = UnityEngine.Random.Range(0, 100) > 50;
+                bool userDislike = false;
+
+                if (!userLike)
+                    userDislike = UnityEngine.Random.Range(0, 100) > 50;
+
+                events[i] = new CommunityEventsDTO.PlaceAndEventDTO
+                {
+                    place = new PlacesData.PlaceInfo(new Vector2Int(UnityEngine.Random.Range(-150, 151), UnityEngine.Random.Range(-150, 151)))
+                    {
+                        id = $"place_{i}",
+                        title = $"Place {i + 1}",
+                        description = $"Description for Place {i + 1}",
+                        user_count = UnityEngine.Random.Range(0, 100),
+                        user_like = userLike,
+                        user_dislike = userDislike,
+                        user_favorite = UnityEngine.Random.Range(0, 100) > 50,
+                        world_name = UnityEngine.Random.Range(0, 100) > 50 ? $"WorldName{i}.dcl.eth" : string.Empty,
+                    },
+                    eventData = new EventDTO
+                    {
+                        id = $"event_{i}",
+                        start_at = DateTimeOffset.UtcNow.AddHours(UnityEngine.Random.Range(-100, 100)).ToUnixTimeSeconds().ToString(),
+                        name = $"Event {i}",
+                        total_attendees = UnityEngine.Random.Range(0, 100),
+                        attending = UnityEngine.Random.Range(0, 100) > 50,
+                        live = UnityEngine.Random.Range(0, 100) > 50,
+                        image = "https://picsum.photos/280/280"
+                    }
+                };
+            }
+
+            long now = DateTimeOffset.Now.ToUnixTimeSeconds();
+
+            return new CommunityEventsDTO
+            {
+                totalAmount = totalAmount,
+                data = events
+                      .OrderByDescending(e => e.eventData.live)
+                      .ThenBy(e =>
+                       {
+                           if (long.TryParse(e.eventData.start_at, out long startAt))
+                               return Math.Abs(startAt - now);
+                           else
+                               return long.MaxValue;
+                       })
+                      .ToArray()
+            };
+        }
 
         public async UniTask MarkAsInterestedAsync(string eventId, CancellationToken ct)
         {

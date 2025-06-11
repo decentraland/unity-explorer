@@ -56,7 +56,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                 if (!canUnHover && value)
                 {
                     canUnHover = value;
-                    OnPointerExit(null);
+                    UnHoverAnimation();
                 }
                 canUnHover = value;
             }
@@ -111,6 +111,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             interestedButton.SetSelected(data.eventData.attending);
             liveBadgeContainer.SetActive(data.eventData.live);
             interestedContainer.SetActive(data.eventData is { live: false, total_attendees: > 0 });
+            UnHoverAnimation();
         }
 
         public void SubscribeToInteractions(Action<EventDTO> mainAction,
@@ -136,6 +137,12 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         public void OnPointerExit(PointerEventData data)
+        {
+            if (canUnHover)
+                UnHoverAnimation();
+        }
+
+        private void UnHoverAnimation()
         {
             offlineInteractionContainer.SetActive(false);
             liveInteractionContainer.SetActive(false);

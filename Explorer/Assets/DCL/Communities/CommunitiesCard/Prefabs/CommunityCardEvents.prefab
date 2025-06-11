@@ -496,7 +496,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mItemPrefabDataList:
   - mItemPrefab: {fileID: 4274773754785718902}
-    mPadding: 5
+    mPadding: 10
     mInitCreateCount: 0
     mStartPosOffset: 0
   mArrangeType: 0
@@ -1283,7 +1283,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4536725697558613486, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
       propertyPath: m_Pivot.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4536725697558613486, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
       propertyPath: m_Pivot.y
@@ -1343,7 +1343,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4536725697558613486, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 215
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4536725697558613486, guid: d4226feb8cb684109bb7833b764418fa, type: 3}
       propertyPath: m_AnchoredPosition.y

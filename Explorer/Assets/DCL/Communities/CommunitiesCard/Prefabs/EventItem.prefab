@@ -957,8 +957,8 @@ MonoBehaviour:
   liveShareButton: {fileID: 8462107412257126423}
   interestedButton: {fileID: 3667130979709381892}
   offlineShareButton: {fileID: 7796272018042831747}
-  liveBadgeContainer: {fileID: 0}
-  interestedContainer: {fileID: 0}
+  liveBadgeContainer: {fileID: 3369050341449445702}
+  interestedContainer: {fileID: 2206185839776700055}
   eventThumbnailImage: {fileID: 4875162771560992584}
   eventTimeText: {fileID: 6316897665412424019}
   eventNameText: {fileID: 256119827136602486}
