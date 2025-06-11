@@ -37,7 +37,7 @@ namespace DCL.VoiceChat.Services
         {
         }
 
-        public async UniTask StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
+        public async UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
             var payload = new StartPrivateVoiceChatPayload
@@ -53,19 +53,10 @@ namespace DCL.VoiceChat.Services
                                                                             .AttachExternalCancellation(ct)
                                                                             .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-            switch (response.ResponseCase)
-            {
-                //When the call can be started
-                case StartPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    break;
-                //When the other user is already in a call or is already being called
-                case StartPrivateVoiceChatResponse.ResponseOneofCase.InvalidRequest:
-                case StartPrivateVoiceChatResponse.ResponseOneofCase.ConflictingError:
-                    break;
-            }
+            return response;
         }
 
-        public async UniTask AcceptPrivateVoiceChatAsync(string callId, CancellationToken ct)
+        public async UniTask<AcceptPrivateVoiceChatResponse> AcceptPrivateVoiceChatAsync(string callId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
@@ -79,10 +70,10 @@ namespace DCL.VoiceChat.Services
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
-
+            return response;
         }
 
-        public async UniTask RejectPrivateVoiceChatAsync(string callId, CancellationToken ct)
+        public async UniTask<RejectPrivateVoiceChatResponse> RejectPrivateVoiceChatAsync(string callId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
@@ -96,9 +87,10 @@ namespace DCL.VoiceChat.Services
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
+            return response;
         }
 
-        public async UniTask EndPrivateVoiceChatAsync(string callId, CancellationToken ct)
+        public async UniTask<EndPrivateVoiceChatResponse> EndPrivateVoiceChatAsync(string callId, CancellationToken ct)
         {
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
 
@@ -112,6 +104,7 @@ namespace DCL.VoiceChat.Services
                                                                              .AttachExternalCancellation(ct)
                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
 
+            return response;
         }
 
         public UniTask SubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)

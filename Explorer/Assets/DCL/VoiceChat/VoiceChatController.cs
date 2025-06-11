@@ -60,7 +60,7 @@ namespace DCL.VoiceChat
         private void HangUp()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.LeaveCallAudio);
-            voiceChatCallStatusService.StopCall();
+            voiceChatCallStatusService.HangUp();
         }
 
         private void ToggleMicrophone()
@@ -70,12 +70,12 @@ namespace DCL.VoiceChat
 
         private void RefuseCall()
         {
-            voiceChatCallStatusService.StopCall();
+            voiceChatCallStatusService.RejectCall();
         }
 
         private void AcceptCall()
         {
-            voiceChatCallStatusService.StartCall(new Web3Address());
+            voiceChatCallStatusService.AcceptCall();
         }
 
         public void Dispose()

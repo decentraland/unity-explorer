@@ -14,8 +14,8 @@ namespace DCL.VoiceChat
         VOICE_CHAT_IN_CALL,
         //Local state when user ends a call
         VOICE_CHAT_ENDING_CALL,
-        //Remote state when backend confirms a voice chat has ended
-        VOICE_CHAT_ENDED_CALL,
+        //Local state when user rejects a call
+        VOICE_CHAT_REJECTING_CALL,
         //Remote status when user is busy
         VOICE_CHAT_USER_BUSY,
         //Generic error for unhandled exceptions

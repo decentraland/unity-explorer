@@ -75,7 +75,7 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL: break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL: break;
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL: break;
-                case VoiceChatStatus.VOICE_CHAT_ENDED_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_REJECTING_CALL: break;
                 default: throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
             }
         }

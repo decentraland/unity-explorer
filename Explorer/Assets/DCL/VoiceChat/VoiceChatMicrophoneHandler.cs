@@ -118,7 +118,7 @@ namespace DCL.VoiceChat
             switch (newStatus)
             {
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-                case VoiceChatStatus.VOICE_CHAT_ENDED_CALL:
+                case VoiceChatStatus.VOICE_CHAT_REJECTING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                     isInCall = false;
                     DisableMicrophone();
