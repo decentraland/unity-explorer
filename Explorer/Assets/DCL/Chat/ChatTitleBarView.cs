@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.Profiles.Helpers;
+using DCL.Profiles;
+using DCL.UI.Communities;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
 using MVC;
@@ -16,6 +18,7 @@ namespace DCL.Chat
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
         public delegate void DeleteChatHistoryRequestedDelegate();
+        public delegate void ViewCommunityRequestedDelegate();
 
         public event Action? CloseChatButtonClicked;
         public event Action? CloseMemberListButtonClicked;
@@ -24,6 +27,7 @@ namespace DCL.Chat
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
+        public event ViewCommunityRequestedDelegate ViewCommunityRequested;
 
         [SerializeField] private Button closeChatButton;
         [SerializeField] private Button closeMemberListButton;
@@ -42,6 +46,7 @@ namespace DCL.Chat
         [SerializeField] private GameObject memberCountObject;
         [SerializeField] private GameObject nearbyChannelContainer;
         [SerializeField] private SimpleProfileView profileView;
+        [SerializeField] private CommunityTitleView communityChannelContainer;
 
         [Header("Context Menu Data")]
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
@@ -83,6 +88,9 @@ namespace DCL.Chat
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
             profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
             profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
+            communityChannelContainer.ContextMenuOpened += OnProfileContextMenuOpened;
+            communityChannelContainer.ContextMenuClosed += OnProfileContextMenuClosed;
+            communityChannelContainer.ViewCommunityRequested += OnCommunityContextMenuViewCommunityRequested;
             isInitialized = true;
         }
 
@@ -109,6 +117,7 @@ namespace DCL.Chat
             nearbyChannelContainer.SetActive(true);
             memberCountObject.SetActive(true);
             profileView.gameObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(false);
         }
 
         public void SetupProfileView(Web3Address userId, ProfileRepositoryWrapper profileDataProvider)
@@ -118,6 +127,16 @@ namespace DCL.Chat
             profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(false);
+        }
+
+        public void SetupCommunityView(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CommunityTitleView.OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
+        {
+            nearbyChannelContainer.SetActive(false);
+            memberCountObject.SetActive(true);
+            profileView.gameObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(true);
+            communityChannelContainer.SetupAsync(thumbnailCache, communityId, communityName, thumbnailUrl, openContextMenuAction, ct).Forget();
         }
 
         private void OnOpenContextMenuButtonClicked()
@@ -173,6 +192,11 @@ namespace DCL.Chat
         private void OnDisable()
         {
             contextMenuTask.TrySetResult();
+        }
+
+        private void OnCommunityContextMenuViewCommunityRequested()
+        {
+            ViewCommunityRequested?.Invoke();
         }
     }
 }
