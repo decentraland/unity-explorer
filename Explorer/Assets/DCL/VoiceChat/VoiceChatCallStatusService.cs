@@ -15,6 +15,13 @@ namespace DCL.VoiceChat
         public VoiceChatStatus Status { get; private set; }
         public Web3Address CurrentTargetWallet { get; private set; }
 
+        //Call Id is set when starting a call and when receiving a call
+        public string CallId { get; private set; }
+
+        //Room url and Token are retrieved when accepting a call
+        public string RoomUrl { get; private set; }
+        public string Token { get; private set; }
+
         private CancellationTokenSource cts;
 
         public VoiceChatCallStatusService(IVoiceService voiceChatService)
@@ -31,15 +38,20 @@ namespace DCL.VoiceChat
             {
                 case PrivateVoiceChatStatus.VoiceChatAccepted:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                    RoomUrl = update.Credentials.Url;
+                    Token = update.Credentials.Token;
                     break;
                 case PrivateVoiceChatStatus.VoiceChatEnded:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
+                    ResetVoiceChatData();
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRejected:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
+                    ResetVoiceChatData();
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRequested:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
+                    CallId = update.CallId;
                     break;
             }
         }
@@ -68,11 +80,13 @@ namespace DCL.VoiceChat
                 //When the call can be started
                 case StartPrivateVoiceChatResponse.ResponseOneofCase.Ok:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
+                    CallId = response.Ok.CallId;
                     break;
                 //When the other user is already in a call or is already being called
                 case StartPrivateVoiceChatResponse.ResponseOneofCase.InvalidRequest:
                 case StartPrivateVoiceChatResponse.ResponseOneofCase.ConflictingError:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
+                    ResetVoiceChatData();
                     break;
                 default:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
@@ -88,7 +102,7 @@ namespace DCL.VoiceChat
             cts = cts?.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
 
-            AcceptCallAsync("", cts.Token).Forget();
+            AcceptCallAsync(CallId, cts.Token).Forget();
         }
 
         private async UniTaskVoid AcceptCallAsync(string callId, CancellationToken ct)
@@ -100,6 +114,8 @@ namespace DCL.VoiceChat
                 //When the call has been ended
                 case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                    RoomUrl = response.Ok.Credentials.Url;
+                    Token = response.Ok.Credentials.Token;
                     break;
                 default:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
@@ -115,7 +131,7 @@ namespace DCL.VoiceChat
             cts = cts?.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
 
-            HangUpAsync("", cts.Token).Forget();
+            HangUpAsync(CallId, cts.Token).Forget();
         }
 
         private async UniTaskVoid HangUpAsync(string callId, CancellationToken ct)
@@ -127,6 +143,7 @@ namespace DCL.VoiceChat
                 //When the call has been ended
                 case EndPrivateVoiceChatResponse.ResponseOneofCase.Ok:
                     UpdateStatus(VoiceChatStatus.DISCONNECTED);
+                    ResetVoiceChatData();
                     break;
                 default:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
@@ -142,7 +159,7 @@ namespace DCL.VoiceChat
             cts = cts?.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
 
-            RejectCallAsync("", cts.Token).Forget();
+            RejectCallAsync(CallId, cts.Token).Forget();
         }
 
         private async UniTaskVoid RejectCallAsync(string callId, CancellationToken ct)
@@ -165,6 +182,13 @@ namespace DCL.VoiceChat
         {
             Status = newStatus;
             StatusChanged?.Invoke(Status);
+        }
+
+        private void ResetVoiceChatData()
+        {
+            CallId = string.Empty;
+            RoomUrl = string.Empty;
+            Token = string.Empty;
         }
 
         public void Dispose()
