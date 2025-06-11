@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
+using System;
 using System.Threading;
 using Utility;
 
@@ -10,16 +11,39 @@ namespace DCL.VoiceChat
     public class VoiceChatCallStatusService : IVoiceChatCallStatusService
     {
         private readonly IVoiceService voiceChatService;
+        private readonly IVoiceChatEventBus voiceChatEventBus;
         public event IVoiceChatCallStatusService.VoiceChatStatusChangeDelegate StatusChanged;
         public VoiceChatStatus Status { get; private set; }
         public Web3Address CurrentTargetWallet { get; private set; }
 
         private CancellationTokenSource cts;
 
-        public VoiceChatCallStatusService(IVoiceService voiceChatService)
+        public VoiceChatCallStatusService(IVoiceService voiceChatService, IVoiceChatEventBus voiceChatEventBus)
         {
             this.voiceChatService = voiceChatService;
+            this.voiceChatEventBus = voiceChatEventBus;
+
+            this.voiceChatEventBus.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             cts = new CancellationTokenSource();
+        }
+
+        private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
+        {
+            switch (update.Status)
+            {
+                case PrivateVoiceChatStatus.VoiceChatAccepted:
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                    break;
+                case PrivateVoiceChatStatus.VoiceChatEnded:
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
+                    break;
+                case PrivateVoiceChatStatus.VoiceChatRejected:
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
+                    break;
+                case PrivateVoiceChatStatus.VoiceChatRequested:
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
+                    break;
+            }
         }
 
         public void StartCall(Web3Address walletId)

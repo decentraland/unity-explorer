@@ -24,13 +24,16 @@ namespace DCL.VoiceChat.Services
 
         private readonly ISelfProfile selfProfile;
         private readonly IRPCSocialServices socialServiceRPC;
+        private readonly IVoiceChatEventBus voiceChatEventBus;
 
         public RPCVoiceChatService(
             ISelfProfile selfProfile,
-            IRPCSocialServices socialServiceRPC)
+            IRPCSocialServices socialServiceRPC,
+            IVoiceChatEventBus voiceChatEventBus)
         {
             this.selfProfile = selfProfile;
             this.socialServiceRPC = socialServiceRPC;
+            this.voiceChatEventBus = voiceChatEventBus;
         }
 
         public void Dispose()
@@ -120,21 +123,8 @@ namespace DCL.VoiceChat.Services
                 {
                     try
                     {
-                        switch (response.Status)
-                        {
-                            case PrivateVoiceChatStatus.VoiceChatAccepted:
-                                break;
-                            case PrivateVoiceChatStatus.VoiceChatEnded:
-                                break;
-                            case PrivateVoiceChatStatus.VoiceChatExpired:
-                                break;
-                            case PrivateVoiceChatStatus.VoiceChatRejected:
-                                break;
-                            case PrivateVoiceChatStatus.VoiceChatRequested:
-                                break;
-                        }
+                        voiceChatEventBus.BroadcastPrivateVoiceChatUpdateReceived(response);
                     }
-
                     // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.VOICE_CHAT)); }
                 }
