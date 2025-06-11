@@ -288,6 +288,7 @@ namespace DCL.Chat
                         case ChatChannel.ChatChannelType.COMMUNITY:
                             SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
+                            communityTitleCts = communityTitleCts.SafeRestart();
                             chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails[0], openContextMenuAction, communityTitleCts.Token);
                             break;
                     }
