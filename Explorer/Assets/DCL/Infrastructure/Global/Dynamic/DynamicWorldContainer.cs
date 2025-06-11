@@ -976,6 +976,8 @@ namespace Global.Dynamic
                     realmNftNamesProvider,
                     placesAPIService,
                     selfProfile,
+                    realmNavigator,
+                    clipboard,
                     communityCreationEditionEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)

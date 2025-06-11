@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Input;
-using DCL.UI;
+using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunityCreation;
@@ -12,9 +12,11 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
@@ -39,7 +41,11 @@ namespace DCL.PluginSystem.Global
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly ISystemClipboard clipboard;
         private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
+
+        private CommunityCardController? communityCardController;
 
         private CommunityCreationEditionController? communityCreationEditionController;
 
@@ -58,6 +64,8 @@ namespace DCL.PluginSystem.Global
             INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
+            IRealmNavigator realmNavigator,
+            ISystemClipboard clipboard,
             CommunityCreationEditionEventBus communityCreationEditionEventBus)
         {
             this.mvcManager = mvcManager;
@@ -74,11 +82,14 @@ namespace DCL.PluginSystem.Global
             this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
+            this.realmNavigator = realmNavigator;
+            this.clipboard = clipboard;
             this.communityCreationEditionEventBus = communityCreationEditionEventBus;
         }
 
         public void Dispose()
         {
+            communityCardController?.Dispose();
             communityCreationEditionController?.Dispose();
         }
 
@@ -91,7 +102,7 @@ namespace DCL.PluginSystem.Global
             CommunityCardView communityCardViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCardPrefab, ct: ct)).GetComponent<CommunityCardView>();
             ControllerBase<CommunityCardView, CommunityCardParameter>.ViewFactoryMethod viewFactoryMethod = CommunityCardController.Preallocate(communityCardViewAsset, null, out CommunityCardView communityCardView);
 
-            mvcManager.RegisterController(new CommunityCardController(viewFactoryMethod,
+            communityCardController = new CommunityCardController(viewFactoryMethod,
                 mvcManager,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
@@ -99,7 +110,13 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 webRequestController,
                 inWorldWarningNotificationView,
-                profileRepositoryWrapper));
+                profileRepositoryWrapper,
+                placesAPIService,
+                realmNavigator,
+                clipboard,
+                webBrowser);
+
+            mvcManager.RegisterController(communityCardController);
 
             CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
             ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);

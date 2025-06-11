@@ -11,7 +11,7 @@ using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MembersListView : MonoBehaviour
+    public class MembersListView : MonoBehaviour, ICommunityFetchingView
     {
         public enum MemberListSections
         {
@@ -33,6 +33,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private RectTransform sectionButtons { get; set; }
         [field: SerializeField] private RectTransform scrollViewRect { get; set; }
         [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; }
+        [field: SerializeField] private GameObject loadingObject { get; set; }
 
         [field: Header("Assets")]
         [field: SerializeField] public CommunityMemberListContextMenuConfiguration ContextMenuSettings { get; private set; }
@@ -52,8 +53,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private float scrollViewMaxHeight;
         private float scrollViewHeight;
         private MemberListSections currentSection;
-        private Func<SectionFetchData> getCurrentSectionFetchData;
         private CancellationTokenSource confirmationDialogCts = new ();
+        private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private void Awake()
@@ -140,7 +141,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
         }
 
-        public void InitGrid(Func<SectionFetchData> currentSectionDataFunc)
+        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getCurrentSectionFetchData = currentSectionDataFunc;
@@ -156,10 +157,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
 
-            SectionFetchData membersData = getCurrentSectionFetchData();
+            SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
             elementView.SetProfileDataProvider(profileRepositoryWrapper);
-            elementView.Configure(membersData.members[index], currentSection);
+            elementView.Configure(membersData.items[index], currentSection);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 (member, position, item) => ElementContextMenuButtonClicked?.Invoke(member, position, item),
@@ -174,9 +175,14 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void RefreshGrid()
         {
-            loopGrid.SetListItemCount(getCurrentSectionFetchData().members.Count, false);
+            loopGrid.SetListItemCount(getCurrentSectionFetchData().items.Count, false);
             loopGrid.RefreshAllShownItem();
         }
+
+        public void SetEmptyStateActive(bool active) { }
+
+        public void SetLoadingStateActive(bool active) =>
+            loadingObject.SetActive(active);
 
         [Serializable]
         public struct MemberListSectionMapping

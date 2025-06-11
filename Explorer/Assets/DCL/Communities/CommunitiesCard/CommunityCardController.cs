@@ -1,17 +1,22 @@
 using Cysharp.Threading.Tasks;
+using DCL.Browser;
+using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunityCreation;
+using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -38,12 +43,16 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly ISystemClipboard clipboard;
+        private readonly IWebBrowser webBrowser;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
+        private PlacesSectionController? placesSectionController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
@@ -57,8 +66,11 @@ namespace DCL.Communities.CommunitiesCard
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView,
-            ProfileRepositoryWrapper profileDataProvider)
+            ProfileRepositoryWrapper profileDataProvider,
+            IPlacesAPIService placesAPIService,
+            IRealmNavigator realmNavigator,
+            ISystemClipboard clipboard,
+            IWebBrowser webBrowser)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -67,8 +79,11 @@ namespace DCL.Communities.CommunitiesCard
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.placesAPIService = placesAPIService;
+            this.realmNavigator = realmNavigator;
+            this.clipboard = clipboard;
+            this.webBrowser = webBrowser;
         }
 
         public override void Dispose()
@@ -89,6 +104,7 @@ namespace DCL.Communities.CommunitiesCard
 
             cameraReelGalleryController?.Dispose();
             membersListController?.Dispose();
+            placesSectionController?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -108,7 +124,17 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                inWorldWarningNotificationView);
+                viewInstance.warningNotificationView);
+
+            placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
+                webRequestController,
+                placesAPIService,
+                viewInstance.warningNotificationView,
+                viewInstance.successNotificationView,
+                realmNavigator,
+                mvcManager,
+                clipboard,
+                webBrowser);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
@@ -143,6 +169,7 @@ namespace DCL.Communities.CommunitiesCard
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             membersListController?.Reset();
+            placesSectionController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -160,6 +187,7 @@ namespace DCL.Communities.CommunitiesCard
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
+                    placesSectionController!.ShowPlaces(communityData, sectionCancellationTokenSource.Token);
                     break;
             }
         }
@@ -185,7 +213,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
                     return;
                 }
 
@@ -206,7 +234,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(LEAVE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
                     return;
                 }
 
