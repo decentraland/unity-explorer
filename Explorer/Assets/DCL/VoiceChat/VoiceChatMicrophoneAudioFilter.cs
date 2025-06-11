@@ -12,6 +12,7 @@ namespace DCL.VoiceChat
     /// </summary>
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
+        private const int DEFAULT_LIVEKIT_CHANNELS = 2;
         private const int DEFAULT_BUFFER_SIZE = 8192;
 
         private VoiceChatAudioProcessor audioProcessor;
@@ -70,7 +71,7 @@ namespace DCL.VoiceChat
             }
 
             // This sends the processed audio data to LiveKit
-            AudioRead?.Invoke(data.AsSpan(), 2, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
+            AudioRead?.Invoke(data.AsSpan(), DEFAULT_LIVEKIT_CHANNELS, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead;

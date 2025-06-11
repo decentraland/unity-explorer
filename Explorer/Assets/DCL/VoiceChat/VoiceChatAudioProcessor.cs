@@ -4,26 +4,21 @@ using System;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    ///     Handles real-time audio processing for voice chat including noise reduction,
-    ///     noise gate, high-pass filtering, and automatic gain control.
+    ///     Handles real-time audio processing for voice chat including noise gate
+    ///     and low-pass filtering to complement WebRTC's built-in processing.
     /// </summary>
     public class VoiceChatAudioProcessor
     {
         private enum FilterType
         {
-            HIGH_PASS,
             LOW_PASS,
         }
 
         private readonly VoiceChatConfiguration configuration;
 
-        private readonly float[] highPassPrevInputs = new float[2];
-        private readonly float[] highPassPrevOutputs = new float[2];
         private readonly float[] lowPassPrevInputs = new float[2];
         private readonly float[] lowPassPrevOutputs = new float[2];
 
-        private float dcBlockPrevInput;
-        private float dcBlockPrevOutput;
         private float peakLevel;
         private bool gateIsOpen;
         private float lastSpeechTime;
@@ -31,9 +26,6 @@ namespace DCL.VoiceChat
         private int fadeInBufferIndex;
         private bool isGateOpening;
         private float gateOpenFadeProgress;
-
-        private float currentGain;
-
         private float gateSmoothing;
 
         public VoiceChatAudioProcessor(VoiceChatConfiguration configuration)
@@ -48,16 +40,10 @@ namespace DCL.VoiceChat
         {
             for (var i = 0; i < 2; i++)
             {
-                highPassPrevInputs[i] = 0f;
-                highPassPrevOutputs[i] = 0f;
                 lowPassPrevInputs[i] = 0f;
                 lowPassPrevOutputs[i] = 0f;
             }
 
-            dcBlockPrevInput = 0f;
-            dcBlockPrevOutput = 0f;
-
-            currentGain = 1f;
             peakLevel = 0f;
             gateSmoothing = 0f;
             gateIsOpen = false;
@@ -73,7 +59,7 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
-        ///     Process audio samples with noise reduction and other effects
+        ///     Process audio samples with noise gate and low-pass filtering
         /// </summary>
         public void ProcessAudio(Span<float> audioData, int sampleRate)
         {
@@ -85,41 +71,12 @@ namespace DCL.VoiceChat
             {
                 float sample = audioData[i];
 
-                if (configuration.EnableBandPassFilter) { sample = ApplyBandPassFilter(sample, sampleRate); }
+                if (configuration.EnableLowPassFilter) { sample = ApplyLowPassFilter2NdOrder(sample, sampleRate); }
 
                 if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime, sampleRate); }
 
-                if (configuration.EnableAutoGainControl) { sample = ApplyAGC(sample); }
-
                 audioData[i] = Mathf.Clamp(sample, -1f, 1f);
             }
-        }
-
-        private float ApplyBandPassFilter(float input, int sampleRate)
-        {
-            float sample = ApplyDcBlockingFilter(input, sampleRate);
-            sample = ApplyHighPassFilter2NdOrder(sample, sampleRate);
-            sample = ApplyLowPassFilter2NdOrder(sample, sampleRate);
-
-            return sample;
-        }
-
-        private float ApplyDcBlockingFilter(float input, int sampleRate)
-        {
-            float rc = 1f / (2f * Mathf.PI * 20f);
-            float dt = 1f / sampleRate;
-            float alpha = rc / (rc + dt);
-
-            alpha = Mathf.Clamp(alpha, 0.9f, 0.999f);
-
-            float output = alpha * (dcBlockPrevOutput + input - dcBlockPrevInput);
-
-            if (Mathf.Abs(output) < 1e-10f) output = 0f;
-
-            dcBlockPrevInput = input;
-            dcBlockPrevOutput = output;
-
-            return output;
         }
 
         private float ApplyBiquadFilter(float input, int sampleRate, float cutoffFreq, FilterType filterType,
@@ -132,20 +89,9 @@ namespace DCL.VoiceChat
             float sinw = Mathf.Sin(w);
             float alpha = sinw / (2f * 0.7071f);
 
-            float b0, b1, b2;
-
-            if (filterType == FilterType.HIGH_PASS)
-            {
-                b0 = (1f + cosw) / 2f;
-                b1 = -(1f + cosw);
-                b2 = (1f + cosw) / 2f;
-            }
-            else // LowPass
-            {
-                b0 = (1f - cosw) / 2f;
-                b1 = 1f - cosw;
-                b2 = (1f - cosw) / 2f;
-            }
+            float b0 = (1f - cosw) / 2f;
+            float b1 = 1f - cosw;
+            float b2 = (1f - cosw) / 2f;
 
             float a0 = 1f + alpha;
             float a1 = -2f * cosw;
@@ -169,10 +115,6 @@ namespace DCL.VoiceChat
 
             return output;
         }
-
-        private float ApplyHighPassFilter2NdOrder(float input, int sampleRate) =>
-            ApplyBiquadFilter(input, sampleRate, configuration.HighPassCutoffFreq, FilterType.HIGH_PASS,
-                highPassPrevInputs, highPassPrevOutputs);
 
         private float ApplyLowPassFilter2NdOrder(float input, int sampleRate) =>
             ApplyBiquadFilter(input, sampleRate, configuration.LowPassCutoffFreq, FilterType.LOW_PASS,
@@ -258,63 +200,12 @@ namespace DCL.VoiceChat
         {
             for (var i = 0; i < 2; i++)
             {
-                if (Mathf.Abs(highPassPrevInputs[i]) < 0.001f && Mathf.Abs(highPassPrevOutputs[i]) < 0.001f)
-                {
-                    highPassPrevInputs[i] = 0f;
-                    highPassPrevOutputs[i] = 0f;
-                }
-
                 if (Mathf.Abs(lowPassPrevInputs[i]) < 0.001f && Mathf.Abs(lowPassPrevOutputs[i]) < 0.001f)
                 {
                     lowPassPrevInputs[i] = 0f;
                     lowPassPrevOutputs[i] = 0f;
                 }
             }
-
-            if (Mathf.Abs(dcBlockPrevInput) < 0.001f && Mathf.Abs(dcBlockPrevOutput) < 0.001f)
-            {
-                dcBlockPrevInput = 0f;
-                dcBlockPrevOutput = 0f;
-            }
-        }
-
-        private float ApplyAGC(float sample)
-        {
-            float sampleAbs = Mathf.Abs(sample);
-
-            var peakDecay = 0.9995f;
-            var peakAttack = 0.1f;
-
-            if (sampleAbs > peakLevel) { peakLevel = Mathf.Lerp(peakLevel, sampleAbs, peakAttack); }
-            else { peakLevel = peakLevel * peakDecay; }
-
-            if (peakLevel > 0.001f)
-            {
-                float targetGain = configuration.AGCTargetLevel / peakLevel;
-                targetGain = Mathf.Clamp(targetGain, 0.2f, 3f);
-
-                float gainDifference = Mathf.Abs(targetGain - currentGain);
-                float baseSpeed = configuration.AGCResponseSpeed * 0.002f;
-
-                float adaptiveSpeed = gainDifference > 0.5f ? baseSpeed * 0.3f : baseSpeed;
-
-                var smoothingWindow = 0.95f;
-                currentGain = (currentGain * smoothingWindow) + (targetGain * (1f - smoothingWindow) * adaptiveSpeed);
-                currentGain = Mathf.Clamp(currentGain, 0.2f, 3f);
-            }
-
-            float processedSample = sample * currentGain;
-
-            if (Mathf.Abs(processedSample) > 0.95f)
-            {
-                float sign = Mathf.Sign(processedSample);
-                float magnitude = Mathf.Abs(processedSample);
-
-                float compressedMagnitude = 0.95f + ((magnitude - 0.95f) * 0.1f);
-                processedSample = sign * Mathf.Min(compressedMagnitude, 0.99f);
-            }
-
-            return processedSample;
         }
     }
 }
