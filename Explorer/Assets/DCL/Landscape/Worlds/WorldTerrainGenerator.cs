@@ -44,7 +44,7 @@ namespace DCL.Landscape
 
         private TerrainModel terrainModel;
 
-        private TerrainDetailSetter terrainDetailSetter;
+        private ITerrainDetailSetter terrainDetailSetter;
 
         public WorldTerrainGenerator(bool measureTime = false)
         {
@@ -64,7 +64,7 @@ namespace DCL.Landscape
             return false;
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData)
+        public void Initialize(TerrainGenerationData terrainGenData, ITerrainDetailSetter detailSetter)
         {
             this.terrainGenData = terrainGenData;
 
@@ -73,7 +73,7 @@ namespace DCL.Landscape
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
             chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE);
 
-            terrainDetailSetter = new TerrainDetailSetter(false);
+            terrainDetailSetter = detailSetter;
             IsInitialized = true;
         }
 

@@ -77,8 +77,8 @@ namespace DCL.Landscape
 
         private TerrainModel terrainModel;
 
-        private TerrainDetailSetter terrainDetailSetter;
-        private GPUIWrapper? gpuiWrapper;
+        private ITerrainDetailSetter terrainDetailSetter;
+        private IGPUIWrapper gpuiWrapper;
 
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
@@ -116,11 +116,10 @@ namespace DCL.Landscape
 
             terrainChunkColliders[chunkIndex].enabled = isEnabled;
             activeChunk = chunkIndex;
-
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, GPUIWrapper? gpuiWrapper)
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -134,9 +133,9 @@ namespace DCL.Landscape
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
 
+            this.terrainDetailSetter = terrainDetailSetter;
             this.gpuiWrapper = gpuiWrapper;
-            gpuiWrapper?.SetupLocalCache(localCache);
-            terrainDetailSetter = new TerrainDetailSetter(gpuiWrapper != null);
+            gpuiWrapper.SetupLocalCache(localCache);
 
             isInitialized = true;
         }

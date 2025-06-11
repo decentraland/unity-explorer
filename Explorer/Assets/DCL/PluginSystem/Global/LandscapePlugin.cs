@@ -44,7 +44,7 @@ namespace DCL.PluginSystem.Global
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
-        private GPUIWrapper? gpuiWrapper;
+        private IGPUIWrapper gpuiWrapper;
         private readonly bool isGPUIEnabledFF;
 
         public LandscapePlugin(IRealmData realmData,
@@ -113,14 +113,16 @@ namespace DCL.PluginSystem.Global
             }
 
             CheckGPUIFF();
-            gpuiWrapper?.SetupLandscapeData(landscapeData.Value);
+            gpuiWrapper.SetupLandscapeData(landscapeData.Value);
             terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone, gpuiWrapper);
-            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
+                parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter());
+
+            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
         }
 
         private void CheckGPUIFF()
         {
+#if GPUI_PRO_PRESENT
             //HACK to be removed
             //This if should go when we decide to keep GPUI enabled or not.
             //As of now, if we have to turn it off because of an emergency situation, we need to regenerate the cache.
@@ -136,6 +138,11 @@ namespace DCL.PluginSystem.Global
 
             if (isGPUIEnabledFF)
                 gpuiWrapper = new GPUIWrapper();
+            else
+                gpuiWrapper = new MockGPUIWrapper();
+#else
+            gpuiWrapper = new MockGPUIWrapper();
+#endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -149,7 +156,7 @@ namespace DCL.PluginSystem.Global
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
 
-            gpuiWrapper?.InjectDebugSystem(ref builder, debugContainerBuilder);
+            gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
         }
     }
 }

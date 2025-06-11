@@ -273,7 +273,7 @@ namespace DCL.Landscape
         }
 
         public async UniTask SetDetailsAsync(int offsetX, int offsetZ, int chunkSize, TerrainData terrainData, uint baseSeed,
-            CancellationToken cancellationToken, bool nullifyDetailsOnOwned, int2 chunkMinParcel, TerrainDetailSetter terrainDetailSetter, IReadOnlyList<int2> chunkOccupiedParcels = null,
+            CancellationToken cancellationToken, bool nullifyDetailsOnOwned, int2 chunkMinParcel, ITerrainDetailSetter terrainDetailSetter, IReadOnlyList<int2> chunkOccupiedParcels = null,
             bool useCache = true)
         {
             terrainData.SetDetailScatterMode(terrainGenData.detailScatterMode);
