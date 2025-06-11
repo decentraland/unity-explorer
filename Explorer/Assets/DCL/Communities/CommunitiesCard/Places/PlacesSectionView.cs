@@ -95,7 +95,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             SectionFetchData<PlaceInfo> membersData = getPlacesFetchData();
 
             int realIndex = canModify ? index - 1 : index;
-            elementView.Configure(membersData.members[realIndex], webRequestController);
+            elementView.Configure(membersData.items[realIndex], webRequestController);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
@@ -113,15 +113,15 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OpenCardContextMenu(PlaceInfo placeInfo, Vector2 position, PlaceCardView placeCardView)
         {
             lastClickedPlaceCtx = placeInfo;
-            placeCardView.CanUnHover = false;
+            placeCardView.CanPlayUnHoverAnimation = false;
 
             mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
-                actionOnHide: () => placeCardView.CanUnHover = true)), cancellationToken);
+                actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true)), cancellationToken);
         }
 
         public void RefreshGrid()
         {
-            int count = getPlacesFetchData().members.Count;
+            int count = getPlacesFetchData().items.Count;
 
             //Account for the "Add Place" button if the user can modify the places
             if (canModify)

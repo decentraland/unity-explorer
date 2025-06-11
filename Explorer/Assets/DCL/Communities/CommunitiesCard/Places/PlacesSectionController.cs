@@ -84,6 +84,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public override void Dispose()
         {
+            view.AddPlaceRequested -= OnAddPlaceClicked;
+
             view.ElementLikeToggleChanged -= OnElementLikeToggleChanged;
             view.ElementDislikeToggleChanged -= OnElementDislikeToggleChanged;
             view.ElementFavoriteToggleChanged -= OnElementFavoriteToggleChanged;
@@ -145,10 +147,10 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnElementFavoriteToggleChanged(PlaceInfo placeInfo, bool favoriteValue, PlaceCardView placeCardView)
         {
             placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
-            FavoritePlaceAsync(placeCardOperationsCts.Token).Forget();
+            UpdateFavoritePlaceAsync(placeCardOperationsCts.Token).Forget();
             return;
 
-            async UniTaskVoid FavoritePlaceAsync(CancellationToken ct)
+            async UniTaskVoid UpdateFavoritePlaceAsync(CancellationToken ct)
             {
                 var result = await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, favoriteValue, ct)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
@@ -249,7 +251,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 return total;
             }
 
-            placesFetchData.members.AddRange(response.Value.data);
+            placesFetchData.items.AddRange(response.Value.data);
 
             return total;
         }

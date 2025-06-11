@@ -167,9 +167,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.members.Remove(profile);
+                allMembersFetchData.items.Remove(profile);
 
-                List<MemberData> memberList = bannedMembersFetchData.members;
+                List<MemberData> memberList = bannedMembersFetchData.items;
                 profile.role = CommunityMemberRole.none;
                 memberList.Add(profile);
 
@@ -196,7 +196,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.members.Remove(profile);
+                allMembersFetchData.items.Remove(profile);
                 view.RefreshGrid();
             }
         }
@@ -218,7 +218,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.members;
+                List<MemberData> memberList = allMembersFetchData.items;
 
                 foreach (MemberData member in memberList)
                     if (member.memberAddress.Equals(profile.memberAddress))
@@ -251,7 +251,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.members;
+                List<MemberData> memberList = allMembersFetchData.items;
                 foreach (MemberData member in memberList)
                     if (member.memberAddress.Equals(profile.memberAddress))
                     {
@@ -355,10 +355,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
 
             foreach (var member in response.Value.data.results)
-                if (!membersData.members.Contains(member))
-                    membersData.members.Add(member);
+                if (!membersData.items.Contains(member))
+                    membersData.items.Add(member);
 
-            MembersSorter.SortMembersList(membersData.members);
+            MembersSorter.SortMembersList(membersData.items);
 
             return response.Value.data.total;
         }
@@ -437,7 +437,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                bannedMembersFetchData.members.Remove(profile);
+                bannedMembersFetchData.items.Remove(profile);
                 view.RefreshGrid();
 
             }

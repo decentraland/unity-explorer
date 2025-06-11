@@ -50,18 +50,19 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo> InfoButtonClicked;
         public event Action<PlaceInfo> JumpInButtonClicked;
 
-        private bool canUnHover = true;
-        internal bool CanUnHover
+        private bool canPlayUnHoverAnimation = true;
+        // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
+        internal bool CanPlayUnHoverAnimation
         {
-            get => canUnHover;
+            get => canPlayUnHoverAnimation;
             set
             {
-                if (!canUnHover && value)
+                if (!canPlayUnHoverAnimation && value)
                 {
-                    canUnHover = value;
+                    canPlayUnHoverAnimation = value;
                     PlayHoverExitAnimation();
                 }
-                canUnHover = value;
+                canPlayUnHoverAnimation = value;
             }
         }
 
@@ -149,7 +150,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (canUnHover)
+            if (canPlayUnHoverAnimation)
                 PlayHoverExitAnimation();
         }
 

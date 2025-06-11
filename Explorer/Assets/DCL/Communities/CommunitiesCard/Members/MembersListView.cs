@@ -160,7 +160,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
             elementView.SetProfileDataProvider(profileRepositoryWrapper);
-            elementView.Configure(membersData.members[index], currentSection);
+            elementView.Configure(membersData.items[index], currentSection);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 (member, position, item) => ElementContextMenuButtonClicked?.Invoke(member, position, item),
@@ -175,7 +175,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void RefreshGrid()
         {
-            loopGrid.SetListItemCount(getCurrentSectionFetchData().members.Count, false);
+            loopGrid.SetListItemCount(getCurrentSectionFetchData().items.Count, false);
             loopGrid.RefreshAllShownItem();
         }
 

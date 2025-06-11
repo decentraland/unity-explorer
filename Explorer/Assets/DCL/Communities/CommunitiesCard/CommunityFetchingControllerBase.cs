@@ -4,6 +4,12 @@ using System.Threading;
 
 namespace DCL.Communities.CommunitiesCard
 {
+    /// <summary>
+    ///     A base class for controllers that handle fetching data for community sections in order to wrap common behavior such as:
+    ///         - Handling the fetching state
+    ///         - Storing the cancellation token given by the main controller
+    ///         - Handling the fetch logic + loading and empty states
+    /// </summary>
     public abstract class CommunityFetchingControllerBase<T, U> : IDisposable
     where U : ICommunityFetchingView
     {
