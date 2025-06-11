@@ -183,8 +183,6 @@ namespace DCL.PluginSystem.Global
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
-            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
         }
 
@@ -193,18 +191,11 @@ namespace DCL.PluginSystem.Global
             if (status == LoadingStatus.LoadingStage.Completed)
                 sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
+        
         private void OnIdentityCleared()
         {
             if (chatController.IsVisibleInSharedSpace)
                 chatController.HideViewAsync(CancellationToken.None).Forget();
-        }
-
-        private void OnIdentityChanged()
-        {
-            //This might pose a problem if we havent logged in yet (so we change session before first login), it works, but we are trying to show the chat twice
-            //Once from here and once from the MainUIController. We need to account for this.
-
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
     }
 
