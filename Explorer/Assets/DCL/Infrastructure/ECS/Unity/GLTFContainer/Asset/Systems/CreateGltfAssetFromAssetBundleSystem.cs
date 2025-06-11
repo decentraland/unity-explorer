@@ -13,6 +13,7 @@ using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 using VisibleMeshCollider = ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset.VisibleMeshCollider;
 
@@ -85,6 +86,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             {
                 instance.GetComponentsInChildren(true, instanceRenderers.Value);
                 result.Renderers.AddRange(instanceRenderers.Value);
+
+                foreach (var rdr in result.Renderers)
+                {
+                    //rdr.material.mainTexture = null;
+                    rdr.material.SetInt("_Cull", (int)CullMode.Back);
+                }
             }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
