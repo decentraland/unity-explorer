@@ -10,11 +10,12 @@ namespace DCL.VoiceChat
     public class VoiceChatCombinedAudioSource : MonoBehaviour
     {
         [field: SerializeField] private AudioSource audioSource;
+
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
+        private int lastDataLength;
         private int sampleRate = 48000;
         private float[] tempBuffer;
-        private int lastDataLength = 0;
 
         private void OnEnable()
         {
@@ -31,17 +32,18 @@ namespace DCL.VoiceChat
         {
             if (!isPlaying || streams.Count == 0)
             {
-                Array.Clear(data, 0, data.Length);
+                data.AsSpan().Clear();
                 return;
             }
 
-            if (tempBuffer == null || lastDataLength != data.Length)
+            if (tempBuffer == null || tempBuffer.Length != data.Length)
             {
                 tempBuffer = new float[data.Length];
                 lastDataLength = data.Length;
             }
 
-            Array.Clear(data, 0, data.Length);
+            Span<float> dataSpan = data.AsSpan();
+            dataSpan.Clear();
             var activeStreams = 0;
 
             foreach (WeakReference<IAudioStream> weakStream in streams)
@@ -49,21 +51,30 @@ namespace DCL.VoiceChat
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
-                    stream.ReadAudio(tempBuffer, 1, sampleRate);
+                    stream.ReadAudio(tempBuffer, channels, sampleRate);
 
-                    for (var i = 0; i < tempBuffer.Length; i++)
+                    for (var i = 0; i < data.Length; i++)
                         data[i] += tempBuffer[i];
 
                     activeStreams++;
                 }
             }
 
-            // Normalize only if multiple streams (avoid unnecessary computation)
+            // Normalize only if multiple streams
             if (activeStreams > 1)
             {
                 float norm = 1f / activeStreams;
+
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
+            }
+
+            // Copy left channel to right channel for proper stereo output
+            // Because LiveKit audio arrives with audio only on the left channel
+            if (channels == 2)
+            {
+                for (var i = 0; i < data.Length; i += 2)
+                    data[i + 1] = data[i];
             }
         }
 
@@ -118,11 +129,6 @@ namespace DCL.VoiceChat
         {
             await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
             audioSource.Stop();
-        }
-
-        public void SetVolume(float target)
-        {
-            audioSource.volume = target;
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)

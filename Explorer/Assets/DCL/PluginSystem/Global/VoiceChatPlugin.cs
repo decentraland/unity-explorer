@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedInstance<VoiceChatCombinedAudioSource> audioSource;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
-        private VoiceChatController controller;
+        private VoiceChatController? controller;
 
         public VoiceChatPlugin(
             ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
@@ -71,13 +71,18 @@ namespace DCL.PluginSystem.Global
             voiceChatSettingsAsset.Dispose();
             microphoneAudioFilter.Dispose();
             voiceChatConfigurations.Dispose();
-            controller.Dispose();
+            controller?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
+            
+            AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
+            audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
+            AudioSettings.Reset(audioConfig);
+
             voiceChatConfigurations = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatConfigurations, ct: ct);
             VoiceChatPluginSettings configurations = voiceChatConfigurations.Value;
 
@@ -96,7 +101,7 @@ namespace DCL.PluginSystem.Global
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
 
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, microphoneAudioSource, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatHandler);
+            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration);
 
             controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, dependencies, profileDataProvider);
         }

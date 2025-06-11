@@ -12,23 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcc266991aac5dd4d8eefcb174ba92dd, type: 3}
   m_Name: VoiceChatConfiguration
   m_EditorClassIdentifier: 
+  EnableLocalTrackPlayback: 1
   HoldThresholdInSeconds: 0.5
+  EnableAudioProcessing: 1
   EnableNoiseGate: 1
-  NoiseGateThreshold: 0.0015
+  NoiseGateThreshold: 0.0001
   NoiseGateHoldTime: 2
-  NoiseGateAttackTime: 0.05
-  NoiseGateReleaseTime: 0.1
-  EnableBandPassFilter: 1
-  HighPassCutoffFreq: 80
-  LowPassCutoffFreq: 8000
+  NoiseGateAttackTime: 0.5
+  NoiseGateReleaseTime: 0.2
+  EnableBandPassFilter: 0
+  HighPassCutoffFreq: 200
+  LowPassCutoffFreq: 3000
   EnableAutoGainControl: 0
   AGCTargetLevel: 0.5
-  AGCResponseSpeed: 1
-  EnableNoiseReduction: 1
+  AGCResponseSpeed: 0.1
+  EnableNoiseReduction: 0
   NoiseReductionStrength: 1
-  EnableDeEsser: 1
+  EnableDeEsser: 0
   DeEsserThreshold: 0.282
   DeEsserRatio: 3
   EnableGateFadeIn: 1
   FadeInBufferSize: 64
   PreGateAttenuation: 0.1
+  MicrophoneReinitDelayMs: 500
+  EnableFreshDataWait1: 1
+  EnableFreshDataWait2: 1
+  MaxFreshDataWaitTimeMs: 1000
+  FreshDataCheckDelayMs: 50

@@ -57,9 +57,10 @@ namespace DCL.VoiceChat
                 switch (otherUserStatus)
                 {
                     case OtherUserCallStatus.USER_OFFLINE:
-                        view.TooltipParent.gameObject.SetActive(true);
-                        view.TooltipText.text = USER_OFFLINE_TOOLTIP_TEXT;
-                        break;
+                        //TODO: REVERT THIS BEFORE MERGING
+                        //view.TooltipParent.gameObject.SetActive(true);
+                        //view.TooltipText.text = USER_OFFLINE_TOOLTIP_TEXT;
+                        //break;
                     case OtherUserCallStatus.USER_AVAILABLE:
                         view.TooltipParent.gameObject.SetActive(false);
                         StartCall?.Invoke(currentUserId);

@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             this.origin = origin;
         }
 
-        public ITrack CreateAudioTrack(string name, RtcAudioSource source)
+        public ITrack CreateAudioTrack(string name, IRtcAudioSource source)
         {
             ReportHub.Log(ReportCategory.LIVEKIT, $"{PREFIX}: create Audio Track with name {name}");
             var audioTrack = origin.CreateAudioTrack(name, source);

@@ -356,7 +356,7 @@ namespace DCL.Chat
 
         private void OnStartCall(string userId)
         {
-            voiceChatCallStatusService.StartCall(new Web3Address(userId));
+            voiceChatCallStatusService.StartCall(new Web3Address("userId"));
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
