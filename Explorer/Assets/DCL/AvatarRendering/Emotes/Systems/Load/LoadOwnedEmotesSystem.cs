@@ -10,6 +10,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
 using System;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
