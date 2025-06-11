@@ -79,10 +79,9 @@ namespace DCL.WebRequests.HTTP2
 
         private static readonly ThreadSafeListPool<string> REDUNDANT_HEADERS_POOL =
             new (15, 50);
-
+        internal readonly long fullFileSize;
 
         private readonly Uri fromUrl;
-        internal readonly long fullFileSize;
 
         private CachedPartialData cachedPartialData;
         private MemoryStreamPartialData memoryStreamPartialData;
@@ -144,7 +143,7 @@ namespace DCL.WebRequests.HTTP2
             // Start reading from the cache acquiring a lock so the entry won't be deleted on maintenance
             // Thus, we increase the read lock so we need to release it later
             // The locks works for both Headers and Content
-            Stream stream = cache.BeginReadContent(requestHash, null);
+            Stream? stream = cache.BeginReadContent(requestHash, null);
 
             if (stream == null)
                 return false;
@@ -328,7 +327,6 @@ namespace DCL.WebRequests.HTTP2
                                                                       + $"{BytesFormatter.Convert((ulong)cachedPartialData.partialContentLength, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} / "
                                                                       + $"{BytesFormatter.Convert((ulong)fullFileSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} KB");
 
-
                         return;
                     }
 
@@ -362,6 +360,7 @@ namespace DCL.WebRequests.HTTP2
                         {
                             // When the cache is reserved, the stream is open for write
                             cachedPartialData.writeHandler = writeHandler;
+
                             // Copy buffered data to the write handler
 
                             writeHandler.contentWriter.Write(bufferSegment);
@@ -374,7 +373,6 @@ namespace DCL.WebRequests.HTTP2
 
                             return;
                         }
-
 
                         // Not enough space on disk, use the HTTP Stream
                         cachedPartialData.headers.Dispose();
@@ -397,6 +395,7 @@ namespace DCL.WebRequests.HTTP2
 
                 default:
                     headersResult.Dispose();
+
                     // Otherwise the stream was already initialized
                     return;
             }
@@ -449,7 +448,14 @@ namespace DCL.WebRequests.HTTP2
                         cachedPartialData.EndCacheWrite(loggingContext, false);
 
                         // Open for reading immediately
-                        cachedPartialData.BeginCacheRead(loggingContext);
+                        // Can return false, probably due to the concurrent maintenance
+                        bool streamOpened = cachedPartialData.BeginCacheRead(loggingContext);
+
+                        if (!streamOpened)
+                        {
+                            ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) could not be opened for reading after writing to the cache");
+                            return false;
+                        }
 
                         opMode = Mode.COMPLETE_DATA_CACHED;
 
@@ -478,7 +484,6 @@ namespace DCL.WebRequests.HTTP2
                         opMode = Mode.COMPLETE_SEGMENTED_STREAM;
                         ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} completed in {opMode} mode");
                     }
-
 
                     return true;
                 default:
@@ -670,12 +675,15 @@ namespace DCL.WebRequests.HTTP2
                 cache.Delete(requestHash, context);
             }
 
-            internal void BeginCacheRead(LoggingContext? context = null)
+            internal bool BeginCacheRead(LoggingContext? context = null)
             {
                 Stream? stream = cache.BeginReadContent(requestHash, context);
-                Assert.IsNotNull(stream);
+
+                if (stream == null)
+                    return false;
 
                 readHandler = new CacheReadHandler(stream);
+                return true;
             }
 
             internal void EndCacheRead(LoggingContext? loggingContext, bool discardCache)
