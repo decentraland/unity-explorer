@@ -13,7 +13,7 @@ namespace DCL.Communities
             public string[] thumbnails;
             public string name;
             public string description;
-            public string ownerId;
+            public string ownerAddress;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public string[] places;

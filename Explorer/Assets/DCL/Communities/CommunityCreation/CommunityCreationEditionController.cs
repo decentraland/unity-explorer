@@ -12,6 +12,7 @@ using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -51,11 +52,13 @@ namespace DCL.Communities.CommunityCreation
         private struct CommunityPlace
         {
             public string Id;
+            public bool IsWorld;
             public string Name;
         }
 
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
+        private byte[] currentThumbnail;
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
@@ -94,6 +97,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
+            currentThumbnail = null;
             loadLandsAndWorldsCts = loadLandsAndWorldsCts.SafeRestart();
             LoadLandsAndWorldsAsync(loadLandsAndWorldsCts.Token).Forget();
 
@@ -177,6 +181,7 @@ namespace DCL.Communities.CommunityCreation
             }
 
             viewInstance!.SetProfileSelectedImage(data.CTToSprite());
+            currentThumbnail = data;
         }
 
         private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
@@ -199,6 +204,7 @@ namespace DCL.Communities.CommunityCreation
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
                         Id = placeInfo.id,
+                        IsWorld = false,
                         Name = placeText,
                     });
                 }
@@ -212,6 +218,7 @@ namespace DCL.Communities.CommunityCreation
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
                         Id = $"{name}.dcl.eth",
+                        IsWorld = true,
                         Name = $"{name}.dcl.eth",
                     });
                 }
@@ -230,7 +237,7 @@ namespace DCL.Communities.CommunityCreation
             if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
                 return;
 
-            viewInstance!.AddPlaceTag(selectedPlace.Id, selectedPlace.Name);
+            viewInstance!.AddPlaceTag(selectedPlace.Id, selectedPlace.IsWorld, selectedPlace.Name);
             addedCommunityPlaces.Add(selectedPlace);
         }
 
@@ -262,16 +269,16 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SetCreationPanelAsLoading(false);
         }
 
-        private void CreateCommunity(string name, string description)
+        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, FileBrowser.Instance.CurrentOpenSingleFileData, createCommunityCts.Token).Forget();
+            CreateCommunityAsync(name, description, lands, worlds, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, byte[] thumbnail, CancellationToken ct)
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, thumbnail, null, null, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, currentThumbnail, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)

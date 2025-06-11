@@ -22,7 +22,7 @@ namespace DCL.Communities.CommunityCreation
         public Action CancelButtonClicked;
         public Action GetNameButtonClicked;
         public Action SelectProfilePictureButtonClicked;
-        public Action<string, string> CreateCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>> CreateCommunityButtonClicked;
         public Action<string, string> SaveCommunityButtonClicked;
         public Action<int> AddPlaceButtonClicked;
         public Action<int> RemovePlaceButtonClicked;
@@ -77,8 +77,18 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionInputField.onValueChanged.AddListener(CreationPanelCommunityDescriptionInputChanged);
             creationPanelCreateButton.onClick.AddListener(() =>
             {
+                var lands = new List<string>();
+                var worlds = new List<string>();
+                foreach (CommunityPlaceTag placeTag in currentPlaceTags)
+                {
+                    if (placeTag.IsWorld)
+                        worlds.Add(placeTag.Id);
+                    else
+                        lands.Add(placeTag.Id);
+                }
+
                 if (!isEditionMode)
-                    CreateCommunityButtonClicked?.Invoke(creationPanelCommunityNameInputField.text, creationPanelCommunityDescriptionInputField.text);
+                    CreateCommunityButtonClicked?.Invoke(creationPanelCommunityNameInputField.text, creationPanelCommunityDescriptionInputField.text, lands, worlds);
                 else
                     SaveCommunityButtonClicked?.Invoke(creationPanelCommunityNameInputField.text, creationPanelCommunityDescriptionInputField.text);
             });
@@ -112,6 +122,9 @@ namespace DCL.Communities.CommunityCreation
 
             if (canCreate)
                 CleanCreationPanel();
+
+            creationPanelScrollRect.verticalNormalizedPosition = 1f;
+            WarningNotificationView.Hide(true);
         }
 
         public void ConvertGetNameDescriptionUrlsToClickableLinks(Action<string> onLinkClicked) =>
@@ -168,10 +181,10 @@ namespace DCL.Communities.CommunityCreation
                 creationPanelPlacesDropdown.value = 0;
             }
         }
-        public void AddPlaceTag(string id, string placeName)
+        public void AddPlaceTag(string id, bool isWorld, string placeName)
         {
             CommunityPlaceTag placeTag = Instantiate(placeTagPrefab, placeTagsContainer);
-            placeTag.Setup(id, placeName);
+            placeTag.Setup(id, isWorld, placeName);
 
             void OnPlaceTagRemovedClicked()
             {

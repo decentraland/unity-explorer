@@ -13,6 +13,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private Button removeButton;
 
         public string Id { get; private set; }
+        public bool IsWorld { get; private set; }
 
         public string Text
         {
@@ -27,9 +28,10 @@ namespace DCL.Communities.CommunityCreation
         private void OnDestroy() =>
             removeButton.onClick.RemoveAllListeners();
 
-        public void Setup(string id, string text)
+        public void Setup(string id, bool isWorld, string text)
         {
             Id = id;
+            IsWorld = isWorld;
             Text = text;
         }
     }

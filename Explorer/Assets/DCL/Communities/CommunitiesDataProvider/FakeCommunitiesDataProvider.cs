@@ -35,7 +35,7 @@ namespace DCL.Communities
                     thumbnails = communityData.thumbnails,
                     name = communityData.name,
                     description = communityData.description,
-                    ownerId = "test",
+                    ownerAddress = "test",
                     privacy = communityData.privacy,
                     role = communityData.role,
                     places = new [] { "land1", "land2" },
@@ -82,7 +82,7 @@ namespace DCL.Communities
         public async UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands,
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands,
             List<string> worlds, CancellationToken ct) =>
             throw new NotImplementedException();
 
