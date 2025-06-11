@@ -88,7 +88,7 @@ namespace DCL.Landscape
 
             noiseGenCache = new NoiseGeneratorCache();
             reportData = ReportCategory.LANDSCAPE;
-            timeProfiler = new TimeProfiler(true);
+            timeProfiler = new TimeProfiler(measureTime);
 
             // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
             terrains = new List<Terrain>();
@@ -296,8 +296,7 @@ namespace DCL.Landscape
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
 
-            if (gpuiWrapper != null)
-                await gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
+            await gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
