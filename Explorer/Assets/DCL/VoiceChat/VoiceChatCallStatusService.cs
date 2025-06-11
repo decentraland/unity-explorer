@@ -37,21 +37,21 @@ namespace DCL.VoiceChat
             switch (update.Status)
             {
                 case PrivateVoiceChatStatus.VoiceChatAccepted:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     RoomUrl = update.Credentials.Url;
                     Token = update.Credentials.Token;
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatEnded:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
                     ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRejected:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
                     ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRequested:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                     CallId = update.CallId;
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                     break;
             }
         }
@@ -79,14 +79,14 @@ namespace DCL.VoiceChat
             {
                 //When the call can be started
                 case StartPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
                     CallId = response.Ok.CallId;
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
                     break;
                 //When the other user is already in a call or is already being called
                 case StartPrivateVoiceChatResponse.ResponseOneofCase.InvalidRequest:
                 case StartPrivateVoiceChatResponse.ResponseOneofCase.ConflictingError:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
                     ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
                     break;
                 default:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
@@ -113,9 +113,9 @@ namespace DCL.VoiceChat
             {
                 //When the call has been ended
                 case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     RoomUrl = response.Ok.Credentials.Url;
                     Token = response.Ok.Credentials.Token;
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     break;
                 default:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
