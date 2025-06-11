@@ -76,7 +76,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
 
-            itemView.Configure(eventData.members[index], webRequestController);
+            itemView.Configure(eventData.items[index], webRequestController);
 
             itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
                                              data => JumpInButtonClicked?.Invoke(data),
@@ -92,15 +92,15 @@ namespace DCL.Communities.CommunitiesCard.Events
         private void OpenCardContextMenu(EventDTO eventData, Vector2 position, EventListItemView eventListItemView)
         {
             lastClickedEventCtx = eventData;
-            eventListItemView.CanUnHover = false;
+            eventListItemView.CanPlayUnHoverAnimation = false;
 
             mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
-                actionOnHide: () => eventListItemView.CanUnHover = true)), cancellationToken);
+                actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true)), cancellationToken);
         }
 
         public void RefreshGrid()
         {
-            loopList.SetListItemCount(getEventsFetchData().members.Count, false);
+            loopList.SetListItemCount(getEventsFetchData().items.Count, false);
             loopList.RefreshAllShownItem();
         }
 

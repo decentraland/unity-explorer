@@ -103,7 +103,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                 return eventsFetchData.totalToFetch;
             }
 
-            eventsFetchData.members.AddRange(response.Value.data);
+            eventsFetchData.items.AddRange(response.Value.data);
 
             return response.Value.totalAmount;
         }

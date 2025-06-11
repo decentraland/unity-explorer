@@ -47,18 +47,18 @@ namespace DCL.Communities.CommunitiesCard.Events
         private PlaceAndEventDTO? eventData;
         private ImageController imageController;
 
-        private bool canUnHover = true;
-        internal bool CanUnHover
+        private bool canPlayUnHoverAnimation = true;
+        internal bool CanPlayUnHoverAnimation
         {
-            get => canUnHover;
+            get => canPlayUnHoverAnimation;
             set
             {
-                if (!canUnHover && value)
+                if (!canPlayUnHoverAnimation && value)
                 {
-                    canUnHover = value;
+                    canPlayUnHoverAnimation = value;
                     UnHoverAnimation();
                 }
-                canUnHover = value;
+                canPlayUnHoverAnimation = value;
             }
         }
 
@@ -138,7 +138,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         public void OnPointerExit(PointerEventData data)
         {
-            if (canUnHover)
+            if (canPlayUnHoverAnimation)
                 UnHoverAnimation();
         }
 
