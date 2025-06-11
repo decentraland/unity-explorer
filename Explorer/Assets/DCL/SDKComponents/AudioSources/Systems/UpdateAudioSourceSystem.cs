@@ -107,15 +107,15 @@ namespace DCL.SDKComponents.AudioSources
 
         private void FadeVolumeOnSceneChange(PBAudioSource sdkComponent, AudioSource audio, float dt)
         {
+            float sdkVolume = sdkComponent.GetVolume();
+
             switch (sceneStateProvider.IsCurrent)
             {
-                case true when audio.volume < sdkComponent.GetVolume():
-                    audio.volume += dt * settings.FadeSpeed * sdkComponent.GetVolume();
-                    audio.volume = Mathf.Min(audio.volume, sdkComponent.GetVolume());
+                case true when audio.volume < sdkVolume:
+                    audio.volume = Mathf.Min(sdkVolume, audio.volume + (dt * settings.FadeSpeed * sdkVolume));
                     return;
                 case false when audio.volume > 0:
-                    audio.volume -= dt * settings.FadeSpeed * sdkComponent.GetVolume();
-                    audio.volume = Mathf.Max(audio.volume, 0);
+                    audio.volume = Mathf.Max(0, audio.volume - (dt * settings.FadeSpeed * sdkVolume));
                     break;
             }
         }

@@ -80,8 +80,8 @@ namespace DCL.SDKComponents.MediaStream
         protected override void Update(float t)
         {
             UpdateMediaPlayerPositionQuery(World);
-            UpdateAudioStreamQuery(World);
-            UpdateVideoStreamQuery(World);
+            UpdateAudioStreamQuery(World, t);
+            UpdateVideoStreamQuery(World, t);
 
             UpdateVideoTextureQuery(World);
         }
@@ -93,14 +93,14 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent)
+        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
             {
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+                component.MediaPlayer.UpdateVolume(dt, sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
             var address = MediaAddress.New(sdkComponent.Url!);
@@ -111,14 +111,14 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
+        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
             {
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+                component.MediaPlayer.UpdateVolume(dt, sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
             }
 
             var address = MediaAddress.New(sdkComponent.Src!);

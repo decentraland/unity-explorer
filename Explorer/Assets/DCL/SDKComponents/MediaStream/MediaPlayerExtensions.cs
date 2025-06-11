@@ -17,26 +17,29 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.Events.RemoveAllListeners();
         }
 
-        public static void UpdateVolume(this MediaPlayer mediaPlayer, bool isCurrentScene, bool hasVolume, float volume)
+        public static void UpdateVolume(this MediaPlayer mediaPlayer, float delta, bool isCurrentScene, bool hasVolume, float volume)
         {
-            if (!isCurrentScene)
-                mediaPlayer.AudioVolume = 0f;
-            else
-            {
-                if (!hasVolume)
-
-                    //This following part is a workaround applied for the MacOS platform, the reason
-                    //is related to the video and audio streams, the MacOS environment does not support
-                    //the volume control for the video and audio streams, as it doesn’t allow to route audio
-                    //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
-                    //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
+            float targetVolume = hasVolume ? volume
+                :
+                //This following part is a workaround applied for the MacOS platform, the reason
+                //is related to the video and audio streams, the MacOS environment does not support
+                //the volume control for the video and audio streams, as it doesn’t allow to route audio
+                //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
+                //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
-                    mediaPlayer.AudioVolume = MediaPlayerComponent.DEFAULT_VOLUME * volume;
+                   MediaPlayerComponent.DEFAULT_VOLUME * volume;
 #else
-                    mediaPlayer.AudioVolume = MediaPlayerComponent.DEFAULT_VOLUME;
+                MediaPlayerComponent.DEFAULT_VOLUME;
 #endif
-                else if (!Mathf.Approximately(mediaPlayer.AudioVolume, volume))
-                    mediaPlayer.AudioVolume = volume;
+
+            switch (isCurrentScene)
+            {
+                case true when mediaPlayer.AudioVolume < targetVolume:
+                    mediaPlayer.AudioVolume = Mathf.Min(targetVolume, mediaPlayer.AudioVolume + (delta * targetVolume));
+                    break;
+                case false when mediaPlayer.AudioVolume > 0:
+                    mediaPlayer.AudioVolume = Mathf.Max(0, mediaPlayer.AudioVolume - (delta * targetVolume));
+                    break;
             }
         }
 

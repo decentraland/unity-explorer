@@ -111,11 +111,11 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        public void UpdateVolume(bool isCurrentScene, bool hasVolume, float volume)
+        public void UpdateVolume(float delta, bool isCurrentScene, bool hasVolume, float volume)
         {
             Match(
-                (isCurrentScene, hasVolume, volume),
-                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdateVolume(ctx.isCurrentScene, ctx.hasVolume, ctx.volume),
+                (delta, isCurrentScene, hasVolume, volume),
+                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdateVolume(ctx.delta, ctx.isCurrentScene, ctx.hasVolume, ctx.volume),
                 static (ctx, livekitPlayer) =>
                 {
                     float target = ctx.hasVolume ? ctx.volume : MediaPlayerComponent.DEFAULT_VOLUME;
