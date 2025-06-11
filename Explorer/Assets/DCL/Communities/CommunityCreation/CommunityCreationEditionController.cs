@@ -12,7 +12,6 @@ using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
