@@ -10,9 +10,6 @@ namespace ECS.StreamableLoading.Textures
 {
     public class TextureDiskSerializer : IDiskSerializer<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>
     {
-        public SerializeMemoryIterator<State> Serialize(Texture2DData data) =>
-            ToArray(data);
-
         public async UniTask<Texture2DData> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             var meta = Meta.FromSpan(data.Memory.Span);
@@ -32,7 +29,7 @@ namespace ECS.StreamableLoading.Textures
             return new Texture2DData(texture);
         }
 
-        private static SerializeMemoryIterator<State> ToArray(Texture2DData data)
+        public SerializeMemoryIterator<State> Serialize(Texture2DData data)
         {
             var textureData = data.Asset.GetRawTextureData<byte>()!;
 
