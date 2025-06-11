@@ -999,10 +999,7 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)
         {
             if (currentChannel == null || !CurrentChannelId.Equals(channelId))
-                if (!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                    ConversationSelected?.Invoke(channelId);
-                else
-                    CurrentChannelId = channelId;
+                ConversationSelected?.Invoke(channelId);
         }
 
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)

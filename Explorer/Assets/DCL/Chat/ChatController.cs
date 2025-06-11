@@ -594,23 +594,6 @@ namespace DCL.Chat
         /// <param name="userId"></param>
         private void OnUserDisconnected(string userId)
         {
-            var currentChannelId = viewInstance?.CurrentChannelId;
-            
-            // If user disconnects but we are in the nearby channel
-            // we do not update the state
-            if (currentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                return;
-
-            // If the user is not part of the current conversation
-            // we do not update the state
-            if (currentChannelId.HasValue)
-            {
-                if (!currentChannelId.Value.Id.Equals(userId))
-                    return;
-            }
-            else
-                return;
-
             // Update the state of the user in the current conversation
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
             viewInstance!.SetInputWithUserState(state);
