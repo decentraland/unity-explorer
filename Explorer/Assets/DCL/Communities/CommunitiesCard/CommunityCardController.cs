@@ -146,7 +146,12 @@ namespace DCL.Communities.CommunitiesCard
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
                 webRequestController,
-                mvcManager);
+                mvcManager,
+                viewInstance.warningNotificationView,
+                viewInstance.successNotificationView,
+                clipboard,
+                webBrowser,
+                realmNavigator);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 

@@ -17,8 +17,11 @@ namespace DCL.UI
         [field: SerializeField] public Sprite SelectedIconImage { get; private set; }
         [field: SerializeField] public Sprite UnselectedIconImage { get; private set; }
 
+        public bool Selected { get; private set; }
+
         public void SetSelected(bool selected)
         {
+            Selected = selected;
             BackgroundImage.color = selected ? SelectedBackgroundColor : UnselectedBackgroundColor;
             Text.color = selected ? SelectedTextColor : UnselectedTextColor;
 

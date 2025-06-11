@@ -39,10 +39,10 @@ namespace DCL.Communities.CommunitiesCard.Events
         [SerializeField] private TMP_Text eventOnlineUsersText;
         [SerializeField] private TMP_Text eventInterestedUsersText;
 
-        public event Action<EventDTO> MainButtonClicked;
-        public event Action<EventDTO> JumpInButtonClicked;
-        public event Action<EventDTO> InterestedButtonClicked;
-        public event Action<EventDTO, Vector2, EventListItemView> ShareButtonClicked;
+        public event Action<PlaceAndEventDTO> MainButtonClicked;
+        public event Action<PlaceAndEventDTO> JumpInButtonClicked;
+        public event Action<PlaceAndEventDTO> InterestedButtonClicked;
+        public event Action<PlaceAndEventDTO, Vector2> ShareButtonClicked;
 
         private PlaceAndEventDTO? eventData;
         private ImageController imageController;
@@ -64,11 +64,12 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(eventData!.Value.eventData));
-            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventData!.Value.eventData));
-            interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventData!.Value.eventData));
-            liveShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value.eventData, liveShareButton.transform.position, this));
-            offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value.eventData, offlineShareButton.transform.position, this));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(eventData!.Value));
+            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventData!.Value));
+            interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventData!.Value));
+            interestedButton.Button.onClick.AddListener(() => interestedButton.SetSelected(!interestedButton.Selected));
+            liveShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, liveShareButton.transform.position));
+            offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, offlineShareButton.transform.position));
         }
 
         private static string GetEventTimeText(EventDTO data)
@@ -105,19 +106,25 @@ namespace DCL.Communities.CommunitiesCard.Events
             imageController.RequestImage(data.eventData.image);
             eventTimeText.text = GetEventTimeText(data.eventData);
             eventNameText.text = data.eventData.name;
-            eventInterestedUsersText.text = data.eventData.total_attendees.ToString();
+            UpdateInterestedCounter();
             eventOnlineUsersText.text = data.place.user_count.ToString();
 
-            interestedButton.SetSelected(data.eventData.attending);
+            UpdateInterestedButtonState();
             liveBadgeContainer.SetActive(data.eventData.live);
             interestedContainer.SetActive(data.eventData is { live: false, total_attendees: > 0 });
             UnHoverAnimation();
         }
 
-        public void SubscribeToInteractions(Action<EventDTO> mainAction,
-                                            Action<EventDTO> jumpInAction,
-                                            Action<EventDTO> interestedAction,
-                                            Action<EventDTO, Vector2, EventListItemView> shareAction)
+        public void UpdateInterestedButtonState() =>
+            interestedButton.SetSelected(eventData!.Value.eventData.attending);
+
+        public void UpdateInterestedCounter() =>
+            eventInterestedUsersText.text = eventData!.Value.eventData.total_attendees.ToString();
+
+        public void SubscribeToInteractions(Action<PlaceAndEventDTO> mainAction,
+                                            Action<PlaceAndEventDTO> jumpInAction,
+                                            Action<PlaceAndEventDTO> interestedAction,
+                                            Action<PlaceAndEventDTO, Vector2> shareAction)
         {
             MainButtonClicked = null;
             JumpInButtonClicked = null;

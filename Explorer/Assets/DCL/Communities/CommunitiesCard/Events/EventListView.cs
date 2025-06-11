@@ -28,17 +28,17 @@ namespace DCL.Communities.CommunitiesCard.Events
         public event Action NewDataRequested;
         public event Action OpenWizardRequested;
 
-        public event Action<EventDTO> MainButtonClicked;
-        public event Action<EventDTO> JumpInButtonClicked;
-        public event Action<EventDTO> InterestedButtonClicked;
-        public event Action<EventDTO> EventShareButtonClicked;
-        public event Action<EventDTO> EventCopyLinkButtonClicked;
+        public event Action<PlaceAndEventDTO> MainButtonClicked;
+        public event Action<PlaceAndEventDTO> JumpInButtonClicked;
+        public event Action<PlaceAndEventDTO, EventListItemView> InterestedButtonClicked;
+        public event Action<PlaceAndEventDTO> EventShareButtonClicked;
+        public event Action<PlaceAndEventDTO> EventCopyLinkButtonClicked;
 
         private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData;
         private bool canModify;
         private IWebRequestController webRequestController;
         private IMVCManager mvcManager;
-        private EventDTO lastClickedEventCtx;
+        private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
         private GenericContextMenu contextMenu;
 
@@ -80,8 +80,8 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
                                              data => JumpInButtonClicked?.Invoke(data),
-                                             data => InterestedButtonClicked?.Invoke(data),
-                                             OpenCardContextMenu);
+                                             data => InterestedButtonClicked?.Invoke(data, itemView),
+                                             (data, position) => OpenCardContextMenu(data, position, itemView));
 
             if (index >= eventData.totalFetched - ELEMENT_MISSING_THRESHOLD && eventData.totalFetched < eventData.totalToFetch)
                 NewDataRequested?.Invoke();
@@ -89,7 +89,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             return item;
         }
 
-        private void OpenCardContextMenu(EventDTO eventData, Vector2 position, EventListItemView eventListItemView)
+        private void OpenCardContextMenu(PlaceAndEventDTO eventData, Vector2 position, EventListItemView eventListItemView)
         {
             lastClickedEventCtx = eventData;
             eventListItemView.CanPlayUnHoverAnimation = false;
