@@ -111,17 +111,27 @@ namespace DCL.SDKComponents.MediaStream
             );
         }
 
-        public void UpdateVolume(float delta, bool isCurrentScene, bool hasVolume, float volume)
+        public void UpdateVolume(bool isCurrentScene, bool hasVolume, float volume, float fadeDelta = 1)
         {
+            float targetVolume = hasVolume ? volume
+                :
+                //This following part is a workaround applied for the MacOS platform, the reason
+                //is related to the video and audio streams, the MacOS environment does not support
+                //the volume control for the video and audio streams, as it doesn’t allow to route audio
+                //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
+                //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+                   MediaPlayerComponent.DEFAULT_VOLUME * volume;
+#else
+                MediaPlayerComponent.DEFAULT_VOLUME;
+#endif
+
+            float volumeDelta = fadeDelta * targetVolume;
+
             Match(
-                (delta, isCurrentScene, hasVolume, volume),
-                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdateVolume(ctx.delta, ctx.isCurrentScene, ctx.hasVolume, ctx.volume),
-                static (ctx, livekitPlayer) =>
-                {
-                    float target = ctx.hasVolume ? ctx.volume : MediaPlayerComponent.DEFAULT_VOLUME;
-                    livekitPlayer!.SetVolume(target);
-                }
-            );
+                (isCurrentScene, targetVolume, volumeDelta),
+                static (ctx, avPro) => avPro.AvProMediaPlayer.UpdateVolume(ctx.isCurrentScene, ctx.targetVolume, ctx.volumeDelta),
+                static (ctx, livekitPlayer) => livekitPlayer!.SetVolumeFaded(ctx.isCurrentScene, ctx.targetVolume, ctx.volumeDelta));
         }
 
         public void UpdatePlaybackProperties(PBVideoPlayer sdkVideoPlayer)

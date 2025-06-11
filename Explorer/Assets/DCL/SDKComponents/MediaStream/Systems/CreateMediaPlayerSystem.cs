@@ -9,17 +9,16 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Transforms.Components;
+#if UNITY_EDITOR
 using RenderHeads.Media.AVProVideo;
+#endif
 using SceneRunner.Scene;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
@@ -83,7 +82,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            MediaPlayerComponent component = CreateMediaPlayerComponent(dt, entity, url, hasVolume, volume);
+            MediaPlayerComponent component = CreateMediaPlayerComponent(entity, url, hasVolume, volume);
 
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.MediaAddress, GetReportData(), component.Cts.Token).SuppressCancellationThrow().Forget();
@@ -98,7 +97,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [SuppressMessage("ReSharper", "RedundantAssignment")]
-        private MediaPlayerComponent CreateMediaPlayerComponent(float dt, Entity entity, string url, bool hasVolume, float volume)
+        private MediaPlayerComponent CreateMediaPlayerComponent(Entity entity, string url, bool hasVolume, float volume)
         {
             var isValidLocalPath = false;
             var isValidStreamUrl = false;
@@ -152,7 +151,7 @@ namespace DCL.SDKComponents.MediaStream
 #endif
 
             // speed
-            component.MediaPlayer.UpdateVolume(dt, sceneStateProvider.IsCurrent, hasVolume, volume);
+            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
 
             return component;
         }

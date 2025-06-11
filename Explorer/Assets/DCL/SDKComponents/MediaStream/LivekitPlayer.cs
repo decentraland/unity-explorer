@@ -33,6 +33,7 @@ namespace DCL.SDKComponents.MediaStream
         private bool disposed;
 
         public bool MediaOpened => currentStream != null;
+        public float Volume { get; private set; }
 
         public PlayerState State => playerState;
 
@@ -167,7 +168,21 @@ namespace DCL.SDKComponents.MediaStream
 
         public void SetVolume(float target)
         {
+            Volume = target;
             audioSource.SetVolume(target);
+        }
+
+        public void SetVolumeFaded(bool isCurrentScene, float targetVolume, float volumeDelta)
+        {
+            switch (isCurrentScene)
+            {
+                case true when Volume < targetVolume:
+                    SetVolume(Mathf.Min(targetVolume, Volume + volumeDelta));
+                    break;
+                case false when Volume > 0:
+                    SetVolume(Mathf.Max(0, targetVolume - volumeDelta));
+                    break;
+            }
         }
 
         public void PlaceAudioAt(Vector3 position)
