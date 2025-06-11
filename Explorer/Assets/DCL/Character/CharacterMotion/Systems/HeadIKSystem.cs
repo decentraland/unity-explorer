@@ -83,13 +83,10 @@ namespace DCL.CharacterMotion.Systems
         private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
-            if (emoteComponent.CurrentEmoteReference != null)
-            {
-                headIK.IsDisabled = true;
-                return;
-            }
+            headIK.IsDisabled = emoteComponent.CurrentEmoteReference != null || !this.headIKIsEnabled;
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, headIK.IsDisabled ? 0 : 1, 2 * dt);
 
-            headIK.IsDisabled = !this.headIKIsEnabled;
+            if (headIK.IsDisabled) return;
 
             Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
 

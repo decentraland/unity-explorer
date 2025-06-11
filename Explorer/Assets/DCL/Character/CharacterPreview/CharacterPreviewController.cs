@@ -72,6 +72,10 @@ namespace DCL.CharacterPreview
             }
 
             StopEmotes();
+
+            if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+                avatarBase.HeadIKRig.weight = 0;
+
             characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
             cameraController.Dispose();
         }
