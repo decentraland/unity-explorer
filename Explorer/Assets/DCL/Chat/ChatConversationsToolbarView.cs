@@ -124,10 +124,10 @@ namespace DCL.Chat
             SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache);
         }
 
-        public void SetPrivateConversationData(ChatChannel.ChannelId channelId)
+        public void SetPrivateConversationData(ChatChannel.ChannelId channelId, CancellationToken ct)
         {
             PrivateChatConversationsToolbarViewItem conversationItem = (PrivateChatConversationsToolbarViewItem)items[channelId];
-            SetupPrivateConversationItemAsync(conversationItem).Forget();
+            SetupPrivateConversationItemAsync(conversationItem, ct).Forget();
         }
 
         /// <summary>
@@ -284,9 +284,9 @@ namespace DCL.Chat
             tooltip.transform.SetParent(transform, true);
         }
 
-        private async UniTaskVoid SetupPrivateConversationItemAsync(PrivateChatConversationsToolbarViewItem newItem)
+        private async UniTaskVoid SetupPrivateConversationItemAsync(PrivateChatConversationsToolbarViewItem newItem, CancellationToken ct)
         {
-            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
+            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, ct);
 
             if (profile != null)
             {

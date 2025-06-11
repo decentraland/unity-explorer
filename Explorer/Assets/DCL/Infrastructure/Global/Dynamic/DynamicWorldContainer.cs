@@ -711,7 +711,8 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     profileRepositoryWrapper,
                     communitiesDataProvider,
-                    thumbnailCache),
+                    thumbnailCache,
+                    mainUIView.WarningNotification),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

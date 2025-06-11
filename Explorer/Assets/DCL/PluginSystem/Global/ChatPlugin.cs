@@ -21,6 +21,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
@@ -65,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ICommunitiesDataProvider communityDataProvider;
         private readonly IThumbnailCache thumbnailCache;
+        private readonly WarningNotificationView warningNotificationView;
 
         private ChatController chatController;
 
@@ -96,7 +98,8 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendsServiceProxy,
             ProfileRepositoryWrapper profileDataProvider,
             ICommunitiesDataProvider communityDataProvider,
-            IThumbnailCache thumbnailCache)
+            IThumbnailCache thumbnailCache,
+            WarningNotificationView warningNotificationView)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -127,6 +130,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
+            this.warningNotificationView = warningNotificationView;
         }
 
         public void Dispose()
@@ -176,7 +180,8 @@ namespace DCL.PluginSystem.Global
                 profileRepositoryWrapper,
                 communityDataProvider,
                 thumbnailCache,
-                mvcManager
+                mvcManager,
+                warningNotificationView
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

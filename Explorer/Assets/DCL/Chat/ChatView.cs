@@ -213,6 +213,8 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
+        private CancellationTokenSource privateConversationItemCts;
+        private CancellationTokenSource communityTitleCts;
 
         private IThumbnailCache thumbnailCache;
         private CommunityTitleView.OpenContextMenuDelegate openContextMenuAction;
@@ -286,7 +288,7 @@ namespace DCL.Chat
                         case ChatChannel.ChatChannelType.COMMUNITY:
                             SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
-                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails[0], openContextMenuAction, CancellationToken.None); // TODO: Add a cancelation token
+                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails[0], openContextMenuAction, communityTitleCts.Token);
                             break;
                     }
 
@@ -412,6 +414,8 @@ namespace DCL.Chat
             chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
             popupCts.SafeCancelAndDispose();
+            privateConversationItemCts.SafeCancelAndDispose();
+            communityTitleCts.SafeCancelAndDispose();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -780,7 +784,7 @@ namespace DCL.Chat
         public void AddPrivateConversation(ChatChannel channelToAdd)
         {
             conversationsToolbar.AddConversation(channelToAdd);
-            conversationsToolbar.SetPrivateConversationData(channelToAdd.Id);
+            conversationsToolbar.SetPrivateConversationData(channelToAdd.Id, privateConversationItemCts.Token);
         }
 
         /// <summary>

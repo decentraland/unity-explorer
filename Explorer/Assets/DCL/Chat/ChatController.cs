@@ -49,6 +49,8 @@ namespace DCL.Chat
 
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
         private const string NEW_CHAT_MESSAGE = "The chat starts here! Time to say hi! \\U0001F44B";
+        private const string GET_COMMUNITY_FAILED_MESSAGE = "It was not possible to retrieve the data for the new community to create the conversation, the conversation will not appear in the chat toolbar.";
+        private const string GET_USER_COMMUNITIES_FAILED_MESSAGE = "It was not possible to retrieve the communities of the user, their corresponding conversations will not appear in the chat toolbar.";
 
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
@@ -73,6 +75,7 @@ namespace DCL.Chat
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IThumbnailCache thumbnailCache;
         private readonly IMVCManager mvcManager;
+        private readonly WarningNotificationView warningNotificationView;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
         private readonly List<Profile> participantProfileBuffer = new ();
@@ -87,6 +90,7 @@ namespace DCL.Chat
         private bool viewInstanceCreated;
         private CancellationTokenSource chatUsersUpdateCts = new();
         private CancellationTokenSource communitiesServiceCts = new();
+        private CancellationTokenSource errorNotificationCts = new();
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
@@ -122,7 +126,8 @@ namespace DCL.Chat
             ProfileRepositoryWrapper profileDataProvider,
             ICommunitiesDataProvider communitiesDataProvider,
             IThumbnailCache thumbnailCache,
-            IMVCManager mvcManager) : base(viewFactory)
+            IMVCManager mvcManager,
+            WarningNotificationView warningNotificationView) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -143,6 +148,7 @@ namespace DCL.Chat
             this.communitiesDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
+            this.warningNotificationView = warningNotificationView;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -337,7 +343,8 @@ namespace DCL.Chat
             }
             else
             {
-                ReportHub.LogError(ReportCategory.COMMUNITIES, "It was not possible to retrieve the communities of the user, their corresponding conversations will not appear in the chat toolbar. " + result.ErrorMessage?? string.Empty);
+                ReportHub.LogError(ReportCategory.COMMUNITIES, GET_USER_COMMUNITIES_FAILED_MESSAGE + result.ErrorMessage?? string.Empty);
+                ShowErrorNotificationAsync(GET_USER_COMMUNITIES_FAILED_MESSAGE, errorNotificationCts.Token).Forget();
             }
         }
 
@@ -345,25 +352,34 @@ namespace DCL.Chat
         private async UniTask AddCommunityCoversationAsync(string communityId)
         {
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token);
+            Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync();
 
-            await UniTask.SwitchToMainThread();
+            if (result.Success)
+            {
+                await UniTask.SwitchToMainThread();
 
-            // TODO remove this
-            response.data.thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
-            userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.id), new GetUserCommunitiesData.CommunityData()
-                {
-                    id = response.data.id,
-                    thumbnails = response.data.thumbnails,
-                    name = response.data.name,
-                    privacy = response.data.privacy,
-                    role = response.data.role,
-                    ownerAddress = response.data.ownerId
-                });
+                GetCommunityResponse response = result.Value;
+                // TODO remove this
+                response.data.thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
+                userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.id), new GetUserCommunitiesData.CommunityData()
+                    {
+                        id = response.data.id,
+                        thumbnails = response.data.thumbnails,
+                        name = response.data.name,
+                        privacy = response.data.privacy,
+                        role = response.data.role,
+                        ownerAddress = response.data.ownerId
+                    });
 
-            viewInstance.SetCommunitiesData(userCommunities);
+                viewInstance!.SetCommunitiesData(userCommunities);
 
-            chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
+                chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
+            }
+            else
+            {
+                ReportHub.LogError(ReportCategory.COMMUNITIES, GET_COMMUNITY_FAILED_MESSAGE + result.ErrorMessage?? string.Empty);
+                ShowErrorNotificationAsync(GET_COMMUNITY_FAILED_MESSAGE, errorNotificationCts.Token).Forget();
+            }
         }
 
         // TODO: Ready to be called by a notification
@@ -402,6 +418,7 @@ namespace DCL.Chat
             memberListHelper.Dispose();
             chatUsersUpdateCts.SafeCancelAndDispose();
             communitiesServiceCts.SafeCancelAndDispose();
+            errorNotificationCts.SafeCancelAndDispose();
         }
 
 #endregion
@@ -791,7 +808,6 @@ namespace DCL.Chat
 
             viewInstance!.PointerEnter += OnViewPointerEnter;
             viewInstance.PointerExit += OnViewPointerExit;
-
             viewInstance.FocusChanged += OnViewFocusChanged;
             viewInstance.EmojiSelectionVisibilityChanged += OnViewEmojiSelectionVisibilityChanged;
             viewInstance.InputSubmitted += OnViewInputSubmitted;
@@ -877,6 +893,17 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+        }
+
+        private async UniTaskVoid ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
+        {
+            const int WARNING_MESSAGE_DELAY_MS = 3000;
+            warningNotificationView.SetText(errorMessage);
+            warningNotificationView.Show(ct);
+
+            await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
+
+            warningNotificationView.Hide(ct: ct);
         }
     }
 }
