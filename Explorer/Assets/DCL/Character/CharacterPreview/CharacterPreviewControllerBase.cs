@@ -23,16 +23,17 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private readonly World world;
-        protected CharacterPreviewAvatarModel previewAvatarModel;
+        private readonly bool isPreviewPlatformActive;
 
-        protected bool zoomEnabled = true;
-        protected bool panEnabled = true;
-        protected bool rotateEnabled = true;
         private CharacterPreviewController? previewController;
         private bool initialized;
         private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
-        private bool isPreviewPlatformActive;
+
+        protected CharacterPreviewAvatarModel previewAvatarModel;
+        protected bool zoomEnabled = true;
+        protected bool panEnabled = true;
+        protected bool rotateEnabled = true;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,

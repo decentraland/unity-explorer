@@ -117,10 +117,9 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
-            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null)
+            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null  && !avatarBase.RigBuilder.enabled)
             {
                 avatarBase.RigBuilder.enabled = true;
-                avatarBase.RigBuilder.Build();
                 avatarBase.HeadIKRig.weight = 1f;
             }
             return;
