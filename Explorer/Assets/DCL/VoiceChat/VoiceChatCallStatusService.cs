@@ -11,19 +11,17 @@ namespace DCL.VoiceChat
     public class VoiceChatCallStatusService : IVoiceChatCallStatusService
     {
         private readonly IVoiceService voiceChatService;
-        private readonly IVoiceChatEventBus voiceChatEventBus;
         public event IVoiceChatCallStatusService.VoiceChatStatusChangeDelegate StatusChanged;
         public VoiceChatStatus Status { get; private set; }
         public Web3Address CurrentTargetWallet { get; private set; }
 
         private CancellationTokenSource cts;
 
-        public VoiceChatCallStatusService(IVoiceService voiceChatService, IVoiceChatEventBus voiceChatEventBus)
+        public VoiceChatCallStatusService(IVoiceService voiceChatService)
         {
             this.voiceChatService = voiceChatService;
-            this.voiceChatEventBus = voiceChatEventBus;
 
-            this.voiceChatEventBus.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
+            this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             cts = new CancellationTokenSource();
         }
 

@@ -22,18 +22,17 @@ namespace DCL.VoiceChat.Services
         private const string END_PRIVATE_VOICE_CHAT = "EndPrivateVoiceChat";
         private const string SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES = "SubscribeToPrivateVoiceChatUpdates";
 
+        public event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
+
         private readonly ISelfProfile selfProfile;
         private readonly IRPCSocialServices socialServiceRPC;
-        private readonly IVoiceChatEventBus voiceChatEventBus;
 
         public RPCVoiceChatService(
             ISelfProfile selfProfile,
-            IRPCSocialServices socialServiceRPC,
-            IVoiceChatEventBus voiceChatEventBus)
+            IRPCSocialServices socialServiceRPC)
         {
             this.selfProfile = selfProfile;
             this.socialServiceRPC = socialServiceRPC;
-            this.voiceChatEventBus = voiceChatEventBus;
         }
 
         public void Dispose()
@@ -123,7 +122,7 @@ namespace DCL.VoiceChat.Services
                 {
                     try
                     {
-                        voiceChatEventBus.BroadcastPrivateVoiceChatUpdateReceived(response);
+                        PrivateVoiceChatUpdateReceived?.Invoke(response);
                     }
                     // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.VOICE_CHAT)); }
