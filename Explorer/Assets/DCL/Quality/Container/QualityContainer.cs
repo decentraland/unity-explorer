@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 #nullable disable
 
@@ -59,6 +61,9 @@ namespace DCL.Quality
             QualityLevelController.Dispose();
         }
 
+        private ElementBinding<float> stpValue;
+
+
         public void AddDebugViews(IDebugContainerBuilder debugContainerBuilder)
         {
             var widget = debugContainerBuilder.AddWidget("Quality");
@@ -70,6 +75,23 @@ namespace DCL.Quality
             AddSettingsSelector(widget.Value);
 
             QualityLevelController.AddDebugViews(widget.Value, onDebugViewUpdate);
+
+            ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale = 1f;
+
+            stpValue = new ElementBinding<float>(1,
+                evt =>
+                {
+                    var urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
+
+                    // Apply your desired scale
+                    urpAsset.renderScale = evt.newValue;
+                });
+
+            widget.Value.AddFloatSliderField(
+                "STP",
+                stpValue,
+                0.1f,
+                2f);
         }
 
         private void AddSettingsSelector(DebugWidgetBuilder builder)
