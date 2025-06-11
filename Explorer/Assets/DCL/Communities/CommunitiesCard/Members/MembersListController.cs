@@ -23,7 +23,7 @@ using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MembersListController : IDisposable
+    public class MembersListController : CommunityFetchingControllerBase<MemberData, MembersListView>
     {
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 20, 25);
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
@@ -51,14 +51,12 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly GenericContextMenuElement banUserContextMenuElement;
         private readonly GenericContextMenuElement communityOptionsSeparatorContextMenuElement;
 
-        private readonly SectionFetchData allMembersFetchData = new (PAGE_SIZE);
-        private readonly SectionFetchData bannedMembersFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<MemberData> allMembersFetchData = new (PAGE_SIZE);
+        private readonly SectionFetchData<MemberData> bannedMembersFetchData = new (PAGE_SIZE);
 
         private GetCommunityResponse.CommunityData? communityData = null;
-        private CancellationToken cancellationToken;
-        private bool isFetching;
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
-        private SectionFetchData currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
+        protected override SectionFetchData<MemberData> currentSectionFetchData => currentSection == MembersListView.MemberListSections.ALL ? allMembersFetchData : bannedMembersFetchData;
 
         private MemberData lastClickedProfileCtx;
         private CancellationTokenSource friendshipOperationCts = new ();
@@ -71,7 +69,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
-            WarningNotificationView inWorldWarningNotificationView)
+            WarningNotificationView inWorldWarningNotificationView) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -94,7 +92,6 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             this.view.InitGrid(() => currentSectionFetchData);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
-            this.view.NewDataRequested += OnNewDataRequested;
             this.view.ElementMainButtonClicked += OnMainButtonClicked;
             this.view.ElementContextMenuButtonClicked += OnContextMenuButtonClicked;
             this.view.ElementFriendButtonClicked += OnFriendButtonClicked;
@@ -106,12 +103,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.SetProfileDataProvider(profileDataProvider);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             contextMenuOperationCts.SafeCancelAndDispose();
             friendshipOperationCts.SafeCancelAndDispose();
             view.ActiveSectionChanged -= OnMemberListSectionChanged;
-            view.NewDataRequested -= OnNewDataRequested;
             view.ElementMainButtonClicked -= OnMainButtonClicked;
             view.ElementContextMenuButtonClicked -= OnContextMenuButtonClicked;
             view.ElementFriendButtonClicked -= OnFriendButtonClicked;
@@ -119,13 +115,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             view.KickUserRequested -= OnKickUser;
             view.BanUserRequested -= OnBanUser;
-        }
 
-        private void OnNewDataRequested()
-        {
-            if (isFetching) return;
-
-            FetchNewDataAsync(cancellationToken).Forget();
+            base.Dispose();
         }
 
         private void OnMemberListSectionChanged(MembersListView.MemberListSections section)
@@ -147,7 +138,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 currentSection = section;
 
-                SectionFetchData sectionData = currentSectionFetchData;
+                SectionFetchData<MemberData> sectionData = currentSectionFetchData;
 
                 if (sectionData.pageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
@@ -176,9 +167,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.members.Remove(profile);
+                allMembersFetchData.items.Remove(profile);
 
-                List<MemberData> memberList = bannedMembersFetchData.members;
+                List<MemberData> memberList = bannedMembersFetchData.items;
                 profile.role = CommunityMemberRole.none;
                 memberList.Add(profile);
 
@@ -205,7 +196,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.members.Remove(profile);
+                allMembersFetchData.items.Remove(profile);
                 view.RefreshGrid();
             }
         }
@@ -227,7 +218,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.members;
+                List<MemberData> memberList = allMembersFetchData.items;
 
                 foreach (MemberData member in memberList)
                     if (member.memberAddress.Equals(profile.memberAddress))
@@ -260,7 +251,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.members;
+                List<MemberData> memberList = allMembersFetchData.items;
                 foreach (MemberData member in memberList)
                     if (member.memberAddress.Equals(profile.memberAddress))
                     {
@@ -287,17 +278,16 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void OpenProfilePassport(MemberData profile) =>
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(profile.memberAddress)), cancellationToken).Forget();
 
-        public void Reset()
+        public override void Reset()
         {
             communityData = null;
 
             allMembersFetchData.Reset();
             bannedMembersFetchData.Reset();
 
-            view.RefreshGrid();
-
-            isFetching = false;
             panelLifecycleTask?.TrySetResult();
+
+            base.Reset();
         }
 
         private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
@@ -347,24 +337,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private async UniTaskVoid FetchNewDataAsync(CancellationToken ct)
+        protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            isFetching = true;
-
-            SectionFetchData membersData = currentSectionFetchData;
-
-            membersData.pageNumber++;
-            await FetchDataAsync(ct);
-            membersData.totalFetched = membersData.pageNumber * PAGE_SIZE;
-
-            view.RefreshGrid();
-
-            isFetching = false;
-        }
-
-        private async UniTask FetchDataAsync(CancellationToken ct)
-        {
-            SectionFetchData membersData = currentSectionFetchData;
+            SectionFetchData<MemberData> membersData = currentSectionFetchData;
 
             Result<GetCommunityMembersResponse> response = currentSection == MembersListView.MemberListSections.ALL
                 ? await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
@@ -376,16 +351,16 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 membersData.pageNumber--;
-                return;
+                return membersData.totalToFetch;
             }
 
             foreach (var member in response.Value.data.results)
-                if (!membersData.members.Contains(member))
-                    membersData.members.Add(member);
+                if (!membersData.items.Contains(member))
+                    membersData.items.Add(member);
 
-            MembersSorter.SortMembersList(membersData.members);
+            MembersSorter.SortMembersList(membersData.items);
 
-            membersData.totalToFetch = response.Value.data.total;
+            return response.Value.data.total;
         }
 
         public void ShowMembersList(GetCommunityResponse.CommunityData community, CancellationToken ct)
@@ -462,7 +437,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                bannedMembersFetchData.members.Remove(profile);
+                bannedMembersFetchData.items.Remove(profile);
                 view.RefreshGrid();
 
             }

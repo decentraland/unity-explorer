@@ -964,7 +964,10 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     communitiesDataProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    mainUIView.WarningNotification));
+                    placesAPIService,
+                    realmNavigator,
+                    clipboard,
+                    webBrowser));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
