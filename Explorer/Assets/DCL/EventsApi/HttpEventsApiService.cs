@@ -6,6 +6,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -78,6 +79,8 @@ namespace DCL.EventsApi
             int totalAmount = UnityEngine.Random.Range(0, pageSize);
             CommunityEventsDTO.PlaceAndEventDTO[] events = new CommunityEventsDTO.PlaceAndEventDTO[totalAmount];
 
+            DateTime now = DateTime.UtcNow;
+
             for (int i = 0; i < totalAmount; i++)
             {
                 bool userLike = UnityEngine.Random.Range(0, 100) > 50;
@@ -85,6 +88,8 @@ namespace DCL.EventsApi
 
                 if (!userLike)
                     userDislike = UnityEngine.Random.Range(0, 100) > 50;
+
+                DateTime eventStartAt = DateTime.UtcNow.AddHours(UnityEngine.Random.Range(-100, 100));
 
                 events[i] = new CommunityEventsDTO.PlaceAndEventDTO
                 {
@@ -102,17 +107,15 @@ namespace DCL.EventsApi
                     eventData = new EventDTO
                     {
                         id = $"event_{i}",
-                        start_at = DateTimeOffset.UtcNow.AddHours(UnityEngine.Random.Range(-100, 100)).ToUnixTimeSeconds().ToString(),
+                        start_at = eventStartAt.ToString("o"),
                         name = $"Event {i}",
                         total_attendees = UnityEngine.Random.Range(0, 100),
                         attending = UnityEngine.Random.Range(0, 100) > 50,
-                        live = UnityEngine.Random.Range(0, 100) > 50,
+                        live = now > eventStartAt,
                         image = "https://picsum.photos/280/280"
                     }
                 };
             }
-
-            long now = DateTimeOffset.Now.ToUnixTimeSeconds();
 
             return new CommunityEventsDTO
             {
@@ -121,10 +124,10 @@ namespace DCL.EventsApi
                       .OrderByDescending(e => e.eventData.live)
                       .ThenBy(e =>
                        {
-                           if (long.TryParse(e.eventData.start_at, out long startAt))
-                               return Math.Abs(startAt - now);
-                           else
-                               return long.MaxValue;
+                           if (DateTime.TryParse(e.eventData.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
+                               return startAt.CompareTo(now);
+
+                           return 1;
                        })
                       .ToArray()
             };

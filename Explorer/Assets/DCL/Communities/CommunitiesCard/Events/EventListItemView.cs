@@ -13,7 +13,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 {
     public class EventListItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private const string STARTED_EVENT_TIME_FORMAT = "Event started {0} {1} ago";
+        private const string STARTED_EVENT_TIME_FORMAT = "Started {0} {1} ago";
         private const string EVENT_TIME_FORMAT = "ddd, MMM dd @ h:mmtt";
         private const string DAY_STRING = "day";
         private const string HOUR_STRING = "hour";
