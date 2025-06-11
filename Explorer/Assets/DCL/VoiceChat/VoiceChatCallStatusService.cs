@@ -168,5 +168,11 @@ namespace DCL.VoiceChat
             Status = newStatus;
             StatusChanged?.Invoke(Status);
         }
+
+        public void Dispose()
+        {
+            voiceChatService?.Dispose();
+            cts?.Dispose();
+        }
     }
 }

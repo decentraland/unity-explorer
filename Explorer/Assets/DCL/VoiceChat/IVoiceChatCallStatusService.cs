@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.VoiceChat
 {
-    public interface IVoiceChatCallStatusService
+    public interface IVoiceChatCallStatusService : IDisposable
     {
         public delegate void VoiceChatStatusChangeDelegate(VoiceChatStatus newStatus);
         event VoiceChatStatusChangeDelegate StatusChanged;
