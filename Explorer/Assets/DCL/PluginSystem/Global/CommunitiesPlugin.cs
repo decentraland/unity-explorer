@@ -109,7 +109,6 @@ namespace DCL.PluginSystem.Global
                 friendServiceProxy,
                 communitiesDataProvider,
                 webRequestController,
-                inWorldWarningNotificationView,
                 profileRepositoryWrapper,
                 placesAPIService,
                 realmNavigator,
