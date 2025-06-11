@@ -28,6 +28,8 @@ namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewController : IDisposable
     {
+        private const string CHARACTER_PREVIEW_NAME = "CharacterPreview";
+
         private readonly CharacterPreviewCameraController cameraController;
         private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool;
@@ -48,12 +50,12 @@ namespace DCL.CharacterPreview
             Transform? parent = transformPool.Get();
             parent.SetParent(avatarContainer.avatarParent, false);
             parent.gameObject.layer = avatarContainer.avatarParent.gameObject.layer;
-            parent.name = "CharacterPreview";
+            parent.name = CHARACTER_PREVIEW_NAME;
             parent.ResetLocalTRS();
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
-                new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
+                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME),
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings},
                 new HeadIKComponent(),
                 new CharacterEmoteComponent());

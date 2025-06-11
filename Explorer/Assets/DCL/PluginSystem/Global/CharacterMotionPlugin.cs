@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.Global
 {
     public class CharacterMotionPlugin : IDCLGlobalPlugin<CharacterMotionSettings>
     {
-        private readonly ObjectProxy<DCLInput> inputProxy;
+        private readonly DCLInput dclInput;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
@@ -36,9 +36,9 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            ObjectProxy<DCLInput> inputProxy)
+            DCLInput dclInput)
         {
-            this.inputProxy = inputProxy;
+            this.dclInput = dclInput;
             this.assetsProvisioner = assetsProvisioner;
             this.characterObject = characterObject;
             this.debugContainerBuilder = debugContainerBuilder;
@@ -85,7 +85,7 @@ namespace DCL.PluginSystem.Global
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, inputProxy, (ICharacterControllerSettings)settings.Value);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings.Value, dclInput);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
         }

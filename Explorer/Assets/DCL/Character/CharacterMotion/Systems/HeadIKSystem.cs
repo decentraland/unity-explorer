@@ -36,14 +36,14 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> horizontalReset;
         private readonly ElementBinding<float> speed;
         private SingleInstanceEntity settingsEntity;
-        private readonly ObjectProxy<DCLInput> inputProxy;
         private readonly ICharacterControllerSettings settings;
+        private readonly DCLInput dclInput;
         private readonly Vector3[] previewImageCorners = new Vector3[4];
 
-        private HeadIKSystem(World world, IDebugContainerBuilder builder, ObjectProxy<DCLInput> inputProxy, ICharacterControllerSettings settings) : base(world)
+        private HeadIKSystem(World world, IDebugContainerBuilder builder, ICharacterControllerSettings settings, DCLInput dclInput) : base(world)
         {
-            this.inputProxy = inputProxy;
             this.settings = settings;
+            this.dclInput = dclInput;
 
             verticalLimit = new ElementBinding<float>(0);
             horizontalLimit = new ElementBinding<float>(0);
@@ -95,7 +95,10 @@ namespace DCL.CharacterMotion.Systems
                 Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
                 previewComponent.Settings.AvatarDepth);
 
-            Vector2 mousePos = Mouse.current.position.value;
+            if(!dclInput.UI.Point.enabled)
+                dclInput.UI.Point.Enable();
+
+            Vector2 mousePos = dclInput.UI.Point.ReadValue<Vector2>();
             Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
 
             var screenVector = objectScreenPos - mouseScreenPos;
