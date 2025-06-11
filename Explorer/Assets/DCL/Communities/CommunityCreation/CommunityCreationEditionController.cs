@@ -11,6 +11,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
+using DCL.WebRequests;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
@@ -37,6 +38,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
+        private readonly IWebRequestController webRequestController;
         private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
@@ -57,7 +59,6 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
-        private byte[] currentThumbnail;
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
@@ -67,6 +68,7 @@ namespace DCL.Communities.CommunityCreation
             INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
+            IWebRequestController webRequestController,
             CommunityCreationEditionEventBus communityCreationEditionEventBus) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
@@ -75,12 +77,14 @@ namespace DCL.Communities.CommunityCreation
             this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
+            this.webRequestController = webRequestController;
             this.communityCreationEditionEventBus = communityCreationEditionEventBus;
         }
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.ConvertGetNameDescriptionUrlsToClickableLinks(GoToAnyLinkFromGetNameDescription);
+            viewInstance!.ConfigureImageController(webRequestController);
+            viewInstance.ConvertGetNameDescriptionUrlsToClickableLinks(GoToAnyLinkFromGetNameDescription);
             viewInstance.GetNameButtonClicked += GoToGetNameLink;
             viewInstance.CancelButtonClicked += OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked += OpenImageSelection;
@@ -96,7 +100,6 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
-            currentThumbnail = null;
             loadLandsAndWorldsCts = loadLandsAndWorldsCts.SafeRestart();
             LoadLandsAndWorldsAsync(loadLandsAndWorldsCts.Token).Forget();
 
@@ -170,17 +173,20 @@ namespace DCL.Communities.CommunityCreation
         {
             FileBrowser.Instance.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
             byte[] data = FileBrowser.Instance.CurrentOpenSingleFileData;
-            Texture2D texture = data.CTToTexture();
 
-            if (texture.width > MAX_IMAGE_DIMENSION_PIXELS || texture.height > MAX_IMAGE_DIMENSION_PIXELS || data.Length > MAX_IMAGE_SIZE_BYTES)
+            if (data != null)
             {
-                showErrorCts = showErrorCts.SafeRestart();
-                viewInstance!.WarningNotificationView.AnimatedShowAsync(INCOMPATIBLE_IMAGE_ERROR, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token).Forget();
-                return;
-            }
+                Texture2D texture = data.CTToTexture();
 
-            viewInstance!.SetProfileSelectedImage(data.CTToSprite());
-            currentThumbnail = data;
+                if (texture.width > MAX_IMAGE_DIMENSION_PIXELS || texture.height > MAX_IMAGE_DIMENSION_PIXELS || data.Length > MAX_IMAGE_SIZE_BYTES)
+                {
+                    showErrorCts = showErrorCts.SafeRestart();
+                    viewInstance!.WarningNotificationView.AnimatedShowAsync(INCOMPATIBLE_IMAGE_ERROR, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token).Forget();
+                    return;
+                }
+
+                viewInstance!.SetProfileSelectedImage(data.CTToSprite());
+            }
         }
 
         private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
@@ -263,21 +269,23 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
+            //"https://assets-cdn-decentraland-zone-contentbucket-79cb984.s3.us-east-1.amazonaws.com/social/communities/a5462ae8-841a-4423-992f-0d598079a8ea/raw-thumbnail.png"
+            viewInstance.SetProfileSelectedImage(imageUrl: result.Value.data.thumbnails is { Length: > 0 } ? result.Value.data.thumbnails[0] : null);
             viewInstance.SetCommunityName(result.Value.data.name);
             viewInstance.SetCommunityDescription(result.Value.data.description);
             viewInstance.SetCreationPanelAsLoading(false);
         }
 
-        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds)
+        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, lands, worlds, createCommunityCts.Token).Forget();
+            CreateCommunityAsync(name, description, lands, worlds, thumbnail, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, currentThumbnail, lands, worlds, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, thumbnail, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)
@@ -292,16 +300,16 @@ namespace DCL.Communities.CommunityCreation
             communityCreationEditionEventBus.OnCommunityCreated();
         }
 
-        private void UpdateCommunity(string name, string description)
+        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            UpdateCommunityAsync(inputData.CommunityId, name, description, createCommunityCts.Token).Forget();
+            UpdateCommunityAsync(inputData.CommunityId, name, description, lands, worlds, thumbnail, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, CancellationToken ct)
+        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, null, null, null, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, thumbnail, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)

@@ -127,6 +127,7 @@ namespace DCL.PluginSystem.Global
                 nftNamesProvider,
                 placesAPIService,
                 selfProfile,
+                webRequestController,
                 communityCreationEditionEventBus);
             mvcManager.RegisterController(communityCreationEditionController);
         }

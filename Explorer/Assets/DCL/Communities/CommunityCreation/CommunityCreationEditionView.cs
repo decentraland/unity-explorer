@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.WebRequests;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -22,8 +23,8 @@ namespace DCL.Communities.CommunityCreation
         public Action CancelButtonClicked;
         public Action GetNameButtonClicked;
         public Action SelectProfilePictureButtonClicked;
-        public Action<string, string, List<string>, List<string>> CreateCommunityButtonClicked;
-        public Action<string, string> SaveCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, byte[]> CreateCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>, byte[]> SaveCommunityButtonClicked;
         public Action<int> AddPlaceButtonClicked;
         public Action<int> RemovePlaceButtonClicked;
 
@@ -43,7 +44,8 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_Text creationPanelTitleText;
         [SerializeField] private ScrollRect creationPanelScrollRect;
         [SerializeField] private Button creationPanelEditProfilePictureButton;
-        [SerializeField] private Image creationPanelProfileSelectedImage;
+        [SerializeField] private ImageView creationPanelProfileSelectedImage;
+        [SerializeField] private Sprite creationPanelProfileDefaultSelectedImage;
         [SerializeField] private TMP_InputField creationPanelCommunityNameInputField;
         [SerializeField] private TMP_Text creationPanelCommunityNameCharCounter;
         [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField;
@@ -62,7 +64,9 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
+        private ImageController imageController;
         private bool isEditionMode;
+        private bool isDefaultImageSelected;
 
         private CancellationTokenSource updateScrollPositionCts;
 
@@ -87,10 +91,26 @@ namespace DCL.Communities.CommunityCreation
                         lands.Add(placeTag.Id);
                 }
 
+                byte[] imageData = isDefaultImageSelected ?
+                    null :
+                    creationPanelProfileSelectedImage.ImageSprite ?
+                        creationPanelProfileSelectedImage.ImageSprite.texture.GetRawTextureData() :
+                        null;
+
                 if (!isEditionMode)
-                    CreateCommunityButtonClicked?.Invoke(creationPanelCommunityNameInputField.text, creationPanelCommunityDescriptionInputField.text, lands, worlds);
+                    CreateCommunityButtonClicked?.Invoke(
+                        creationPanelCommunityNameInputField.text,
+                        creationPanelCommunityDescriptionInputField.text,
+                        lands,
+                        worlds,
+                        imageData);
                 else
-                    SaveCommunityButtonClicked?.Invoke(creationPanelCommunityNameInputField.text, creationPanelCommunityDescriptionInputField.text);
+                    SaveCommunityButtonClicked?.Invoke(
+                        creationPanelCommunityNameInputField.text,
+                        creationPanelCommunityDescriptionInputField.text,
+                        lands,
+                        worlds,
+                        imageData);
             });
             creationPanelPlacesDropdown.onValueChanged.AddListener(index => creationPanelAddPlaceButton.interactable = index > 0);
             creationPanelAddPlaceButton.onClick.AddListener(() => AddPlaceButtonClicked?.Invoke(creationPanelPlacesDropdown.value - 1)); // The first option is the default one, so we need to subtract 1 to the index
@@ -151,10 +171,33 @@ namespace DCL.Communities.CommunityCreation
                 CheckForCreateButtonAvailability();
         }
 
+        public void ConfigureImageController(IWebRequestController webRequestController)
+        {
+            if (imageController != null)
+                return;
+
+            imageController = new ImageController(creationPanelProfileSelectedImage, webRequestController);
+        }
+
+        public void SetProfileSelectedImage(string imageUrl)
+        {
+            isDefaultImageSelected = false;
+            creationPanelProfileSelectedImage.gameObject.SetActive(true);
+
+            if (!string.IsNullOrEmpty(imageUrl))
+                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+            else
+            {
+                imageController.SetImage(creationPanelProfileDefaultSelectedImage);
+                isDefaultImageSelected = true;
+            }
+        }
+
         public void SetProfileSelectedImage(Sprite sprite)
         {
+            isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(sprite is not null);
-            creationPanelProfileSelectedImage.sprite = sprite;
+            imageController.SetImage(sprite);
         }
 
         public void SetCommunityName(string text)
@@ -228,7 +271,7 @@ namespace DCL.Communities.CommunityCreation
         private void CleanCreationPanel()
         {
             SetCommunityCreationInProgress(false);
-            SetProfileSelectedImage(null);
+            SetProfileSelectedImage(sprite: null);
             SetCommunityName(string.Empty);
             SetCommunityDescription(string.Empty);
             SetPlacesSelector(new List<string>());

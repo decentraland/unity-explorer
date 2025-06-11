@@ -194,11 +194,10 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnOpenCommunityWizard()
         {
-            // TODO (Santi): Uncomment this when the community edition flow is ready in the backend side
-            // mvcManager.ShowAsync(
-            //     CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
-            //         canCreateCommunities: true,
-            //         communityId: communityData.id)));
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    canCreateCommunities: true,
+                    communityId: communityData.id)));
         }
 
         private void JoinCommunity()
