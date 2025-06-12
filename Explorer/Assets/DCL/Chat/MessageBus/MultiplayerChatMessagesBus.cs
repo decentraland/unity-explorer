@@ -87,22 +87,13 @@ namespace DCL.Chat.MessageBus
 
                 ChatChannel.ChannelId parsedChannelId;
 
-                // TODO: Remove this when protobuf is ready
-                string topic = receivedMessage.Topic;
-                //topic.Split(":from:", 1, StringSplitOptions.RemoveEmptyEntries);
-                if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
-                {
-                    int topicPartLength = "community:c1e1a1b2-1111-4a1b-9111-111111111111".Length;
-                    topic = receivedMessage.Topic.Substring(0, topicPartLength);
-                }
-
                 switch (channelType)
                 {
                     case ChatChannel.ChatChannelType.NEARBY:
                         parsedChannelId = ChatChannel.NEARBY_CHANNEL_ID;
                         break;
                     case ChatChannel.ChatChannelType.COMMUNITY:
-                        parsedChannelId = new ChatChannel.ChannelId(topic);
+                        parsedChannelId = new ChatChannel.ChannelId(receivedMessage.Topic);
                         break;
                     case ChatChannel.ChatChannelType.USER:
                         parsedChannelId = new ChatChannel.ChannelId(receivedMessage.FromWalletId);
@@ -112,15 +103,10 @@ namespace DCL.Chat.MessageBus
                         break;
                 }
 
-                // TODO: Remove this when protobuf is ready
-                string walletId = receivedMessage.FromWalletId;
-                if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
-                {
-                    int walletPartLength = "community:c1e1a1b2-1111-4a1b-9111-111111111111:from:".Length;
-                    walletId = receivedMessage.Topic.Substring(walletPartLength);
-                }
+                string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
+                                                                           : receivedMessage.FromWalletId;
 
-                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, topic);
+                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Topic);
 
                 MessageAdded?.Invoke(parsedChannelId, newMessage);
             }
