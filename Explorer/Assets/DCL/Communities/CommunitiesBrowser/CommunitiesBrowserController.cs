@@ -23,7 +23,7 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const int COMMUNITIES_PER_PAGE = 20;
         private const string MY_COMMUNITIES_RESULTS_TITLE = "My Communities";
-        private const string MY_GENERAL_RESULTS_TITLE = "Decentraland Communities";
+        private const string MY_GENERAL_RESULTS_TITLE = "Browse Communities";
         private const int SEARCH_AWAIT_TIME = 1000;
         private const string SEARCH_RESULTS_TITLE_FORMAT = "Results for '{0}'";
         private const string MY_COMMUNITIES_LOADING_ERROR_MESSAGE = "There was an error loading My Communities. Please try again.";

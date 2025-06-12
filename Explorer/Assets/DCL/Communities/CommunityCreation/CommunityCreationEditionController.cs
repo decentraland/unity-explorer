@@ -270,7 +270,7 @@ namespace DCL.Communities.CommunityCreation
             }
 
             //"https://assets-cdn-decentraland-zone-contentbucket-79cb984.s3.us-east-1.amazonaws.com/social/communities/a5462ae8-841a-4423-992f-0d598079a8ea/raw-thumbnail.png"
-            viewInstance.SetProfileSelectedImage(imageUrl: result.Value.data.thumbnails is { Length: > 0 } ? result.Value.data.thumbnails[0] : null);
+            viewInstance.SetProfileSelectedImage(imageUrl: result.Value.data.thumbnails?.raw);
             viewInstance.SetCommunityName(result.Value.data.name);
             viewInstance.SetCommunityDescription(result.Value.data.description);
             viewInstance.SetCreationPanelAsLoading(false);
