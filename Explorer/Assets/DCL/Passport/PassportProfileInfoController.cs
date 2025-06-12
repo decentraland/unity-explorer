@@ -27,23 +27,26 @@ namespace DCL.Passport
             this.playerEntity = playerEntity;
         }
 
-        public async UniTask UpdateProfileAsync(CancellationToken ct)
+        public async UniTask UpdateProfileAsync(Profile profile, CancellationToken ct)
         {
             try
             {
                 // Update profile data
-                var profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
+                var updatedProfile = await selfProfile.UpdateProfileAsync(profile, ct,
+                    // No need to update avatar, since the only thing you can update from the passport is the profile description, not wearables nor emotes
+                    updateAvatarInWorld: false);
 
-                if (profile != null)
+                if (updatedProfile != null)
                 {
                     // Update player entity in world
-                    profile.IsDirty = true;
-                    world.Set(playerEntity, profile);
+                    updatedProfile.IsDirty = true;
+                    world.Set(playerEntity, updatedProfile);
 
-                    OnProfilePublished?.Invoke(profile);
+                    OnProfilePublished?.Invoke(updatedProfile);
                 }
             }
             catch (OperationCanceledException) { }
+            catch (IdenticalProfileUpdateException) { }
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
