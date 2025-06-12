@@ -33,7 +33,7 @@ namespace DCL.Settings.ModuleControllers
             else if (resolution.width > 2000 || resolution.height > 2000)
                 stpScale = 0.6f;
 
-            SetSTPSetting(stpScale);
+            view.SliderView.Slider.value = stpScale;
         }
 
         private void SetSTPSetting(float sliderValue)
