@@ -103,7 +103,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
             {
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume, dt * audioFadeSpeed);
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume, dt * audioFadeSpeed * actualVolume);
             }
 
             var address = MediaAddress.New(sdkComponent.Url!);
@@ -121,7 +121,7 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
             {
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume, dt * audioFadeSpeed);
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume, dt * audioFadeSpeed * actualVolume);
             }
 
             var address = MediaAddress.New(sdkComponent.Src!);
