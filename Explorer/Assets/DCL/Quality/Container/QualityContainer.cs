@@ -76,15 +76,10 @@ namespace DCL.Quality
 
             QualityLevelController.AddDebugViews(widget.Value, onDebugViewUpdate);
 
-            ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale = 1f;
-
             stpValue = new ElementBinding<float>(1,
                 evt =>
                 {
-                    var urpAsset = (UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline;
-
-                    // Apply your desired scale
-                    urpAsset.renderScale = evt.newValue;
+                    ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale = evt.newValue;
                 });
 
             widget.Value.AddFloatSliderField(
