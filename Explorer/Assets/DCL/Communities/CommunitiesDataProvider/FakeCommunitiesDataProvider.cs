@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -38,7 +40,6 @@ namespace DCL.Communities
                     ownerId = "test",
                     privacy = communityData.privacy,
                     role = communityData.role,
-                    places = new [] { "land1", "land2" },
                     membersCount = communityData.memberCount,
                 }
             };
@@ -151,6 +152,88 @@ namespace DCL.Communities
 
         public async UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
             throw new NotImplementedException();
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetCommunityPlacesAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+
+            int totalPlaces = UnityEngine.Random.Range(0, elementsPerPage);
+
+            List<PlacesData.PlaceInfo> result = new List<PlacesData.PlaceInfo>(totalPlaces);
+
+            bool userLike = UnityEngine.Random.Range(0, 100) > 50;
+            bool userDislike = false;
+
+            if (!userLike)
+                userDislike = UnityEngine.Random.Range(0, 100) > 50;
+
+            for (int i = 0; i < totalPlaces; i++)
+            {
+                result.Add(new PlacesData.PlaceInfo(new Vector2Int(UnityEngine.Random.Range(-150, 151), UnityEngine.Random.Range(-150, 151)))
+                {
+                    id = $"place-id-{i + 1}",
+                    title = $"Place {i + 1}",
+                    description = $"Description for Place {i + 1}",
+                    user_count = UnityEngine.Random.Range(0, 100),
+                    user_like = userLike,
+                    user_dislike = userDislike,
+                    user_favorite = UnityEngine.Random.Range(0, 100) > 50,
+                    world_name = UnityEngine.Random.Range(0, 100) > 50 ? $"WorldName{i}.dcl.eth" : string.Empty,
+                });
+            }
+
+            return new PlacesData.PlacesAPIResponse()
+            {
+                ok = true,
+                total = totalPlaces,
+                data = result
+            };
+        }
+
+        public async UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+
+            int totalAmount = UnityEngine.Random.Range(0, elementsPerPage);
+            CommunityEventsResponse.CommunityEvent[] events = new CommunityEventsResponse.CommunityEvent[totalAmount];
+
+            DateTime now = DateTime.UtcNow;
+
+            for (int i = 0; i < totalAmount; i++)
+            {
+                DateTime eventStartAt = DateTime.UtcNow.AddHours(UnityEngine.Random.Range(-100, 100));
+
+                events[i] = new CommunityEventsResponse.CommunityEvent
+                {
+                    id = $"event_{i}",
+                    start_at = eventStartAt.ToString("o"),
+                    name = $"Event {i}",
+                    total_attendees = UnityEngine.Random.Range(0, 100),
+                    attending = UnityEngine.Random.Range(0, 100) > 50,
+                    live = now > eventStartAt,
+                    image = "https://picsum.photos/280/280",
+                    placeId = $"place_{i}",
+                };
+            }
+
+            return new CommunityEventsResponse
+            {
+                data = events
+                      .OrderByDescending(e => e.live)
+                      .ThenBy(e =>
+                       {
+                           if (DateTime.TryParse(e.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
+                               return startAt.CompareTo(now);
+
+                           return 1;
+                       })
+                      .ToArray(),
+                total = totalAmount,
+                page = pageNumber,
+                pages = (int)Math.Ceiling((double)totalAmount / elementsPerPage),
+                limit = elementsPerPage
+            };
+        }
 
         public async UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             true;

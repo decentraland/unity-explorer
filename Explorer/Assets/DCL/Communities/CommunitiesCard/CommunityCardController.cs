@@ -135,6 +135,7 @@ namespace DCL.Communities.CommunitiesCard
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 webRequestController,
+                communitiesDataProvider,
                 placesAPIService,
                 viewInstance.warningNotificationView,
                 viewInstance.successNotificationView,
@@ -145,13 +146,15 @@ namespace DCL.Communities.CommunitiesCard
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
+                placesAPIService,
                 webRequestController,
                 mvcManager,
                 viewInstance.warningNotificationView,
                 viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
-                realmNavigator);
+                realmNavigator,
+                communitiesDataProvider);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
@@ -201,7 +204,8 @@ namespace DCL.Communities.CommunitiesCard
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityData.places, sectionCancellationTokenSource.Token).Forget();
+                    //TODO: fix the place ids
+                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, Array.Empty<string>(), sectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);

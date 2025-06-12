@@ -7,7 +7,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using PlaceAndEventDTO = DCL.EventsApi.CommunityEventsDTO.PlaceAndEventDTO;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
@@ -72,7 +71,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, offlineShareButton.transform.position));
         }
 
-        private static string GetEventTimeText(EventDTO data)
+        private static string GetEventTimeText(CommunityEventsResponse.CommunityEvent data)
         {
             string schedule = string.Empty;
 
@@ -103,23 +102,23 @@ namespace DCL.Communities.CommunitiesCard.Events
             eventData = data;
             imageController ??= new ImageController(eventThumbnailImage, webRequestController);
 
-            imageController.RequestImage(data.eventData.image);
-            eventTimeText.text = GetEventTimeText(data.eventData);
-            eventNameText.text = data.eventData.name;
+            imageController.RequestImage(data.Event.image);
+            eventTimeText.text = GetEventTimeText(data.Event);
+            eventNameText.text = data.Event.name;
             UpdateInterestedCounter();
-            eventOnlineUsersText.text = data.place.user_count.ToString();
+            eventOnlineUsersText.text = data.Place.user_count.ToString();
 
             UpdateInterestedButtonState();
-            liveBadgeContainer.SetActive(data.eventData.live);
-            interestedContainer.SetActive(data.eventData is { live: false, total_attendees: > 0 });
+            liveBadgeContainer.SetActive(data.Event.live);
+            interestedContainer.SetActive(data.Event is { live: false, total_attendees: > 0 });
             UnHoverAnimation();
         }
 
         public void UpdateInterestedButtonState() =>
-            interestedButton.SetSelected(eventData!.Value.eventData.attending);
+            interestedButton.SetSelected(eventData!.Value.Event.attending);
 
         public void UpdateInterestedCounter() =>
-            eventInterestedUsersText.text = eventData!.Value.eventData.total_attendees.ToString();
+            eventInterestedUsersText.text = eventData!.Value.Event.total_attendees.ToString();
 
         public void SubscribeToInteractions(Action<PlaceAndEventDTO> mainAction,
                                             Action<PlaceAndEventDTO> jumpInAction,
@@ -139,8 +138,8 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         public void OnPointerEnter(PointerEventData data)
         {
-            offlineInteractionContainer.SetActive(!eventData!.Value.eventData.live);
-            liveInteractionContainer.SetActive(eventData!.Value.eventData.live);
+            offlineInteractionContainer.SetActive(!eventData!.Value.Event.live);
+            liveInteractionContainer.SetActive(eventData!.Value.Event.live);
         }
 
         public void OnPointerExit(PointerEventData data)

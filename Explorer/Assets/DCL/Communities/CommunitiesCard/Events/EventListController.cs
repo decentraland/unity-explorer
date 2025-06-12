@@ -5,17 +5,19 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
-using PlaceAndEventDTO = DCL.EventsApi.CommunityEventsDTO.PlaceAndEventDTO;
+using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
@@ -33,13 +35,17 @@ namespace DCL.Communities.CommunitiesCard.Events
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
 
         private readonly EventListView view;
+        private readonly IPlacesAPIService placesAPIService;
         private readonly IEventsApiService eventsApiService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly WarningNotificationView inWorldSuccessNotificationView;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
+        private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
+        private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
@@ -48,21 +54,25 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         public EventListController(EventListView view,
             IEventsApiService eventsApiService,
+            IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
             WarningNotificationView inWorldWarningNotificationView,
             WarningNotificationView inWorldSuccessNotificationView,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IRealmNavigator realmNavigator) : base(view, PAGE_SIZE)
+            IRealmNavigator realmNavigator,
+            ICommunitiesDataProvider communitiesDataProvider) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.eventsApiService = eventsApiService;
+            this.placesAPIService = placesAPIService;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
+            this.communitiesDataProvider = communitiesDataProvider;
 
             view.InitList(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
 
@@ -95,24 +105,24 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private static string GetEventCopyLink(PlaceAndEventDTO eventData) =>
-            eventData.eventData.live
+            eventData.Event.live
                 ? GetPlaceJumpInLink(eventData)
                 : GetEventWebsiteLink(eventData);
 
         private static string GetPlaceJumpInLink(PlaceAndEventDTO eventData)
         {
-            if (!string.IsNullOrEmpty(eventData.place.world_name))
-                return string.Format(JUMP_IN_WORLD_LINK, eventData.place.world_name);
+            if (!string.IsNullOrEmpty(eventData.Place.world_name))
+                return string.Format(JUMP_IN_WORLD_LINK, eventData.Place.world_name);
 
-            VectorUtilities.TryParseVector2Int(eventData.place.base_position, out var coordinates);
+            VectorUtilities.TryParseVector2Int(eventData.Place.base_position, out var coordinates);
             return string.Format(JUMP_IN_GC_LINK, coordinates.x, coordinates.y);
         }
 
         private static string GetEventWebsiteLink(PlaceAndEventDTO eventData) =>
-            string.Format(EVENT_WEBSITE_LINK, eventData.eventData.id);
+            string.Format(EVENT_WEBSITE_LINK, eventData.Event.id);
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl(string.Format(TWITTER_NEW_POST_LINK, eventData.eventData.name, "DCLPlace", GetEventCopyLink(eventData)));
+            webBrowser.OpenUrl(string.Format(TWITTER_NEW_POST_LINK, eventData.Event.name, "DCLPlace", GetEventCopyLink(eventData)));
 
         private void OnInterestedButtonClicked(PlaceAndEventDTO eventData, EventListItemView eventItemView)
         {
@@ -122,10 +132,10 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             async UniTaskVoid UpdateUserInterestedAsync(CancellationToken ct)
             {
-                var result = eventData.eventData.attending
-                    ? await eventsApiService.MarkAsNotInterestedAsync(eventData.eventData.id, ct)
+                var result = eventData.Event.attending
+                    ? await eventsApiService.MarkAsNotInterestedAsync(eventData.Event.id, ct)
                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                    : await eventsApiService.MarkAsInterestedAsync(eventData.eventData.id, ct)
+                    : await eventsApiService.MarkAsInterestedAsync(eventData.Event.id, ct)
                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (!result.Success)
@@ -135,8 +145,8 @@ namespace DCL.Communities.CommunitiesCard.Events
                     return;
                 }
 
-                eventData.eventData.attending = !eventData.eventData.attending;
-                eventData.eventData.total_attendees += eventData.eventData.attending ? 1 : -1;
+                eventData.Event.attending = !eventData.Event.attending;
+                eventData.Event.total_attendees += eventData.Event.attending ? 1 : -1;
 
                 eventItemView.UpdateInterestedCounter();
                 eventItemView.UpdateInterestedButtonState();
@@ -147,10 +157,10 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
 
-            if (!string.IsNullOrWhiteSpace(eventData.place.world_name))
-                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.place.world_name).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token).Forget();
+            if (!string.IsNullOrWhiteSpace(eventData.Place.world_name))
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Place.world_name).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token).Forget();
             else
-                realmNavigator.TeleportToParcelAsync(eventData.place.base_position_processed, eventCardOperationsCts.Token, false).Forget();
+                realmNavigator.TeleportToParcelAsync(eventData.Place.base_position_processed, eventCardOperationsCts.Token, false).Forget();
         }
 
         private void OnMainButtonClicked(PlaceAndEventDTO eventData) =>
@@ -172,19 +182,44 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            Result<CommunityEventsDTO> response = await eventsApiService.GetEventsByCommunityAsync(communityData!.Value.id, eventsFetchData.pageNumber, PAGE_SIZE, ct)
+            Result<CommunityEventsResponse> eventResponse = await communitiesDataProvider.GetCommunityEventsAsync(communityData!.Value.id, eventsFetchData.pageNumber, PAGE_SIZE, ct)
                                                                         .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (!response.Success)
+            if (!eventResponse.Success)
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.pageNumber--;
                 return eventsFetchData.totalToFetch;
             }
 
-            eventsFetchData.items.AddRange(response.Value.data);
+            eventPlaceIds.Clear();
 
-            return response.Value.totalAmount;
+            foreach (var item in eventResponse.Value.data)
+                eventPlaceIds.Add(item.placeId);
+
+            Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!placesResponse.Success)
+            {
+                //If the request fails, we restore the previous page number in order to retry the same request next time
+                eventsFetchData.pageNumber--;
+                return eventsFetchData.totalToFetch;
+            }
+
+            placeInfoCache.Clear();
+
+            foreach (var place in placesResponse.Value.data)
+                placeInfoCache.Add(place.id, place);
+
+            foreach (var item in eventResponse.Value.data)
+                eventsFetchData.items.Add(new PlaceAndEventDTO
+                {
+                    Place = placeInfoCache[item.placeId],
+                    Event = item
+                });
+
+            return eventResponse.Value.total;
         }
 
         public void ShowEvents(CommunityData community, CancellationToken token)

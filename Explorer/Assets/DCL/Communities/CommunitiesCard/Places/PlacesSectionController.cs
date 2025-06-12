@@ -16,7 +16,6 @@ using Utility;
 using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
-using Random = UnityEngine.Random;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -37,6 +36,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
 
         private readonly PlacesSectionView view;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
@@ -53,6 +53,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public PlacesSectionController(PlacesSectionView view,
             IWebRequestController webRequestController,
+            ICommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
             WarningNotificationView inWorldSuccessNotificationView,
@@ -62,6 +63,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IWebBrowser webBrowser) : base (view, PAGE_SIZE)
         {
             this.view = view;
+            this.communitiesDataProvider = communitiesDataProvider;
             this.placesAPIService = placesAPIService;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
@@ -231,29 +233,18 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            if (communityData!.Value.places == null || communityData.Value.places.Length == 0)
-                return 0;
-
-            int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
-            int total = communityData!.Value.places.Length;
-
-            int remaining = total - offset;
-            int count = Math.Min(PAGE_SIZE, remaining);
-
-            ArraySegment<string> slice = new ArraySegment<string>(communityData.Value.places, offset, count);
-
-            Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
+            Result<PlacesData.PlacesAPIResponse> response = await communitiesDataProvider.GetCommunityPlacesAsync(communityData!.Value.id, placesFetchData.pageNumber, PAGE_SIZE, ct)
                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.pageNumber--;
-                return total;
+                return placesFetchData.totalToFetch;
             }
 
             placesFetchData.items.AddRange(response.Value.data);
 
-            return total;
+            return response.Value.total;
         }
 
         public void ShowPlaces(CommunityData community, CancellationToken token)
@@ -261,17 +252,6 @@ namespace DCL.Communities.CommunitiesCard.Places
             cancellationToken = token;
 
             if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
-
-            //TODO: remove this once we have real data
-            if ((community.places == null || community.places.Length == 0) && Random.Range(0, 100) < 50)
-            {
-                string[] fakePlaces = new string[PAGE_SIZE + 5];
-                for (int i = 0; i < fakePlaces.Length; i++)
-                {
-                    fakePlaces[i] = $"fake-place-id-{i + 1}";
-                }
-                community.places = fakePlaces;
-            }
 
             communityData = community;
             userCanModify = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;

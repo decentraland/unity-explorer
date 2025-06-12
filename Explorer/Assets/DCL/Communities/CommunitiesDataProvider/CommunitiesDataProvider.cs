@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -77,6 +78,12 @@ namespace DCL.Communities
 
         public UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
             fakeDataProvider.GetOnlineCommunityMembersAsync(ct);
+
+        public UniTask<PlacesData.PlacesAPIResponse> GetCommunityPlacesAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
+            fakeDataProvider.GetCommunityPlacesAsync(communityId, pageNumber, elementsPerPage, ct);
+
+        public UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
+            fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);
 
         public UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             fakeDataProvider.KickUserFromCommunityAsync(userId, communityId, ct);

@@ -1,4 +1,3 @@
-using DCL.EventsApi;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Utilities;
@@ -9,7 +8,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
-using PlaceAndEventDTO = DCL.EventsApi.CommunityEventsDTO.PlaceAndEventDTO;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
