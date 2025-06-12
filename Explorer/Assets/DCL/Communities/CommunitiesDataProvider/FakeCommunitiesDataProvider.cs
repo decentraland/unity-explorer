@@ -170,41 +170,18 @@ namespace DCL.Communities
         public async UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<PlacesData.PlacesAPIResponse> GetCommunityPlacesAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        public async UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct)
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
 
-            int totalPlaces = UnityEngine.Random.Range(0, elementsPerPage);
+            int totalPlaces = UnityEngine.Random.Range(0, 10);
 
-            List<PlacesData.PlaceInfo> result = new List<PlacesData.PlaceInfo>(totalPlaces);
-
-            bool userLike = UnityEngine.Random.Range(0, 100) > 50;
-            bool userDislike = false;
-
-            if (!userLike)
-                userDislike = UnityEngine.Random.Range(0, 100) > 50;
-
+            List<string> places = new List<string>(totalPlaces);
             for (int i = 0; i < totalPlaces; i++)
             {
-                result.Add(new PlacesData.PlaceInfo(new Vector2Int(UnityEngine.Random.Range(-150, 151), UnityEngine.Random.Range(-150, 151)))
-                {
-                    id = $"place-id-{i + 1}",
-                    title = $"Place {i + 1}",
-                    description = $"Description for Place {i + 1}",
-                    user_count = UnityEngine.Random.Range(0, 100),
-                    user_like = userLike,
-                    user_dislike = userDislike,
-                    user_favorite = UnityEngine.Random.Range(0, 100) > 50,
-                    world_name = UnityEngine.Random.Range(0, 100) > 50 ? $"WorldName{i}.dcl.eth" : string.Empty,
-                });
+                places.Add($"place_{i}");
             }
-
-            return new PlacesData.PlacesAPIResponse()
-            {
-                ok = true,
-                total = totalPlaces,
-                data = result
-            };
+            return places;
         }
 
         public async UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)

@@ -79,8 +79,8 @@ namespace DCL.Communities
         public UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
             fakeDataProvider.GetOnlineCommunityMembersAsync(ct);
 
-        public UniTask<PlacesData.PlacesAPIResponse> GetCommunityPlacesAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityPlacesAsync(communityId, pageNumber, elementsPerPage, ct);
+        public UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct) =>
+            fakeDataProvider.GetCommunityPlacesAsync(communityId, ct);
 
         public UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);

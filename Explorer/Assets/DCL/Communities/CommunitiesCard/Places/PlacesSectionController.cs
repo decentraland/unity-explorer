@@ -11,6 +11,7 @@ using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
@@ -44,6 +45,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
+
+        private string[] communityPlaceIds;
 
         protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
 
@@ -227,13 +230,35 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             communityData = null;
             placesFetchData.Reset();
+            communityPlaceIds = null;
             view.SetCanModify(false);
             base.Reset();
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            Result<PlacesData.PlacesAPIResponse> response = await communitiesDataProvider.GetCommunityPlacesAsync(communityData!.Value.id, placesFetchData.pageNumber, PAGE_SIZE, ct)
+            if (communityPlaceIds == null || communityPlaceIds.Length == 0)
+            {
+                Result<List<string>> placeIdsResult = await communitiesDataProvider.GetCommunityPlacesAsync(communityData!.Value.id, ct)
+                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                if (!placeIdsResult.Success)
+                {
+                    placesFetchData.pageNumber--;
+                    return placesFetchData.totalToFetch;
+                }
+
+                communityPlaceIds = placeIdsResult.Value.ToArray();
+            }
+
+            int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
+            int total = communityPlaceIds.Length;
+
+            int remaining = total - offset;
+            int count = Math.Min(PAGE_SIZE, remaining);
+
+            ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
+
+            Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!response.Success || !response.Value.ok)
