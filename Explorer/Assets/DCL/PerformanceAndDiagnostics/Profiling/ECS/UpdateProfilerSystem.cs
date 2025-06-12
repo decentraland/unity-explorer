@@ -6,7 +6,9 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner;
 using SceneRunner.Scene;
+#if UNITY_EDITOR
 using System.Net.NetworkInformation;
+#endif
 
 namespace DCL.Profiling.ECS
 {
@@ -30,6 +32,7 @@ namespace DCL.Profiling.ECS
             this.profiler = profiler;
             this.scenesCache = scenesCache;
 
+#if UNITY_EDITOR
             foreach (NetworkInterface? ns in NetworkInterface.GetAllNetworkInterfaces())
                 if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
                 {
@@ -42,6 +45,7 @@ namespace DCL.Profiling.ECS
 
             // NetworkInterface.GetAllNetworkInterfaces() call is expensive (~5 ms). So it is used only for debug purposes.
             UnityEngine.Profiling.Profiler.SetCategoryEnabled(NetworkProfilerCounters.CATEGORY, false);
+#endif
         }
 
         protected override void Update(float t)
@@ -88,7 +92,9 @@ namespace DCL.Profiling.ECS
                 JavaScriptProfilerCounters.TOTAL_EXTERNAL_SIZE.Sample(profiler.AllScenesTotalExternalSize);
                 JavaScriptProfilerCounters.ACTIVE_ENGINES.Sample(profiler.ActiveEngines);
             }
+#endif
 
+#if UNITY_EDITOR && ENABLE_PROFILER
             if (UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
             {
                 foreach (NetworkInterface? ns in NetworkInterface.GetAllNetworkInterfaces())
