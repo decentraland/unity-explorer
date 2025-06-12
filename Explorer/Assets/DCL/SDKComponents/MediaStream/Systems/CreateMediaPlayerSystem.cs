@@ -150,7 +150,6 @@ namespace DCL.SDKComponents.MediaStream
                 avPro!.gameObject.name = $"MediaPlayer_Entity_{entity}";
 #endif
 
-            // speed
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
 
             return component;
