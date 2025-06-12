@@ -221,12 +221,13 @@ namespace DCL.Communities.CommunityCreation
 
                 foreach (string name in names.Names)
                 {
-                    placesToAdd.Add($"{name}.dcl.eth");
+                    var worldText = $"{name}.dcl.eth";
+                    placesToAdd.Add(worldText);
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
-                        Id = $"{name}.dcl.eth",
+                        Id = worldText,
                         IsWorld = true,
-                        Name = $"{name}.dcl.eth",
+                        Name = worldText,
                     });
                 }
             }
