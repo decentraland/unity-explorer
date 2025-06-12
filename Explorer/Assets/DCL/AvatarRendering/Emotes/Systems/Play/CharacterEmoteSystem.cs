@@ -72,6 +72,7 @@ namespace DCL.AvatarRendering.Emotes.Play
             CancelEmotesByMovementQuery(World);
             CancelEmotesQuery(World);
             UpdateEmoteTagsQuery(World);
+            DisableCharacterControllerQuery(World);
             CleanUpQuery(World);
         }
 
@@ -241,6 +242,13 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (!deleteEntityIntention.DeferDeletion)
                 messageBus.OnPlayerRemoved(profile.UserId);
+        }
+
+        [Query]
+        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
+        {
+            bool isPlayingEmote = emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE || emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
+            characterController.enabled = !isPlayingEmote;
         }
 
         private void LoadEmote(URN emoteId, BodyShape bodyShape)
