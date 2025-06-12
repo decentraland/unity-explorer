@@ -200,6 +200,7 @@ namespace DCL.Communities.CommunityCreation
             if (ownProfile != null)
             {
                 // Lands owned or managed by the user
+                // TODO (Santi): Get places correctly when the API is ready
                 PlacesData.IPlacesAPIResponse placesResponse = await placesAPIService.SearchPlacesAsync(0, 1000, ct, "santi");
 
                 foreach (PlacesData.PlaceInfo placeInfo in placesResponse.Data)
@@ -215,6 +216,7 @@ namespace DCL.Communities.CommunityCreation
                 }
 
                 // Worlds
+                // TODO (Santi): Get worlds correctly when the API is ready
                 INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1000, ct);
 
                 foreach (string name in names.Names)
@@ -268,7 +270,7 @@ namespace DCL.Communities.CommunityCreation
                 await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
-            
+
             viewInstance.SetProfileSelectedImage(imageUrl: result.Value.data.thumbnails?.raw);
             viewInstance.SetCommunityName(result.Value.data.name);
             viewInstance.SetCommunityDescription(result.Value.data.description);
