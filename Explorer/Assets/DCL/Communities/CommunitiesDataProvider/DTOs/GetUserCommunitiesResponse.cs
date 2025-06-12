@@ -16,7 +16,7 @@ namespace DCL.Communities
         public class CommunityData
         {
             public string id;
-            public string[] thumbnails;
+            public CommunityThumbnails? thumbnails;
             public string name;
             public string description;
             public string ownerAddress;
@@ -38,8 +38,6 @@ namespace DCL.Communities
         public CommunityData[] results;
         public int total;
     }
-
-
 }
 
 

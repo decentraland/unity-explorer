@@ -328,7 +328,8 @@ namespace DCL.Chat
                 for (int i = 0; i < response.data.results.Length; ++i)
                 {
                     // TODO remove this when there are real thumbnails
-                    response.data.results[i].thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
+                    response.data.results[i].thumbnails ??= new CommunityThumbnails { raw = "https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png" };
+
                     userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.results[i].id), response.data.results[i]);
                 }
 
@@ -360,7 +361,8 @@ namespace DCL.Chat
 
                 GetCommunityResponse response = result.Value;
                 // TODO remove this
-                response.data.thumbnails = new [] {"https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png"};
+                response.data.thumbnails ??= new CommunityThumbnails { raw = "https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png" };
+
                 userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.id), new GetUserCommunitiesData.CommunityData()
                     {
                         id = response.data.id,
