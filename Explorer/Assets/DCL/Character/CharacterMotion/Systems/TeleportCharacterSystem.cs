@@ -41,7 +41,6 @@ namespace DCL.CharacterMotion.Systems
         private void TeleportPlayer(Entity entity, in PlayerTeleportIntent teleportIntent, CharacterController controller,
             CharacterPlatformComponent platformComponent, CharacterRigidTransform rigidTransform)
         {
-
             AsyncLoadProcessReport? loadReport = teleportIntent.AssetsResolution;
 
             if (loadReport == null)
@@ -54,10 +53,12 @@ namespace DCL.CharacterMotion.Systems
                 switch (status.TaskStatus)
                 {
                     case UniTaskStatus.Pending:
-                        // Teleport the character to a far away place while the teleport is executed
-                        controller.transform.position = MordorConstants.PLAYER_MORDOR_POSITION;
+                        controller.transform.position = teleportIntent.Position;
+                        // Disable collisions so the scene does not interact with the character, and we avoid possible issues at startup
+                        controller.detectCollisions = false;
                         return;
                     case UniTaskStatus.Succeeded:
+                        controller.detectCollisions = true;
                         ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
                         return;
                     case UniTaskStatus.Canceled:
