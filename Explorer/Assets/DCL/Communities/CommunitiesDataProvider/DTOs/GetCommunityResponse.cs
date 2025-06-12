@@ -10,7 +10,7 @@ namespace DCL.Communities
         public struct CommunityData
         {
             public string id;
-            public string[] thumbnails;
+            public CommunityThumbnails? thumbnails;
             public string name;
             public string description;
             public string ownerId;
