@@ -112,6 +112,8 @@ namespace DCL.Profiles.Self
 
         public async UniTask<Profile?> UpdateProfileAsync(Profile newProfile, CancellationToken ct, bool updateAvatarInWorld = true)
         {
+            ct.ThrowIfCancellationRequested();
+
             if (web3IdentityCache.Identity == null)
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
