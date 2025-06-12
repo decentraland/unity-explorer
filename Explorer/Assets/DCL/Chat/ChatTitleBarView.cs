@@ -31,7 +31,6 @@ namespace DCL.Chat
         public event ViewCommunityRequestedDelegate ViewCommunityRequested;
 
         [SerializeField] private Button closeChatButton;
-        [SerializeField] private Button closeMemberListButton;
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
@@ -65,10 +64,7 @@ namespace DCL.Chat
         {
             get
             {
-                if (closeChatButton.gameObject.activeInHierarchy)
-                    return closeChatButton;
-                else
-                    return closeMemberListButton;
+                return closeChatButton;
             }
         }
 
@@ -84,7 +80,6 @@ namespace DCL.Chat
                 return;
 
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
-            closeMemberListButton.onClick.AddListener(OnCloseMemberListButtonClicked);
             showMemberListButton.onClick.AddListener(OnShowMemberListButtonClicked);
             hideMemberListButton.onClick.AddListener(OnHideMemberListButtonClicked);
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
@@ -99,6 +94,7 @@ namespace DCL.Chat
         public void ChangeTitleBarVisibility(bool isMemberListVisible, ChatChannel.ChatChannelType channelType)
         {
             defaultChatTitlebar.SetActive(!isMemberListVisible);
+            hideMemberListButton.gameObject.SetActive(isMemberListVisible);
 
             if (channelType == ChatChannel.ChatChannelType.NEARBY)
             {
@@ -167,11 +163,6 @@ namespace DCL.Chat
         private void OnContextMenuClosed()
         {
             ContextMenuVisibilityChanged?.Invoke(false);
-        }
-
-        private void OnCloseMemberListButtonClicked()
-        {
-            CloseMemberListButtonClicked?.Invoke();
         }
 
         private void OnHideMemberListButtonClicked()
