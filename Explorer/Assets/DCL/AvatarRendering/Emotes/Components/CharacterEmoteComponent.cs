@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Emotes
         public void Reset()
         {
             EmoteLoop = false;
-            // CurrentEmoteReference = null;
+            CurrentEmoteReference = null;
             StopEmote = false;
         }
     }
