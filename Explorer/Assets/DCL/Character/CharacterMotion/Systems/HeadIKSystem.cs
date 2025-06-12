@@ -88,11 +88,8 @@ namespace DCL.CharacterMotion.Systems
 
             if (headIK.IsDisabled) return;
 
+            (Vector3 bottomLeft, Vector3 topRight) = GetImageScreenCorners(previewComponent.RenderImageRect);
             Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
-
-            previewComponent.RenderImageRect.GetWorldCorners(previewImageCorners);
-            Vector3 bottomLeft = RectTransformUtility.WorldToScreenPoint(null, previewImageCorners[0]);
-            Vector3 topRight = RectTransformUtility.WorldToScreenPoint(null, previewImageCorners[2]);
 
             Vector3 objectScreenPos = new Vector3(
                 Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
@@ -109,6 +106,19 @@ namespace DCL.CharacterMotion.Systems
             screenVector.y = -screenVector.y;
 
             ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt * previewComponent.Settings.HeadMoveSpeed, settings, useFrontalReset: false);
+        }
+
+        private static (Vector3 bottomLeft, Vector3 topRight) GetImageScreenCorners(RectTransform imageRect)
+        {
+            Rect rect = imageRect.rect;
+            var bottomLeftLocal = new Vector3(rect.x, rect.y, 0.0f);
+            var topRightLocal = new Vector3(rect.xMax, rect.yMax, 0.0f);
+
+            Matrix4x4 localToWorldMatrix = imageRect.transform.localToWorldMatrix;
+
+            return (
+                bottomLeft: RectTransformUtility.WorldToScreenPoint(null, localToWorldMatrix.MultiplyPoint(bottomLeftLocal)),
+                topRight: RectTransformUtility.WorldToScreenPoint(null, localToWorldMatrix.MultiplyPoint(topRightLocal)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
