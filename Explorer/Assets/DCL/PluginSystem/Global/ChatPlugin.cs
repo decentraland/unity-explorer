@@ -8,6 +8,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Communities;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
@@ -20,6 +21,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
@@ -62,6 +64,9 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly ICommunitiesDataProvider communityDataProvider;
+        private readonly IThumbnailCache thumbnailCache;
+        private readonly WarningNotificationView warningNotificationView;
 
         private ChatController chatController;
 
@@ -91,7 +96,10 @@ namespace DCL.PluginSystem.Global
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            ProfileRepositoryWrapper profileDataProvider)
+            ProfileRepositoryWrapper profileDataProvider,
+            ICommunitiesDataProvider communityDataProvider,
+            IThumbnailCache thumbnailCache,
+            WarningNotificationView warningNotificationView)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -120,6 +128,9 @@ namespace DCL.PluginSystem.Global
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.communityDataProvider = communityDataProvider;
+            this.thumbnailCache = thumbnailCache;
+            this.warningNotificationView = warningNotificationView;
         }
 
         public void Dispose()
@@ -166,7 +177,11 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 chatStorage,
                 friendsServiceProxy,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                communityDataProvider,
+                thumbnailCache,
+                mvcManager,
+                warningNotificationView
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

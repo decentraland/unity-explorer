@@ -36,13 +36,13 @@ namespace DCL.Chat.MessageBus
             MessageAdded?.Invoke(channelId, message);
         }
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
-            this.origin.Send(channel, message, origin);
-            SendSelf(channel.Id, message);
+            this.origin.Send(channel, message, origin, topic);
+            SendSelf(channel.Id, message, topic);
         }
 
-        private void SendSelf(ChatChannel.ChannelId channelId, string chatMessage)
+        private void SendSelf(ChatChannel.ChannelId channelId, string chatMessage, string topic)
         {
             IWeb3Identity identity = web3IdentityCache.Identity;
 
@@ -52,7 +52,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null);
+            ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null, topic);
 
             MessageAdded?.Invoke(channelId, newMessage);
         }
