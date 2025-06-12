@@ -262,13 +262,7 @@ namespace DCL.Communities.CommunityCreation
             SetScrollPositionToBottom(updateScrollPositionCts.Token).Forget();
         }
 
-        private async UniTaskVoid SetScrollPositionToBottom(CancellationToken ct)
-        {
-            await UniTask.DelayFrame(1, cancellationToken: ct);
-            creationPanelScrollRect.verticalNormalizedPosition = 0f;
-        }
-
-        private void CleanCreationPanel()
+        public void CleanCreationPanel()
         {
             SetCommunityCreationInProgress(false);
             SetProfileSelectedImage(sprite: null);
@@ -279,6 +273,12 @@ namespace DCL.Communities.CommunityCreation
             foreach (CommunityPlaceTag placeTag in currentPlaceTags)
                 Destroy(placeTag.gameObject);
             currentPlaceTags.Clear();
+        }
+
+        private async UniTaskVoid SetScrollPositionToBottom(CancellationToken ct)
+        {
+            await UniTask.DelayFrame(1, cancellationToken: ct);
+            creationPanelScrollRect.verticalNormalizedPosition = 0f;
         }
 
         private void CreationPanelCommunityNameInputChanged(string text)

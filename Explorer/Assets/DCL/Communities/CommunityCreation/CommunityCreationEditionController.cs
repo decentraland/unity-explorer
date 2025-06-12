@@ -116,6 +116,7 @@ namespace DCL.Communities.CommunityCreation
 
         protected override void OnViewClose()
         {
+            viewInstance.CleanCreationPanel();
             RestoreInput();
 
             createCommunityCts?.SafeCancelAndDispose();
