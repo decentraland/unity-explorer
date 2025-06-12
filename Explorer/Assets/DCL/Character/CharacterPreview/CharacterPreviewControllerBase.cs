@@ -72,6 +72,7 @@ namespace DCL.CharacterPreview
             previewAvatarModel.Initialized = true;
 
             Initialize();
+            PlayEmote("wave");
         }
 
         private void Initialize()

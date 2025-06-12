@@ -27,8 +27,7 @@ namespace DCL.AuthenticationScreenFlow
                 if (urn.IsNullOrEmpty()) continue;
                 URN shortenedUrn = urn.Shorten();
 
-                if (!shortenedEmotes.Contains(shortenedUrn))
-                    shortenedEmotes.Add(shortenedUrn);
+                shortenedEmotes.Add(shortenedUrn);
             }
 
             previewAvatarModel.Wearables = shortenedWearables;
