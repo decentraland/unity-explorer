@@ -35,10 +35,10 @@ namespace DCL.Chat.MessageBus
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
             if (Valid(message))
-                this.origin.Send(channel, message, origin);
+                this.origin.Send(channel, message, origin, topic);
             else
                 MessageAdded?.Invoke(channel.Id,
                     ChatMessage.NewFromSystem("Message with the special character is forbidden")

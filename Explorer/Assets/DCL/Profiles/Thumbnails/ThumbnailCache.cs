@@ -10,7 +10,7 @@ using Utility;
 
 namespace DCL.Profiles
 {
-    public class ProfileThumbnailCache : IProfileThumbnailCache
+    public class ThumbnailCache : IThumbnailCache
     {
         private struct RequestAttempts
         {
@@ -49,7 +49,7 @@ namespace DCL.Profiles
         private readonly Dictionary<string, UniTaskCompletionSource<Sprite?>> currentThumbnailTasks = new ();
         private readonly HashSet<string> unsolvableThumbnails = new ();
 
-        public ProfileThumbnailCache(IWebRequestController webRequestController)
+        public ThumbnailCache(IWebRequestController webRequestController)
         {
             this.webRequestController = webRequestController;
         }
@@ -57,36 +57,36 @@ namespace DCL.Profiles
         public Sprite? GetThumbnail(string userId) =>
             thumbnails.GetValueOrDefault(userId);
 
-        public async UniTask<Sprite?> GetThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct)
+        public async UniTask<Sprite?> GetThumbnailAsync(string id, string thumbnailUrl, CancellationToken ct)
         {
-            Sprite? sprite = GetThumbnail(userId);
+            Sprite? sprite = GetThumbnail(id);
             if (sprite != null)
                 return sprite;
 
             //Avoid multiple requests for the same thumbnail
-            if (currentThumbnailTasks.TryGetValue(userId, out UniTaskCompletionSource<Sprite?> thumbnailTask))
+            if (currentThumbnailTasks.TryGetValue(id, out UniTaskCompletionSource<Sprite?> thumbnailTask))
                 return await thumbnailTask.Task;
 
             UniTaskCompletionSource<Sprite?> spriteTaskCompletionSource = new UniTaskCompletionSource<Sprite?>();
-            if (currentThumbnailTasks.TryAdd(userId, spriteTaskCompletionSource))
-                DownloadThumbnailAsync(userId, thumbnailUrl, spriteTaskCompletionSource, ct).Forget();
+            if (currentThumbnailTasks.TryAdd(id, spriteTaskCompletionSource))
+                DownloadThumbnailAsync(id, thumbnailUrl, spriteTaskCompletionSource, ct).Forget();
 
             return await spriteTaskCompletionSource.Task;
         }
 
-        private async UniTaskVoid DownloadThumbnailAsync(string userId, string thumbnailUrl, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
+        private async UniTaskVoid DownloadThumbnailAsync(string id, string thumbnailUrl, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
         {
             Sprite? result = null;
 
             if (URLAddress.EMPTY.Equals(thumbnailUrl))
             {
-                FinalizeTask(tcs, result, userId);
+                FinalizeTask(tcs, result, id);
                 return;
             }
 
-            if (unsolvableThumbnails.Contains(userId) || !TestCooldownCondition(userId))
+            if (unsolvableThumbnails.Contains(id) || !TestCooldownCondition(id))
             {
-                FinalizeTask(tcs, result, userId);
+                FinalizeTask(tcs, result, id);
                 return;
             }
 
@@ -107,48 +107,48 @@ namespace DCL.Profiles
                 result = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
 
-                SetThumbnailIntoCache(userId, result);
-                failedThumbnails.Remove(userId);
+                SetThumbnailIntoCache(id, result);
+                failedThumbnails.Remove(id);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e) { HandleCooldownOnException(userId, e); }
+            catch (Exception e) { HandleCooldownOnException(id, e); }
             finally
             {
-                FinalizeTask(tcs, result, userId);
+                FinalizeTask(tcs, result, id);
             }
         }
 
-        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string userId)
+        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string id)
         {
-            currentThumbnailTasks.Remove(userId);
+            currentThumbnailTasks.Remove(id);
             tcs.TrySetResult(result);
         }
 
-        private void HandleCooldownOnException(string userId, Exception e)
+        private void HandleCooldownOnException(string id, Exception e)
         {
-            if (failedThumbnails.TryGetValue(userId, out RequestAttempts requestAttempts))
+            if (failedThumbnails.TryGetValue(id, out RequestAttempts requestAttempts))
                 if (requestAttempts.CanIncreaseCooldown())
                 {
                     requestAttempts.IncreaseCooldown();
-                    failedThumbnails[userId] = requestAttempts;
+                    failedThumbnails[id] = requestAttempts;
                 }
                 else
                 {
                     ReportData reportData = new ReportData(ReportCategory.PROFILE);
-                    ReportHub.LogError(reportData, $"Failed to fetch user thumbnail for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for wallet {userId}");
+                    ReportHub.LogError(reportData, $"Failed to fetch user thumbnail for the {RequestAttempts.MAX_ATTEMPTS + 1}th time for element {id}");
                     ReportHub.LogException(e, reportData);
 
-                    unsolvableThumbnails.Add(userId);
-                    failedThumbnails.Remove(userId);
+                    unsolvableThumbnails.Add(id);
+                    failedThumbnails.Remove(id);
                 }
             else
-                failedThumbnails[userId] = RequestAttempts.FirstAttempt();
+                failedThumbnails[id] = RequestAttempts.FirstAttempt();
         }
 
-        private bool TestCooldownCondition(string userId) =>
-            !failedThumbnails.TryGetValue(userId, out RequestAttempts requestAttempts) || requestAttempts.CanRetry();
+        private bool TestCooldownCondition(string id) =>
+            !failedThumbnails.TryGetValue(id, out RequestAttempts requestAttempts) || requestAttempts.CanRetry();
 
-        private void SetThumbnailIntoCache(string userId, Sprite sprite) =>
-            thumbnails[userId] = sprite;
+        private void SetThumbnailIntoCache(string id, Sprite sprite) =>
+            thumbnails[id] = sprite;
     }
 }

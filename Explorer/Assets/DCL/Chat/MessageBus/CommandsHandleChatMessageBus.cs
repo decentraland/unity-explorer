@@ -36,7 +36,7 @@ namespace DCL.Chat.MessageBus
             commandCts.SafeCancelAndDispose();
         }
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
             if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                 return;
@@ -48,7 +48,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            this.origin.Send(channel, message, origin);
+            this.origin.Send(channel, message, origin, topic);
         }
 
         private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, string message)
