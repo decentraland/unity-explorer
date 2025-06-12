@@ -24,15 +24,15 @@ namespace DCL.VoiceChat.Services
 
         public event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
 
-        private readonly ISelfProfile selfProfile;
         private readonly IRPCSocialServices socialServiceRPC;
 
         public RPCVoiceChatService(
-            ISelfProfile selfProfile,
             IRPCSocialServices socialServiceRPC)
         {
-            this.selfProfile = selfProfile;
             this.socialServiceRPC = socialServiceRPC;
+
+            //TODO: Temporary solution, need to move it somewhere else
+            SubscribeToPrivateVoiceChatUpdatesAsync(default).Forget();
         }
 
         public void Dispose()

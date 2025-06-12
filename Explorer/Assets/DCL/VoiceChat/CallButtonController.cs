@@ -10,11 +10,11 @@ namespace DCL.VoiceChat
         private const string OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "You're already on a call. Starting a new one will end it. Click the button again to confirm. Click anywhere else to cancel.";
 
         public event Action<string> StartCall;
+        public string CurrentUserId { get; private set; }
 
         private readonly CallButtonView view;
         private bool isClickedOnce = false;
         private OtherUserCallStatus otherUserStatus;
-        private string currentUserId;
 
         public CallButtonController(CallButtonView view)
         {
@@ -31,7 +31,7 @@ namespace DCL.VoiceChat
 
         public void SetCallStatusForUser(OtherUserCallStatus status, string userId)
         {
-            currentUserId = userId;
+            CurrentUserId = userId;
             otherUserStatus = status;
             view.TooltipParent.gameObject.SetActive(false);
             isClickedOnce = false;
@@ -46,7 +46,7 @@ namespace DCL.VoiceChat
                 switch (otherUserStatus)
                 {
                     case OtherUserCallStatus.OWN_USER_IN_CALL:
-                        StartCall?.Invoke(currentUserId);
+                        StartCall?.Invoke(CurrentUserId);
                         break;
                 }
             }
@@ -63,7 +63,7 @@ namespace DCL.VoiceChat
                         //break;
                     case OtherUserCallStatus.USER_AVAILABLE:
                         view.TooltipParent.gameObject.SetActive(false);
-                        StartCall?.Invoke(currentUserId);
+                        StartCall?.Invoke(CurrentUserId);
                         break;
                     case OtherUserCallStatus.USER_IN_CALL:
                         view.TooltipParent.gameObject.SetActive(true);

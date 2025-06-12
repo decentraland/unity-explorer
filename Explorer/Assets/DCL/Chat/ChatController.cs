@@ -30,6 +30,7 @@ using DCL.Web3;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -167,6 +168,13 @@ namespace DCL.Chat
                 membersBuffer,
                 participantProfileBuffer,
                 this);
+
+            this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
+        }
+
+        private void OnVoiceChatStatusChanged(VoiceChatStatus newstatus)
+        {
+
         }
 
 #region Panel Visibility
@@ -356,7 +364,7 @@ namespace DCL.Chat
 
         private void OnStartCall(string userId)
         {
-            voiceChatCallStatusService.StartCall(new Web3Address("userId"));
+            voiceChatCallStatusService.StartCall(new Web3Address(userId));
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
