@@ -268,8 +268,7 @@ namespace DCL.Communities.CommunityCreation
                 await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
-
-            //"https://assets-cdn-decentraland-zone-contentbucket-79cb984.s3.us-east-1.amazonaws.com/social/communities/a5462ae8-841a-4423-992f-0d598079a8ea/raw-thumbnail.png"
+            
             viewInstance.SetProfileSelectedImage(imageUrl: result.Value.data.thumbnails?.raw);
             viewInstance.SetCommunityName(result.Value.data.name);
             viewInstance.SetCommunityDescription(result.Value.data.description);
