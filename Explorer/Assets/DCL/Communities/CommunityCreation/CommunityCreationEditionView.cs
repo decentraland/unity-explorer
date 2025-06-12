@@ -168,7 +168,7 @@ namespace DCL.Communities.CommunityCreation
             if (isInProgress)
                 creationPanelCreateButton.interactable = false;
             else
-                CheckForCreateButtonAvailability();
+                UpdateCreateButtonAvailability();
         }
 
         public void ConfigureImageController(IWebRequestController webRequestController)
@@ -203,13 +203,13 @@ namespace DCL.Communities.CommunityCreation
         public void SetCommunityName(string text)
         {
             creationPanelCommunityNameInputField.text = text;
-            CheckForCreateButtonAvailability();
+            UpdateCreateButtonAvailability();
         }
 
         public void SetCommunityDescription(string text)
         {
             creationPanelCommunityDescriptionInputField.text = text;
-            CheckForCreateButtonAvailability();
+            UpdateCreateButtonAvailability();
         }
 
         public void SetPlacesSelector(List<string> options)
@@ -284,16 +284,16 @@ namespace DCL.Communities.CommunityCreation
         private void CreationPanelCommunityNameInputChanged(string text)
         {
             creationPanelCommunityNameCharCounter.text = $"{text.Length}/{creationPanelCommunityNameInputField.characterLimit}";
-            CheckForCreateButtonAvailability();
+            UpdateCreateButtonAvailability();
         }
 
         private void CreationPanelCommunityDescriptionInputChanged(string text)
         {
             creationPanelCommunityDescriptionCharCounter.text = $"{text.Length}/{creationPanelCommunityDescriptionInputField.characterLimit}";
-            CheckForCreateButtonAvailability();
+            UpdateCreateButtonAvailability();
         }
 
-        private void CheckForCreateButtonAvailability()
+        private void UpdateCreateButtonAvailability()
         {
             creationPanelCreateButton.interactable =
                 !string.IsNullOrEmpty(creationPanelCommunityNameInputField.text) &&
