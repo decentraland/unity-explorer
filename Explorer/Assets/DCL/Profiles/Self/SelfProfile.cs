@@ -166,12 +166,14 @@ namespace DCL.Profiles.Self
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+                ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.Failed.Reverted: {e}");
                 // Revert to the old profile so we are aligned to the catalyst's version
                 // copyOfOwnProfile should never be null at this point
                 Profile oldProfile = profileBuilder.From(copyOfOwnProfile!).Build();
                 profileCache.Set(oldProfile.UserId, oldProfile);
                 UpdateAvatarInWorld(oldProfile);
                 OwnProfile = oldProfile;
+                ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.Failed.Reverted: {JsonConvert.SerializeObject(new GetProfileJsonRootDto().CopyFrom(oldProfile))}");
                 throw;
             }
         }
