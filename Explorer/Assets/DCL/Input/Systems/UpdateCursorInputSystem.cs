@@ -193,7 +193,7 @@ namespace DCL.Input.Systems
             if (!cursor.IsLocked() && cursorComponent is { CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
 
-            if (!isMouseOutOfBounds && isTemporalLock && cameraData.CameraMode != CameraMode.SDKCamera && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
+            if (!isMouseOutOfBounds && isTemporalLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
                 nextState = CursorState.Panning;
 
             if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })
