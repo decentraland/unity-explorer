@@ -7,7 +7,10 @@ namespace DCL.CharacterMotion.IK
 {
     public static class ApplyHeadLookAt
     {
-        // This method updates the head IK targets (horizontal and vertical) based on a target look-at direction
+        /// <summary>
+        /// This method updates the head IK targets (horizontal and vertical) based on a target look-at direction
+        /// </summary>
+        /// <param name="useFrontalReset"> If the target horizonal angle is outside of the limits, reset the head location to look frontal </param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(Vector3 targetDirection, AvatarBase avatarBase, float dt, ICharacterControllerSettings settings, bool useFrontalReset = true)
         {

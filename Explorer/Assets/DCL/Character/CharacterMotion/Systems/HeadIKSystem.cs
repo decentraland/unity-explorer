@@ -84,7 +84,7 @@ namespace DCL.CharacterMotion.Systems
             ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
         {
             headIK.IsDisabled = emoteComponent.CurrentEmoteReference != null || !this.headIKIsEnabled;
-            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, headIK.IsDisabled ? 0 : 1, 2 * dt);
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, headIK.IsDisabled ? 0 : 1, settings.HeadIKWeightChangeSpeed * dt);
 
             if (headIK.IsDisabled) return;
 
@@ -148,7 +148,7 @@ namespace DCL.CharacterMotion.Systems
                              && emoteComponent.CurrentEmoteReference == null
                              && !platformComponent.IsMovingPlatform;
 
-            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, 2 * dt);
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
             if (headIK.IsDisabled) return;
