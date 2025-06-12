@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             sceneFacade.Initialize();
-            ReportHub.LogProductionInfo($"Loading scene '{definition.GetLogSceneName()}' ended");
+            ReportHub.LogProductionInfo($"Loading scene {(sceneFacade.SceneData.IsPortableExperience() ? "(PX)" : "")} '{definition.GetLogSceneName()}' ended");
             return sceneFacade;
         }
 
