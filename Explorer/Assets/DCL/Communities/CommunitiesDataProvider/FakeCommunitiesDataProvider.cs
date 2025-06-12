@@ -237,7 +237,7 @@ namespace DCL.Communities
                 communities.Add(new GetUserCommunitiesData.CommunityData
                 {
                     id = (i + 1).ToString(),
-                    thumbnails = new[] { "https://picsum.photos/280/280" },
+                    thumbnails = new CommunityThumbnails { raw = "https://picsum.photos/280/280" },
                     name = $"Community {i + 1}",
                     description = $"Test description for Community {i + 1}. This is only a fake text to test this awesome feature!! This is the card that represent a community in Decentraland.",
                     ownerAddress = string.Empty,

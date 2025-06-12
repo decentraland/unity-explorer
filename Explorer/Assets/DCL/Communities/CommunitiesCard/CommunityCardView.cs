@@ -185,8 +185,8 @@ namespace DCL.Communities.CommunitiesCard
 
             communityDescription.text = communityData.description;
             //TODO: handle thumbnails properly
-            if (communityData.thumbnails is { Length: > 0 })
-                imageController.RequestImage(communityData.thumbnails[0], true, true);
+            if (communityData.thumbnails != null)
+                imageController.RequestImage(communityData.thumbnails.Value.raw, true, true);
 
             ConfigureInteractionButtons(communityData.role);
 

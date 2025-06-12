@@ -231,7 +231,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(communityData.thumbnails is { Length: > 0 } ? communityData.thumbnails[0] : null);
+            cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
 
             // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
@@ -256,7 +256,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
             cardView.ConfigureImageController(webRequestController);
-            cardView.SetCommunityThumbnail(communityData.thumbnails is { Length: > 0 } ? communityData.thumbnails[0] : null);
+            cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events
