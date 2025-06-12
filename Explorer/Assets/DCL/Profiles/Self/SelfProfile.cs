@@ -5,8 +5,10 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Profiles.Helpers;
 using DCL.Web3.Identities;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -117,6 +119,8 @@ namespace DCL.Profiles.Self
             if (web3IdentityCache.Identity == null)
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
+            ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.IsSameProfile: {JsonConvert.SerializeObject(new GetProfileJsonRootDto().CopyFrom(newProfile))}");
+
             // Skip publishing the same profile
             // We need to keep a copy of the last fetched/updated profile, since many update operations modify the original profile
             // outside of this class, and so this check fails
@@ -132,9 +136,12 @@ namespace DCL.Profiles.Self
 
             if (!updateAvatarInWorld)
             {
+                ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.PublishWithoutUpdateAvatar: {JsonConvert.SerializeObject(new GetProfileJsonRootDto().CopyFrom(newProfile))}");
                 await profileRepository.SetAsync(newProfile, ct);
                 return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
             }
+
+            ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.UpdateAvatarInWorld: {JsonConvert.SerializeObject(new GetProfileJsonRootDto().CopyFrom(newProfile))}");
 
             // Update profile immediately to prevent UI inconsistencies
             // Without this immediate update, temporary desync can occur between backpack closure and catalyst validation
@@ -144,14 +151,17 @@ namespace DCL.Profiles.Self
 
             try
             {
+                ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.Publish: {JsonConvert.SerializeObject(new GetProfileJsonRootDto().CopyFrom(newProfile))}");
                 await profileRepository.SetAsync(newProfile, ct);
+                ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.Fetch: {JsonConvert.SerializeObject(new GetProfileJsonRootDto().CopyFrom(newProfile))}");
                 Profile? savedProfile = await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
-
+                ReportHub.Log(ReportCategory.PROFILE, $"UpdateProfileAsync.UpdateAvatarInWorld: {JsonConvert.SerializeObject(new GetProfileJsonRootDto().CopyFrom(savedProfile))}");
                 // We need to re-update the avatar in-world with the new profile because the save operation invalidates the previous profile
                 // breaking the avatar and the backpack
                 UpdateAvatarInWorld(savedProfile!);
                 copyOfOwnProfile?.Dispose();
                 copyOfOwnProfile = profileBuilder.From(savedProfile!).Build();
+                ReportHub.Log(ReportCategory.PROFILE, "UpdateProfileAsync.Finish");
                 return savedProfile;
             }
             catch (Exception e) when (e is not OperationCanceledException)

@@ -289,9 +289,7 @@ namespace Global.Dynamic
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            var profileRepository = new LogProfileRepository(
-                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
-            );
+            var profileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache);
 
             static IMultiPool MultiPoolFactory() =>
                 new DCLMultiPool();
