@@ -126,7 +126,7 @@ namespace DCL.CharacterPreview
                 inputEventBus.OnPointerUp(pointerEventData);
         }
 
-        private void OnPointerDown(PointerEventData pointerEventData)
+        protected void OnPointerDown(PointerEventData pointerEventData)
         {
             if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
                 (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))

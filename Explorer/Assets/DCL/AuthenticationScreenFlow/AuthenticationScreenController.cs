@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -51,7 +52,7 @@ namespace DCL.AuthenticationScreenFlow
             Finalize,
         }
 
-        private const int ANIMATION_DELAY = 300;
+        private const int ANIMATION_DELAY = 3000;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -63,6 +64,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly BuildData buildData;
+        private readonly IEquippedEmotes equippedEmotes;
 #if !UNITY_EDITOR
         private readonly FeatureFlagsCache featureFlagsCache;
 #endif
@@ -93,6 +95,7 @@ namespace DCL.AuthenticationScreenFlow
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
+            IEquippedEmotes equippedEmotes,
             World world)
             : base(viewFactory)
         {
@@ -108,6 +111,7 @@ namespace DCL.AuthenticationScreenFlow
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.buildData = buildData;
+            this.equippedEmotes = equippedEmotes;
             this.world = world;
         }
 
@@ -143,7 +147,7 @@ namespace DCL.AuthenticationScreenFlow
 #else
             viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
 #endif
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, equippedEmotes, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);
@@ -353,6 +357,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
+                int? animTime = characterPreviewController?.PlayJumpInEmote();
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
