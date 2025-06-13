@@ -6,7 +6,7 @@ namespace DCL.CharacterCamera.Settings
     internal interface ICinemachineThirdPersonCameraData
     {
         CinemachineFreeLook Camera { get; }
-        CinemachineCameraOffset CameraOffset { get; }
+        DCLCinemachineCameraOffset CameraOffset { get; }
         Vector3 OffsetBottom { get; }
         Vector3 OffsetMid { get; }
         Vector3 OffsetTop { get; }

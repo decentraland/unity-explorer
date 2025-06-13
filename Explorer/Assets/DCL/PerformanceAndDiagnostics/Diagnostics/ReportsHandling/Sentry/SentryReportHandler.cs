@@ -177,9 +177,7 @@ namespace DCL.Diagnostics.Sentry
 
             private static void AddSceneInfo(Scope scope, ReportData data)
             {
-                if (data.SceneShortInfo.BaseParcel != Vector2Int.zero) ;
                 scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
-
                 scope.SetTag("scene.name", data.SceneShortInfo.Name);
             }
 

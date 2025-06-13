@@ -37,7 +37,7 @@
         {
             "name": "com.dcl.gpui-assets",
             "expression": "",
-            "define": "GPUIPRO_PRESENT"
+            "define": "GPUI_PRO_PRESENT"
         }
     ],
     "noEngineReferences": false

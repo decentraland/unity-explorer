@@ -150,11 +150,14 @@ namespace DCL.AvatarRendering.Emotes.Play
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void StopEmote(ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
         {
-            if (emoteComponent.CurrentEmoteReference != null)
-            {
-                emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
-                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-            }
+            if (emoteComponent.CurrentEmoteReference == null) return;
+
+            emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
+
+            // Create a clean slate for the animator before setting the stop trigger
+            avatarView.ResetTrigger(AnimationHashes.EMOTE);
+            avatarView.ResetTrigger(AnimationHashes.EMOTE_RESET);
+            avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
 
             emoteComponent.Reset();
         }

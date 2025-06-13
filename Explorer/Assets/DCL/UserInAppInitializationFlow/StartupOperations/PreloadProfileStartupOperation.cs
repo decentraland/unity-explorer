@@ -20,7 +20,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         protected override async UniTask InternalExecuteAsync(IStartupOperation.Params args, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.ProfileLoading);
-            await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            await selfProfile.ProfileAsync(ct);
             args.Report.SetProgress(finalizationProgress);
         }
     }

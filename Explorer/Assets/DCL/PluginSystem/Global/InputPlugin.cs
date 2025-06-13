@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument sceneUIDocument;
         private readonly UIDocument cursorUIDocument;
-        private readonly IExposedCameraData cameraData;
         private CrosshairCanvas crosshairCanvas = null!;
 
         public InputPlugin(
@@ -59,8 +58,7 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument sceneUIDocument,
-            UIDocument cursorUIDocument,
-            IExposedCameraData cameraData)
+            UIDocument cursorUIDocument)
         {
             this.dclInput = dclInput;
             this.cursor = cursor;
@@ -73,7 +71,6 @@ namespace DCL.PluginSystem.Global
             this.rootUIDocument = rootUIDocument;
             this.sceneUIDocument = sceneUIDocument;
             this.cursorUIDocument = cursorUIDocument;
-            this.cameraData = cameraData;
 
             dclInput.Enable();
         }
@@ -104,7 +101,7 @@ namespace DCL.PluginSystem.Global
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput, messageBus, mvcManager);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas, cameraData);
+            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas);
             UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, sceneUIDocument, cursorUIDocument);
         }
 

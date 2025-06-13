@@ -14,7 +14,7 @@ namespace DCL.Landscape.Settings
         public TerrainGenerationData terrainData;
         public TerrainGenerationData worldsTerrainData;
 
-#if GPUIPRO_PRESENT
+#if GPUI_PRO_PRESENT
         public GPUIAssets gpuiAssets;
 #endif
 

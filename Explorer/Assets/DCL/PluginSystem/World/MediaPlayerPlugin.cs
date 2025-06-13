@@ -80,6 +80,7 @@ namespace DCL.PluginSystem.World
                 mediaPlayerPrefab,
                 worldVolumeMacBus,
                 exposedCameraData,
+                settings.FadeSpeed,
                 videoPrioritizationSettings,
                 roomHub
             );
@@ -90,6 +91,8 @@ namespace DCL.PluginSystem.World
         {
             [field: SerializeField]
             public AssetReferenceGameObject MediaPlayerPrefab;
+
+            [field: SerializeField] public float FadeSpeed { get; private set; } = 1f;
 
             public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings;
         }

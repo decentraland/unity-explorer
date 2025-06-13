@@ -62,12 +62,13 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "Y2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxlX3ZlcnNpb24YASABKA0iOgoO",
             "UHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9wcm9maWxlX3Zl",
             "cnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNlcmlhbGl6ZWRf",
-            "cHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSIqCgRDaGF0Eg8KB21l",
-            "c3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgBIicKBVNjZW5lEhAKCHNj",
-            "ZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNlEhcKD2VuY29k",
-            "ZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVjb2RlYxgDIAEo",
-            "DjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5Wb2ljZS5Wb2lj",
-            "ZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZwcm90bzM="));
+            "cHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSJaCgRDaGF0Eg8KB21l",
+            "c3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgBEhsKDmZvcndhcmRlZF9m",
+            "cm9tGAMgASgJSACIAQFCEQoPX2ZvcndhcmRlZF9mcm9tIicKBVNjZW5lEhAK",
+            "CHNjZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNlEhcKD2Vu",
+            "Y29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVjb2RlYxgD",
+            "IAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5Wb2ljZS5W",
+            "b2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -80,7 +81,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest), global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest.Parser, new[]{ "Address", "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileResponse), global::Decentraland.Kernel.Comms.Rfc4.ProfileResponse.Parser, new[]{ "SerializedProfile", "BaseUrl" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Chat), global::Decentraland.Kernel.Comms.Rfc4.Chat.Parser, new[]{ "Message", "Timestamp" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Chat), global::Decentraland.Kernel.Comms.Rfc4.Chat.Parser, new[]{ "Message", "Timestamp", "ForwardedFrom" }, new[]{ "ForwardedFrom" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Scene), global::Decentraland.Kernel.Comms.Rfc4.Scene.Parser, new[]{ "SceneId", "Data" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice), global::Decentraland.Kernel.Comms.Rfc4.Voice.Parser, new[]{ "EncodedSamples", "Index", "Codec" }, null, new[]{ typeof(global::Decentraland.Kernel.Comms.Rfc4.Voice.Types.VoiceCodec) }, null, null)
           }));
@@ -3462,6 +3463,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     public Chat(Chat other) : this() {
       message_ = other.message_;
       timestamp_ = other.timestamp_;
+      forwardedFrom_ = other.forwardedFrom_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -3495,6 +3497,34 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "forwarded_from" field.</summary>
+    public const int ForwardedFromFieldNumber = 3;
+    private string forwardedFrom_;
+    /// <summary>
+    /// Extension: optional forwarded_from to identify the original sender when
+    /// messages are forwarded through an SFU
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string ForwardedFrom {
+      get { return forwardedFrom_ ?? ""; }
+      set {
+        forwardedFrom_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+    /// <summary>Gets whether the "forwarded_from" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasForwardedFrom {
+      get { return forwardedFrom_ != null; }
+    }
+    /// <summary>Clears the value of the "forwarded_from" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearForwardedFrom() {
+      forwardedFrom_ = null;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -3512,6 +3542,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (Message != other.Message) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
+      if (ForwardedFrom != other.ForwardedFrom) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -3521,6 +3552,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       int hash = 1;
       if (Message.Length != 0) hash ^= Message.GetHashCode();
       if (Timestamp != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Timestamp);
+      if (HasForwardedFrom) hash ^= ForwardedFrom.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -3547,6 +3579,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(17);
         output.WriteDouble(Timestamp);
       }
+      if (HasForwardedFrom) {
+        output.WriteRawTag(26);
+        output.WriteString(ForwardedFrom);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -3565,6 +3601,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(17);
         output.WriteDouble(Timestamp);
       }
+      if (HasForwardedFrom) {
+        output.WriteRawTag(26);
+        output.WriteString(ForwardedFrom);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -3580,6 +3620,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (Timestamp != 0D) {
         size += 1 + 8;
+      }
+      if (HasForwardedFrom) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ForwardedFrom);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -3598,6 +3641,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
       if (other.Timestamp != 0D) {
         Timestamp = other.Timestamp;
+      }
+      if (other.HasForwardedFrom) {
+        ForwardedFrom = other.ForwardedFrom;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -3622,6 +3668,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             Timestamp = input.ReadDouble();
             break;
           }
+          case 26: {
+            ForwardedFrom = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -3643,6 +3693,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           }
           case 17: {
             Timestamp = input.ReadDouble();
+            break;
+          }
+          case 26: {
+            ForwardedFrom = input.ReadString();
             break;
           }
         }

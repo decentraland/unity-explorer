@@ -49,14 +49,14 @@ namespace DCL.CharacterCamera.Tests
             thirdPersonCamera.transform.SetParent(cinemachineObj.transform);
             thirdPersonCameraData = Substitute.For<ICinemachineThirdPersonCameraData>();
             thirdPersonCameraData.Camera.Returns(thirdPersonCamera);
-            thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<CinemachineCameraOffset>());
+            thirdPersonCameraData.CameraOffset.Returns(thirdPersonCamera.gameObject.AddComponent<DCLCinemachineCameraOffset>());
 
             // Setup Drone View Camera
             CinemachineFreeLook droneView = new GameObject("Third Person Camera Drone").AddComponent<CinemachineFreeLook>();
             droneView.transform.SetParent(cinemachineObj.transform);
             droneViewData = Substitute.For<ICinemachineThirdPersonCameraData>();
             droneViewData.Camera.Returns(droneView);
-            droneViewData.CameraOffset.Returns(droneView.gameObject.AddComponent<CinemachineCameraOffset>());
+            droneViewData.CameraOffset.Returns(droneView.gameObject.AddComponent<DCLCinemachineCameraOffset>());
 
             // Setup Free Camera
             CinemachineVirtualCamera freeCamera = new GameObject("Free Camera").AddComponent<CinemachineVirtualCamera>();

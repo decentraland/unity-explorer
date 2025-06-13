@@ -22,6 +22,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
         public bool IsRoot { get; private set; }
+        public int? ZIndex = null;
 
         public UITransformRelationLinkedData RelationData;
 
@@ -29,7 +30,6 @@ namespace DCL.SDKComponents.SceneUI.Components
         internal EventCallback<PointerUpEvent> currentOnPointerUpCallback;
         internal EventCallback<PointerEnterEvent> currentOnPointerEnterCallback;
         internal EventCallback<PointerLeaveEvent> currentOnPointerLeaveCallback;
-
 
         private VisualElement rootTransform;
         private VisualElement reusableTransform;
@@ -75,7 +75,8 @@ namespace DCL.SDKComponents.SceneUI.Components
                 if (entitiesMap.TryGetValue(childEntityId, out var child))
                 {
                     var childTransform = world.Get<UITransformComponent>(child);
-                    childTransform.Transform.tabIndex = i;
+
+                    childTransform.Transform.tabIndex = childTransform.ZIndex ?? i;
                 }
 
                 i++;
@@ -93,7 +94,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         {
             RelationData.Dispose();
 
-            // If it's not a root its transform can be reused
+            // If it's not a root, its transform can be reused
             if (IsRoot) return;
 
             this.UnregisterPointerCallbacks();

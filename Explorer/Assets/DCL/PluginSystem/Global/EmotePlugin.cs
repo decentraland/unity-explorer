@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
@@ -15,14 +16,11 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.ResourcesUnloading;
-using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.GLTF;
-using ECS.StreamableLoading.GLTF.DownloadProvider;
 using Global.AppArgs;
 using MVC;
 using System;
@@ -132,6 +130,9 @@ namespace DCL.PluginSystem.Global
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
                 emoteStorage, builderContentURL);
+
+            if(builderCollectionsPreview)
+                ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs);
 

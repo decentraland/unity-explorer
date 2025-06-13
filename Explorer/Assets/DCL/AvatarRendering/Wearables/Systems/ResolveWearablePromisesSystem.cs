@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             if (wearablesByPointersIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                World!.Add(entity, new StreamableResult(GetReportCategory(), new Exception("Pointer request cancelled")));
+                World!.Add(entity, new StreamableResult(GetReportCategory(), new OperationCanceledException("Pointer request cancelled")));
                 return;
             }
 
