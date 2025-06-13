@@ -145,7 +145,7 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void ResetToggle() =>
-            ToggleSection(Sections.PHOTOS);
+            ToggleSection(Sections.MEMBERS);
 
         public void SetLoadingState(bool isLoading)
         {
