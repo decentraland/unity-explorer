@@ -194,6 +194,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.dcl.gpui-assets",
+            "expression": "",
+            "define": "GPUI_PRO_PRESENT"
+        }
+    ],
     "noEngineReferences": false
 }
