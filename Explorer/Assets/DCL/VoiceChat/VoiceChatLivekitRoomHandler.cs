@@ -65,11 +65,11 @@ namespace DCL.VoiceChat
         {
             switch (newStatus)
             {
-                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                     DisconnectFromRoomAsync().Forget();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                     ConnectToRoomAsync().Forget();
                     break;
