@@ -244,7 +244,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelPlacesDropdown.value = 0;
 
             updateScrollPositionCts = updateScrollPositionCts.SafeRestart();
-            SetScrollPositionToBottom(updateScrollPositionCts.Token).Forget();
+            SetScrollPositionToBottomAsync(updateScrollPositionCts.Token).Forget();
         }
 
         public void RemovePlaceTag(string id)
@@ -259,7 +259,7 @@ namespace DCL.Communities.CommunityCreation
             });
 
             updateScrollPositionCts = updateScrollPositionCts.SafeRestart();
-            SetScrollPositionToBottom(updateScrollPositionCts.Token).Forget();
+            SetScrollPositionToBottomAsync(updateScrollPositionCts.Token).Forget();
         }
 
         public void CleanCreationPanel()
@@ -275,7 +275,7 @@ namespace DCL.Communities.CommunityCreation
             currentPlaceTags.Clear();
         }
 
-        private async UniTaskVoid SetScrollPositionToBottom(CancellationToken ct)
+        private async UniTaskVoid SetScrollPositionToBottomAsync(CancellationToken ct)
         {
             await UniTask.DelayFrame(1, cancellationToken: ct);
             creationPanelScrollRect.verticalNormalizedPosition = 0f;
