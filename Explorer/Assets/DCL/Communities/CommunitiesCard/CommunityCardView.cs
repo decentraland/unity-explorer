@@ -58,7 +58,9 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; }
 
         [field: Header("Community interactions")]
+        [field: SerializeField] private Button openChatButton { get; set; }
         [field: SerializeField] private Button openWizardButton { get; set; }
+        [field: SerializeField] private Button openContextMenuButton { get; set; }
         [field: SerializeField] private Button joinedButton { get; set; }
         [field: SerializeField] private Button joinButton { get; set; }
 
