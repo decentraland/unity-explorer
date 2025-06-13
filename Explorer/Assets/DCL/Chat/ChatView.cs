@@ -214,7 +214,7 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
-        private CancellationTokenSource privateConversationItemCts;
+        private CancellationTokenSource privateConversationItemCts = new CancellationTokenSource();
         private CancellationTokenSource communityTitleCts;
 
         private IThumbnailCache thumbnailCache;
@@ -786,7 +786,6 @@ namespace DCL.Chat
         public void AddPrivateConversation(ChatChannel channelToAdd)
         {
             conversationsToolbar.AddConversation(channelToAdd);
-            privateConversationItemCts = privateConversationItemCts.SafeRestart();
             conversationsToolbar.SetPrivateConversationData(channelToAdd.Id, privateConversationItemCts.Token);
         }
 
