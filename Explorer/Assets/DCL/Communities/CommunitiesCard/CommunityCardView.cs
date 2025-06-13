@@ -25,6 +25,10 @@ namespace DCL.Communities.CommunitiesCard
         private const string LEAVE_COMMUNITY_CONFIRM_TEXT = "YES";
         private const string LEAVE_COMMUNITY_CANCEL_TEXT = "NO";
 
+        private const string DELETE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to delete [{0}] Community?";
+        private const string DELETE_COMMUNITY_CONFIRM_TEXT = "CONTINUE";
+        private const string DELETE_COMMUNITY_CANCEL_TEXT = "CANCEL";
+
         public enum Sections
         {
             PHOTOS,
@@ -60,6 +64,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; }
         [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; }
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; }
+        [field: SerializeField] private Sprite deleteCommunityImage { get; set; }
         [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; }
 
         [field: Header("Community interactions")]
@@ -122,7 +127,29 @@ namespace DCL.Communities.CommunitiesCard
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, () => LeaveCommunityRequested?.Invoke()))
-                         .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, () => DeleteCommunityRequested?.Invoke())));
+                         .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested)));
+        }
+
+        private void OnDeleteCommunityRequested()
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowDeleteConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTaskVoid ShowDeleteConfirmationDialogAsync(CancellationToken ct)
+            {
+                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                    new ConfirmationDialogView.DialogData(string.Format(DELETE_COMMUNITY_TEXT_FORMAT, communityName.text),
+                        DELETE_COMMUNITY_CANCEL_TEXT,
+                        DELETE_COMMUNITY_CONFIRM_TEXT,
+                        deleteCommunityImage,
+                        false, false),
+                    ct);
+
+                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
+                DeleteCommunityRequested?.Invoke();
+            }
         }
 
         public void ConfigureContextMenu(IMVCManager mvcManager, CancellationToken cancellationToken)
