@@ -50,17 +50,18 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus status)
         {
-            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL)
-                view.Hide(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
+            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL or VoiceChatStatus.VOICE_CHAT_REJECTING_CALL or VoiceChatStatus.VOICE_CHAT_USER_BUSY)
+                view.Hide();
             else
-                view.Show(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
+                view.Show();
 
+            view.SetActiveSection(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
         }
 
         private void HangUp()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.LeaveCallAudio);
-            voiceChatCallStatusService.StopCall();
+            voiceChatCallStatusService.HangUp();
         }
 
         private void ToggleMicrophone()
@@ -70,12 +71,12 @@ namespace DCL.VoiceChat
 
         private void RefuseCall()
         {
-            voiceChatCallStatusService.StopCall();
+            voiceChatCallStatusService.RejectCall();
         }
 
         private void AcceptCall()
         {
-            voiceChatCallStatusService.StartCall(new Web3Address());
+            voiceChatCallStatusService.AcceptCall();
         }
 
         public void Dispose()
