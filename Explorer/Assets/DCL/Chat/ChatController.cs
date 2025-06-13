@@ -378,7 +378,7 @@ namespace DCL.Chat
                         name = response.data.name,
                         privacy = response.data.privacy,
                         role = response.data.role,
-                        ownerAddress = response.data.ownerId
+                        ownerAddress = response.data.ownerAddress
                     });
 
                 viewInstance!.SetCommunitiesData(userCommunities);

@@ -305,6 +305,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <CommunityCreationEditionPrefab>k__BackingField:
+          m_AssetGUID: 24aec0b5ead4ec44081cf47744a7a268
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
