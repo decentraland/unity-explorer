@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Settings.Settings;
+using DCL.Utilities;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
@@ -11,6 +13,8 @@ namespace DCL.VoiceChat
     public class VoiceChatCallStatusService : IVoiceChatCallStatusService
     {
         private readonly IVoiceService voiceChatService;
+        private readonly ObjectProxy<VoiceChatSettingsAsset> settings;
+
         public event IVoiceChatCallStatusService.VoiceChatStatusChangeDelegate StatusChanged;
         public VoiceChatStatus Status { get; private set; }
         public Web3Address CurrentTargetWallet { get; private set; }
@@ -24,9 +28,10 @@ namespace DCL.VoiceChat
 
         private CancellationTokenSource cts;
 
-        public VoiceChatCallStatusService(IVoiceService voiceChatService)
+        public VoiceChatCallStatusService(IVoiceService voiceChatService, ObjectProxy<VoiceChatSettingsAsset> settings)
         {
             this.voiceChatService = voiceChatService;
+            this.settings = settings;
 
             this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             cts = new CancellationTokenSource();
@@ -39,6 +44,8 @@ namespace DCL.VoiceChat
                 case PrivateVoiceChatStatus.VoiceChatAccepted:
                     RoomUrl = update.Credentials.Url;
                     Token = update.Credentials.Token;
+                    settings.StrictObject.Token = update.Credentials.Token;
+                    settings.StrictObject.RoomURL = update.Credentials.Url;
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatEnded:
@@ -115,6 +122,8 @@ namespace DCL.VoiceChat
                 case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
                     RoomUrl = response.Ok.Credentials.Url;
                     Token = response.Ok.Credentials.Token;
+                    settings.StrictObject.Token = response.Ok.Credentials.Token;
+                    settings.StrictObject.RoomURL = response.Ok.Credentials.Url;
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     break;
                 default:

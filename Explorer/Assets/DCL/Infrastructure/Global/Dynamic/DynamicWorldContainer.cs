@@ -543,7 +543,7 @@ namespace Global.Dynamic
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
             IVoiceService voiceService = new RPCVoiceChatService(socialServiceContainer.socialServicesRPC);
-            IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService);
+            IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService, voiceChatSettingsAssetProxy);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)

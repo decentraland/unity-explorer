@@ -20,6 +20,8 @@ namespace DCL.Settings.Settings
 
         [Tooltip("Used for Debug Purposes")]
         public string ConnectionString;
+        public string Token;
+        public string RoomURL;
 
         private void OnEnable()
         {
