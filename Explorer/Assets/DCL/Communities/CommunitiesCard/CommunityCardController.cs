@@ -101,8 +101,10 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance.SectionChanged -= OnSectionChanged;
                 viewInstance.OpenWizardRequested -= OnOpenCommunityWizard;
+                viewInstance.OpenChatRequested -= OnOpenCommunityChat;
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
+                viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
             }
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
@@ -118,12 +120,25 @@ namespace DCL.Communities.CommunitiesCard
             eventListController?.Dispose();
         }
 
+        private void OnDeleteCommunityRequested()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OnOpenCommunityChat()
+        {
+            //TODO: Focus the community chat and close the community card
+            throw new NotImplementedException();
+        }
+
         protected override void OnViewInstantiated()
         {
             viewInstance!.SectionChanged += OnSectionChanged;
             viewInstance.OpenWizardRequested += OnOpenCommunityWizard;
+            viewInstance.OpenChatRequested += OnOpenCommunityChat;
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
+            viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -182,6 +197,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.SetLoadingState(false);
 
                 viewInstance.ConfigureCommunity(communityData, imageController);
+                viewInstance.ConfigureContextMenu(mvcManager, ct);
 
                 viewInstance.ResetToggle();
 
