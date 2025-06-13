@@ -194,5 +194,25 @@ namespace DCL.CharacterCamera.Tests
             Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
             cursor.Received(1).Unlock();
         }
+
+        [Test]
+        public void DisallowPanningWhenInSDKCameraMode()
+        {
+            // Arrange
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free, PositionIsDirty = true });
+            ref var cameraData = ref world.Get<ExposedCameraData>(entity);
+            cameraData.CameraMode = CameraMode.SDKCamera;
+
+            Press(mouse.leftButton); // Temporal lock
+
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(false);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
+        }
     }
 }
