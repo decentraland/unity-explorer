@@ -31,6 +31,8 @@ namespace DCL.Profiles.Self
         private readonly IReadOnlyList<string> forceRender;
         private Profile? copyOfOwnProfile;
 
+        public Profile? OwnProfile { get; private set; }
+
         public SelfProfile(
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
@@ -55,9 +57,17 @@ namespace DCL.Profiles.Self
             this.profileCache = profileCache;
             this.world = world;
             this.playerEntity = playerEntity;
+
+            web3IdentityCache.OnIdentityCleared += InvalidateOwnProfile;
+            web3IdentityCache.OnIdentityChanged += InvalidateOwnProfile;
         }
 
-        public Profile? OwnProfile { get; private set; }
+        public void Dispose()
+        {
+            copyOfOwnProfile?.Dispose();
+            web3IdentityCache.OnIdentityCleared -= InvalidateOwnProfile;
+            web3IdentityCache.OnIdentityChanged -= InvalidateOwnProfile;
+        }
 
         public async UniTask<Profile?> ProfileAsync(CancellationToken ct)
         {
@@ -183,6 +193,12 @@ namespace DCL.Profiles.Self
             profile.IsDirty = true;
             // We assume that the profile already exists at this point, so we don't add it but update it
             world.Set(playerEntity, profile);
+        }
+
+        private void InvalidateOwnProfile()
+        {
+            copyOfOwnProfile = null;
+            OwnProfile = null;
         }
     }
 }
