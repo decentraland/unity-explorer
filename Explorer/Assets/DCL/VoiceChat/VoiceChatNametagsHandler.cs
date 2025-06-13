@@ -106,18 +106,16 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
-                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
                     world.AddOrGet(playerEntity, new VoiceChatNametagComponent(false));
-                    OnActiveSpeakersUpdated(); // Initialize speaking states when entering call
+                    OnActiveSpeakersUpdated();
                     break;
 
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
+
                     world.TryRemove<VoiceChatNametagComponent>(playerEntity);
                     activeSpeakers.Clear();
 
-                    // Remove components from all other participants
                     foreach (string participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out var entry))
