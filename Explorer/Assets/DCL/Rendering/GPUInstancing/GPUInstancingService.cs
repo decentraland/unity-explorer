@@ -4,6 +4,7 @@ using DCL.Rendering.GPUInstancing.InstancingData;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
@@ -39,7 +40,7 @@ namespace DCL.Rendering.GPUInstancing
                 frustumOffset = 0.0f;
                 vBoundsExtents = candidate.LODGroup.Bounds.extents;
                 fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
-                fMaxDistance = maxDistance;
+                fMaxDistance = math.min(maxDistance, cam.farClipPlane);
                 minCullingDistance = cam.nearClipPlane;
                 nInstBufferSize = instancesCount;
                 nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
