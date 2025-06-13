@@ -65,16 +65,14 @@ namespace DCL.VoiceChat
         {
             switch (newStatus)
             {
+                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL: break;
                 case VoiceChatStatus.DISCONNECTED:
                     DisconnectFromRoomAsync().Forget();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL: break;
-                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
+                case VoiceChatStatus.VOICE_CHAT_IN_CALL: break;
+                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                     ConnectToRoomAsync().Forget();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL: break;
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL: break;
-                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL: break;
                 case VoiceChatStatus.VOICE_CHAT_REJECTING_CALL: break;
                 default: throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
             }
