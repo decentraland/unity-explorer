@@ -512,6 +512,8 @@ MonoBehaviour:
       Severity: 4
     - Category: MARKETPLACE_CREDITS
       Severity: 1
+    - Category: PROFILE
+      Severity: 3
   sentryMatrix:
     entries: []
   debounceEnabled: 1

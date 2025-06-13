@@ -53,7 +53,6 @@ namespace DCL.InWorldCamera.Playground
             hud.Screenshot = Texture;
         }
 
-
         [ContextMenu(nameof(CaptureMetadata))]
         public async UniTask CaptureMetadata()
         {
@@ -87,9 +86,7 @@ namespace DCL.InWorldCamera.Playground
             Entity playerEntity = world.Create();
 
             return new SelfProfile(
-                new LogProfileRepository(
-                    new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache())
-                ),
+                new RealmProfileRepository(IWebRequestController.DEFAULT, realmData, new DefaultProfileCache()),
                 web3IdentityCache,
                 new EquippedWearables(),
                 new WearableStorage(),

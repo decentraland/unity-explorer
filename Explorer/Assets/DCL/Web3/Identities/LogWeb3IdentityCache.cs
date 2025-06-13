@@ -40,9 +40,7 @@ namespace DCL.Web3.Identities
                    .WithReport(ReportCategory.PROFILE)
                    .Log("Web3IdentityCache Identity value get requested");
                 var value = origin.Identity;
-                return value == null
-                    ? null
-                    : new LogWeb3Identity(value);
+                return value;
             }
 
             set
