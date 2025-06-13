@@ -3,6 +3,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.VoiceChat;
 using DCL.Web3;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
@@ -109,7 +110,9 @@ namespace DCL.Chat
 
         public void SetCallButtonStatus(bool isActive)
         {
-            CallButton.gameObject.SetActive(isActive);
+            // We need this as this method can be called from a background thread
+            // specially when comming from a Livekit Participant Update
+            CallButton.gameObject.ThreadSafeSetActive(isActive);
         }
 
         public void SetNearbyChannelImage()
