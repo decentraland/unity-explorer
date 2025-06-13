@@ -12,6 +12,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -69,7 +70,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
-            WarningNotificationView inWorldWarningNotificationView) : base(view, PAGE_SIZE)
+            WarningNotificationView inWorldWarningNotificationView,
+            IWeb3IdentityCache web3IdentityCache) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -90,7 +92,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.KickUserText, view.ContextMenuSettings.KickUserSprite, () => view.ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name))))
                          .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => view.ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name))));
 
-            this.view.InitGrid(() => currentSectionFetchData);
+            this.view.InitGrid(() => currentSectionFetchData, web3IdentityCache);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
             this.view.ElementMainButtonClicked += OnMainButtonClicked;
             this.view.ElementContextMenuButtonClicked += OnContextMenuButtonClicked;

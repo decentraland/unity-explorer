@@ -84,7 +84,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             background.color = normalColor;
         }
 
-        public void Configure(MemberData memberProfile, MembersListView.MemberListSections section)
+        public void Configure(MemberData memberProfile, MembersListView.MemberListSections section, bool isSelfCard)
         {
             UnHover();
             UserProfile = memberProfile;
@@ -104,11 +104,11 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             currentSection = section;
 
-            addFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
-            acceptFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
-            removeFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL);
-            cancelFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.ALL);
-            unblockFriendButton.gameObject.SetActive(memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
+            addFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
+            acceptFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
+            removeFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.friend && currentSection == MembersListView.MemberListSections.ALL);
+            cancelFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_sent && currentSection == MembersListView.MemberListSections.ALL);
+            unblockFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.blocked && currentSection == MembersListView.MemberListSections.ALL);
         }
 
         public void SubscribeToInteractions(Action<MemberData> mainButton,

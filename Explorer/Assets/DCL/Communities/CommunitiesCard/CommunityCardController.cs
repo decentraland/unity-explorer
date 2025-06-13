@@ -16,6 +16,7 @@ using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -50,6 +51,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -74,7 +76,8 @@ namespace DCL.Communities.CommunitiesCard
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            IWeb3IdentityCache web3IdentityCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -89,6 +92,7 @@ namespace DCL.Communities.CommunitiesCard
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public override void Dispose()
@@ -131,7 +135,8 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                viewInstance.warningNotificationView);
+                viewInstance.warningNotificationView,
+                web3IdentityCache);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 webRequestController,
