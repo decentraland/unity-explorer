@@ -252,6 +252,7 @@ MonoBehaviour:
   <contentObject>k__BackingField: {fileID: 4438923677015721477}
   <warningNotificationView>k__BackingField: {fileID: 8357571657956180249}
   <successNotificationView>k__BackingField: {fileID: 632918195793710035}
+  <defaultCommunityImage>k__BackingField: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
   <openWizardButton>k__BackingField: {fileID: 1634923376034701604}
   <joinedButton>k__BackingField: {fileID: 8865448273156285983}
   <joinButton>k__BackingField: {fileID: 1251281582169058030}

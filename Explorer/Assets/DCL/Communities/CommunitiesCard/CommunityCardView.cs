@@ -55,6 +55,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private GameObject contentObject { get; set; }
         [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; }
         [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; }
+        [field: SerializeField] private Sprite defaultCommunityImage { get; set; }
 
         [field: Header("Community interactions")]
         [field: SerializeField] private Button openWizardButton { get; set; }
@@ -187,7 +188,9 @@ namespace DCL.Communities.CommunitiesCard
             communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
 
             communityDescription.text = communityData.description;
-            //TODO: handle thumbnails properly
+
+            imageController.SetImage(defaultCommunityImage);
+
             if (communityData.thumbnails != null)
                 imageController.RequestImage(communityData.thumbnails.Value.raw, true, true);
 
