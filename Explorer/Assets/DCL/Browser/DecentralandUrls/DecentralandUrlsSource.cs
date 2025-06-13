@@ -24,6 +24,7 @@ namespace DCL.Browser.DecentralandUrls
 
         public DecentralandUrlsSource(DecentralandEnvironment environment, ILaunchMode launchMode)
         {
+            environment = DecentralandEnvironment.Zone;
             Environment = environment;
             DecentralandDomain = environment.ToString()!.ToLower();
             this.launchMode = launchMode;
