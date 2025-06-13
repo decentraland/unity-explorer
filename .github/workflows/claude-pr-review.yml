@@ -1,0 +1,50 @@
+name: Claude Review (On Label)
+
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  review-on-label:
+    if: github.event.label.name == 'ai-review'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Claude Review (Label Triggered)
+        uses: anthropics/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          timeout_minutes: "60"
+          direct_prompt: |
+            This PR is labeled ai_review and requires automated analysis focused on actionable improvements only.
+            Review Focus
+            Identify and report ONLY issues that require fixes:
+            1. Code quality violations per CLAUDE.md standards
+            2. Bugs or potential runtime errors
+            3. Security vulnerabilities
+            4. Performance issues
+            Bad practices or anti-patterns
+            1. Missing error handling
+            2. Unclear or problematic logic
+            3. Response Format
+            For each issue found:
+            1. Location: File and line number
+            2. Problem: What is wrong (be specific)
+            3. Fix: Exact change needed
+            4. Why: Brief explanation of the impact
+            What NOT to Include
+            1. Praise for correct code
+            2. General observations about what works well
+            3. Style preferences that don't violate standards
+            4. Suggestions that are "nice-to-have" rather than necessary
+            Focus entirely on what needs to be changed to make this PR production-ready.
+          allowed_tools: "mcp__github__add_pull_request_review_comment_to_pending_review,mcp__github__get_pull_request_diff"

@@ -32,7 +32,7 @@ namespace DCL.VoiceChat.Services
             this.socialServiceRPC = socialServiceRPC;
 
             //TODO: Temporary solution, need to move it somewhere else
-            SubscribeToPrivateVoiceChatUpdatesAsync(default).Forget();
+            //SubscribeToPrivateVoiceChatUpdatesAsync(default).Forget();
         }
 
         public void Dispose()
