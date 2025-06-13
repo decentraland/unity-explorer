@@ -17,6 +17,7 @@ namespace DCL.Chat
         private readonly List<Profile> participantProfileBuffer;
         private readonly ChatController controller;
         private CancellationTokenSource memberListCts = new();
+        private ChatView viewInstance;
 
         public ChatControllerMemberListHelper(
             IRoomHub roomHub,
@@ -30,6 +31,11 @@ namespace DCL.Chat
             this.membersBuffer = membersBuffer;
             this.participantProfileBuffer = participantProfileBuffer;
             this.controller = controller;
+        }
+
+        public void SetView(ChatView view)
+        {
+            viewInstance = view;
         }
 
         public void StartUpdating()
@@ -80,9 +86,7 @@ namespace DCL.Chat
         public void RefreshMemberList()
         {
             List<ChatMemberListView.MemberData> members = GenerateMemberList();
-
-            if (controller.TryGetView(out var viewInstance))
-                viewInstance.SetMemberData(members);
+            viewInstance.SetMemberData(members);
         }
 
         private void GetProfilesFromParticipants(List<Profile> outProfiles)
@@ -102,8 +106,6 @@ namespace DCL.Chat
 
             while (!memberListCts.IsCancellationRequested)
             {
-                if (!controller.TryGetView(out var viewInstance)) continue;
-
                 // If the player jumps to another island room (like a world) while the member list is visible, it must refresh
                 if (controller.PreviousRoomSid != controller.IslandRoomSid && viewInstance?.IsMemberListVisible == true)
                 {
@@ -123,7 +125,7 @@ namespace DCL.Chat
 
         public void Dispose()
         {
-            memberListCts.SafeCancelAndDispose();
+            StopUpdating();
         }
     }
 }

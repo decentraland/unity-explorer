@@ -22,6 +22,7 @@ namespace DCL.PlacesAPIService
             SortBy sortByBy = SortBy.MOST_ACTIVE, SortDirection sortDirection = SortDirection.DESC);
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
 
         UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct);
 

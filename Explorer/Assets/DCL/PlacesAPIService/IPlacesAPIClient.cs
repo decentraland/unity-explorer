@@ -21,6 +21,7 @@ namespace DCL.PlacesAPIService
             List<PlacesData.PlaceInfo>? resultBuffer = null);
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct);
+        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
 

@@ -341,7 +341,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c4b10b158dc49bebd8ac14a27fc7ac0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  profilePictureView: {fileID: 8102784969483356200}
+  thumbnailView: {fileID: 2130818043378227885}
   openButton: {fileID: 510709296985545676}
   unreadMessagesBadge: {fileID: 7151291566315591043}
   selectionMark: {fileID: 1280643333913694863}
@@ -1149,17 +1149,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
---- !u!114 &8102784969483356200 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 609007630589666506, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+--- !u!1 &2130818043378227885 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7319283368522151503, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
   m_PrefabInstance: {fileID: 8647332162550541538}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 946db314bdcc52a41a226ff3aa3acbbd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &8871218832219129309 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 224503025678412095, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}

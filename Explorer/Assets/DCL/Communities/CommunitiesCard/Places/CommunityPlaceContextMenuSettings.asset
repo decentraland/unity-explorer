@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b81b82a7a1344de8ff8b1b31ae820b7, type: 3}
+  m_Name: CommunityPlaceContextMenuSettings
+  m_EditorClassIdentifier: 
+  contextMenuWidth: 250
+  elementsSpacing: 5
+  verticalPadding:
+    m_Left: 15
+    m_Right: 15
+    m_Top: 20
+    m_Bottom: 25
+  shareSprite: {fileID: 21300000, guid: 4c97cd3c67403471d8fe75c5fc348e58, type: 3}
+  shareText: Share on X
+  copyLinkSprite: {fileID: 21300000, guid: 3bffb1589fb814c70b23fbce43ba6736, type: 3}
+  copyLinkText: Copy link

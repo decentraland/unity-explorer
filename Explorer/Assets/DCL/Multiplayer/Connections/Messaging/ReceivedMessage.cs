@@ -11,16 +11,18 @@ namespace DCL.Multiplayer.Connections.Messaging
         public readonly T Payload;
         public readonly string FromWalletId;
         public readonly RoomSource FromRoom;
+        public readonly string Topic;
         private readonly Packet packet;
         private readonly IMultiPool multiPool;
 
-        public ReceivedMessage(T payload, Packet packet, string fromWalletId, IMultiPool multiPool, RoomSource fromRoom)
+        public ReceivedMessage(T payload, Packet packet, string fromWalletId, IMultiPool multiPool, RoomSource fromRoom, string topic)
         {
             Payload = payload;
             FromWalletId = fromWalletId;
             this.multiPool = multiPool;
             FromRoom = fromRoom;
             this.packet = packet;
+            Topic = topic;
         }
 
         public void Dispose()

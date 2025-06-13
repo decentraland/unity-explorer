@@ -114,6 +114,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelUsers => $"https://camera-reel-service.decentraland.{ENV}/api/users",
                 DecentralandUrl.CameraReelImages => $"https://camera-reel-service.decentraland.{ENV}/api/images",
                 DecentralandUrl.CameraReelPlaces => $"https://camera-reel-service.decentraland.{ENV}/api/places",
+                DecentralandUrl.CameraReelCommunity => $"https://camera-reel-service.decentraland.{ENV}/api/community",
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
@@ -125,6 +126,8 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",
+                DecentralandUrl.Communities => $"https://communities.decentraland.{ENV}/v1",
+                DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }

@@ -37,9 +37,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private void ReEmit(ChatChannel.ChannelId channelId, ChatMessage obj) =>
             MessageAdded?.Invoke(channelId, obj);
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
-            core.Send(channel, message, origin);
+            core.Send(channel, message, origin, topic);
 
             JsonObject jsonObject = new JsonObject
                 {
@@ -47,6 +47,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     { "origin", origin },
                     { "is_mention", CheckIfIsMention(message)},
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
+                    // TODO: Add community id
 
                     //TODO FRAN: Add here array of mentioned players.
                     // { "emoji_count", emoji_count },

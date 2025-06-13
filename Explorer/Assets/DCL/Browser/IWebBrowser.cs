@@ -7,5 +7,7 @@ namespace DCL.Browser
         void OpenUrl(string url);
 
         void OpenUrl(DecentralandUrl url);
+
+        string GetUrl(DecentralandUrl url);
     }
 }

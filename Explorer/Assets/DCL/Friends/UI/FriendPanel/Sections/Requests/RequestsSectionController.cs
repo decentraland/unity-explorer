@@ -92,7 +92,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void BlockUserClicked(FriendProfile profile) =>
             FriendListSectionUtilities.BlockUserClicked(mvcManager, profile.Address, profile.Name);
 
-        private void HandleContextMenuUserProfileButton(string userId, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             friendshipOperationCts = friendshipOperationCts.SafeRestart();
 
@@ -105,7 +105,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
             async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
             {
-                await friendsService.CancelFriendshipAsync(userId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                await friendsService.CancelFriendshipAsync(userData.userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -164,10 +164,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
         private void ContextMenuClicked(FriendProfile friendProfile, Vector2 buttonPosition, RequestUserView elementView)
         {
             lastClickedProfileCtx = friendProfile;
-            userProfileContextMenuControlSettings.SetInitialData(friendProfile.Name, friendProfile.Address, friendProfile.HasClaimedName,
-                friendProfile.UserNameColor,
-                elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED,
-                friendProfile.FacePictureUrl);
+            userProfileContextMenuControlSettings.SetInitialData(friendProfile.ToUserData(),
+                elementView.ParentStatus == FriendPanelStatus.SENT ? UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT : UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED);
             elementView.CanUnHover = false;
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                 actionOnHide: () => elementView.CanUnHover = true,
