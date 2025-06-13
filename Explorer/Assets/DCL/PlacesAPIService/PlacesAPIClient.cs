@@ -103,25 +103,30 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
         {
-            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             var url = $"{baseWorldsURL}?names={placeId}";
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
-                url, ct, ReportCategory.UI,
+                url, ct,
+                ReportCategory.UI,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            PlacesData.PlacesAPIGetParcelResponse response = await result.CreateFromJson<PlacesData.PlacesAPIGetParcelResponse>(WRJsonParser.Unity,
-                                                                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing place info:", text))
-                                                                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
+            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
+
+            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+
+
 
             if (!response.ok)
                 throw new NotAPlaceException(placeId);
 
             // At this moment WR is already disposed
-            return response.data;
+            return response;
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)

@@ -73,8 +73,17 @@ namespace DCL.PlacesAPIService
             if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo? place = await client.GetWorldAsync(placeId, ct);
+            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync(placeId, ct);
+
+            if (!response.ok)
+                return null;
+
+            if (response.data.Count == 0)
+                return null;
+
+            PlacesData.PlaceInfo place = response.data[0];
             TryCachePlace(place);
+
             return place;
         }
 
