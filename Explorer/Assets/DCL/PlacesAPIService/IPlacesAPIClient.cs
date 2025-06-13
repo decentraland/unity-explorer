@@ -20,7 +20,7 @@ namespace DCL.PlacesAPIService
             IReadOnlyList<string>? positions = null,
             List<PlacesData.PlaceInfo>? resultBuffer = null);
 
-        UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct);
+        UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
 
