@@ -103,8 +103,23 @@ namespace DCL.Communities
         public UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct) =>
             fakeDataProvider.GetUserCommunitiesCompactAsync(ct);
 
-        public UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
-            fakeDataProvider.GetOnlineCommunityMembersAsync(ct);
+        public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members?offset=0&limit=1000&onlyOnline=true";
+
+            GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                           .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+            return response;
+        }
+
+        public async UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members?offset=0&limit=0&onlyOnline=true";
+
+            GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                           .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
+            return response.data.total;
+        }
 
         public UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct) =>
             fakeDataProvider.GetCommunityPlacesAsync(communityId, ct);

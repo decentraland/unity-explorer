@@ -16,9 +16,10 @@ namespace DCL.Communities
         UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct);
-        UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct);
         UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct);
         UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct);
+        UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct);
 
         UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);
         UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);

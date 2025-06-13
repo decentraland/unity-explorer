@@ -25,7 +25,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public delegate void GetParticipantProfilesDelegate(List<Profile> outProfiles);
+    public delegate UniTask GetChannelMembersDelegate(List<ChatUserData> outProfiles, CancellationToken ct);
 
     // Note: The view never changes any data (chatMessages), that's done by the controller
     public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
@@ -191,7 +191,7 @@ namespace DCL.Chat
 
         private ViewDependencies viewDependencies;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
+        private readonly List<ChatUserData> sortedMemberData = new ();
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private UniTaskCompletionSource closePopupTask;
@@ -496,8 +496,9 @@ namespace DCL.Chat
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatSettingsAsset chatSettings,
-            GetParticipantProfilesDelegate getParticipantProfilesDelegate,
+            GetChannelMembersDelegate getParticipantProfilesDelegate,
             ILoadingStatus loadingStatus,
+            IProfileCache profileCache,
             IThumbnailCache thumbnailCache,
             CommunityTitleView.OpenContextMenuDelegate openContextMenuAction)
         {
@@ -523,7 +524,7 @@ namespace DCL.Chat
             scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
             memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
 
-            chatInputBox.Initialize(chatSettings, getParticipantProfilesDelegate);
+            chatInputBox.Initialize(chatSettings, getParticipantProfilesDelegate, profileCache);
             chatInputBox.InputBoxFocusChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
@@ -731,7 +732,7 @@ namespace DCL.Chat
         /// The list will be refreshed during the next Update.
         /// </summary>
         /// <param name="memberData">The data of the members to be displayed in the member list.</param>
-        public void SetMemberData(List<ChatMemberListView.MemberData> memberData)
+        public void SetMemberData(List<ChatUserData> memberData)
         {
             sortedMemberData.Clear();
             sortedMemberData.AddRange(memberData);
@@ -1013,7 +1014,7 @@ namespace DCL.Chat
 
         private void OnMemberListViewVisibilityChanged(bool isVisible)
         {
-            chatTitleBar.ChangeTitleBarVisibility(isVisible);
+            chatTitleBar.ChangeTitleBarVisibility(isVisible, currentChannel.ChannelType);
             chatInputBox.gameObject.SetActive(!isVisible);
             chatAndConversationsPanel.gameObject.SetActive(!isVisible);
             unfoldedPanelInteractableArea.enabled = !isVisible;
