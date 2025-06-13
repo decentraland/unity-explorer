@@ -296,7 +296,7 @@ namespace DCL.Landscape
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
 
-            await gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
+            gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it

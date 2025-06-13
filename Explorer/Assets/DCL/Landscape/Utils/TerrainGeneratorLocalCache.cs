@@ -299,7 +299,7 @@ namespace DCL.Landscape.Utils
         {
             try
             {
-                int[]? detailLayer = await localCache.RetrieveArrayFromFileAsync<int>(TerrainLocalCache.DETAIL_LAYER,
+                int[] detailLayer = await localCache.RetrieveArrayFromFileAsync<int>(TerrainLocalCache.DETAIL_LAYER,
                     offsetX.ToString(), offsetZ.ToString(), layer.ToString(), isZone);
 
                 return UnFlatten(detailLayer, localCache.detailX, localCache.detailY);
