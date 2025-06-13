@@ -175,6 +175,7 @@ namespace DCL.Communities.CommunitiesBrowser
             currentMyCommunities.AddRange(communities);
             myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, resetPos);
             SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
+            myCommunitiesLoopList.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
         public void InitializeResultsGrid(int itemTotalCount, IWebRequestController webRequestCtrl, ProfileRepositoryWrapper profileDataProvider)
@@ -197,6 +198,9 @@ namespace DCL.Communities.CommunitiesBrowser
             currentResults.AddRange(communities);
             resultLoopGrid.SetListItemCount(currentResults.Count, resetPos);
             SetResultsAsEmpty(currentResults.Count == 0);
+
+            if (resetPos)
+                resultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
         public void UpdateJoinedCommunity(int index, bool isSuccess)
