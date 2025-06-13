@@ -125,7 +125,7 @@ namespace DCL.AvatarRendering.Emotes
             Func<StreamableLoadingResult<TAsset>, AttachmentRegularAsset> toRegularAsset)
             where TLoadingIntention: IAssetIntention, IEquatable<TLoadingIntention>
         {
-            if (promise.IsCancellationRequested(World))
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
                 ResetEmoteResultOnCancellation(emote, bodyShape);
                 promise.ForgetLoading(World);

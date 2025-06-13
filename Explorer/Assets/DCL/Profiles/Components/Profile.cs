@@ -229,5 +229,26 @@ namespace DCL.Profiles
             else
                 Links.Clear();
         }
+
+        public bool IsSameProfile(Profile profile)
+        {
+            if (!Avatar.IsSameAvatar(profile.Avatar)) return false;
+
+            return UserId == profile.UserId
+                   && Name == profile.Name
+                   && HasClaimedName == profile.HasClaimedName
+                   && HasConnectedWeb3 == profile.HasConnectedWeb3
+                   && Description == profile.Description
+                   && TutorialStep == profile.TutorialStep
+                   && Email == profile.Email
+                   && Country == profile.Country
+                   && EmploymentStatus == profile.EmploymentStatus
+                   && Gender == profile.Gender
+                   && Pronouns == profile.Pronouns
+                   && Language == profile.Language
+                   && Profession == profile.Profession
+                   && Birthdate == profile.Birthdate
+                   && Version == profile.Version;
+        }
     }
 }
