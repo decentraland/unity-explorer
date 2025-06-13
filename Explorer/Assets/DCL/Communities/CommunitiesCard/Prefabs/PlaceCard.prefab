@@ -143,7 +143,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 304577832558759916}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -1169,7 +1169,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2716949632277967359
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1185,9 +1185,9 @@ RectTransform:
   - {fileID: 9081981110568402251}
   m_Father: {fileID: 4048262121493806485}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 289.3, y: -23}
   m_SizeDelta: {x: 55, y: 46}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1323247920977521739
@@ -1413,7 +1413,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 55, y: 46}
+  m_SizeDelta: {x: 71.5, y: 46}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &800856422546710252
 CanvasRenderer:
@@ -2805,7 +2805,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 55
+      value: 71.5
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.y
@@ -3074,7 +3074,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 55
+      value: 71.5
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.y
@@ -3343,7 +3343,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 55
+      value: 71.5
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.y
