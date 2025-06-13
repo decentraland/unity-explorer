@@ -106,21 +106,20 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    world.AddOrGet(playerEntity, new VoiceChatNametagComponent(false));
+                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false));
                     OnActiveSpeakersUpdated();
                     break;
 
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
-
-                    world.TryRemove<VoiceChatNametagComponent>(playerEntity);
+                    world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false) { IsRemoving = true });
                     activeSpeakers.Clear();
 
                     foreach (string participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
                         if (entityParticipantTable.TryGet(participantId, out var entry))
                         {
-                            world.TryRemove<VoiceChatNametagComponent>(entry.Entity);
+                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true });
                         }
                     }
                     break;

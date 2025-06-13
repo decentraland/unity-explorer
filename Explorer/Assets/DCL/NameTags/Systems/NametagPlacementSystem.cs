@@ -20,6 +20,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Pool;
 using Unity.Mathematics;
+using System.Collections.Generic;
 
 // #if UNITY_EDITOR
 // using Utility.Editor;
@@ -45,6 +46,8 @@ namespace DCL.Nametags
         private readonly float maxDistanceSqr;
         private CameraComponent cameraComponent;
         private bool cameraInitialized;
+
+        private readonly List<Entity> entitiesToRemove = new ();
 
         public NametagPlacementSystem(
             World world,
@@ -80,6 +83,7 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
+            entitiesToRemove.Clear();
             EnableTagQuery(World);
             UpdateTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             AddTagForPlayerAvatarsQuery(World, cameraComponent, cameraForward, cameraUp);
@@ -87,6 +91,11 @@ namespace DCL.Nametags
             UpdateOwnTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
             UpdateNametagSpeakingStateQuery(World);
+
+            for (int i = 0; i < entitiesToRemove.Count; i++)
+            {
+                World.Remove<VoiceChatNametagComponent>(entitiesToRemove[i]);
+            }
         }
 
         [Query]
@@ -173,8 +182,12 @@ namespace DCL.Nametags
                 return;
 
             nametagView.SetIsSpeaking(voiceChatComponent.IsSpeaking);
-
             voiceChatComponent.IsDirty = false;
+
+            if (voiceChatComponent.IsRemoving)
+            {
+                entitiesToRemove.Add(e);
+            }
         }
 
         [Query]
