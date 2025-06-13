@@ -30,9 +30,12 @@ namespace DCL.Communities.CommunitiesCard.Events
         private const string JUMP_IN_WORLD_LINK = " https://decentraland.org/jump/?realm={0}";
         private const string EVENT_WEBSITE_LINK = "https://decentraland.org/events/event/?id={0}";
         private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
+        private const string TWITTER_HASHTAG = "DCLPlace";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
+        private const string FAILED_EVENTS_FETCHING_ERROR_MESSAGE = "There was an error fetching the community's events. Please try again.";
+        private const string FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE = "There was an error fetching the community events places. Please try again.";
 
         private readonly EventListView view;
         private readonly IPlacesAPIService placesAPIService;
@@ -87,6 +90,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public override void Dispose()
         {
             view.OpenWizardRequested -= OnOpenWizardRequested;
+            view.MainButtonClicked -= OnMainButtonClicked;
             view.JumpInButtonClicked -= OnJumpInButtonClicked;
             view.InterestedButtonClicked -= OnInterestedButtonClicked;
             view.EventShareButtonClicked -= OnEventShareButtonClicked;
@@ -122,7 +126,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             string.Format(EVENT_WEBSITE_LINK, eventData.Event.id);
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl(string.Format(TWITTER_NEW_POST_LINK, eventData.Event.name, "DCLPlace", GetEventCopyLink(eventData)));
+            webBrowser.OpenUrl(string.Format(TWITTER_NEW_POST_LINK, eventData.Event.name, TWITTER_HASHTAG, GetEventCopyLink(eventData)));
 
         private void OnInterestedButtonClicked(PlaceAndEventDTO eventData, EventListItemView eventItemView)
         {
@@ -189,6 +193,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.pageNumber--;
+                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
                 return eventsFetchData.totalToFetch;
             }
 
@@ -204,6 +209,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.pageNumber--;
+                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
                 return eventsFetchData.totalToFetch;
             }
 

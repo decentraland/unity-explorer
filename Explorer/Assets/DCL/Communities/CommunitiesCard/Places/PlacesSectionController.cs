@@ -28,6 +28,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
+        private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
@@ -244,6 +245,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!placeIdsResult.Success)
                 {
                     placesFetchData.pageNumber--;
+                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
                     return placesFetchData.totalToFetch;
                 }
 
@@ -264,6 +266,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.pageNumber--;
+                await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
                 return placesFetchData.totalToFetch;
             }
 
