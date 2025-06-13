@@ -25,7 +25,6 @@ namespace DCL.Audio.Systems
     /// </summary>
     [LogCategory(ReportCategory.AUDIO)]
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(LandscapeTerrainCullingSystem))]
     public partial class LandscapeAudioCullingSystem : BaseUnityLoopSystem
     {
         private readonly TerrainGenerator terrainGenerator;

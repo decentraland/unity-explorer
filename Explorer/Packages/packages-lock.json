@@ -56,13 +56,6 @@
       "dependencies": {},
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
-    "com.dcl.gpui-assets": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
-    },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
@@ -92,15 +85,6 @@
         "com.unity.burst": "1.6.0",
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
-      },
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
-    },
-    "com.gurbu.gpui-pro.terrain": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {
-        "com.gurbu.gpui-pro": "0.9.19"
       },
       "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
     },
@@ -578,18 +562,9 @@
     },
     "com.unity.modules.terrain": {
       "version": "1.0.0",
-      "depth": 0,
+      "depth": 2,
       "source": "builtin",
       "dependencies": {}
-    },
-    "com.unity.modules.terrainphysics": {
-      "version": "1.0.0",
-      "depth": 0,
-      "source": "builtin",
-      "dependencies": {
-        "com.unity.modules.physics": "1.0.0",
-        "com.unity.modules.terrain": "1.0.0"
-      }
     },
     "com.unity.modules.ui": {
       "version": "1.0.0",

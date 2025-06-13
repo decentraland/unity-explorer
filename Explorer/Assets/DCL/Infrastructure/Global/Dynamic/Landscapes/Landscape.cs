@@ -22,7 +22,6 @@ namespace Global.Dynamic.Landscapes
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly bool landscapeEnabled;
-        private readonly bool isLocalSceneDevelopment;
 
         public Landscape(IGlobalRealmController realmController, TerrainGenerator genesisTerrain, WorldTerrainGenerator worldsTerrain, bool landscapeEnabled, bool isLocalSceneDevelopment)
         {
@@ -30,7 +29,6 @@ namespace Global.Dynamic.Landscapes
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.landscapeEnabled = landscapeEnabled;
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
         }
 
         public async UniTask<EnumResult<LandscapeError>> LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)

@@ -1,7 +1,5 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.MapRenderer.ComponentsFactory;
-using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.Triggers;
 using ECS;
 using UnityEngine;
 using Utility;
@@ -19,8 +17,6 @@ namespace DCL.Landscape
 
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
 
-        private readonly IRealmData realmData;
-
         private Renderer[] satelliteRenderers;
 
         private Transform landscapeParentObject;
@@ -33,8 +29,6 @@ namespace DCL.Landscape
 
         public SatelliteFloor(IRealmData realmData, LandscapeData config)
         {
-            this.realmData = realmData;
-
             landscapeData = config;
 
             landscapeParentObject = new GameObject("Satellite View").transform;

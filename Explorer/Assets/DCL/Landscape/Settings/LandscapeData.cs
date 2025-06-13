@@ -14,10 +14,6 @@ namespace DCL.Landscape.Settings
         public TerrainGenerationData terrainData;
         public TerrainGenerationData worldsTerrainData;
 
-#if GPUIPRO_PRESENT
-        public GPUIAssets gpuiAssets;
-#endif
-
         [SerializeField] private float detailDistanceValue = 200;
         public float DetailDistance
         {
