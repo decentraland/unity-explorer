@@ -186,7 +186,7 @@ namespace DCL.Communities.CommunityCreation
                     return;
                 }
 
-                viewInstance!.SetProfileSelectedImage(data.CTToSprite());
+                viewInstance!.SetProfileSelectedImage(data.CTToSprite(texture));
             }
         }
 
