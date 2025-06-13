@@ -68,6 +68,7 @@ MonoBehaviour:
   openContextMenuButton: {fileID: 3140900631477848246}
   chatTitleMemberListNumberText: {fileID: 2895227464705487980}
   memberListTitleMemberListNumberText: {fileID: 5377769190290950630}
+  communityMemberListTitleMemberListNumberText: {fileID: 3603435867378355716}
   chatChannelNameNameText: {fileID: 9044296380937847988}
   memberListChannelNameText: {fileID: 1320663737415923502}
   defaultChatTitlebar: {fileID: 5554480968708598910}
@@ -1372,6 +1373,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4721481818274419596, guid: 5a7de2a40f1a67d4dbeea3c775a39776, type: 3}
   m_PrefabInstance: {fileID: 7899808053694209961}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3603435867378355716 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6890569302098547117, guid: 5a7de2a40f1a67d4dbeea3c775a39776, type: 3}
+  m_PrefabInstance: {fileID: 7899808053694209961}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &8028966600662829535
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -37,6 +37,7 @@ namespace DCL.Chat
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
+        [SerializeField] private TMP_Text communityMemberListTitleMemberListNumberText;
         [SerializeField] private TMP_Text chatChannelNameNameText;
         [SerializeField] private TMP_Text memberListChannelNameText;
 
@@ -109,7 +110,15 @@ namespace DCL.Chat
         public void SetMemberListNumberText(string userAmount)
         {
             chatTitleMemberListNumberText.text = userAmount;
-            memberListTitleMemberListNumberText.text = userAmount;
+
+            if (communityChannelContainer.gameObject.activeInHierarchy)
+            {
+                communityMemberListTitleMemberListNumberText.text = userAmount;
+            }
+            else if (nearbyMemberListTitlebar.gameObject.activeInHierarchy)
+            {
+                memberListTitleMemberListNumberText.text = userAmount;
+            }
         }
 
         public void SetChannelNameText(string channelName)
