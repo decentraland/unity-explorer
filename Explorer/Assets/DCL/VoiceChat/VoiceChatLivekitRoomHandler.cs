@@ -70,7 +70,6 @@ namespace DCL.VoiceChat
                     DisconnectFromRoomAsync().Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                     ConnectToRoomAsync().Forget();
                     break;
             }
