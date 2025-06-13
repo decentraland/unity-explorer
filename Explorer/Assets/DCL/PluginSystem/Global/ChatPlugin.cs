@@ -188,46 +188,19 @@ namespace DCL.PluginSystem.Global
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
-            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
-
-            realmData.RealmType.OnUpdate += OnRealmChange;
-            realmNavigator.NavigationExecuted += OnNavigationExecuted;
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
         }
 
-        /// <summary>
-        /// TODO: This is a temporary solution to show the chat when the user navigates to a parcel.
-        /// NOTE: check this PR for more details:
-        /// https://github.com/decentraland/unity-explorer/issues/4324
-        /// </summary>
-        /// <param name="parcel"></param>
-        private void OnNavigationExecuted(Vector2Int parcel)
+        private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
         {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
-        }
-
-        /// <summary>
-        /// TODO: This is a temporary solution to show the chat when the user changes realm.
-        /// NOTE: check this PR for more details:
-        /// https://github.com/decentraland/unity-explorer/issues/4324
-        /// </summary>
-        /// <param name="realmKind"></param>
-        private void OnRealmChange(RealmKind realmKind)
-        {
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true,false)).Forget();
+            if (status == LoadingStatus.LoadingStage.Completed)
+                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
 
         private void OnIdentityCleared()
         {
             if (chatController.IsVisibleInSharedSpace)
                 chatController.HideViewAsync(CancellationToken.None).Forget();
-        }
-
-        private void OnIdentityChanged()
-        {
-            //This might pose a problem if we havent logged in yet (so we change session before first login), it works, but we are trying to show the chat twice
-            //Once from here and once from the MainUIController. We need to account for this.
-
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
     }
 

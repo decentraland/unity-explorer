@@ -165,6 +165,9 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
             else
                 visualElementToSetup.style.left = StyleKeyword.Null;
+
+            if(model.HasOpacity)
+                visualElementToSetup.style.opacity = model.Opacity;
         }
 
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
