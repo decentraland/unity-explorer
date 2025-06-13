@@ -233,7 +233,6 @@ namespace DCL.Passport
         {
             Assert.IsNotNull(world);
 
-            viewInstance!.SetProfileDataProvider(profileRepositoryWrapper);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider, decentralandUrlsSource, isNameEditorEnabled);
@@ -669,8 +668,7 @@ namespace DCL.Passport
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
-                    mutualConfig[i].Picture.SetProfileDataProvider(profileRepositoryWrapper);
+                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
                 }
             }
         }

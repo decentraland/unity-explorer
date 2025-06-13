@@ -5,7 +5,6 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using UnityEngine;
 

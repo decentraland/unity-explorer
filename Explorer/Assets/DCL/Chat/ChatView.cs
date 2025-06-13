@@ -14,6 +14,7 @@ using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -472,7 +473,6 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
             return base.HideAsync(ct, isInstant);
         }
 
@@ -529,9 +529,9 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
             viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
             viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
+            SubscribeToSubmitEvent();
 
             closePopupTask = new UniTaskCompletionSource();
 
@@ -785,6 +785,7 @@ namespace DCL.Chat
         public void AddPrivateConversation(ChatChannel channelToAdd)
         {
             conversationsToolbar.AddConversation(channelToAdd);
+            privateConversationItemCts = privateConversationItemCts.SafeRestart();
             conversationsToolbar.SetPrivateConversationData(channelToAdd.Id, privateConversationItemCts.Token);
         }
 
@@ -1080,6 +1081,31 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
+        }
+
+        private bool isSubmitHooked;
+        public void SubscribeToSubmitEvent()
+        {
+            if (isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to subscribe to submit event when it was already hooked");
+                return;
+            }
+
+            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
+            isSubmitHooked = true;
+        }
+
+        public void UnsubscribeToSubmitEvent()
+        {
+            if (!isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to unsubscribe from submit event when it was not hooked");
+                return;
+            }
+
+            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            isSubmitHooked = false;
         }
     }
 }

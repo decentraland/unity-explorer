@@ -332,13 +332,13 @@ MonoBehaviour:
     <Camera>k__BackingField: {fileID: 4115714836209283951}
   thirdPersonCameraData:
     <Camera>k__BackingField: {fileID: 1829658356799049534}
-    <CameraOffset>k__BackingField: {fileID: 5294527864094199746}
+    <CameraOffset>k__BackingField: {fileID: 7531990628935797749}
     <OffsetBottom>k__BackingField: {x: 0.3, y: 0.2, z: 0}
     <OffsetMid>k__BackingField: {x: 0.6, y: 0, z: 0}
     <OffsetTop>k__BackingField: {x: 0.3, y: 0.7, z: 0}
   droneViewCameraData:
     <Camera>k__BackingField: {fileID: 3873798736405262014}
-    <CameraOffset>k__BackingField: {fileID: 8869747115766645440}
+    <CameraOffset>k__BackingField: {fileID: 7236558867446750272}
     <OffsetBottom>k__BackingField: {x: 0, y: 0, z: 0}
     <OffsetMid>k__BackingField: {x: 0, y: 0, z: 0}
     <OffsetTop>k__BackingField: {x: 0, y: 2, z: 0}
@@ -1140,7 +1140,7 @@ GameObject:
   - component: {fileID: 1725871008748331031}
   - component: {fileID: 1829658356799049534}
   - component: {fileID: 769675175854280020}
-  - component: {fileID: 5294527864094199746}
+  - component: {fileID: 7531990628935797749}
   m_Layer: 0
   m_Name: ThirdPersonCameraSettings
   m_TagString: Untagged
@@ -1301,7 +1301,7 @@ MonoBehaviour:
   m_Damping: 0.5
   m_DampingWhenOccluded: 0.2
   m_OptimalTargetDistance: 0.5
---- !u!114 &5294527864094199746
+--- !u!114 &7531990628935797749
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1310,12 +1310,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 4708074778744885137}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44d70cc20219cd84593f67d248eafe36, type: 3}
+  m_Script: {fileID: 11500000, guid: 8529cabda5b14c7a8bf220c90074d7cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Offset: {x: 1, y: 0, z: 0}
-  m_ApplyAfter: 1
-  m_PreserveComposition: 0
+  offset: {x: 1, y: 0, z: 0}
+  applyAfter: 1
+  preserveComposition: 0
+  minimumDistanceFromObstacle: 0.5
+  collider: {fileID: 769675175854280020}
 --- !u!1 &5872671959436779839
 GameObject:
   m_ObjectHideFlags: 3
@@ -1533,7 +1535,7 @@ GameObject:
   - component: {fileID: 994044998479405614}
   - component: {fileID: 3873798736405262014}
   - component: {fileID: 9197928246288095689}
-  - component: {fileID: 8869747115766645440}
+  - component: {fileID: 7236558867446750272}
   m_Layer: 0
   m_Name: DroneViewCameraSettings
   m_TagString: Untagged
@@ -1694,7 +1696,7 @@ MonoBehaviour:
   m_Damping: 0.5
   m_DampingWhenOccluded: 0.2
   m_OptimalTargetDistance: 0.5
---- !u!114 &8869747115766645440
+--- !u!114 &7236558867446750272
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1703,12 +1705,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 6234749757729860735}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44d70cc20219cd84593f67d248eafe36, type: 3}
+  m_Script: {fileID: 11500000, guid: 8529cabda5b14c7a8bf220c90074d7cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Offset: {x: 0, y: 0, z: 0}
-  m_ApplyAfter: 1
-  m_PreserveComposition: 0
+  offset: {x: 0, y: 0, z: 0}
+  applyAfter: 1
+  preserveComposition: 0
+  minimumDistanceFromObstacle: 0.5
+  collider: {fileID: 9197928246288095689}
 --- !u!1 &6786270023864290576
 GameObject:
   m_ObjectHideFlags: 0

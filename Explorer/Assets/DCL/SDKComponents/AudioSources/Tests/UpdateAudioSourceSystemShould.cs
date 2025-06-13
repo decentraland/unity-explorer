@@ -2,6 +2,7 @@
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.World;
 using DCL.Tests.Editor;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
@@ -56,7 +57,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.IsCurrent.Returns(true);
 
-            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), poolsRegistry, budgetProvider, budgetProvider, null, sceneStateProvider);
+            return new UpdateAudioSourceSystem(world, ECSTestUtils.SceneDataSub(), poolsRegistry, budgetProvider, budgetProvider, null, sceneStateProvider, new AudioSourcesPlugin.AudioSourcesPluginSettings());
         }
 
         [Test]

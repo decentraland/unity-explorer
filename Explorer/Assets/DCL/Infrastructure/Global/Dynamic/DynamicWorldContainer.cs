@@ -316,7 +316,7 @@ namespace Global.Dynamic
             ParseDebugForcedEmotes(bootstrapContainer.DebugSettings.EmotesToAddToUserProfile, ref selfEmotes);
 
             var selfProfile = new SelfProfile(profileRepository, identityCache, equippedWearables, wearableCatalog,
-                emotesCache, equippedEmotes, forceRender, selfEmotes);
+                emotesCache, equippedEmotes, forceRender, selfEmotes, profileCache, globalWorld, playerEntity);
 
             IEmoteProvider emoteProvider = new ApplicationParamsEmoteProvider(appArgs,
                 new EcsEmoteProvider(globalWorld, staticContainer.RealmData), builderDTOsURL.Value);
@@ -541,11 +541,7 @@ namespace Global.Dynamic
                 : coreBackpackEventBus;
 
             var profileBroadcast = new DebounceProfileBroadcast(
-                new EnsureSelfPublishedProfileBroadcast(
-                    new ProfileBroadcast(messagePipesHub, selfProfile),
-                    selfProfile,
-                    staticContainer.RealmData
-                )
+                new ProfileBroadcast(messagePipesHub, selfProfile)
             );
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(messagePipesHub, multiplayerDebugSettings, userBlockingCacheProxy);
@@ -708,8 +704,10 @@ namespace Global.Dynamic
                     friendsEventBus,
                     chatMessageFactory,
                     staticContainer.FeatureFlagsCache,
-                    friendServiceProxy,
                     profileRepositoryWrapper,
+                    friendServiceProxy,
+                    staticContainer.RealmData,
+                    realmNavigator,
                     communitiesDataProvider,
                     thumbnailCache,
                     mainUIView.WarningNotification),

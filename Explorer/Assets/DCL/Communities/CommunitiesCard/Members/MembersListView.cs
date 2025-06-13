@@ -164,9 +164,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
-            elementView.SetProfileDataProvider(profileRepositoryWrapper);
             MemberData memberData = membersData.items[index];
-            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(web3IdentityCache.Identity?.Address));
+            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(web3IdentityCache.Identity?.Address), profileRepositoryWrapper);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 (member, position, item) => ElementContextMenuButtonClicked?.Invoke(member, position, item),

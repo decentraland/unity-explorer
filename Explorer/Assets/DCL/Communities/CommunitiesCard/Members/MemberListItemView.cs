@@ -1,6 +1,5 @@
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
-using MVC;
 using System;
 using System.Globalization;
 using TMPro;
@@ -84,7 +83,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             background.color = normalColor;
         }
 
-        public void Configure(MemberData memberProfile, MembersListView.MemberListSections section, bool isSelfCard)
+        public void Configure(MemberData memberProfile, MembersListView.MemberListSections section, bool isSelfCard, ProfileRepositoryWrapper profileDataProvider)
         {
             UnHover();
             UserProfile = memberProfile;
@@ -100,7 +99,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             mutualFriendsText.gameObject.SetActive(memberProfile.friendshipStatus != FriendshipStatus.friend && memberProfile.mutualFriends > 0);
             roleText.text = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(memberProfile.role.ToString());
             roleText.transform.parent.gameObject.SetActive(memberProfile.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            profilePicture.Setup(memberProfile.GetUserNameColor(), memberProfile.profilePictureUrl, memberProfile.memberAddress);
+            profilePicture.Setup(profileDataProvider, memberProfile.GetUserNameColor(), memberProfile.profilePictureUrl, memberProfile.memberAddress);
 
             currentSection = section;
 
@@ -145,11 +144,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             if (canUnHover)
                 UnHover();
-        }
-
-        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
-        {
-            profilePicture.SetProfileDataProvider(profileDataProvider);
         }
     }
 }

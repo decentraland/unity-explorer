@@ -17,7 +17,7 @@ namespace DCL.Chat
         {
             customIcon.gameObject.SetActive(false);
             thumbnailView.SetActive(true);
-            thumbnailView.GetComponent<ProfilePictureView>().SetupWithDependencies(profileDataProvider, userColor, faceSnapshotUrl, userId);
+            thumbnailView.GetComponent<ProfilePictureView>().Setup(profileDataProvider, userColor, faceSnapshotUrl, userId);
             tooltipText.color = userColor;
         }
 

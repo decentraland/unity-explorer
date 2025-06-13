@@ -73,8 +73,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             UserNameTag.text = $"#{friendProfile.Address.ToString()[^4..]}";
             UserNameTag.gameObject.SetActive(!friendProfile.HasClaimedName);
             VerifiedIcon.SetActive(friendProfile.HasClaimedName);
-            ProfilePicture.SetProfileDataProvider(profileDataProvider);
-            ProfilePicture.Setup(friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
+            ProfilePicture.Setup(profileDataProvider, friendProfile.UserNameColor, friendProfile.FacePictureUrl, friendProfile.Address);
         }
 
         protected virtual void ToggleButtonView(bool isActive)
