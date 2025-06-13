@@ -3,6 +3,8 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Profiling;
+using DCL.WebRequests.Analytics.Metrics;
 using ECS.Abstract;
 using System;
 using System.Collections.Generic;
@@ -34,6 +36,13 @@ namespace DCL.WebRequests.Analytics
 
         private float lastTimeSinceMetricsUpdate;
 
+        private ulong sumUpload;
+        private ulong sumDownload;
+        private ulong prevSumUpload;
+        private ulong prevSumDownload;
+
+        private bool metricsUpdatedThisFrame;
+
         internal ShowWebRequestsAnalyticsSystem(World world,
             IWebRequestsAnalyticsContainer webRequestsAnalyticsContainer,
             IDebugContainerBuilder debugContainerBuilder,
@@ -64,17 +73,29 @@ namespace DCL.WebRequests.Analytics
 
         protected override void Update(float t)
         {
+            metricsUpdatedThisFrame = false;
+#if ENABLE_PROFILER
+            if (UnityEngine.Profiling.Profiler.enabled && UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
+            {
+                sumUpload = 0;
+                sumDownload = 0;
+
+                UpdateAllMetrics();
+
+                NetworkProfilerCounters.WEB_REQUESTS_UPLOADED.Value = sumUpload;
+                NetworkProfilerCounters.WEB_REQUESTS_DOWNLOADED.Value = sumDownload;
+                NetworkProfilerCounters.WEB_REQUESTS_UPLOADED_FRAME.Value = sumUpload - prevSumUpload;
+                NetworkProfilerCounters.WEB_REQUESTS_DOWNLOADED_FRAME.Value = sumDownload - prevSumDownload;
+
+                prevSumUpload = sumUpload;
+                prevSumDownload = sumDownload;
+            }
+#endif
+
             if (visibilityBinding is { IsExpanded: true })
             {
                 // Some metrics may require update without throttling
-                foreach (RequestType requestType in requestTypes)
-                {
-                    IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
-                    if (metrics == null) continue;
-
-                    foreach (IRequestMetric metric in metrics)
-                        metric.Update();
-                }
+                UpdateAllMetrics();
 
                 if (lastTimeSinceMetricsUpdate > THROTTLE)
                 {
@@ -95,6 +116,32 @@ namespace DCL.WebRequests.Analytics
             }
 
             lastTimeSinceMetricsUpdate += t;
+        }
+
+        private void UpdateAllMetrics()
+        {
+            if (metricsUpdatedThisFrame) return;
+
+            foreach (RequestType requestType in requestTypes)
+            {
+                IReadOnlyList<IRequestMetric>? metrics = webRequestsAnalyticsContainer.GetMetric(requestType.Type);
+
+                if (metrics == null)
+                    continue;
+
+                foreach (IRequestMetric metric in metrics)
+                {
+                    metric.Update();
+
+                    switch (metric)
+                    {
+                        case BandwidthUp: sumUpload += metric.GetMetric(); break;
+                        case BandwidthDown: sumDownload += metric.GetMetric(); break;
+                    }
+                }
+            }
+
+            metricsUpdatedThisFrame = true;
         }
     }
 }
