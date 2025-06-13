@@ -586,7 +586,7 @@ namespace Global.Dynamic
 
             // TODO: Remove fakeCommunitiesDataProvider when all the whole communitiesDataProvider implementation is ready.
             ICommunitiesDataProvider fakeCommunitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -971,7 +971,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     clipboard,
                     webBrowser,
-                    eventsApiService));
+                    eventsApiService,
+                    identityCache));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
