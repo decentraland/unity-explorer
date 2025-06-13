@@ -3,7 +3,6 @@ using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -55,12 +54,10 @@ namespace DCL.Communities.CommunitiesCard
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; }
         [field: SerializeField] private Button backgroundCloseButton { get; set; }
-        [field: SerializeField] private SectionLoadingView loadingObject { get; set; }
+        [field: SerializeField] private GameObject loadingObject { get; set; }
         [field: SerializeField] private Image backgroundImage { get; set; }
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
-        [field: SerializeField] private GameObject headerObject { get; set; }
-        [field: SerializeField] private GameObject contentObject { get; set; }
         [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; }
         [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; }
         [field: SerializeField] private Sprite defaultCommunityImage { get; set; }
@@ -215,14 +212,11 @@ namespace DCL.Communities.CommunitiesCard
 
         public void SetLoadingState(bool isLoading)
         {
-            headerObject.SetActive(!isLoading);
-            contentObject.SetActive(!isLoading);
+            communityName.enabled = !isLoading;
+            communityMembersNumber.enabled = !isLoading;
+            communityDescription.enabled = !isLoading;
             EventListView.SetLoadingStateActive(isLoading);
-
-            if (isLoading)
-                loadingObject?.Show();
-            else
-                loadingObject?.Hide();
+            loadingObject.SetActive(isLoading);
         }
 
         private void ToggleSection(Sections section)
