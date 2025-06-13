@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -15,6 +16,8 @@ namespace DCL.Communities
         UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct);
+        UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct);
+        UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct);
         UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct);
 

@@ -339,8 +339,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         public async UniTask ShowCommunityGalleryAsync(string communityId, string[] placeIds, CancellationToken ct)
         {
-            if (placeIds == null || placeIds.Length == 0) return;
-
             PrepareShowGallery(ct);
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetCommunityGalleryStorageInfoAsync(communityId, ct);
