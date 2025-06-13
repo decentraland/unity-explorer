@@ -21,6 +21,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ApiChunks,
 
         ApiPlaces,
+        ApiWorlds,
         POI,
         Map,
         ContentModerationReport,

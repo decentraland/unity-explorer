@@ -7,10 +7,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
-using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System.Collections.Generic;
@@ -35,7 +33,6 @@ namespace DCL.Communities.CommunityCreation
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly ICommunitiesDataProvider dataProvider;
-        private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
@@ -65,7 +62,6 @@ namespace DCL.Communities.CommunityCreation
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
             ICommunitiesDataProvider dataProvider,
-            INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IWebRequestController webRequestController,
@@ -74,11 +70,12 @@ namespace DCL.Communities.CommunityCreation
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.dataProvider = dataProvider;
-            this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.communityCreationEditionEventBus = communityCreationEditionEventBus;
+
+            FileBrowser.Instance.AllowSyncCalls = true;
         }
 
         protected override void OnViewInstantiated()
@@ -201,8 +198,7 @@ namespace DCL.Communities.CommunityCreation
             if (ownProfile != null)
             {
                 // Lands owned or managed by the user
-                // TODO (Santi): Get places correctly when the API is ready
-                PlacesData.IPlacesAPIResponse placesResponse = await placesAPIService.SearchPlacesAsync(0, 1000, ct, "santi");
+                PlacesData.IPlacesAPIResponse placesResponse = await placesAPIService.GetPlacesByOwnerAsync(ownProfile.UserId, ct);
 
                 foreach (PlacesData.PlaceInfo placeInfo in placesResponse.Data)
                 {
@@ -217,18 +213,16 @@ namespace DCL.Communities.CommunityCreation
                 }
 
                 // Worlds
-                // TODO (Santi): Get worlds correctly when the API is ready
-                INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1000, ct);
+                PlacesData.IPlacesAPIResponse worlds = await placesAPIService.GetWorldsByOwnerAsync(ownProfile.UserId, ct);
 
-                foreach (string name in names.Names)
+                foreach (PlacesData.PlaceInfo worldInfo in worlds.Data)
                 {
-                    var worldText = $"{name}.dcl.eth";
-                    placesToAdd.Add(worldText);
+                    placesToAdd.Add(worldInfo.world_name);
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
-                        Id = worldText,
+                        Id = worldInfo.id,
                         IsWorld = true,
-                        Name = worldText,
+                        Name = worldInfo.world_name,
                     });
                 }
             }
