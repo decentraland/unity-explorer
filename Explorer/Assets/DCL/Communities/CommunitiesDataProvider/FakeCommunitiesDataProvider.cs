@@ -40,7 +40,7 @@ namespace DCL.Communities
                     ownerAddress = "test",
                     privacy = communityData.privacy,
                     role = communityData.role,
-                    membersCount = communityData.memberCount,
+                    membersCount = communityData.membersCount,
                 }
             };
         }
