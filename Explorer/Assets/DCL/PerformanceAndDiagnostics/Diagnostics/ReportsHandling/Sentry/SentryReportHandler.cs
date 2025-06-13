@@ -86,6 +86,16 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
+        internal override void HandleSupressedException(Exception exception, ReportData reportData)
+        {
+            //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningfull information
+            if (reportData.Category.Equals(ReportCategory.ASSET_BUNDLES))
+                return;
+
+            SentrySdk.AddBreadcrumb(
+                $"Suppressed exception {reportData.Category}: {exception.Message}");
+        }
+
         private void CaptureMessage(string message, ReportData reportData, LogType logType)
         {
             // Avoid reporting non-errors to sentry as separate issues (even if they are enabled in the matrix)
@@ -167,9 +177,7 @@ namespace DCL.Diagnostics.Sentry
 
             private static void AddSceneInfo(Scope scope, ReportData data)
             {
-                if (data.SceneShortInfo.BaseParcel != Vector2Int.zero) ;
                 scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
-
                 scope.SetTag("scene.name", data.SceneShortInfo.Name);
             }
 

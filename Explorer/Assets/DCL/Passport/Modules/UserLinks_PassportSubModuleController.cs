@@ -244,7 +244,7 @@ namespace DCL.Passport.Modules
                     });
                 }
 
-                await passportProfileInfoController.UpdateProfileAsync(ct);
+                await passportProfileInfoController.UpdateProfileAsync(currentProfile, ct);
             }
         }
 

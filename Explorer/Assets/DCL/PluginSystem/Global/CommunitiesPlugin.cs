@@ -7,6 +7,7 @@ using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
 using DCL.Communities.CommunityCreation;
+using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PlacesAPIService;
@@ -43,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
+        private readonly IEventsApiService eventsApiService;
         private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
 
         private CommunityCardController? communityCardController;
@@ -66,6 +68,7 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
+            IEventsApiService eventsApiService,
             CommunityCreationEditionEventBus communityCreationEditionEventBus)
         {
             this.mvcManager = mvcManager;
@@ -84,6 +87,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
+            this.eventsApiService = eventsApiService;
             this.communityCreationEditionEventBus = communityCreationEditionEventBus;
         }
 
@@ -113,7 +117,8 @@ namespace DCL.PluginSystem.Global
                 placesAPIService,
                 realmNavigator,
                 clipboard,
-                webBrowser);
+                webBrowser,
+                eventsApiService);
 
             mvcManager.RegisterController(communityCardController);
 
