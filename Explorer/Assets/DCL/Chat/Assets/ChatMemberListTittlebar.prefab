@@ -365,7 +365,7 @@ GameObject:
   - component: {fileID: 2493542143061467435}
   - component: {fileID: 4587900841717654171}
   m_Layer: 5
-  m_Name: MembersWord
+  m_Name: OnlineWord
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -418,7 +418,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Members
+  m_text: Online
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
   m_sharedMaterial: {fileID: 1701868249614554837, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}

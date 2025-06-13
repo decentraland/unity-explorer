@@ -5,6 +5,7 @@ using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities.Extensions;
+using UnityEngine;
 using Utility;
 using Utility.Types;
 
@@ -135,10 +136,6 @@ namespace DCL.Chat
              if (result.Success)
              {
                  viewInstance.MemberCount = result.Value - 1;
-             }
-             else
-             {
-                 // TODO
              }
         }
 

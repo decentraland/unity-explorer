@@ -105,6 +105,11 @@ namespace DCL.Chat
             {
                 communitiesMemberListTitlebar.SetActive(isMemberListVisible);
             }
+            else
+            {
+                nearbyMemberListTitlebar.SetActive(false);
+                communitiesMemberListTitlebar.SetActive(false);
+            }
         }
 
         public void SetMemberListNumberText(string userAmount)
