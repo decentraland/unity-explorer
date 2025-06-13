@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3afcc483b22f184c8187c328ac1576f, type: 3}
+  m_Name: NewTerrainData
+  m_EditorClassIdentifier: 
+  randomSeed: 1
+  parcelSize: 16
+  bounds:
+    x: -150
+    y: -150
+    width: 314
+    height: 309
+  maxHeight: 40
+  occupancyMap: {fileID: 2800000, guid: 3fb0d1129424bdb40a89f785c5ec75a8, type: 3}
+  treesPerParcel: 0.15
+  treePrototypes:
+  - source: {fileID: 2214953459268991292, guid: 46ba147d6eb053147b59c469dd34425f, type: 3}
+    collider: {fileID: 7013496733605040723, guid: dcca3898bf9ce4a42ad171cb4313e6fa, type: 3}
+    localSize: 21.57782
+    lods:
+    - minScreenSize: 0.19794142
+      mesh: {fileID: 4300000, guid: 1cc28936fb720cd469a6755539529d40, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 8336fb9305a3c064088d0ef2283f9984, type: 2}
+      - {fileID: 2100000, guid: e7e92f2d15f104447b579a3e7e79fa48, type: 2}
+    - minScreenSize: 0.07799419
+      mesh: {fileID: 4300002, guid: 1cc28936fb720cd469a6755539529d40, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 6216ac33d8f9df848947beada2ae5d74, type: 2}
+      - {fileID: 2100000, guid: 586ed44f1ca988c4b886ff5cb85d2999, type: 2}
+    - minScreenSize: 0.031121986
+      mesh: {fileID: 4300004, guid: 1cc28936fb720cd469a6755539529d40, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 6216ac33d8f9df848947beada2ae5d74, type: 2}
+      - {fileID: 2100000, guid: 586ed44f1ca988c4b886ff5cb85d2999, type: 2}
+    - minScreenSize: 0.010651686
+      mesh: {fileID: 4300006, guid: 1cc28936fb720cd469a6755539529d40, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 70dadd10bee5a8c4f80b058605d618f8, type: 2}
+  - source: {fileID: 2187335638020092438, guid: a5880297cd94bc64697d703509a25311, type: 3}
+    collider: {fileID: 845438642989770326, guid: a99cd2a1ca9ce304fb5284edff5da8d1, type: 3}
+    localSize: 24.402372
+    lods:
+    - minScreenSize: 0.19976239
+      mesh: {fileID: 4300000, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: dd2dd7c1f820cff4191aa9cb417e3523, type: 2}
+      - {fileID: 2100000, guid: 30b633dfcfd6b034790611e8e31a72f2, type: 2}
+    - minScreenSize: 0.08146606
+      mesh: {fileID: 4300002, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: be2688536fdbd4c4b883cceff222ca00, type: 2}
+      - {fileID: 2100000, guid: 91e0dafba65a0af41b73e806444da999, type: 2}
+    - minScreenSize: 0.026214918
+      mesh: {fileID: 4300004, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: be2688536fdbd4c4b883cceff222ca00, type: 2}
+      - {fileID: 2100000, guid: 91e0dafba65a0af41b73e806444da999, type: 2}
+    - minScreenSize: 0.01
+      mesh: {fileID: 4300006, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 4cb61bd64af63184ea6210d8f048610c, type: 2}
+  - source: {fileID: 757561452486300604, guid: f03a5d1da28bc6e4098274181dec6ed6, type: 3}
+    collider: {fileID: 5731890515363948196, guid: 9306a250e75d66d4abb2fdcf55635aad, type: 3}
+    localSize: 42.242
+    lods:
+    - minScreenSize: 0.20516509
+      mesh: {fileID: 4300000, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 70936d57cf05e1442b9b6d919d9f3c9c, type: 2}
+      - {fileID: 2100000, guid: cb0a60424b5b0cf49a1db2ac1909679f, type: 2}
+    - minScreenSize: 0.12371714
+      mesh: {fileID: 4300002, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 71a6827b73a416f4797633b9eda7a640, type: 2}
+      - {fileID: 2100000, guid: 9033a1c43e10cb0439f54b71c37b37a8, type: 2}
+    - minScreenSize: 0.053024832
+      mesh: {fileID: 4300004, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 71a6827b73a416f4797633b9eda7a640, type: 2}
+      - {fileID: 2100000, guid: 9033a1c43e10cb0439f54b71c37b37a8, type: 2}
+    - minScreenSize: 0.017368691
+      mesh: {fileID: 4300006, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      materials:
+      - {fileID: 2100000, guid: 2dee480ba164e4c4d9565df7b04fdc69, type: 2}
+  detailPrototypes:
+  - source: {fileID: 1333259486307050118, guid: 7326c89d1e84ecb429de2f08a2baf2fe, type: 3}
+    scatterMode: 0
+    density: 16
+    alignToGround: 0
+    minScaleXZ: 1
+    maxScaleXZ: 1
+    minScaleY: 2
+    maxScaleY: 2
+    mesh: {fileID: 8666578268043267355, guid: 396ff52ab0b0210408b55a00b0c3cd57, type: 3}
+    material: {fileID: 2100000, guid: 1fb265a1eb82642428d82e5c54ad2148, type: 2}

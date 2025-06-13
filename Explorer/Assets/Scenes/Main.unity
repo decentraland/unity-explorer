@@ -475,8 +475,8 @@ MonoBehaviour:
     showSplash: 1
     showAuthentication: 1
     showLoading: 1
-    enableLandscape: 0
-    enableLOD: 0
+    enableLandscape: 1
+    enableLOD: 1
     enableVersionUpdateGuard: 0
     enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0
@@ -737,6 +737,72 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
+--- !u!1 &1564222426
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1564222428}
+  - component: {fileID: 1564222427}
+  - component: {fileID: 1564222429}
+  m_Layer: 0
+  m_Name: Terrain
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1564222427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1564222426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f13968779bf625e4c9139b3a2108e7b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrainData: {fileID: 11400000, guid: 11ce4e9f83b596341a5883081f7d710d, type: 2}
+  material: {fileID: 2100000, guid: 8f35af7b7cbbe28408136ca659b08b88, type: 2}
+  renderTreesAndDetail: 1
+  detailDistance: 200
+  groundMeshes:
+  - {fileID: 1394718660543912083, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
+  - {fileID: 2474922959326173943, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
+  - {fileID: -3615330361707025511, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
+--- !u!4 &1564222428
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1564222426}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1564222429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1564222426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88f6f4f663e38a84d8daccd1c147597e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  terrainData: {fileID: 11400000, guid: 11ce4e9f83b596341a5883081f7d710d, type: 2}
 --- !u!1 &1800558272
 GameObject:
   m_ObjectHideFlags: 0
@@ -1101,6 +1167,7 @@ SceneRoots:
   - {fileID: 158563622}
   - {fileID: 233166828}
   - {fileID: 4363253906714060728}
+  - {fileID: 1564222428}
   - {fileID: 1800558273}
   - {fileID: 1281082862}
   - {fileID: 946305964}
