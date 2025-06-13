@@ -115,7 +115,7 @@ namespace DCL.Navmap
             isExpanded = false;
             view.CollapseButton.gameObject.SetActive(false);
             view.ExpandButton.gameObject.SetActive(true);
-
+            searchBarController.DisableBack();
             RectTransform transform = (RectTransform)view.CollapseSection;
 
             collapseExpandCancellationToken = collapseExpandCancellationToken.SafeRestart();

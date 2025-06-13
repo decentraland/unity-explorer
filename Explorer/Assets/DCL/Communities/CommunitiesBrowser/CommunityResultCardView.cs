@@ -145,16 +145,13 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetupMutualFriends(ProfileRepositoryWrapper profileDataProvider, CommunityData communityData)
         {
-            foreach (MutualFriendsConfig.MutualThumbnail thumbnail in mutualFriends.thumbnails)
-                thumbnail.picture.SetProfileDataProvider(profileDataProvider);
-
             for (var i = 0; i < mutualFriends.thumbnails.Length; i++)
             {
                 bool friendExists = i < communityData.friends.Length;
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.address);
+                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.address);
             }
         }
 

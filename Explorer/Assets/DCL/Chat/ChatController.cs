@@ -99,6 +99,8 @@ namespace DCL.Chat
         public event ConversationClosedDelegate? ConversationClosed;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
+        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+
         private bool IsViewReady => viewInstanceCreated && viewInstance != null;
 
         public ChatController(
@@ -145,6 +147,7 @@ namespace DCL.Chat
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
             this.profileRepositoryWrapper = profileDataProvider;
+            friendsServiceProxy = friendsService;
             this.communitiesDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
@@ -288,13 +291,18 @@ namespace DCL.Chat
 
         private async UniTaskVoid InitializeChannelsAndConversationsAsync()
         {
-            if (chatStorage != null)
-                chatStorage.LoadAllChannelsWithoutMessages();
+            //We need the friends service enabled to be able to interact with them via chat.
+            //If there is no friends service (like in LSD) these two methods should not be invoked
+            if (friendsServiceProxy.Configured)
+            {
+                if (chatStorage != null)
+                    chatStorage.LoadAllChannelsWithoutMessages();
 
-            var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+                var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
 
-            await UniTask.SwitchToMainThread();
-            viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
+                await UniTask.SwitchToMainThread();
+                viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
+            }
 
             await InitializeCommunityCoversationsAsync();
         }

@@ -29,6 +29,8 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -69,6 +71,8 @@ namespace DCL.PluginSystem.Global
         private readonly WarningNotificationView warningNotificationView;
 
         private ChatController chatController;
+        private IRealmData realmData;
+        private IRealmNavigator realmNavigator;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -95,8 +99,10 @@ namespace DCL.PluginSystem.Global
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy,
             ProfileRepositoryWrapper profileDataProvider,
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IRealmData realmData,
+            IRealmNavigator realmNavigator,
             ICommunitiesDataProvider communityDataProvider,
             IThumbnailCache thumbnailCache,
             WarningNotificationView warningNotificationView)
@@ -128,6 +134,8 @@ namespace DCL.PluginSystem.Global
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.realmData = realmData;
+            this.realmNavigator = realmNavigator;
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
@@ -190,21 +198,19 @@ namespace DCL.PluginSystem.Global
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
-            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
+        }
+
+        private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
+        {
+            if (status == LoadingStatus.LoadingStage.Completed)
+                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
 
         private void OnIdentityCleared()
         {
             if (chatController.IsVisibleInSharedSpace)
                 chatController.HideViewAsync(CancellationToken.None).Forget();
-        }
-
-        private void OnIdentityChanged()
-        {
-            //This might pose a problem if we havent logged in yet (so we change session before first login), it works, but we are trying to show the chat twice
-            //Once from here and once from the MainUIController. We need to account for this.
-
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
     }
 
