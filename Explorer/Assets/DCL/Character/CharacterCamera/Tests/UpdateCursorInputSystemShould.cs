@@ -44,7 +44,7 @@ namespace DCL.CharacterCamera.Tests
             dlcInput.Enable();
 
             hoverEntity = world.Create(new HoverStateComponent());
-            entity = world.Create(new CursorComponent());
+            entity = world.Create(new CursorComponent(), new ExposedCameraData());
             eventSystem = Substitute.For<IEventSystem>();
             cursor = Substitute.For<ICursor>();
             crosshairView = Substitute.For<ICrosshairView>();
