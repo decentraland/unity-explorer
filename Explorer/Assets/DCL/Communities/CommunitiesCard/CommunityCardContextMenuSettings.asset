@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b68e7f2294347b4a4320799a41d0abf, type: 3}
   m_Name: CommunityCardContextMenuSettings
   m_EditorClassIdentifier: 
-  contextMenuWidth: 250
+  contextMenuWidth: 218
   elementsSpacing: 5
+  offsetFromTarget: {x: -20, y: -30}
   verticalPadding:
     m_Left: 15
     m_Right: 15

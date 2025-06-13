@@ -9,6 +9,7 @@ namespace DCL.Communities.CommunitiesCard
     {
         [SerializeField] private int contextMenuWidth = 250;
         [SerializeField] private int elementsSpacing = 5;
+        [SerializeField] private Vector2 offsetFromTarget = Vector2.zero;
         [SerializeField] private RectOffset verticalPadding;
         [Space(10)]
         [SerializeField] private Sprite leaveCommunitySprite;
@@ -19,6 +20,7 @@ namespace DCL.Communities.CommunitiesCard
 
         public int ContextMenuWidth => contextMenuWidth;
         public int ElementsSpacing => elementsSpacing;
+        public Vector2 OffsetFromTarget => offsetFromTarget;
         public RectOffset VerticalPadding => verticalPadding;
 
         public Sprite LeaveCommunitySprite => leaveCommunitySprite;

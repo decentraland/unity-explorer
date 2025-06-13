@@ -116,7 +116,11 @@ namespace DCL.Communities.CommunitiesCard
             placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
 
-            contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing)
+            contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
+                              offsetFromTarget: contextMenuSettings.OffsetFromTarget,
+                              verticalLayoutPadding: contextMenuSettings.VerticalPadding,
+                              elementsSpacing: contextMenuSettings.ElementsSpacing,
+                              anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, () => LeaveCommunityRequested?.Invoke()))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, () => DeleteCommunityRequested?.Invoke())));
         }
@@ -127,8 +131,13 @@ namespace DCL.Communities.CommunitiesCard
             this.cancellationToken = cancellationToken;
         }
 
-        private void OpenContextMenu() =>
-            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position)), cancellationToken);
+        private void OpenContextMenu()
+        {
+            openContextMenuButton.interactable = false;
+
+            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
+                actionOnHide: () => openContextMenuButton.interactable = true)), cancellationToken);
+        }
 
         private void OnDisable()
         {
