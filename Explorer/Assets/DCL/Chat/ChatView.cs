@@ -497,7 +497,7 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
             viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
             SubscribeToSubmitEvent();
-            
+
             closePopupTask = new UniTaskCompletionSource();
 
             conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
@@ -764,7 +764,7 @@ namespace DCL.Chat
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
-            chatTitleBar.SetCallButtonStatus(true);//isOtherUserConnected && currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            chatTitleBar.SetCallButtonStatus(isOtherUserConnected && currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
             SetupViewWithUserStateAsync(userState, isOtherUserConnected).Forget();
         }
 
@@ -793,7 +793,7 @@ namespace DCL.Chat
             else
                 chatMessageViewer.StartChatEntriesFadeout();
         }
-        
+
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
             if (isChatFocused)
@@ -806,7 +806,7 @@ namespace DCL.Chat
                 // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
                 if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
-        
+
                 Focus();
             }
         }
