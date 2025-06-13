@@ -970,7 +970,8 @@ namespace Global.Dynamic
                     placesAPIService,
                     realmNavigator,
                     clipboard,
-                    webBrowser));
+                    webBrowser,
+                    eventsApiService));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
+using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -47,13 +49,15 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
+        private readonly IEventsApiService eventsApiService;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
+        private EventListController? eventListController;
         private CancellationTokenSource sectionCancellationTokenSource = new ();
-        private CancellationTokenSource loadCommunityDataCancellationTokenSource = new ();
+        private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
@@ -69,7 +73,8 @@ namespace DCL.Communities.CommunitiesCard
             IPlacesAPIService placesAPIService,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IEventsApiService eventsApiService)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -83,6 +88,7 @@ namespace DCL.Communities.CommunitiesCard
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
+            this.eventsApiService = eventsApiService;
         }
 
         public override void Dispose()
@@ -96,6 +102,7 @@ namespace DCL.Communities.CommunitiesCard
             }
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
+            panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             if (cameraReelGalleryController != null)
@@ -104,6 +111,7 @@ namespace DCL.Communities.CommunitiesCard
             cameraReelGalleryController?.Dispose();
             membersListController?.Dispose();
             placesSectionController?.Dispose();
+            eventListController?.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -127,6 +135,7 @@ namespace DCL.Communities.CommunitiesCard
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 webRequestController,
+                communitiesDataProvider,
                 placesAPIService,
                 viewInstance.warningNotificationView,
                 viewInstance.successNotificationView,
@@ -135,6 +144,18 @@ namespace DCL.Communities.CommunitiesCard
                 clipboard,
                 webBrowser);
 
+            eventListController = new EventListController(viewInstance.EventListView,
+                eventsApiService,
+                placesAPIService,
+                webRequestController,
+                mvcManager,
+                viewInstance.warningNotificationView,
+                viewInstance.successNotificationView,
+                clipboard,
+                webBrowser,
+                realmNavigator,
+                communitiesDataProvider);
+
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
@@ -142,8 +163,8 @@ namespace DCL.Communities.CommunitiesCard
 
         protected override void OnViewShow()
         {
-            loadCommunityDataCancellationTokenSource = loadCommunityDataCancellationTokenSource.SafeRestart();
-            LoadCommunityDataAsync(loadCommunityDataCancellationTokenSource.Token).Forget();
+            panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
+            LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
 
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
@@ -158,17 +179,20 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.ConfigureCommunity(communityData, imageController);
 
                 viewInstance.ResetToggle();
+
+                eventListController?.ShowEvents(communityData, ct);
             }
         }
 
         protected override void OnViewClose()
         {
             sectionCancellationTokenSource.SafeCancelAndDispose();
-            loadCommunityDataCancellationTokenSource.SafeCancelAndDispose();
+            panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             membersListController?.Reset();
             placesSectionController?.Reset();
+            eventListController?.Reset();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -180,7 +204,8 @@ namespace DCL.Communities.CommunitiesCard
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityData.places, sectionCancellationTokenSource.Token).Forget();
+                    //TODO: fix the place ids
+                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, Array.Empty<string>(), sectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);

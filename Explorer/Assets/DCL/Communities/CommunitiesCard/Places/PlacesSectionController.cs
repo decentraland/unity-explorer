@@ -11,12 +11,12 @@ using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
-using Random = UnityEngine.Random;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -28,6 +28,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string LIKE_PLACE_ERROR_MESSAGE = "There was an error liking the place. Please try again.";
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
+        private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
@@ -37,6 +38,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
 
         private readonly PlacesSectionView view;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
@@ -44,6 +46,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
+
+        private string[] communityPlaceIds;
 
         protected override SectionFetchData<PlaceInfo> currentSectionFetchData => placesFetchData;
 
@@ -53,6 +57,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public PlacesSectionController(PlacesSectionView view,
             IWebRequestController webRequestController,
+            ICommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
             WarningNotificationView inWorldSuccessNotificationView,
@@ -62,6 +67,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IWebBrowser webBrowser) : base (view, PAGE_SIZE)
         {
             this.view = view;
+            this.communitiesDataProvider = communitiesDataProvider;
             this.placesAPIService = placesAPIService;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
@@ -225,22 +231,34 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             communityData = null;
             placesFetchData.Reset();
+            communityPlaceIds = null;
             view.SetCanModify(false);
             base.Reset();
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            if (communityData!.Value.places == null || communityData.Value.places.Length == 0)
-                return 0;
+            if (communityPlaceIds == null || communityPlaceIds.Length == 0)
+            {
+                Result<List<string>> placeIdsResult = await communitiesDataProvider.GetCommunityPlacesAsync(communityData!.Value.id, ct)
+                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                if (!placeIdsResult.Success)
+                {
+                    placesFetchData.pageNumber--;
+                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return placesFetchData.totalToFetch;
+                }
+
+                communityPlaceIds = placeIdsResult.Value.ToArray();
+            }
 
             int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
-            int total = communityData!.Value.places.Length;
+            int total = communityPlaceIds.Length;
 
             int remaining = total - offset;
             int count = Math.Min(PAGE_SIZE, remaining);
 
-            ArraySegment<string> slice = new ArraySegment<string>(communityData.Value.places, offset, count);
+            ArraySegment<string> slice = new ArraySegment<string>(communityPlaceIds, offset, count);
 
             Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
@@ -248,12 +266,13 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.pageNumber--;
-                return total;
+                await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                return placesFetchData.totalToFetch;
             }
 
             placesFetchData.items.AddRange(response.Value.data);
 
-            return total;
+            return response.Value.total;
         }
 
         public void ShowPlaces(CommunityData community, CancellationToken token)
@@ -261,17 +280,6 @@ namespace DCL.Communities.CommunitiesCard.Places
             cancellationToken = token;
 
             if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
-
-            //TODO: remove this once we have real data
-            if ((community.places == null || community.places.Length == 0) && Random.Range(0, 100) < 50)
-            {
-                string[] fakePlaces = new string[PAGE_SIZE + 5];
-                for (int i = 0; i < fakePlaces.Length; i++)
-                {
-                    fakePlaces[i] = $"fake-place-id-{i + 1}";
-                }
-                community.places = fakePlaces;
-            }
 
             communityData = community;
             userCanModify = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;

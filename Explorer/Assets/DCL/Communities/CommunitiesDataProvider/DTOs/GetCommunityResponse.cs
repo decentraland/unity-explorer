@@ -16,7 +16,6 @@ namespace DCL.Communities
             public string ownerId;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
-            public string[] places;
             public int membersCount;
         }
 
