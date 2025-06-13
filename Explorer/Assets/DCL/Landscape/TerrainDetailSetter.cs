@@ -32,7 +32,7 @@ namespace DCL.Landscape
         public async UniTask ReadApplyTerrainDetailAsync(TerrainData terrainData,
             TerrainGeneratorLocalCache localCache, int offsetX, int offsetZ, int i)
         {
-            int[,]? detailLayer = await localCache.GetDetailLayerAsync(offsetX, offsetZ, i);
+            int[,] detailLayer = await localCache.GetDetailLayerAsync(offsetX, offsetZ, i);
             ApplyDetailLayer(terrainData, i, detailLayer);
         }
 

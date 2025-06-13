@@ -56,8 +56,8 @@ namespace DCL.Landscape.Utils
         public const string TREES = "trees";
         public const string DETAIL_LAYER = "detailLayer";
         public const string HOLES = "holes";
-        
-        
+
+
         public static readonly BinaryFormatter FORMATTER = new();
 
         public int heightX;
@@ -122,7 +122,7 @@ namespace DCL.Landscape.Utils
         {
             if (isZone)
                 return GetDictionaryDirectory() + $"{name}{ZONE_MODIFIER}_{x}_{y}.data";
-            
+
             return GetDictionaryDirectory() + $"{name}_{x}_{y}.data";
         }
 
@@ -130,7 +130,7 @@ namespace DCL.Landscape.Utils
         {
             if (isZone)
                 return GetDictionaryDirectory() + $"{name}{ZONE_MODIFIER}_{x}_{y}_{layer}.data";
-            
+
             return GetDictionaryDirectory() + $"{name}_{x}_{y}_{layer}.data";
         }
 
@@ -139,7 +139,7 @@ namespace DCL.Landscape.Utils
             if (isZone)
                 return Application.persistentDataPath + FILE_NAME + ZONE_MODIFIER +
                        $"_{seed}_{chunkSize}_v{version}.data";
-            
+
             return Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}_v{version}.data";
         }
 
@@ -241,38 +241,74 @@ namespace DCL.Landscape.Utils
 
         public async UniTask<float[,]> GetHeightsAsync(int offsetX, int offsetZ)
         {
-            var heightMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.HEIGHTS,
-                offsetX.ToString(),
-                offsetZ.ToString(),
-                isZone);
-            return UnFlatten(heightMaps, localCache.heightX, localCache.heightY);
+            try
+            {
+                float[]? heightMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.HEIGHTS,
+                    offsetX.ToString(),
+                    offsetZ.ToString(),
+                    isZone);
+
+                return UnFlatten(heightMaps, localCache.heightX, localCache.heightY);
+            }
+            catch (Exception e)
+            {
+                ReportHub.Log(ReportCategory.LANDSCAPE, "Hieghts maps load error: " + e);
+                return new float[0, 0];
+            }
         }
 
         public async UniTask<float[,,]> GetAlphaMapsAsync(int offsetX, int offsetZ)
         {
-            var alphaMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.ALPHA_MAPS,
-                offsetX.ToString(),
-                offsetZ.ToString(),
-                isZone);
-            return UnFlatten(alphaMaps, localCache.alphaX, localCache.alphaY, localCache.alphaZ);
+            try
+            {
+                float[]? alphaMaps = await localCache.RetrieveArrayFromFileAsync<float>(TerrainLocalCache.ALPHA_MAPS,
+                    offsetX.ToString(),
+                    offsetZ.ToString(),
+                    isZone);
+
+                return UnFlatten(alphaMaps, localCache.alphaX, localCache.alphaY, localCache.alphaZ);
+            }
+            catch (Exception e)
+            {
+                ReportHub.Log(ReportCategory.LANDSCAPE, "Alpha maps load error: " + e);
+                return new float[0, 0, 0];
+            }
         }
 
 
         public async UniTask<TreeInstance[]> GetTreesAsync(int offsetX, int offsetZ)
         {
-            var treesDTO =
-                await localCache.RetrieveArrayFromFileAsync<TreeInstanceDTO>(TerrainLocalCache.TREES,
-                    offsetX.ToString(),
-                    offsetZ.ToString(),
-                    isZone);
-            return treesDTO.Select(TreeInstanceDTO.ToOriginal).ToArray();
+            try
+            {
+                TreeInstanceDTO[]? treesDTO =
+                    await localCache.RetrieveArrayFromFileAsync<TreeInstanceDTO>(TerrainLocalCache.TREES,
+                        offsetX.ToString(),
+                        offsetZ.ToString(),
+                        isZone);
+
+                return treesDTO.Select(TreeInstanceDTO.ToOriginal).ToArray();
+            }
+            catch (Exception e)
+            {
+                ReportHub.Log(ReportCategory.LANDSCAPE, "Tree layer load error: " + e);
+                return Array.Empty<TreeInstance>();
+            }
         }
 
         public async UniTask<int[,]> GetDetailLayerAsync(int offsetX, int offsetZ, int layer)
         {
-            var detailLayer = await localCache.RetrieveArrayFromFileAsync<int>(TerrainLocalCache.DETAIL_LAYER,
-                offsetX.ToString(), offsetZ.ToString(), layer.ToString(), isZone);
-            return UnFlatten(detailLayer, localCache.detailX, localCache.detailY);
+            try
+            {
+                int[]? detailLayer = await localCache.RetrieveArrayFromFileAsync<int>(TerrainLocalCache.DETAIL_LAYER,
+                    offsetX.ToString(), offsetZ.ToString(), layer.ToString(), isZone);
+
+                return UnFlatten(detailLayer, localCache.detailX, localCache.detailY);
+            }
+            catch (Exception e)
+            {
+                ReportHub.Log(ReportCategory.LANDSCAPE, "Landscape detail layer load error: " + e);
+                return new int[0, 0];
+            }
         }
 
         public async UniTask<bool[,]> GetHolesAsync(int offsetX, int offsetZ)
