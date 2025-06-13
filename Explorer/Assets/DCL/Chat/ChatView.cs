@@ -395,6 +395,7 @@ namespace DCL.Chat
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            Debug.Log("OnPointerEnter View");
             PointerEnter?.Invoke();
 
             isPointerOverChat = true;
@@ -405,6 +406,7 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            Debug.Log("OnPointerExit View");
             // When hovering a context menu, it considers that the mouse is not on the chat, it's a false positive
             if(isChatContextMenuOpen || isChatViewerMessageContextMenuOpen || chatInputBox.IsPasteMenuOpen || chatInputBox.IsEmojiPanelVisible)
                 return;
@@ -865,8 +867,9 @@ namespace DCL.Chat
             {
                 if (!IsUnfolded)
                 {
-                    IsUnfolded = true;
-                    Focus();
+                    OnInputButtonClicked();
+                    // IsUnfolded = true;
+                    // Focus();
                     chatMessageViewer.ShowLastMessage();
                 }
             }
@@ -891,10 +894,14 @@ namespace DCL.Chat
             isChatViewerMessageContextMenuOpen = false;
         }
 
+        public event Action OnCloseButtonClicked = () => { };
+        public event Action OnInputButtonClicked = () => { };
+
         private void OnCloseChatButtonClicked()
         {
             popupCts.SafeCancelAndDispose();
-            IsUnfolded = false;
+            //IsUnfolded = false;
+            OnCloseButtonClicked();
         }
 
         private void OnInputChanged(string inputText)
