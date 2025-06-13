@@ -68,14 +68,12 @@ namespace DCL.PlacesAPIService
             return place;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct)
         {
-            if (renewCache)
-                placesById.Remove(placeId);
-            else if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
+            if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo? place = await client.GetPlaceAsync(placeId, ct);
+            PlacesData.PlaceInfo? place = await client.GetWorldAsync(placeId, ct);
             TryCachePlace(place);
             return place;
         }
@@ -169,7 +167,7 @@ namespace DCL.PlacesAPIService
 
         private void TryCachePlace(PlacesData.PlaceInfo? placeInfo)
         {
-            if (placeInfo == null)
+            if (placeInfo?.id == null)
                 return;
 
             placesById[placeInfo.id] = placeInfo;

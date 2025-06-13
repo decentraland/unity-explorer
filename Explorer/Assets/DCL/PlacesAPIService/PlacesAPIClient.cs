@@ -25,8 +25,9 @@ namespace DCL.PlacesAPIService
 
         private readonly URLBuilder urlBuilder = new ();
 
-        private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
-        private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
+        private string basePlacesURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
+        private string baseWorldsURL => decentralandUrlsSource.Url(DecentralandUrl.ApiWorlds);
+        private URLDomain baseURLDomain => URLDomain.FromString(basePlacesURL);
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
         private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
         private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
@@ -48,7 +49,7 @@ namespace DCL.PlacesAPIService
             List<PlacesData.PlaceInfo>? resultBuffer = null)
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(baseURL));
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
 
             if (!string.IsNullOrEmpty(searchString))
                 urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
@@ -102,10 +103,10 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct)
         {
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            var url = $"{baseURL}/{placeId}?with_realms_detail=true";
+            var url = $"{baseWorldsURL}?names={placeId}";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
                 url, ct, ReportCategory.UI,
@@ -126,7 +127,7 @@ namespace DCL.PlacesAPIService
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            string url = baseURL + "/{0}/favorites";
+            string url = basePlacesURL + "/{0}/favorites";
             const string FAVORITE_PAYLOAD = "{\"favorites\": true}";
             const string NOT_FAVORITE_PAYLOAD = "{\"favorites\": false}";
 
@@ -144,7 +145,7 @@ namespace DCL.PlacesAPIService
 
         public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {
-            string url = baseURL + "/{0}/likes";
+            string url = basePlacesURL + "/{0}/likes";
             const string LIKE_PAYLOAD = "{\"like\": true}";
             const string DISLIKE_PAYLOAD = "{\"like\": false}";
             const string NO_LIKE_PAYLOAD = "{\"like\": null}";
