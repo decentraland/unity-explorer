@@ -785,6 +785,7 @@ namespace DCL.Chat
         public void AddPrivateConversation(ChatChannel channelToAdd)
         {
             conversationsToolbar.AddConversation(channelToAdd);
+            privateConversationItemCts = privateConversationItemCts.SafeRestart();
             conversationsToolbar.SetPrivateConversationData(channelToAdd.Id, privateConversationItemCts.Token);
         }
 
