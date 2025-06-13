@@ -268,6 +268,7 @@ MonoBehaviour:
   <membersButton>k__BackingField: {fileID: 1899825836782332159}
   <placesButton>k__BackingField: {fileID: 7242158169097855626}
   <placesWithSignButton>k__BackingField: {fileID: 6004137563627653444}
+  <placesShortcutButton>k__BackingField: {fileID: 6548173132039614719}
   <membersTextButton>k__BackingField: {fileID: 8727945829379734659}
   <photosSectionSelection>k__BackingField: {fileID: 3929084366575678202}
   <membersSectionSelection>k__BackingField: {fileID: 2405332664425647826}
@@ -690,6 +691,8 @@ GameObject:
   - component: {fileID: 8348008348785225157}
   - component: {fileID: 8024309553457850175}
   - component: {fileID: 1653784423074485173}
+  - component: {fileID: 6548173132039614719}
+  - component: {fileID: 125748066666822685}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -754,6 +757,65 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &6548173132039614719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8530190304850880285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 0.54509807}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 0.78039217}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 0.54509807}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1653784423074485173}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &125748066666822685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8530190304850880285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 6548173132039614719}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1001 &528874344211284269
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1323,7 +1385,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6297640514889114117, guid: 20a6e16dbdc9f4db88faeeafb18061f2, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 520
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 6297640514889114117, guid: 20a6e16dbdc9f4db88faeeafb18061f2, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -1590,6 +1652,10 @@ PrefabInstance:
     - target: {fileID: 7339194061191939688, guid: 20a6e16dbdc9f4db88faeeafb18061f2, type: 3}
       propertyPath: m_Name
       value: PlacesSectionButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 7339194061191939688, guid: 20a6e16dbdc9f4db88faeeafb18061f2, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

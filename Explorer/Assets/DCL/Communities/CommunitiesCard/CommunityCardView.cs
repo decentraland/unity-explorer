@@ -86,6 +86,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button membersButton { get; set; }
         [field: SerializeField] private Button placesButton { get; set; }
         [field: SerializeField] private Button placesWithSignButton { get; set; }
+        [field: SerializeField] private Button placesShortcutButton { get; set; }
         [field: SerializeField] private Button membersTextButton { get; set; }
 
         [field: Header("Selections")]
@@ -120,6 +121,7 @@ namespace DCL.Communities.CommunitiesCard
             membersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
             placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+            placesShortcutButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
                               offsetFromTarget: contextMenuSettings.OffsetFromTarget,
