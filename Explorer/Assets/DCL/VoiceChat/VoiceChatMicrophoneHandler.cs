@@ -118,20 +118,15 @@ namespace DCL.VoiceChat
             switch (newStatus)
             {
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-                case VoiceChatStatus.VOICE_CHAT_REJECTING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                     isInCall = false;
                     DisableMicrophone();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
-                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
                     isInCall = true;
                     IsTalking = true;
                     EnableMicrophone();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL: break;
-                default: throw new ArgumentOutOfRangeException(nameof(newStatus), newStatus, null);
             }
         }
 
