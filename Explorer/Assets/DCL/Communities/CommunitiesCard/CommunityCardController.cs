@@ -34,6 +34,7 @@ namespace DCL.Communities.CommunitiesCard
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
+        private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
@@ -61,6 +62,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
+        private UniTaskCompletionSource closeIntentCompletionSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
 
@@ -122,12 +124,29 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnDeleteCommunityRequested()
         {
-            throw new NotImplementedException();
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            DeleteCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid DeleteCommunityAsync(CancellationToken ct)
+            {
+                Result<bool> result = await communitiesDataProvider.DeleteCommunityAsync(communityData.id, ct)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success || !result.Value)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(DELETE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return;
+                }
+
+                closeIntentCompletionSource.TrySetResult();
+            }
         }
 
         private void OnOpenCommunityChat()
         {
             //TODO: Focus the community chat and close the community card
+            closeIntentCompletionSource.TrySetResult();
             throw new NotImplementedException();
         }
 
@@ -184,6 +203,7 @@ namespace DCL.Communities.CommunitiesCard
         protected override void OnViewShow()
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
+            closeIntentCompletionSource = new UniTaskCompletionSource();
             LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
 
@@ -286,6 +306,6 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.GetClosingTasks(ct));
+            UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));
     }
 }
