@@ -268,7 +268,7 @@ namespace Global.Dynamic
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
-            var dclInput = staticContainer.InputProxy.StrictObject;
+            DCLInput dclInput = staticContainer.InputProxy.StrictObject;
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
@@ -588,7 +588,7 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
-            ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, profileThumbnailCache, remoteMetadata);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, profileThumbnailCache, remoteMetadata);
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
@@ -860,16 +860,24 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
-                new VoiceChatPlugin(voiceChatSettingsAssetProxy, assetsProvisioner, dclInput, roomHub, mainUIView, voiceChatCallStatusService, viewDependencies, profileRepositoryWrapper)
+                new VoiceChatPlugin(
+                    voiceChatSettingsAssetProxy,
+                    assetsProvisioner,
+                    dclInput,
+                    roomHub,
+                    mainUIView,
+                    voiceChatCallStatusService,
+                    viewDependencies,
+                    profileRepositoryWrapper,
+                    entityParticipantTable,
+                    globalWorld,
+                    playerEntity),
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
 
-            if (localSceneDevelopment)
-            {
-                globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
-            }
+            if (localSceneDevelopment) { globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls)); }
             else
             {
                 globalPlugins.Add(lodContainer.LODPlugin);

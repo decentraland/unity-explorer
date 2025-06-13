@@ -1,7 +1,9 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
@@ -25,6 +27,9 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ViewDependencies dependencies;
         private readonly ProfileRepositoryWrapper profileDataProvider;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
+        private readonly Arch.Core.World world;
+        private readonly Entity playerEntity;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
@@ -34,6 +39,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
         private VoiceChatController? controller;
+        private VoiceChatNametagsHandler? nametagsHandler;
 
         public VoiceChatPlugin(
             ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
@@ -43,7 +49,7 @@ namespace DCL.PluginSystem.Global
             MainUIView mainUIView,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             ViewDependencies dependencies,
-            ProfileRepositoryWrapper profileDataProvider)
+            ProfileRepositoryWrapper profileDataProvider, IReadOnlyEntityParticipantTable entityParticipantTable, Arch.Core.World world, Entity playerEntity)
         {
             this.voiceChatSettingsProxy = voiceChatSettingsProxy;
             this.assetsProvisioner = assetsProvisioner;
@@ -53,6 +59,9 @@ namespace DCL.PluginSystem.Global
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.dependencies = dependencies;
             this.profileDataProvider = profileDataProvider;
+            this.entityParticipantTable = entityParticipantTable;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
         public void Dispose()
@@ -65,6 +74,7 @@ namespace DCL.PluginSystem.Global
 
             voiceChatHandler.Dispose();
             livekitRoomHandler.Dispose();
+            nametagsHandler?.Dispose();
 
             audioSource.Dispose();
             voiceChatConfigurationAsset.Dispose();
@@ -78,7 +88,6 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            
             AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
             audioConfig.sampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
             AudioSettings.Reset(audioConfig);
@@ -102,6 +111,13 @@ namespace DCL.PluginSystem.Global
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
 
             livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration);
+
+            nametagsHandler = new VoiceChatNametagsHandler(
+                roomHub.VoiceChatRoom().Room(),
+                voiceChatCallStatusService,
+                entityParticipantTable,
+                world,
+                playerEntity);
 
             controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, dependencies, profileDataProvider);
         }

@@ -4,16 +4,11 @@ using System;
 namespace DCL.VoiceChat
 {
     /// <summary>
-    ///     Handles real-time audio processing for voice chat including noise gate
-    ///     and low-pass filtering to complement WebRTC's built-in processing.
+    ///     Performs real-time audio preprocessing for voice chat, including noise gating, low-pass filtering, and auto-gain control.
+    ///     Designed to improve audio quality before transmission or playback.
     /// </summary>
     public class VoiceChatAudioProcessor
     {
-        private enum FilterType
-        {
-            LOW_PASS,
-        }
-
         private readonly VoiceChatConfiguration configuration;
 
         private readonly float[] lowPassPrevInputs = new float[2];
@@ -27,6 +22,14 @@ namespace DCL.VoiceChat
         private bool isGateOpening;
         private float gateOpenFadeProgress;
         private float gateSmoothing;
+        private float targetGain = 1f;
+        private float currentGain = 1f;
+        private float peakTrackingTime;
+
+        private BiquadState lowPassState;
+        private BiquadCoefficients lowPassCoeffs;
+        private float lastLowPassCutoff = -1f;
+        private int lastLowPassSampleRate = -1;
 
         public VoiceChatAudioProcessor(VoiceChatConfiguration configuration)
         {
@@ -48,6 +51,9 @@ namespace DCL.VoiceChat
             gateSmoothing = 0f;
             gateIsOpen = false;
             lastSpeechTime = 0f;
+            currentGain = 1f;
+            targetGain = 1f;
+            peakTrackingTime = 0f;
 
             if (fadeInBuffer == null || fadeInBuffer.Length != configuration.FadeInBufferSize) { fadeInBuffer = new float[configuration.FadeInBufferSize]; }
 
@@ -56,16 +62,92 @@ namespace DCL.VoiceChat
             fadeInBufferIndex = 0;
             isGateOpening = false;
             gateOpenFadeProgress = 0f;
+
+            lowPassState = default(BiquadState);
+            lastLowPassCutoff = -1f;
+            lastLowPassSampleRate = -1;
+        }
+
+        private void UpdateLowPassCoefficients(float cutoffFreq, int sampleRate)
+        {
+            if (Mathf.Approximately(cutoffFreq, lastLowPassCutoff) && sampleRate == lastLowPassSampleRate)
+                return;
+
+            float w = 2f * Mathf.PI * cutoffFreq / sampleRate;
+            w = Mathf.Clamp(w, 0.01f, Mathf.PI * 0.95f);
+            float cosw = Mathf.Cos(w);
+            float sinw = Mathf.Sin(w);
+            float alpha = sinw / (2f * 0.7071f);
+
+            float b0 = (1f - cosw) / 2f;
+            float b1 = 1f - cosw;
+            float b2 = (1f - cosw) / 2f;
+            float a0 = 1f + alpha;
+            float a1 = -2f * cosw;
+            float a2 = 1f - alpha;
+
+            lowPassCoeffs.b0 = b0 / a0;
+            lowPassCoeffs.b1 = b1 / a0;
+            lowPassCoeffs.b2 = b2 / a0;
+            lowPassCoeffs.a1 = a1 / a0;
+            lowPassCoeffs.a2 = a2 / a0;
+
+            lastLowPassCutoff = cutoffFreq;
+            lastLowPassSampleRate = sampleRate;
         }
 
         /// <summary>
-        ///     Process audio samples with noise gate and low-pass filtering
+        ///     Adjusts gain to maintain a target peak level, only when speech is detected.
+        ///     Smoothly transitions gain to avoid abrupt changes.
+        /// </summary>
+        private void UpdateAutoGain(float deltaTime, bool speechDetected)
+        {
+            if (speechDetected)
+            {
+                peakTrackingTime += deltaTime;
+
+                if (peakTrackingTime >= configuration.PeakTrackingWindow)
+                {
+                    if (peakLevel > configuration.MinPeakThreshold) { targetGain = Mathf.Clamp(configuration.TargetPeakLevel / peakLevel, configuration.MinGain, configuration.MaxGain); }
+
+                    peakLevel = 0f;
+                    peakTrackingTime = 0f;
+                }
+            }
+
+            float gainDiff = targetGain - currentGain;
+            float maxGainChange = configuration.GainAdjustSpeed * deltaTime;
+            currentGain += Mathf.Clamp(gainDiff, -maxGainChange, maxGainChange);
+        }
+
+        /// <summary>
+        ///     Processes a buffer of audio samples in-place, applying noise gate, low-pass filtering, and auto-gain control.
+        ///     Intended for real-time voice chat audio preprocessing before transmission or playback.
         /// </summary>
         public void ProcessAudio(Span<float> audioData, int sampleRate)
         {
             if (audioData.Length == 0) return;
 
             float deltaTime = (float)audioData.Length / sampleRate;
+            var speechDetected = false;
+            var maxInputLevel = 0f;
+            var maxOutputLevel = 0f;
+
+            // First pass: detect speech and track peak level
+            for (var i = 0; i < audioData.Length; i++)
+            {
+                float sample = audioData[i];
+                float sampleAbs = Mathf.Abs(sample);
+                maxInputLevel = Mathf.Max(maxInputLevel, sampleAbs);
+
+                if (sampleAbs > configuration.NoiseGateThreshold)
+                {
+                    speechDetected = true;
+                    peakLevel = Mathf.Max(peakLevel, sampleAbs);
+                }
+            }
+
+            UpdateAutoGain(deltaTime, speechDetected);
 
             for (var i = 0; i < audioData.Length; i++)
             {
@@ -75,51 +157,42 @@ namespace DCL.VoiceChat
 
                 if (configuration.EnableNoiseGate) { sample = ApplyNoiseGateWithHold(sample, deltaTime, sampleRate); }
 
+                sample *= currentGain;
+                maxOutputLevel = Mathf.Max(maxOutputLevel, Mathf.Abs(sample));
+
                 audioData[i] = Mathf.Clamp(sample, -1f, 1f);
             }
         }
 
-        private float ApplyBiquadFilter(float input, int sampleRate, float cutoffFreq, FilterType filterType,
-            float[] prevInputs, float[] prevOutputs)
+        /// <summary>
+        ///     Applies a second-order low-pass filter to the input sample using the configured cutoff frequency.
+        ///     See: https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
+        /// </summary>
+        private float ApplyLowPassFilter2NdOrder(float input, int sampleRate)
         {
-            float w = 2f * Mathf.PI * cutoffFreq / sampleRate;
-            w = Mathf.Clamp(w, 0.01f, Mathf.PI * 0.95f);
+            UpdateLowPassCoefficients(configuration.LowPassCutoffFreq, sampleRate);
 
-            float cosw = Mathf.Cos(w);
-            float sinw = Mathf.Sin(w);
-            float alpha = sinw / (2f * 0.7071f);
-
-            float b0 = (1f - cosw) / 2f;
-            float b1 = 1f - cosw;
-            float b2 = (1f - cosw) / 2f;
-
-            float a0 = 1f + alpha;
-            float a1 = -2f * cosw;
-            float a2 = 1f - alpha;
-
-            b0 /= a0;
-            b1 /= a0;
-            b2 /= a0;
-            a1 /= a0;
-            a2 /= a0;
-
-            float output = (b0 * input) + (b1 * prevInputs[0]) + (b2 * prevInputs[1])
-                           - (a1 * prevOutputs[0]) - (a2 * prevOutputs[1]);
+            float output = (lowPassCoeffs.b0 * input)
+                           + (lowPassCoeffs.b1 * lowPassState.x1)
+                           + (lowPassCoeffs.b2 * lowPassState.x2)
+                           - (lowPassCoeffs.a1 * lowPassState.y1)
+                           - (lowPassCoeffs.a2 * lowPassState.y2);
 
             if (Mathf.Abs(output) < 1e-10f) output = 0f;
 
-            prevInputs[1] = prevInputs[0];
-            prevInputs[0] = input;
-            prevOutputs[1] = prevOutputs[0];
-            prevOutputs[0] = output;
+            // Shift state
+            lowPassState.x2 = lowPassState.x1;
+            lowPassState.x1 = input;
+            lowPassState.y2 = lowPassState.y1;
+            lowPassState.y1 = output;
 
             return output;
         }
 
-        private float ApplyLowPassFilter2NdOrder(float input, int sampleRate) =>
-            ApplyBiquadFilter(input, sampleRate, configuration.LowPassCutoffFreq, FilterType.LOW_PASS,
-                lowPassPrevInputs, lowPassPrevOutputs);
-
+        /// <summary>
+        ///     Applies a noise gate with hold and fade-in logic to the sample,
+        ///     muting low-level noise and smoothing transitions.
+        /// </summary>
         private float ApplyNoiseGateWithHold(float sample, float deltaTime, int sampleRate)
         {
             float sampleAbs = Mathf.Abs(sample);
@@ -196,16 +269,22 @@ namespace DCL.VoiceChat
             return processedSample * gateMultiplier;
         }
 
+        /// <summary>
+        ///     Resets the filter state buffers to prevent artifacts when the gate closes.
+        /// </summary>
         private void ResetFilterStates()
         {
-            for (var i = 0; i < 2; i++)
-            {
-                if (Mathf.Abs(lowPassPrevInputs[i]) < 0.001f && Mathf.Abs(lowPassPrevOutputs[i]) < 0.001f)
-                {
-                    lowPassPrevInputs[i] = 0f;
-                    lowPassPrevOutputs[i] = 0f;
-                }
-            }
+            lowPassState = default(BiquadState);
+        }
+
+        private struct BiquadState
+        {
+            public float x1, x2, y1, y2;
+        }
+
+        private struct BiquadCoefficients
+        {
+            public float b0, b1, b2, a1, a2;
         }
     }
 }

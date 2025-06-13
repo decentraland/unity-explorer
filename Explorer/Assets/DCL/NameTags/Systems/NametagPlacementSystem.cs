@@ -15,6 +15,7 @@ using ECS.Prioritization.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.ECSComponents;
 using DCL.Profiles.Helpers;
+using DCL.VoiceChat;
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -40,8 +41,8 @@ namespace DCL.Nametags
         private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
 
         private SingleInstanceEntity playerCamera;
-        private float maxDistance;
-        private float maxDistanceSqr;
+        private readonly float maxDistance;
+        private readonly float maxDistanceSqr;
         private CameraComponent cameraComponent;
         private bool cameraInitialized;
 
@@ -55,8 +56,8 @@ namespace DCL.Nametags
             this.nametagViewPool = nametagViewPool;
             this.nametagsData = nametagsData;
             this.chatBubbleConfigurationSo = chatBubbleConfigurationSo;
-            this.maxDistance = chatBubbleConfigurationSo.maxDistance;
-            this.maxDistanceSqr = maxDistance * maxDistance;
+            maxDistance = chatBubbleConfigurationSo.maxDistance;
+            maxDistanceSqr = maxDistance * maxDistance;
         }
 
         public override void Initialize()
@@ -85,11 +86,13 @@ namespace DCL.Nametags
             AddTagForNonPlayerAvatarsQuery(World, cameraComponent, cameraForward, cameraUp);
             UpdateOwnTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
+            UpdateNametagSpeakingStateQuery(World);
         }
 
         [Query]
         [None(typeof(NametagView), typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
-        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
+        private void AddTagForPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
+            in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
             if (partitionComponent.IsBehind ||
                 (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)) ||
@@ -104,7 +107,8 @@ namespace DCL.Nametags
         [Query]
         [None(typeof(NametagView), typeof(Profile), typeof(DeleteEntityIntention))]
         [All(typeof(PBAvatarShape))]
-        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
+        private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape,
+            in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind ||
@@ -112,7 +116,7 @@ namespace DCL.Nametags
                 string.IsNullOrEmpty(avatarShape.Name))
                 return;
 
-            var nametagView = CreateNameTagView(in avatarShape, true, false);
+            NametagView nametagView = CreateNameTagView(in avatarShape, true, false);
             UpdateTagPosition(nametagView, characterTransform.Position, cameraForward, cameraUp);
             World.Add(e, nametagView);
         }
@@ -128,7 +132,8 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(PBAvatarShape))]
-        private void UpdateOwnTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
+        private void UpdateOwnTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, in AvatarShapeComponent avatarShape,
+            in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
             if (nametagView.Id == avatarShape.ID
                 && nametagView.ProfileVersion == profile.Version)
@@ -162,7 +167,20 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
+        private void UpdateNametagSpeakingState(Entity e, in NametagView nametagView, ref VoiceChatNametagComponent voiceChatComponent)
+        {
+            if (!voiceChatComponent.IsDirty)
+                return;
+
+            nametagView.SetIsSpeaking(voiceChatComponent.IsSpeaking);
+
+            voiceChatComponent.IsDirty = false;
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e,
+            NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
         {
             if (avatarShape.HiddenByModifierArea ||
                 partitionComponent.IsBehind
@@ -174,12 +192,13 @@ namespace DCL.Nametags
                 World.Remove<NametagView>(e);
                 return;
             }
-// To view and test bounds:
-//#if UNITY_EDITOR
-//            Bounds avatarBounds = avatarSkinningComponent.LocalBounds;
-//            avatarBounds.center += characterTransform.Position;
-//            avatarBounds.DrawInEditor(Color.red);
-//#endif
+
+            // To view and test bounds:
+            //#if UNITY_EDITOR
+            //            Bounds avatarBounds = avatarSkinningComponent.LocalBounds;
+            //            avatarBounds.center += characterTransform.Position;
+            //            avatarBounds.DrawInEditor(Color.red);
+            //#endif
 
             NametagMathHelper.CalculateTagPosition(characterTransform.Position, NAMETAG_MAX_HEIGHT, avatarSkinningComponent.LocalBounds.max.y, out float3 position);
 
@@ -189,7 +208,7 @@ namespace DCL.Nametags
 
         private void UpdateTagPosition(NametagView view, float3 newPosition, float3 cameraForward, float3 cameraUp)
         {
-            var transform = view.transform;
+            Transform transform = view.transform;
             transform.position = newPosition;
             transform.LookAt(newPosition + cameraForward, cameraUp);
         }
@@ -208,19 +227,18 @@ namespace DCL.Nametags
 
         private NametagView CreateNameTagView(in AvatarShapeComponent avatarShape, bool hasClaimedName, bool useVerifiedIcon, Profile? profile = null)
         {
-            var nametagView = nametagViewPool.Get();
+            NametagView? nametagView = nametagViewPool.Get();
             nametagView.gameObject.name = avatarShape.ID;
             nametagView.Id = avatarShape.ID;
 
             Color usernameColor;
+
             if (profile != null)
-                usernameColor = profile.UserNameColor != Color.white ?
-                    profile.UserNameColor :
-                    ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                usernameColor = profile.UserNameColor != Color.white ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
             else
                 usernameColor = ProfileNameColorHelper.GetNameColor(avatarShape.Name);
 
-            var walletId = profile?.WalletId ?? (avatarShape.ID.Length >= 4
+            string? walletId = profile?.WalletId ?? (avatarShape.ID.Length >= 4
                 ? avatarShape.ID.AsSpan(avatarShape.ID.Length - 4).ToString()
                 : NAMETAG_DEFAULT_WALLET_ID);
 

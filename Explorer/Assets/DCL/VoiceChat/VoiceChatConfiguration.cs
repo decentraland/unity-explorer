@@ -7,7 +7,7 @@ namespace DCL.VoiceChat
     {
         [Header("Local Audio Feedback")]
         [Tooltip("Enable to hear your own voice through the audio output (may cause echo)")]
-        public bool EnableLocalTrackPlayback = false;
+        public bool EnableLocalTrackPlayback;
 
         [Header("Voice Detection Configurations")]
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
@@ -56,6 +56,31 @@ namespace DCL.VoiceChat
         [Tooltip("Pre-gate audio attenuation factor during crossfade")]
         [Range(0.01f, 0.5f)]
         public float PreGateAttenuation = 0.1f;
+
+        [Header("Auto-Gain Control")]
+        [Tooltip("Target peak level for auto-gain (0.0 to 1.0)")]
+        [Range(0.1f, 0.9f)]
+        public float TargetPeakLevel = 0.7f;
+
+        [Tooltip("Speed of gain adjustment (higher = faster response)")]
+        [Range(1f, 10f)]
+        public float GainAdjustSpeed = 4f;
+
+        [Tooltip("Minimum gain multiplier")]
+        [Range(0.1f, 2f)]
+        public float MinGain = 1f;
+
+        [Tooltip("Maximum gain multiplier")]
+        [Range(10f, 100f)]
+        public float MaxGain = 40f;
+
+        [Tooltip("Minimum peak level to consider for gain adjustment")]
+        [Range(0.00001f, 0.001f)]
+        public float MinPeakThreshold = 0.0001f;
+
+        [Tooltip("Window size in seconds for peak tracking")]
+        [Range(0.1f, 2f)]
+        public float PeakTrackingWindow = 0.5f;
 
         [Header("Microphone Initialization")]
         [Tooltip("Delay in milliseconds before reinitializing microphone after device change")]
