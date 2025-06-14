@@ -373,7 +373,6 @@ namespace DCL.Chat
             if (TryGetView(out var view))
             {
                 view.CurrentChannelId = channelId;
-                callButtonController.SetCallButtonVisibility(!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID));
                 if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
                 {
                     view.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);

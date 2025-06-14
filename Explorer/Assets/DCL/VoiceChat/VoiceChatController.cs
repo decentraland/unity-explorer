@@ -60,6 +60,11 @@ namespace DCL.VoiceChat
                     break;
             }
 
+            if (status is VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL)
+                UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(view.CallTuneAudio);
+            else
+                UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(view.CallTuneAudio);
+
             view.SetActiveSection(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
         }
 

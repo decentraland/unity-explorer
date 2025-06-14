@@ -82,6 +82,7 @@ MonoBehaviour:
   <UnMuteMicrophoneAudio>k__BackingField: {fileID: 11400000, guid: d99ca4a62bf3744c299beac41f2035b3, type: 2}
   <JoinCallAudio>k__BackingField: {fileID: 11400000, guid: 40f0c59c2ab6f48e4b20c3f631bddd2f, type: 2}
   <LeaveCallAudio>k__BackingField: {fileID: 11400000, guid: 76661e0067a37477b8b782b7056f9a18, type: 2}
+  <CallTuneAudio>k__BackingField: {fileID: 11400000, guid: 224c612db15ff435ab782ec7cec69c16, type: 2}
 --- !u!1001 &3234945878829315382
 PrefabInstance:
   m_ObjectHideFlags: 0

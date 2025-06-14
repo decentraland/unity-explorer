@@ -40,6 +40,9 @@ namespace DCL.VoiceChat
         [field: SerializeField]
         public AudioClipConfig LeaveCallAudio { get; private set; }
 
+        [field: SerializeField]
+        public AudioClipConfig CallTuneAudio { get; private set; }
+
         private CancellationTokenSource cts;
 
         private void Start()
@@ -84,7 +87,6 @@ namespace DCL.VoiceChat
                     IncomingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
-                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL:
                     OutgoingCallView.gameObject.SetActive(true);
                     OutgoingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;

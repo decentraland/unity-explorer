@@ -6,6 +6,7 @@ using DCL.Web3;
 using Decentraland.SocialService.V2;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.VoiceChat
@@ -189,6 +190,7 @@ namespace DCL.VoiceChat
 
         private void UpdateStatus(VoiceChatStatus newStatus)
         {
+            Debug.Log($"New status is {newStatus}");
             Status = newStatus;
             StatusChanged?.Invoke(Status);
         }
