@@ -14,10 +14,12 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsDropdownModuleView view;
         private readonly List<Resolution> possibleResolutions = new ();
+        private readonly ISettingsModuleEventListener settingsEventListener;
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view)
+        public ResolutionSettingsController(SettingsDropdownModuleView view, ISettingsModuleEventListener settingsEventListener)
         {
             this.view = view;
+            this.settingsEventListener = settingsEventListener;
 
             LoadResolutionOptions();
 
@@ -94,6 +96,7 @@ namespace DCL.Settings.ModuleControllers
         {
             Resolution selectedResolution = possibleResolutions[index];
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
+            settingsEventListener.NotifyResolutionChange(selectedResolution);
             settingsDataStore.SetDropdownValue(RESOLUTION_DATA_STORE_KEY, index, save: true);
         }
 

@@ -59,7 +59,7 @@ namespace DCL.Settings.Configuration
                                                        DropdownFeatures.GRAPHICS_QUALITY_FEATURE => new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset),
                                                        DropdownFeatures.CAMERA_LOCK_FEATURE => new CameraLockSettingsController(viewInstance),
                                                        DropdownFeatures.CAMERA_SHOULDER_FEATURE => new CameraShoulderSettingsController(viewInstance),
-                                                       DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance),
+                                                       DropdownFeatures.RESOLUTION_FEATURE => new ResolutionSettingsController(viewInstance, settingsEventListener),
                                                        DropdownFeatures.WINDOW_MODE_FEATURE => new WindowModeSettingsController(viewInstance),
                                                        DropdownFeatures.FPS_LIMIT_FEATURE => new FpsLimitSettingsController(viewInstance),
                                                        DropdownFeatures.MEMORY_LIMIT_FEATURE => new MemoryLimitSettingController(viewInstance, systemMemoryCap, sceneLoadingLimit),

@@ -47,6 +47,8 @@ namespace DCL.Settings
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
+        public event Action<Resolution> ResolutionChanged;
+
 
         public SettingsController(
             SettingsView view,
@@ -120,6 +122,12 @@ namespace DCL.Settings
         {
             ChatBubblesVisibilityChanged?.Invoke(newVisibility);
         }
+
+        public void NotifyResolutionChange(Resolution newResolution)
+        {
+            ResolutionChanged?.Invoke(newResolution);
+        }
+
 
         private void GenerateSettings()
         {
