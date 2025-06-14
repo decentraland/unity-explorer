@@ -102,12 +102,15 @@ namespace DCL.PluginSystem.Global
 
             exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
+            bool isDebug = commandLineArgs.HasDebugFlag();
+
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, cinemachineCameraAudioSettings.Value);
-            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, isFreeCameraAllowed: commandLineArgs.HasDebugFlag());
+            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, isDebug);
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder, cinemachinePreset.Brain);
-            ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
-            ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder, controlsSettingsAsset.Value);
+            CinemachineFieldOfViewSystem.InjectToWorld(ref builder);
+            CinemachineFarClipPlaneSystem.InjectToWorld(ref builder);
+            ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder, controlsSettingsAsset.Value, isDebug);
             UpdateCinemachineBrainSystem.InjectToWorld(ref builder);
         }
     }

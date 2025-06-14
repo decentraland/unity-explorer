@@ -351,6 +351,11 @@ MonoBehaviour:
     <Speed>k__BackingField: 5
     <DefaultPosition>k__BackingField: {x: 0, y: 10, z: 0}
   shoulderChangeSpeed: 4
+  <FarClipPlaneSettings>k__BackingField:
+    <MinFarClipPlaneAltitude>k__BackingField: 0
+    <MaxFarClipPlaneAltitude>k__BackingField: 150
+    <MinFarClipPlane>k__BackingField: 800
+    <MaxFarClipPlane>k__BackingField: 4500
   <DefaultCameraMode>k__BackingField: 1
   <Brain>k__BackingField: {fileID: 1924827267997815873}
 --- !u!1 &2902897560403827600

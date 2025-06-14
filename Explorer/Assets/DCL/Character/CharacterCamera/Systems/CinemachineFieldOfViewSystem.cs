@@ -11,9 +11,9 @@ namespace DCL.CharacterCamera.Systems
 {
     [UpdateInGroup(typeof(CameraGroup))]
     [UpdateAfter(typeof(ControlCinemachineVirtualCameraSystem))]
-    public partial class ChinemachineFieldOfViewSystem : BaseUnityLoopSystem
+    public partial class CinemachineFieldOfViewSystem : BaseUnityLoopSystem
     {
-        internal ChinemachineFieldOfViewSystem(World world) : base(world) { }
+        internal CinemachineFieldOfViewSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
