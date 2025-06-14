@@ -310,6 +310,7 @@ namespace DCL.Chat
             Blur();
             UnsubscribeFromEvents();
             Dispose();
+            callButtonController.Reset();
         }
 
 #endregion
@@ -556,6 +557,7 @@ namespace DCL.Chat
 
         private void OnViewFocusChanged(bool isFocused)
         {
+            callButtonController.Reset();
             if (isFocused)
                 DisableUnwantedInputs();
             else

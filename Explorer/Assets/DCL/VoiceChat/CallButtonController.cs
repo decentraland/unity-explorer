@@ -29,12 +29,17 @@ namespace DCL.VoiceChat
             isClickedOnce = false;
         }
 
+        public void Reset()
+        {
+            view.TooltipParent.gameObject.SetActive(false);
+            isClickedOnce = false;
+        }
+
         public void SetCallStatusForUser(OtherUserCallStatus status, string userId)
         {
             CurrentUserId = userId;
             otherUserStatus = status;
-            view.TooltipParent.gameObject.SetActive(false);
-            isClickedOnce = false;
+            Reset();
         }
 
         private void OnCallButtonClicked()
@@ -62,6 +67,7 @@ namespace DCL.VoiceChat
                         break;
                     case OtherUserCallStatus.USER_AVAILABLE:
                         view.TooltipParent.gameObject.SetActive(false);
+                        isClickedOnce = false;
                         StartCall?.Invoke(CurrentUserId);
                         break;
                     case OtherUserCallStatus.USER_IN_CALL:

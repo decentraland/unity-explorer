@@ -384,6 +384,7 @@ namespace DCL.Passport
 
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
+            callButtonController?.Reset();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -408,7 +409,7 @@ namespace DCL.Passport
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
-            
+
             if(callButtonController != null)
                 callButtonController.StartCall -= OnStartCall;
 
