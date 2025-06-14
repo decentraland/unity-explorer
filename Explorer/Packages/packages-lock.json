@@ -78,11 +78,11 @@
       "hash": "8aeefd7c62ed6543651a68ad43285cf519212931"
     },
     "com.decentraland.unity-shared-dependencies": {
-      "version": "https://github.com/decentraland/unity-shared-dependencies.git",
+      "version": "https://github.com/decentraland/unity-shared-dependencies.git#chore/bring-avatar-shaders",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "f7afcfe62d08863b017a747f94d02a98f4b612a2"
+      "hash": "20eb42f75598d29916f5087560aae7c5c5c5fb26"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
