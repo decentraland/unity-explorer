@@ -10,8 +10,6 @@ namespace DCL.VoiceChat
         VoiceChatStatus Status { get; }
         public Web3Address CurrentTargetWallet { get; }
         public string RoomUrl { get;}
-        public string Token { get;}
-
 
         void StartCall(Web3Address userAddress);
         void AcceptCall();

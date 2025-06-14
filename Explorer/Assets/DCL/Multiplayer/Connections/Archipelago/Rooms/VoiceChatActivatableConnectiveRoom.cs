@@ -4,8 +4,6 @@ using DCL.Multiplayer.Connections.Audio;
 using DCL.Multiplayer.Connections.Credentials;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
-using DCL.Settings.Settings;
-using DCL.Utilities;
 using LiveKit.Internal;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Rooms;
@@ -26,9 +24,9 @@ using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
-    public class VoiceChatConnectiveRoom : IActivatableConnectiveRoom
+    public class VoiceChatActivatableConnectiveRoom : IActivatableConnectiveRoom
     {
-        private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
+        private const string LOG_PREFIX = "VoiceChatRoom";
         private static readonly TimeSpan HEARTBEATS_INTERVAL = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan CONNECTION_UPDATE_INTERVAL = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
@@ -37,7 +35,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IRoom roomInstance;
-        private readonly ObjectProxy<VoiceChatSettingsAsset> settings;
 
         private CancellationTokenSource? cts;
         private string connectionString = string.Empty;
@@ -45,18 +42,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
 
-        public VoiceChatConnectiveRoom(ObjectProxy<VoiceChatSettingsAsset> settings)
+        public VoiceChatActivatableConnectiveRoom()
         {
-            this.settings = settings;
             var hub = new ParticipantsHub();
-
             var videoStreams = new VideoStreams(hub);
-
             var audioRemixConveyor = new ThreadedAudioRemixConveyor();
             var audioStreams = new AudioStreams(hub, audioRemixConveyor);
             var tracksFactory = new TracksFactory();
 
-            var room = new Room(
+            var newRoom = new Room(
                 new ArrayMemoryPool(),
                 new DefaultActiveSpeakers(),
                 hub,
@@ -71,7 +65,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 null!
             );
 
-            roomInstance = new LogRoom(room);
+            roomInstance = new LogRoom(newRoom);
         }
 
         public void Dispose()
@@ -86,9 +80,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public IRoom Room() =>
             room;
 
-        public async UniTask SetConnectionStringAndActivateAsync(string connectionString)
+        public async UniTask SetConnectionStringAndActivateAsync(string newConnectionString)
         {
-            this.connectionString = connectionString;
+            this.connectionString = newConnectionString;
             await DeactivateAsync();
             await ActivateAsync();
         }
@@ -99,7 +93,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             Activated = true;
 
-            connectionString = settings.StrictObject.RoomURL;
             await this.StartIfNotAsync();
         }
 
@@ -147,7 +140,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
-            //Disabled for now
             SendConnectionStatusAsync(ct).Forget();
 
             while (ct.IsCancellationRequested == false)
@@ -192,13 +184,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask CycleStepAsync(CancellationToken ct)
         {
             if (CurrentState() is not IConnectiveRoom.State.Running)
-                await TryConnectToRoomAsync(connectionString, ct);
+                await TryConnectToRoomAsync(ct);
         }
 
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>
             UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
 
-        private async UniTask<bool> TryConnectToRoomAsync(string connectionString, CancellationToken token)
+        private async UniTask<bool> TryConnectToRoomAsync(CancellationToken token)
         {
             var credentials = new ConnectionStringCredentials(connectionString);
 
@@ -215,5 +207,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             return connectResult;
         }
+
+        public static class Null
+        {
+            public static readonly VoiceChatActivatableConnectiveRoom INSTANCE = new ();
+        }
+
     }
 }

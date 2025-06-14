@@ -42,7 +42,6 @@ MonoBehaviour:
     - <GroupTitle>k__BackingField: Call
       <Modules>k__BackingField:
       - rid: 5995578935093493843
-      - rid: 6995578935093493844
   <ControlsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Mouse
@@ -336,15 +335,3 @@ MonoBehaviour:
           wholeNumbers: 1
           defaultValue: 100
         <Feature>k__BackingField: 9
-    - rid: 6995578935093493844
-      type: {class: TextModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: 0a1b2c3d4e5f6789abcdef0123456789, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Connection String
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 1
-          placeholder: Enter connection string...
-          characterLimit: 0
-          defaultValue: 
-        <Feature>k__BackingField: 0

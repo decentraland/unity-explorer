@@ -6,24 +6,27 @@ namespace DCL.Utilities
     public static class GameObjectExtensions
     {
         /// <summary>
-        /// Sets the GameObject's active state, ensuring it happens on the main thread.
+        /// Sets the Component's GameObject active state, ensuring it happens on the main thread.
         /// If called from a non-main thread, it will switch to the main thread asynchronously.
         /// </summary>
-        public static void SetActiveOnMainThread(this GameObject gameObject, bool isActive)
+        public static void SetActiveOnMainThread(this Component component, bool isActive)
         {
+            if (component == null) return;
+            
             if (!PlayerLoopHelper.IsMainThread)
             {
-                SetActiveOnMainThreadAsync(gameObject, isActive).Forget();
+                SetActiveOnMainThreadAsync(component, isActive).Forget();
                 return;
             }
 
-            gameObject.SetActive(isActive);
+            component.gameObject.SetActive(isActive);
         }
 
-        private static async UniTaskVoid SetActiveOnMainThreadAsync(GameObject gameObject, bool isActive)
+        private static async UniTaskVoid SetActiveOnMainThreadAsync(Component component, bool isActive)
         {
             await UniTask.SwitchToMainThread();
-            gameObject.SetActive(isActive);
+            if (component != null)
+                component.gameObject.SetActive(isActive);
         }
     }
 }

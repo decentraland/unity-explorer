@@ -90,7 +90,6 @@ using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
-using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using Global.Dynamic.ChatCommands;
@@ -369,7 +368,7 @@ namespace Global.Dynamic
 
             var voiceChatSettingsAssetProxy = new ObjectProxy<VoiceChatSettingsAsset>();
 
-            var voiceChatRoom = new VoiceChatConnectiveRoom(voiceChatSettingsAssetProxy);
+            var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
             IRoomHub roomHub = new RoomHub(
                 localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
@@ -543,7 +542,7 @@ namespace Global.Dynamic
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
             IVoiceService voiceService = new RPCVoiceChatService(socialServiceContainer.socialServicesRPC);
-            IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService, voiceChatSettingsAssetProxy);
+            IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)

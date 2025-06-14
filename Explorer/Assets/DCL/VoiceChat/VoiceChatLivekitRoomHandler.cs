@@ -9,7 +9,6 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 using Utility.Multithreading;
 
@@ -77,7 +76,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid ConnectToRoomAsync()
         {
-            await roomHub.VoiceChatRoom().ActivateAsync();
+            await roomHub.VoiceChatRoom().SetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
         }
 
         private async UniTaskVoid DisconnectFromRoomAsync()
@@ -96,7 +95,6 @@ namespace DCL.VoiceChat
                         SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
-
                     break;
                 case ConnectionUpdate.Disconnected:
                     cts.SafeCancelAndDispose();
@@ -115,7 +113,7 @@ namespace DCL.VoiceChat
         {
             rtcAudioSource = new OptimizedRtcAudioSource(microphoneAudioFilter);
             rtcAudioSource.Start();
-            microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack("New Track", rtcAudioSource);
+            microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(voiceChatRoom.Participants.LocalParticipant().Name, rtcAudioSource);
 
             var options = new TrackPublishOptions
             {

@@ -112,7 +112,7 @@ namespace DCL.Chat
         {
             // We need this as this method can be called from a background thread
             // specially when coming from a Livekit Participant Update
-            CallButton.gameObject.SetActiveOnMainThread(isActive);
+            CallButton.SetActiveOnMainThread(isActive);
         }
 
         public void SetNearbyChannelImage()
