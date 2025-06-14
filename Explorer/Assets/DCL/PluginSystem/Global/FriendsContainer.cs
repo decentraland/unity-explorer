@@ -24,6 +24,7 @@ using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -48,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
+        private readonly bool includeCall;
         private readonly IAppArgs appArgs;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ViewDependencies viewDependencies;
@@ -55,6 +57,7 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private CancellationTokenSource friendServiceSubscriptionCts = new ();
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
@@ -84,6 +87,7 @@ namespace DCL.PluginSystem.Global
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
+            bool includeCall,
             IAppArgs appArgs,
             FeatureFlagsCache featureFlagsCache,
             bool useAnalytics,
@@ -97,7 +101,9 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<IFriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ProfileRepositoryWrapper profileDataProvider)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -108,11 +114,13 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.dclInput = dclInput;
             this.includeUserBlocking = includeUserBlocking;
+            this.includeCall = includeCall;
             this.appArgs = appArgs;
             this.featureFlagsCache = featureFlagsCache;
             this.viewDependencies = viewDependencies;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileRepositoryWrapper = profileDataProvider;
 
@@ -147,9 +155,11 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 viewDependencies,
                 includeUserBlocking,
+                includeCall,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                voiceChatCallStatusService
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);

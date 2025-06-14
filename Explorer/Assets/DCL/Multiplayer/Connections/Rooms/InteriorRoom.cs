@@ -27,6 +27,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorDataPipe dataPipe = new ();
         private readonly InteriorVideoStreams videoStreams = new ();
         private readonly InteriorAudioStreams audioStreams = new ();
+        private readonly InteriorAudioTracks audioTracks = new ();
 
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
@@ -34,6 +35,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info => assigned.Info;
         public IVideoStreams VideoStreams => videoStreams;
         public IAudioStreams AudioStreams => audioStreams;
+        public IAudioTracks AudioTracks => audioTracks;
 
         internal IRoom assigned { get; private set; } = NullRoom.INSTANCE;
 
@@ -76,7 +78,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         public UniTask ResetRoom(IObjectPool<IRoom> roomsPool, CancellationToken ct) =>
             SwapRoomsAsync(RoomSelection.NEW, assigned, NullRoom.INSTANCE, roomsPool, ct);
 
-
         /// <summary>
         ///     Disconnects from the current room and connects to the <see cref="NullRoom" /> without using the RoomPool
         /// </summary>
@@ -89,7 +90,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                 assigned = NullRoom.INSTANCE;
             }
         }
-
 
         internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)
         {
@@ -136,7 +136,6 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                     ConnectionState.ConnDisconnected => ConnectionUpdate.Disconnected,
                                                     ConnectionState.ConnReconnecting => ConnectionUpdate.Reconnecting,
                                                     _ => throw new ArgumentOutOfRangeException(),
-
                                                 };
 
             // TODO check the order of these messages
@@ -151,6 +150,7 @@ namespace DCL.Multiplayer.Connections.Rooms
             dataPipe.Assign(room.DataPipe);
             videoStreams.Assign(room.VideoStreams);
             audioStreams.Assign(room.AudioStreams);
+            audioTracks.Assign(room.AudioTracks);
 
             room.RoomMetadataChanged += RoomOnRoomMetadataChanged;
             room.RoomSidChanged += RoomOnRoomSidChanged;
@@ -182,7 +182,6 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
-
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)

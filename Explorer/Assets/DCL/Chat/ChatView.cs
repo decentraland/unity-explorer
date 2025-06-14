@@ -87,8 +87,8 @@ namespace DCL.Chat
 
         [Header("Title bar")]
 
-        [SerializeField]
-        private ChatTitleBarView chatTitleBar;
+        [field: SerializeField]
+        public ChatTitleBarView chatTitleBar { get; private set; }
 
         [SerializeField]
         private CanvasGroup titlebarCanvasGroup;
@@ -111,6 +111,11 @@ namespace DCL.Chat
 
         [SerializeField]
         private CanvasGroup conversationsToolbarCanvasGroup;
+
+        [Header("Voice chat")]
+
+        [SerializeField]
+        private RectTransform voiceChatTransform;
 
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
@@ -206,6 +211,7 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
+        private Vector2 voiceChatSizeDelta;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -266,7 +272,7 @@ namespace DCL.Chat
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
@@ -491,7 +497,7 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
             viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
             SubscribeToSubmitEvent();
-            
+
             closePopupTask = new UniTaskCompletionSource();
 
             conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
@@ -753,14 +759,16 @@ namespace DCL.Chat
         }
 #endregion
 
-        public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
-            SetInputWithUserStateAsync(userState, isOtherUserConnected).Forget();
+
+            chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            SetupViewWithUserStateAsync(userState, isOtherUserConnected).Forget();
         }
 
-        private async UniTaskVoid SetInputWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
+        private async UniTaskVoid SetupViewWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
         {
             await UniTask.SwitchToMainThread();
 
@@ -785,7 +793,7 @@ namespace DCL.Chat
             else
                 chatMessageViewer.StartChatEntriesFadeout();
         }
-        
+
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
             if (isChatFocused)
@@ -798,7 +806,7 @@ namespace DCL.Chat
                 // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
                 if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
-        
+
                 Focus();
             }
         }
@@ -969,12 +977,18 @@ namespace DCL.Chat
                     messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
                     conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
+                    voiceChatSizeDelta = voiceChatTransform.sizeDelta;
+                    voiceChatSizeDelta.x = 0;
+                    voiceChatTransform.DOSizeDelta(voiceChatSizeDelta, BackgroundFadeTime);
                 }
                 else
                 {
                     messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
                     conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
+                    voiceChatSizeDelta = voiceChatTransform.sizeDelta;
+                    voiceChatSizeDelta.x = -40;
+                    voiceChatTransform.DOSizeDelta(voiceChatSizeDelta, BackgroundFadeTime);
                 }
             }
             else
@@ -985,6 +999,9 @@ namespace DCL.Chat
                 conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
                 titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
                 titlebarCanvasGroup.gameObject.SetActive(isVisible);
+                voiceChatSizeDelta = voiceChatTransform.sizeDelta;
+                voiceChatSizeDelta.x = isVisible ? 0 : -40;
+                voiceChatTransform.sizeDelta = voiceChatSizeDelta;
             }
         }
 
