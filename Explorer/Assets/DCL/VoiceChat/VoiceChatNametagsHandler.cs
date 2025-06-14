@@ -50,8 +50,6 @@ namespace DCL.VoiceChat
 
         private void OnActiveSpeakersUpdated()
         {
-            ReportHub.LogError(ReportCategory.VOICE_CHAT, "Active speakers update triggered");
-
             var newActiveSpeakers = new HashSet<string>();
 
             foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
