@@ -55,7 +55,7 @@ namespace DCL.VoiceChat
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRejected:
                     ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
+                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRequested:
                     CallId = update.CallId;
@@ -140,7 +140,6 @@ namespace DCL.VoiceChat
 
             cts = cts?.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
-
             HangUpAsync(CallId, cts.Token).Forget();
         }
 
@@ -152,8 +151,8 @@ namespace DCL.VoiceChat
             {
                 //When the call has been ended
                 case EndPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     break;
                 default:
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
