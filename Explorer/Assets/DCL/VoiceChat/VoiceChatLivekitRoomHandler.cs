@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -22,12 +23,15 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly VoiceChatConfiguration configuration;
-        
+
         private bool disposed;
         private ITrack microphoneTrack;
         private CancellationTokenSource cts;
         private bool isMediaOpen;
         private OptimizedRtcAudioSource rtcAudioSource;
+        private int reconnectionAttempts;
+        private CancellationTokenSource? reconnectionCts;
+        private bool isOrderedDisconnection;
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedAudioSource combinedAudioSource,
@@ -57,6 +61,7 @@ namespace DCL.VoiceChat
             voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
             voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
             voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
+            reconnectionCts.SafeCancelAndDispose();
             CloseMedia();
         }
 
@@ -77,16 +82,18 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid ConnectToRoomAsync()
         {
-            bool success = await roomHub.VoiceChatRoom().SetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
-            if (!success)
-            {
-                voiceChatCallStatusService.HandleConnectionFailed();
-            }
+            CleanupReconnectionState();
+            bool success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
+
+            if (!success) { voiceChatCallStatusService.HandleConnectionFailed(); }
         }
 
         private async UniTaskVoid DisconnectFromRoomAsync()
         {
+            isOrderedDisconnection = true;
+            CleanupReconnectionState();
             await roomHub.VoiceChatRoom().DeactivateAsync();
+            isOrderedDisconnection = false;
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
@@ -94,24 +101,37 @@ namespace DCL.VoiceChat
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
+                    CleanupReconnectionState();
+
                     if (!isMediaOpen)
                     {
+                        isMediaOpen = true;
                         cts = cts.SafeRestart();
                         SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
+
                     break;
                 case ConnectionUpdate.Disconnected:
-                    cts.SafeCancelAndDispose();
-                    CloseMedia();
+                    CleanupReconnectionState();
                     isMediaOpen = false;
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
+                    CloseMedia();
+
+                    if (!isOrderedDisconnection && roomHub.VoiceChatRoom().CurrentConnectionLoopHealth == IConnectiveRoom.ConnectionLoopHealth.Stopped) { HandleUnexpectedDisconnection(); }
+
                     break;
                 case ConnectionUpdate.Reconnecting:
-                    break;
                 case ConnectionUpdate.Reconnected:
                     break;
             }
+        }
+
+        private void CleanupReconnectionState()
+        {
+            reconnectionCts.SafeCancelAndDispose();
+            reconnectionCts = null;
+            reconnectionAttempts = 0;
         }
 
         private void PublishTrack(CancellationToken ct)
@@ -130,8 +150,6 @@ namespace DCL.VoiceChat
             };
 
             voiceChatRoom.Participants.LocalParticipant().PublishTrack(microphoneTrack, options, ct);
-
-            isMediaOpen = true;
         }
 
         private void SubscribeToRemoteTracks()
@@ -200,10 +218,14 @@ namespace DCL.VoiceChat
 
         private void CloseMedia()
         {
+            CloseMediaAsync().Forget();
+        }
+
+        private async UniTask CloseMediaAsync()
+        {
             if (!PlayerLoopHelper.IsMainThread)
             {
-                CloseMediaAsync().Forget();
-                return;
+                await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
             }
 
             if (combinedAudioSource != null)
@@ -217,19 +239,38 @@ namespace DCL.VoiceChat
             voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
         }
 
-        private async UniTaskVoid CloseMediaAsync()
+        private void HandleUnexpectedDisconnection()
         {
-            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            if (roomHub.VoiceChatRoom().CurrentConnectionLoopHealth != IConnectiveRoom.ConnectionLoopHealth.Stopped)
+                return;
 
-            if (combinedAudioSource != null)
+            reconnectionAttempts = 0;
+            reconnectionCts = reconnectionCts.SafeRestart();
+            AttemptReconnectionAsync(reconnectionCts.Token).Forget();
+        }
+
+        private async UniTaskVoid AttemptReconnectionAsync(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
             {
-                combinedAudioSource.Stop();
-                combinedAudioSource.Free();
-            }
+                if (reconnectionAttempts >= configuration.MaxReconnectionAttempts)
+                {
+                    reconnectionAttempts = 0;
+                    voiceChatCallStatusService.HandleConnectionFailed();
+                    return;
+                }
 
-            rtcAudioSource?.Stop();
-            voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
-            voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
+                reconnectionAttempts++;
+                await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct);
+
+                bool success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
+
+                if (success)
+                {
+                    return;
+                    CleanupReconnectionState();
+                }
+            }
         }
     }
 }

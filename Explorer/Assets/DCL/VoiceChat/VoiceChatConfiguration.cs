@@ -94,5 +94,14 @@ namespace DCL.VoiceChat
         [Tooltip("Delay in milliseconds between checks for fresh microphone data")]
         [Range(10, 200)]
         public int FreshDataCheckDelayMs = 50;
+
+        [Header("Reconnection Settings")]
+        [Tooltip("Maximum number of reconnection attempts when connection is lost")]
+        [Range(1, 10)]
+        public int MaxReconnectionAttempts = 3;
+
+        [Tooltip("Delay in milliseconds between reconnection attempts")]
+        [Range(1000, 10000)]
+        public int ReconnectionDelayMs = 2000;
     }
 }

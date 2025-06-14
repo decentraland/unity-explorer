@@ -35,7 +35,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IRoom roomInstance;
-
         private CancellationTokenSource? cts;
         private string connectionString = string.Empty;
         public bool Activated { get; private set; }
@@ -80,7 +79,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public IRoom Room() =>
             room;
 
-        public async UniTask<bool> SetConnectionStringAndActivateAsync(string newConnectionString)
+        public async UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString)
         {
             this.connectionString = newConnectionString;
             await DeactivateAsync();
