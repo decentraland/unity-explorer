@@ -56,7 +56,7 @@ namespace DCL.AvatarRendering.Emotes
                     // localBuffer accumulates the loaded emotes
                     await source.GetOwnedEmotesAsync(userId, ct, requestOptions, localBuffer,
                         loadingArguments: new CommonLoadingArguments(
-                            builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i]),
+                            new Uri(builderDTOsUrl.Replace(LoadingConstants.BUILDER_DTO_URL_COL_ID_PLACEHOLDER, collections[i])),
                             cancellationTokenSource: new CancellationTokenSource()
                         ),
                         needsBuilderAPISigning: true);

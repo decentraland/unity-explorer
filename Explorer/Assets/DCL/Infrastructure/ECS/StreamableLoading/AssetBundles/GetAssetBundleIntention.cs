@@ -59,7 +59,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             // Don't resolve URL here
 
-            CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
+            CommonArguments = new CommonLoadingArguments(null!, customEmbeddedSubDirectory, permittedSources: permittedSources, cancellationTokenSource: cancellationTokenSource);
             cacheHash = null;
             Manifest = assetBundleManifest;
             LookForShaderAssets = lookForShaderAssets;
@@ -97,17 +97,5 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public override string ToString() =>
             $"Get Asset Bundle: {Name} ({Hash})";
-
-        public class DiskHashCompute : AbstractDiskHashCompute<GetAssetBundleIntention>
-        {
-            public static readonly DiskHashCompute INSTANCE = new ();
-
-            private DiskHashCompute() { }
-
-            protected override void FillPayload(IHashKeyPayload keyPayload, in GetAssetBundleIntention asset)
-            {
-                keyPayload.Put(asset.Hash ?? asset.Name!);
-            }
-        }
     }
 }

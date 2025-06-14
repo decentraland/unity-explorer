@@ -1,12 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.WebRequests;
 using System;
 using System.IO;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace DCL.InWorldCamera.ReelActions
 {
@@ -22,11 +23,11 @@ namespace DCL.InWorldCamera.ReelActions
         public static void ShareReelToX(string shareToXMessage, string reelId, IDecentralandUrlsSource decentralandUrlsSource, ISystemClipboard systemClipboard, IWebBrowser webBrowser)
         {
             string description = shareToXMessage;
-            string url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{reelId}";
+            var url = $"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink).OriginalString}/{reelId}";
             string xUrl = $"https://x.com/intent/post?text={description}&hashtags=DCLCamera&url={url}";
 
             systemClipboard.Set(xUrl);
-            webBrowser.OpenUrl(xUrl);
+            webBrowser.OpenUrl(new Uri(xUrl));
         }
 
         /// <summary>
@@ -34,27 +35,23 @@ namespace DCL.InWorldCamera.ReelActions
         /// </summary>
         public static void CopyReelLink(string reelId, IDecentralandUrlsSource decentralandUrlsSource, ISystemClipboard systemClipboard)
         {
-            systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink)}/{reelId}");
+            systemClipboard.Set($"{decentralandUrlsSource.Url(DecentralandUrl.CameraReelLink).OriginalString}/{reelId}");
         }
 
         /// <summary>
         ///     Downloads a reel image to local storage in {home_directory}/{DECENTRALAND_REELS_HOME_FOLDER}/{reelId}
         ///     and opens the default file browser at that location
         /// </summary>
-        public static async UniTask DownloadReelToFileAsync(string reelUrl, CancellationToken ct)
+        public static async UniTask DownloadReelToFileAsync(IWebRequestController webRequestController, Uri reelUrl, CancellationToken ct)
         {
-            using (UnityWebRequest webRequest = UnityWebRequestTexture.GetTexture(reelUrl))
+            using IOwnedTexture2D texture = await webRequestController.GetTextureAsync(reelUrl, new GetTextureArguments(TextureType.Albedo), ReportCategory.CAMERA_REEL)
+                                                                      .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct)
+                                                                      .WithCustomExceptionAsync(e => new Exception("Error while downloading reel", e));
+
             {
-                Uri uri = new Uri(reelUrl);
-                await webRequest.SendWebRequest().ToUniTask(cancellationToken: ct);
-
-                if (webRequest.result != UnityWebRequest.Result.Success)
-                    throw new Exception($"Error while downloading reel: {webRequest.error}");
-
-                Texture2D texture = DownloadHandlerTexture.GetContent(webRequest);
-                byte[] imageBytes = texture.EncodeToPNG();
+                byte[] imageBytes = texture.Texture.EncodeToPNG();
                 string directoryPath = ReelsPath;
-                string absolutePath = Path.Combine(ReelsPath, Path.GetFileName(uri.LocalPath));
+                string absolutePath = Path.Combine(ReelsPath, Path.GetFileName(reelUrl.LocalPath));
 
                 if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
                     Directory.CreateDirectory(directoryPath);

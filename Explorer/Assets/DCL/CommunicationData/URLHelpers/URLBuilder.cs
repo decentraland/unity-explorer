@@ -130,7 +130,7 @@ namespace CommunicationData.URLHelpers
             return this;
         }
 
-        public URLAddress Build() =>
+        public Uri Build() =>
             new (GetResult());
 
         public string GetResult() =>
@@ -167,7 +167,7 @@ namespace CommunicationData.URLHelpers
         /// <param name="domain"></param>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static URLAddress Combine(in URLDomain domain, in URLPath path) =>
+        public static Uri Combine(in URLDomain domain, in URLPath path) =>
             new (Combine(domain.Value, path.Value));
 
         private static string Combine(string domainValue, string appendValue)

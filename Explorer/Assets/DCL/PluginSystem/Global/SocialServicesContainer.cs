@@ -82,14 +82,14 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private URLAddress GetApiUrl()
+        private Uri GetApiUrl()
         {
-            string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
+            Uri url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
 
             if (appArgs.TryGetValue(AppArgsFlags.FRIENDS_API_URL, out string? urlFromArgs))
-                url = urlFromArgs!;
+                url = new Uri(urlFromArgs!);
 
-            return URLAddress.FromString(url);
+            return url;
         }
     }
 }

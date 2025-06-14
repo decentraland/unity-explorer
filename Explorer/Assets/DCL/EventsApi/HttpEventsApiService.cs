@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -73,15 +72,16 @@ namespace DCL.EventsApi
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
             urlBuilder.AppendPath(URLPath.FromString($"{eventId}/attendees"));
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            GenericDownloadHandlerUtils.Adapter<GenericPostRequest, GenericPostArguments> result = webRequestController.PostAsync(
-                url, GenericPostArguments.Empty, ct, ReportCategory.EVENTS,
+            var result = webRequestController.PostAsync(
+                url, GenericUploadArguments.Empty, ReportCategory.EVENTS,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
+            var response = await result.CreateFromJsonAsync<AttendResponse>(WRJsonParser.Unity,
+                ct,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error on trying to create attend intention: {text}", e));
 
             if (!response.ok)
@@ -93,31 +93,33 @@ namespace DCL.EventsApi
             urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl);
             urlBuilder.AppendPath(URLPath.FromString($"{eventId}/attendees"));
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            GenericDownloadHandlerUtils.Adapter<GenericDeleteRequest, GenericDeleteArguments> result = webRequestController.DeleteAsync(
-                url, GenericDeleteArguments.Empty, ct, ReportCategory.EVENTS,
+            var result = webRequestController.DeleteAsync(
+                url, GenericUploadArguments.Empty, ReportCategory.EVENTS,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "delete"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            var response = await result.CreateFromJson<AttendResponse>(WRJsonParser.Unity,
+            var response = await result.CreateFromJsonAsync<AttendResponse>(WRJsonParser.Unity,
+                ct,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error on trying to create attend intention: {text}", e));
 
             if (!response.ok)
                 throw new EventsApiException($"Error on trying to create attend intention to event {eventId}");
         }
 
-        private async UniTask<IReadOnlyList<EventDTO>> FetchEventListAsync(URLAddress url, CancellationToken ct)
+        private async UniTask<IReadOnlyList<EventDTO>> FetchEventListAsync(Uri url, CancellationToken ct)
         {
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
-                url, ct, ReportCategory.EVENTS,
+            var result = webRequestController.GetAsync(
+                url, ReportCategory.EVENTS,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "post"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            var response = await result.CreateFromJson<EventDTOListResponse>(WRJsonParser.Unity,
+            var response = await result.CreateFromJsonAsync<EventDTOListResponse>(WRJsonParser.Unity,
+                ct,
                 createCustomExceptionOnFailure: static (e, text) => new EventsApiException($"Error fetching events: {text}", e));
 
             if (!response.ok)

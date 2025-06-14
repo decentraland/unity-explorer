@@ -15,8 +15,7 @@ namespace DCL.Browser.DecentralandUrls
         private const string ASSET_BUNDLE_URL_TEMPLATE = "https://ab-cdn.decentraland.{0}";
         private const string GENESIS_URL_TEMPLATE = "https://realm-provider-ea.decentraland.{0}/main";
 
-
-        private readonly Dictionary<DecentralandUrl, string> cache = new ();
+        private readonly Dictionary<DecentralandUrl, Uri> cache = new ();
         private readonly ILaunchMode launchMode;
 
         public string DecentralandDomain { get; }
@@ -50,11 +49,11 @@ namespace DCL.Browser.DecentralandUrls
             }
         }
 
-        public string Url(DecentralandUrl decentralandUrl)
+        public Uri Url(DecentralandUrl decentralandUrl)
         {
-            if (cache.TryGetValue(decentralandUrl, out string? url) == false)
+            if (cache.TryGetValue(decentralandUrl, out Uri? url) == false)
             {
-                url = RawUrl(decentralandUrl).Replace(ENV, DecentralandDomain);
+                url = new Uri(RawUrl(decentralandUrl).Replace(ENV, DecentralandDomain));
                 cache[decentralandUrl] = url;
             }
 
@@ -64,7 +63,7 @@ namespace DCL.Browser.DecentralandUrls
         public string GetHostnameForFeatureFlag() =>
             launchMode.CurrentMode switch
             {
-                LaunchMode.Play => Url(DecentralandUrl.Host),
+                LaunchMode.Play => Url(DecentralandUrl.Host).OriginalString,
                 LaunchMode.LocalSceneDevelopment => "localhost", //TODO should this behaviour be extracted to Url() call?
                 _ => throw new ArgumentOutOfRangeException()
             };

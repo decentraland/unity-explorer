@@ -59,7 +59,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                 w => new LoadNFTShapeSystem(
                     w,
                     new NftShapeCache(),
-                    IWebRequestController.DEFAULT,
+                    IWebRequestController.UNITY,
                     IDiskCache<Texture2DData>.Null.INSTANCE,
                     true,
                     VideoTextureFactory.CreateVideoTexturesPool(),

@@ -12,7 +12,7 @@ namespace DCL.Navmap
 {
     public class SatelliteController : ISection
     {
-        private const string GENESIS_CITY_LINK = "https://genesis.city/";
+        private static readonly Uri GENESIS_CITY_LINK = new ("https://genesis.city/");
 
         private readonly SatelliteView view;
         private readonly RectTransform rectTransform;

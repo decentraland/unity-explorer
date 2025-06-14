@@ -1,8 +1,9 @@
 using DCL.Optimization.PerformanceBudgeting;
+using System;
 
 namespace ECS.StreamableLoading.Cache.InMemory
 {
-    public class StreamableWrapMemoryCache<T, TKey> : IMemoryCache<T, TKey>
+    public class StreamableWrapMemoryCache<T, TKey> : IMemoryCache<T, TKey> where TKey: IEquatable<TKey>
     {
         private const int UNLOAD_CHUNK = int.MaxValue;
         private readonly IStreamableCache<T, TKey> streamableCache;

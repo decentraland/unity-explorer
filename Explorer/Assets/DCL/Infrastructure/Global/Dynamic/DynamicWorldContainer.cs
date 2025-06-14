@@ -83,6 +83,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -212,12 +213,12 @@ namespace Global.Dynamic
             LODContainer lodContainer = null!;
 
             IOnlineUsersProvider baseUserProvider = new ArchipelagoHttpOnlineUsersProvider(staticContainer.WebRequestsContainer.WebRequestController,
-                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers)));
+                bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeers));
 
             var onlineUsersProvider = new WorldInfoOnlineUsersProviderDecorator(
                 baseUserProvider,
                 staticContainer.WebRequestsContainer.WebRequestController,
-                URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld)));
+                bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.RemotePeersWorld));
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -322,7 +323,7 @@ namespace Global.Dynamic
                 new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value);
 
             //TODO should be unified with LaunchMode
-            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+            bool localSceneDevelopment = dynamicWorldParams.LocalSceneDevelopmentRealm != null;
             bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
             var realmContainer = RealmContainer.Create(
@@ -361,7 +362,7 @@ namespace Global.Dynamic
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
 
-            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
+            var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter));
 
             IRoomHub roomHub = new RoomHub(
                 localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
@@ -755,7 +756,7 @@ namespace Global.Dynamic
                     profileRepositoryWrapper
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
-                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
+                new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
                 new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.FeatureFlagsCache),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
@@ -1007,14 +1008,14 @@ namespace Global.Dynamic
             return (container, true);
         }
 
-        private static URLAddress GetFriendsApiUrl(IDecentralandUrlsSource dclUrlSource, IAppArgs appArgs)
+        private static Uri GetFriendsApiUrl(IDecentralandUrlsSource dclUrlSource, IAppArgs appArgs)
         {
-            string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
+            Uri url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
 
             if (appArgs.TryGetValue(AppArgsFlags.FRIENDS_API_URL, out string? urlFromArgs))
-                url = urlFromArgs!;
+                url = new Uri(urlFromArgs!);
 
-            return URLAddress.FromString(url);
+            return url;
         }
 
         private static void ParseDebugForcedEmotes(IReadOnlyCollection<string>? debugEmotes, ref List<URN> parsedEmotes)

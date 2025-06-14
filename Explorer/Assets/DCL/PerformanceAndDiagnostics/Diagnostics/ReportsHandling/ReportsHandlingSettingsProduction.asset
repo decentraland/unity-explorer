@@ -338,6 +338,8 @@ MonoBehaviour:
       Severity: 4
     - Category: CHAT_HISTORY
       Severity: 0
+    - Category: VERSION_CONTROL
+      Severity: 0
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

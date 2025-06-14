@@ -8,6 +8,8 @@ using DCL.Diagnostics;
 using DCL.SDKComponents.AudioSources;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.AudioClips;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.GLTF;
 using System;
 
@@ -128,7 +130,7 @@ namespace DCL.AvatarRendering.Emotes.Systems
                     var audioType = content.file.ToAudioType();
                     urlBuilder.Clear();
                     urlBuilder.AppendDomain(URLDomain.FromString(emote.DTO.ContentDownloadUrl)).AppendPath(new URLPath(content.hash));
-                    URLAddress url = urlBuilder.Build();
+                    Uri url = urlBuilder.Build();
 
                     for (int i = 0; i < ALL_BODYSHAPES.Length; i++)
                     {
@@ -136,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes.Systems
                         if (!emote.IsUnisex() && !bodyShape.Equals(targetBodyShape))
                             continue;
 
-                        var audioPromise = AudioUtils.CreateAudioClipPromise(World!, url.Value, audioType, partitionComponent);
+                        AssetPromise<AudioClipData, GetAudioClipIntention> audioPromise = AudioUtils.CreateAudioClipPromise(World!, url, audioType, partitionComponent);
                         World!.Create(audioPromise, emote, bodyShape);
                     }
 

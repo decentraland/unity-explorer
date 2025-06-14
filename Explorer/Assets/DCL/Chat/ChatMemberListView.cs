@@ -22,7 +22,7 @@ namespace DCL.Chat
         {
             public string Id;
             public string Name;
-            public string FaceSnapshotUrl;
+            public Uri? FaceSnapshotUrl;
             public string WalletId;
             public ChatMemberConnectionStatus ConnectionStatus;
             public Color ProfileColor;

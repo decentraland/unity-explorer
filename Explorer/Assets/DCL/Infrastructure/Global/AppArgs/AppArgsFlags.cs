@@ -39,6 +39,8 @@
 
         public const string SIMULATE_MEMORY = "simulateMemory";
 
+        public const string PROXY_ADDRESS = "proxy";
+
         public static class Multiplayer
         {
             public const string COMPRESSION = "compression";

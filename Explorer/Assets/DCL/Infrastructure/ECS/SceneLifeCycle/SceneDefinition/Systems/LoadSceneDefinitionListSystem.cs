@@ -16,6 +16,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
@@ -69,11 +70,16 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
             bodyBuilder.Append("]}");
 
-            var adapter = webRequestController.PostAsync(intention.CommonArguments,
-                GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportData());
+            return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(await webRequestController.PostAsync(intention.CommonArguments, GenericUploadArguments.CreateJson(bodyBuilder.ToString()), GetReportData())
+                                                                                                                .OverwriteFromJsonAsync(intention.TargetCollection, WRJsonParser.Newtonsoft, ct)));
 
-            using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
-            var nativeData = downloadHandler.nativeData;
+            // TODO This logic should be modified to work with Stream (according to the expectations of BestHTTP and the corresponding generalization)
+
+            /*var adapter = webRequestController.PostAsync(intention.CommonArguments,
+                GenericUploadArguments.CreateJson(bodyBuilder.ToString()), GetReportData());
+
+            //using var downloadHandler = await adapter.ExposeDownloadHandlerAsync();
+            var nativeData = new NativeArray<byte>(1, Allocator.None); // downloadHandler.nativeData;
 
             await UniTask.SwitchToThreadPool();
 
@@ -100,7 +106,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             }
 
             return new StreamableLoadingResult<SceneDefinitions>(
-                new SceneDefinitions(intention.TargetCollection));
+                new SceneDefinitions(intention.TargetCollection));*/
         }
 
         private sealed class SceneMetadataConverter : JsonConverter

@@ -1,53 +1,38 @@
 ﻿using DCL.DebugUtilities;
 using System;
-using System.Collections.Generic;
-using UnityEngine.Pool;
 
 namespace DCL.WebRequests.Analytics.Metrics
 {
-    public class TimeToFirstByteAverage : IRequestMetric
+    internal class TimeToFirstByteAverage : IRequestMetric
     {
-        private readonly Dictionary<ITypedWebRequest, DateTime> pendingRequests = new (10);
-
         private double sum;
         private uint count;
 
         public DebugLongMarkerDef.Unit GetUnit() =>
             DebugLongMarkerDef.Unit.TimeNanoseconds;
 
-        public void Update()
+        public ulong GetMetric()
         {
-            TrackFirstByteDownloaded();
+            lock (this) { return (ulong)(sum / count) * 1_000_000UL; }
         }
 
-        public ulong GetMetric() =>
-            (ulong)(sum / count) * 1_000_000UL;
-
-        private void TrackFirstByteDownloaded()
+        private void TrackFirstByteDownloaded(IWebRequest analytics)
         {
-            using PooledObject<List<ITypedWebRequest>> pooledObject = ListPool<ITypedWebRequest>.Get(out List<ITypedWebRequest>? resolved);
-
-            foreach ((ITypedWebRequest key, DateTime startTime) in pendingRequests)
+            lock (this)
             {
-                if (key.UnityWebRequest.downloadedBytes <= 0) continue;
-
-                resolved.Add(key);
                 count++;
-                sum += (DateTime.Now - startTime).TotalMilliseconds;
+                sum += (DateTime.Now - analytics.CreationTime).TotalMilliseconds;
             }
-
-            foreach (ITypedWebRequest? key in resolved)
-                pendingRequests.Remove(key);
         }
 
-        public void OnRequestStarted(ITypedWebRequest request)
+        void IRequestMetric.OnRequestStarted(ITypedWebRequest request, IWebRequest webRequest)
         {
-            pendingRequests.Add(request, DateTime.Now);
+            webRequest.OnDownloadStarted += TrackFirstByteDownloaded;
         }
 
-        public void OnRequestEnded(ITypedWebRequest request)
+        void IRequestMetric.OnRequestEnded(ITypedWebRequest request, IWebRequest webRequest)
         {
-            pendingRequests.Remove(request);
+            webRequest.OnDownloadStarted -= TrackFirstByteDownloaded;
         }
     }
 }

@@ -15,14 +15,14 @@ namespace DCL.Ipfs
         public URLDomain ContentBaseUrl { get; }
         public URLDomain LambdasBaseUrl { get; }
         public IReadOnlyList<string> SceneUrns => Array.Empty<string>();
-        public URLDomain EntitiesActiveEndpoint => URLDomain.EMPTY;
-        public URLDomain AssetBundleRegistry { get; }
+        public Uri EntitiesActiveEndpoint => null!;
+        public Uri AssetBundleRegistry { get; }
 
         public LocalIpfsRealm(URLDomain fullPath)
         {
             CatalystBaseUrl = fullPath;
             ContentBaseUrl = fullPath;
-            AssetBundleRegistry = fullPath;
+            AssetBundleRegistry = null!;
             LambdasBaseUrl = URLDomain.FromString("https://peer.decentraland.org/explorer/");
         }
 
