@@ -50,10 +50,15 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus status)
         {
-            if (status is VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL or VoiceChatStatus.VOICE_CHAT_REJECTING_CALL or VoiceChatStatus.VOICE_CHAT_USER_BUSY)
-                view.Hide();
-            else
-                view.Show();
+            switch (status)
+            {
+                case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
+                    view.Show();
+                    break;
+                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                    view.Hide();
+                    break;
+            }
 
             view.SetActiveSection(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
         }
