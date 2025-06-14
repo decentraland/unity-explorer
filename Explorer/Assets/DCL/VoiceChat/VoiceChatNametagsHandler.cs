@@ -110,6 +110,7 @@ namespace DCL.VoiceChat
 
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
+                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     world.AddOrSet(playerEntity, new VoiceChatNametagComponent(false) { IsRemoving = true });
                     activeSpeakers.Clear();
 

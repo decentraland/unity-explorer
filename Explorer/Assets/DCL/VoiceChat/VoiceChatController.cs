@@ -55,7 +55,7 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
                     view.Show();
                     break;
-                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL or VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     view.Hide();
                     break;
             }

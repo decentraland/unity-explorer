@@ -73,7 +73,7 @@ namespace DCL.VoiceChat
 
             CurrentTargetWallet = walletId;
 
-            cts = cts?.SafeRestart();
+            cts = cts.SafeRestart();
 
             //Setting starting call status to instantly disable call button
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
@@ -100,6 +100,7 @@ namespace DCL.VoiceChat
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
                     break;
                 default:
+                    ResetVoiceChatData();
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
                     break;
             }
@@ -110,7 +111,7 @@ namespace DCL.VoiceChat
             //We can accept a call only if we are receiving a call
             if (Status is not VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL) return;
 
-            cts = cts?.SafeRestart();
+            cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
 
             AcceptCallAsync(CallId, cts.Token).Forget();
@@ -138,7 +139,7 @@ namespace DCL.VoiceChat
             //We can stop a call only if we are starting a call or inside a call
             if (Status is not (VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_IN_CALL)) return;
 
-            cts = cts?.SafeRestart();
+            cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
             HangUpAsync(CallId, cts.Token).Forget();
         }
@@ -155,6 +156,7 @@ namespace DCL.VoiceChat
                     UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     break;
                 default:
+                    ResetVoiceChatData();
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
                     break;
             }
@@ -165,7 +167,7 @@ namespace DCL.VoiceChat
             //We can reject a call only if we are receiving a call
             if (Status is not VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL) return;
 
-            cts = cts?.SafeRestart();
+            cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
 
             RejectCallAsync(CallId, cts.Token).Forget();
@@ -198,6 +200,15 @@ namespace DCL.VoiceChat
         {
             CallId = string.Empty;
             RoomUrl = string.Empty;
+        }
+
+        public void HandleConnectionFailed()
+        {
+            if (Status is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL)
+            {
+                ResetVoiceChatData();
+                UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+            }
         }
     }
 }

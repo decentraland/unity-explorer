@@ -22,7 +22,7 @@ namespace DCL.VoiceChat
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly VoiceChatConfiguration configuration;
-
+        
         private bool disposed;
         private ITrack microphoneTrack;
         private CancellationTokenSource cts;
@@ -66,6 +66,7 @@ namespace DCL.VoiceChat
             {
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
+                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     DisconnectFromRoomAsync().Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
@@ -76,7 +77,11 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid ConnectToRoomAsync()
         {
-            await roomHub.VoiceChatRoom().SetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
+            bool success = await roomHub.VoiceChatRoom().SetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
+            if (!success)
+            {
+                voiceChatCallStatusService.HandleConnectionFailed();
+            }
         }
 
         private async UniTaskVoid DisconnectFromRoomAsync()
