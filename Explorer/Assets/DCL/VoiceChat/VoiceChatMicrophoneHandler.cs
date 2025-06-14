@@ -103,7 +103,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid StopAudioSourceAsync()
         {
-            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            await UniTask.SwitchToMainThread();
 
             if (audioSource != null)
                 audioSource.Stop();
@@ -252,7 +252,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid OnMicrophoneChangedAsync(int newMicrophoneIndex)
         {
-            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            await UniTask.SwitchToMainThread();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone change executing after main thread dispatch (async)");
             HandleMicrophoneChange(newMicrophoneIndex);
         }

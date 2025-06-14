@@ -108,7 +108,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid PlayAsync()
         {
-            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            await UniTask.SwitchToMainThread();
             audioSource.Play();
         }
 
@@ -127,7 +127,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid StopAsync()
         {
-            await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+            await UniTask.SwitchToMainThread();
             audioSource.Stop();
         }
 

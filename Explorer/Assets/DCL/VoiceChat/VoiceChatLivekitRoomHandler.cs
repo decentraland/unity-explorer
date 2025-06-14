@@ -218,16 +218,26 @@ namespace DCL.VoiceChat
 
         private void CloseMedia()
         {
-            CloseMediaAsync().Forget();
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                CloseMediaAsync().Forget();
+            }
+
+            CloseMediaInternal();
         }
 
-        private async UniTask CloseMediaAsync()
+        private async UniTaskVoid CloseMediaAsync()
         {
             if (!PlayerLoopHelper.IsMainThread)
             {
-                await using ExecuteOnMainThreadScope scope = await ExecuteOnMainThreadScope.NewScopeAsync();
+                await UniTask.SwitchToMainThread();
             }
 
+            CloseMediaInternal();
+        }
+
+        private void CloseMediaInternal()
+        {
             if (combinedAudioSource != null)
             {
                 combinedAudioSource.Stop();
@@ -238,6 +248,7 @@ namespace DCL.VoiceChat
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
         }
+
 
         private void HandleUnexpectedDisconnection()
         {
