@@ -74,11 +74,6 @@ namespace DCL.VoiceChat
             voiceChatCallStatusService.HangUp();
         }
 
-        private void ToggleMicrophone()
-        {
-            microphoneHandler.ToggleMicrophone();
-        }
-
         private void RefuseCall()
         {
             voiceChatCallStatusService.RejectCall();
