@@ -99,7 +99,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             Activated = true;
 
-            connectionString = string.Concat("livekit:",settings.StrictObject.RoomURL,"?access_token=",settings.StrictObject.Token);
+            connectionString = settings.StrictObject.RoomURL;
             await this.StartIfNotAsync();
         }
 
