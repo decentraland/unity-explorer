@@ -80,11 +80,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public IRoom Room() =>
             room;
 
-        public async UniTask SetConnectionStringAndActivateAsync(string newConnectionString)
+        public async UniTask<bool> SetConnectionStringAndActivateAsync(string newConnectionString)
         {
             this.connectionString = newConnectionString;
             await DeactivateAsync();
             await ActivateAsync();
+            return CurrentState() is IConnectiveRoom.State.Running;
         }
 
         public async UniTask ActivateAsync()
@@ -121,7 +122,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
-            return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
+            if (attemptToConnectState.Value() is AttemptToConnectState.ERROR)
+            {
+                roomState.Set(IConnectiveRoom.State.Stopped);
+                attemptToConnectState.Set(AttemptToConnectState.NONE);
+                return false;
+            }
+            return true;
         }
 
         public async UniTask StopAsync()
