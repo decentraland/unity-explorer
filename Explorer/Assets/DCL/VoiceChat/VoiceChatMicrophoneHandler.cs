@@ -26,8 +26,7 @@ namespace DCL.VoiceChat
         private readonly AudioSource audioSource;
 
         private AudioClip microphoneAudioClip;
-        private AudioMixerGroup originalAudioMixerGroup;
-        private GameObject audioSourceGameObject;
+        private VoiceChatStatus voiceChatStatus;
 
         private bool isMicrophoneInitialized;
         private bool isInCall;
@@ -56,9 +55,6 @@ namespace DCL.VoiceChat
             this.audioSource = audioSource;
             this.audioFilter = audioFilter;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
-
-            originalAudioMixerGroup = audioSource.outputAudioMixerGroup;
-            audioSourceGameObject = audioSource.gameObject;
 
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
@@ -115,6 +111,7 @@ namespace DCL.VoiceChat
 
         private void OnCallStatusChanged(VoiceChatStatus newStatus)
         {
+            voiceChatStatus = newStatus;
             switch (newStatus)
             {
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
@@ -123,6 +120,9 @@ namespace DCL.VoiceChat
 
                     isInCall = false;
                     DisableMicrophone();
+                    break;
+                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
+                    IsTalking = true;
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     isInCall = true;
@@ -134,7 +134,7 @@ namespace DCL.VoiceChat
 
         private void OnPressed(InputAction.CallbackContext obj)
         {
-            if (!isInCall) return;
+            if (voiceChatStatus == VoiceChatStatus.DISCONNECTED) return;
 
             buttonPressStartTime = Time.time;
 
@@ -146,7 +146,7 @@ namespace DCL.VoiceChat
 
         private void OnReleased(InputAction.CallbackContext obj)
         {
-            if (!isInCall) return;
+            if (voiceChatStatus == VoiceChatStatus.DISCONNECTED) return;
 
             float pressDuration = Time.time - buttonPressStartTime;
 
@@ -167,7 +167,7 @@ namespace DCL.VoiceChat
 
         public void ToggleMicrophone()
         {
-            if (!isInCall) return;
+            if (voiceChatStatus == VoiceChatStatus.DISCONNECTED) return;
 
             if (!IsTalking)
                 EnableMicrophone();
