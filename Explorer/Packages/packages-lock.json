@@ -64,11 +64,11 @@
       "hash": "232e2c6e028e35f5ae55cd644e6ae2c5dcbf441b"
     },
     "com.decentraland.livekit-sdk": {
-      "version": "https://github.com/decentraland/client-sdk-unity.git",
+      "version": "git@github.com:decentraland/client-sdk-unity#feat/voice_chat_improvements",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a3d04b4bba166375ba225b90256e57eea07febd5"
+      "hash": "8e89528573764dc8a223deea958492f306a9324b"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",

@@ -40,6 +40,7 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
+            VoiceChatSettingsAsset voiceChatSettings,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = Object.Instantiate(View, parent);

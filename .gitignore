@@ -63,3 +63,6 @@ Explorer/UserSettings
 # OS generated
 .DS_Store
 .DS_Store?
+
+# Cursor Rules
+**/.cursor/

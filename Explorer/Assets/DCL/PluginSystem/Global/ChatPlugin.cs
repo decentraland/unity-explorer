@@ -25,6 +25,7 @@ using DCL.UI.MainUI;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using MVC;
 using System.Threading;
 using ECS;
@@ -64,11 +65,12 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private ChatController chatController;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
-        
+
         public ChatPlugin(
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
@@ -97,7 +99,8 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             IRealmData realmData,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -122,6 +125,7 @@ namespace DCL.PluginSystem.Global
             this.chatMessageFactory = chatMessageFactory;
             this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -174,7 +178,8 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 chatStorage,
                 friendsServiceProxy,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                voiceChatCallStatusService
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

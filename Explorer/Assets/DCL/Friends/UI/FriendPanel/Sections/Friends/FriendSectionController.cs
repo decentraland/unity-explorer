@@ -3,6 +3,9 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.SharedSpaceManager;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -17,6 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly ViewDependencies viewDependencies;
         private readonly IChatEventBus chatEventBus;
@@ -33,7 +37,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IRealmNavigator realmNavigator,
             ViewDependencies viewDependencies,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager) : base(view, requestManager)
+            ISharedSpaceManager sharedSpaceManager,
+            bool includeCall,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -41,6 +47,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.viewDependencies = viewDependencies;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
