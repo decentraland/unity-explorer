@@ -34,12 +34,17 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
 
             this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
+            this.voiceChatService.Connected += OnConnected;
+            this.voiceChatService.Disconnected += OnDisconnected;
             cts = new CancellationTokenSource();
         }
 
         public void Dispose()
         {
             voiceChatService?.Dispose();
+            voiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
+            voiceChatService.Connected -= OnConnected;
+            voiceChatService.Disconnected -= OnDisconnected;
             cts?.Dispose();
         }
 
@@ -63,6 +68,30 @@ namespace DCL.VoiceChat
                     CallId = update.CallId;
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                     break;
+            }
+        }
+
+        private void OnConnected()
+        {
+            CheckIncomingCallAsync(cts.Token).Forget();
+        }
+
+        private async UniTaskVoid CheckIncomingCallAsync(CancellationToken ct)
+        {
+            var response = await voiceChatService.GetIncomingPrivateVoiceChatRequestAsync(ct);
+            if (response.ResponseCase == GetIncomingPrivateVoiceChatRequestResponse.ResponseOneofCase.Ok)
+            {
+                CallId = response.Ok.CallId;
+                UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
+            }
+        }
+
+        private void OnDisconnected()
+        {
+            if (Status is not VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            {
+                ResetVoiceChatData();
+                UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
             }
         }
 

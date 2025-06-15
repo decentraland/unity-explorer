@@ -21,8 +21,11 @@ namespace DCL.VoiceChat.Services
         private const string REJECT_PRIVATE_VOICE_CHAT = "RejectPrivateVoiceChat";
         private const string END_PRIVATE_VOICE_CHAT = "EndPrivateVoiceChat";
         private const string SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES = "SubscribeToPrivateVoiceChatUpdates";
+        private const string GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST = "GetIncomingPrivateVoiceChatRequest";
 
         public event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
+        public event Action Connected;
+        public event Action Disconnected;
 
         private readonly IRPCSocialServices socialServiceRPC;
 
@@ -109,6 +112,18 @@ namespace DCL.VoiceChat.Services
             return response;
         }
 
+        public async UniTask<GetIncomingPrivateVoiceChatRequestResponse> GetIncomingPrivateVoiceChatRequestAsync(CancellationToken ct)
+        {
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+
+            GetIncomingPrivateVoiceChatRequestResponse? response = await socialServiceRPC.Module()!
+                .CallUnaryProcedure<GetIncomingPrivateVoiceChatRequestResponse>(GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST, new Empty())
+                .AttachExternalCancellation(ct)
+                .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
         public UniTask SubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)
         {
             return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
@@ -140,10 +155,15 @@ namespace DCL.VoiceChat.Services
                 {
                     // It's an endless [background] loop
                     await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
+                    Connected?.Invoke();
                     await openStreamFunc().AttachExternalCancellation(ct);
                 }
                 catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.VOICE_CHAT)); }
+                catch (Exception e) 
+                { 
+                    ReportHub.LogException(e, new ReportData(ReportCategory.VOICE_CHAT));
+                    Disconnected?.Invoke();
+                }
             }
         }
     }
