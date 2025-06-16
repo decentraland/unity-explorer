@@ -16,6 +16,7 @@ namespace DCL.Landscape
         public IReadOnlyList<int2> OccupiedParcels => occupiedParcels;
 
         public TerrainData TerrainData { get; set; }
+        public Terrain terrain;
 
         public ChunkModel(int2 minParcel, int2 maxParcel)
         {
