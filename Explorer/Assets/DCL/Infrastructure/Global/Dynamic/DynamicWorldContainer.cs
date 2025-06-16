@@ -20,6 +20,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
+using DCL.Communities.CommunityCreation;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -613,6 +614,8 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
+            var communityCreationEditionEventBus = new CommunityCreationEditionEventBus();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -765,7 +768,9 @@ namespace Global.Dynamic
                     staticContainer.SceneLoadingLimit,
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
-                    communitiesDataProvider
+                    communitiesDataProvider,
+                    realmNftNamesProvider,
+                    communityCreationEditionEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -959,20 +964,26 @@ namespace Global.Dynamic
             }
 
             if (includeCommunities)
-                globalPlugins.Add(new CommunitiesPlugin(mvcManager,
+                globalPlugins.Add(new CommunitiesPlugin(
+                    mvcManager,
                     assetsProvisioner,
+                    staticContainer.InputBlock,
                     cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     profileRepositoryWrapper,
                     friendServiceProxy,
                     communitiesDataProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
+                    mainUIView.WarningNotification,
+                    realmNftNamesProvider,
                     placesAPIService,
+                    selfProfile,
                     realmNavigator,
                     clipboard,
                     webBrowser,
                     eventsApiService,
-                    identityCache));
+                    identityCache,
+                    communityCreationEditionEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

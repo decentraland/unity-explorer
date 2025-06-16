@@ -37,10 +37,10 @@ namespace DCL.Communities
                     thumbnails = communityData.thumbnails,
                     name = communityData.name,
                     description = communityData.description,
-                    ownerId = "test",
+                    ownerAddress = "test",
                     privacy = communityData.privacy,
                     role = communityData.role,
-                    membersCount = communityData.memberCount,
+                    membersCount = communityData.membersCount,
                 }
             };
         }
@@ -83,7 +83,7 @@ namespace DCL.Communities
         public async UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             throw new NotImplementedException();
 
-        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<Vector2Int> lands,
+        public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands,
             List<string> worlds, CancellationToken ct) =>
             throw new NotImplementedException();
 
@@ -91,7 +91,7 @@ namespace DCL.Communities
         {
             GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
-            int totalMembers = communityData.memberCount;
+            int totalMembers = communityData.membersCount;
 
             List<GetCommunityMembersResponse.MemberData> paginatedData = new ();
 
@@ -305,7 +305,7 @@ namespace DCL.Communities
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
-                    memberCount = UnityEngine.Random.Range(1, 101),
+                    membersCount = UnityEngine.Random.Range(1, 101),
                     isLive = UnityEngine.Random.Range(0, 5) == 0,
                     friends = mutualFriends.ToArray(),
                 });

@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
+using DCL.Communities.CommunityCreation;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
 using DCL.EventsApi;
@@ -259,8 +260,10 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnOpenCommunityWizard()
         {
-            //TODO: Open the community wizard
-            throw new NotImplementedException();
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    canCreateCommunities: true,
+                    communityId: communityData.id)));
         }
 
         private void JoinCommunity()

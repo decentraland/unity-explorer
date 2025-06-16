@@ -127,6 +127,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://communities.decentraland.{ENV}/v1",
+                DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };
     }
