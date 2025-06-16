@@ -415,11 +415,11 @@ MonoBehaviour:
     m_RotationOrder: 4
   <privateMessageIcon>k__BackingField: {fileID: 6150886871577296280}
   <privateMessageIconRenderer>k__BackingField: {fileID: 5844589265473337727}
-  <isTalkingIcon>k__BackingField: {fileID: 407507127688075238}
-  <isTalkingIconRenderer>k__BackingField: {fileID: 6493516169890296030}
-  <isTalkingIconOuterRenderer>k__BackingField: {fileID: 5304425934672700721}
-  <isTalkingIconRect>k__BackingField: {fileID: 977382119942593327}
-  <isTalkingIconOuterRect>k__BackingField: {fileID: 1966775455348051753}
+  <isSpeakingIcon>k__BackingField: {fileID: 407507127688075238}
+  <isSpeakingIconRenderer>k__BackingField: {fileID: 6493516169890296030}
+  <isSpeakingIconOuterRenderer>k__BackingField: {fileID: 5304425934672700721}
+  <isSpeakingIconRect>k__BackingField: {fileID: 977382119942593327}
+  <isSpeakingIconOuterRect>k__BackingField: {fileID: 1966775455348051753}
   <privateMessageText>k__BackingField: {fileID: 4907543279996336927}
 --- !u!210 &317692783042627670
 SortingGroup:
