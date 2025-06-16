@@ -284,7 +284,7 @@ namespace DCL.Passport
         private async UniTaskVoid OnOpenConversationAsync()
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(inputData.UserId);
+            chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
         }
 
         private void OnJumpToFriendButtonClicked()
