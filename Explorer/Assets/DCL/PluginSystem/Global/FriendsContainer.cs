@@ -46,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
-        private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
         private readonly ViewDependencies viewDependencies;
@@ -76,7 +75,6 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
-            DCLInput dclInput,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
             INotificationsBusController notificationsBusController,
@@ -104,7 +102,6 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
-            this.dclInput = dclInput;
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
             this.viewDependencies = viewDependencies;
@@ -136,7 +133,6 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 mvcManager,
                 profileRepository,
-                dclInput,
                 passportBridge,
                 onlineUsersProvider,
                 realmNavigator,
@@ -224,8 +220,7 @@ namespace DCL.PluginSystem.Global
 
                 var blockUserPromptController = new BlockUserPromptController(
                     BlockUserPromptController.CreateLazily(blockUserPromptPrefab, null),
-                    friendsService,
-                    dclInput);
+                    friendsService);
 
                 mvcManager.RegisterController(blockUserPromptController);
             }

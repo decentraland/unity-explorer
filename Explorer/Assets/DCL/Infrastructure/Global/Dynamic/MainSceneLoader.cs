@@ -360,7 +360,7 @@ namespace Global.Dynamic
         {
             // We disable Inputs directly because otherwise before login (so before the Input component was created and the system that handles it is working)
             // all inputs will be valid, and it allows for weird behaviour, including opening menus that are not ready to be open yet.
-            DCLInput dclInput = staticContainer!.InputProxy.StrictObject;
+            DCLInput dclInput = DCLInput.Instance;
 
             dclInput.Shortcuts.Disable();
             dclInput.Player.Disable();
@@ -378,7 +378,7 @@ namespace Global.Dynamic
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
 
-            staticContainer.InputProxy.StrictObject.UI.Enable();
+            DCLInput.Instance.UI.Enable();
         }
 
         private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)

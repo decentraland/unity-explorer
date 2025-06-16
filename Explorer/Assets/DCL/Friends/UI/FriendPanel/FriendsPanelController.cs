@@ -60,7 +60,6 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
             IProfileRepository profileRepository,
-            DCLInput dclInput,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
@@ -73,7 +72,7 @@ namespace DCL.Friends.UI.FriendPanel
             ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             this.chatEventBus = chatEventBus;
             this.includeUserBlocking = includeUserBlocking;
             this.sharedSpaceManager = sharedSpaceManager;

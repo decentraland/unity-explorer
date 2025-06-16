@@ -39,12 +39,11 @@ namespace DCL.Interaction.Systems
         private ProcessOtherAvatarsInteractionSystem(
             World world,
             IEventSystem eventSystem,
-            DCLInput dclInput,
             IMVCManagerMenusAccessFacade menusAccessFacade,
             IMVCManager mvcManager) : base(world)
         {
             this.eventSystem = eventSystem;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
             this.mvcManager = mvcManager;
             viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);

@@ -86,7 +86,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
-        private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
@@ -153,7 +152,6 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             List<string> forceRender,
-            DCLInput dclInput,
             IRealmData realmData,
             IProfileCache profileCache,
             URLDomain assetBundleURL,
@@ -209,7 +207,6 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
             this.emoteStorage = emoteStorage;
-            this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
             this.backpackEventBus = backpackEventBus;
@@ -303,7 +300,7 @@ namespace DCL.PluginSystem.Global
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
-            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput, navmapBus);
+            NavmapZoomController zoomController = new (navmapView.zoomView, navmapBus);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPoolAsync(navmapView.SearchBarResultPanel, ct);
             ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePoolAsync(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
@@ -362,7 +359,7 @@ namespace DCL.PluginSystem.Global
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            inputHandler = new ExplorePanelInputHandler(dclInput);
+            inputHandler = new ExplorePanelInputHandler();
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
@@ -381,8 +378,7 @@ namespace DCL.PluginSystem.Global
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                    dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper), inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

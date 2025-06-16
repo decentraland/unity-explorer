@@ -66,7 +66,6 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
@@ -168,9 +167,7 @@ namespace Global
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new Profiler();
             var container = new StaticContainer();
-            var dclInput = new DCLInput();
 
-            container.InputProxy.SetObject(dclInput);
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;
@@ -272,7 +269,7 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy, scenesUIRoot),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, scenesUIRoot),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
@@ -285,7 +282,7 @@ namespace Global
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
-                new PrimaryPointerInfoPlugin(globalWorld, container.InputProxy),
+                new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

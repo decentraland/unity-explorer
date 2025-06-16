@@ -11,7 +11,6 @@ namespace MVC
     /// </summary>
     public class ViewDependencies
     {
-        public readonly DCLInput DclInput;
         public readonly IEventSystem EventSystem;
         public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
         public readonly IClipboardManager ClipboardManager;
@@ -20,10 +19,9 @@ namespace MVC
         // TODO: Remove this from here
         public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
 
-        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
+        public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
-            DclInput = dclInput;
             EventSystem = eventSystem;
             GlobalUIViews = globalUIViews;
             ClipboardManager = clipboardManager;
@@ -31,5 +29,6 @@ namespace MVC
             this.UserBlockingCacheProxy = userBlockingCacheProxy;
         }
 
+        public DCLInput DclInput => DCLInput.Instance;
     }
 }

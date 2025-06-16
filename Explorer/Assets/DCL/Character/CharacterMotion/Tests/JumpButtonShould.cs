@@ -25,8 +25,7 @@ namespace DCL.CharacterMotion.Tests
             base.Setup();
             world = World.Create();
 
-            var dlcInput = new DCLInput();
-            dlcInput.Enable();
+            DCLInput.Instance.Enable();
             inputDevice = InputSystem.AddDevice<Keyboard>();
 
             ICharacterControllerSettings controllerSettings = Substitute.For<ICharacterControllerSettings>();
@@ -39,7 +38,7 @@ namespace DCL.CharacterMotion.Tests
                 new InputModifierComponent());
 
             updatePhysicsTickSystem = new UpdatePhysicsTickSystem(world, new PhysicsTickProvider());
-            updateInputJumpSystem = new UpdateInputJumpSystem(world, dlcInput.Player.Jump);
+            updateInputJumpSystem = new UpdateInputJumpSystem(world, DCLInput.Instance.Player.Jump);
             updateInputJumpSystem.Initialize();
 
             fixedTick = world.CachePhysicsTick();

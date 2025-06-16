@@ -264,7 +264,6 @@ namespace Global.Dynamic
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
-            var dclInput = staticContainer.InputProxy.StrictObject;
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
@@ -428,7 +427,7 @@ namespace Global.Dynamic
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -596,7 +595,6 @@ namespace Global.Dynamic
                 sharedSpaceManager);
 
             var viewDependencies = new ViewDependencies(
-                dclInput,
                 unityEventSystem,
                 menusAccessFacade,
                 clipboardManager,
@@ -633,13 +631,13 @@ namespace Global.Dynamic
                     sceneThroughputBunch
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, dclInput),
-                new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
-                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
-                new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
+                new InputPlugin(dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
+                new GlobalInteractionPlugin(dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
+                new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder,
-                    assetsProvisioner, selfProfile, mvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs),
+                    assetsProvisioner, selfProfile, mvcManager, staticContainer.CacheCleaner, identityCache, entityParticipantTable, assetBundlesURL, dclCursor, staticContainer.InputBlock, globalWorld, playerEntity, builderContentURL.Value, localSceneDevelopment, sharedSpaceManager, builderCollectionsPreview, appArgs),
                 new ProfilingPlugin(staticContainer.Profiler, staticContainer.RealmData, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder, staticContainer.ScenesCache, dclVersion, physicsSettings.Value, staticContainer.SceneLoadingLimit),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -665,7 +663,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
-                    profileCache, dclInput,
+                    profileCache,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData),
@@ -722,7 +720,6 @@ namespace Global.Dynamic
                     webBrowser,
                     emotesCache,
                     forceRender,
-                    dclInput,
                     staticContainer.RealmData,
                     profileCache,
                     assetBundlesURL,
@@ -869,7 +866,6 @@ namespace Global.Dynamic
                     profileRepository,
                     staticContainer.LoadingStatus,
                     staticContainer.InputBlock,
-                    dclInput,
                     selfProfile,
                     new MVCPassportBridge(mvcManager),
                     notificationsBusController,
@@ -897,7 +893,6 @@ namespace Global.Dynamic
 
             if (includeCameraReel)
                 globalPlugins.Add(new InWorldCameraPlugin(
-                    dclInput,
                     selfProfile,
                     staticContainer.RealmData,
                     playerEntity,

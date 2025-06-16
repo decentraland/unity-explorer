@@ -46,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
-        private readonly DCLInput input;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
@@ -72,7 +71,6 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            DCLInput input,
             Arch.Core.World world,
             Entity playerEntity,
             bool includeCameraReel,
@@ -97,7 +95,6 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
-            this.input = input;
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
@@ -135,7 +132,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
-                new ControlsPanelController(() => controlsPanelView, mvcManager, input),
+                new ControlsPanelController(() => controlsPanelView, mvcManager),
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
