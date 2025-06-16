@@ -75,35 +75,19 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address), buttonPosition, default(Vector2),
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
-        
-        private async UniTaskVoid HandleJump(FriendProfile profile)
+
+        private void HandleJump(FriendProfile profile)
         {
-            chatMessageBus.Send(ChatChannel.NEARBY_CHANNEL,
-                $"/{ChatCommandsUtils.COMMAND_GOTO} 100,10",
-                "passport-jump"
-            );
-            
-            
-            // (bool success, bool isInWorld, string parameters, var parcel) =
-            //     await FriendListSectionUtilities
-            //         .PrepareTeleportTargetAsync(profile.Address,
-            //             onlineUsersProvider,
-            //             jumpToFriendLocationCts);
-            //
-            // if(!success) return;
-            //
-            // chatMessageBus.Send(ChatChannel.NEARBY_CHANNEL,
-            //     $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
-            //     "passport-jump"
-            // );
-            //
-            // sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
-            //     new ChatControllerShowParams(true, true)).Forget();
+            FriendListSectionUtilities
+                .PrepareTeleportTargetAsync2(profile.Address,
+                    onlineUsersProvider,
+                    chatMessageBus,
+                    jumpToFriendLocationCts);
         }
 
         private void JumpInClicked(FriendProfile profile)
         {
-            HandleJump(profile).Forget();
+            HandleJump(profile);
         }
 
         protected override void ElementClicked(FriendProfile profile) =>

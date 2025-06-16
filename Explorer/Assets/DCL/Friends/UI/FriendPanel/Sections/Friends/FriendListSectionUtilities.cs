@@ -5,9 +5,13 @@ using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using Utility;
 
@@ -21,16 +25,60 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
 
         /// <summary>
+        /// Public entry:
+        /// restarts the CTS and fires off the teleport lookup & send.
+        /// </summary>
+        public static void PrepareTeleportTargetAsync2(
+            string userId,
+            IOnlineUsersProvider onlineUsersProvider,
+            IChatMessagesBus chatMessageBus,
+            CancellationTokenSource? cts)
+        {
+            cts = cts.SafeRestart();
+            
+            // fire‐and‐forget the async work
+            ExecuteTeleportLookupAndSendAsync(userId, onlineUsersProvider, chatMessageBus, cts.Token).Forget();
+        }
+
+        /// <summary>
+        /// Actually does the async lookup and chat send.
+        /// </summary>
+        private static async UniTask ExecuteTeleportLookupAndSendAsync(
+            string userId,
+            IOnlineUsersProvider onlineUsersProvider,
+            IChatMessagesBus chatMessageBus,
+            CancellationToken ct)
+        {
+            IReadOnlyCollection<OnlineUserData> onlineData =
+                await onlineUsersProvider.GetAsync(new[] { userId }, ct);
+            if (onlineData.Count == 0)
+                return;
+
+            var userData = onlineData.First();
+            Vector2Int parcel = userData.position.ToParcel();
+
+            string parameters = userData.IsInWorld
+                ? userData.worldName!
+                : $"{parcel.x},{parcel.y}";
+
+            chatMessageBus.Send(
+                ChatChannel.NEARBY_CHANNEL,
+                $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
+                "passport-jump"
+            );
+        }
+        
+        /// <summary>
         /// Fetches the OnlineUserData for `userId`, restarts the CTS, 
         /// and returns (success, isInWorld, parameters, parcel).
         /// </summary>
         public static async UniTask<(bool success, bool isInWorld, string parameters, Vector2Int? parcel)> 
             PrepareTeleportTargetAsync(string userId,
                 IOnlineUsersProvider onlineUsersProvider,
-                CancellationTokenSource? ct)
+                CancellationTokenSource? cts)
         {
-            ct = ct.SafeRestart();
-            var onlineData = await onlineUsersProvider.GetAsync(new [] { userId }, ct.Token);
+            cts = cts.SafeRestart();
+            var onlineData = await onlineUsersProvider.GetAsync(new [] { userId }, cts.Token);
             if (onlineData.Count == 0)
                 return (false, false, null!, null);
 
@@ -69,5 +117,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             return buffer.ToString();
         }
+
+
+
     }
 }

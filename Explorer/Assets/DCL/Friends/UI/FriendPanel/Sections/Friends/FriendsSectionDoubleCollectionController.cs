@@ -144,12 +144,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
-        private async UniTaskVoid HandleJump(FriendProfile profile)
+        private void HandleJump(FriendProfile profile)
         {
-            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL,
-                $"/{ChatCommandsUtils.COMMAND_GOTO} 100,10",
-                "jump in"
-            );
+            Debug.Log(this.GetType().Name + ": HandleJump");
+            
+            FriendListSectionUtilities
+                .PrepareTeleportTargetAsync2(profile.Address,
+                    onlineUsersProvider,
+                    chatMessagesBus,
+                    jumpToFriendLocationCts);
+
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
+                new ChatControllerShowParams(true, true)).Forget();
             
             // (bool success, bool isInWorld, string parameters, var parcel) =
             //     await FriendListSectionUtilities
@@ -170,7 +176,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         
         private void OnJumpInClicked(FriendProfile profile)
         {
-            HandleJump(profile).Forget();
+            HandleJump(profile);
         }
 
         private void OnChatButtonClicked(FriendProfile elementViewUserProfile)

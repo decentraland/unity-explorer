@@ -102,9 +102,9 @@ namespace DCL.Chat.Commands
         /// </summary>
         public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct)
         {
-            // var currentPosition = world.Get<CharacterTransform>(playerEntity).Transform.position.ToParcel();
-            // if (targetPosition == currentPosition)
-            //     return $"🔴 You are already at {targetPosition.x},{targetPosition.y}.";
+            var currentPosition = world.Get<CharacterTransform>(playerEntity).Transform.position.ToParcel();
+            if (targetPosition == currentPosition)
+                return $"🔴 You are already at {targetPosition.x},{targetPosition.y}.";
 
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local);
 
