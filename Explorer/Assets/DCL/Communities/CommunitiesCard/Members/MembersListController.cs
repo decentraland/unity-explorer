@@ -20,6 +20,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 using Utility.Types;
@@ -310,51 +311,73 @@ namespace DCL.Communities.CommunitiesCard.Members
             base.Reset();
         }
 
-        private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private async void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
-            friendshipOperationCts = friendshipOperationCts.SafeRestart();
-
-            switch (friendshipStatus)
+            try
             {
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
-                    {
-                        OneShotFriendAccepted = userData.ToFriendProfile()
-                    }), ct: friendshipOperationCts.Token).Forget();
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
-                    mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)), cancellationToken).Forget();
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
-                    {
-                        UserId = new Web3Address(userData.userAddress),
-                    }), friendshipOperationCts.Token);
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
-                    {
-                        DestinationUser = new Web3Address(userData.userAddress),
-                    }), friendshipOperationCts.Token);
-                    break;
+                friendshipOperationCts = friendshipOperationCts.SafeRestart();
+                CancellationToken ct = friendshipOperationCts.Token;
+
+                switch (friendshipStatus)
+                {
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
+                        await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.userAddress, ct)
+                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                        await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                        {
+                            OneShotFriendAccepted = userData.ToFriendProfile()
+                        }), ct: ct);
+
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
+                        await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(
+                            new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)),
+                            ct);
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
+                        await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
+                        {
+                            UserId = new Web3Address(userData.userAddress),
+                        }), ct);
+
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
+                        await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                        {
+                            DestinationUser = new Web3Address(userData.userAddress),
+                        }), ct);
+
+                        break;
+                }
+
+                Friends.FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userData.userAddress, ct);
+
+                currentSectionFetchData.items.Find(item => item.memberAddress.Equals(userData.userAddress))
+                                       .friendshipStatus = ConvertFriendshipStatus(status);
+
+                view.RefreshGrid();
             }
-
-            return;
-
-            async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
+            catch (Exception ex) when (ex is OperationCanceledException)
             {
-                try
-                {
-                    await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.userAddress, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
-                }
+                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
+        }
+
+        private static FriendshipStatus ConvertFriendshipStatus(Friends.FriendshipStatus status)
+        {
+            return status switch
+               {
+                   Friends.FriendshipStatus.FRIEND => FriendshipStatus.friend,
+                   Friends.FriendshipStatus.REQUEST_RECEIVED => FriendshipStatus.request_received,
+                   Friends.FriendshipStatus.REQUEST_SENT => FriendshipStatus.request_sent,
+                   Friends.FriendshipStatus.BLOCKED => FriendshipStatus.blocked,
+                   Friends.FriendshipStatus.BLOCKED_BY => FriendshipStatus.blocked_by,
+                   Friends.FriendshipStatus.NONE => FriendshipStatus.none,
+                   _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+               };
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
