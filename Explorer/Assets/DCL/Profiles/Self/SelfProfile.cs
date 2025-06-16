@@ -199,6 +199,9 @@ namespace DCL.Profiles.Self
         {
             copyOfOwnProfile = null;
             OwnProfile = null;
+            // We also need to clear the owned nfts since they need to be re-initialized, otherwise we might end up with wrong nftIds (last part of the urn chunks)
+            wearableStorage.ClearOwnedNftRegistry();
+            emoteStorage.ClearOwnedNftRegistry();
         }
     }
 }

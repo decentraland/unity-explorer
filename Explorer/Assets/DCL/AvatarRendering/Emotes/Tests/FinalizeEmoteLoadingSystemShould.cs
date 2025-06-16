@@ -555,7 +555,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
         public class MockStreamableDataWithURN : IStreamableRefCountData
         {
             public URN Urn { get; }
-            public int ReferenceCount => 0;
 
             public MockStreamableDataWithURN(URN urn)
             {
@@ -563,8 +562,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             }
 
             public void Dispose() { }
-
-            public void Reference() { }
 
             public void Dereference() { }
         }
@@ -576,9 +573,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public readonly List<URN> TryGetElementCalls = new ();
             public Action<MockEmote, bool> OnUpdateLoadingStatusCalled;
             public List<URN> EmbededURNs => throw new NotImplementedException();
-
-            public IEmote GetOrAddByDTO(EmoteDTO dto) =>
-                GetOrAddByDTO(dto, false);
 
             public IEmote GetOrAddByDTO(EmoteDTO dto, bool isDefault)
             {
@@ -602,21 +596,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
             public void Set(URN urn, IEmote emote) =>
                 Emotes[urn] = emote;
 
-            public IEmote GetOrAdd(URN urn) =>
-                Emotes.TryGetValue(urn, out IEmote? e) ? e : Emotes[urn] = new MockEmote(urn, this);
-
-            public void Add(URN urn, IEmote emote) =>
-                Emotes[urn] = emote;
-
-            public bool TryGetMainAsset(URN urn, BodyShape bodyShape, out StreamableLoadingResult<AttachmentRegularAsset> asset) =>
-                throw new NotImplementedException();
-
-            public bool TryGetAudioClip(URN urn, BodyShape bodyShape, out StreamableLoadingResult<AudioClipData> audioClip) =>
-                throw new NotImplementedException();
-
-            public bool IsLoading(URN urn) =>
-                throw new NotImplementedException();
-
             public void AddEmbeded(URN urn, IEmote emote) =>
                 throw new NotImplementedException();
 
@@ -628,6 +607,11 @@ namespace DCL.AvatarRendering.Emotes.Tests
 
             public bool TryGetOwnedNftRegistry(URN urn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
                 throw new NotImplementedException();
+
+            public void ClearOwnedNftRegistry()
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public class MockEmote : IEmote
@@ -673,9 +657,6 @@ namespace DCL.AvatarRendering.Emotes.Tests
                 LastAppliedDTO = dto;
                 ApplyAndMarkAsLoadedCallCount++;
             }
-
-            public bool IsUnisex() =>
-                MockIsUnisexValue;
 
             public bool HasSameClipForAllGenders() =>
                 MockHasSameClipForAllGendersValue;
