@@ -382,7 +382,7 @@ namespace DCL.Chat
                         name = response.data.name,
                         privacy = response.data.privacy,
                         role = response.data.role,
-                        ownerAddress = response.data.ownerId
+                        ownerAddress = response.data.ownerAddress
                     });
 
                 viewInstance!.SetCommunitiesData(userCommunities);
@@ -440,19 +440,34 @@ namespace DCL.Chat
 
 #region Conversation Events
 
-        private void OnOpenPrivateConversation(string userId)
+        private void OnOpenPrivateConversationRequested(string userId)
         {
-            ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(new ChatChannel.ChannelId(userId)));
+            ChatChannel.ChannelId channelId = new ChatChannel.ChannelId(userId);
+            ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(channelId));
 
-            var channelId = new ChatChannel.ChannelId(userId);
-            ChatChannel channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
+            chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
 
-            viewInstance!.CurrentChannelId = channel.Id;
+            viewInstance!.CurrentChannelId = channelId;
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
             UpdateChatUserStateAsync(userId, true, chatUsersUpdateCts.Token).Forget();
+
+            viewInstance.Focus();
+        }
+
+        private void OnOpenCommunityConversationRequested(string communityId)
+        {
+            ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(communityId);
+            ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(channelId));
+
+            chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
+            viewInstance!.CurrentChannelId = channelId;
+
+            viewInstance.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+
+            chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
 
             viewInstance.Focus();
         }
@@ -863,8 +878,9 @@ private CancellationTokenSource memberListCts;
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
 
-            chatEventBus.InsertTextInChat += OnTextInserted;
-            chatEventBus.OpenConversation += OnOpenPrivateConversation;
+            chatEventBus.InsertTextInChatRequested += OnTextInserted;
+            chatEventBus.OpenPrivateConversationRequested += OnOpenPrivateConversationRequested;
+            chatEventBus.OpenCommunityConversationRequested += OnOpenCommunityConversationRequested;
 
             viewInstance!.PointerEnter += OnViewPointerEnter;
             viewInstance.PointerExit += OnViewPointerExit;
@@ -918,7 +934,7 @@ private CancellationTokenSource memberListCts;
             chatMessagesBus.MessageAdded -= OnChatBusMessageAdded;
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
-            chatEventBus.InsertTextInChat -= OnTextInserted;
+            chatEventBus.InsertTextInChatRequested -= OnTextInserted;
 
             if (viewInstance != null)
             {

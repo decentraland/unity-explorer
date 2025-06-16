@@ -176,7 +176,7 @@ namespace DCL.Communities.CommunitiesCard
         public void ConfigureInteractionButtons(CommunityMemberRole role)
         {
             joinedButton.gameObject.SetActive(role is CommunityMemberRole.member or CommunityMemberRole.moderator);
-            openWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner);
+            openWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
         }
 

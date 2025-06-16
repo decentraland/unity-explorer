@@ -53,7 +53,8 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetUserRole(CommunityMemberRole role)
         {
             userRoleContainer.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            userRole.text = role.ToString();
+            var roleString = role.ToString();
+            userRole.text = $"{char.ToUpperInvariant(roleString[0])}{roleString[1..]}";
         }
 
         public void SetLiveMarkAsActive(bool isLiveMark) =>

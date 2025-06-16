@@ -256,7 +256,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            ShowChatAsync(() => chatEventBus.OpenConversationUsingUserId(userId)).Forget();
+            ShowChatAsync(() => chatEventBus.OpenPrivateConversationUsingUserId(userId)).Forget();
         }
 
         private async UniTaskVoid ShowChatAsync(Action onChatShown)

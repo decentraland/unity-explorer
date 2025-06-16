@@ -2,13 +2,17 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
@@ -26,52 +30,71 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly IWebBrowser webBrowser;
+        private readonly IInputBlock inputBlock;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly ISelfProfile selfProfile;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
-        private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
+        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
 
         private CommunityCardController? communityCardController;
 
-        public CommunitiesPlugin(IMVCManager mvcManager,
+        private CommunityCreationEditionController? communityCreationEditionController;
+
+        public CommunitiesPlugin(
+            IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
+            IWebBrowser webBrowser,
+            IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
+            WarningNotificationView inWorldWarningNotificationView,
+            INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
+            ISelfProfile selfProfile,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            CommunityCreationEditionEventBus communityCreationEditionEventBus)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
+            this.webBrowser = webBrowser;
+            this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
+            this.selfProfile = selfProfile;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
-            this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
+            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
         }
 
         public void Dispose()
         {
             communityCardController?.Dispose();
+            communityCreationEditionController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -98,6 +121,20 @@ namespace DCL.PluginSystem.Global
                 eventsApiService);
 
             mvcManager.RegisterController(communityCardController);
+
+            CommunityCreationEditionView communityCreationEditionViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCreationEditionPrefab, ct: ct)).GetComponent<CommunityCreationEditionView>();
+            ControllerBase<CommunityCreationEditionView, CommunityCreationEditionParameter>.ViewFactoryMethod communityCreationEditionViewFactoryMethod = CommunityCreationEditionController.Preallocate(communityCreationEditionViewAsset, null, out CommunityCreationEditionView communityCreationEditionView);
+            communityCreationEditionController = new CommunityCreationEditionController(
+                communityCreationEditionViewFactoryMethod,
+                webBrowser,
+                inputBlock,
+                communitiesDataProvider,
+                nftNamesProvider,
+                placesAPIService,
+                selfProfile,
+                webRequestController,
+                communityCreationEditionEventBus);
+            mvcManager.RegisterController(communityCreationEditionController);
         }
     }
 
@@ -106,5 +143,8 @@ namespace DCL.PluginSystem.Global
     {
         [field: Header("Community Card")]
         [field: SerializeField] internal AssetReferenceGameObject CommunityCardPrefab { get; private set; }
+
+        [field: Header("Community Creation Edition Wizard")]
+        [field: SerializeField] internal AssetReferenceGameObject CommunityCreationEditionPrefab { get; private set; }
     }
 }
