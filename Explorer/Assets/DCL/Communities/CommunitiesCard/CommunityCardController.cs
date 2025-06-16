@@ -163,17 +163,17 @@ namespace DCL.Communities.CommunitiesCard
         private void CloseController() =>
             closeIntentCompletionSource.TrySetResult();
 
-        private void OnOpenCommunityChat()
+        private async void OnOpenCommunityChat()
         {
-            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
-            OpenChatWithCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
-            return;
-
-            async UniTaskVoid OpenChatWithCommunityAsync(CancellationToken ct)
+            try
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
                 chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
                 CloseController();
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
         }
 

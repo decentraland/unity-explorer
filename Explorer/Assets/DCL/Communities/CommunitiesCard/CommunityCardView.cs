@@ -135,7 +135,7 @@ namespace DCL.Communities.CommunitiesCard
             ShowDeleteConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
             return;
 
-            async UniTaskVoid ShowDeleteConfirmationDialogAsync(CancellationToken ct)
+            async UniTask ShowDeleteConfirmationDialogAsync(CancellationToken ct)
             {
                 ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
                     new ConfirmationDialogView.DialogData(string.Format(DELETE_COMMUNITY_TEXT_FORMAT, communityName.text),
@@ -176,7 +176,7 @@ namespace DCL.Communities.CommunitiesCard
             ShowLeaveConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
             return;
 
-            async UniTaskVoid ShowLeaveConfirmationDialogAsync(CancellationToken ct)
+            async UniTask ShowLeaveConfirmationDialogAsync(CancellationToken ct)
             {
                 ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
                     new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, communityName.text),

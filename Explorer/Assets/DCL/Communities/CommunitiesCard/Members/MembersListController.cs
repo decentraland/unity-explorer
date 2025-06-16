@@ -282,16 +282,16 @@ namespace DCL.Communities.CommunitiesCard.Members
             throw new NotImplementedException();
         }
 
-        private void OpenChatWithUser(MemberData profile)
+        private async void OpenChatWithUser(MemberData profile)
         {
-            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
-            OpenChatWithUserAsync(contextMenuOperationCts.Token).Forget();
-            return;
-
-            async UniTaskVoid OpenChatWithUserAsync(CancellationToken ct)
+            try
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.memberAddress);
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
         }
 
