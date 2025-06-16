@@ -147,7 +147,7 @@ namespace DCL.AuthenticationScreenFlow
 #else
             viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
 #endif
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, equippedEmotes, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);

@@ -23,6 +23,7 @@ namespace DCL.Passport
             previewAvatarModel.Wearables = shortenedWearables;
 
             base.Initialize(avatar);
+            PlayEmote("wave");
         }
     }
 }

@@ -135,6 +135,12 @@ namespace DCL.CharacterPreview
                 globalWorld.Add(characterPreviewEntity, intent);
         }
 
+        public bool IsPlayingEmote()
+        {
+            ref CharacterEmoteComponent emoteComponent = ref globalWorld.TryGetRef<CharacterEmoteComponent>(characterPreviewEntity, out bool exists);
+            return exists && emoteComponent.CurrentEmoteReference;
+        }
+
         public void StopEmotes()
         {
             ref CharacterEmoteComponent emoteComponent = ref globalWorld.Get<CharacterEmoteComponent>(characterPreviewEntity);

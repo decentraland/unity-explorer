@@ -1,12 +1,9 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Loading.Components;
 using DCL.CharacterPreview;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -16,19 +13,14 @@ namespace DCL.AuthenticationScreenFlow
     {
         private readonly List<URN> shortenedWearables = new ();
         private readonly HashSet<URN> shortenedEmotes = new ();
-        private readonly IEquippedEmotes equippedEmotes;
-        private Avatar avatar;
 
-        public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view,  IEquippedEmotes equippedEmotes, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
-            : base(view, previewFactory, world, true, characterPreviewEventBus)
-        {
-            this.equippedEmotes = equippedEmotes;
-        }
+        private URN[] cachedShortenedEmotes;
+
+        public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view,  ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
+            : base(view, previewFactory, world, true, characterPreviewEventBus) { }
 
         public override void Initialize(Avatar avatar)
         {
-            this.avatar = avatar;
-
             shortenedWearables.Clear();
             shortenedEmotes.Clear();
 
@@ -45,14 +37,16 @@ namespace DCL.AuthenticationScreenFlow
 
             previewAvatarModel.Wearables = shortenedWearables;
             previewAvatarModel.Emotes = shortenedEmotes;
+            cachedShortenedEmotes = shortenedEmotes.ToArray();
 
             base.Initialize(avatar);
 
+            PlayEmote("wave");
             EmoteTaskLoop().Forget();
-            checkTime = Time.unscaledTime;
         }
 
-        private float checkTime;
+        private const float TIME_BETWEEN_EMOTES = 3f;
+        private float emoteCooldown;
 
         private async UniTask EmoteTaskLoop()
         {
@@ -61,13 +55,17 @@ namespace DCL.AuthenticationScreenFlow
             while (true)
             {
                 await UniTask.Yield(PlayerLoopTiming.PreLateUpdate);
-                if(Time.unscaledTime - checkTime > 3f)
+
+                if (!IsPlayingEmote())
+                    emoteCooldown += Time.deltaTime;
+
+                if(emoteCooldown > TIME_BETWEEN_EMOTES)
                 {
-                    checkTime = Time.unscaledTime;
-                    PlayEmote(avatar.Emotes[i].Shorten());
+                    emoteCooldown = 0f;
+                    PlayEmote(cachedShortenedEmotes[i]);
 
                     i++;
-                    if (i >= avatar.Emotes.Count)
+                    if (i >= cachedShortenedEmotes.Length)
                         i = 0;
                 }
             }

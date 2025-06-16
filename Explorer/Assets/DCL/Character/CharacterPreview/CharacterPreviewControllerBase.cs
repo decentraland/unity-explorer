@@ -32,7 +32,7 @@ namespace DCL.CharacterPreview
         private bool initialized;
         private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
-        private bool isPreviewPlatformActive;
+        private readonly bool isPreviewPlatformActive;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
@@ -72,7 +72,6 @@ namespace DCL.CharacterPreview
             previewAvatarModel.Initialized = true;
 
             Initialize();
-            PlayEmote("wave");
         }
 
         private void Initialize()
@@ -266,6 +265,9 @@ namespace DCL.CharacterPreview
 
         protected void StopEmotes() =>
             previewController?.StopEmotes();
+
+        protected bool IsPlayingEmote() =>
+            previewController != null && previewController.Value.IsPlayingEmote();
 
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);
