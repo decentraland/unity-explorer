@@ -37,6 +37,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private Button unblockFriendButton { get; set; }
 
         private bool canUnHover = true;
+        private bool isUserCard = false;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
         public MemberData UserProfile { get; protected set; }
@@ -102,6 +103,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             profilePicture.Setup(profileDataProvider, memberProfile.GetUserNameColor(), memberProfile.profilePictureUrl, memberProfile.memberAddress);
 
             currentSection = section;
+            isUserCard = isSelfCard;
 
             addFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.none && currentSection == MembersListView.MemberListSections.ALL);
             acceptFriendButton.gameObject.SetActive(!isSelfCard && memberProfile.friendshipStatus == FriendshipStatus.request_received && currentSection == MembersListView.MemberListSections.ALL);
@@ -132,7 +134,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void Hover()
         {
-            contextMenuButton.gameObject.SetActive(true);
+            contextMenuButton.gameObject.SetActive(!isUserCard);
             unbanButton.gameObject.SetActive(currentSection == MembersListView.MemberListSections.BANNED);
             background.color = hoveredColor;
         }
