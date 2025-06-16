@@ -1,11 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.Communities
@@ -66,6 +65,22 @@ namespace DCL.Communities
                     new MultipartFormDataSection("name", name),
                     new MultipartFormDataSection("description", description),
                 };
+
+                List<string> landsAndWorlds = new (lands);
+                landsAndWorlds.AddRange(worlds);
+                if (landsAndWorlds.Count > 0)
+                {
+                    StringBuilder placeIdsJsonString = new StringBuilder("[");
+                    for (var i = 0; i < landsAndWorlds.Count; i++)
+                    {
+                        placeIdsJsonString.Append($"\"{landsAndWorlds[i]}\"");
+                        if (i < landsAndWorlds.Count - 1)
+                            placeIdsJsonString.Append(", ");
+                    }
+                    placeIdsJsonString.Append("]");
+
+                    formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
+                }
 
                 if (thumbnail != null)
                     formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
