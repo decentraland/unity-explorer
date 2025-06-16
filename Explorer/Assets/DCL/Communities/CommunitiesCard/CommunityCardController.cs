@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat.EventBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
@@ -15,6 +16,7 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -54,6 +56,8 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IChatEventBus chatEventBus;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -80,7 +84,9 @@ namespace DCL.Communities.CommunitiesCard
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -96,6 +102,10 @@ namespace DCL.Communities.CommunitiesCard
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
             this.web3IdentityCache = web3IdentityCache;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatEventBus = chatEventBus;
+
+            chatEventBus.OpenConversation += OnOpenPrivateChat;
         }
 
         public override void Dispose()
@@ -110,6 +120,8 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
             }
 
+            chatEventBus.OpenConversation -= OnOpenPrivateChat;
+
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
@@ -122,6 +134,9 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController?.Dispose();
             eventListController?.Dispose();
         }
+
+        private void OnOpenPrivateChat(string userId) =>
+            CloseController();
 
         private void OnDeleteCommunityRequested()
         {
@@ -140,14 +155,17 @@ namespace DCL.Communities.CommunitiesCard
                     return;
                 }
 
-                closeIntentCompletionSource.TrySetResult();
+                CloseController();
             }
         }
+
+        private void CloseController() =>
+            closeIntentCompletionSource.TrySetResult();
 
         private void OnOpenCommunityChat()
         {
             //TODO: Focus the community chat and close the community card
-            closeIntentCompletionSource.TrySetResult();
+            CloseController();
             throw new NotImplementedException();
         }
 
@@ -171,7 +189,9 @@ namespace DCL.Communities.CommunitiesCard
                 friendServiceProxy,
                 communitiesDataProvider,
                 viewInstance.warningNotificationView,
-                web3IdentityCache);
+                web3IdentityCache,
+                sharedSpaceManager,
+                chatEventBus);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 webRequestController,

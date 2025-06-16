@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -9,6 +11,7 @@ using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
@@ -43,6 +46,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IChatEventBus chatEventBus;
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly GenericContextMenuElement removeModeratorContextMenuElement;
@@ -71,13 +76,17 @@ namespace DCL.Communities.CommunitiesCard.Members
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             WarningNotificationView inWorldWarningNotificationView,
-            IWeb3IdentityCache web3IdentityCache) : base(view, PAGE_SIZE)
+            IWeb3IdentityCache web3IdentityCache,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatEventBus = chatEventBus;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
@@ -269,12 +278,21 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void CallUser(MemberData profile)
         {
+            //TODO: call user in private conversation
             throw new NotImplementedException();
         }
 
         private void OpenChatWithUser(MemberData profile)
         {
-            throw new NotImplementedException();
+            contextMenuOperationCts = contextMenuOperationCts.SafeRestart();
+            OpenChatWithUserAsync(contextMenuOperationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid OpenChatWithUserAsync(CancellationToken ct)
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                chatEventBus.OpenConversationUsingUserId(profile.memberAddress);
+            }
         }
 
         private void OpenProfilePassport(MemberData profile) =>

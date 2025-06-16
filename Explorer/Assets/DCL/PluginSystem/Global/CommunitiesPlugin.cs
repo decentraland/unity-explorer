@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.Chat.EventBus;
 using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
@@ -15,6 +16,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -48,6 +50,8 @@ namespace DCL.PluginSystem.Global
         private readonly IEventsApiService eventsApiService;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IChatEventBus chatEventBus;
 
         private CommunityCardController? communityCardController;
 
@@ -72,7 +76,9 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
             IWeb3IdentityCache web3IdentityCache,
-            CommunityCreationEditionEventBus communityCreationEditionEventBus)
+            CommunityCreationEditionEventBus communityCreationEditionEventBus,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -93,6 +99,8 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.communityCreationEditionEventBus = communityCreationEditionEventBus;
             this.web3IdentityCache = web3IdentityCache;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatEventBus = chatEventBus;
         }
 
         public void Dispose()
@@ -123,7 +131,9 @@ namespace DCL.PluginSystem.Global
                 clipboard,
                 webBrowser,
                 eventsApiService,
-                web3IdentityCache);
+                web3IdentityCache,
+                sharedSpaceManager,
+                chatEventBus);
 
             mvcManager.RegisterController(communityCardController);
 

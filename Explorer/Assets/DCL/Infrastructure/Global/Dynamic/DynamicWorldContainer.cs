@@ -983,7 +983,9 @@ namespace Global.Dynamic
                     webBrowser,
                     eventsApiService,
                     identityCache,
-                    communityCreationEditionEventBus));
+                    communityCreationEditionEventBus,
+                    sharedSpaceManager,
+                    chatEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
