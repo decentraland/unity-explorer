@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Events;
@@ -105,7 +106,7 @@ namespace DCL.Communities.CommunitiesCard
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
 
-            chatEventBus.OpenPrivateConversationRequested += OnOpenPrivateChat;
+            chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
         }
 
         public override void Dispose()
@@ -120,7 +121,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
             }
 
-            chatEventBus.OpenPrivateConversationRequested -= OnOpenPrivateChat;
+            chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -135,7 +136,7 @@ namespace DCL.Communities.CommunitiesCard
             eventListController?.Dispose();
         }
 
-        private void OnOpenPrivateChat(string userId) =>
+        private void CloseCardOnConversationRequested(string _) =>
             CloseController();
 
         private void OnDeleteCommunityRequested()
@@ -164,9 +165,16 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OnOpenCommunityChat()
         {
-            //TODO: Focus the community chat and close the community card
-            CloseController();
-            throw new NotImplementedException();
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            OpenChatWithCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid OpenChatWithCommunityAsync(CancellationToken ct)
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
+                CloseController();
+            }
         }
 
         protected override void OnViewInstantiated()
