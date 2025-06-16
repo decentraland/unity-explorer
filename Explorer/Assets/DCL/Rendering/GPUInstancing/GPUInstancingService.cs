@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.Profiling;
 using Utility;
 
 namespace DCL.Rendering.GPUInstancing
@@ -13,6 +14,20 @@ namespace DCL.Rendering.GPUInstancing
     public class GPUInstancingService : IDisposable
     {
         private readonly GroupData[] groupDataArray = new GroupData[1];
+
+        // Profile markers
+        private static readonly ProfilerMarker s_RenderIndirectMarker = new ProfilerMarker("GPUInstancing.RenderIndirect");
+        private static readonly ProfilerMarker s_FrustumCullingMarker = new ProfilerMarker("GPUInstancing.FrustumCulling");
+        private static readonly ProfilerMarker s_LODCalculationMarker = new ProfilerMarker("GPUInstancing.LODCalculation");
+        private static readonly ProfilerMarker s_IndirectBufferGenMarker = new ProfilerMarker("GPUInstancing.IndirectBufferGeneration");
+        private static readonly ProfilerMarker s_DrawArgsTransferMarker = new ProfilerMarker("GPUInstancing.DrawArgsTransfer");
+        private static readonly ProfilerMarker s_RenderMeshIndirectMarker = new ProfilerMarker("GPUInstancing.RenderMeshIndirect");
+        private static readonly ProfilerMarker s_BufferSetupMarker = new ProfilerMarker("GPUInstancing.BufferSetup");
+        private static readonly ProfilerMarker s_AddToIndirectMarker = new ProfilerMarker("GPUInstancing.AddToIndirect");
+        private static readonly ProfilerMarker s_BufferCreationMarker = new ProfilerMarker("GPUInstancing.BufferCreation");
+        private static readonly ProfilerMarker s_DrawArgsInitMarker = new ProfilerMarker("GPUInstancing.DrawArgsInit");
+        private static readonly ProfilerMarker s_RenderParamsInitMarker = new ProfilerMarker("GPUInstancing.RenderParamsInit");
+        private static readonly ProfilerMarker s_ComputeDispatchMarker = new ProfilerMarker("GPUInstancing.ComputeDispatch");
 
         struct GroupData
         {
@@ -140,45 +155,76 @@ namespace DCL.Rendering.GPUInstancing
 
         public void RenderIndirect()
         {
-            if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender)
-                return;
-
-            foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
+            using (s_RenderIndirectMarker.Auto())
             {
-                groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
+                if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender)
+                    return;
 
-                buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
-                FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
-                FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, buffers.PerInstanceMatrices);
-                FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
-                FrustumCullingAndLODGenComputeShader.Dispatch(FrustumCullingAndLODGenComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)FrustumCullingAndLODGen_ThreadGroupSize_X), 1, 1);
-
-                buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
-
-                IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
-                IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
-                IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
-                IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
-                IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
-
-                // Zero-out draw args - will be calculated by compute shaders
-                for (var i = 0; i < buffers.DrawArgsCommandData.Length; i++)
-                    buffers.DrawArgsCommandData[i].instanceCount = 0;
-
-                buffers.DrawArgs.SetData(buffers.DrawArgsCommandData);
-
-                DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
-                DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount);
-                DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
-                DrawArgsInstanceCountTransferComputeShader.SetInt(ComputeVar_nSubMeshCount, candidate.LODGroup.CombinedLodsRenderers.Count);
-                DrawArgsInstanceCountTransferComputeShader.Dispatch(DrawArgsInstanceCountTransferComputeShader_KernelIDs, 1, 1, 1);
-
-                for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
+                foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
                 {
-                    CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
-                    int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
+                    using (s_BufferSetupMarker.Auto())
+                    {
+                        groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
+                        buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
+                    }
 
-                    Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i * lodCount);
+                    // Frustum Culling and LOD Generation
+                    using (s_FrustumCullingMarker.Auto())
+                    {
+                        FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
+                        FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstanceData, buffers.PerInstanceMatrices);
+                        FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
+
+                        using (s_ComputeDispatchMarker.Auto())
+                        {
+                            FrustumCullingAndLODGenComputeShader.Dispatch(FrustumCullingAndLODGenComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)FrustumCullingAndLODGen_ThreadGroupSize_X), 1, 1);
+                        }
+                    }
+
+                    using (s_IndirectBufferGenMarker.Auto())
+                    {
+                        buffers.ArrLODCount.SetData(arrLOD, 0, 0, 8);
+
+                        IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
+                        IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount); // uint[8]
+                        IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_PerInstance_LODLevels, buffers.LODLevels);
+                        IndirectBufferGenerationComputeShader.SetBuffer(IndirectBufferGenerationComputeShader_KernelIDs, ComputeVar_InstanceLookUpAndDither, buffers.InstanceLookUpAndDither);
+
+                        using (s_ComputeDispatchMarker.Auto())
+                        {
+                            IndirectBufferGenerationComputeShader.Dispatch(IndirectBufferGenerationComputeShader_KernelIDs, Mathf.CeilToInt((float)buffers.PerInstanceMatrices.count / (int)IndirectBufferGeneration_ThreadGroupSize_X), 1, 1);
+                        }
+                    }
+
+                    using (s_DrawArgsTransferMarker.Auto())
+                    {
+                        // Zero-out draw args - will be calculated by compute shaders
+                        for (var i = 0; i < buffers.DrawArgsCommandData.Length; i++)
+                            buffers.DrawArgsCommandData[i].instanceCount = 0;
+
+                        buffers.DrawArgs.SetData(buffers.DrawArgsCommandData);
+
+                        DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
+                        DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount);
+                        DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
+                        DrawArgsInstanceCountTransferComputeShader.SetInt(ComputeVar_nSubMeshCount, candidate.LODGroup.CombinedLodsRenderers.Count);
+
+                        using (s_ComputeDispatchMarker.Auto())
+                        {
+                            DrawArgsInstanceCountTransferComputeShader.Dispatch(DrawArgsInstanceCountTransferComputeShader_KernelIDs, 1, 1, 1);
+                        }
+                    }
+
+                    using (s_RenderMeshIndirectMarker.Auto())
+                    {
+                        for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
+                        {
+                            CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
+                            int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
+
+                            Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i * lodCount);
+                        }
+                    }
                 }
             }
         }
@@ -194,65 +240,83 @@ namespace DCL.Rendering.GPUInstancing
 
         public void AddToIndirect(IReadOnlyList<GPUInstancingLODGroupWithBuffer> candidates)
         {
-            foreach (GPUInstancingLODGroupWithBuffer candidate in candidates)
+            using (s_AddToIndirectMarker.Auto())
             {
-                if (!candidatesBuffersTable.TryGetValue(candidate, out GPUInstancingBuffers buffers))
+                foreach (GPUInstancingLODGroupWithBuffer candidate in candidates)
                 {
-                    buffers = new GPUInstancingBuffers();
-                    candidatesBuffersTable.Add(candidate, buffers);
-                }
-
-                int _nInstanceCount = candidate.InstancesBuffer.Count;
-                int _nLODCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
-
-                buffers.LODLevels = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, sizeof(uint) * 4);
-                buffers.InstanceLookUpAndDither = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount * _nLODCount, sizeof(uint) * 4);
-                buffers.GroupData = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 1, 192);
-                buffers.ArrLODCount = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 8, sizeof(uint));
-
-                // TODO : set flag to Lock
-                buffers.PerInstanceMatrices = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
-                buffers.PerInstanceMatrices.SetData(candidate.InstancesBuffer, 0, 0, _nInstanceCount);
-
-                int combinedRenderersCount = candidate.LODGroup.CombinedLodsRenderers.Count;
-                buffers.DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: combinedRenderersCount * _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
-                buffers.DrawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[combinedRenderersCount * _nLODCount];
-
-                for (var combinedRendererId = 0; combinedRendererId < combinedRenderersCount; combinedRendererId++)
-                {
-                    CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[combinedRendererId];
-                    Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
-
-                    if (combinedMesh == null)
+                    if (!candidatesBuffersTable.TryGetValue(candidate, out GPUInstancingBuffers buffers))
                     {
-                        ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"{candidate.Name} has combined lod renderer equal to null for material {combinedLodRenderer.SharedMaterial.name}");
-                        continue;
+                        buffers = new GPUInstancingBuffers();
+                        candidatesBuffersTable.Add(candidate, buffers);
                     }
 
-                    for (var lodLevel = 0; lodLevel < _nLODCount; lodLevel++)
+                    int _nInstanceCount = candidate.InstancesBuffer.Count;
+                    int _nLODCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
+
+                    using (s_BufferCreationMarker.Auto())
                     {
-                        if (lodLevel < combinedMesh.subMeshCount)
+                        buffers.LODLevels = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, sizeof(uint) * 4);
+                        buffers.InstanceLookUpAndDither = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount * _nLODCount, sizeof(uint) * 4);
+                        buffers.GroupData = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 1, 192);
+                        buffers.ArrLODCount = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, 8, sizeof(uint));
+
+                        // TODO : set flag to Lock
+                        buffers.PerInstanceMatrices = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
+                        buffers.PerInstanceMatrices.SetData(candidate.InstancesBuffer, 0, 0, _nInstanceCount);
+                    }
+
+                    int combinedRenderersCount = candidate.LODGroup.CombinedLodsRenderers.Count;
+
+                    using (s_DrawArgsInitMarker.Auto())
+                    {
+                        buffers.DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: combinedRenderersCount * _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
+                        buffers.DrawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[combinedRenderersCount * _nLODCount];
+
+                        for (var combinedRendererId = 0; combinedRendererId < combinedRenderersCount; combinedRendererId++)
                         {
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].instanceCount = 0;
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startIndex = combinedMesh.GetIndexStart(lodLevel);
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
-                            buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
+                            CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[combinedRendererId];
+                            Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
+
+                            if (combinedMesh == null)
+                            {
+                                ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"{candidate.Name} has combined lod renderer equal to null for material {combinedLodRenderer.SharedMaterial.name}");
+                                continue;
+                            }
+
+                            for (var lodLevel = 0; lodLevel < _nLODCount; lodLevel++)
+                            {
+                                if (lodLevel < combinedMesh.subMeshCount)
+                                {
+                                    buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].instanceCount = 0;
+                                    buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].indexCountPerInstance = combinedMesh.GetIndexCount(lodLevel);
+                                    buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startIndex = combinedMesh.GetIndexStart(lodLevel);
+                                    buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].baseVertexIndex = combinedMesh.GetBaseVertex(lodLevel);
+                                    buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)].startInstance = (uint)lodLevel * (uint)candidate.InstancesBuffer.Count;
+                                }
+                                else { buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)] = zeroDrawArgs; }
+                            }
                         }
-                        else { buffers.DrawArgsCommandData[lodLevel + (combinedRendererId * _nLODCount)] = zeroDrawArgs; }
+
+                        buffers.DrawArgs.SetData(buffers.DrawArgsCommandData, 0, 0, count: combinedRenderersCount * _nLODCount);
                     }
 
-                    buffers.DrawArgs.SetData(buffers.DrawArgsCommandData, 0, 0, count: combinedRenderersCount * _nLODCount);
+                    using (s_RenderParamsInitMarker.Auto())
+                    {
+                        for (var combinedRendererId = 0; combinedRendererId < combinedRenderersCount; combinedRendererId++)
+                        {
+                            CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[combinedRendererId];
 
-                    ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Initializing render params for {candidate.Name} with material {combinedLodRenderer.SharedMaterial.name}");
+                            ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Initializing render params for {candidate.Name} with material {combinedLodRenderer.SharedMaterial.name}");
 
-                    combinedLodRenderer.InitializeRenderParams(instancingMaterials);
-                    ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray;
-                    rparams.camera = renderCamera;
-                    rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
-                    rparams.matProps = new MaterialPropertyBlock();
-                    rparams.matProps.SetBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
-                    rparams.matProps.SetBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
+                            combinedLodRenderer.InitializeRenderParams(instancingMaterials);
+                            ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray;
+                            rparams.camera = renderCamera;
+                            rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
+                            rparams.matProps = new MaterialPropertyBlock();
+                            rparams.matProps.SetBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
+                            rparams.matProps.SetBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
+                        }
+                    }
                 }
             }
         }

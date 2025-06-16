@@ -21,30 +21,32 @@ RWStructuredBuffer<PerInstanceLODLevels> PerInstance_LODLevels; // LOD_A, LOD_B,
 [numthreads(GPUI_THREADS, 1, 1)]
 void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
 {
-    if (id.x >= GroupDataBuffer[0].nInstBufferSize)
+    GroupData group = GroupDataBuffer[0];
+    
+    if (id.x >= group.nInstBufferSize)
         return;
 
     PerInstanceLODLevels nOutput4 = {8,8,0,8};
 
-    float fDistance;
-    float fScreenSpaceSize;
-    const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
-    EvaluateInstanceDistance(mInstMatrix, GroupDataBuffer[0].vBoundsExtents, GroupDataBuffer[0].vCameraPosition, GroupDataBuffer[0].fCameraHalfAngle, fDistance, fScreenSpaceSize);
+    float fDistance = 1.0f;
+    float fScreenSpaceSize = 1.0f;;
+   // const float4x4 mInstMatrix = PerInstanceData[id.x].worldMatrix;
+    //EvaluateInstanceDistance(mInstMatrix, GroupDataBuffer[0].vBoundsExtents, GroupDataBuffer[0].vCameraPosition, GroupDataBuffer[0].fCameraHalfAngle, fDistance, fScreenSpaceSize);
     
     bool bCulled = false;
     
     // Distance culling
-    if (fDistance >= GroupDataBuffer[0].fMaxDistance)
+    if (fDistance >= group.fMaxDistance)
     {
         bCulled = true;
     }
 
-    if (bCulled == false && fDistance >= GroupDataBuffer[0].fMinCullingDistance)
+    if (bCulled == false && fDistance >= group.fMinCullingDistance)
     {
         float4 BoundingBox[8];
-        CalculateBoundingBox(mInstMatrix, GroupDataBuffer[0].matCamera_MVP, GroupDataBuffer[0].vBoundsCenter, GroupDataBuffer[0].vBoundsExtents, BoundingBox);
+       // CalculateBoundingBox(mInstMatrix, GroupDataBuffer[0].matCamera_MVP, GroupDataBuffer[0].vBoundsCenter, GroupDataBuffer[0].vBoundsExtents, BoundingBox);
         
-        bCulled = IsFrustumCulled(BoundingBox, GroupDataBuffer[0].fFrustumOffset);
+       // bCulled = IsFrustumCulled(BoundingBox, GroupDataBuffer[0].fFrustumOffset);
 
         // TODO:
         // Hierarchical Z-Buffer Occlusion Culling      
@@ -56,7 +58,7 @@ void CameraCullingAndLODCalculationKernel(uint3 id : SV_DispatchThreadID)
 
     if (bCulled == false)
     {
-        nOutput4 = EvaluateLODLevel(GroupDataBuffer[0].nLODCount, GroupDataBuffer[0].matLODSizes, GroupDataBuffer[0].fShadowDistance, fScreenSpaceSize, GroupDataBuffer[0].fMaxDistance, fDistance);
+        nOutput4 = EvaluateLODLevel(group.nLODCount, group.matLODSizes, group.fShadowDistance, fScreenSpaceSize, group.fMaxDistance, fDistance);
     }
 
     PerInstance_LODLevels[id.x] = nOutput4;
