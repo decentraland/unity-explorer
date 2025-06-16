@@ -327,7 +327,7 @@ namespace DCL.Chat
             // Obtains all the communities of the user
             const int ALL_COMMUNITIES_OF_USER = 100;
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync();
+            Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
             {
@@ -365,7 +365,7 @@ namespace DCL.Chat
         private async UniTask AddCommunityCoversationAsync(string communityId)
         {
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync();
+            Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
             {
@@ -843,7 +843,7 @@ private CancellationTokenSource memberListCts;
             }
             else if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
             {
-                Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(userCommunities[viewInstance!.CurrentChannelId].id, ct).SuppressToResultAsync();
+                Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(userCommunities[viewInstance!.CurrentChannelId].id, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (result.Success)
                 {

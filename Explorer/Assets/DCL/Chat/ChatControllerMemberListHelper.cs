@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Communities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities.Extensions;
 using UnityEngine;
@@ -131,7 +132,7 @@ namespace DCL.Chat
 
         public async UniTask RefreshCommunityMemberCountAsync(string communityId, ICommunitiesDataProvider dataProvider, CancellationToken ct)
         {
-             Result<int> result = await dataProvider.GetOnlineMemberCountAsync(communityId, ct).SuppressToResultAsync();
+             Result<int> result = await dataProvider.GetOnlineMemberCountAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
              if (result.Success)
              {
