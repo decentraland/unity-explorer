@@ -7,6 +7,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using Utility.Arch;
 using DCL.Profiles.Helpers;
+using System;
 
 namespace DCL.Chat
 {
@@ -36,7 +37,7 @@ namespace DCL.Chat
             this.chatSettings = chatSettings;
         }
 
-        public void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser)
+        public void CreateChatBubble(ChatChannel channel, ChatMessage chatMessage, bool isSentByOwnUser, string? communityName = null)
         {
             if (!nametagsData.showNameTags || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.NONE)
                 return;
@@ -67,12 +68,16 @@ namespace DCL.Chat
                         }
                     }
                 }
+                else if (channel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+                {
+                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id, null, null, true, communityName);
+                }
                 else
                     GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id);
             }
         }
 
-        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null)
+        private void GenerateChatBubbleComponent(Entity e, ChatMessage chatMessage, Color receiverNameColor, bool isPrivateMessage, ChatChannel.ChannelId messageChannelId, string? receiverDisplayName = null, string? receiverWalletId = null, bool isCommunityMessage = false, string? communityName = null)
         {
             world.AddOrSet(e, new ChatBubbleComponent(
                 chatMessage.Message,
@@ -84,7 +89,9 @@ namespace DCL.Chat
                 chatMessage.IsSentByOwnUser,
                 receiverDisplayName ?? string.Empty,
                 receiverWalletId ?? string.Empty,
-                receiverNameColor));
+                receiverNameColor,
+                isCommunityMessage,
+                communityName ?? string.Empty));
         }
     }
 }

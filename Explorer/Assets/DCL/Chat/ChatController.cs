@@ -517,7 +517,9 @@ namespace DCL.Chat
         {
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
-            chatBubblesHelper.CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser);
+            string? communityName = destinationChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY ? userCommunities[destinationChannel.Id].name : null;
+
+            chatBubblesHelper.CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser, communityName);
 
             if (isSentByOwnUser)
             {
