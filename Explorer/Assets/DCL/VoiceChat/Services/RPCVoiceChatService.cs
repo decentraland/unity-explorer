@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Profiles.Self;
 using DCL.SocialService;
 using System;
 using System.Threading;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.WellKnownTypes;
+using Utility;
 
 namespace DCL.VoiceChat.Services
 {
@@ -29,6 +29,7 @@ namespace DCL.VoiceChat.Services
 
         private readonly IRPCSocialServices socialServiceRPC;
         private readonly ISocialServiceEventBus socialServiceEventBus;
+        private CancellationTokenSource subscriptionCts = new();
 
         public RPCVoiceChatService(
             IRPCSocialServices socialServiceRPC,
@@ -39,25 +40,32 @@ namespace DCL.VoiceChat.Services
 
             socialServiceEventBus.TransportClosed += OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
+            socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+        }
 
-            //TODO: Temporary solution, need to move it somewhere else
-            SubscribeToPrivateVoiceChatUpdatesAsync(default).Forget();
+        private void OnTransportConnected()
+        {
+            SubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
         }
 
         public void Dispose()
         {
             socialServiceEventBus.TransportClosed -= OnTransportClosed;
             socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
+            socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            subscriptionCts.SafeCancelAndDispose();
         }
 
         private void OnTransportClosed()
         {
+            subscriptionCts = subscriptionCts.SafeRestart();
             Disconnected?.Invoke();
         }
 
         private void OnTransportReconnected()
         {
             Reconnected?.Invoke();
+            SubscribeToPrivateVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
         }
 
         public async UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
