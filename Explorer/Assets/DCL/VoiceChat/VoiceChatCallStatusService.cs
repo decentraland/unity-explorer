@@ -34,7 +34,7 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
 
             this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
-            this.voiceChatService.Connected += OnConnected;
+            this.voiceChatService.Reconnected += OnConnected;
             this.voiceChatService.Disconnected += OnRCPDisconnected;
             cts = new CancellationTokenSource();
         }
@@ -44,7 +44,7 @@ namespace DCL.VoiceChat
             if (voiceChatService != null)
             {
                 voiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
-                voiceChatService.Connected -= OnConnected;
+                voiceChatService.Reconnected -= OnConnected;
                 voiceChatService.Disconnected -= OnRCPDisconnected;
                 voiceChatService.Dispose();
             }

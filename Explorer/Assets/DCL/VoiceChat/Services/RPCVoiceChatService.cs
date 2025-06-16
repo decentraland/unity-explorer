@@ -24,15 +24,21 @@ namespace DCL.VoiceChat.Services
         private const string GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST = "GetIncomingPrivateVoiceChatRequest";
 
         public event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
-        public event Action Connected;
+        public event Action Reconnected;
         public event Action Disconnected;
 
         private readonly IRPCSocialServices socialServiceRPC;
+        private readonly ISocialServiceEventBus socialServiceEventBus;
 
         public RPCVoiceChatService(
-            IRPCSocialServices socialServiceRPC)
+            IRPCSocialServices socialServiceRPC,
+            ISocialServiceEventBus socialServiceEventBus)
         {
             this.socialServiceRPC = socialServiceRPC;
+            this.socialServiceEventBus = socialServiceEventBus;
+
+            socialServiceEventBus.TransportClosed += OnTransportClosed;
+            socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
 
             //TODO: Temporary solution, need to move it somewhere else
             SubscribeToPrivateVoiceChatUpdatesAsync(default).Forget();
@@ -40,6 +46,18 @@ namespace DCL.VoiceChat.Services
 
         public void Dispose()
         {
+            socialServiceEventBus.TransportClosed -= OnTransportClosed;
+            socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
+        }
+
+        private void OnTransportClosed()
+        {
+            Disconnected?.Invoke();
+        }
+
+        private void OnTransportReconnected()
+        {
+            Reconnected?.Invoke();
         }
 
         public async UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
@@ -155,14 +173,12 @@ namespace DCL.VoiceChat.Services
                 {
                     // It's an endless [background] loop
                     await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
-                    Connected?.Invoke();
                     await openStreamFunc().AttachExternalCancellation(ct);
                 }
                 catch (OperationCanceledException) { }
-                catch (Exception e) 
-                { 
+                catch (Exception e)
+                {
                     ReportHub.LogException(e, new ReportData(ReportCategory.VOICE_CHAT));
-                    Disconnected?.Invoke();
                 }
             }
         }
