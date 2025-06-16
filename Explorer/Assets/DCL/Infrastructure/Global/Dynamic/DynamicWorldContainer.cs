@@ -522,7 +522,7 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY))
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), includeCommunities)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -713,7 +713,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     communitiesDataProvider,
                     thumbnailCache,
-                    mainUIView.WarningNotification),
+                    mainUIView.WarningNotification,
+                    includeCommunities),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

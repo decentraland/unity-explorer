@@ -24,6 +24,7 @@ namespace DCL.Chat.MessageBus
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ChatMessageFactory messageFactory;
         private readonly string routingUser;
+        private readonly bool isCommunitiesIncluded;
 
         public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
 
@@ -31,12 +32,14 @@ namespace DCL.Chat.MessageBus
             ChatMessageFactory messageFactory,
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            bool isCommunitiesIncluded)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
+            this.isCommunitiesIncluded = isCommunitiesIncluded;
 
             // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandUrlsSource.Environment == DecentralandEnvironment.Org ? "prd" :
@@ -69,18 +72,22 @@ namespace DCL.Chat.MessageBus
                 // groups in the future?
             }
 
-            OnChatAsync(receivedMessage, channelType).Forget();
+            OnChat(receivedMessage, channelType);
         }
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
         {
-            OnChatAsync(receivedMessage).Forget();
+            OnChat(receivedMessage);
         }
 
-        private async UniTaskVoid OnChatAsync(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, ChatChannel.ChatChannelType channelType = ChatChannel.ChatChannelType.NEARBY)
+        private void OnChat(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage, ChatChannel.ChatChannelType channelType = ChatChannel.ChatChannelType.NEARBY)
         {
             using (receivedMessage)
             {
+                // If the Communities shape is disabled, ignores the community conversation messages
+                if(!isCommunitiesIncluded && channelType == ChatChannel.ChatChannelType.COMMUNITY)
+                    return;
+
                 if (messageDeduplication.TryPass(receivedMessage.FromWalletId, receivedMessage.Payload.Timestamp) == false
                     || IsUserBlockedAndMessagesHidden(receivedMessage.FromWalletId))
                     return;
