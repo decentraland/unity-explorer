@@ -29,6 +29,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -69,6 +70,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
         private readonly IChatEventBus chatEventBus;
+        private readonly IChatMessagesBus chatMessageBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
@@ -106,7 +108,11 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
-            bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager, ProfileRepositoryWrapper profileDataProvider)
+            bool isNameEditorEnabled,
+            IChatEventBus chatEventBus,
+            IChatMessagesBus chatMessageBus,
+            ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -141,6 +147,7 @@ namespace DCL.PluginSystem.Global
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
             this.chatEventBus = chatEventBus;
+            this.chatMessageBus = chatMessageBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
         }
@@ -202,6 +209,7 @@ namespace DCL.PluginSystem.Global
                 includeUserBlocking,
                 isNameEditorEnabled,
                 chatEventBus,
+                chatMessageBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper
             );

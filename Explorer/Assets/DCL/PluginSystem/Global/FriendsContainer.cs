@@ -30,6 +30,7 @@ using Global.AppArgs;
 using MVC;
 using System;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using Utility;
 using Utility.Types;
@@ -89,6 +90,7 @@ namespace DCL.PluginSystem.Global
             bool useAnalytics,
             IAnalyticsController? analyticsController,
             IChatEventBus chatEventBus,
+            IChatMessagesBus chatMessageBus,
             ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
@@ -145,6 +147,7 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 chatEventBus,
+                chatMessageBus,
                 viewDependencies,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,

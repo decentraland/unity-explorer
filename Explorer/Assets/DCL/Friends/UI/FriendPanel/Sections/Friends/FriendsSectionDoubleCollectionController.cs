@@ -9,6 +9,9 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using Utility;
 
@@ -25,6 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly ViewDependencies viewDependencies;
         private readonly IChatEventBus chatEventBus;
+        private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource jumpToFriendLocationCts = new ();
@@ -47,6 +51,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
+            IChatMessagesBus chatMessagesBus,
             ISharedSpaceManager sharedSpaceManager,
             ViewDependencies viewDependencies)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
@@ -56,6 +61,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.realmNavigator = realmNavigator;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.chatEventBus = chatEventBus;
+            this.chatMessagesBus = chatMessagesBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.viewDependencies = viewDependencies;
 
@@ -138,10 +144,33 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                 ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
+        private async UniTaskVoid HandleJump(FriendProfile profile)
+        {
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL,
+                $"/{ChatCommandsUtils.COMMAND_GOTO} 100,10",
+                "jump in"
+            );
+            
+            // (bool success, bool isInWorld, string parameters, var parcel) =
+            //     await FriendListSectionUtilities
+            //         .PrepareTeleportTargetAsync(profile.Address,
+            //             onlineUsersProvider,
+            //             jumpToFriendLocationCts);
+            //
+            // if(!success) return;
+            //
+            // chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL,
+            //     $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
+            //     "passport-jump"
+            // );
+            //
+            // sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
+            //     new ChatControllerShowParams(true, true)).Forget();
+        }
+        
         private void OnJumpInClicked(FriendProfile profile)
         {
-            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
-            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpInClicked?.Invoke(profile.Address, parcel));
+            HandleJump(profile).Forget();
         }
 
         private void OnChatButtonClicked(FriendProfile elementViewUserProfile)

@@ -7,6 +7,9 @@ using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using Utility;
 
@@ -20,6 +23,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly ViewDependencies viewDependencies;
         private readonly IChatEventBus chatEventBus;
+        private readonly IChatMessagesBus chatMessageBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource? jumpToFriendLocationCts;
@@ -33,6 +37,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IRealmNavigator realmNavigator,
             ViewDependencies viewDependencies,
             IChatEventBus chatEventBus,
+            IChatMessagesBus chatMessagesBus,
             ISharedSpaceManager sharedSpaceManager) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
@@ -40,6 +45,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.realmNavigator = realmNavigator;
             this.viewDependencies = viewDependencies;
             this.chatEventBus = chatEventBus;
+            this.chatMessageBus = chatMessagesBus;
             this.sharedSpaceManager = sharedSpaceManager;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
@@ -69,9 +75,36 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address), buttonPosition, default(Vector2),
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
+        
+        private async UniTaskVoid HandleJump(FriendProfile profile)
+        {
+            chatMessageBus.Send(ChatChannel.NEARBY_CHANNEL,
+                $"/{ChatCommandsUtils.COMMAND_GOTO} 100,10",
+                "passport-jump"
+            );
+            
+            
+            // (bool success, bool isInWorld, string parameters, var parcel) =
+            //     await FriendListSectionUtilities
+            //         .PrepareTeleportTargetAsync(profile.Address,
+            //             onlineUsersProvider,
+            //             jumpToFriendLocationCts);
+            //
+            // if(!success) return;
+            //
+            // chatMessageBus.Send(ChatChannel.NEARBY_CHANNEL,
+            //     $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
+            //     "passport-jump"
+            // );
+            //
+            // sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
+            //     new ChatControllerShowParams(true, true)).Forget();
+        }
 
-        private void JumpInClicked(FriendProfile profile) =>
-            FriendListSectionUtilities.JumpToFriendLocation(profile.Address, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator);
+        private void JumpInClicked(FriendProfile profile)
+        {
+            HandleJump(profile).Forget();
+        }
 
         protected override void ElementClicked(FriendProfile profile) =>
             FriendListSectionUtilities.OpenProfilePassport(profile, passportBridge);

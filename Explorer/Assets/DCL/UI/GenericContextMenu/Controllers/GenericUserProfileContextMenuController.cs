@@ -21,6 +21,9 @@ using MVC;
 using Segment.Serialization;
 using System;
 using System.Threading;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using Utility;
 
@@ -40,6 +43,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IChatMessagesBus chatMessageBus;
         private readonly bool includeUserBlocking;
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -65,6 +69,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         public GenericUserProfileContextMenuController(
             ObjectProxy<IFriendsService> friendServiceProxy,
             IChatEventBus chatEventBus,
+            IChatMessagesBus chatMessageBus,
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
@@ -76,6 +81,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
+            this.chatMessageBus = chatMessageBus;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
             this.includeUserBlocking = includeUserBlocking;
@@ -275,10 +281,28 @@ namespace DCL.UI.GenericContextMenu.Controllers
             await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
         }
 
+        private async UniTaskVoid HandleJump(string userId)
+        {
+            (bool success, bool isInWorld, string parameters, var parcel) =
+                await FriendListSectionUtilities
+                    .PrepareTeleportTargetAsync(userId,
+                        onlineUsersProvider,
+                        cancellationTokenSource);
+            
+            if(!success) return;
+            
+            chatMessageBus.Send(ChatChannel.NEARBY_CHANNEL,
+                $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
+                "passport-jump"
+            );
+            
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
+                new ChatControllerShowParams(true, true)).Forget();
+        }
+        
         private void OnJumpInClicked(string userId)
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            FriendListSectionUtilities.JumpToFriendLocation(userId, cancellationTokenSource, getUserPositionBuffer, onlineUsersProvider, realmNavigator, parcel => JumpToFriendClicked(userId, parcel));
+            HandleJump(userId).Forget();
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>

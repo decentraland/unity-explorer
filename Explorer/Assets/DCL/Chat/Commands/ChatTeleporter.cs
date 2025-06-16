@@ -6,7 +6,10 @@ using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Arch.Core;
+using DCL.Character.Components;
 using UnityEngine;
+using Utility;
 using Utility.Types;
 
 namespace DCL.Chat.Commands
@@ -22,9 +25,17 @@ namespace DCL.Chat.Commands
         private readonly Dictionary<string, string> paramUrls;
         private readonly ChatEnvironmentValidator environmentValidator;
         private readonly URLDomain worldDomain;
+        private readonly Entity playerEntity;
+        private readonly World world;
 
-        public ChatTeleporter(IRealmNavigator realmNavigator, ChatEnvironmentValidator environmentValidator, IDecentralandUrlsSource decentralandUrlsSource)
+        public ChatTeleporter(World world,
+            Entity playerEntity,
+            IRealmNavigator realmNavigator,
+            ChatEnvironmentValidator environmentValidator,
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
+            this.world = world;
+            this.playerEntity = playerEntity;
             this.realmNavigator = realmNavigator;
             this.environmentValidator = environmentValidator;
             worldDomain = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.WorldContentServer));
@@ -91,6 +102,10 @@ namespace DCL.Chat.Commands
         /// </summary>
         public async UniTask<string> TeleportToParcelAsync(Vector2Int targetPosition, bool local, CancellationToken ct)
         {
+            // var currentPosition = world.Get<CharacterTransform>(playerEntity).Transform.position.ToParcel();
+            // if (targetPosition == currentPosition)
+            //     return $"🔴 You are already at {targetPosition.x},{targetPosition.y}.";
+
             var result = await realmNavigator.TeleportToParcelAsync(targetPosition, ct, local);
 
             if (result.Success)

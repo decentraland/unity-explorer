@@ -42,11 +42,17 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using DCL.Character.Components;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
+using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Utility;
 using Utility.Types;
+using Assert = UnityEngine.Assertions.Assert;
 
 namespace DCL.Passport
 {
@@ -99,15 +105,15 @@ namespace DCL.Passport
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
-        private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IChatEventBus chatEventBus;
+        private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-
+        private readonly Entity playerEntity;
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
         private Profile? targetProfile;
@@ -179,6 +185,7 @@ namespace DCL.Passport
             bool includeUserBlocking,
             bool isNameEditorEnabled,
             IChatEventBus chatEventBus,
+            IChatMessagesBus chatMessagesBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
@@ -192,6 +199,7 @@ namespace DCL.Passport
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.world = world;
+            this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -216,6 +224,7 @@ namespace DCL.Passport
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
             this.chatEventBus = chatEventBus;
+            this.chatMessagesBus = chatMessagesBus;
             this.sharedSpaceManager = sharedSpaceManager;
 
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
@@ -270,8 +279,7 @@ namespace DCL.Passport
                          .AddControl(userProfileContextMenuControlSettings)
                          .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
                          .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                              () => FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                                  parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel))), false))
+                              OnJumpToFriendButtonClicked), false))
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
         }
 
@@ -286,10 +294,34 @@ namespace DCL.Passport
             chatEventBus.OpenConversationUsingUserId(inputData.UserId);
         }
 
+        private async UniTaskVoid HandleJump()
+        {
+            (bool success, bool isInWorld, string parameters, var parcel) =
+                await FriendListSectionUtilities
+                    .PrepareTeleportTargetAsync(inputData.UserId,
+                        onlineUsersProvider,
+                        jumpToFriendLocationCts);
+            
+            if(!success) return;
+
+            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL,
+                $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
+                "passport-jump"
+            );
+            
+            // sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
+            //     new ChatControllerShowParams(true, true)).Forget();
+
+            // if (!isInWorld)
+            // {
+            //     if (parcel != null) 
+            //         JumpToFriendClicked?.Invoke(inputData.UserId, parcel.Value);
+            // }
+        }
+        
         private void OnJumpToFriendButtonClicked()
         {
-            FriendListSectionUtilities.JumpToFriendLocation(inputData.UserId, jumpToFriendLocationCts, getUserPositionBuffer, onlineUsersProvider, realmNavigator,
-                parcel => JumpToFriendClicked?.Invoke(inputData.UserId, parcel));
+            HandleJump().Forget();
         }
 
         private void OnNameClaimRequested() =>
