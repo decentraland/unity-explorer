@@ -105,7 +105,7 @@ namespace DCL.Communities.CommunitiesCard
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
 
-            chatEventBus.OpenConversation += OnOpenPrivateChat;
+            chatEventBus.OpenPrivateConversationRequested += OnOpenPrivateChat;
         }
 
         public override void Dispose()
@@ -120,7 +120,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
             }
 
-            chatEventBus.OpenConversation -= OnOpenPrivateChat;
+            chatEventBus.OpenPrivateConversationRequested -= OnOpenPrivateChat;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();

@@ -291,7 +291,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             async UniTaskVoid OpenChatWithUserAsync(CancellationToken ct)
             {
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-                chatEventBus.OpenConversationUsingUserId(profile.memberAddress);
+                chatEventBus.OpenPrivateConversationUsingUserId(profile.memberAddress);
             }
         }
 
