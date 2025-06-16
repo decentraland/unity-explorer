@@ -340,6 +340,10 @@ MonoBehaviour:
       Severity: 0
     - Category: VERSION_CONTROL
       Severity: 0
+    - Category: PARTIAL_LOADING
+      Severity: 0
+    - Category: PARTIAL_LOADING
+      Severity: 2
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES
