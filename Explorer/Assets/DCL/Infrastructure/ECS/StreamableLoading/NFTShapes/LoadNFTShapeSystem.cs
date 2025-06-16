@@ -42,9 +42,9 @@ namespace ECS.StreamableLoading.NFTShapes
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            string imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
-            string convertUrl = ktxEnabled ? string.Format(urlsSource.Url(DecentralandUrl.MediaConverter), Uri.EscapeDataString(imageUrl)) : imageUrl;
-            var contentInfo = await WebContentInfo.FetchAsync(convertUrl, ct);
+            Uri imageUrl = await ImageUrlAsync(intention.CommonArguments, ct);
+            Uri convertUrl = GetTextureWebRequest.GetEffectiveUrl(urlsSource, imageUrl, ktxEnabled);
+            WebContentInfo contentInfo = await WebContentInfo.FetchAsync(webRequestController, convertUrl, GetReportData(), ct);
 
             if (!ktxEnabled && contentInfo is { Type: WebContentInfo.ContentType.Image, SizeInBytes: > MAX_PREVIEW_SIZE })
                 return new StreamableLoadingResult<Texture2DData>(GetReportCategory(), new Exception("Image size is too big"));
@@ -57,16 +57,15 @@ namespace ECS.StreamableLoading.NFTShapes
                    };
         }
 
-        private async UniTask<StreamableLoadingResult<Texture2DData>> HandleImageAsync(string url, CancellationToken ct)
+        private async UniTask<StreamableLoadingResult<Texture2DData>> HandleImageAsync(Uri url, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
             var result = await webRequestController.GetTextureAsync(
-                new CommonLoadingArguments(URLAddress.FromString(url), attempts: 1),
+                                                        new CommonLoadingArguments(url, attempts: 1),
                 new GetTextureArguments(TextureType.Albedo, true),
-                new GetTextureWebRequest.CreateTextureOp(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE),
-                ct,
-                GetReportData()
-            );
+                GetReportData())
+                    .CreateTextureAsync(GetNFTShapeIntention.WRAP_MODE, GetNFTShapeIntention.FILTER_MODE, ct);
+
 
             if (result == null)
                 return new StreamableLoadingResult<Texture2DData>(
@@ -77,16 +76,16 @@ namespace ECS.StreamableLoading.NFTShapes
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(result));
         }
 
-        private StreamableLoadingResult<Texture2DData> HandleVideo(string url)
+        private StreamableLoadingResult<Texture2DData> HandleVideo(Uri url)
         {
             var texture2D = videoTexturePool.Get();
             return new StreamableLoadingResult<Texture2DData>(new Texture2DData(texture2D, url));
         }
 
-        private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
+        private async UniTask<Uri> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
         {
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> infoRequest = webRequestController.GetAsync(commonArguments, ct, GetReportData());
-            var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
+            GenericGetRequest? infoRequest = webRequestController.GetAsync(commonArguments, GetReportData());
+            NftInfoDto nft = await infoRequest.CreateFromJsonAsync<NftInfoDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchBackToMainThread);
             return nft.ImageUrl();
         }
     }

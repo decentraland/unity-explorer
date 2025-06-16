@@ -24,8 +24,7 @@ namespace ECS.SceneLifeCycle.Components
             IpfsRealm = ipfsRealm;
             DefinitionComponent = definitionComponent;
 
-            // URL = EntityId just for identification, it is used by LoadSystemBase, it won't be used as a URL
-            CommonArguments = new CommonLoadingArguments(definitionComponent.IpfsPath.EntityId);
+            CommonArguments = new CommonLoadingArguments(null!);
         }
 
         public bool Equals(GetSceneFacadeIntention other) =>

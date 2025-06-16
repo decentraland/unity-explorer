@@ -68,13 +68,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
                 ca.URL = assetBundleIntention.Manifest.GetAssetBundleURL(assetBundleIntention.Hash);
-                ca.CacheableURL = assetBundleIntention.Manifest.GetCacheableURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
                 assetBundleIntention.cacheHash = assetBundleIntention.Manifest.ComputeHash(assetBundleIntention.Hash);
             }
         }
 
-        private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
+        private Uri GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
 
             // There is a special case when it comes to the shaders:
             // they are shared and custom subdirectory should be ignored, otherwise we would need to store a copy in every subdirectory

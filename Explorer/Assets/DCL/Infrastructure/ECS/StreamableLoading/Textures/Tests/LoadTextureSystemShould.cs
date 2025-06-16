@@ -5,19 +5,22 @@ using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 
 namespace ECS.StreamableLoading.Textures.Tests
 {
-    [TestFixture]
+    [TestFixture(WebRequestsMode.UNITY)]
     public class LoadTextureSystemShould : LoadSystemBaseShould<LoadTextureSystem, Texture2DData, GetTextureIntention>
     {
-        private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
-        private string failPath => $"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}";
-        private string wrongTypePath => $"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}";
+        public LoadTextureSystemShould(WebRequestsMode webRequestsMode) : base(webRequestsMode) { }
+
+        private Uri successPath => new ($"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}");
+        private Uri failPath => new ($"file://{Application.dataPath + "/../TestResources/Images/non_existing.png"}");
+        private Uri wrongTypePath => new ($"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}");
 
         protected override GetTextureIntention CreateSuccessIntention() =>
-            new (successPath, string.Empty, TextureWrapMode.MirrorOnce, FilterMode.Trilinear, TextureType.Albedo);
+            new (successPath.OriginalString, string.Empty, TextureWrapMode.MirrorOnce, FilterMode.Trilinear, TextureType.Albedo);
 
         protected override GetTextureIntention CreateNotFoundIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(failPath) };
@@ -25,11 +28,8 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override GetTextureIntention CreateWrongTypeIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
-        protected override LoadTextureSystem CreateSystem()
-        {
-            return new LoadTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
-        }
+        protected override LoadTextureSystem CreateSystem(IWebRequestController webRequestController) =>
+            new (world, cache, webRequestController, IDiskCache<Texture2DData>.Null.INSTANCE, Substitute.For<IAvatarTextureUrlProvider>());
 
         protected override void AssertSuccess(Texture2DData data)
         {

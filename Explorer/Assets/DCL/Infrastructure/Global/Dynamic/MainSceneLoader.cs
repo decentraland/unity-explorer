@@ -25,12 +25,9 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Accounts.Factory;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.Disk.CleanUp;
 using ECS.StreamableLoading.Cache.Disk.Lock;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
 using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
@@ -166,12 +163,10 @@ namespace Global.Dynamic
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
             var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
-            var staticSettings = (globalPluginSettingsContainer as IPluginSettingsContainer).GetSettings<StaticSettings>();
-            var webRequestsContainer = WebRequestsContainer.Create(identityCache, debugContainerBuilder, decentralandUrlsSource, staticSettings.CoreWebRequestsBudget, staticSettings.SceneWebRequestsBudget, KTX_ENABLED);
+            WebRequestsContainer webRequestsContainer = await WebRequestsContainer.CreateAsync(applicationParametersParser, globalPluginSettingsContainer, identityCache, decentralandUrlsSource, debugContainerBuilder, KTX_ENABLED, ct);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
-            var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
-            var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
+            IDiskCache diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings, webRequestsContainer.WebRequestsMode);
 
             var featureFlagsProxy = new ObjectProxy<FeatureFlagsCache>();
 
@@ -187,7 +182,6 @@ namespace Global.Dynamic
                 splashScreen,
                 realmUrls,
                 diskCache,
-                partialsDiskCache,
                 world,
                 decentralandEnvironment,
                 dclVersion,
@@ -385,38 +379,7 @@ namespace Global.Dynamic
             staticContainer.InputProxy.StrictObject.UI.Enable();
         }
 
-        private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
-        {
-            if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
-            {
-                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cached disabled while LSD");
-                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
-            }
-
-            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
-            {
-                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
-                return IDiskCache<PartialLoadingState>.Null.INSTANCE;
-            }
-
-            var cacheDirectory = CacheDirectory.NewDefaultSubdirectory("partials");
-            var filesLock = new FilesLock();
-
-            IDiskCleanUp diskCleanUp;
-
-            if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP))
-            {
-                ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache cleanup, flag --{AppArgsFlags.DISABLE_DISK_CACHE_CLEANUP} is passed");
-                diskCleanUp = IDiskCleanUp.None.INSTANCE;
-            }
-            else
-                diskCleanUp = new LRUDiskCleanUp(cacheDirectory, filesLock);
-
-            var partialCache = new DiskCache<PartialLoadingState, SerializeMemoryIterator<PartialDiskSerializer.State>>(new DiskCache(cacheDirectory, filesLock, diskCleanUp), new PartialDiskSerializer());
-            return partialCache;
-        }
-
-        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)
+        private static IDiskCache NewInstanceDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings, WebRequestsMode webRequestsMode)
         {
             if (launchSettings.CurrentMode == LaunchMode.LocalSceneDevelopment)
             {
@@ -427,6 +390,12 @@ namespace Global.Dynamic
             if (appArgs.HasFlag(AppArgsFlags.DISABLE_DISK_CACHE))
             {
                 ReportHub.Log(ReportData.UNSPECIFIED, $"Disable disk cache, flag --{AppArgsFlags.DISABLE_DISK_CACHE} is passed");
+                return new IDiskCache.Fake();
+            }
+
+            if (webRequestsMode == WebRequestsMode.HTTP2)
+            {
+                ReportHub.Log(ReportData.UNSPECIFIED, "Disk cache disabled while using HTTP2");
                 return new IDiskCache.Fake();
             }
 
@@ -481,9 +450,9 @@ namespace Global.Dynamic
             IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
 
             // If we want to save one http request, we could have a hardcoded list of trusted realms instead
-            var url = URLAddress.FromString(dclUrls.Url(DecentralandUrl.Servers));
-            var adapter = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-            TrustedRealmApiResponse[] realms = await adapter.CreateFromJson<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft);
+            Uri url = dclUrls.Url(DecentralandUrl.Servers);
+            GenericGetRequest adapter = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
+            TrustedRealmApiResponse[] realms = await adapter.CreateFromJsonAsync<TrustedRealmApiResponse[]>(WRJsonParser.Newtonsoft, ct);
 
             foreach (TrustedRealmApiResponse trustedRealm in realms)
                 if (string.Equals(trustedRealm.baseUrl, realm, StringComparison.OrdinalIgnoreCase))

@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using ECS.Prioritization.Components;
@@ -16,14 +15,15 @@ using System;
 using System.Threading;
 using AssetManagement;
 using DCL.WebRequests;
-using ECS.StreamableLoading.Cache.Disk;
-using System.Buffers;
-using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
+    /// <summary>
+    ///     Super-seeded by <see cref="PartialLoadAssetBundleSystem" />. <br />
+    ///     These 2 classes are not unified as <see cref="LoadAssetBundleSystem" /> should be removed when Http2 has been considered stable
+    /// </summary>
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadAssetBundleSystem : LoadSystemBase<AssetBundleData, GetAssetBundleIntention>
@@ -41,9 +41,7 @@ namespace ECS.StreamableLoading.AssetBundles
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
             IWebRequestController webRequestController,
-            ArrayPool<byte> buffersPool,
-            AssetBundleLoadingMutex loadingMutex,
-            IDiskCache<PartialLoadingState> partialDiskCache) : base(world, cache)
+            AssetBundleLoadingMutex loadingMutex) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
             this.webRequestController = webRequestController;
@@ -64,8 +62,8 @@ namespace ECS.StreamableLoading.AssetBundles
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             AssetBundleLoadingResult assetBundleResult = await webRequestController
-               .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), ct, GetReportCategory(),
-                    suppressErrors: true); // Suppress errors because here we have our own error handling
+                                                              .GetAssetBundleAsync(intention.CommonArguments, new GetAssetBundleArguments(loadingMutex, intention.cacheHash), GetReportCategory(), suppressErrors: true) // Suppress errors because here we have our own error handling
+                                                              .CreateAsyncBundleAsync(ct);
 
             AssetBundle? assetBundle = assetBundleResult.AssetBundle;
 

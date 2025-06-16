@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -26,7 +27,7 @@ namespace DCL.UI.Profiles.Helpers
             this.remoteMetadata = remoteMetadata;
         }
 
-        public async UniTask<Sprite?> GetProfileThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
+        public async UniTask<Sprite?> GetProfileThumbnailAsync(string userId, Uri thumbnailUrl, CancellationToken ct) =>
             await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
 
         public Sprite? GetProfileThumbnail(string userId) =>

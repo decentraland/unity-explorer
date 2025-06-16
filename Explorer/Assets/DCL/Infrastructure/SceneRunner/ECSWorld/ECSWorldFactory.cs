@@ -16,6 +16,7 @@ using ECS.LifeCycle.Components;
 using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Systems;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
@@ -68,7 +69,10 @@ namespace SceneRunner.ECSWorld
                .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.SceneStateProvider))
                .InjectCustomGroup(new SyncedPreRenderingSystemGroup(sharedDependencies.SceneStateProvider));
 
-            var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
+            var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32)
+            {
+                new DisposeUnfinishedPromises(world),
+            };
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
 
             foreach (IDCLWorldPlugin worldPlugin in plugins)

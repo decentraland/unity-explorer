@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using UnityEngine;
 
@@ -20,7 +21,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal string userName;
         internal string userAddress;
         internal bool hasClaimedName;
-        internal string userThumbnailAddress;
+        [CanBeNull] internal Uri userThumbnailAddress;
         internal Color userColor;
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
@@ -37,7 +38,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             bool hasClaimedName,
             Color userColor,
             FriendshipStatus friendshipStatus,
-            string userThumbnailAddress = null)
+            [CanBeNull] Uri userThumbnailAddress = null)
         {
             this.userName = userName;
             this.userAddress = userAddress;

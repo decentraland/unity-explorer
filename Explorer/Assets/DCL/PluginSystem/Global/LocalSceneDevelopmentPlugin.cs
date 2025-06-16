@@ -43,18 +43,22 @@ namespace DCL.PluginSystem.Global
 
         private async UniTaskVoid ConnectToServerAsync(Entity playerEntity, Arch.Core.World world, CancellationToken ct)
         {
-            string realm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct) ?? string.Empty;
+            Uri? realm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
 
             localSceneDevelopmentController = new LocalSceneDevelopmentController(reloadSceneController,
                 playerEntity,
                 world);
 
+            if (realm == null) return;
+
             while (!ct.IsCancellationRequested)
             {
                 try
                 {
+                    string realmString = realm.OriginalString;
+
                     await localSceneDevelopmentController.ConnectToServerAsync(
-                        realm.Contains("https") ? realm.Replace("https", "wss") : realm.Replace("http", "ws"),
+                        new Uri(realm.Scheme.Contains("https") ? realmString.Replace("https", "wss") : realmString.Replace("http", "ws")),
                         ct);
                 }
                 catch (OperationCanceledException) { break; }

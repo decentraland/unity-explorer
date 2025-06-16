@@ -2,6 +2,7 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -19,7 +20,7 @@ namespace DCL.AssetsProvision.CodeResolver
             };
         }
 
-        public UniTask<string> GetCodeContent(URLAddress contentUrl, CancellationToken ct) =>
+        public UniTask<string> GetCodeContent(Uri contentUrl, CancellationToken ct) =>
             providers[AssetSource.WEB].GetJsCodeAsync(contentUrl, ct);
     }
 }

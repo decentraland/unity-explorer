@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -19,6 +18,7 @@ using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 #endif
 using SceneRunner.Scene;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
@@ -116,10 +116,10 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (!isValidStreamUrl)
                 {
-                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                    isValidLocalPath = sceneData.TryGetMediaUrl(url, out Uri mediaUrl);
 
                     if (isValidLocalPath)
-                        url = mediaUrl;
+                        url = mediaUrl.OriginalString;
                 }
             }
 
