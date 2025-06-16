@@ -33,6 +33,7 @@ namespace DCL.VoiceChat
         private int reconnectionAttempts;
         private CancellationTokenSource? reconnectionCts;
         private bool isOrderedDisconnection;
+        private VoiceChatStatus currentStatus;
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedAudioSource combinedAudioSource,
@@ -68,17 +69,21 @@ namespace DCL.VoiceChat
 
         private void OnCallStatusChanged(VoiceChatStatus newStatus)
         {
+            if (newStatus == currentStatus) return;
+
             switch (newStatus)
             {
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
-                    DisconnectFromRoomAsync().Forget();
+                    if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL)
+                        DisconnectFromRoomAsync().Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     ConnectToRoomAsync().Forget();
                     break;
             }
+            currentStatus = newStatus;
         }
 
         private async UniTaskVoid ConnectToRoomAsync()
@@ -86,10 +91,10 @@ namespace DCL.VoiceChat
             CleanupReconnectionState();
             bool success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
 
-            if (!success) 
-            { 
+            if (!success)
+            {
                 Debug.Log($"[VoiceChatLivekitRoomHandler] Initial connection failed for room {voiceChatCallStatusService.RoomUrl}");
-                voiceChatCallStatusService.HandleLivekitConnectionFailed(); 
+                voiceChatCallStatusService.HandleLivekitConnectionFailed();
             }
         }
 
@@ -106,7 +111,7 @@ namespace DCL.VoiceChat
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
         {
             Debug.Log($"[VoiceChatLivekitRoomHandler] Connection update: {connectionUpdate}, IsOrderedDisconnection: {isOrderedDisconnection}");
-            
+
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
@@ -127,10 +132,10 @@ namespace DCL.VoiceChat
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
                     CloseMedia();
 
-                    if (!isOrderedDisconnection && roomHub.VoiceChatRoom().CurrentConnectionLoopHealth == IConnectiveRoom.ConnectionLoopHealth.Stopped) 
-                    { 
+                    if (!isOrderedDisconnection && roomHub.VoiceChatRoom().CurrentConnectionLoopHealth == IConnectiveRoom.ConnectionLoopHealth.Stopped)
+                    {
                         Debug.Log("[VoiceChatLivekitRoomHandler] Unexpected disconnection detected - starting reconnection attempts");
-                        HandleUnexpectedDisconnection(); 
+                        HandleUnexpectedDisconnection();
                     }
                     else
                     {
