@@ -17,7 +17,7 @@ namespace DCL.Communities.CommunitiesCard
 {
     public class CommunityCardView : ViewBase, IView
     {
-        private const string COMMUNITY_MEMBERS_NUMBER_FORMAT = "<b>{0}</b> members";
+        private const string COMMUNITY_MEMBERS_NUMBER_FORMAT = "<b>{0}</b> Members";
 
         private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
         private const string LEAVE_COMMUNITY_CONFIRM_TEXT = "YES";
