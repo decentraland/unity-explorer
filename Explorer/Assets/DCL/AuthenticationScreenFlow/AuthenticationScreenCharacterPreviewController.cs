@@ -62,7 +62,8 @@ namespace DCL.AuthenticationScreenFlow
                 if(emoteCooldown > TIME_BETWEEN_EMOTES)
                 {
                     emoteCooldown = 0f;
-                    PlayEmote(previewEmotes[i]);
+                    // PlayEmote(previewEmotes[i]);
+                    PlayEmote("disco");
 
                     i++;
                     if (i >= previewEmotes.Length)
