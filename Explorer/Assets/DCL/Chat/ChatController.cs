@@ -528,30 +528,32 @@ namespace DCL.Chat
                     viewInstance!.RefreshMessages();
                     viewInstance.ShowLastMessage();
                 }
-
-                return;
             }
-
-            HandleMessageAudioFeedback(addedMessage);
-
-            if (IsViewReady)
+            else
             {
-                bool shouldMarkChannelAsRead = viewInstance is { IsMessageListVisible: true, IsScrollAtBottom: true };
-                bool isCurrentChannel = destinationChannel.Id.Equals(viewInstance!.CurrentChannelId);
+                HandleMessageAudioFeedback(addedMessage);
 
-                if (isCurrentChannel)
+                if (IsViewReady)
                 {
-                    if (shouldMarkChannelAsRead)
-                        MarkCurrentChannelAsRead();
+                    bool shouldMarkChannelAsRead = viewInstance is { IsMessageListVisible: true, IsScrollAtBottom: true };
+                    bool isCurrentChannel = destinationChannel.Id.Equals(viewInstance!.CurrentChannelId);
 
-                    HandleUnreadMessagesSeparator(destinationChannel);
-                    viewInstance.RefreshMessages();
-                }
-                else
-                {
-                    viewInstance.RefreshUnreadMessages(destinationChannel.Id);
+                    if (isCurrentChannel)
+                    {
+                        if (shouldMarkChannelAsRead)
+                            MarkCurrentChannelAsRead();
+
+                        HandleUnreadMessagesSeparator(destinationChannel);
+                        viewInstance.RefreshMessages();
+                    }
+                    else
+                    {
+                        viewInstance.RefreshUnreadMessages(destinationChannel.Id);
+                    }
                 }
             }
+
+            viewInstance?.MoveChannelToTop(destinationChannel.Id);
         }
 
         private void HandleMessageAudioFeedback(ChatMessage message)
