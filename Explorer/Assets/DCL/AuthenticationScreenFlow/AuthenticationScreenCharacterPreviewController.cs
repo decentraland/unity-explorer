@@ -11,10 +11,13 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenCharacterPreviewController : CharacterPreviewControllerBase
     {
+        private const float TIME_BETWEEN_EMOTES = 3f;
+
         private readonly List<URN> shortenedWearables = new ();
         private readonly HashSet<URN> shortenedEmotes = new ();
 
-        private URN[] cachedShortenedEmotes;
+        private URN[] previewEmotes;
+        private float emoteCooldown;
 
         public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view,  ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
             : base(view, previewFactory, world, true, characterPreviewEventBus) { }
@@ -37,16 +40,13 @@ namespace DCL.AuthenticationScreenFlow
 
             previewAvatarModel.Wearables = shortenedWearables;
             previewAvatarModel.Emotes = shortenedEmotes;
-            cachedShortenedEmotes = shortenedEmotes.ToArray();
+            previewEmotes = shortenedEmotes.ToArray();
 
             base.Initialize(avatar);
 
-            PlayEmote("wave");
+            PlayEmote("raiseHand");
             EmoteTaskLoop().Forget();
         }
-
-        private const float TIME_BETWEEN_EMOTES = 3f;
-        private float emoteCooldown;
 
         private async UniTask EmoteTaskLoop()
         {
@@ -62,10 +62,10 @@ namespace DCL.AuthenticationScreenFlow
                 if(emoteCooldown > TIME_BETWEEN_EMOTES)
                 {
                     emoteCooldown = 0f;
-                    PlayEmote(cachedShortenedEmotes[i]);
+                    PlayEmote(previewEmotes[i]);
 
                     i++;
-                    if (i >= cachedShortenedEmotes.Length)
+                    if (i >= previewEmotes.Length)
                         i = 0;
                 }
             }
@@ -73,7 +73,7 @@ namespace DCL.AuthenticationScreenFlow
 
         public int PlayJumpInEmote()
         {
-            PlayEmote("wave");
+            PlayEmote("fistpump");
             return 3;
         }
     }
