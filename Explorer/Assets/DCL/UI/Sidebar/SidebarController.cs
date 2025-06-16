@@ -1,8 +1,10 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
+using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
@@ -12,6 +14,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
@@ -22,7 +25,6 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -45,10 +47,13 @@ namespace DCL.UI.Sidebar
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private bool includeMarketplaceCredits;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly URLBuilder urlBuilder = new ();
 
+        private bool includeMarketplaceCredits;
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
+        private CancellationTokenSource? referralNotificationCts;
         private const string IDLE_ICON_ANIMATOR = "Empty";
         private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
 
@@ -74,7 +79,8 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -94,6 +100,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.featureFlagsCache = featureFlagsCache;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public override void Dispose()
@@ -102,6 +109,7 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
+            referralNotificationCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -125,8 +133,10 @@ namespace DCL.UI.Sidebar
             viewInstance.helpButton.onClick.AddListener(OnHelpButtonClicked);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
-            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);;
+            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
+            ;
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
@@ -139,7 +149,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.InWorldCameraButton.gameObject.SetActive(false);
             }
 
-            if(includeFriends)
+            if (includeFriends)
                 viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
@@ -162,13 +172,36 @@ namespace DCL.UI.Sidebar
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
         }
 
+        private void OnReferralNewTierNotificationClicked(object[] parameters)
+        {
+            referralNotificationCts = referralNotificationCts.SafeRestart();
+            OpenReferralWebsiteAsync(referralNotificationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid OpenReferralWebsiteAsync(CancellationToken ct)
+            {
+                try
+                {
+                    Profile? myProfile = await selfProfile.ProfileAsync(ct);
+                    if (myProfile == null) return;
+
+                    urlBuilder.Clear();
+
+                    URLAddress url = urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Host)))
+                                               .AppendPath(URLPath.FromString($"profile/accounts/{myProfile.UserId}/referral"))
+                                               .Build();
+
+                    webBrowser.OpenUrl(url);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+            }
+        }
+
         private void OnMvcManagerViewClosed(IController closedController)
         {
             // Panels that are controllers and can be opened using shortcuts
-            if (closedController is EmotesWheelController)
-            {
-                viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-            }
+            if (closedController is EmotesWheelController) { viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR); }
             else if (closedController is FriendsPanelController)
             {
                 viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
@@ -179,10 +212,7 @@ namespace DCL.UI.Sidebar
         private void OnMvcManagerViewShowed(IController showedController)
         {
             // Panels that are controllers and can be opened using shortcuts
-            if (showedController is EmotesWheelController)
-            {
-                viewInstance.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
-            }
+            if (showedController is EmotesWheelController) { viewInstance.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR); }
             else if (showedController is FriendsPanelController)
             {
                 viewInstance.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
@@ -244,6 +274,7 @@ namespace DCL.UI.Sidebar
 
             await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
             var ownProfile = await selfProfile.ProfileAsync(ct);
+
             if (ownProfile == null)
                 return;
 
@@ -254,12 +285,12 @@ namespace DCL.UI.Sidebar
                 ct);
 
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
+
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
         }
 
-        #region Sidebar button handlers
-
+#region Sidebar button handlers
         private void OnUnreadMessagesButtonClicked()
         {
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events
@@ -336,7 +367,6 @@ namespace DCL.UI.Sidebar
             // Note: The buttons of these options (map, backpack, etc.) are not highlighted because they are not visible anyway
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(section, backpackSection));
         }
-
-        #endregion
+#endregion
     }
 }
