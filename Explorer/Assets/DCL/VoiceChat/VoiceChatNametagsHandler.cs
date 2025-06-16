@@ -16,7 +16,7 @@ namespace DCL.VoiceChat
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly World world;
         private readonly Entity playerEntity;
-        private HashSet<string> activeSpeakers = new();
+        private HashSet<string> activeSpeakers = new ();
 
         private bool disposed;
 
@@ -55,18 +55,13 @@ namespace DCL.VoiceChat
             foreach (string speakerId in voiceChatRoom.ActiveSpeakers)
             {
                 newActiveSpeakers.Add(speakerId);
-                if (!activeSpeakers.Contains(speakerId))
-                {
-                    SetIsSpeaking(speakerId, true);
-                }
+
+                if (!activeSpeakers.Contains(speakerId)) { SetIsSpeaking(speakerId, true); }
             }
 
             foreach (string oldSpeakerId in activeSpeakers)
             {
-                if (!newActiveSpeakers.Contains(oldSpeakerId))
-                {
-                    SetIsSpeaking(oldSpeakerId, false);
-                }
+                if (!newActiveSpeakers.Contains(oldSpeakerId)) { SetIsSpeaking(oldSpeakerId, false); }
             }
 
             activeSpeakers = newActiveSpeakers;
@@ -74,15 +69,10 @@ namespace DCL.VoiceChat
 
         private void SetIsSpeaking(string participantId, bool isSpeaking)
         {
-            if (entityParticipantTable.TryGet(participantId, out var entry))
-            {
+            if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
                 world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking));
-                ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Participant {participantId} {(isSpeaking ? "started" : "stopped")} speaking");
-            }
             else
-            {
                 world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
-            }
         }
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
@@ -90,11 +80,12 @@ namespace DCL.VoiceChat
             switch (update)
             {
                 case UpdateFromParticipant.Disconnected:
-                    if (entityParticipantTable.TryGet(participant.Identity, out var entry))
+                    if (entityParticipantTable.TryGet(participant.Identity, out IReadOnlyEntityParticipantTable.Entry entry))
                     {
                         world.TryRemove<VoiceChatNametagComponent>(entry.Entity);
                         activeSpeakers.Remove(participant.Identity);
                     }
+
                     break;
             }
         }
@@ -116,11 +107,9 @@ namespace DCL.VoiceChat
 
                     foreach (string participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
-                        if (entityParticipantTable.TryGet(participantId, out var entry))
-                        {
-                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true });
-                        }
+                        if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry)) { world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true }); }
                     }
+
                     break;
             }
         }
