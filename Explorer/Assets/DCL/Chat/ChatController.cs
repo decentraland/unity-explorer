@@ -285,7 +285,7 @@ namespace DCL.Chat
         {
             chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
             chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
         }
 
@@ -604,7 +604,7 @@ namespace DCL.Chat
                 chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
 
                 if (chatHistory.Channels[viewInstance.CurrentChannelId].Messages.Count == 0)
-                    chatHistory.AddMessage(viewInstance.CurrentChannelId, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+                    chatHistory.AddMessage(viewInstance.CurrentChannelId, chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
 
                 viewInstance.RefreshMessages();
             }
@@ -700,16 +700,16 @@ namespace DCL.Chat
             nametagsData.showNameTags = !nametagsData.showNameTags;
         }
 
-        private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
+        private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage chatMessage)
         {
             if (!chatMessage.IsSystemMessage)
             {
                 string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
                 var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
-                chatHistory.AddMessage(channelId, newChatMessage);
+                chatHistory.AddMessage(channelId, channelType, newChatMessage);
             }
             else
-                chatHistory.AddMessage(channelId, chatMessage);
+                chatHistory.AddMessage(channelId, channelType, chatMessage);
         }
 
 #endregion
