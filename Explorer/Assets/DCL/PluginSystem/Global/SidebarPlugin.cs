@@ -58,7 +58,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileChangesBus profileChangesBus;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -84,8 +83,7 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
-            IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            IRealmData realmData)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -111,7 +109,6 @@ namespace DCL.PluginSystem.Global
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose() { }
@@ -147,8 +144,7 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
-                realmData,
-                featureFlagsCache
+                realmData
             ));
         }
 

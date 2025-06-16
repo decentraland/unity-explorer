@@ -56,7 +56,6 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ChatMessageFactory chatMessageFactory;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
@@ -68,7 +67,7 @@ namespace DCL.PluginSystem.Global
         private ChatController chatController;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
-        
+
         public ChatPlugin(
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
@@ -93,7 +92,6 @@ namespace DCL.PluginSystem.Global
             IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
-            FeatureFlagsCache featureFlagsCache,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             IRealmData realmData,
@@ -120,7 +118,6 @@ namespace DCL.PluginSystem.Global
             this.roomHub = roomHub;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
-            this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
@@ -141,7 +138,8 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
-            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);

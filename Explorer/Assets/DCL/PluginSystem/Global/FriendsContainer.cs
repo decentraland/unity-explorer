@@ -49,7 +49,6 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ViewDependencies viewDependencies;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
@@ -85,7 +84,6 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
             IAppArgs appArgs,
-            FeatureFlagsCache featureFlagsCache,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
             IChatEventBus chatEventBus,
@@ -109,7 +107,6 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
-            this.featureFlagsCache = featureFlagsCache;
             this.viewDependencies = viewDependencies;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
@@ -276,7 +273,7 @@ namespace DCL.PluginSystem.Global
 
         private bool IsConnectivityStatusEnabled() =>
             appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
-            || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
+            || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
 
         private void OnRPCClientReconnected()
         {

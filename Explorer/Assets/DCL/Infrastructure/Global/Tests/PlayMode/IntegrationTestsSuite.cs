@@ -95,7 +95,6 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
                 new ObjectProxy<IProfileRepository>(),
-                new ObjectProxy<FeatureFlagsCache>(),
                 ct,
                 enableGPUInstancing: false
             );

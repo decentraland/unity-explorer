@@ -108,7 +108,6 @@ namespace Global
         public IInputBlock InputBlock { get; private set; }
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
-        public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
@@ -160,7 +159,6 @@ namespace Global
             IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
             ObjectProxy<IProfileRepository> profileRepository,
-            ObjectProxy<FeatureFlagsCache> featureFlagsCacheProxy,
             CancellationToken ct,
             bool enableGPUInstancing = true)
         {
@@ -217,13 +215,10 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
             container.PhysicsTickProvider = new PhysicsTickProvider();
-            container.FeatureFlagsCache = new FeatureFlagsCache();
-            featureFlagsCacheProxy.SetObject(container.FeatureFlagsCache);
 
-            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, launchMode, decentralandUrlsSource);
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
 
-            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
-                container.FeatureFlagsCache);
+            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
             var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
@@ -264,7 +259,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, container.FeatureFlagsCache, videoTexturePool),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, videoTexturePool),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
@@ -281,10 +276,10 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy, container.FeatureFlagsCache),
+                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
-                new MapPinPlugin(globalWorld, container.FeatureFlagsCache, container.MapPinsEventBus),
+                new MapPinPlugin(globalWorld, container.MapPinsEventBus),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),

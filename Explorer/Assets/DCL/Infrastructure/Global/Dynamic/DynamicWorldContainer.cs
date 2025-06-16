@@ -334,7 +334,6 @@ namespace Global.Dynamic
                 loadingScreen,
                 localSceneDevelopment,
                 bootstrapContainer.DecentralandUrlsSource,
-                staticContainer.FeatureFlagsCache,
                 appArgs,
                 new TeleportController(staticContainer.SceneReadinessReportQueue));
 
@@ -420,11 +419,13 @@ namespace Global.Dynamic
 
             livekitHealthCheck.WithRetries();
 
-            bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
-            bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
-            bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
-            bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
-            bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            bool includeCameraReel = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
+            bool includeFriends = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
+            bool includeUserBlocking = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
+            bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
+            bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel);
@@ -505,8 +506,8 @@ namespace Global.Dynamic
                 new DebugPanelChatCommand(debugBuilder, chatCommandsBus),
                 new ShowEntityChatCommand(worldInfoHub),
                 new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache),
-                new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
-                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController, staticContainer.FeatureFlagsCache),
+                new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
+                new KillPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
@@ -667,7 +668,7 @@ namespace Global.Dynamic
                     profileCache, dclInput,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
-                    selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache),
+                    selfProfile, staticContainer.RealmData),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -695,7 +696,6 @@ namespace Global.Dynamic
                     socialServiceContainer.socialServicesRPC,
                     friendsEventBus,
                     chatMessageFactory,
-                    staticContainer.FeatureFlagsCache,
                     profileRepositoryWrapper,
                     friendServiceProxy,
                     staticContainer.RealmData,
@@ -756,8 +756,8 @@ namespace Global.Dynamic
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.FeatureFlagsCache),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, characterPreviewEventBus, globalWorld),
+                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
@@ -787,8 +787,7 @@ namespace Global.Dynamic
                     appArgs,
                     entityParticipantTable,
                     staticContainer.RealmData,
-                    remoteMetadata,
-                    staticContainer.FeatureFlagsCache),
+                    remoteMetadata),
                 new AudioPlaybackPlugin(terrainContainer.GenesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
                 new NotificationPlugin(
@@ -842,7 +841,7 @@ namespace Global.Dynamic
             };
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
-                globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
+                globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
 
             if (localSceneDevelopment)
             {
@@ -878,7 +877,6 @@ namespace Global.Dynamic
                     realmNavigator,
                     includeUserBlocking,
                     appArgs,
-                    staticContainer.FeatureFlagsCache,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
                     chatEventBus,
@@ -941,8 +939,7 @@ namespace Global.Dynamic
                     mvcManager,
                     notificationsBusController,
                     staticContainer.RealmData,
-                    sharedSpaceManager,
-                    staticContainer.FeatureFlagsCache));
+                    sharedSpaceManager));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

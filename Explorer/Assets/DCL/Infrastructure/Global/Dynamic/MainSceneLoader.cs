@@ -173,8 +173,6 @@ namespace Global.Dynamic
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
-            var featureFlagsProxy = new ObjectProxy<FeatureFlagsCache>();
-
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
@@ -191,7 +189,6 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
-                featureFlagsProxy,
                 destroyCancellationToken
             );
 
@@ -203,7 +200,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, featureFlagsProxy, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
 
                 if (!isLoaded)
                 {
@@ -216,9 +213,8 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                //TODO: This is a hack. Feature flags should be the first thing to be initialized
-                bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
-                staticContainer.SceneLoadingLimit.SetEnabled(staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+                staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,

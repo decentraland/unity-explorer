@@ -153,7 +153,7 @@ namespace Global.Dynamic
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
-        public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsCache featureFlagsCache)
+        public void CheckStartParcelFeatureFlagOverride(IAppArgs appArgs, FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
             //First we need to check if the user has passed a position as an argument.
             //If we have set a position trough args, the feature flag should not be taken into consideration
@@ -168,8 +168,8 @@ namespace Global.Dynamic
 
             //If not, we check the feature flag usage
             var featureFlagOverride =
-                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
-                featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
+                featureFlagsConfigurationCache.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
                     FeatureFlagsStrings.STRING_VARIANT, out parcelToTeleportOverride) &&
                 parcelToTeleportOverride != null;
 

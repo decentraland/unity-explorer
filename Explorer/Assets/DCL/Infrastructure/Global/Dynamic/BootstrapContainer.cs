@@ -87,7 +87,6 @@ namespace Global.Dynamic
             World world,
             DecentralandEnvironment decentralandEnvironment,
             DCLVersion dclVersion,
-            ObjectProxy<FeatureFlagsCache> featureFlagsCacheProxy,
             CancellationToken ct)
         {
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
@@ -113,7 +112,7 @@ namespace Global.Dynamic
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
 
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, applicationParametersParser, splashScreen, realmUrls, diskCache, partialsDiskCache, container, webRequestsContainer, container.settings, realmLaunchSettings, world, container.settings.BuildData, dclVersion, ct);
-                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser, featureFlagsCacheProxy);
+                (container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, web3AccountFactory, identityCache, browser, container, decentralandUrlsSource, applicationParametersParser);
 
                 if (container.enableAnalytics)
                 {
@@ -215,8 +214,7 @@ namespace Global.Dynamic
                 IWebBrowser webBrowser,
                 BootstrapContainer container,
                 IDecentralandUrlsSource decentralandUrlsSource,
-                IAppArgs appArgs,
-                ObjectProxy<FeatureFlagsCache> featureFlagsCache)
+                IAppArgs appArgs)
         {
 
 
@@ -230,7 +228,7 @@ namespace Global.Dynamic
                 new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods),
                 new HashSet<string>(sceneLoaderSettings.Web3ReadOnlyMethods),
                 decentralandUrlsSource.Environment,
-                new AuthCodeVerificationFeatureFlag(featureFlagsCache),
+                new AuthCodeVerificationFeatureFlag(),
                 appArgs.TryGetValue(AppArgsFlags.IDENTITY_EXPIRATION_DURATION, out string? v) ? int.Parse(v!) : null
             );
 
@@ -259,15 +257,7 @@ namespace Global.Dynamic
 
     internal class AuthCodeVerificationFeatureFlag : DappWeb3Authenticator.ICodeVerificationFeatureFlag
     {
-        private readonly ObjectProxy<FeatureFlagsCache> featureFlagsCache;
-
-        public AuthCodeVerificationFeatureFlag(ObjectProxy<FeatureFlagsCache> featureFlagsCache)
-        {
-            this.featureFlagsCache = featureFlagsCache;
-        }
-
-        public bool ShouldWaitForCodeVerificationFromServer =>
-            featureFlagsCache.Object?.Configuration.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION) ?? false;
+        public bool ShouldWaitForCodeVerificationFromServer => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION);
     }
 
     [Serializable]
