@@ -15,6 +15,6 @@ namespace DCL.VoiceChat
         void AcceptCall();
         void HangUp();
         void RejectCall();
-        void HandleConnectionFailed();
+        void HandleLivekitConnectionFailed();
     }
 }

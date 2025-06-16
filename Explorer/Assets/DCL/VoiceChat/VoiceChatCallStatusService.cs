@@ -35,17 +35,20 @@ namespace DCL.VoiceChat
 
             this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             this.voiceChatService.Connected += OnConnected;
-            this.voiceChatService.Disconnected += OnDisconnected;
+            this.voiceChatService.Disconnected += OnRCPDisconnected;
             cts = new CancellationTokenSource();
         }
 
         public void Dispose()
         {
-            voiceChatService?.Dispose();
-            voiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
-            voiceChatService.Connected -= OnConnected;
-            voiceChatService.Disconnected -= OnDisconnected;
-            cts?.Dispose();
+            if (voiceChatService != null)
+            {
+                voiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
+                voiceChatService.Connected -= OnConnected;
+                voiceChatService.Disconnected -= OnRCPDisconnected;
+                voiceChatService.Dispose();
+            }
+            cts.SafeCancelAndDispose();
         }
 
         private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
@@ -86,7 +89,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnDisconnected()
+        private void OnRCPDisconnected()
         {
             if (Status is not VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
@@ -231,7 +234,7 @@ namespace DCL.VoiceChat
             RoomUrl = string.Empty;
         }
 
-        public void HandleConnectionFailed()
+        public void HandleLivekitConnectionFailed()
         {
             if (Status is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL)
             {
