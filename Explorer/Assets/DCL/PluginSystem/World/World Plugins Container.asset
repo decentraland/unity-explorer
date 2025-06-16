@@ -215,6 +215,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <FadeSpeed>k__BackingField: 1
         VideoPrioritizationSettings:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
