@@ -61,7 +61,7 @@ namespace DCL.VoiceChat
                     break;
                 case PrivateVoiceChatStatus.VoiceChatEnded:
                     ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
+                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRejected:
                     ResetVoiceChatData();
