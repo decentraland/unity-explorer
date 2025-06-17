@@ -142,8 +142,23 @@ namespace DCL.Communities
             return response.data.total;
         }
 
-        public UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityPlacesAsync(communityId, ct);
+        public async UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/communities/{communityId}/places";
+
+            GetCommunityPlacesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                            .CreateFromJson<GetCommunityPlacesResponse>(WRJsonParser.Newtonsoft);
+
+            List<string> placesIds = new ();
+
+            if (response is { data: { results: not null } })
+            {
+                foreach (GetCommunityPlacesResult placeResult in response.data.results)
+                    placesIds.Add(placeResult.id);
+            }
+
+            return placesIds;
+        }
 
         public UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);

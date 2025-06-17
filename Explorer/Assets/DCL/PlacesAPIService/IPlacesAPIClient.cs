@@ -32,7 +32,7 @@ namespace DCL.PlacesAPIService
             bool? showDisabled = null,
             string? ownerAddress = null);
 
-        UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct);
+        UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct);
         UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct);
 
         UniTask ReportPlaceAsync(PlaceContentReportPayload placeContentReportPayload, CancellationToken ct);
