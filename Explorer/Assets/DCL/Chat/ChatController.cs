@@ -523,14 +523,12 @@ namespace DCL.Chat
 
         private void OnViewPointerExit()
         {
-            Debug.Log("OnViewPointerExit");
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
         }
 
 
         private void OnViewPointerEnter()
         {
-            Debug.Log("OnViewPointerEnter");
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
         }
 

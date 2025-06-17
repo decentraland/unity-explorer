@@ -398,7 +398,6 @@ namespace DCL.Chat
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            Debug.Log("OnPointerEnter View");
             PointerEnter?.Invoke();
 
             isPointerOverChat = true;
@@ -409,7 +408,6 @@ namespace DCL.Chat
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            Debug.Log("OnPointerExit View");
             // When hovering a context menu, it considers that the mouse is not on the chat, it's a false positive
             if(isChatContextMenuOpen || isChatViewerMessageContextMenuOpen || chatInputBox.IsPasteMenuOpen || chatInputBox.IsEmojiPanelVisible)
                 return;
