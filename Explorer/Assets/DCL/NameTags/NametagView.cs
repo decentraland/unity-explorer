@@ -402,6 +402,12 @@ namespace DCL.Nametags
             privateMessageText.SetText(string.Empty);
             cachedUsernameWidth = 0;
             additionalHeight = 0;
+            isSpeaking = false;
+            isSpeakingIcon.gameObject.SetActive(false);
+            isSpeakingCurrentSequence?.Kill();
+            isSpeakingCurrentSequence = null;
+            BackgroundSprite.transform.localPosition = Vector3.zero;
+            mentionBackgroundSprite.transform.localPosition = Vector3.zero;
         }
 
         private async UniTaskVoid StartChatBubbleFlowAsync(string messageText, CancellationToken ct)
