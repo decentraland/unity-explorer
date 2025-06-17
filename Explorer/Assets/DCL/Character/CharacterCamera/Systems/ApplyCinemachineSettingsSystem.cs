@@ -24,6 +24,7 @@ namespace DCL.Character.CharacterCamera.Systems
         private readonly ElementBinding<float> maxAltitude;
         private readonly ElementBinding<float> minDistance;
         private readonly ElementBinding<float> maxDistance;
+        private readonly ElementBinding<float> currentDistance;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
 
         private float currentSens;
@@ -53,11 +54,13 @@ namespace DCL.Character.CharacterCamera.Systems
                 maxAltitude = new ElementBinding<float>(0);
                 minDistance = new ElementBinding<float>(0);
                 maxDistance = new ElementBinding<float>(0);
+                currentDistance = new ElementBinding<float>(0);
 
                 widget?.AddFloatField("Min Draw Dist. Altitude", minAltitude)
                        .AddFloatField("Max Draw Dist. Altitude", maxAltitude)
                        .AddFloatField("Min Draw Dist.", minDistance)
-                       .AddFloatField("Max Draw Dist.", maxDistance);
+                       .AddFloatField("Max Draw Dist.", maxDistance)
+                       .AddFloatField("Current Draw Dist.", currentDistance);
             }
         }
 
@@ -118,6 +121,8 @@ namespace DCL.Character.CharacterCamera.Systems
                 farClipSettings.MaxFarClipPlaneAltitude = maxAltitude.Value;
                 farClipSettings.MinFarClipPlane = minDistance.Value;
                 farClipSettings.MaxFarClipPlane = maxDistance.Value;
+
+                currentDistance.SetAndUpdate(cinemachinePreset.Brain.ActiveVirtualCamera?.State.Lens.FarClipPlane ?? -1);
             }
         }
     }
