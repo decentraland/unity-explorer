@@ -1,6 +1,5 @@
 ﻿using DCL.Settings.Settings;
 using System;
-using UnityEngine;
 
 namespace DCL.Settings
 {
@@ -20,6 +19,5 @@ namespace DCL.Settings
         /// </summary>
         /// <param name="newVisibility">The new value for the visibility of the chat bubbles.</param>
         void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility);
-
     }
 }
