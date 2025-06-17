@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Clipboard;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
@@ -15,8 +17,10 @@ using DCL.InWorldCamera.PhotoDetail;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -34,6 +38,7 @@ namespace DCL.Communities.CommunitiesCard
         private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
 
         private const string JOIN_COMMUNITY_ERROR_TEXT = "There was an error joining the community. Please try again.";
+        private const string DELETE_COMMUNITY_ERROR_TEXT = "There was an error deleting the community. Please try again.";
         private const string LEAVE_COMMUNITY_ERROR_TEXT = "There was an error leaving the community. Please try again.";
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
@@ -51,6 +56,9 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IChatEventBus chatEventBus;
 
         private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -60,6 +68,7 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource sectionCancellationTokenSource = new ();
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
+        private UniTaskCompletionSource closeIntentCompletionSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
 
@@ -75,7 +84,10 @@ namespace DCL.Communities.CommunitiesCard
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            IWeb3IdentityCache web3IdentityCache,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -90,6 +102,11 @@ namespace DCL.Communities.CommunitiesCard
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
+            this.web3IdentityCache = web3IdentityCache;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatEventBus = chatEventBus;
+
+            chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
         }
 
         public override void Dispose()
@@ -98,9 +115,13 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance.SectionChanged -= OnSectionChanged;
                 viewInstance.OpenWizardRequested -= OnOpenCommunityWizard;
+                viewInstance.OpenChatRequested -= OnOpenCommunityChatAsync;
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
+                viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
             }
+
+            chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -115,12 +136,55 @@ namespace DCL.Communities.CommunitiesCard
             eventListController?.Dispose();
         }
 
+        private void CloseCardOnConversationRequested(string _) =>
+            CloseController();
+
+        private void OnDeleteCommunityRequested()
+        {
+            communityOperationsCancellationTokenSource = communityOperationsCancellationTokenSource.SafeRestart();
+            DeleteCommunityAsync(communityOperationsCancellationTokenSource.Token).Forget();
+            return;
+
+            async UniTaskVoid DeleteCommunityAsync(CancellationToken ct)
+            {
+                Result<bool> result = await communitiesDataProvider.DeleteCommunityAsync(communityData.id, ct)
+                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success || !result.Value)
+                {
+                    await viewInstance!.warningNotificationView.AnimatedShowAsync(DELETE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return;
+                }
+
+                CloseController();
+            }
+        }
+
+        private void CloseController() =>
+            closeIntentCompletionSource.TrySetResult();
+
+        private async void OnOpenCommunityChatAsync()
+        {
+            try
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
+                CloseController();
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
+            }
+        }
+
         protected override void OnViewInstantiated()
         {
             viewInstance!.SectionChanged += OnSectionChanged;
             viewInstance.OpenWizardRequested += OnOpenCommunityWizard;
+            viewInstance.OpenChatRequested += OnOpenCommunityChatAsync;
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
+            viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -132,7 +196,10 @@ namespace DCL.Communities.CommunitiesCard
                 mvcManager,
                 friendServiceProxy,
                 communitiesDataProvider,
-                viewInstance.warningNotificationView);
+                viewInstance.warningNotificationView,
+                web3IdentityCache,
+                sharedSpaceManager,
+                chatEventBus);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 webRequestController,
@@ -165,6 +232,7 @@ namespace DCL.Communities.CommunitiesCard
         protected override void OnViewShow()
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
+            closeIntentCompletionSource = new UniTaskCompletionSource();
             LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
 
@@ -178,6 +246,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.SetLoadingState(false);
 
                 viewInstance.ConfigureCommunity(communityData, imageController);
+                viewInstance.ConfigureContextMenu(mvcManager, ct);
 
                 viewInstance.ResetToggle();
 
@@ -268,6 +337,6 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.WhenAny(viewInstance!.GetClosingTasks(ct));
+            UniTask.WhenAny(viewInstance!.GetClosingTasks(closeIntentCompletionSource.Task, ct));
     }
 }

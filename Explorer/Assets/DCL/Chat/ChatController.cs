@@ -18,6 +18,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
@@ -77,8 +78,8 @@ namespace DCL.Chat
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
 
-        private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
-        private readonly List<Profile> participantProfileBuffer = new ();
+        private readonly List<ChatUserData> membersBuffer = new ();
+        private readonly List<ChatUserData> participantProfileBuffer = new ();
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> userCommunities = new();
 
         private SingleInstanceEntity cameraEntity;
@@ -175,10 +176,13 @@ namespace DCL.Chat
 
             memberListHelper = new ChatControllerMemberListHelper(
                 roomHub,
-                profileCache,
                 membersBuffer,
+                GetChannelMembers,
                 participantProfileBuffer,
-                this);
+                this,
+                chatHistory,
+                userCommunities,
+                communitiesDataProvider);
         }
 
 #region Panel Visibility
@@ -260,7 +264,7 @@ namespace DCL.Chat
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
-            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus, thumbnailCache, OpenContextMenuAsync);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembers, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -323,7 +327,7 @@ namespace DCL.Chat
             // Obtains all the communities of the user
             const int ALL_COMMUNITIES_OF_USER = 100;
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync();
+            Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
             {
@@ -356,7 +360,7 @@ namespace DCL.Chat
         private async UniTask AddCommunityCoversationAsync(string communityId)
         {
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync();
+            Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
             {
@@ -422,6 +426,7 @@ namespace DCL.Chat
             chatUsersUpdateCts.SafeCancelAndDispose();
             communitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
+            memberListCts.SafeCancelAndDispose();
         }
 
 #endregion
@@ -661,10 +666,11 @@ namespace DCL.Chat
             if (isVisible && roomHub.HasAnyRoomConnected())
                 RefreshMemberList();
         }
-
+private CancellationTokenSource memberListCts;
         private void RefreshMemberList()
         {
-            memberListHelper.RefreshMemberList();
+            memberListCts = memberListCts.SafeRestart();
+            memberListHelper.RefreshMemberListAsync(memberListCts.Token).Forget();
         }
 
 #endregion
@@ -804,15 +810,59 @@ namespace DCL.Chat
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
-        private void GetProfilesFromParticipants(List<Profile> outProfiles)
+        private async UniTask GetChannelMembers(List<ChatUserData> outMembers, CancellationToken ct)
         {
-            outProfiles.Clear();
-// TODO with communities
-            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
+            outMembers.Clear();
+
+            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.NEARBY)
             {
-                // TODO: Use new endpoint to get a bunch of profile info
-                if (profileCache.TryGet(identity, out var profile))
-                    outProfiles.Add(profile);
+                foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
+                {
+                    if(ct.IsCancellationRequested)
+                        break;
+
+                    // TODO: Use new endpoint to get a bunch of profile info
+                    if (profileCache.TryGet(identity, out var profile))
+                        outMembers.Add(new ChatUserData()
+                        {
+                            WalletAddress = profile.UserId,
+                            FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl,
+                            Name = profile.ValidatedName,
+                            ConnectionStatus = ChatMemberConnectionStatus.Online,
+                            ProfileColor = ProfileNameColorHelper.GetNameColor(profile.ValidatedName),
+                            WalletId = profile.WalletId
+                        });
+                }
+            }
+            else if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(userCommunities[viewInstance!.CurrentChannelId].id, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (result.Success)
+                {
+                    GetCommunityMembersResponse response = result.Value;
+
+                    foreach(GetCommunityMembersResponse.MemberData memberData in response.data.results)
+                    {
+                        // Skips the user of the player
+                        if(memberData.memberAddress == web3IdentityCache.Identity.Address)
+                            continue;
+
+                        outMembers.Add(new ChatUserData()
+                            {
+                                WalletAddress = memberData.memberAddress,
+                                FaceSnapshotUrl = memberData.profilePictureUrl,
+                                Name = memberData.name,
+                                ConnectionStatus = ChatMemberConnectionStatus.Online,
+                                ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name),
+                                WalletId = memberData.memberAddress = $"#{memberData.memberAddress[^4..]}"
+                            });
+                    }
+                }
+                else
+                {
+                    // TODO
+                }
             }
         }
 

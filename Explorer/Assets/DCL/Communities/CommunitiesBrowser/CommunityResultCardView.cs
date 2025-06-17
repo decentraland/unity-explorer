@@ -26,7 +26,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
-        private const string MEMBERS_COUNTER_FORMAT = "{0} members";
+        private const string MEMBERS_COUNTER_FORMAT = "{0} Members";
 
         [SerializeField] private RectTransform headerContainer;
         [SerializeField] private RectTransform footerContainer;

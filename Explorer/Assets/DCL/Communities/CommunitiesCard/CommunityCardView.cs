@@ -3,8 +3,9 @@ using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
-using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using MVC;
 using System;
 using System.Threading;
@@ -17,11 +18,15 @@ namespace DCL.Communities.CommunitiesCard
 {
     public class CommunityCardView : ViewBase, IView
     {
-        private const string COMMUNITY_MEMBERS_NUMBER_FORMAT = "<b>{0}</b> members";
+        private const string COMMUNITY_MEMBERS_NUMBER_FORMAT = "<b>{0}</b> Members";
 
         private const string LEAVE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to leave '{0}'?";
         private const string LEAVE_COMMUNITY_CONFIRM_TEXT = "YES";
         private const string LEAVE_COMMUNITY_CANCEL_TEXT = "NO";
+
+        private const string DELETE_COMMUNITY_TEXT_FORMAT = "Are you sure you want to delete [{0}] Community?";
+        private const string DELETE_COMMUNITY_CONFIRM_TEXT = "CONTINUE";
+        private const string DELETE_COMMUNITY_CANCEL_TEXT = "CANCEL";
 
         public enum Sections
         {
@@ -41,23 +46,28 @@ namespace DCL.Communities.CommunitiesCard
 
         public event Action<Sections>? SectionChanged;
         public event Action? OpenWizardRequested;
+        public event Action? OpenChatRequested;
         public event Action? JoinCommunity;
         public event Action? LeaveCommunityRequested;
+        public event Action? DeleteCommunityRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; }
         [field: SerializeField] private Button backgroundCloseButton { get; set; }
-        [field: SerializeField] private SectionLoadingView loadingObject { get; set; }
+        [field: SerializeField] private GameObject loadingObject { get; set; }
         [field: SerializeField] private Image backgroundImage { get; set; }
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
-        [field: SerializeField] private GameObject headerObject { get; set; }
-        [field: SerializeField] private GameObject contentObject { get; set; }
         [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; }
         [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; }
+        [field: SerializeField] private Sprite defaultCommunityImage { get; set; }
+        [field: SerializeField] private Sprite deleteCommunityImage { get; set; }
+        [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; }
 
         [field: Header("Community interactions")]
+        [field: SerializeField] private Button openChatButton { get; set; }
         [field: SerializeField] private Button openWizardButton { get; set; }
+        [field: SerializeField] private Button openContextMenuButton { get; set; }
         [field: SerializeField] private Button joinedButton { get; set; }
         [field: SerializeField] private Button joinButton { get; set; }
 
@@ -73,6 +83,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Button membersButton { get; set; }
         [field: SerializeField] private Button placesButton { get; set; }
         [field: SerializeField] private Button placesWithSignButton { get; set; }
+        [field: SerializeField] private Button placesShortcutButton { get; set; }
         [field: SerializeField] private Button membersTextButton { get; set; }
 
         [field: Header("Selections")]
@@ -87,12 +98,18 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; }
         [field: SerializeField] public EventListView EventListView { get; private set; }
 
-        private readonly UniTask[] closingTasks = new UniTask[2];
+        private readonly UniTask[] closingTasks = new UniTask[3];
         private CancellationTokenSource confirmationDialogCts = new ();
+        private GenericContextMenu contextMenu;
+        private GenericContextMenuElement deleteCommunityContextMenuElement;
+        private IMVCManager mvcManager;
+        private CancellationToken cancellationToken;
 
         private void Awake()
         {
             openWizardButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
+            openChatButton.onClick.AddListener(() => OpenChatRequested?.Invoke());
+            openContextMenuButton.onClick.AddListener(OpenContextMenu);
             joinButton.onClick.AddListener(() => JoinCommunity?.Invoke());
             joinedButton.onClick.AddListener(ShowLeaveConfirmationDialog);
 
@@ -101,6 +118,51 @@ namespace DCL.Communities.CommunitiesCard
             membersTextButton.onClick.AddListener(() => ToggleSection(Sections.MEMBERS));
             placesButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
             placesWithSignButton.onClick.AddListener(() => ToggleSection(Sections.PLACES));
+            placesShortcutButton.onClick.AddListener(() => OpenWizardRequested?.Invoke());
+
+            contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth,
+                              offsetFromTarget: contextMenuSettings.OffsetFromTarget,
+                              verticalLayoutPadding: contextMenuSettings.VerticalPadding,
+                              elementsSpacing: contextMenuSettings.ElementsSpacing,
+                              anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, () => LeaveCommunityRequested?.Invoke()))
+                         .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested)));
+        }
+
+        private void OnDeleteCommunityRequested()
+        {
+            confirmationDialogCts = confirmationDialogCts.SafeRestart();
+            ShowDeleteConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
+            return;
+
+            async UniTask ShowDeleteConfirmationDialogAsync(CancellationToken ct)
+            {
+                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                    new ConfirmationDialogView.DialogData(string.Format(DELETE_COMMUNITY_TEXT_FORMAT, communityName.text),
+                        DELETE_COMMUNITY_CANCEL_TEXT,
+                        DELETE_COMMUNITY_CONFIRM_TEXT,
+                        deleteCommunityImage,
+                        false, false),
+                    ct);
+
+                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
+                DeleteCommunityRequested?.Invoke();
+            }
+        }
+
+        public void ConfigureContextMenu(IMVCManager mvcManager, CancellationToken cancellationToken)
+        {
+            this.mvcManager = mvcManager;
+            this.cancellationToken = cancellationToken;
+        }
+
+        private void OpenContextMenu()
+        {
+            openContextMenuButton.interactable = false;
+
+            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
+                actionOnHide: () => openContextMenuButton.interactable = true)), cancellationToken);
         }
 
         private void OnDisable()
@@ -114,7 +176,7 @@ namespace DCL.Communities.CommunitiesCard
             ShowLeaveConfirmationDialogAsync(confirmationDialogCts.Token).Forget();
             return;
 
-            async UniTaskVoid ShowLeaveConfirmationDialogAsync(CancellationToken ct)
+            async UniTask ShowLeaveConfirmationDialogAsync(CancellationToken ct)
             {
                 ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
                     new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, communityName.text),
@@ -130,10 +192,11 @@ namespace DCL.Communities.CommunitiesCard
             }
         }
 
-        public UniTask[] GetClosingTasks(CancellationToken ct)
+        public UniTask[] GetClosingTasks(UniTask controllerTask, CancellationToken ct)
         {
             closingTasks[0] = closeButton.OnClickAsync(ct);
             closingTasks[1] = backgroundCloseButton.OnClickAsync(ct);
+            closingTasks[2] = controllerTask;
 
             return closingTasks;
         }
@@ -145,18 +208,15 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void ResetToggle() =>
-            ToggleSection(Sections.PHOTOS);
+            ToggleSection(Sections.MEMBERS);
 
         public void SetLoadingState(bool isLoading)
         {
-            headerObject.SetActive(!isLoading);
-            contentObject.SetActive(!isLoading);
+            communityName.enabled = !isLoading;
+            communityMembersNumber.enabled = !isLoading;
+            communityDescription.enabled = !isLoading;
             EventListView.SetLoadingStateActive(isLoading);
-
-            if (isLoading)
-                loadingObject?.Show();
-            else
-                loadingObject?.Hide();
+            loadingObject.SetActive(isLoading);
         }
 
         private void ToggleSection(Sections section)
@@ -175,21 +235,26 @@ namespace DCL.Communities.CommunitiesCard
 
         public void ConfigureInteractionButtons(CommunityMemberRole role)
         {
-            joinedButton.gameObject.SetActive(role is CommunityMemberRole.member or CommunityMemberRole.moderator);
+            openChatButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member);
             openWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
+            openContextMenuButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
+            joinedButton.gameObject.SetActive(role is CommunityMemberRole.member);
             joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
         }
 
-        public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData, ImageController imageController)
+        public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData,
+            ImageController imageController)
         {
             communityName.text = communityData.name;
-
             communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
-
             communityDescription.text = communityData.description;
-            //TODO: handle thumbnails properly
+
+            imageController.SetImage(defaultCommunityImage);
+
             if (communityData.thumbnails != null)
                 imageController.RequestImage(communityData.thumbnails.Value.raw, true, true);
+
+            deleteCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.owner;
 
             ConfigureInteractionButtons(communityData.role);
 

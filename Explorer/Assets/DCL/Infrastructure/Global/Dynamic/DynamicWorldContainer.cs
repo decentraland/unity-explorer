@@ -587,7 +587,7 @@ namespace Global.Dynamic
 
             // TODO: Remove fakeCommunitiesDataProvider when all the whole communitiesDataProvider implementation is ready.
             ICommunitiesDataProvider fakeCommunitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -676,7 +676,7 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
+                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits, includeCommunities,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
@@ -967,7 +967,6 @@ namespace Global.Dynamic
                 globalPlugins.Add(new CommunitiesPlugin(
                     mvcManager,
                     assetsProvisioner,
-                    webBrowser,
                     staticContainer.InputBlock,
                     cameraReelStorageService,
                     cameraReelScreenshotsStorage,
@@ -981,8 +980,12 @@ namespace Global.Dynamic
                     selfProfile,
                     realmNavigator,
                     clipboard,
+                    webBrowser,
                     eventsApiService,
-                    communityCreationEditionEventBus));
+                    identityCache,
+                    communityCreationEditionEventBus,
+                    sharedSpaceManager,
+                    chatEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

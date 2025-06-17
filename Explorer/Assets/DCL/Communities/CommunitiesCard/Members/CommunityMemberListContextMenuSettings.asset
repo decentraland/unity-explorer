@@ -22,10 +22,10 @@ MonoBehaviour:
   callSprite: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
   callText: Call
   removeModeratorSprite: {fileID: 21300000, guid: bc7b3b3ba2e964e21bd23ac21ce74305, type: 3}
-  removeModeratorText: Remove Moderator
+  removeModeratorText: Demote Moderator
   addModeratorSprite: {fileID: 21300000, guid: aa635ee59944245afb570e44c2caeac7, type: 3}
-  addModeratorText: Add Moderator
-  kickUserSprite: {fileID: 21300000, guid: e3499ac030cef4df0885e37a2833728a, type: 3}
-  kickUserText: Kick
+  addModeratorText: Promote Moderator
+  kickUserSprite: {fileID: 21300000, guid: 63ca55af13b6147d9a3b2fb88a9e1c2f, type: 3}
+  kickUserText: Remove Member
   banUserSprite: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
   banUserText: Ban
