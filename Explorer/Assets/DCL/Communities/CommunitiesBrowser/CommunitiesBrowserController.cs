@@ -50,6 +50,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private CancellationTokenSource showErrorCts;
         private CancellationTokenSource openCommunityCreationCts;
 
+        private bool isSectionActivated;
         private string currentNameFilter;
         private bool currentIsOwnerFilter;
         private bool currentIsMemberFilter;
@@ -103,6 +104,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Activate()
         {
+            if (isSectionActivated)
+                return;
+
+            isSectionActivated = true;
             view.SetViewActive(true);
             cursor.Unlock();
 
@@ -114,6 +119,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void Deactivate()
         {
+            isSectionActivated = false;
             view.SetViewActive(false);
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();

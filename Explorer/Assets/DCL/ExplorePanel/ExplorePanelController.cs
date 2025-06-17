@@ -124,7 +124,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            lastShownSection = ExploreSections.Navmap;
+            lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
             foreach (KeyValuePair<ExploreSections, ISection> keyValuePair in exploreSections)
                 keyValuePair.Value.Deactivate();

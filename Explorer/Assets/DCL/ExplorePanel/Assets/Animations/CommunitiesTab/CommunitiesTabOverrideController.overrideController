@@ -6,7 +6,7 @@ AnimatorOverrideController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: CameraReelTabOverrideController
+  m_Name: CommunitiesTabOverrideController
   m_Controller: {fileID: 9100000, guid: 29515e57a75974c4480e658f7421d023, type: 2}
   m_Clips:
   - m_OriginalClip: {fileID: 7400000, guid: b0a045939fb100b438fdb51c4b59789e, type: 2}
