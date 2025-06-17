@@ -216,7 +216,7 @@ namespace DCL.Communities.CommunityCreation
                 creationPanelPlacesDropdown.value = 0;
             }
         }
-        public void AddPlaceTag(string id, bool isWorld, string placeName)
+        public void AddPlaceTag(string id, bool isWorld, string placeName, bool updateScrollPosition = true)
         {
             CommunityPlaceTag placeTag = Instantiate(placeTagPrefab, placeTagsContainer);
             placeTag.Setup(id, isWorld, placeName);
@@ -235,8 +235,11 @@ namespace DCL.Communities.CommunityCreation
             currentPlaceTags.Add(placeTag);
             creationPanelPlacesDropdown.value = 0;
 
-            updateScrollPositionCts = updateScrollPositionCts.SafeRestart();
-            SetScrollPositionToBottomAsync(updateScrollPositionCts.Token).Forget();
+            if (updateScrollPosition)
+            {
+                updateScrollPositionCts = updateScrollPositionCts.SafeRestart();
+                SetScrollPositionToBottomAsync(updateScrollPositionCts.Token).Forget();
+            }
         }
 
         public void RemovePlaceTag(string id)

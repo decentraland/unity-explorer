@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
+        private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
         private const string INCOMPATIBLE_IMAGE_ERROR = "Invalid image file selected. Please check file type and size.";
         private const string FILE_BROWSER_TITLE = "Select image";
         private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
@@ -243,8 +244,13 @@ namespace DCL.Communities.CommunityCreation
             if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
                 return;
 
-            viewInstance!.AddPlaceTag(selectedPlace.Id, selectedPlace.IsWorld, selectedPlace.Name);
-            addedCommunityPlaces.Add(selectedPlace);
+            AddPlaceTag(selectedPlace);
+        }
+
+        private void AddPlaceTag(CommunityPlace place, bool updateScrollPosition = true)
+        {
+            viewInstance!.AddPlaceTag(place.Id, place.IsWorld, place.Name, updateScrollPosition);
+            addedCommunityPlaces.Add(place);
         }
 
         private void RemoveCommunityPlace(int index)
@@ -260,20 +266,53 @@ namespace DCL.Communities.CommunityCreation
         {
             viewInstance!.SetCreationPanelAsLoading(true);
 
-            var result = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            var getCommunityResult = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
+                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (!result.Success)
+            if (!getCommunityResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
                 await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
 
-            viewInstance.SetProfileSelectedImage(imageUrl: result.Value.data.thumbnails?.raw);
-            viewInstance.SetCommunityName(result.Value.data.name);
-            viewInstance.SetCommunityDescription(result.Value.data.description);
+            viewInstance.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw);
+            viewInstance.SetCommunityName(getCommunityResult.Value.data.name);
+            viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCreationPanelAsLoading(false);
+
+            var getCommunityPlacesResult = await dataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)
+                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!getCommunityPlacesResult.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                return;
+            }
+
+            var getPlacesDetailsResult = await  placesAPIService.GetPlacesByIdsAsync(getCommunityPlacesResult.Value, ct)
+                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!getPlacesDetailsResult.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                return;
+            }
+
+            if (getPlacesDetailsResult.Value is not null)
+            {
+                foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
+                {
+                    AddPlaceTag(new CommunityPlace
+                    {
+                        Id = placeInfo.id,
+                        IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
+                        Name = $"{placeInfo.title} ({placeInfo.base_position})",
+                    }, updateScrollPosition: false);
+                }
+            }
         }
 
         private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds)
