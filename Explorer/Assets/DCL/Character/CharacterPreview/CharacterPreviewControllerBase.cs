@@ -274,7 +274,7 @@ namespace DCL.CharacterPreview
 
             await UniTask.WaitUntil(() => previewController != null && previewController.Value.IsPlayingEmote());
 
-            if (previewController != null && previewController.Value.IsPlayingEmote(out CharacterEmoteComponent emoteComponent))
+            if (previewController!.Value.IsPlayingEmote(out CharacterEmoteComponent emoteComponent))
                 await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000));
         }
 
