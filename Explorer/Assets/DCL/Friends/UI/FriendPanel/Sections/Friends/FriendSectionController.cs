@@ -79,10 +79,13 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void HandleJump(FriendProfile profile)
         {
             FriendListSectionUtilities
-                .PrepareTeleportTargetAsync2(profile.Address,
+                .TeleportToTargetAsync(profile.Address,
                     onlineUsersProvider,
                     chatMessageBus,
                     jumpToFriendLocationCts);
+            
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
+                new ChatControllerShowParams(true, true)).Forget();
         }
 
         private void JumpInClicked(FriendProfile profile)

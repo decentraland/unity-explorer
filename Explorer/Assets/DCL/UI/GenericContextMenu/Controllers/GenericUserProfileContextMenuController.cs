@@ -281,28 +281,21 @@ namespace DCL.UI.GenericContextMenu.Controllers
             await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.UserId), profile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)));
         }
 
-        private async UniTaskVoid HandleJump(string userId)
+        private void HandleJump(string userId)
         {
-            (bool success, bool isInWorld, string parameters, var parcel) =
-                await FriendListSectionUtilities
-                    .PrepareTeleportTargetAsync(userId,
-                        onlineUsersProvider,
-                        cancellationTokenSource);
-            
-            if(!success) return;
-            
-            chatMessageBus.Send(ChatChannel.NEARBY_CHANNEL,
-                $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
-                "passport-jump"
-            );
-            
+            FriendListSectionUtilities
+                .TeleportToTargetAsync(userId,
+                    onlineUsersProvider,
+                    chatMessageBus,
+                    cancellationTokenSource);
+
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
                 new ChatControllerShowParams(true, true)).Forget();
         }
         
         private void OnJumpInClicked(string userId)
         {
-            HandleJump(userId).Forget();
+            HandleJump(userId);
         }
 
         private UniTask ShowPassport(string userId, CancellationToken ct) =>

@@ -42,13 +42,8 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using DCL.Character.Components;
-using DCL.Chat.Commands;
-using DCL.Chat.History;
 using DCL.Chat.MessageBus;
-using NUnit.Framework;
 using UnityEngine;
 using Utility;
 using Utility.Types;
@@ -106,14 +101,12 @@ namespace DCL.Passport
         private readonly bool isNameEditorEnabled;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly IOnlineUsersProvider onlineUsersProvider;
-        private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly Entity playerEntity;
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
         private Profile? targetProfile;
@@ -135,6 +128,7 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
 
+        private UniTaskCompletionSource<AsyncUnit> _contextMenuJumpActionCloseIntentTcs;
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
@@ -199,7 +193,6 @@ namespace DCL.Passport
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.world = world;
-            this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -212,7 +205,6 @@ namespace DCL.Passport
             this.friendServiceProxy = friendServiceProxy;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.onlineUsersProvider = onlineUsersProvider;
-            this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepositoryWrapper = profileDataProvider;
             this.nftNamesProvider = nftNamesProvider;
@@ -270,17 +262,16 @@ namespace DCL.Passport
             viewInstance.ContextMenuButton.onClick.AddListener(ShowContextMenu);
             viewInstance.JumpInButton.onClick.AddListener(OnJumpToFriendButtonClicked);
             viewInstance.ChatButton.onClick.AddListener(OnChatButtonClicked);
-
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
             viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
 
             contextMenu = new GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings)
-                         .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
-                         .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite,
-                              OnJumpToFriendButtonClicked), false))
-                         .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+                .AddControl(userProfileContextMenuControlSettings)
+                .AddControl(contextMenuSeparator = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right), false))
+                .AddControl(contextMenuJumpInButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.JumpInText, viewInstance.JumpInSprite, OnJumpToFriendContextButtonClicked), false))
+                .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
+
         }
 
         private void OnChatButtonClicked()
@@ -294,34 +285,27 @@ namespace DCL.Passport
             chatEventBus.OpenConversationUsingUserId(inputData.UserId);
         }
 
-        private async UniTaskVoid HandleJump()
+        private void HandleJump()
         {
-            (bool success, bool isInWorld, string parameters, var parcel) =
-                await FriendListSectionUtilities
-                    .PrepareTeleportTargetAsync(inputData.UserId,
-                        onlineUsersProvider,
-                        jumpToFriendLocationCts);
-            
-            if(!success) return;
+            FriendListSectionUtilities
+                .TeleportToTargetAsync(inputData.UserId,
+                    onlineUsersProvider,
+                    chatMessagesBus,
+                    jumpToFriendLocationCts);
 
-            chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL,
-                $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
-                "passport-jump"
-            );
-            
-            // sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
-            //     new ChatControllerShowParams(true, true)).Forget();
-
-            // if (!isInWorld)
-            // {
-            //     if (parcel != null) 
-            //         JumpToFriendClicked?.Invoke(inputData.UserId, parcel.Value);
-            // }
+            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
+                new ChatControllerShowParams(true, true)).Forget();
         }
-        
+
         private void OnJumpToFriendButtonClicked()
         {
-            HandleJump().Forget();
+            HandleJump();
+        }
+
+        private void OnJumpToFriendContextButtonClicked()
+        {
+            HandleJump();
+            _contextMenuJumpActionCloseIntentTcs?.TrySetResult(AsyncUnit.Default);
         }
 
         private void OnNameClaimRequested() =>
@@ -346,6 +330,7 @@ namespace DCL.Passport
 
         protected override void OnViewShow()
         {
+            _contextMenuJumpActionCloseIntentTcs = new UniTaskCompletionSource<AsyncUnit>();
             currentUserId = inputData.UserId;
             isOwnProfile = inputData.IsOwnProfile;
             alreadyLoadedSections = PassportSection.NONE;
@@ -392,6 +377,9 @@ namespace DCL.Passport
 
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
+            
+            _contextMenuJumpActionCloseIntentTcs?.TrySetResult(AsyncUnit.Default); // Ensure it's completed
+            _contextMenuJumpActionCloseIntentTcs = null;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -399,7 +387,8 @@ namespace DCL.Passport
                 viewInstance!.CloseButton.OnClickAsync(ct),
                 viewInstance.BackgroundButton.OnClickAsync(ct),
                 viewInstance.JumpInButton.OnClickAsync(ct),
-                viewInstance.ChatButton.OnClickAsync(ct));
+                viewInstance.ChatButton.OnClickAsync(ct),
+                _contextMenuJumpActionCloseIntentTcs.Task);
 
         public override void Dispose()
         {

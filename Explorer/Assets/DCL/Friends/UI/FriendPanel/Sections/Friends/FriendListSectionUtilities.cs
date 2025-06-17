@@ -28,7 +28,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         /// Public entry:
         /// restarts the CTS and fires off the teleport lookup & send.
         /// </summary>
-        public static void PrepareTeleportTargetAsync2(
+        public static void TeleportToTargetAsync(
             string userId,
             IOnlineUsersProvider onlineUsersProvider,
             IChatMessagesBus chatMessageBus,
@@ -36,7 +36,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         {
             cts = cts.SafeRestart();
             
-            // fire‐and‐forget the async work
             ExecuteTeleportLookupAndSendAsync(userId, onlineUsersProvider, chatMessageBus, cts.Token).Forget();
         }
 
@@ -68,39 +67,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             );
         }
         
-        /// <summary>
-        /// Fetches the OnlineUserData for `userId`, restarts the CTS, 
-        /// and returns (success, isInWorld, parameters, parcel).
-        /// </summary>
-        public static async UniTask<(bool success, bool isInWorld, string parameters, Vector2Int? parcel)> 
-            PrepareTeleportTargetAsync(string userId,
-                IOnlineUsersProvider onlineUsersProvider,
-                CancellationTokenSource? cts)
-        {
-            cts = cts.SafeRestart();
-            var onlineData = await onlineUsersProvider.GetAsync(new [] { userId }, cts.Token);
-            if (onlineData.Count == 0)
-                return (false, false, null!, null);
-
-            var userData = onlineData.First();
-
-            if (userData.IsInWorld)
-            {
-                // NOTE: Realm
-                return (true, true,
-                    userData.worldName!,
-                    null);
-            }
-            else
-            {
-                // NOTE: Parcel
-                var p = userData.position.ToParcel();
-                return (true, false,
-                    $"{p.x},{p.y}",
-                    p);
-            }
-        }
-        
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
@@ -117,8 +83,5 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             return buffer.ToString();
         }
-
-
-
     }
 }

@@ -146,32 +146,14 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private void HandleJump(FriendProfile profile)
         {
-            Debug.Log(this.GetType().Name + ": HandleJump");
-            
             FriendListSectionUtilities
-                .PrepareTeleportTargetAsync2(profile.Address,
+                .TeleportToTargetAsync(profile.Address,
                     onlineUsersProvider,
                     chatMessagesBus,
                     jumpToFriendLocationCts);
 
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
                 new ChatControllerShowParams(true, true)).Forget();
-            
-            // (bool success, bool isInWorld, string parameters, var parcel) =
-            //     await FriendListSectionUtilities
-            //         .PrepareTeleportTargetAsync(profile.Address,
-            //             onlineUsersProvider,
-            //             jumpToFriendLocationCts);
-            //
-            // if(!success) return;
-            //
-            // chatMessagesBus.Send(ChatChannel.NEARBY_CHANNEL,
-            //     $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
-            //     "passport-jump"
-            // );
-            //
-            // sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
-            //     new ChatControllerShowParams(true, true)).Forget();
         }
         
         private void OnJumpInClicked(FriendProfile profile)
