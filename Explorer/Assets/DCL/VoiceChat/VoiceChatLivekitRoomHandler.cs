@@ -139,11 +139,7 @@ namespace DCL.VoiceChat
                     if (!isOrderedDisconnection)
                     {
                         Debug.Log("[VoiceChatLivekitRoomHandler] Unexpected disconnection detected - waiting for potential ordered disconnection");
-                        WaitForOrderedDisconnectionAsync().Forget();
-                    }
-                    else
-                    {
-                        Debug.Log($"[VoiceChatLivekitRoomHandler] Disconnection handled - IsOrdered, ConnectionHealth: {roomHub.VoiceChatRoom().CurrentConnectionLoopHealth}");
+                        //WaitForOrderedDisconnectionAsync().Forget();
                     }
                     break;
                 case ConnectionUpdate.Reconnecting:

@@ -85,9 +85,9 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public async UniTask ResetRoomAsync(CancellationToken ct)
         {
-            var disconnectTask = assigned.DisconnectAsync(ct);
+            var disconnectTask = assigned.DisconnectAsync(ct).AsUniTask();
             var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
-            var (winIndex, _) = await UniTask.WhenAny(disconnectTask, timeoutTask);
+            var winIndex = await UniTask.WhenAny(disconnectTask, timeoutTask);
             if (winIndex != 0)
             {
                 ReportHub.LogWarning(ReportCategory.LIVEKIT, $"ResetRoomAsync timed out after {RESET_ROOM_TIMEOUT_SECONDS} seconds");
