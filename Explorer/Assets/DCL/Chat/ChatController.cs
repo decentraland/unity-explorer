@@ -178,11 +178,12 @@ namespace DCL.Chat
                 if (!viewInstanceCreated) return;
                 viewInstance!.IsUnfolded = value;
 
-                // When opened from outside, it should show the unread messages
+                // When opened from outside,
+                // it should show the unread messages
                 if (value)
                 { 
-                    // Update the current conversation state
-                    // UpdateConversationState();
+                    // Set input state to connected if we are in the NEARBY_CHANNEL_ID
+                    // https://github.com/decentraland/unity-explorer/issues/4186
                     if (chatUserStateUpdater.CurrentConversation.Equals(ChatChannel.NEARBY_CHANNEL_ID.Id))
                     {
                         viewInstance.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
@@ -732,6 +733,7 @@ namespace DCL.Chat
             {
                 view.OnCloseButtonClicked += OnCloseButtonClicked;
                 view.OnInputButtonClicked += OnInputButtonClicked;
+                
                 view.PointerEnter += OnViewPointerEnter;
                 view.PointerExit += OnViewPointerExit;
 

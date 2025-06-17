@@ -206,6 +206,9 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
 
+        public event Action OnCloseButtonClicked = () => { };
+        public event Action OnInputButtonClicked = () => { };
+        
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
@@ -867,9 +870,9 @@ namespace DCL.Chat
             {
                 if (!IsUnfolded)
                 {
+                    // NOTE: notify controller to handle opening the chat
+                    // NOTE: instead of handling it here in the view
                     OnInputButtonClicked();
-                    // IsUnfolded = true;
-                    // Focus();
                     chatMessageViewer.ShowLastMessage();
                 }
             }
@@ -894,13 +897,12 @@ namespace DCL.Chat
             isChatViewerMessageContextMenuOpen = false;
         }
 
-        public event Action OnCloseButtonClicked = () => { };
-        public event Action OnInputButtonClicked = () => { };
-
         private void OnCloseChatButtonClicked()
         {
             popupCts.SafeCancelAndDispose();
-            //IsUnfolded = false;
+            
+            // NOTE: notify controller to handle closing the chat
+            // NOTE: instead of handling it here in the view
             OnCloseButtonClicked();
         }
 
