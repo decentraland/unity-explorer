@@ -70,6 +70,7 @@ namespace DCL.AuthenticationScreenFlow
 #endif
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
+        private readonly AuthScreenEmotesSettings emotesSettings;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -96,7 +97,8 @@ namespace DCL.AuthenticationScreenFlow
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
             IEquippedEmotes equippedEmotes,
-            World world)
+            World world,
+            AuthScreenEmotesSettings emotesSettings)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -113,6 +115,7 @@ namespace DCL.AuthenticationScreenFlow
             this.buildData = buildData;
             this.equippedEmotes = equippedEmotes;
             this.world = world;
+            this.emotesSettings = emotesSettings;
         }
 
         public override void Dispose()
@@ -147,7 +150,7 @@ namespace DCL.AuthenticationScreenFlow
 #else
             viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
 #endif
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);

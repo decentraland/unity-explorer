@@ -1,21 +1,19 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
 using DCL.CharacterPreview;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
+using Random = UnityEngine.Random;
 
 namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenCharacterPreviewController : CharacterPreviewControllerBase
     {
-        private const float TIME_BETWEEN_EMOTES = 3f;
-        private const string INTRO_EMOTE_URN = "raiseHand";
-        private const string JUMP_IN_EMOTE_URN = "fistpump";
-        private static readonly URN[] FUNNY_EMOTES = { new ("disco"), new ("robot") };
+        private readonly AuthScreenEmotesSettings settings;
 
         private readonly List<URN> shortenedWearables = new();
         private readonly HashSet<URN> shortenedEmotes = new();
@@ -25,8 +23,11 @@ namespace DCL.AuthenticationScreenFlow
         private float emoteCooldown;
         private int currentEmoteIndex;
 
-        public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
-            : base(view, previewFactory, world, true, characterPreviewEventBus) { }
+        public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, AuthScreenEmotesSettings settings, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
+            : base(view, previewFactory, world, true, characterPreviewEventBus)
+        {
+            this.settings = settings;
+        }
 
         public override void Initialize(Avatar avatar)
         {
@@ -72,25 +73,15 @@ namespace DCL.AuthenticationScreenFlow
             foreach (var emote in shortenedEmotes)
                 previewEmotesSet.Add(emote);
 
-            foreach (var funnyEmote in FUNNY_EMOTES)
+            foreach (string funnyEmote in settings.FunnyEmotes)
                 previewEmotesSet.Add(funnyEmote);
 
             return previewEmotesSet.ToArray();
         }
 
-        // Fisher-Yates shuffle algorithm
-        private void RandomizePreviewEmotes()
-        {
-            for (int i = previewEmotes.Length - 1; i > 0; i--)
-            {
-                int randomIndex = Random.Range(0, i + 1);
-                (previewEmotes[i], previewEmotes[randomIndex]) = (previewEmotes[randomIndex], previewEmotes[i]);
-            }
-        }
-
         private async UniTask PlayPreviewEmotesSequentially()
         {
-            await PlayEmoteAndAwaitIt(INTRO_EMOTE_URN);
+            await PlayEmoteAndAwaitIt(settings.IntroEmoteURN);
 
             if (previewEmotes is not { Length: > 0 }) return;
 
@@ -100,17 +91,44 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Yield(PlayerLoopTiming.PreLateUpdate);
                 emoteCooldown += Time.deltaTime;
 
-                if (emoteCooldown > TIME_BETWEEN_EMOTES)
+                if (emoteCooldown > settings.TimeBetweenEmotes)
                 {
                     await PlayEmoteAndAwaitIt(previewEmotes[currentEmoteIndex]);
 
                     emoteCooldown = 0f;
-                    currentEmoteIndex = (currentEmoteIndex + 1) % previewEmotes.Length;
+                    currentEmoteIndex++;
+
+                    if (currentEmoteIndex >= previewEmotes.Length)
+                    {
+                        RandomizePreviewEmotes();
+                        currentEmoteIndex = 0;
+                    }
                 }
             }
         }
 
         public async UniTask PlayJumpInEmoteAndAwaitIt() =>
-            await PlayEmoteAndAwaitIt(JUMP_IN_EMOTE_URN);
+            await PlayEmoteAndAwaitIt(settings.JumpInEmoteURN);
+
+        /// <summary>
+        /// Fisher-Yates shuffle algorithm
+        /// </summary>
+        private void RandomizePreviewEmotes()
+        {
+            for (int i = previewEmotes.Length - 1; i > 0; i--)
+            {
+                int randomIndex = Random.Range(0, i + 1);
+                (previewEmotes[i], previewEmotes[randomIndex]) = (previewEmotes[randomIndex], previewEmotes[i]);
+            }
+        }
+    }
+
+    [Serializable]
+    public class AuthScreenEmotesSettings
+    {
+        [field: SerializeField] public float TimeBetweenEmotes { get; private set; }
+        [field: SerializeField] public string IntroEmoteURN { get; private set; }
+        [field: SerializeField] public string JumpInEmoteURN { get; private set; }
+        [field: SerializeField] public string[] FunnyEmotes { get; private set; }
     }
 }
