@@ -50,26 +50,27 @@ namespace DCL.Utilities
 
             if (settingsDataStore.HasKey(STP_DATA_STORE_KEY))
             {
-                SetSTPSetting(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY), false);
+                SetSTPSetting(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY), false, false);
                 ignoreFirstResolutionChange = true;
             }
         }
 
         private void CharacterViewClosed(CharacterPreviewControllerBase obj) =>
-            SetSTPSetting(savedSTPDuringCharacterPreview, false);
+            SetSTPSetting(savedSTPDuringCharacterPreview, false, false);
 
         private void CharacterViewOpened(CharacterPreviewControllerBase obj)
         {
             savedSTPDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-            SetSTPSetting(STP_VALUE_FOR_CHARACTER_PREVIEW, false);
+            SetSTPSetting(STP_VALUE_FOR_CHARACTER_PREVIEW, false, false);
         }
 
-        private void SetSTPSetting(float sliderValue, bool updateSlider)
+        private void SetSTPSetting(float sliderValue, bool updateSlider, bool updateStoredValue)
         {
             foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
                 ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = sliderValue;
 
-            settingsDataStore.SetSliderValue(STP_DATA_STORE_KEY, sliderValue);
+            if (updateStoredValue)
+                settingsDataStore.SetSliderValue(STP_DATA_STORE_KEY, sliderValue);
 
             if (updateSlider)
                 sliderView?.SliderView.Slider.SetValueWithoutNotify(sliderValue);
@@ -92,13 +93,19 @@ namespace DCL.Utilities
             else if (resolution.width > 2000 || resolution.height > 2000)
                 newSTPScale = midResolutionPreset;
 
-            SetSTPSetting(newSTPScale, true);
+            SetSTPSetting(newSTPScale, true, true);
         }
 
         public void SetSliderModuleView(SettingsSliderModuleView stpSettingsView)
         {
             sliderView = stpSettingsView;
-            sliderView!.SliderView.Slider.onValueChanged.AddListener(newValue => SetSTPSetting(newValue, false));
+
+            sliderView!.SliderView.Slider.onValueChanged.AddListener(newValue =>
+            {
+                //If there is a slider change, we want it to persist when the menu is closed
+                savedSTPDuringCharacterPreview = newValue;
+                SetSTPSetting(newValue, false, true);
+            });
             sliderView.SliderView.Slider.SetValueWithoutNotify(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY));
         }
     }
