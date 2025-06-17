@@ -82,15 +82,15 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 Vector3 cinemachineCurrentActiveCamPos = cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject.transform.position;
 
                 // It may take more than 1 run to detect the VirtualCamera component on the crdt entity
-                if (TryApplyVirtualCamera(
+                if (!TryApplyVirtualCamera(
                         ref mainCameraComponent,
                         virtualCameraCRDTEntity.Value,
                         hasPreviousVirtualCamera ? previousVirtualCamera!.transform.position : cinemachineCurrentActiveCamPos))
-                {
-                    // virtualCameraCRDTEntity assigned only after successfully applying it, so that
-                    // the system keeps trying otherwise
-                    mainCameraComponent.virtualCameraCRDTEntity = virtualCameraCRDTEntity;
-                }
+                    return;
+
+                // virtualCameraCRDTEntity assigned only after successfully applying it, so that
+                // the system keeps trying otherwise
+                mainCameraComponent.virtualCameraCRDTEntity = virtualCameraCRDTEntity;
             }
             else
             {
