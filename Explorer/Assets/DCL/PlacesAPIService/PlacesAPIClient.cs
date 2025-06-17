@@ -8,6 +8,8 @@ using DCL.WebRequests;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility.Times;
@@ -124,42 +126,26 @@ namespace DCL.PlacesAPIService
             return response.data;
         }
 
-        //TODO: This method currently return made up data: fetch actual data from the endpoint when it is available
         public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
         {
-            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
+            var placeIdsList = placeIds.ToList();
 
-            List<string> placeIdsList = new List<string>(placeIds);
-
-            List<PlacesData.PlaceInfo> result = new List<PlacesData.PlaceInfo>(placeIdsList.Count);
-
-            bool userLike = Random.Range(0, 100) > 50;
-            bool userDislike = false;
-
-            if (!userLike)
-                userDislike = Random.Range(0, 100) > 50;
-
-            for (int i = 0; i < placeIdsList.Count; i++)
+            StringBuilder jsonBody = new StringBuilder("[");
+            for (var i = 0; i < placeIdsList.Count; i++)
             {
-                result.Add(new PlacesData.PlaceInfo(new Vector2Int(Random.Range(-150, 151), Random.Range(-150, 151)))
-                {
-                    id = placeIdsList[i],
-                    title = $"Place {i + 1}",
-                    description = $"Description for Place {i + 1}",
-                    user_count = Random.Range(0, 100),
-                    user_like = userLike,
-                    user_dislike = userDislike,
-                    user_favorite = Random.Range(0, 100) > 50,
-                    world_name = Random.Range(0, 100) > 50 ? $"WorldName{i}.dcl.eth" : string.Empty,
-                });
+                jsonBody.Append($"\"{placeIdsList[i]}\"");
+                if (i < placeIdsList.Count - 1)
+                    jsonBody.Append(", ");
             }
+            jsonBody.Append("]");
 
-            return new PlacesData.PlacesAPIResponse()
-            {
-                ok = true,
-                total = placeIdsList.Count,
-                data = result
-            };
+            if (placeIdsList.Count == 0)
+                jsonBody.Clear();
+
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(baseURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+                                                                              .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
+
+            return response;
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)

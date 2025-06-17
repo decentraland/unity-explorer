@@ -1019,6 +1019,11 @@ namespace DCL.Chat
             chatAndConversationsPanel.gameObject.SetActive(!isVisible);
             unfoldedPanelInteractableArea.enabled = !isVisible;
 
+            if (currentChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                chatTitleBar.SetChannelNameText(communitiesData[CurrentChannelId].name);
+            }
+
             MemberListVisibilityChanged?.Invoke(isVisible);
         }
 

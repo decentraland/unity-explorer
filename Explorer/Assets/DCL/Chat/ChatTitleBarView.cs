@@ -44,6 +44,7 @@ namespace DCL.Chat
         [SerializeField] private GameObject defaultChatTitlebar;
         [SerializeField] private GameObject nearbyMemberListTitlebar;
         [SerializeField] private GameObject communitiesMemberListTitlebar;
+        [SerializeField] private TMP_Text communitiesMemberListTitlebarText;
 
         [SerializeField] private GameObject memberCountObject;
         [SerializeField] private GameObject nearbyChannelContainer;
@@ -128,8 +129,18 @@ namespace DCL.Chat
 
         public void SetChannelNameText(string channelName)
         {
-            chatChannelNameNameText.text = channelName;
-            memberListChannelNameText.text = channelName;
+            if (chatChannelNameNameText.gameObject.activeInHierarchy)
+            {
+                chatChannelNameNameText.text = channelName;
+            }
+            else if (memberListChannelNameText.gameObject.activeInHierarchy)
+            {
+                memberListChannelNameText.text = channelName;
+            }
+            else if (communitiesMemberListTitlebarText.gameObject.activeInHierarchy)
+            {
+                communitiesMemberListTitlebarText.text = channelName;
+            }
         }
 
         public void SetNearbyChannelImage()

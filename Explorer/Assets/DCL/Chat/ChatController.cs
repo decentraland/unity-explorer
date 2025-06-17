@@ -92,6 +92,7 @@ namespace DCL.Chat
         private CancellationTokenSource chatUsersUpdateCts = new();
         private CancellationTokenSource communitiesServiceCts = new();
         private CancellationTokenSource errorNotificationCts = new();
+        private CancellationTokenSource memberListCts = new();
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
@@ -673,7 +674,7 @@ namespace DCL.Chat
             if (isVisible && roomHub.HasAnyRoomConnected())
                 RefreshMemberList();
         }
-private CancellationTokenSource memberListCts;
+
         private void RefreshMemberList()
         {
             memberListCts = memberListCts.SafeRestart();
