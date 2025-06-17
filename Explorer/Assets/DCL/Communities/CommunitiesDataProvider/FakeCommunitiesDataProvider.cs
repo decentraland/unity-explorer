@@ -23,6 +23,8 @@ namespace DCL.Communities
             currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 1);
         }
 
+        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
+
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
             await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);

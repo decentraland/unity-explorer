@@ -108,6 +108,7 @@ namespace DCL.Communities.CommunitiesCard
             this.chatEventBus = chatEventBus;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
+            communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
         }
 
         public override void Dispose()
@@ -123,6 +124,7 @@ namespace DCL.Communities.CommunitiesCard
             }
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
+            communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -135,6 +137,14 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+        }
+
+        private void OnCommunityUpdated(string communityId)
+        {
+            if (!communityId.Equals(communityData.id)) return;
+
+            ResetSubControllers();
+            OnViewShow();
         }
 
         private void CloseCardOnConversationRequested(string _) =>
@@ -262,6 +272,11 @@ namespace DCL.Communities.CommunitiesCard
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
+            ResetSubControllers();
+        }
+
+        private void ResetSubControllers()
+        {
             membersListController?.Reset();
             placesSectionController?.Reset();
             eventListController?.Reset();

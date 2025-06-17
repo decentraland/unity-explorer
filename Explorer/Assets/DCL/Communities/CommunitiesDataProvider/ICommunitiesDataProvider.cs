@@ -1,13 +1,14 @@
 using Cysharp.Threading.Tasks;
-using DCL.PlacesAPIService;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Communities
 {
     public interface ICommunitiesDataProvider
     {
+        public delegate void CommunityOperation(string communityId);
+        event CommunityOperation CommunityUpdated;
+
         UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct);
         UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct);

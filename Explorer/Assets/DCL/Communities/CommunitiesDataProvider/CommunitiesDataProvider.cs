@@ -20,6 +20,8 @@ namespace DCL.Communities
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
 
+        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
+
         public CommunitiesDataProvider(
             ICommunitiesDataProvider fakeDataProvider,
             IWebRequestController webRequestController,
@@ -76,6 +78,7 @@ namespace DCL.Communities
 
                 response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
+                CommunityUpdated?.Invoke(communityId);
             }
             else
             {
