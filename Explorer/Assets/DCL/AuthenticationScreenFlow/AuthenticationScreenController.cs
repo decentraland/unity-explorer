@@ -1,7 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
@@ -360,9 +359,10 @@ namespace DCL.AuthenticationScreenFlow
 
             async UniTaskVoid AnimateAndAwaitAsync()
             {
+                await (characterPreviewController?.PlayJumpInEmoteAndAwaitIt() ?? UniTask.CompletedTask);
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitIt() ?? UniTask.CompletedTask);
+                await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;

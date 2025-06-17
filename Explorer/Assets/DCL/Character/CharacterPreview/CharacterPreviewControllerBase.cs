@@ -35,6 +35,7 @@ namespace DCL.CharacterPreview
         protected bool zoomEnabled = true;
         protected bool panEnabled = true;
         protected bool rotateEnabled = true;
+        private readonly Func<bool> isPlayingEmoteDelegate;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
@@ -62,6 +63,8 @@ namespace DCL.CharacterPreview
 
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
+
+            isPlayingEmoteDelegate = () => previewController != null && previewController.Value.IsPlayingEmote();
         }
 
         public virtual void Initialize(Avatar avatar)
@@ -272,9 +275,9 @@ namespace DCL.CharacterPreview
         {
             PlayEmote(emoteURN);
 
-            await UniTask.WaitUntil(() => previewController != null && previewController.Value.IsPlayingEmote(), cancellationToken: ct);
+            await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);
 
-            if (previewController!.Value.IsPlayingEmote(out CharacterEmoteComponent emoteComponent))
+            if (previewController!.Value.TryGetPlayingEmote(out CharacterEmoteComponent emoteComponent))
                 await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
         }
 

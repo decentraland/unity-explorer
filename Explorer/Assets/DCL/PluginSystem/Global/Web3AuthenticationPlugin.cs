@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
-using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.DebugUtilities;
