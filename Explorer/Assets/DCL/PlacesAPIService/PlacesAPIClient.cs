@@ -13,7 +13,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility.Times;
-using Random = UnityEngine.Random;
 
 namespace DCL.PlacesAPIService
 {
@@ -28,9 +27,9 @@ namespace DCL.PlacesAPIService
 
         private readonly URLBuilder urlBuilder = new ();
 
-        private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
-        private string worldsBaseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiWorlds);
-        private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
+        private string basePlacesURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
+        private string baseWorldsURL => decentralandUrlsSource.Url(DecentralandUrl.ApiWorlds);
+        private URLDomain baseURLDomain => URLDomain.FromString(basePlacesURL);
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
         private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
         private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
@@ -122,7 +121,7 @@ namespace DCL.PlacesAPIService
             string? ownerAddress = null)
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(worldsBaseURL));
+            urlBuilder.AppendDomain(URLDomain.FromString(baseWorldsURL));
 
             if (!string.IsNullOrEmpty(searchString))
                 urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
