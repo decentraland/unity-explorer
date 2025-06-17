@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Utilities;
@@ -9,6 +10,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
+using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
@@ -18,11 +20,17 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const int ADD_PLACE_PREFAB_INDEX = 0;
         private const int PLACE_PREFAB_INDEX = 1;
 
+        private const string DELETE_PLACE_TEXT_FORMAT = "Are you sure you want to delete [{0}] from [{1}]'s Places?";
+        private const string DELETE_PLACE_CANCEL_TEXT = "CANCEL";
+        private const string DELETE_PLACE_CONFIRM_TEXT = "DELETE";
+
         [field: SerializeField] private LoopGridView loopGrid { get; set; }
         [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; }
         [field: SerializeField] private GameObject emptyState { get; set; }
         [field: SerializeField] private GameObject loadingObject { get; set; }
         [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; }
+        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
+        [field: SerializeField] private Sprite deleteSprite { get; set; }
 
         public event Action? NewDataRequested;
         public event Action? AddPlaceRequested;
@@ -34,9 +42,11 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo> ElementCopyLinkButtonClicked;
         public event Action<PlaceInfo> ElementInfoButtonClicked;
         public event Action<PlaceInfo> ElementJumpInButtonClicked;
+        public event Action<PlaceInfo> ElementDeleteButtonClicked;
 
         private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData;
         private bool canModify;
+        private CommunityData communityData;
         private IWebRequestController webRequestController;
         private IMVCManager mvcManager;
         private GenericContextMenu contextMenu;
@@ -64,6 +74,11 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void SetCanModify(bool canModify)
         {
             this.canModify = canModify;
+        }
+
+        public void SetCommunityData(CommunityData community)
+        {
+            communityData = community;
         }
 
         public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
@@ -102,7 +117,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                 (placeInfo, value, cardView) => ElementFavoriteToggleChanged?.Invoke(placeInfo, value, cardView),
                 OpenCardContextMenu,
                 placeInfo => ElementInfoButtonClicked?.Invoke(placeInfo),
-                placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo));
+                placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo),
+                placeInfo => ShowBanConfirmationDialog(placeInfo, communityData.name));
 
             if (realIndex >= membersData.totalFetched - ELEMENT_MISSING_THRESHOLD && membersData.totalFetched < membersData.totalToFetch)
                 NewDataRequested?.Invoke();
@@ -117,6 +133,27 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
                 actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true)), cancellationToken);
+        }
+
+        private void ShowBanConfirmationDialog(PlaceInfo placeInfo, string communityName)
+        {
+            ShowBanConfirmationDialogAsync(cancellationToken).Forget();
+            return;
+
+            async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
+            {
+                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                    new ConfirmationDialogView.DialogData(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
+                        DELETE_PLACE_CANCEL_TEXT,
+                        DELETE_PLACE_CONFIRM_TEXT,
+                        deleteSprite,
+                        false, false),
+                    ct);
+
+                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+
+                ElementDeleteButtonClicked?.Invoke(placeInfo);
+            }
         }
 
         public void RefreshGrid()

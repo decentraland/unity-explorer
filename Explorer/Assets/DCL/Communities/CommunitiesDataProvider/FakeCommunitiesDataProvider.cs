@@ -279,6 +279,9 @@ namespace DCL.Communities
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId,  CommunityMemberRole newRole, CancellationToken ct) =>
             true;
 
+        public async UniTask<bool> RemovePlaceFromCommunityAsync(string communityId, string placeId, CancellationToken ct) =>
+            true;
+
         private List<GetUserCommunitiesData.CommunityData> GetFakeCommunitiesForBrowserTesting(int communitiesAsOwner, int communitiesAsModerator, int communitiesAsMember)
         {
             List<GetUserCommunitiesData.CommunityData> communities = new List<GetUserCommunitiesData.CommunityData>();

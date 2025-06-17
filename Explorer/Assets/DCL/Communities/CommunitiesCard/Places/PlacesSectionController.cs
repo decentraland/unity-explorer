@@ -30,6 +30,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
         private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
+        private const string COMMUNITY_PLACES_DELETE_ERROR_MESSAGE = "There was an error deleting the community place. Please try again.";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
@@ -89,6 +90,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementCopyLinkButtonClicked += OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked += OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked += OnElementJumpInButtonClicked;
+            view.ElementDeleteButtonClicked += OnElementDeleteButtonClicked;
         }
 
         public override void Dispose()
@@ -102,6 +104,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementCopyLinkButtonClicked -= OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked -= OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked -= OnElementJumpInButtonClicked;
+            view.ElementDeleteButtonClicked -= OnElementDeleteButtonClicked;
 
             placeCardOperationsCts.SafeCancelAndDispose();
 
@@ -114,6 +117,28 @@ namespace DCL.Communities.CommunitiesCard.Places
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
                     communityId: communityData!.Value.id)));
+        }
+
+        private void OnElementDeleteButtonClicked(PlaceInfo placeInfo)
+        {
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            DeletePlaceAsync(placeCardOperationsCts.Token).Forget();
+            return;
+
+            async UniTaskVoid DeletePlaceAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.RemovePlaceFromCommunityAsync(communityData!.Value.id, placeInfo.id, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success)
+                {
+                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return;
+                }
+
+                placesFetchData.items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
+                view.RefreshGrid();
+            }
         }
 
         private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)
@@ -289,6 +314,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             communityData = community;
             userCanModify = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
             view.SetCanModify(userCanModify);
+            view.SetCommunityData(community);
 
             FetchNewDataAsync(token).Forget();
         }

@@ -33,6 +33,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private Button shareButton;
         [SerializeField] private Button infoButton;
         [SerializeField] private Button jumpInButton;
+        [SerializeField] private Button deleteButton;
 
         private Tweener headerTween;
         private Tweener footerTween;
@@ -49,6 +50,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo, Vector2, PlaceCardView> ShareButtonClicked;
         public event Action<PlaceInfo> InfoButtonClicked;
         public event Action<PlaceInfo> JumpInButtonClicked;
+        public event Action<PlaceInfo> DeleteButtonClicked;
 
         private bool canPlayUnHoverAnimation = true;
         // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
@@ -77,6 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo, shareButton.transform.position, this));
             infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo));
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
+            deleteButton.onClick.AddListener(() => DeleteButtonClicked?.Invoke(currentPlaceInfo));
         }
 
         private void OnEnable() =>
@@ -95,6 +98,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             onlineMembersText.text = $"{placeInfo.user_count}";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
 
+            //TODO: check if user own the place and show/hide delete button accordingly
+            deleteButton.gameObject.SetActive(false);
+
             //Make sure to remove listeners before setting values in order to avoid unwanted calls to previously subscribed methods
             LikeToggleChanged = null;
             DislikeToggleChanged = null;
@@ -110,7 +116,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             Action<PlaceInfo, bool, PlaceCardView> favoriteToggleChanged,
             Action<PlaceInfo, Vector2, PlaceCardView> shareButtonClicked,
             Action<PlaceInfo> infoButtonClicked,
-            Action<PlaceInfo> jumpInButtonClicked)
+            Action<PlaceInfo> jumpInButtonClicked,
+            Action<PlaceInfo> deleteButtonClicked)
         {
             LikeToggleChanged = null;
             DislikeToggleChanged = null;
@@ -118,6 +125,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             ShareButtonClicked = null;
             InfoButtonClicked = null;
             JumpInButtonClicked = null;
+            DeleteButtonClicked = null;
 
             LikeToggleChanged += likeToggleChanged;
             DislikeToggleChanged += dislikeToggleChanged;
@@ -125,6 +133,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             ShareButtonClicked += shareButtonClicked;
             InfoButtonClicked += infoButtonClicked;
             JumpInButtonClicked += jumpInButtonClicked;
+            DeleteButtonClicked += deleteButtonClicked;
         }
 
         public void SilentlySetLikeToggle(bool isOn)

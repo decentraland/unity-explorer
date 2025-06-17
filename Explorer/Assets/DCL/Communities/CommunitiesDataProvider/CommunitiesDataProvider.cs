@@ -7,7 +7,6 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.Communities
@@ -213,6 +212,17 @@ namespace DCL.Communities
             string url = $"{communitiesBaseUrl}/communities/{communityId}/members/{userId}";
 
             var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> RemovePlaceFromCommunityAsync(string communityId, string placeId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/places/{placeId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
