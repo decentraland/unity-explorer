@@ -112,11 +112,6 @@ namespace DCL.Chat
         [SerializeField]
         private CanvasGroup conversationsToolbarCanvasGroup;
 
-        [Header("Voice chat")]
-
-        [SerializeField]
-        private RectTransform voiceChatTransform;
-
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio {get; private set;}
@@ -211,7 +206,6 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
-        private Vector2 voiceChatSizeDelta;
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -977,18 +971,12 @@ namespace DCL.Chat
                     messagesPanelBackgroundCanvasGroup.DOFade(1, BackgroundFadeTime);
                     conversationsToolbarCanvasGroup.DOFade(1, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(1, BackgroundFadeTime);
-                    voiceChatSizeDelta = voiceChatTransform.sizeDelta;
-                    voiceChatSizeDelta.x = 0;
-                    voiceChatTransform.DOSizeDelta(voiceChatSizeDelta, BackgroundFadeTime);
                 }
                 else
                 {
                     messagesPanelBackgroundCanvasGroup.DOFade(0, BackgroundFadeTime).OnComplete(() => { SetBackgroundVisibility(false, false); });
                     conversationsToolbarCanvasGroup.DOFade(0, BackgroundFadeTime);
                     titlebarCanvasGroup.DOFade(0, BackgroundFadeTime);
-                    voiceChatSizeDelta = voiceChatTransform.sizeDelta;
-                    voiceChatSizeDelta.x = -40;
-                    voiceChatTransform.DOSizeDelta(voiceChatSizeDelta, BackgroundFadeTime);
                 }
             }
             else
@@ -999,9 +987,6 @@ namespace DCL.Chat
                 conversationsToolbarCanvasGroup.gameObject.SetActive(isVisible);
                 titlebarCanvasGroup.alpha = isVisible ? 1.0f : 0.0f;
                 titlebarCanvasGroup.gameObject.SetActive(isVisible);
-                voiceChatSizeDelta = voiceChatTransform.sizeDelta;
-                voiceChatSizeDelta.x = isVisible ? 0 : -40;
-                voiceChatTransform.sizeDelta = voiceChatSizeDelta;
             }
         }
 

@@ -13,6 +13,9 @@ namespace DCL.VoiceChat
         public GameObject TooltipParent { get; private set; }
 
         [field: SerializeField]
+        public CanvasGroup TooltipParentCanvas { get; private set; }
+
+        [field: SerializeField]
         public TMP_Text TooltipText { get; private set; }
     }
 }
