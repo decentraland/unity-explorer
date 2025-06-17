@@ -63,7 +63,7 @@ namespace DCL.Friends.UI.FriendPanel
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
             ViewDependencies viewDependencies,
             bool includeUserBlocking,

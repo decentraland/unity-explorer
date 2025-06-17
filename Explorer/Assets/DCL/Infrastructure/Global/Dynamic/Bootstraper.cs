@@ -42,8 +42,8 @@ namespace Global.Dynamic
 {
     public class Bootstrap : IBootstrap
     {
-        private readonly IDebugSettings debugSettings;
-        private readonly IRealmUrls realmUrls;
+        private readonly DebugSettings.DebugSettings debugSettings;
+        private readonly RealmUrls realmUrls;
         private readonly IAppArgs appArgs;
         private readonly ISplashScreen splashScreen;
         private readonly RealmLaunchSettings realmLaunchSettings;
@@ -60,10 +60,10 @@ namespace Global.Dynamic
         public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(
-            IDebugSettings debugSettings,
+            DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
             ISplashScreen splashScreen,
-            IRealmUrls realmUrls,
+            RealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,

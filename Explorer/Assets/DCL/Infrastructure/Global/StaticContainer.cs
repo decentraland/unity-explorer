@@ -97,7 +97,6 @@ namespace Global
         public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
         public Profiler Profiler { get; private set; }
-        public PhysicsTickProvider PhysicsTickProvider { get; private set; }
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
@@ -211,7 +210,6 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
-            container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
 
@@ -260,7 +258,7 @@ namespace Global
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
-                new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
+                new AssetsCollidersPlugin(sharedDependencies),
                 new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry),
                 new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),

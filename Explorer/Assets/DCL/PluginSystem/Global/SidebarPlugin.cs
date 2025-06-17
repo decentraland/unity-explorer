@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
 
@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.Global
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
-            IProfileChangesBus profileChangesBus,
+            ProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData)
         {

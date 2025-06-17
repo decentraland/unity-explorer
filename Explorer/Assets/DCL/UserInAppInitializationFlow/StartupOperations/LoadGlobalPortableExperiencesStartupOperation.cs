@@ -14,12 +14,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     public class LoadGlobalPortableExperiencesStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly IDebugSettings debugSettings;
+        private readonly DebugSettings debugSettings;
         private readonly IPortableExperiencesController portableExperiencesController;
 
         public LoadGlobalPortableExperiencesStartupOperation(
             ILoadingStatus loadingStatus,
-            IDebugSettings debugSettings,
+            DebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController)
         {
             this.loadingStatus = loadingStatus;

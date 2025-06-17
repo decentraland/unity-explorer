@@ -51,7 +51,7 @@ namespace Global.Dynamic
         public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
-        public IDebugSettings DebugSettings { get; private set; }
+        public DebugSettings.DebugSettings DebugSettings { get; private set; }
         public WorldVolumeMacBus WorldVolumeMacBus { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public IAppArgs ApplicationParametersParser { get; private set; }
@@ -81,7 +81,7 @@ namespace Global.Dynamic
             RealmLaunchSettings realmLaunchSettings,
             IAppArgs applicationParametersParser,
             ISplashScreen splashScreen,
-            IRealmUrls realmUrls,
+            RealmUrls realmUrls,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             World world,
@@ -136,10 +136,10 @@ namespace Global.Dynamic
         }
 
         private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(
-            IDebugSettings debugSettings,
+            DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
             ISplashScreen splashScreen,
-            IRealmUrls realmUrls,
+            RealmUrls realmUrls,
             IDiskCache diskCache,
             IDiskCache<PartialLoadingState> partialsDiskCache,
             BootstrapContainer container,

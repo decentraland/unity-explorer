@@ -37,7 +37,7 @@ namespace DCL.CharacterMotion.Tests
                 new CharacterRigidTransform { IsGrounded = true },
                 new InputModifierComponent());
 
-            updatePhysicsTickSystem = new UpdatePhysicsTickSystem(world, new PhysicsTickProvider());
+            updatePhysicsTickSystem = new UpdatePhysicsTickSystem(world);
             updateInputJumpSystem = new UpdateInputJumpSystem(world, DCLInput.Instance.Player.Jump);
             updateInputJumpSystem.Initialize();
 

@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly FriendsPanelController friendsPanelController;
         private readonly IFriendsService friendsService;
         private readonly FriendsCache friendsCache;
-        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
 
         public FriendsContainer(
             MainUIView mainUIView,
@@ -91,7 +91,7 @@ namespace DCL.PluginSystem.Global
             IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<IFriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
+            ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ProfileRepositoryWrapper profileDataProvider)
         {

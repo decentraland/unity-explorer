@@ -114,7 +114,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
-        private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly bool includeCameraReel;
 
         private ExplorePanelInputHandler? inputHandler;
@@ -177,7 +177,7 @@ namespace DCL.PluginSystem.Global
             IAppArgs appArgs, ViewDependencies viewDependencies,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            IProfileChangesBus profileChangesBus,
+            ProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider)

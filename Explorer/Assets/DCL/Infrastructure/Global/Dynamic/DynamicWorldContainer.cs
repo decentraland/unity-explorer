@@ -184,7 +184,7 @@ namespace Global.Dynamic
             IAppArgs appArgs,
             ICoroutineRunner coroutineRunner,
             DCLVersion dclVersion,
-            IRealmUrls realmUrls,
+            RealmUrls realmUrls,
             CancellationToken ct)
         {
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -488,12 +488,11 @@ namespace Global.Dynamic
 
             dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
 
-            var chatCommandsBus = new ChatCommandsBus();
             var characterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             var currentSceneInfo = new CurrentSceneInfo();
 
-            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
+            var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder);
 
             var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
 
@@ -502,7 +501,7 @@ namespace Global.Dynamic
                 new GoToChatCommand(chatTeleporter, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource),
                 new GoToLocalChatCommand(chatTeleporter),
                 new WorldChatCommand(chatTeleporter),
-                new DebugPanelChatCommand(debugBuilder, chatCommandsBus),
+                new DebugPanelChatCommand(debugBuilder),
                 new ShowEntityChatCommand(worldInfoHub),
                 new ReloadSceneChatCommand(reloadSceneController, globalWorld, playerEntity, staticContainer.ScenesCache),
                 new LoadPortableExperienceChatCommand(staticContainer.PortableExperiencesController),
@@ -567,7 +566,7 @@ namespace Global.Dynamic
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
-            var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
+            var friendOnlineStatusCacheProxy = new ObjectProxy<FriendsConnectivityStatusTracker>();
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             IProfileThumbnailCache profileThumbnailCache = new ProfileThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
@@ -576,7 +575,7 @@ namespace Global.Dynamic
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
 
-            var profileChangesBus = new ProfileChangesBusController();
+            var profileChangesBus = new ProfileChangesBus();
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
@@ -681,7 +680,6 @@ namespace Global.Dynamic
                     globalWorld,
                     playerEntity,
                     viewDependencies,
-                    chatCommandsBus,
                     roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter,

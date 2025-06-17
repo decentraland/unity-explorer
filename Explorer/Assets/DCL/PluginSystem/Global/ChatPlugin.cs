@@ -46,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
         private readonly ViewDependencies viewDependencies;
-        private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoomHub roomHub;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
@@ -79,7 +78,6 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
@@ -106,7 +104,6 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.viewDependencies = viewDependencies;
-            this.chatCommandsBus = chatCommandsBus;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
