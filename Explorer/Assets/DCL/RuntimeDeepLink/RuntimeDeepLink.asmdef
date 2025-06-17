@@ -3,15 +3,14 @@
     "rootNamespace": "",
     "references": [
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5"
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "REnum.dll"
-    ],
+    "overrideReferences": false,
+    "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
