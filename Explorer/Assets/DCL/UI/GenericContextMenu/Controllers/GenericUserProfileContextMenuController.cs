@@ -290,7 +290,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                     cancellationTokenSource);
 
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
-                new ChatControllerShowParams(true, true)).Forget();
+                new ChatControllerShowParams(false, true)).Forget();
         }
         
         private void OnJumpInClicked(string userId)

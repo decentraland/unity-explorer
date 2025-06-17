@@ -294,7 +294,7 @@ namespace DCL.Passport
                     jumpToFriendLocationCts);
 
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
-                new ChatControllerShowParams(true, true)).Forget();
+                new ChatControllerShowParams(false, false)).Forget();
         }
 
         private void OnJumpToFriendButtonClicked()

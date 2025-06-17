@@ -153,7 +153,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     jumpToFriendLocationCts);
 
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
-                new ChatControllerShowParams(true, true)).Forget();
+                new ChatControllerShowParams(false, false)).Forget();
         }
         
         private void OnJumpInClicked(FriendProfile profile)

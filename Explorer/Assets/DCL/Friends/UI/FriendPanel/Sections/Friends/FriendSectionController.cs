@@ -85,7 +85,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
                     jumpToFriendLocationCts);
             
             sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat,
-                new ChatControllerShowParams(true, true)).Forget();
+                new ChatControllerShowParams(true, false)).Forget();
         }
 
         private void JumpInClicked(FriendProfile profile)
