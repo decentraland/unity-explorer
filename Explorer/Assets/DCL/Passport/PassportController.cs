@@ -5,6 +5,7 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
@@ -271,7 +272,6 @@ namespace DCL.Passport
             viewInstance.ContextMenuButton.onClick.AddListener(ShowContextMenu);
             viewInstance.JumpInButton.onClick.AddListener(OnJumpToFriendButtonClicked);
             viewInstance.ChatButton.onClick.AddListener(OnChatButtonClicked);
-            viewInstance.VoiceChatButton.CallButton.onClick.AddListener(OnVoiceChatButtonClicked);
 
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
@@ -294,11 +294,6 @@ namespace DCL.Passport
         private void OnChatButtonClicked()
         {
             OnOpenConversationAsync().Forget();
-        }
-
-        private void OnVoiceChatButtonClicked()
-        {
-
         }
 
         private async UniTaskVoid OnOpenConversationAsync()
@@ -619,7 +614,6 @@ namespace DCL.Passport
                 viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
                 //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
                 viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
-                viewInstance.VoiceChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY && friendOnlineStatus && isCallEnabled);
 
                 await SetupContextMenuAsync(friendshipStatus, ct);
             }
