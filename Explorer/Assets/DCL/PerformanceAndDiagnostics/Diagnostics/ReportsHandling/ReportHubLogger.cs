@@ -25,8 +25,11 @@ namespace DCL.Diagnostics
         void ILogHandler.LogFormat(LogType logType, Object context, string format, params object[] args)
         {
             // Report to all reports
-            foreach ((_, IReportHandler handler) in reportHandlers)
+            for (var i = 0; i < reportHandlers.Count; i++)
+            {
+                (ReportHandler _, IReportHandler handler) = reportHandlers[i];
                 handler.LogFormat(logType, ReportData.UNSPECIFIED, context, format, args);
+            }
         }
 
         /// <summary>
@@ -34,8 +37,11 @@ namespace DCL.Diagnostics
         /// </summary>
         void ILogHandler.LogException(Exception exception, Object context)
         {
-            foreach ((_, IReportHandler handler) in reportHandlers)
+            for (var i = 0; i < reportHandlers.Count; i++)
+            {
+                (ReportHandler _, IReportHandler handler) = reportHandlers[i];
                 handler.LogException(exception, ReportData.UNSPECIFIED, context);
+            }
         }
 
         /// <summary>
@@ -48,8 +54,10 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void Log(LogType logType, ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+            for (var i = 0; i < reportHandlers.Count; i++)
             {
+                (ReportHandler type, IReportHandler? handler) = reportHandlers[i];
+
                 if (EnumUtils.HasFlag(reportToHandlers, type))
                     handler.Log(logType, reportData, null, message);
             }
@@ -68,14 +76,15 @@ namespace DCL.Diagnostics
         {
             try
             {
-                foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+                for (var i = 0; i < reportHandlers.Count; i++)
+                {
+                    (ReportHandler type, IReportHandler? handler) = reportHandlers[i];
+
                     if (EnumUtils.HasFlag(reportToHandlers, type))
                         handler.Log(logType, reportData, context, message);
+                }
             }
-            catch (Exception e)
-            {
-                emergencyLog(new Exception($"Some error while logging the message: '{message}'", e));
-            }
+            catch (Exception e) { emergencyLog(new Exception($"Some error while logging the message: '{message}'", e)); }
         }
 
         /// <summary>
@@ -89,8 +98,10 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void LogFormat(LogType logType, ReportData reportData, object message, ReportHandler reportHandler = ReportHandler.All, params object[] args)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+            for (var i = 0; i < reportHandlers.Count; i++)
             {
+                (ReportHandler type, IReportHandler? handler) = reportHandlers[i];
+
                 if (EnumUtils.HasFlag(reportHandler, type))
                     handler.LogFormat(logType, reportData, null, message, args);
             }
@@ -104,8 +115,10 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void LogException<T>(T ecsSystemException, ReportHandler reportHandler = ReportHandler.All) where T: Exception, IDecentralandException
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+            for (var i = 0; i < reportHandlers.Count; i++)
             {
+                (ReportHandler type, IReportHandler handler) = reportHandlers[i];
+
                 if (EnumUtils.HasFlag(reportHandler, type))
                     handler.LogException(ecsSystemException);
             }
@@ -120,8 +133,10 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void LogException(Exception exception, ReportData reportData, ReportHandler reportHandler = ReportHandler.All)
         {
-            foreach ((ReportHandler type, IReportHandler handler) in reportHandlers)
+            for (var i = 0; i < reportHandlers.Count; i++)
             {
+                (ReportHandler type, IReportHandler handler) = reportHandlers[i];
+
                 if (EnumUtils.HasFlag(reportHandler, type))
                     handler.LogException(exception, reportData, null);
             }

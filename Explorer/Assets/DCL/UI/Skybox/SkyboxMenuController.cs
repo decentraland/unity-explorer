@@ -83,7 +83,8 @@ namespace DCL.UI.Skybox
 
         private string GetFormatedTime(float time)
         {
-            var totalSec = (int)(time * skyboxSettings.SECONDS_IN_DAY);
+            // We need to subtract 1 second to SECONDS_IN_DAY to make the slider range is between 00:00 and 23:59, instead of 00:00 and 24:00
+            var totalSec = (int)(time * (SECONDS_IN_DAY - 1));
 
             int hours = totalSec / 3600;
             int minutes = totalSec % 3600 / 60;

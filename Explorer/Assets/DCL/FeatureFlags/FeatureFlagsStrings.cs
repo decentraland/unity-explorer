@@ -21,14 +21,18 @@
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
+        public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
 
         public const string CAMERA_REEL = "alfa-camera-reel";
         public const string FRIENDS = "alfa-friends";
         public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
         public const string FRIENDS_ONLINE_STATUS = "alfa-friends-online-status";
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
+        public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
         public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
+
+        public const string AUTH_CODE_VALIDATION = "number-validation";
     }
 }

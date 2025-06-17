@@ -45,6 +45,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -88,6 +89,8 @@ namespace Global
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         public ISystemMemoryCap MemoryCap { get; private set; }
+
+        public SceneLoadingLimit SceneLoadingLimit { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -157,6 +160,7 @@ namespace Global
             IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
             ObjectProxy<IProfileRepository> profileRepository,
+            ObjectProxy<FeatureFlagsCache> featureFlagsCacheProxy,
             CancellationToken ct,
             bool enableGPUInstancing = true)
         {
@@ -212,6 +216,7 @@ namespace Global
             container.WebRequestsContainer = webRequestsContainer;
             container.PhysicsTickProvider = new PhysicsTickProvider();
             container.FeatureFlagsCache = new FeatureFlagsCache();
+            featureFlagsCacheProxy.SetObject(container.FeatureFlagsCache);
 
             container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, launchMode, decentralandUrlsSource);
 
@@ -281,11 +286,12 @@ namespace Global
 #endif
             };
 
+            container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
+
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
-                    container.RealmPartitionSettings),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(container.assetsProvisioner, container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,

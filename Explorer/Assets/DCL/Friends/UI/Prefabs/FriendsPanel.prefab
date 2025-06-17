@@ -3923,7 +3923,7 @@ PrefabInstance:
     - target: {fileID: 6427542621141232502, guid: 9b6941d23c57d4ca6b6c5d9db7f9560c, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 77a17b25d704b4d57b6c9e8ca21d8262, type: 3}
+      objectReference: {fileID: 21300000, guid: ae2c23cfe2c784e76ad707a0239b48be, type: 3}
     - target: {fileID: 6520669751170218549, guid: 9b6941d23c57d4ca6b6c5d9db7f9560c, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 12
@@ -4520,6 +4520,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6427542621141232502, guid: 9b6941d23c57d4ca6b6c5d9db7f9560c, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 56aa382de1fa345479075105be74f18b, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
