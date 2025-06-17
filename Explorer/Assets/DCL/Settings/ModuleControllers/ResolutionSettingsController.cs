@@ -1,5 +1,6 @@
 ﻿using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
+using DCL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +15,12 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsDropdownModuleView view;
         private readonly List<Resolution> possibleResolutions = new ();
-        private readonly ISettingsModuleEventListener settingsEventListener;
+        private readonly STPController stpController;
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view, ISettingsModuleEventListener settingsEventListener)
+        public ResolutionSettingsController(SettingsDropdownModuleView view, STPController stpController)
         {
             this.view = view;
-            this.settingsEventListener = settingsEventListener;
+            this.stpController = stpController;
 
             LoadResolutionOptions();
 
@@ -96,8 +97,8 @@ namespace DCL.Settings.ModuleControllers
         {
             Resolution selectedResolution = possibleResolutions[index];
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
-            settingsEventListener.NotifyResolutionChange(selectedResolution);
             settingsDataStore.SetDropdownValue(RESOLUTION_DATA_STORE_KEY, index, save: true);
+            stpController.ResolutionChanged(selectedResolution);
         }
 
         public override void Dispose()

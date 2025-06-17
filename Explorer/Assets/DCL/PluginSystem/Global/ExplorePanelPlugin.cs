@@ -131,6 +131,7 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private ViewDependencies viewDependencies;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly STPController stpController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -182,7 +183,8 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
-            ProfileRepositoryWrapper profileDataProvider)
+            ProfileRepositoryWrapper profileDataProvider,
+            STPController stpController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -236,6 +238,7 @@ namespace DCL.PluginSystem.Global
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.stpController = stpController;
         }
 
         public void Dispose()
@@ -343,7 +346,21 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, userBlockingCacheProxy, sceneLoadingLimit, worldVolumeMacBus);
+            settingsController = new SettingsController(
+                explorePanelView.GetComponentInChildren<SettingsView>(),
+                settingsMenuConfiguration.Value,
+                generalAudioMixer.Value,
+                realmPartitionSettings.Value,
+                videoPrioritizationSettings.Value,
+                landscapeData.Value,
+                qualitySettingsAsset.Value,
+                controlsSettingsAsset.Value,
+                systemMemoryCap,
+                chatSettingsAsset.Value,
+                userBlockingCacheProxy,
+                sceneLoadingLimit,
+                worldVolumeMacBus,
+                stpController);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,

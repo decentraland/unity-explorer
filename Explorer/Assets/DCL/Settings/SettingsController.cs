@@ -45,10 +45,9 @@ namespace DCL.Settings
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly STPController stpController;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
-        public event Action<Resolution> ResolutionChanged;
-
 
         public SettingsController(
             SettingsView view,
@@ -63,7 +62,8 @@ namespace DCL.Settings
             ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
-            WorldVolumeMacBus worldVolumeMacBus = null
+            WorldVolumeMacBus worldVolumeMacBus,
+            STPController stpController
         )
         {
             this.view = view;
@@ -79,6 +79,7 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.stpController = stpController;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -123,12 +124,6 @@ namespace DCL.Settings
             ChatBubblesVisibilityChanged?.Invoke(newVisibility);
         }
 
-        public void NotifyResolutionChange(Resolution newResolution)
-        {
-            ResolutionChanged?.Invoke(newResolution);
-        }
-
-
         private void GenerateSettings()
         {
             if (settingsMenuConfiguration.SettingsGroupPrefab == null)
@@ -161,7 +156,7 @@ namespace DCL.Settings
                     generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, stpController, worldVolumeMacBus));
             }
         }
 

@@ -21,8 +21,5 @@ namespace DCL.Settings
         /// <param name="newVisibility">The new value for the visibility of the chat bubbles.</param>
         void NotifyChatBubblesVisibilityChanged(ChatBubbleVisibilitySettings newVisibility);
 
-        void NotifyResolutionChange(Resolution newResolution);
-
-        event Action<Resolution> ResolutionChanged;
     }
 }
