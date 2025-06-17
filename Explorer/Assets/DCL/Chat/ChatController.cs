@@ -553,7 +553,9 @@ namespace DCL.Chat
                 }
             }
 
-            viewInstance?.MoveChannelToTop(destinationChannel.Id);
+            // Moves the conversation icon to the top, beneath nearby
+            if(destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
+                viewInstance?.MoveChannelToTop(destinationChannel.Id);
         }
 
         private void HandleMessageAudioFeedback(ChatMessage message)
