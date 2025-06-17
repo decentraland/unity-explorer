@@ -1,10 +1,8 @@
-using System;
 using UnityEngine;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
     [CreateAssetMenu(fileName = "CommunityPlaceContextMenuSettings", menuName = "DCL/Communities/Places/ContextMenuSettings")]
-    [Serializable]
     public class CommunityPlaceContextMenuConfiguration : ScriptableObject
     {
         [SerializeField] private int contextMenuWidth = 250;

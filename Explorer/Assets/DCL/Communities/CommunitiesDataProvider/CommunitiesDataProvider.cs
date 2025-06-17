@@ -1,5 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -14,17 +17,20 @@ namespace DCL.Communities
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
 
         public CommunitiesDataProvider(
             ICommunitiesDataProvider fakeDataProvider,
             IWebRequestController webRequestController,
-            IDecentralandUrlsSource urlsSource)
+            IDecentralandUrlsSource urlsSource,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.fakeDataProvider = fakeDataProvider;
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
@@ -143,24 +149,75 @@ namespace DCL.Communities
             fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);
 
         public UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
-            fakeDataProvider.KickUserFromCommunityAsync(userId, communityId, ct);
+            RemoveMemberFromCommunityAsync(userId, communityId, ct);
 
-        public UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
-            fakeDataProvider.BanUserFromCommunityAsync(userId, communityId, ct);
+        public async UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members/{userId}/bans";
 
-        public UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
-            fakeDataProvider.UnBanUserFromCommunityAsync(userId, communityId, ct);
+            var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members/{userId}/bans";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        private async UniTask<bool> RemoveMemberFromCommunityAsync(string userId, string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members/{userId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
 
         public UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct) =>
-            fakeDataProvider.LeaveCommunityAsync(communityId, ct);
+            RemoveMemberFromCommunityAsync(web3IdentityCache.Identity?.Address, communityId, ct);
 
-        public UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct) =>
-            fakeDataProvider.JoinCommunityAsync(communityId, ct);
+        public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members";
 
-        public UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct) =>
-            fakeDataProvider.DeleteCommunityAsync(communityId, ct);
+            var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-        public UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct) =>
-            fakeDataProvider.SetMemberRoleAsync(userId, communityId, newRole, ct);
+            return result.Success;
+        }
+
+        public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
+                                      .WithNoOpAsync()
+                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/members/{userId}";
+
+            var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
     }
 }
