@@ -10,6 +10,9 @@ namespace DCL.AvatarRendering.Emotes
         public int CurrentAnimationTag;
         public bool StopEmote;
 
+        public bool IsPlayingEmote => CurrentEmoteReference;
+        public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip? CurrentEmoteReference.avatarClip.length : 0f;
+
         public void Reset()
         {
             EmoteLoop = false;

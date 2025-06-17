@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AvatarRendering.Emotes;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -266,6 +267,12 @@ namespace DCL.CharacterPreview
 
         protected void StopEmotes() =>
             previewController?.StopEmotes();
+
+        protected bool IsPlayingEmote(out CharacterEmoteComponent emoteComponent)
+        {
+            emoteComponent = default(CharacterEmoteComponent);
+            return previewController != null && previewController.Value.IsPlayingEmote(out emoteComponent);
+        }
 
         protected bool IsPlayingEmote() =>
             previewController != null && previewController.Value.IsPlayingEmote();

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.CharacterPreview;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,10 +73,14 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        public int PlayJumpInEmote()
+        public async UniTask PlayJumpInEmoteAndAwaitIt()
         {
             PlayEmote("fistpump");
-            return 3;
+
+            await UniTask.Yield(PlayerLoopTiming.LastUpdate);
+
+            if(IsPlayingEmote(out CharacterEmoteComponent emoteComponent))
+                await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000));
         }
     }
 }
