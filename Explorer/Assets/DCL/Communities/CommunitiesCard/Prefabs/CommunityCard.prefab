@@ -4377,6 +4377,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -11
       objectReference: {fileID: 0}
+    - target: {fileID: 7725805354245305314, guid: 74eae08068f444246821acd550adcba4, type: 3}
+      propertyPath: <deleteSprite>k__BackingField
+      value: 
+      objectReference: {fileID: 21300000, guid: 767d48f13763447a3b8bdc48c0a2efee, type: 3}
+    - target: {fileID: 7725805354245305314, guid: 74eae08068f444246821acd550adcba4, type: 3}
+      propertyPath: <confirmationDialogView>k__BackingField
+      value: 
+      objectReference: {fileID: 2113713318068618317}
     - target: {fileID: 7738965015722870030, guid: 74eae08068f444246821acd550adcba4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
