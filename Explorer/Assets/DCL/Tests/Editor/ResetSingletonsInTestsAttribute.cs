@@ -1,5 +1,4 @@
 ﻿using CodeLess.Singletons;
-using DCL.FeatureFlags;
 using DCL.Tests.Editor;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
