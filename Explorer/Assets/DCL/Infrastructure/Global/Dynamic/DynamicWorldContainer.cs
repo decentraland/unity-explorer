@@ -119,6 +119,7 @@ namespace Global.Dynamic
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
+        private readonly ISelfProfile selfProfile;
 
         public IMVCManager MvcManager { get; }
 
@@ -150,7 +151,8 @@ namespace Global.Dynamic
             IRemoteMetadata remoteMetadata,
             IProfileBroadcast profileBroadcast,
             IRoomHub roomHub,
-            SocialServicesContainer socialServicesContainer)
+            SocialServicesContainer socialServicesContainer,
+            ISelfProfile selfProfile)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -164,6 +166,7 @@ namespace Global.Dynamic
             this.chatMessagesBus = chatMessagesBus;
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
+            this.selfProfile = selfProfile;
         }
 
         public override void Dispose()
@@ -172,6 +175,7 @@ namespace Global.Dynamic
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
+            selfProfile.Dispose();
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -289,9 +293,7 @@ namespace Global.Dynamic
 
             IProfileCache profileCache = new DefaultProfileCache();
 
-            var profileRepository = new LogProfileRepository(
-                new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
-            );
+            var profileRepository = new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache);
 
             static IMultiPool MultiPoolFactory() =>
                 new DCLMultiPool();
@@ -1000,7 +1002,8 @@ namespace Global.Dynamic
                 remoteMetadata,
                 profileBroadcast,
                 roomHub,
-                socialServiceContainer
+                socialServiceContainer,
+                selfProfile
             );
 
             // Init itself
