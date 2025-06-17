@@ -676,7 +676,7 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
+                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits, includeCommunities,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
