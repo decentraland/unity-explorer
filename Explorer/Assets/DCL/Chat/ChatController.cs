@@ -257,7 +257,7 @@ namespace DCL.Chat
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
-            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton);
+            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -417,6 +417,9 @@ namespace DCL.Chat
                     break;
                 case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
                     callStatus = CallButtonController.OtherUserCallStatus.USER_REJECTS_CALLS;
+                    break;
+                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
+                    callStatus = CallButtonController.OtherUserCallStatus.OWN_USER_REJECTS_CALLS;
                     break;
             }
             callButtonController.SetCallStatusForUser(callStatus, userId);
