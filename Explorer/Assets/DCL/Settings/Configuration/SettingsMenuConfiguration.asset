@@ -157,12 +157,12 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: STP
+          <ModuleName>k__BackingField: Upscaler
           <Description>k__BackingField: Rendering Upscaler
           <IsEnabled>k__BackingField: 1
           sliderType: 0
           minValue: 0.1
-          maxValue: 2
+          maxValue: 1
           wholeNumbers: 0
           defaultValue: 1
         <Feature>k__BackingField: 9
