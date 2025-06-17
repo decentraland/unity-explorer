@@ -405,6 +405,11 @@ namespace DCL.Chat
                 view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
             }
 
+            UpdateCallButtonUserState(userState, userId);
+        }
+
+        private void UpdateCallButtonUserState(ChatUserStateUpdater.ChatUserState userState, string userId)
+        {
             CallButtonController.OtherUserCallStatus callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
 
             switch (userState)
@@ -648,6 +653,7 @@ namespace DCL.Chat
         {
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
             viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, userId);
         }
 
         private void OnNonFriendConnected(string userId)
@@ -661,12 +667,14 @@ namespace DCL.Chat
             viewInstance!.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
             viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, userId);
         }
 
         private void OnFriendConnected(string userId)
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
             viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, userId);
         }
 
         private void OnUserBlockedByOwnUser(string userId)
@@ -679,12 +687,14 @@ namespace DCL.Chat
         {
             var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
             viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
 
         private void OnCurrentConversationUserAvailable()
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
             viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
 
         private void OnUserConnectionStateChanged(string userId, bool isConnected)
