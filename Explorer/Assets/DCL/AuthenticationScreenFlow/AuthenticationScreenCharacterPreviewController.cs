@@ -43,7 +43,7 @@ namespace DCL.AuthenticationScreenFlow
             base.Initialize(avatar);
 
             playEmotesCts = playEmotesCts.SafeRestart();
-            PlayPreviewEmotesSequentially(playEmotesCts.Token).Forget();
+            PlayPreviewEmotesSequentiallyAsync(playEmotesCts.Token).Forget();
         }
 
         public new void OnHide(bool triggerOnHideBusEvent = true)
@@ -95,9 +95,9 @@ namespace DCL.AuthenticationScreenFlow
             return previewEmotesSet.ToArray();
         }
 
-        private async UniTask PlayPreviewEmotesSequentially(CancellationToken ct)
+        private async UniTask PlayPreviewEmotesSequentiallyAsync(CancellationToken ct)
         {
-            await PlayEmoteAndAwaitIt(settings.IntroEmoteURN, ct);
+            await PlayEmoteAndAwaitItAsync(settings.IntroEmoteURN, ct);
 
             if (previewEmotes is { Length: <= 0 } || ct.IsCancellationRequested) return;
 
@@ -109,7 +109,7 @@ namespace DCL.AuthenticationScreenFlow
 
                 if (emoteCooldown > settings.TimeBetweenEmotes)
                 {
-                    await PlayEmoteAndAwaitIt(previewEmotes[currentEmoteIndex], ct);
+                    await PlayEmoteAndAwaitItAsync(previewEmotes[currentEmoteIndex], ct);
 
                     emoteCooldown = 0f;
                     currentEmoteIndex++;
@@ -123,8 +123,8 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        public async UniTask PlayJumpInEmoteAndAwaitIt() =>
-            await PlayEmoteAndAwaitIt(settings.JumpInEmoteURN, playEmotesCts!.Token);
+        public async UniTask PlayJumpInEmoteAndAwaitItAsync() =>
+            await PlayEmoteAndAwaitItAsync(settings.JumpInEmoteURN, playEmotesCts!.Token);
 
         /// <summary>
         /// Fisher-Yates shuffle algorithm

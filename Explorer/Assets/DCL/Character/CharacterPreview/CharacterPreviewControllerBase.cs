@@ -271,7 +271,7 @@ namespace DCL.CharacterPreview
         protected void StopEmotes() =>
             previewController?.StopEmotes();
 
-        protected async UniTask PlayEmoteAndAwaitIt(string emoteURN, CancellationToken ct)
+        protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
             PlayEmote(emoteURN);
 

@@ -359,7 +359,7 @@ namespace DCL.AuthenticationScreenFlow
 
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitIt() ?? UniTask.CompletedTask);
+                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
