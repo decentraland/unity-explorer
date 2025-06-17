@@ -52,7 +52,7 @@ namespace DCL.AuthenticationScreenFlow
             Finalize,
         }
 
-        private const int ANIMATION_DELAY = 3000;
+        private const int ANIMATION_DELAY = 300;
 
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
@@ -64,7 +64,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly BuildData buildData;
-        private readonly IEquippedEmotes equippedEmotes;
 #if !UNITY_EDITOR
         private readonly FeatureFlagsCache featureFlagsCache;
 #endif
@@ -96,7 +95,6 @@ namespace DCL.AuthenticationScreenFlow
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
-            IEquippedEmotes equippedEmotes,
             World world,
             AuthScreenEmotesSettings emotesSettings)
             : base(viewFactory)
@@ -113,7 +111,6 @@ namespace DCL.AuthenticationScreenFlow
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.buildData = buildData;
-            this.equippedEmotes = equippedEmotes;
             this.world = world;
             this.emotesSettings = emotesSettings;
         }
@@ -358,6 +355,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            AnimateAndAwaitAsync().Forget();
+            return;
+
             async UniTaskVoid AnimateAndAwaitAsync()
             {
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
@@ -367,8 +367,6 @@ namespace DCL.AuthenticationScreenFlow
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
-
-            AnimateAndAwaitAsync().Forget();
         }
 
         private void SwitchState(ViewState state)
