@@ -240,7 +240,7 @@ namespace DCL.Passport
         {
             Assert.IsNotNull(world);
 
-            callButtonController = new CallButtonController(viewInstance.VoiceChatButton);
+            callButtonController = new CallButtonController(viewInstance.VoiceChatButton, voiceChatCallStatusService);
             callButtonController.StartCall += OnStartCall;
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);

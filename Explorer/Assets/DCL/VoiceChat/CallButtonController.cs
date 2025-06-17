@@ -4,29 +4,25 @@ namespace DCL.VoiceChat
 {
     public class CallButtonController
     {
-        private const string USER_OFFLINE_TOOLTIP_TEXT = "The user you are trying to call is offline.";
-        private const string USER_REJECTS_CALLS_TOOLTIP_TEXT = "This user accepts calls from friends only.";
-        private const string USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "The user is in another call. Please try again later.";
-        private const string OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "You're already on a call. Starting a new one will end it. Click the button again to confirm. Click anywhere else to cancel.";
+        private const string USER_OFFLINE_TOOLTIP_TEXT = "User is offline.";
+        private const string USER_REJECTS_CALLS_TOOLTIP_TEXT = "User only accepts calls from friends.";
+        private const string OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT = "Add User as a friend, or update your DM & Call settings to connect with everyone.";
+        private const string USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "User is in another call.";
+        private const string OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "End your current call to start a new one.";
 
         public event Action<string> StartCall;
         public string CurrentUserId { get; private set; }
 
         private readonly CallButtonView view;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private bool isClickedOnce = false;
         private OtherUserCallStatus otherUserStatus;
 
-        public CallButtonController(CallButtonView view)
+        public CallButtonController(CallButtonView view, IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.view = view;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
-        }
-
-        public void SetCallButtonVisibility(bool isVisible)
-        {
-            view.gameObject.SetActive(isVisible);
-            view.TooltipParent.gameObject.SetActive(false);
-            isClickedOnce = false;
         }
 
         public void Reset()
@@ -48,16 +44,17 @@ namespace DCL.VoiceChat
             {
                 view.TooltipParent.gameObject.SetActive(false);
                 isClickedOnce = false;
-                switch (otherUserStatus)
-                {
-                    case OtherUserCallStatus.OWN_USER_IN_CALL:
-                        StartCall?.Invoke(CurrentUserId);
-                        break;
-                }
             }
             else
             {
                 isClickedOnce = true;
+
+                if (voiceChatCallStatusService.Status is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
+                {
+                    view.TooltipParent.gameObject.SetActive(true);
+                    view.TooltipText.text = OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT;
+                    return;
+                }
 
                 switch (otherUserStatus)
                 {
@@ -70,10 +67,6 @@ namespace DCL.VoiceChat
                         isClickedOnce = false;
                         StartCall?.Invoke(CurrentUserId);
                         break;
-                    case OtherUserCallStatus.USER_IN_CALL:
-                        view.TooltipParent.gameObject.SetActive(true);
-                        view.TooltipText.text = USER_ALREADY_IN_CALL_TOOLTIP_TEXT;
-                        break;
                     case OtherUserCallStatus.OWN_USER_IN_CALL:
                         view.TooltipParent.gameObject.SetActive(true);
                         view.TooltipText.text = OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT;
@@ -81,6 +74,10 @@ namespace DCL.VoiceChat
                     case OtherUserCallStatus.USER_REJECTS_CALLS:
                         view.TooltipParent.gameObject.SetActive(true);
                         view.TooltipText.text = USER_REJECTS_CALLS_TOOLTIP_TEXT;
+                        break;
+                    case OtherUserCallStatus.OWN_USER_REJECTS_CALLS:
+                        view.TooltipParent.gameObject.SetActive(true);
+                        view.TooltipText.text = OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT;
                         break;
                 }
             }
@@ -91,8 +88,8 @@ namespace DCL.VoiceChat
             USER_OFFLINE,
             USER_REJECTS_CALLS,
             USER_AVAILABLE,
-            USER_IN_CALL,
-            OWN_USER_IN_CALL
+            OWN_USER_IN_CALL,
+            OWN_USER_REJECTS_CALLS
         }
     }
 }
