@@ -115,7 +115,7 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance.SectionChanged -= OnSectionChanged;
                 viewInstance.OpenWizardRequested -= OnOpenCommunityWizard;
-                viewInstance.OpenChatRequested -= OnOpenCommunityChat;
+                viewInstance.OpenChatRequested -= OnOpenCommunityChatAsync;
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
@@ -163,7 +163,7 @@ namespace DCL.Communities.CommunitiesCard
         private void CloseController() =>
             closeIntentCompletionSource.TrySetResult();
 
-        private async void OnOpenCommunityChat()
+        private async void OnOpenCommunityChatAsync()
         {
             try
             {
@@ -171,7 +171,7 @@ namespace DCL.Communities.CommunitiesCard
                 chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
                 CloseController();
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
@@ -181,7 +181,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             viewInstance!.SectionChanged += OnSectionChanged;
             viewInstance.OpenWizardRequested += OnOpenCommunityWizard;
-            viewInstance.OpenChatRequested += OnOpenCommunityChat;
+            viewInstance.OpenChatRequested += OnOpenCommunityChatAsync;
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;

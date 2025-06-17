@@ -244,7 +244,7 @@ MonoBehaviour:
   <closeButton>k__BackingField: {fileID: 8765912401497571406}
   <backgroundCloseButton>k__BackingField: {fileID: 6113321632732672044}
   <loadingObject>k__BackingField: {fileID: 3618468853064455734}
-  <backgroundImage>k__BackingField: {fileID: 0}
+  <backgroundImage>k__BackingField: {fileID: 1130247918267632924}
   <BackgroundColor>k__BackingField: {r: 0.56078434, g: 0.25882354, b: 0.85882354, a: 1}
   <confirmationDialogView>k__BackingField: {fileID: 2113713318068618317}
   <warningNotificationView>k__BackingField: {fileID: 8357571657956180249}
