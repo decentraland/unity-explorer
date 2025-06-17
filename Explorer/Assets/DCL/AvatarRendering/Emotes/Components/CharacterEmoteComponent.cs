@@ -11,7 +11,9 @@ namespace DCL.AvatarRendering.Emotes
         public bool StopEmote;
 
         public bool IsPlayingEmote => CurrentEmoteReference;
-        public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip? CurrentEmoteReference.avatarClip.length : 0f;
+        public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
+            ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
+            : 0f;
 
         public void Reset()
         {

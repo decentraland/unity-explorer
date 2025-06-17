@@ -268,14 +268,15 @@ namespace DCL.CharacterPreview
         protected void StopEmotes() =>
             previewController?.StopEmotes();
 
-        protected bool IsPlayingEmote(out CharacterEmoteComponent emoteComponent)
+        protected async UniTask PlayEmoteAndAwaitIt(string emoteURN)
         {
-            emoteComponent = default(CharacterEmoteComponent);
-            return previewController != null && previewController.Value.IsPlayingEmote(out emoteComponent);
-        }
+            PlayEmote(emoteURN);
 
-        protected bool IsPlayingEmote() =>
-            previewController != null && previewController.Value.IsPlayingEmote();
+            await UniTask.WaitUntil(() => previewController != null && previewController.Value.IsPlayingEmote());
+
+            if (previewController != null && previewController.Value.IsPlayingEmote(out CharacterEmoteComponent emoteComponent))
+                await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000));
+        }
 
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);

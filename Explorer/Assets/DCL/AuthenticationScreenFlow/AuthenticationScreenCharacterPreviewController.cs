@@ -51,36 +51,28 @@ namespace DCL.AuthenticationScreenFlow
 
         private async UniTask EmoteTaskLoop()
         {
-            int i = 0;
+            var i = 0;
 
             while (true)
             {
-                await UniTask.Yield(PlayerLoopTiming.PreLateUpdate);
-
-                if (!IsPlayingEmote())
-                    emoteCooldown += Time.deltaTime;
 
                 if(emoteCooldown > TIME_BETWEEN_EMOTES)
                 {
                     emoteCooldown = 0f;
                     // PlayEmote(previewEmotes[i]);
-                    PlayEmote("disco");
+                    await PlayEmoteAndAwaitIt("disco");
 
                     i++;
                     if (i >= previewEmotes.Length)
                         i = 0;
                 }
+
+                await UniTask.Yield(PlayerLoopTiming.PreLateUpdate);
+                emoteCooldown += Time.deltaTime;
             }
         }
 
-        public async UniTask PlayJumpInEmoteAndAwaitIt()
-        {
-            PlayEmote("fistpump");
-
-            await UniTask.Yield(PlayerLoopTiming.LastUpdate);
-
-            if(IsPlayingEmote(out CharacterEmoteComponent emoteComponent))
-                await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000));
-        }
+        public async UniTask  PlayJumpInEmoteAndAwaitIt() =>
+            await PlayEmoteAndAwaitIt("fistpump");
     }
 }
