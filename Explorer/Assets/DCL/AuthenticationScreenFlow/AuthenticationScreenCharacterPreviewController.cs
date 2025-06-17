@@ -5,7 +5,9 @@ using DCL.CharacterPreview;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
+using Utility;
 using Avatar = DCL.Profiles.Avatar;
 using Random = UnityEngine.Random;
 
@@ -22,6 +24,7 @@ namespace DCL.AuthenticationScreenFlow
         private URN[] previewEmotes;
         private float emoteCooldown;
         private int currentEmoteIndex;
+        private CancellationTokenSource? playEmotesCts;
 
         public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, AuthScreenEmotesSettings settings, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
             : base(view, previewFactory, world, true, characterPreviewEventBus)
@@ -39,7 +42,20 @@ namespace DCL.AuthenticationScreenFlow
 
             base.Initialize(avatar);
 
-            PlayPreviewEmotesSequentially().Forget();
+            playEmotesCts = playEmotesCts.SafeRestart();
+            PlayPreviewEmotesSequentially(playEmotesCts.Token).Forget();
+        }
+
+        public new void OnHide(bool triggerOnHideBusEvent = true)
+        {
+            playEmotesCts.SafeCancelAndDispose();
+            base.OnHide(triggerOnHideBusEvent);
+        }
+
+        public new void Dispose()
+        {
+            playEmotesCts.SafeCancelAndDispose();
+            base.Dispose();
         }
 
         private List<URN> ShortenWearables(Avatar avatar)
@@ -79,21 +95,21 @@ namespace DCL.AuthenticationScreenFlow
             return previewEmotesSet.ToArray();
         }
 
-        private async UniTask PlayPreviewEmotesSequentially()
+        private async UniTask PlayPreviewEmotesSequentially(CancellationToken ct)
         {
-            await PlayEmoteAndAwaitIt(settings.IntroEmoteURN);
+            await PlayEmoteAndAwaitIt(settings.IntroEmoteURN, ct);
 
-            if (previewEmotes is not { Length: > 0 }) return;
+            if (previewEmotes is { Length: <= 0 } || ct.IsCancellationRequested) return;
 
             currentEmoteIndex = 0;
-            while (true)
+            while (!ct.IsCancellationRequested)
             {
                 await UniTask.Yield(PlayerLoopTiming.PreLateUpdate);
                 emoteCooldown += Time.deltaTime;
 
                 if (emoteCooldown > settings.TimeBetweenEmotes)
                 {
-                    await PlayEmoteAndAwaitIt(previewEmotes[currentEmoteIndex]);
+                    await PlayEmoteAndAwaitIt(previewEmotes[currentEmoteIndex], ct);
 
                     emoteCooldown = 0f;
                     currentEmoteIndex++;
@@ -108,7 +124,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         public async UniTask PlayJumpInEmoteAndAwaitIt() =>
-            await PlayEmoteAndAwaitIt(settings.JumpInEmoteURN);
+            await PlayEmoteAndAwaitIt(settings.JumpInEmoteURN, playEmotesCts!.Token);
 
         /// <summary>
         /// Fisher-Yates shuffle algorithm
