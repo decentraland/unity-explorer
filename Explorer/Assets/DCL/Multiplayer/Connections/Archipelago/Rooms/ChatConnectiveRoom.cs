@@ -16,7 +16,6 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
-using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
@@ -53,8 +52,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
-            var participantFactory = new ParticipantFactory();
-            var hub = new ParticipantsHub(participantFactory);
+            var hub = new ParticipantsHub();
 
             var videoStreams = new VideoStreams(hub);
 
@@ -70,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                     hub,
                     tracksFactory,
                     new FfiHandleFactory(),
-                    participantFactory,
+                    new ParticipantFactory(),
                     new TrackPublicationFactory(),
                     new DataPipe(),
                     new MemoryRoomInfo(),

@@ -60,8 +60,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
             () =>
             {
-                var participantFactory = new ParticipantFactory();
-                var hub = new ParticipantsHub(participantFactory);
+                var hub = new ParticipantsHub();
                 var videoStreams = new VideoStreams(hub);
 
                 var audioRemixConveyor = new ThreadedAudioRemixConveyor();
@@ -75,7 +74,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                     hub,
                     tracksFactory,
                     new FfiHandleFactory(),
-                    participantFactory,
+                    new ParticipantFactory(),
                     new TrackPublicationFactory(),
                     new DataPipe(),
                     new MemoryRoomInfo(),
