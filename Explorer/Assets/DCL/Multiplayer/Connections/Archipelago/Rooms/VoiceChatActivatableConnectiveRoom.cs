@@ -43,7 +43,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public VoiceChatActivatableConnectiveRoom()
         {
-            var hub = new ParticipantsHub();
+            var participantFactory = new ParticipantFactory();
+            var hub = new ParticipantsHub(participantFactory);
             var videoStreams = new VideoStreams(hub);
             var audioRemixConveyor = new ThreadedAudioRemixConveyor();
             var audioStreams = new AudioStreams(hub, audioRemixConveyor);
@@ -55,7 +56,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 hub,
                 tracksFactory,
                 new FfiHandleFactory(),
-                new ParticipantFactory(),
+                participantFactory,
                 new TrackPublicationFactory(),
                 new DataPipe(),
                 new MemoryRoomInfo(),

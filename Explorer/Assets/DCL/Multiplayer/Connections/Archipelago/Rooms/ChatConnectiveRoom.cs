@@ -53,7 +53,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
-            var hub = new ParticipantsHub();
+            var participantFactory = new ParticipantFactory();
+            var hub = new ParticipantsHub(participantFactory);
 
             var videoStreams = new VideoStreams(hub);
 
@@ -69,7 +70,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                     hub,
                     tracksFactory,
                     new FfiHandleFactory(),
-                    new ParticipantFactory(),
+                    participantFactory,
                     new TrackPublicationFactory(),
                     new DataPipe(),
                     new MemoryRoomInfo(),
