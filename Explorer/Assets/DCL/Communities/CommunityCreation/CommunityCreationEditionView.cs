@@ -23,8 +23,8 @@ namespace DCL.Communities.CommunityCreation
         public Action CancelButtonClicked;
         public Action GetNameButtonClicked;
         public Action SelectProfilePictureButtonClicked;
-        public Action<string, string, List<string>, List<string>, byte[]> CreateCommunityButtonClicked;
-        public Action<string, string, List<string>, List<string>, byte[]> SaveCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>> CreateCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>> SaveCommunityButtonClicked;
         public Action<int> AddPlaceButtonClicked;
         public Action<int> RemovePlaceButtonClicked;
 
@@ -91,26 +91,18 @@ namespace DCL.Communities.CommunityCreation
                         lands.Add(placeTag.Id);
                 }
 
-                byte[] imageData = isDefaultImageSelected ?
-                    null :
-                    creationPanelProfileSelectedImage.ImageSprite ?
-                        creationPanelProfileSelectedImage.ImageSprite.texture.GetRawTextureData() :
-                        null;
-
                 if (!isEditionMode)
                     CreateCommunityButtonClicked?.Invoke(
                         creationPanelCommunityNameInputField.text,
                         creationPanelCommunityDescriptionInputField.text,
                         lands,
-                        worlds,
-                        imageData);
+                        worlds);
                 else
                     SaveCommunityButtonClicked?.Invoke(
                         creationPanelCommunityNameInputField.text,
                         creationPanelCommunityDescriptionInputField.text,
                         lands,
-                        worlds,
-                        imageData);
+                        worlds);
             });
             creationPanelPlacesDropdown.onValueChanged.AddListener(index => creationPanelAddPlaceButton.interactable = index > 0);
             creationPanelAddPlaceButton.onClick.AddListener(() => AddPlaceButtonClicked?.Invoke(creationPanelPlacesDropdown.value - 1)); // The first option is the default one, so we need to subtract 1 to the index

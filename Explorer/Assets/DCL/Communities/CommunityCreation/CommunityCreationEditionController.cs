@@ -56,6 +56,7 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
+        private byte[] lastSelectedImageData;
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
@@ -93,6 +94,7 @@ namespace DCL.Communities.CommunityCreation
 
         protected override void OnBeforeViewShow()
         {
+            lastSelectedImageData = null;
             closeTaskCompletionSource = new UniTaskCompletionSource();
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
@@ -184,6 +186,7 @@ namespace DCL.Communities.CommunityCreation
                 }
 
                 viewInstance!.SetProfileSelectedImage(data.CTToSprite(texture));
+                lastSelectedImageData = data;
             }
         }
 
@@ -273,16 +276,16 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SetCreationPanelAsLoading(false);
         }
 
-        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail)
+        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, lands, worlds, thumbnail, createCommunityCts.Token).Forget();
+            CreateCommunityAsync(name, description, lands, worlds, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail, CancellationToken ct)
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, thumbnail, lands, worlds, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)
@@ -297,16 +300,16 @@ namespace DCL.Communities.CommunityCreation
             communityCreationEditionEventBus.OnCommunityCreated();
         }
 
-        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail)
+        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            UpdateCommunityAsync(inputData.CommunityId, name, description, lands, worlds, thumbnail, createCommunityCts.Token).Forget();
+            UpdateCommunityAsync(inputData.CommunityId, name, description, lands, worlds, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail, CancellationToken ct)
+        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, thumbnail, lands, worlds, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)
