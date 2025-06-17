@@ -167,8 +167,11 @@ namespace DCL.Communities
             };
         }
 
-        public async UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct) =>
+        public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct) =>
             throw new NotImplementedException();
+
+        public async UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct) =>
+            99;
 
         public async UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct)
         {

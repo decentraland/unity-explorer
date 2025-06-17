@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -46,6 +47,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
+        private readonly IMVCManager mvcManager;
 
         private string[] communityPlaceIds;
 
@@ -72,6 +74,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.inWorldSuccessNotificationView = inWorldSuccessNotificationView;
             this.realmNavigator = realmNavigator;
+            this.mvcManager = mvcManager;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
 
@@ -107,8 +110,10 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private void OnAddPlaceClicked()
         {
-            throw new NotImplementedException();
-            //TODO: open wizard
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    canCreateCommunities: true,
+                    communityId: communityData!.Value.id)));
         }
 
         private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)

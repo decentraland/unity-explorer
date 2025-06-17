@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
@@ -9,13 +11,16 @@ using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 using Utility.Types;
@@ -42,6 +47,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly WarningNotificationView inWorldWarningNotificationView;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IChatEventBus chatEventBus;
         private readonly GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
         private readonly GenericContextMenuElement removeModeratorContextMenuElement;
@@ -69,19 +76,24 @@ namespace DCL.Communities.CommunitiesCard.Members
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
-            WarningNotificationView inWorldWarningNotificationView) : base(view, PAGE_SIZE)
+            WarningNotificationView inWorldWarningNotificationView,
+            IWeb3IdentityCache web3IdentityCache,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatEventBus = chatEventBus;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
                          .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
-                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ChatText, view.ContextMenuSettings.ChatSprite, () => OpenChatWithUser(lastClickedProfileCtx!)))
+                         .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ChatText, view.ContextMenuSettings.ChatSprite, () => OpenChatWithUserAsync(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.CallText, view.ContextMenuSettings.CallSprite, () => CallUser(lastClickedProfileCtx!)))
                          .AddControl(blockUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BlockText, view.ContextMenuSettings.BlockSprite, () => BlockUserClicked(lastClickedProfileCtx!))))
                          .AddControl(communityOptionsSeparatorContextMenuElement = new GenericContextMenuElement(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right)))
@@ -90,7 +102,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                          .AddControl(kickUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.KickUserText, view.ContextMenuSettings.KickUserSprite, () => view.ShowKickConfirmationDialog(lastClickedProfileCtx!, communityData?.name))))
                          .AddControl(banUserContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(view.ContextMenuSettings.BanUserText, view.ContextMenuSettings.BanUserSprite, () => view.ShowBanConfirmationDialog(lastClickedProfileCtx!, communityData?.name))));
 
-            this.view.InitGrid(() => currentSectionFetchData);
+            this.view.InitGrid(() => currentSectionFetchData, web3IdentityCache);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
             this.view.ElementMainButtonClicked += OnMainButtonClicked;
             this.view.ElementContextMenuButtonClicked += OnContextMenuButtonClicked;
@@ -267,12 +279,21 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void CallUser(MemberData profile)
         {
+            //TODO: call user in private conversation
             throw new NotImplementedException();
         }
 
-        private void OpenChatWithUser(MemberData profile)
+        private async void OpenChatWithUserAsync(MemberData profile)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                chatEventBus.OpenPrivateConversationUsingUserId(profile.memberAddress);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
+            }
         }
 
         private void OpenProfilePassport(MemberData profile) =>
@@ -290,51 +311,73 @@ namespace DCL.Communities.CommunitiesCard.Members
             base.Reset();
         }
 
-        private void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private async void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
-            friendshipOperationCts = friendshipOperationCts.SafeRestart();
-
-            switch (friendshipStatus)
+            try
             {
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
-                    CancelFriendshipRequestAsync(friendshipOperationCts.Token).Forget();
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
-                    mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
-                    {
-                        OneShotFriendAccepted = userData.ToFriendProfile()
-                    }), ct: friendshipOperationCts.Token).Forget();
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
-                    mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)), cancellationToken).Forget();
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
-                    mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
-                    {
-                        UserId = new Web3Address(userData.userAddress),
-                    }), friendshipOperationCts.Token);
-                    break;
-                case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
-                    mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
-                    {
-                        DestinationUser = new Web3Address(userData.userAddress),
-                    }), friendshipOperationCts.Token);
-                    break;
+                friendshipOperationCts = friendshipOperationCts.SafeRestart();
+                CancellationToken ct = friendshipOperationCts.Token;
+
+                switch (friendshipStatus)
+                {
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_SENT:
+                        await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.userAddress, ct)
+                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.REQUEST_RECEIVED:
+                        await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                        {
+                            OneShotFriendAccepted = userData.ToFriendProfile()
+                        }), ct: ct);
+
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED:
+                        await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(
+                            new Web3Address(userData.userAddress), userData.userName, BlockUserPromptParams.UserBlockAction.UNBLOCK)),
+                            ct);
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.FRIEND:
+                        await mvcManager.ShowAsync(UnfriendConfirmationPopupController.IssueCommand(new UnfriendConfirmationPopupController.Params
+                        {
+                            UserId = new Web3Address(userData.userAddress),
+                        }), ct);
+
+                        break;
+                    case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
+                        await mvcManager.ShowAsync(FriendRequestController.IssueCommand(new FriendRequestParams
+                        {
+                            DestinationUser = new Web3Address(userData.userAddress),
+                        }), ct);
+
+                        break;
+                }
+
+                Friends.FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userData.userAddress, ct);
+
+                currentSectionFetchData.items.Find(item => item.memberAddress.Equals(userData.userAddress))
+                                       .friendshipStatus = ConvertFriendshipStatus(status);
+
+                view.RefreshGrid();
             }
-
-            return;
-
-            async UniTaskVoid CancelFriendshipRequestAsync(CancellationToken ct)
+            catch (Exception ex) when (ex is OperationCanceledException)
             {
-                try
-                {
-                    await friendServiceProxy.StrictObject.CancelFriendshipAsync(userData.userAddress, ct);
-                }
-                catch(Exception e) when (e is not OperationCanceledException)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITIES));
-                }
+                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
+        }
+
+        private static FriendshipStatus ConvertFriendshipStatus(Friends.FriendshipStatus status)
+        {
+            return status switch
+               {
+                   Friends.FriendshipStatus.FRIEND => FriendshipStatus.friend,
+                   Friends.FriendshipStatus.REQUEST_RECEIVED => FriendshipStatus.request_received,
+                   Friends.FriendshipStatus.REQUEST_SENT => FriendshipStatus.request_sent,
+                   Friends.FriendshipStatus.BLOCKED => FriendshipStatus.blocked,
+                   Friends.FriendshipStatus.BLOCKED_BY => FriendshipStatus.blocked_by,
+                   Friends.FriendshipStatus.NONE => FriendshipStatus.none,
+                   _ => throw new ArgumentOutOfRangeException(nameof(status), status, null)
+               };
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
@@ -402,11 +445,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             userProfileContextMenuControlSettings.SetInitialData(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
             elementView.CanUnHover = false;
 
-            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator && viewerCanEdit;
-            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.member && viewerCanEdit;
+            removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
+            addModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.member && communityData?.role is CommunityMemberRole.owner;
             blockUserContextMenuElement.Enabled = profile.friendshipStatus != FriendshipStatus.blocked && profile.friendshipStatus != FriendshipStatus.blocked_by;
-            kickUserContextMenuElement.Enabled = viewerCanEdit && currentSection == MembersListView.MemberListSections.ALL;
-            banUserContextMenuElement.Enabled = viewerCanEdit && currentSection == MembersListView.MemberListSections.ALL;
+            kickUserContextMenuElement.Enabled = profile.role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MembersListView.MemberListSections.ALL;
+            banUserContextMenuElement.Enabled = profile.role != CommunityMemberRole.owner && viewerCanEdit && currentSection == MembersListView.MemberListSections.ALL;
 
             communityOptionsSeparatorContextMenuElement.Enabled = removeModeratorContextMenuElement.Enabled || addModeratorContextMenuElement.Enabled || kickUserContextMenuElement.Enabled || banUserContextMenuElement.Enabled;
 
