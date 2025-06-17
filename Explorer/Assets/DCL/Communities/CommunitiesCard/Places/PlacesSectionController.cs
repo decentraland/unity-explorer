@@ -261,27 +261,12 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             communityData = null;
             placesFetchData.Reset();
-            communityPlaceIds = null;
             view.SetCanModify(false);
             base.Reset();
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            if (communityPlaceIds == null || communityPlaceIds.Length == 0)
-            {
-                Result<List<string>> placeIdsResult = await communitiesDataProvider.GetCommunityPlacesAsync(communityData!.Value.id, ct)
-                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                if (!placeIdsResult.Success)
-                {
-                    placesFetchData.pageNumber--;
-                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
-                    return placesFetchData.totalToFetch;
-                }
-
-                communityPlaceIds = placeIdsResult.Value.ToArray();
-            }
-
             int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
 
@@ -305,13 +290,14 @@ namespace DCL.Communities.CommunitiesCard.Places
             return response.Value.total;
         }
 
-        public void ShowPlaces(CommunityData community, CancellationToken token)
+        public void ShowPlaces(CommunityData community, string[] placeIds, CancellationToken token)
         {
             cancellationToken = token;
 
             if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
 
             communityData = community;
+            communityPlaceIds = placeIds;
             userCanModify = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
             view.SetCanModify(userCanModify);
             view.SetCommunityData(community);

@@ -71,6 +71,7 @@ namespace DCL.Communities.CommunitiesCard
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
+        private string[] communityPlaceIds;
 
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -241,6 +242,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance!.SetLoadingState(true);
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
+                communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
                 communityData = response.data;
 
                 viewInstance.SetLoadingState(false);
@@ -274,14 +276,13 @@ namespace DCL.Communities.CommunitiesCard
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
-                    //TODO: fix the place ids
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, Array.Empty<string>(), sectionCancellationTokenSource.Token).Forget();
+                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityPlaceIds, sectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
-                    placesSectionController!.ShowPlaces(communityData, sectionCancellationTokenSource.Token);
+                    placesSectionController!.ShowPlaces(communityData, communityPlaceIds, sectionCancellationTokenSource.Token);
                     break;
             }
         }
