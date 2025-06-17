@@ -81,7 +81,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public async UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString)
         {
-            this.connectionString = newConnectionString;
+            connectionString = newConnectionString;
             await DeactivateAsync();
             await ActivateAsync();
             return CurrentState() is IConnectiveRoom.State.Running;
@@ -121,12 +121,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
+
             if (attemptToConnectState.Value() is AttemptToConnectState.ERROR)
             {
                 roomState.Set(IConnectiveRoom.State.Stopped);
                 attemptToConnectState.Set(AttemptToConnectState.NONE);
                 return false;
             }
+
             return true;
         }
 
@@ -135,9 +137,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
                 throw new InvalidOperationException("Room is already stopped");
 
-            cts = cts.SafeRestart();
             roomState.Set(IConnectiveRoom.State.Stopping);
-            await room.ResetRoomAsync(cts.Token);
+
+            cts = cts.SafeRestart();
+
+            if (connectionLoopHealth != IConnectiveRoom.ConnectionLoopHealth.Stopped)
+                await room.ResetRoomAsync(cts.Token);
+
             roomState.Set(IConnectiveRoom.State.Stopped);
             connectionString = string.Empty;
         }
@@ -155,6 +161,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
+            roomState.Set(IConnectiveRoom.State.Stopped);
         }
 
         private async UniTaskVoid SendConnectionStatusAsync(CancellationToken ct)
@@ -218,6 +225,5 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             public static readonly VoiceChatActivatableConnectiveRoom INSTANCE = new ();
         }
-
     }
 }

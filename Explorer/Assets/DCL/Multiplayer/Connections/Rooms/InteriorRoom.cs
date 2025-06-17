@@ -29,6 +29,8 @@ namespace DCL.Multiplayer.Connections.Rooms
         private readonly InteriorAudioStreams audioStreams = new ();
         private readonly InteriorAudioTracks audioTracks = new ();
 
+        private const int RESET_ROOM_TIMEOUT_SECONDS = 5;
+
         public IActiveSpeakers ActiveSpeakers => activeSpeakers;
         public IParticipantsHub Participants => participants;
         public IDataPipe DataPipe => dataPipe;
@@ -83,12 +85,15 @@ namespace DCL.Multiplayer.Connections.Rooms
         /// </summary>
         public async UniTask ResetRoomAsync(CancellationToken ct)
         {
-            try { await assigned.DisconnectAsync(ct); }
-            finally
+            var disconnectTask = assigned.DisconnectAsync(ct);
+            var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(RESET_ROOM_TIMEOUT_SECONDS), cancellationToken: ct);
+            var (winIndex, _) = await UniTask.WhenAny(disconnectTask, timeoutTask);
+            if (winIndex != 0)
             {
-                Unsubscribe(assigned);
-                assigned = NullRoom.INSTANCE;
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"ResetRoomAsync timed out after {RESET_ROOM_TIMEOUT_SECONDS} seconds");
             }
+            Unsubscribe(assigned);
+            assigned = NullRoom.INSTANCE;
         }
 
         internal async UniTask SwapRoomsAsync(RoomSelection roomSelection, IRoom previous, IRoom newRoom, IObjectPool<IRoom> roomsPool, CancellationToken ct)

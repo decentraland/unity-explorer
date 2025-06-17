@@ -34,6 +34,7 @@ namespace DCL.VoiceChat
         private CancellationTokenSource? reconnectionCts;
         private bool isOrderedDisconnection;
         private VoiceChatStatus currentStatus;
+        private CancellationTokenSource? orderedDisconnectionCts;
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedAudioSource combinedAudioSource,
@@ -77,7 +78,10 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.DISCONNECTED:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL)
+                    {
+                        orderedDisconnectionCts?.Cancel();
                         DisconnectFromRoomAsync().Forget();
+                    }
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     ConnectToRoomAsync().Forget();
@@ -132,16 +136,15 @@ namespace DCL.VoiceChat
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
                     CloseMedia();
 
-                    if (!isOrderedDisconnection && roomHub.VoiceChatRoom().CurrentConnectionLoopHealth == IConnectiveRoom.ConnectionLoopHealth.Stopped)
+                    if (!isOrderedDisconnection)
                     {
-                        Debug.Log("[VoiceChatLivekitRoomHandler] Unexpected disconnection detected - starting reconnection attempts");
-                        HandleUnexpectedDisconnection();
+                        Debug.Log("[VoiceChatLivekitRoomHandler] Unexpected disconnection detected - waiting for potential ordered disconnection");
+                        WaitForOrderedDisconnectionAsync().Forget();
                     }
                     else
                     {
-                        Debug.Log($"[VoiceChatLivekitRoomHandler] Disconnection handled - IsOrdered: {isOrderedDisconnection}, ConnectionHealth: {roomHub.VoiceChatRoom().CurrentConnectionLoopHealth}");
+                        Debug.Log($"[VoiceChatLivekitRoomHandler] Disconnection handled - IsOrdered, ConnectionHealth: {roomHub.VoiceChatRoom().CurrentConnectionLoopHealth}");
                     }
-
                     break;
                 case ConnectionUpdate.Reconnecting:
                     Debug.Log("[VoiceChatLivekitRoomHandler] Reconnecting...");
@@ -152,11 +155,36 @@ namespace DCL.VoiceChat
             }
         }
 
+        private async UniTaskVoid WaitForOrderedDisconnectionAsync()
+        {
+            orderedDisconnectionCts = orderedDisconnectionCts.SafeRestart();
+            try
+            {
+                await UniTask.Delay(500, cancellationToken: orderedDisconnectionCts.Token);
+
+                if (!isOrderedDisconnection)
+                {
+                    Debug.Log("[VoiceChatLivekitRoomHandler] No ordered disconnection received after 5 seconds - starting reconnection attempts");
+                    HandleUnexpectedDisconnection();
+                }
+                else
+                {
+                    Debug.Log("[VoiceChatLivekitRoomHandler] Ordered disconnection received during grace period - no reconnection needed");
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.Log("[VoiceChatLivekitRoomHandler] Grace period cancelled - ordered disconnection received");
+            }
+        }
+
         private void CleanupReconnectionState()
         {
             reconnectionCts.SafeCancelAndDispose();
             reconnectionCts = null;
             reconnectionAttempts = 0;
+            orderedDisconnectionCts.SafeCancelAndDispose();
+            orderedDisconnectionCts = null;
         }
 
         private void PublishTrack(CancellationToken ct)
@@ -276,12 +304,6 @@ namespace DCL.VoiceChat
 
         private void HandleUnexpectedDisconnection()
         {
-            if (roomHub.VoiceChatRoom().CurrentConnectionLoopHealth != IConnectiveRoom.ConnectionLoopHealth.Stopped)
-            {
-                Debug.Log("[VoiceChatLivekitRoomHandler] Skipping reconnection - connection health is not Stopped");
-                return;
-            }
-
             reconnectionAttempts = 0;
             reconnectionCts = reconnectionCts.SafeRestart();
             Debug.Log("[VoiceChatLivekitRoomHandler] Starting reconnection attempts");
