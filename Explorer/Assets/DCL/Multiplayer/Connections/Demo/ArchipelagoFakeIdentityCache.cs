@@ -32,6 +32,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 identityCache.Identity = identity;
             }
 
+            identityCache.Identity = new LogWeb3Identity(identityCache.Identity);
             return identityCache;
         }
     }
