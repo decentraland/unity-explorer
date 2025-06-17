@@ -55,6 +55,8 @@ namespace DCL.CharacterMotion.Systems
                     case UniTaskStatus.Pending:
                         controller.transform.position = teleportIntent.Position;
                         // Disable collisions so the scene does not interact with the character, and we avoid possible issues at startup
+                        // For example: teleport to Genesis Plaza. The dialog with the barman should not show at the spawn point
+                        // See https://github.com/decentraland/unity-explorer/issues/3289 for more info
                         controller.detectCollisions = false;
                         return;
                     case UniTaskStatus.Succeeded:
@@ -62,9 +64,11 @@ namespace DCL.CharacterMotion.Systems
                         ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
                         return;
                     case UniTaskStatus.Canceled:
+                        controller.detectCollisions = true;
                         ResolveAsCancelled(entity, in teleportIntent);
                         return;
                     case UniTaskStatus.Faulted:
+                        controller.detectCollisions = true;
                         ResolveAsFailure(entity, in teleportIntent, status.Exception!);
                         return;
                 }
