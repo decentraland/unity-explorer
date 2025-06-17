@@ -387,7 +387,7 @@ namespace DCL.Profiles
 
         public List<ProfileJsonDto>? avatars;
 
-        private GetProfileJsonRootDto() { }
+        public GetProfileJsonRootDto() { }
 
         public void Dispose()
         {
@@ -405,13 +405,14 @@ namespace DCL.Profiles
             return root;
         }
 
-        public void CopyFrom(Profile profile)
+        public GetProfileJsonRootDto CopyFrom(Profile profile)
         {
             avatars ??= new List<ProfileJsonDto>();
             avatars.Clear();
             var profileDto = new ProfileJsonDto();
             profileDto.CopyFrom(profile);
             avatars.Add(profileDto);
+            return this;
         }
 
         private bool AnyAvatarInList()
