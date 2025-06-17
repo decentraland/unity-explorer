@@ -301,5 +301,15 @@ namespace DCL.Chat
             newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : "", communityData.id);
             newItem.SetConversationName(communityData.name);
         }
+
+        /// <summary>
+        /// Moves the icon that corresponds to a conversation to the given position in the list of conversations.
+        /// </summary>
+        /// <param name="channelToMove">The conversation to move.</param>
+        /// <param name="position">The index of the new position.</param>
+        public void MoveConversationToPosition(ChatChannel.ChannelId channelToMove, int position)
+        {
+            items[channelToMove].transform.SetSiblingIndex(position);
+        }
     }
 }

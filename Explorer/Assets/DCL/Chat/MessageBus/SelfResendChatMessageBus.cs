@@ -11,7 +11,7 @@ namespace DCL.Chat.MessageBus
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ChatMessageFactory messageFactory;
 
-        public event Action<ChatChannel.ChannelId, ChatMessage> MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
 
         public SelfResendChatMessageBus(MultiplayerChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, ChatMessageFactory messageFactory)
         {
@@ -31,18 +31,18 @@ namespace DCL.Chat.MessageBus
             origin.Dispose();
         }
 
-        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatMessage message)
+        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage message)
         {
-            MessageAdded?.Invoke(channelId, message);
+            MessageAdded?.Invoke(channelId, channelType, message);
         }
 
         public void Send(ChatChannel channel, string message, string origin, string topic)
         {
             this.origin.Send(channel, message, origin, topic);
-            SendSelf(channel.Id, message, topic);
+            SendSelf(channel, message, topic);
         }
 
-        private void SendSelf(ChatChannel.ChannelId channelId, string chatMessage, string topic)
+        private void SendSelf(ChatChannel channel, string chatMessage, string topic)
         {
             IWeb3Identity identity = web3IdentityCache.Identity;
 
@@ -54,7 +54,7 @@ namespace DCL.Chat.MessageBus
 
             ChatMessage newMessage = messageFactory.CreateChatMessage(identity.Address, true, chatMessage, null, topic);
 
-            MessageAdded?.Invoke(channelId, newMessage);
+            MessageAdded?.Invoke(channel.Id, channel.ChannelType, newMessage);
         }
 
     }
