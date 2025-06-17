@@ -45,6 +45,8 @@ namespace Global.Tests.PlayMode
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             UIDocument scenesUI = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ADDRESS)).GetComponent<UIDocument>(); // This is / should be the only place where we load this via Addressables

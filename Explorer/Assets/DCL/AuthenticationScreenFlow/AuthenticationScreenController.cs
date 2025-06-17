@@ -19,11 +19,14 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace DCL.AuthenticationScreenFlow
 {
