@@ -8,7 +8,7 @@ namespace DCL.RuntimeDeepLink
         {
             DeepLinkSentinel
                .StartListenForDeepLinksAsync(
-                    new[] { IDeepLinkHandle.Null.INSTANCE },
+                    DeepLinkHandle.Null(),
                     destroyCancellationToken
                 )
                .Forget();

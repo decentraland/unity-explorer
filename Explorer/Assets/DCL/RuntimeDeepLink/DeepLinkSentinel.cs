@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using UnityEngine;
@@ -32,13 +31,13 @@ namespace DCL.RuntimeDeepLink
         [Serializable]
         private struct DeepLinkDTO
         {
-            public string deeplink;
+            public string? deeplink;
         }
 
         /// <summary>
         /// Runs for the lifetime of the app.
         /// </summary>
-        public static async UniTaskVoid StartListenForDeepLinksAsync<T>(T handles, CancellationToken token) where T: IEnumerable<IDeepLinkHandle>
+        public static async UniTaskVoid StartListenForDeepLinksAsync(DeepLinkHandle handle, CancellationToken token)
         {
             while (token.IsCancellationRequested == false)
             {
@@ -53,29 +52,17 @@ namespace DCL.RuntimeDeepLink
                 File.Delete(DEEP_LINK_BRIDGE_PATH);
 
                 DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(content);
+                string? raw = dto.deeplink;
+                DeepLinkCreateResult deepLinkCreateResult = DeepLink.FromRaw(raw);
 
-                if (dto.deeplink == null)
-                {
-                    ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content: {content}");
-                    continue;
-                }
-
-                foreach (IDeepLinkHandle deepLinkHandle in handles)
-                {
-                    HandleResult result = deepLinkHandle.HandleDeepLink(dto.deeplink);
-
-                    result.Match(
-                        deepLinkHandle,
-                        onHandleError: static (handle, error) => ReportHub.LogError(
-                            ReportCategory.RUNTIME_DEEPLINKS,
-                            $"DeepLinkHandle '{handle.Name}' failed to handle deeplink with error message: {error.Message}"
-                        ),
-                        onOk: static _ =>
-                        {
-                            /* ignore */
-                        }
-                    );
-                }
+                deepLinkCreateResult.Match((handle, raw),
+                    onDeepLink: static (tuple, link) =>
+                        tuple.handle.HandleDeepLink(link),
+                    onWrongFormat: static tuple =>
+                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content, wrong format: {tuple.raw}"),
+                    onEmptyInput: static _ =>
+                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content, empty content")
+                );
             }
         }
     }

@@ -567,7 +567,9 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
-            DeepLinkSentinel.StartListenForDeepLinksAsync(new[] { IDeepLinkHandle.Null.INSTANCE }, ct).Forget();
+            DeepLinkHandleImplementation deepLinkHandleImplementation = new DeepLinkHandleImplementation(realmNavigator, ct);
+            DeepLinkHandle deepLinkHandle = DeepLinkHandle.FromDeepLinkHandleImplementation(deepLinkHandleImplementation);
+            DeepLinkSentinel.StartListenForDeepLinksAsync(deepLinkHandle, ct).Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
