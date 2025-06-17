@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles;
 using DCL.UI.Communities;
@@ -30,18 +31,19 @@ namespace DCL.Chat
         public event ViewCommunityRequestedDelegate ViewCommunityRequested;
 
         [SerializeField] private Button closeChatButton;
-        [SerializeField] private Button closeMemberListButton;
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
+        [SerializeField] private TMP_Text communityMemberListTitleMemberListNumberText;
         [SerializeField] private TMP_Text chatChannelNameNameText;
         [SerializeField] private TMP_Text memberListChannelNameText;
 
         [SerializeField] private GameObject defaultChatTitlebar;
-        [SerializeField] private GameObject memberListTitlebar;
+        [SerializeField] private GameObject nearbyMemberListTitlebar;
+        [SerializeField] private GameObject communitiesMemberListTitlebar;
 
         [SerializeField] private GameObject memberCountObject;
         [SerializeField] private GameObject nearbyChannelContainer;
@@ -63,10 +65,7 @@ namespace DCL.Chat
         {
             get
             {
-                if (closeChatButton.gameObject.activeInHierarchy)
-                    return closeChatButton;
-                else
-                    return closeMemberListButton;
+                return closeChatButton;
             }
         }
 
@@ -82,7 +81,6 @@ namespace DCL.Chat
                 return;
 
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
-            closeMemberListButton.onClick.AddListener(OnCloseMemberListButtonClicked);
             showMemberListButton.onClick.AddListener(OnShowMemberListButtonClicked);
             hideMemberListButton.onClick.AddListener(OnHideMemberListButtonClicked);
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
@@ -94,16 +92,38 @@ namespace DCL.Chat
             isInitialized = true;
         }
 
-        public void ChangeTitleBarVisibility(bool isMemberListVisible)
+        public void ChangeTitleBarVisibility(bool isMemberListVisible, ChatChannel.ChatChannelType channelType)
         {
             defaultChatTitlebar.SetActive(!isMemberListVisible);
-            memberListTitlebar.SetActive(isMemberListVisible);
+            hideMemberListButton.gameObject.SetActive(isMemberListVisible);
+
+            if (channelType == ChatChannel.ChatChannelType.NEARBY)
+            {
+                nearbyMemberListTitlebar.SetActive(isMemberListVisible);
+            }
+            else if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                communitiesMemberListTitlebar.SetActive(isMemberListVisible);
+            }
+            else
+            {
+                nearbyMemberListTitlebar.SetActive(false);
+                communitiesMemberListTitlebar.SetActive(false);
+            }
         }
 
         public void SetMemberListNumberText(string userAmount)
         {
             chatTitleMemberListNumberText.text = userAmount;
-            memberListTitleMemberListNumberText.text = userAmount;
+
+            if (communityChannelContainer.gameObject.activeInHierarchy)
+            {
+                communityMemberListTitleMemberListNumberText.text = userAmount;
+            }
+            else if (nearbyMemberListTitlebar.gameObject.activeInHierarchy)
+            {
+                memberListTitleMemberListNumberText.text = userAmount;
+            }
         }
 
         public void SetChannelNameText(string channelName)
@@ -157,11 +177,6 @@ namespace DCL.Chat
         private void OnContextMenuClosed()
         {
             ContextMenuVisibilityChanged?.Invoke(false);
-        }
-
-        private void OnCloseMemberListButtonClicked()
-        {
-            CloseMemberListButtonClicked?.Invoke();
         }
 
         private void OnHideMemberListButtonClicked()

@@ -3,6 +3,8 @@ using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using UnityEngine;
 using DCL.UI.Utilities;
+using DCL.Web3.Identities;
+using Nethereum.Siwe.Core.Recap;
 using System;
 using System.Threading;
 using UnityEngine.UI;
@@ -56,6 +58,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private CancellationTokenSource confirmationDialogCts = new ();
         private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
+        private IWeb3IdentityCache web3IdentityCache;
 
         private void Awake()
         {
@@ -141,10 +144,12 @@ namespace DCL.Communities.CommunitiesCard.Members
             scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
         }
 
-        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc)
+        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc,
+            IWeb3IdentityCache web3IdentityCache)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getCurrentSectionFetchData = currentSectionDataFunc;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
@@ -159,7 +164,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
-            elementView.Configure(membersData.items[index], currentSection, profileRepositoryWrapper);
+            MemberData memberData = membersData.items[index];
+            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(web3IdentityCache.Identity?.Address), profileRepositoryWrapper);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 (member, position, item) => ElementContextMenuButtonClicked?.Invoke(member, position, item),
