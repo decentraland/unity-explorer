@@ -321,7 +321,6 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
-            communityCreationEditionEventBus.OnCommunityCreated();
         }
     }
 }
