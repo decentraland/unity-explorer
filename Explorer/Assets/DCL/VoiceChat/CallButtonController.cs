@@ -35,8 +35,18 @@ namespace DCL.VoiceChat
 
         public void Reset()
         {
-            view.TooltipParent.gameObject.SetActive(false);
+            if (!PlayerLoopHelper.IsMainThread)
+                ResetAsync().Forget();
+            else
+                view.TooltipParent.gameObject.SetActive(false);
+
             isClickedOnce = false;
+        }
+
+        private async UniTaskVoid ResetAsync()
+        {
+            await UniTask.SwitchToMainThread();
+            view.TooltipParent.gameObject.SetActive(false);
         }
 
         public void SetCallStatusForUser(OtherUserCallStatus status, string userId)
