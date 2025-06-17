@@ -148,7 +148,7 @@ namespace DCL.PlacesAPIService
             if (placeIdsList.Count == 0)
                 jsonBody.Clear();
 
-            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(baseURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(basePlacesURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
                                                                               .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
 
             return response;
