@@ -71,6 +71,7 @@ using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
+using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SocialService;
 using DCL.StylizedSkybox.Scripts.Plugin;
@@ -566,6 +567,8 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
+            DeepLinkSentinel.StartListenForDeepLinksAsync(new[] { IDeepLinkHandle.Null.INSTANCE }, ct).Forget();
+
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
@@ -844,10 +847,7 @@ namespace Global.Dynamic
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
 
-            if (localSceneDevelopment)
-            {
-                globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
-            }
+            if (localSceneDevelopment) { globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls)); }
             else
             {
                 globalPlugins.Add(lodContainer.LODPlugin);
