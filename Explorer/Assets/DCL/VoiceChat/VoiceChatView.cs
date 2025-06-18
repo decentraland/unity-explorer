@@ -104,6 +104,7 @@ namespace DCL.VoiceChat
             else
             {
                 isSpeakingCurrentSequence.Kill();
+                isSpeakingCurrentSequence = null;
             }
         }
 

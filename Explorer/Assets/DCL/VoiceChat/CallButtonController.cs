@@ -128,7 +128,7 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus newStatus)
         {
-            if (isClickedOnce && newStatus == VoiceChatStatus.VOICE_CHAT_USER_BUSY)
+            if (newStatus == VoiceChatStatus.VOICE_CHAT_USER_BUSY)
             {
                 EnableTooltipParent(cts.Token);
                 view.TooltipText.text = USER_ALREADY_IN_CALL_TOOLTIP_TEXT;

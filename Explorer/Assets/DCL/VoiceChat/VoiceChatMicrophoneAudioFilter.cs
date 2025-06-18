@@ -2,6 +2,9 @@ using DCL.Diagnostics;
 using UnityEngine;
 using LiveKit;
 using System;
+using DCL.VoiceChat;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace DCL.VoiceChat
 {
@@ -14,9 +17,12 @@ namespace DCL.VoiceChat
     {
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
         private const int DEFAULT_BUFFER_SIZE = 8192;
+        private const int LIVEKIT_FRAME_SIZE = 960; // 20ms at 48kHz
 
         private IVoiceChatAudioProcessor audioProcessor;
         private bool isFilterActive = true;
+
+        private readonly List<float> liveKitBuffer = new (LIVEKIT_FRAME_SIZE * 2);
         private int outputSampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
         private float[] resampleBuffer;
 
@@ -55,27 +61,39 @@ namespace DCL.VoiceChat
             if (data == null)
                 return;
 
+            int samplesPerChannel = data.Length / channels;
+            Span<float> sendBuffer = data;
+
             if (isProcessingEnabled && audioProcessor != null && data.Length > 0)
             {
-                if (tempBuffer == null || tempBuffer.Length < data.Length)
-                    tempBuffer = new float[Mathf.Max(data.Length, DEFAULT_BUFFER_SIZE)];
+                if (tempBuffer == null || tempBuffer.Length < data.Length * 2)
+                    tempBuffer = new float[Mathf.Max(data.Length * 2, DEFAULT_BUFFER_SIZE)];
 
-                try { ProcessAudioData(data.AsSpan(), channels, outputSampleRate); }
+                try { sendBuffer = ProcessAudioData(data.AsSpan(), channels, outputSampleRate, ref samplesPerChannel); }
                 catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Audio processing error: {ex.Message}"); }
             }
 
-            // This sends the processed audio data to LiveKit
-            int samplesPerChannel = data.Length / channels;
-            AudioRead?.Invoke(data.AsSpan(0, samplesPerChannel), DEFAULT_LIVEKIT_CHANNELS, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
+            // Buffer the resampled audio for LiveKit
+            for (var i = 0; i < samplesPerChannel; i++)
+                liveKitBuffer.Add(sendBuffer[i]);
+
+            while (liveKitBuffer.Count >= LIVEKIT_FRAME_SIZE)
+            {
+                if (tempBuffer == null || tempBuffer.Length < LIVEKIT_FRAME_SIZE)
+                    tempBuffer = new float[LIVEKIT_FRAME_SIZE];
+
+                liveKitBuffer.CopyTo(0, tempBuffer, 0, LIVEKIT_FRAME_SIZE);
+                AudioRead?.Invoke(tempBuffer.AsSpan(0, LIVEKIT_FRAME_SIZE), DEFAULT_LIVEKIT_CHANNELS, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
+                liveKitBuffer.RemoveRange(0, LIVEKIT_FRAME_SIZE);
+            }
         }
 
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
         public bool IsValid => audioProcessor != null && voiceChatConfiguration != null;
 
-        private void ProcessAudioData(Span<float> data, int channels, int sampleRate)
+        private Span<float> ProcessAudioData(Span<float> data, int channels, int sampleRate, ref int samplesPerChannel)
         {
-            int samplesPerChannel = data.Length / channels;
             Span<float> monoSpan = tempBuffer.AsSpan(0, samplesPerChannel);
 
             if (channels > 1)
@@ -83,45 +101,27 @@ namespace DCL.VoiceChat
                 for (var i = 0; i < samplesPerChannel; i++)
                 {
                     var sum = 0f;
+
                     for (var ch = 0; ch < channels; ch++)
                         sum += data[(i * channels) + ch];
+
                     monoSpan[i] = sum / channels;
                 }
             }
-            else
-            {
-                data.CopyTo(monoSpan);
-            }
+            else { data.CopyTo(monoSpan); }
 
             audioProcessor.ProcessAudio(monoSpan, sampleRate);
 
             if (outputSampleRate != VoiceChatConstants.LIVEKIT_SAMPLE_RATE)
             {
-                int targetSamplesPerChannel = (int)((float)samplesPerChannel * VoiceChatConstants.LIVEKIT_SAMPLE_RATE / outputSampleRate);
+                var targetSamplesPerChannel = (int)((float)samplesPerChannel * VoiceChatConstants.LIVEKIT_SAMPLE_RATE / outputSampleRate);
                 Span<float> resampledSpan = tempBuffer.AsSpan(samplesPerChannel, targetSamplesPerChannel);
-
-                // Resample working backwards to avoid overwriting data
-                for (int i = targetSamplesPerChannel - 1; i >= 0; i--)
-                {
-                    float sourceIndex = (float)i * outputSampleRate / VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
-                    int sourceIndexFloor = Mathf.FloorToInt(sourceIndex);
-                    int sourceIndexCeil = Mathf.Min(sourceIndexFloor + 1, samplesPerChannel - 1);
-                    float fraction = sourceIndex - sourceIndexFloor;
-
-                    float sample1 = monoSpan[sourceIndexFloor];
-                    float sample2 = monoSpan[sourceIndexCeil];
-                    resampledSpan[i] = Mathf.Lerp(sample1, sample2, fraction);
-                }
-
-                monoSpan = resampledSpan;
+                VoiceChatAudioResampler.ResampleCubic(monoSpan.Slice(0, samplesPerChannel), outputSampleRate, resampledSpan, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
                 samplesPerChannel = targetSamplesPerChannel;
+                return resampledSpan;
             }
 
-            // Output processed mono audio back to data array
-            for (var i = 0; i < samplesPerChannel; i++)
-            {
-                data[i] = monoSpan[i];
-            }
+            return monoSpan;
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
