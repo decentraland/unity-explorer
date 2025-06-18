@@ -18,6 +18,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private RectTransform headerContainer;
         [SerializeField] private RectTransform footerContainer;
         [SerializeField] private CanvasGroup interactionButtonsCanvasGroup;
+        [SerializeField] private Sprite defaultPlaceThumbnail;
 
         [Header("Place info")]
         [SerializeField] private ImageView placeThumbnailImage;
@@ -91,6 +92,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             imageController ??= new ImageController(placeThumbnailImage, webRequestController);
 
+            imageController.SetImage(defaultPlaceThumbnail);
             imageController.RequestImage(placeInfo.image);
 
             placeNameText.text = placeInfo.title;

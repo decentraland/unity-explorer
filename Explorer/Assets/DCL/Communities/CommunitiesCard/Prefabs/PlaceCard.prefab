@@ -418,6 +418,7 @@ MonoBehaviour:
   headerContainer: {fileID: 5629250283557921473}
   footerContainer: {fileID: 5951469731124757622}
   interactionButtonsCanvasGroup: {fileID: 4679103036289497690}
+  defaultPlaceThumbnail: {fileID: 21300000, guid: 50c948c68942a4cf188b1f118ba70f8d, type: 3}
   placeThumbnailImage: {fileID: 3951069872983715749}
   onlineMembersText: {fileID: 6311681305906227349}
   placeNameText: {fileID: 5579438315706490994}
