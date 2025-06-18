@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -8,6 +9,9 @@ namespace DCL.Communities
     {
         public delegate void CommunityOperation(string communityId);
         event CommunityOperation CommunityUpdated;
+
+        event Action CommunityCreated;
+        event Action CommunityDeleted;
 
         UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct);
         UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct);

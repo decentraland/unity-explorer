@@ -178,7 +178,7 @@ namespace DCL.Chat
             memberListHelper = new ChatControllerMemberListHelper(
                 roomHub,
                 membersBuffer,
-                GetChannelMembers,
+                GetChannelMembersAsync,
                 participantProfileBuffer,
                 this,
                 chatHistory,
@@ -265,7 +265,7 @@ namespace DCL.Chat
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
-            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembers, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -822,7 +822,7 @@ namespace DCL.Chat
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
-        private async UniTask GetChannelMembers(List<ChatUserData> outMembers, CancellationToken ct)
+        private async UniTask GetChannelMembersAsync(List<ChatUserData> outMembers, CancellationToken ct)
         {
             outMembers.Clear();
 
