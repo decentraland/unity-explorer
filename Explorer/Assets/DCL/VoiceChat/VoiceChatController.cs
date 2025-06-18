@@ -54,6 +54,13 @@ namespace DCL.VoiceChat
             this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
             this.voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
+            this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
+        }
+
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        {
+            if (connectionupdate == ConnectionUpdate.Connected)
+                view.SetInCallSection();
         }
 
         private void OnActiveSpeakersUpdated()

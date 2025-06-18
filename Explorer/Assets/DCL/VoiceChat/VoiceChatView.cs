@@ -32,6 +32,9 @@ namespace DCL.VoiceChat
         public VoiceChatErrorView ErrorView;
 
         [field: SerializeField]
+        public VoiceChatConnectingView ConnectingView;
+
+        [field: SerializeField]
         public AudioClipConfig MuteMicrophoneAudio { get; private set; }
 
         [field: SerializeField]
@@ -111,8 +114,9 @@ namespace DCL.VoiceChat
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    InCallView.gameObject.SetActive(true);
+                    ConnectingView.gameObject.SetActive(true);
                     InCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
+                    ConnectingView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
                     IncomingCallView.SetActive(true);
@@ -130,12 +134,19 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void SetInCallSection()
+        {
+            DisableAllSections();
+            InCallView.gameObject.SetActive(true);
+        }
+
         private void DisableAllSections()
         {
             InCallView.gameObject.SetActive(false);
             IncomingCallView.gameObject.SetActive(false);
             OutgoingCallView.gameObject.SetActive(false);
             ErrorView.SetActive(false);
+            ConnectingView.gameObject.SetActive(false);
         }
     }
 }
