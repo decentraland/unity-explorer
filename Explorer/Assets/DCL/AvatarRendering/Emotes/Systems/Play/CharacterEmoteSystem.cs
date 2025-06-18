@@ -65,10 +65,10 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         protected override void Update(float t)
         {
+            CancelEmotesByTeleportIntentionQuery(World);
             ConsumeEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
             CancelEmotesByDeletionQuery(World);
-            CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMovementQuery(World);
             CancelEmotesQuery(World);
             UpdateEmoteTagsQuery(World);
@@ -85,6 +85,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [All(typeof(PlayerTeleportIntent))]
+        [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             StopEmote(ref emoteComponent, avatarView);
