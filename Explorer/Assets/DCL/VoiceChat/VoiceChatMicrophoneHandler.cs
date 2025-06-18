@@ -28,6 +28,7 @@ namespace DCL.VoiceChat
         private AudioClip microphoneAudioClip;
         private VoiceChatStatus voiceChatStatus;
 
+        private bool isMicrophoneEnabledBeforeCall;
         private bool isMicrophoneInitialized;
         private bool isInCall;
         private CancellationTokenSource microphoneChangeCts;
@@ -60,7 +61,7 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
-
+            isMicrophoneEnabledBeforeCall = true;
             isInCall = false;
         }
 
@@ -117,16 +118,18 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
                 case VoiceChatStatus.DISCONNECTED:
                     if (!isInCall) return;
-
                     isInCall = false;
+                    isMicrophoneEnabledBeforeCall = true;
                     DisableMicrophone();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
-                    IsTalking = true;
+                    if (isMicrophoneEnabledBeforeCall)
+                        IsTalking = true;
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     isInCall = true;
-                    IsTalking = true;
+                    if (isMicrophoneEnabledBeforeCall)
+                        IsTalking = true;
                     EnableMicrophone();
                     break;
             }
@@ -167,8 +170,11 @@ namespace DCL.VoiceChat
 
         public void ToggleMicrophone()
         {
-            if (voiceChatStatus == VoiceChatStatus.DISCONNECTED) return;
-
+            if (voiceChatStatus != VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            {
+                isMicrophoneEnabledBeforeCall = !isMicrophoneEnabledBeforeCall;
+                return;
+            }
             if (!IsTalking)
                 EnableMicrophone();
             else

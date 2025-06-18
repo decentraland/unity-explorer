@@ -120,7 +120,6 @@ namespace DCL.VoiceChat
             {
                 case ConnectionUpdate.Connected:
                     CleanupReconnectionState();
-
                     if (!isMediaOpen)
                     {
                         isMediaOpen = true;
@@ -128,7 +127,6 @@ namespace DCL.VoiceChat
                         SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
-
                     break;
                 case ConnectionUpdate.Disconnected:
                     CleanupReconnectionState();
