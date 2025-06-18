@@ -47,7 +47,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
         private async UniTask<CameraReelResponsesCompact> FetchResponseAsync(CancellationToken ct)
         {
             if (parameters.PlaceIds != null)
-                return await cameraReelStorageService.GetCompactCommunityScreenshotGalleryAsync(parameters.PlaceIds, pageSize, currentOffset, ct);
+                return await cameraReelStorageService.GetCompactPlacesScreenshotGalleryAsync(parameters.PlaceIds, pageSize, currentOffset, ct);
 
             if (parameters.PlaceId != null)
                 return await cameraReelStorageService.GetCompactPlaceScreenshotGalleryAsync(parameters.PlaceId, pageSize, currentOffset, ct);

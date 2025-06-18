@@ -291,7 +291,7 @@ namespace DCL.Communities.CommunitiesCard
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, communityPlaceIds, sectionCancellationTokenSource.Token).Forget();
+                    cameraReelGalleryController!.ShowPlacesGalleryAsync(communityPlaceIds, sectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
