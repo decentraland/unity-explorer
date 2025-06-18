@@ -44,6 +44,8 @@ namespace DCL.Landscape
 
         private TerrainModel terrainModel;
 
+        private ITerrainDetailSetter terrainDetailSetter;
+
         public WorldTerrainGenerator(bool measureTime = false)
         {
             timeProfiler = new TimeProfiler(measureTime);
@@ -62,7 +64,7 @@ namespace DCL.Landscape
             return false;
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData)
+        public void Initialize(TerrainGenerationData terrainGenData, ITerrainDetailSetter detailSetter)
         {
             this.terrainGenData = terrainGenData;
 
@@ -71,6 +73,7 @@ namespace DCL.Landscape
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
             chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE);
 
+            terrainDetailSetter = detailSetter;
             IsInitialized = true;
         }
 
@@ -162,7 +165,7 @@ namespace DCL.Landscape
             {
                 chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, GetMaxHeightIndex(emptyParcelsData), parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, useCache: false),
                 chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
-                chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
+                chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, terrainDetailSetter, chunkModel.OccupiedParcels, false),
                 chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, useCache: false),
             };
 

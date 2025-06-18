@@ -20,6 +20,7 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Transform rotationTarget { get; private set; }
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
+        [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
         public void Dispose()
         {
@@ -61,5 +62,12 @@ namespace DCL.CharacterPreview
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
+    }
+
+    [Serializable]
+    public class AvatarPreviewHeadIKSettings
+    {
+        public float AvatarDepth = 500;
+        public float HeadMoveSpeed = 0.5f;
     }
 }

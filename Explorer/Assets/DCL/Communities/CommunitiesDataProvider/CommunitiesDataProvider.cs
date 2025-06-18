@@ -7,13 +7,15 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.Communities
 {
     public class CommunitiesDataProvider : ICommunitiesDataProvider
     {
+        public event Action CommunityCreated;
+        public event Action CommunityDeleted;
+
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -77,6 +79,8 @@ namespace DCL.Communities
 
                 response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
+
+                CommunityCreated?.Invoke();
             }
             else
             {
@@ -126,8 +130,23 @@ namespace DCL.Communities
             return response.data.total;
         }
 
-        public UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityPlacesAsync(communityId, ct);
+        public async UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct)
+        {
+            var url = $"{communitiesBaseUrl}/communities/{communityId}/places";
+
+            GetCommunityPlacesResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
+                                                                            .CreateFromJson<GetCommunityPlacesResponse>(WRJsonParser.Newtonsoft);
+
+            List<string> placesIds = new ();
+
+            if (response is { data: { results: not null } })
+            {
+                foreach (GetCommunityPlacesResult placeResult in response.data.results)
+                    placesIds.Add(placeResult.id);
+            }
+
+            return placesIds;
+        }
 
         public UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
             fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);
@@ -189,6 +208,9 @@ namespace DCL.Communities
             var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                       .WithNoOpAsync()
                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (result.Success)
+                CommunityDeleted?.Invoke();
 
             return result.Success;
         }

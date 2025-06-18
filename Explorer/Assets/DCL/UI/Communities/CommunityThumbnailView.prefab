@@ -97,6 +97,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
     - target: {fileID: 1550108083613389261, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1550108083613389261, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
       value: 3
       objectReference: {fileID: 0}
@@ -104,6 +108,22 @@ PrefabInstance:
       propertyPath: _sprite
       value: 
       objectReference: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
+    - target: {fileID: 1592991949209245285, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1592991949209245285, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: _spriteBorderMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1592991949209245285, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: _spritePixelsPerUnitMultiplier
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3566865946185505719, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
     - target: {fileID: 4561718667523275783, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -140,7 +160,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   thumbnailImageView: {fileID: 5866946252261905873}
   thumbnailBackground: {fileID: 7465909787489353167}
-  defaultEmptyThumbnail: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
+  defaultEmptyThumbnail: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
+  fadingDuration: 0.5
 --- !u!114 &5866946252261905873 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2554876876778093011, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
@@ -158,7 +179,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 8223338120684694530}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1696866409616317005}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 

@@ -290,7 +290,7 @@ namespace DCL.Chat
                             SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
                             communityTitleCts = communityTitleCts.SafeRestart();
-                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : "", openContextMenuAction, communityTitleCts.Token);
+                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : null, openContextMenuAction, communityTitleCts.Token);
                             break;
                     }
 
@@ -1019,6 +1019,11 @@ namespace DCL.Chat
             chatAndConversationsPanel.gameObject.SetActive(!isVisible);
             unfoldedPanelInteractableArea.enabled = !isVisible;
 
+            if (currentChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                chatTitleBar.SetChannelNameText(communitiesData[CurrentChannelId].name);
+            }
+
             MemberListVisibilityChanged?.Invoke(isVisible);
         }
 
@@ -1106,6 +1111,15 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
             isSubmitHooked = false;
+        }
+
+        /// <summary>
+        /// In the conversation toolbar, the channel is moved to the top beneath the nearby channel.
+        /// </summary>
+        /// <param name="channelToMove">The channel to be moved.</param>
+        public void MoveChannelToTop(ChatChannel.ChannelId channelToMove)
+        {
+            conversationsToolbar.MoveConversationToPosition(channelToMove, 1);
         }
     }
 }

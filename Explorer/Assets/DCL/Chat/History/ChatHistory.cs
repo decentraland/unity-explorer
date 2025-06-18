@@ -47,7 +47,7 @@ namespace DCL.Chat.History
             }
         }
 
-        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.UNDEFINED)
+        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type)
         {
             if (channels.TryGetValue(channelId, out ChatChannel channel))
                 return channel;
@@ -84,9 +84,9 @@ namespace DCL.Chat.History
             ChannelRemoved?.Invoke(channelId, channel.ChannelType);
         }
 
-        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage newMessage)
         {
-            var channel = AddOrGetChannel(channelId);
+            var channel = AddOrGetChannel(channelId, channelType);
             channel.AddMessage(newMessage);
         }
 

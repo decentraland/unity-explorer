@@ -26,7 +26,7 @@ namespace DCL.Chat.MessageBus
         private readonly string routingUser;
         private readonly bool isCommunitiesIncluded;
 
-        public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub,
             ChatMessageFactory messageFactory,
@@ -115,7 +115,7 @@ namespace DCL.Chat.MessageBus
 
                 ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Topic);
 
-                MessageAdded?.Invoke(parsedChannelId, newMessage);
+                MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
             }
         }
 

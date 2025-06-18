@@ -223,6 +223,11 @@ namespace DCL.AvatarRendering.Emotes.Play
                 emoteComponent.EmoteLoop = isLooping;
             }
 
+            // Create a clean slate for the animator before setting the play trigger
+            view.ResetTrigger(AnimationHashes.EMOTE_STOP);
+            view.ResetTrigger(AnimationHashes.EMOTE);
+            view.ResetTrigger(AnimationHashes.EMOTE_RESET);
+
             view.SetAnimatorTrigger(view.IsAnimatorInTag(AnimationHashes.EMOTE) || view.IsAnimatorInTag(AnimationHashes.EMOTE_LOOP) ? AnimationHashes.EMOTE_RESET : AnimationHashes.EMOTE);
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
