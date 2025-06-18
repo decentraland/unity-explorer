@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
@@ -46,6 +47,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly IMVCManager mvcManager;
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
@@ -76,6 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.communitiesDataProvider = communitiesDataProvider;
+            this.mvcManager = mvcManager;
 
             view.InitList(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
 
@@ -180,8 +183,10 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private void OnOpenWizardRequested()
         {
-            //TODO: open community wizard
-            throw new NotImplementedException();
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    canCreateCommunities: true,
+                    communityId: communityData!.Value.id)));
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
