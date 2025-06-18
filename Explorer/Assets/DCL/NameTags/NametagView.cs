@@ -271,7 +271,7 @@ namespace DCL.Nametags
             currentUsernameColor.a = NameTagAlpha;
             usernameText.color = currentUsernameColor;
             privateMessageText.color = currentRecipientNameColor;
-            Debug.Log(NameTagAlpha);
+
             communityNameText.color = new Color(communityNameText.color.r, communityNameText.color.g, communityNameText.color.b, NameTagAlpha);
             communityNameTextBackground.color = new Color(communityNameTextBackground.color.r, communityNameTextBackground.color.g, communityNameTextBackground.color.b, NameTagAlpha);
 
