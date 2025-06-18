@@ -263,6 +263,7 @@ namespace DCL.Communities.CommunityCreation
         {
             viewInstance!.SetCreationPanelAsLoading(true);
 
+            // Load community data
             var getCommunityResult = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -278,6 +279,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCreationPanelAsLoading(false);
 
+            // Load community places ids
             var getCommunityPlacesResult = await dataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)
                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -288,26 +290,30 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            var getPlacesDetailsResult = await  placesAPIService.GetPlacesByIdsAsync(getCommunityPlacesResult.Value, ct)
-                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-
-            if (!getPlacesDetailsResult.Success)
+            if (getCommunityPlacesResult.Value is { Count: > 0 })
             {
-                showErrorCts = showErrorCts.SafeRestart();
-                await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
-                return;
-            }
+                // Load places details
+                var getPlacesDetailsResult = await  placesAPIService.GetPlacesByIdsAsync(getCommunityPlacesResult.Value, ct)
+                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (getPlacesDetailsResult.Value is not null)
-            {
-                foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
+                if (!getPlacesDetailsResult.Success)
                 {
-                    AddPlaceTag(new CommunityPlace
+                    showErrorCts = showErrorCts.SafeRestart();
+                    await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                    return;
+                }
+
+                if (getPlacesDetailsResult.Value is { data: { Count: > 0 } })
+                {
+                    foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
                     {
-                        Id = placeInfo.id,
-                        IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
-                        Name = $"{placeInfo.title} ({placeInfo.base_position})",
-                    }, updateScrollPosition: false);
+                        AddPlaceTag(new CommunityPlace
+                        {
+                            Id = placeInfo.id,
+                            IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
+                            Name = $"{placeInfo.title} ({placeInfo.base_position})",
+                        }, updateScrollPosition: false);
+                    }
                 }
             }
         }
