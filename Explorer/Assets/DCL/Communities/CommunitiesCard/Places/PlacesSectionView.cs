@@ -1,6 +1,8 @@
+using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Utilities;
+using DCL.Utilities;
 using DCL.WebRequests;
 using MVC;
 using SuperScrollView;
@@ -37,7 +39,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData;
         private bool canModify;
-        private IWebRequestController webRequestController;
+        private ObjectProxy<ISpriteCache> spriteCache;
         private IMVCManager mvcManager;
         private GenericContextMenu contextMenu;
         private CancellationToken cancellationToken;
@@ -67,13 +69,13 @@ namespace DCL.Communities.CommunitiesCard.Places
         }
 
         public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
-            IWebRequestController webRequestController,
+            ObjectProxy<ISpriteCache> placeThumbnailsCache,
             IMVCManager mvcManager,
             CancellationToken panelCancellationToken)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getPlacesFetchData = placesDataFunc;
-            this.webRequestController = webRequestController;
+            this.spriteCache = placeThumbnailsCache;
             this.mvcManager = mvcManager;
             cancellationToken = panelCancellationToken;
         }
@@ -95,7 +97,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             SectionFetchData<PlaceInfo> membersData = getPlacesFetchData();
 
             int realIndex = canModify ? index - 1 : index;
-            elementView.Configure(membersData.items[realIndex], webRequestController);
+            elementView.Configure(membersData.items[realIndex], spriteCache);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),

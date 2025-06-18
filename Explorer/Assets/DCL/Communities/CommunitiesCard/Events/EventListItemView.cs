@@ -1,5 +1,6 @@
 using DCL.EventsApi;
 using DCL.UI;
+using DCL.Utilities;
 using DCL.WebRequests;
 using System;
 using System.Globalization;
@@ -97,10 +98,10 @@ namespace DCL.Communities.CommunitiesCard.Events
             return schedule;
         }
 
-        public void Configure(PlaceAndEventDTO data, IWebRequestController webRequestController)
+        public void Configure(PlaceAndEventDTO data, ObjectProxy<ISpriteCache> spriteCache)
         {
             eventData = data;
-            imageController ??= new ImageController(eventThumbnailImage, webRequestController);
+            imageController ??= new ImageController(eventThumbnailImage, spriteCache);
 
             imageController.RequestImage(data.Event.image);
             eventTimeText.text = GetEventTimeText(data.Event);

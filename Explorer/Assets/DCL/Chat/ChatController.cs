@@ -74,7 +74,7 @@ namespace DCL.Chat
         private readonly IRoomHub roomHub;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
-        private readonly IThumbnailCache thumbnailCache;
+        private readonly ISpriteCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
 
@@ -129,7 +129,7 @@ namespace DCL.Chat
             ObjectProxy<IFriendsService> friendsService,
             ProfileRepositoryWrapper profileDataProvider,
             ICommunitiesDataProvider communitiesDataProvider,
-            IThumbnailCache thumbnailCache,
+            ISpriteCache thumbnailCache,
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView) : base(viewFactory)
         {

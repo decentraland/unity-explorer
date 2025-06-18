@@ -77,6 +77,7 @@ using DCL.Rendering.GPUInstancing.Systems;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SocialService;
 using DCL.StylizedSkybox.Scripts.Plugin;
+using DCL.UI;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
@@ -575,7 +576,7 @@ namespace Global.Dynamic
             var friendOnlineStatusCacheProxy = new ObjectProxy<IFriendsConnectivityStatusTracker>();
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
-            IThumbnailCache thumbnailCache = new ThumbnailCache(staticContainer.WebRequestsContainer.WebRequestController);
+            ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
             ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
 
             IChatEventBus chatEventBus = new ChatEventBus();

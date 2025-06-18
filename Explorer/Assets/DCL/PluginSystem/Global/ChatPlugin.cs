@@ -67,7 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ICommunitiesDataProvider communityDataProvider;
-        private readonly IThumbnailCache thumbnailCache;
+        private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
 
         private ChatController chatController;
@@ -104,7 +104,7 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IRealmNavigator realmNavigator,
             ICommunitiesDataProvider communityDataProvider,
-            IThumbnailCache thumbnailCache,
+            ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView)
         {
             this.mvcManager = mvcManager;

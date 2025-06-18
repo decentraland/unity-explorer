@@ -43,14 +43,14 @@ namespace DCL.UI.Communities
         private UniTaskCompletionSource contextMenuTask = new ();
         private GenericContextMenu.Controls.Configs.GenericContextMenu contextMenuConfig;
 
-        public async UniTaskVoid SetupAsync(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
+        public async UniTaskVoid SetupAsync(ISpriteCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
         {
             contextMenuConfig = new GenericContextMenu.Controls.Configs.GenericContextMenu(contextMenuSettings.Width, contextMenuSettings.Offset, contextMenuSettings.VerticalLayoutPadding, contextMenuSettings.ElementsSpacing, ContextMenuOpenDirection.TOP_LEFT)
                                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText, contextMenuSettings.ViewCommunitySprite, () => ViewCommunityRequested?.Invoke()));
 
             openContextMenu = openContextMenuAction;
             userNameElement.text = communityName;
-            await thumbnailView.LoadThumbnailAsync(thumbnailCache, thumbnailUrl, communityId, ct);
+            await thumbnailView.LoadThumbnailAsync(thumbnailCache, thumbnailUrl, ct);
         }
 
         private void Awake()

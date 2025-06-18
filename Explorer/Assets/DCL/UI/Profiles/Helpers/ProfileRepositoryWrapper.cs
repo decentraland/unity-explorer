@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using DCL.UI;
 using System.Threading;
 using UnityEngine;
 
@@ -15,22 +16,22 @@ namespace DCL.UI.Profiles.Helpers
     /// </remarks>
     public class ProfileRepositoryWrapper
     {
-        private readonly IThumbnailCache thumbnailCache;
+        private readonly ISpriteCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
-        public ProfileRepositoryWrapper(IProfileRepository profileRepository, IThumbnailCache thumbnailCache, IRemoteMetadata remoteMetadata)
+        public ProfileRepositoryWrapper(IProfileRepository profileRepository, ISpriteCache thumbnailCache, IRemoteMetadata remoteMetadata)
         {
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;
             this.remoteMetadata = remoteMetadata;
         }
 
-        public async UniTask<Sprite?> GetProfileThumbnailAsync(string userId, string thumbnailUrl, CancellationToken ct) =>
-            await thumbnailCache.GetThumbnailAsync(userId, thumbnailUrl, ct);
+        public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
+            await thumbnailCache.GetSpriteAsync(thumbnailUrl, ct);
 
         public Sprite? GetProfileThumbnail(string userId) =>
-            thumbnailCache.GetThumbnail(userId);
+            thumbnailCache.GetCachedSprite(userId);
 
         public async UniTask<Profile?> GetProfileAsync(string userId, CancellationToken ct) =>
             await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);

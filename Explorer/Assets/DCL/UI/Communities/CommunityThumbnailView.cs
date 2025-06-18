@@ -1,5 +1,4 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Profiles;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -19,7 +18,7 @@ namespace DCL.UI.Communities
         [SerializeField] private float fadingDuration = 0.5f;
 
         private CancellationTokenSource? cts;
-        private string? currentCommunityId;
+        private string? currentCommunityUrl;
 
         public void Dispose()
         {
@@ -35,21 +34,21 @@ namespace DCL.UI.Communities
         public void SetDefaultThumbnail()
         {
             thumbnailImageView.SetImage(defaultEmptyThumbnail);
-            currentCommunityId = null;
+            currentCommunityUrl = null;
         }
 
-        public async UniTask LoadThumbnailAsync(IThumbnailCache thumbnailCache, string imageUrl, string communityId,  CancellationToken ct = default)
+        public async UniTask LoadThumbnailAsync(ISpriteCache thumbnailCache, string imageUrl, CancellationToken ct = default)
         {
-            if (communityId.Equals(currentCommunityId)) return;
+            if (imageUrl.Equals(currentCommunityUrl)) return;
 
             cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
-            currentCommunityId = communityId;
+            currentCommunityUrl = imageUrl;
 
             try
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = thumbnailCache.GetThumbnail(communityId);
+                Sprite? sprite = thumbnailCache.GetCachedSprite(imageUrl);
 
                 if (sprite != null)
                 {
@@ -62,20 +61,20 @@ namespace DCL.UI.Communities
                 SetLoadingState(true);
                 thumbnailImageView.Alpha = 0f;
 
-                sprite = await thumbnailCache!.GetThumbnailAsync(communityId, imageUrl, cts.Token);
+                sprite = await thumbnailCache!.GetSpriteAsync(imageUrl, cts.Token);
 
                 if (sprite == null)
-                    currentCommunityId = null;
+                    currentCommunityUrl = null;
 
                 await SetThumbnailImageWithAnimationAsync(sprite ? sprite! : defaultEmptyThumbnail, cts.Token);
             }
             catch (OperationCanceledException)
             {
-                currentCommunityId = null;
+                currentCommunityUrl = null;
             }
             catch (Exception)
             {
-                currentCommunityId = null;
+                currentCommunityUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }
         }
