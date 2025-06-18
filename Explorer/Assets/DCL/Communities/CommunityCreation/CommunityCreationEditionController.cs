@@ -36,7 +36,6 @@ namespace DCL.Communities.CommunityCreation
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
-        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -65,8 +64,7 @@ namespace DCL.Communities.CommunityCreation
             ICommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
-            IWebRequestController webRequestController,
-            CommunityCreationEditionEventBus communityCreationEditionEventBus) : base(viewFactory)
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
@@ -74,7 +72,6 @@ namespace DCL.Communities.CommunityCreation
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
-            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -297,7 +294,6 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
-            communityCreationEditionEventBus.OnCommunityCreated();
         }
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds)

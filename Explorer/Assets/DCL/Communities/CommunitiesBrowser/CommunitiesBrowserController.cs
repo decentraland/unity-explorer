@@ -42,7 +42,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -70,8 +69,7 @@ namespace DCL.Communities.CommunitiesBrowser
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
-            INftNamesProvider nftNamesProvider,
-            CommunityCreationEditionEventBus communityCreationEditionEventBus)
+            INftNamesProvider nftNamesProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -84,7 +82,6 @@ namespace DCL.Communities.CommunitiesBrowser
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
-            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -99,7 +96,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
-            communityCreationEditionEventBus.CommunityCreated += ReloadBrowser;
+            dataProvider.CommunityCreated += ReloadBrowser;
+            dataProvider.CommunityDeleted += ReloadBrowser;
         }
 
         public void Activate()
@@ -146,7 +144,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened -= OpenCommunityProfile;
             view.CommunityJoined -= JoinCommunity;
             view.CreateCommunityButtonClicked -= CreateCommunity;
-            communityCreationEditionEventBus.CommunityCreated -= ReloadBrowser;
+            dataProvider.CommunityCreated -= ReloadBrowser;
+            dataProvider.CommunityDeleted -= ReloadBrowser;
 
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();

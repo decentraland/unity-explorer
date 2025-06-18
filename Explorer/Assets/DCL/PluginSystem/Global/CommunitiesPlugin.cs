@@ -47,7 +47,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
 
@@ -72,7 +71,6 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
             IWeb3IdentityCache web3IdentityCache,
-            CommunityCreationEditionEventBus communityCreationEditionEventBus,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus)
         {
@@ -91,7 +89,6 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
@@ -140,8 +137,7 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 placesAPIService,
                 selfProfile,
-                webRequestController,
-                communityCreationEditionEventBus);
+                webRequestController);
             mvcManager.RegisterController(communityCreationEditionController);
         }
     }

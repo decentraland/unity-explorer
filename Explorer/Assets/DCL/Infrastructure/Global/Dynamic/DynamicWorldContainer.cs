@@ -614,8 +614,6 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
-            var communityCreationEditionEventBus = new CommunityCreationEditionEventBus();
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -769,8 +767,7 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
                     communitiesDataProvider,
-                    realmNftNamesProvider,
-                    communityCreationEditionEventBus
+                    realmNftNamesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -981,7 +978,6 @@ namespace Global.Dynamic
                     webBrowser,
                     eventsApiService,
                     identityCache,
-                    communityCreationEditionEventBus,
                     sharedSpaceManager,
                     chatEventBus));
 
