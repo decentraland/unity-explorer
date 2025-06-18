@@ -15,6 +15,7 @@ namespace DCL.Communities
     {
         public event Action CommunityCreated;
         public event Action CommunityDeleted;
+        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
 
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
@@ -22,8 +23,6 @@ namespace DCL.Communities
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
-
-        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
 
         public CommunitiesDataProvider(
             ICommunitiesDataProvider fakeDataProvider,

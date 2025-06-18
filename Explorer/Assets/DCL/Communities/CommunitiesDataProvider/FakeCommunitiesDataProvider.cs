@@ -15,6 +15,7 @@ namespace DCL.Communities
     {
         public event Action CommunityCreated;
         public event Action CommunityDeleted;
+        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
 
         private readonly List<GetUserCommunitiesData.CommunityData> currentCommunities;
 
@@ -23,8 +24,6 @@ namespace DCL.Communities
         {
             currentCommunities = GetFakeCommunitiesForBrowserTesting(communitiesAsOwner: 1, communitiesAsModerator: 1, communitiesAsMember: 1);
         }
-
-        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
