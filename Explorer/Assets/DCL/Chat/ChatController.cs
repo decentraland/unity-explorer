@@ -77,6 +77,7 @@ namespace DCL.Chat
         private readonly IThumbnailCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
+        private readonly bool isCommunitiesIncluded;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -131,7 +132,8 @@ namespace DCL.Chat
             ICommunitiesDataProvider communitiesDataProvider,
             IThumbnailCache thumbnailCache,
             IMVCManager mvcManager,
-            WarningNotificationView warningNotificationView) : base(viewFactory)
+            WarningNotificationView warningNotificationView,
+            bool isCommunitiesIncluded) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -154,6 +156,7 @@ namespace DCL.Chat
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
+            this.isCommunitiesIncluded = isCommunitiesIncluded;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -309,7 +312,10 @@ namespace DCL.Chat
                 viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
             }
 
-            await InitializeCommunityCoversationsAsync();
+            if (isCommunitiesIncluded)
+            {
+                await InitializeCommunityCoversationsAsync();
+            }
         }
 
         protected override void OnViewClose()
@@ -360,6 +366,7 @@ namespace DCL.Chat
         // TODO: Ready to be called by a notification
         private async UniTask AddCommunityCoversationAsync(string communityId)
         {
+            // TODO Add the feature flag somewhere in the place where the incoming notifications are processed
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
             Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -393,6 +400,7 @@ namespace DCL.Chat
         // TODO: Ready to be called by a notification
         private void RemoveCommunityConversation(string communityId)
         {
+            // TODO Add the feature flag somewhere in the place where the incoming notifications are processed
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(communityId);
             userCommunities.Remove(communityChannelId);
             chatHistory.RemoveChannel(communityChannelId);
