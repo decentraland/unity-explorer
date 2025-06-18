@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -67,7 +68,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser) : base (view, PAGE_SIZE)
+            IWebBrowser webBrowser,
+            IWeb3IdentityCache web3IdentityCache) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -79,7 +81,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
 
-            view.InitGrid(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
+            view.InitGrid(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken, web3IdentityCache);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 

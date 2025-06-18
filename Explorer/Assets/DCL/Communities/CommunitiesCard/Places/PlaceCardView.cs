@@ -85,7 +85,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceInfo placeInfo, IWebRequestController webRequestController)
+        public void Configure(PlaceInfo placeInfo, bool userOwnsPlace, IWebRequestController webRequestController)
         {
             currentPlaceInfo = placeInfo;
 
@@ -98,8 +98,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             onlineMembersText.text = $"{placeInfo.user_count}";
             placeCoordsText.text = string.IsNullOrWhiteSpace(placeInfo.world_name) ? placeInfo.base_position : placeInfo.world_name;
 
-            //TODO: check if user own the place and show/hide delete button accordingly
-            deleteButton.gameObject.SetActive(false);
+            deleteButton.gameObject.SetActive(userOwnsPlace);
 
             //Make sure to remove listeners before setting values in order to avoid unwanted calls to previously subscribed methods
             LikeToggleChanged = null;

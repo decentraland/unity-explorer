@@ -223,7 +223,8 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 mvcManager,
                 clipboard,
-                webBrowser);
+                webBrowser,
+                web3IdentityCache);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,

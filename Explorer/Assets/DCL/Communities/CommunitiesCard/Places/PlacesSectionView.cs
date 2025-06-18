@@ -2,8 +2,10 @@ using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Utilities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
+using Nethereum.Siwe.Core.Recap;
 using SuperScrollView;
 using System;
 using System.Threading;
@@ -52,6 +54,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private IMVCManager mvcManager;
         private GenericContextMenu contextMenu;
         private CancellationToken cancellationToken;
+        private IWeb3IdentityCache web3IdentityCache;
 
         private PlaceInfo lastClickedPlaceCtx;
 
@@ -85,13 +88,15 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
             IWebRequestController webRequestController,
             IMVCManager mvcManager,
-            CancellationToken panelCancellationToken)
+            CancellationToken panelCancellationToken,
+            IWeb3IdentityCache web3IdentityCache)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getPlacesFetchData = placesDataFunc;
             this.webRequestController = webRequestController;
             this.mvcManager = mvcManager;
             cancellationToken = panelCancellationToken;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
@@ -111,7 +116,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             SectionFetchData<PlaceInfo> membersData = getPlacesFetchData();
 
             int realIndex = canModify ? index - 1 : index;
-            elementView.Configure(membersData.items[realIndex], webRequestController);
+            PlaceInfo placeInfo = membersData.items[realIndex];
+            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(web3IdentityCache.Identity?.Address) && canModify, webRequestController);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),

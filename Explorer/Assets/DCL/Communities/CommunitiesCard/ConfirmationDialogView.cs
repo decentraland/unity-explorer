@@ -70,7 +70,7 @@ namespace DCL.Communities.CommunitiesCard
 
             mainText.text = dialogData.Text;
             subText.text = dialogData.SubText;
-            subText.gameObject.SetActive(!string.IsNullOrEmpty(dialogData.SubText));
+            subText.gameObject.SetActive(!string.IsNullOrWhiteSpace(dialogData.SubText));
             cancelButtonText.text = dialogData.CancelButtonText;
             confirmButtonText.text = dialogData.ConfirmButtonText;
             rimImage.enabled = dialogData.ShowImageRim;
