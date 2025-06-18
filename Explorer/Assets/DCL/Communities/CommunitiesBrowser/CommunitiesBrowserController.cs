@@ -97,6 +97,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
             dataProvider.CommunityCreated += ReloadBrowser;
+            dataProvider.CommunityUpdated += ReloadBrowser;
             dataProvider.CommunityDeleted += ReloadBrowser;
         }
 
@@ -145,6 +146,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityJoined -= JoinCommunity;
             view.CreateCommunityButtonClicked -= CreateCommunity;
             dataProvider.CommunityCreated -= ReloadBrowser;
+            dataProvider.CommunityUpdated -= ReloadBrowser;
             dataProvider.CommunityDeleted -= ReloadBrowser;
 
             loadMyCommunitiesCts?.SafeCancelAndDispose();

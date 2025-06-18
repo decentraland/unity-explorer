@@ -216,10 +216,10 @@ namespace DCL.Communities.CommunityCreation
                 creationPanelPlacesDropdown.value = 0;
             }
         }
-        public void AddPlaceTag(string id, bool isWorld, string placeName, bool updateScrollPosition = true)
+        public void AddPlaceTag(string id, bool isWorld, string placeName, bool isRemovalAllowed, bool updateScrollPosition = true)
         {
             CommunityPlaceTag placeTag = Instantiate(placeTagPrefab, placeTagsContainer);
-            placeTag.Setup(id, isWorld, placeName);
+            placeTag.Setup(id, isWorld, placeName, isRemovalAllowed);
 
             void OnPlaceTagRemovedClicked()
             {

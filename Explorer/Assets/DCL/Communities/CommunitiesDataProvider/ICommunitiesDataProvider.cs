@@ -10,6 +10,7 @@ namespace DCL.Communities
     public interface ICommunitiesDataProvider
     {
         public event Action CommunityCreated;
+        public event Action CommunityUpdated;
         public event Action CommunityDeleted;
 
         UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct);

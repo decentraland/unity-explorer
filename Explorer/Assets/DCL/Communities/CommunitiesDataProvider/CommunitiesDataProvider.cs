@@ -15,6 +15,7 @@ namespace DCL.Communities
     public class CommunitiesDataProvider : ICommunitiesDataProvider
     {
         public event Action CommunityCreated;
+        public event Action CommunityUpdated;
         public event Action CommunityDeleted;
 
         private readonly ICommunitiesDataProvider fakeDataProvider;
@@ -103,6 +104,8 @@ namespace DCL.Communities
             {
                 // Updating an existing community
                 throw new NotImplementedException("Updating communities is not implemented yet.");
+
+                CommunityUpdated?.Invoke();
             }
 
             return response;

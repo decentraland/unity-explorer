@@ -14,6 +14,7 @@ namespace DCL.Communities
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
         public event Action CommunityCreated;
+        public event Action CommunityUpdated;
         public event Action CommunityDeleted;
 
         private readonly List<GetUserCommunitiesData.CommunityData> currentCommunities;

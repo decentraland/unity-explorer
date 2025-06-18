@@ -241,12 +241,12 @@ namespace DCL.Communities.CommunityCreation
             if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
                 return;
 
-            AddPlaceTag(selectedPlace);
+            AddPlaceTag(selectedPlace, isRemovalAllowed: true);
         }
 
-        private void AddPlaceTag(CommunityPlace place, bool updateScrollPosition = true)
+        private void AddPlaceTag(CommunityPlace place, bool isRemovalAllowed, bool updateScrollPosition = true)
         {
-            viewInstance!.AddPlaceTag(place.Id, place.IsWorld, place.Name, updateScrollPosition);
+            viewInstance!.AddPlaceTag(place.Id, place.IsWorld, place.Name, isRemovalAllowed, updateScrollPosition);
             addedCommunityPlaces.Add(place);
         }
 
@@ -307,12 +307,27 @@ namespace DCL.Communities.CommunityCreation
                 {
                     foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
                     {
+                        bool isOwner = getCommunityResult.Value.data.role == CommunityMemberRole.owner;
+                        bool isRemovalAllowed = isOwner;
+
+                        if (!isOwner)
+                        {
+                            foreach (CommunityPlace existingPlace in currentCommunityPlaces)
+                            {
+                                if (existingPlace.Id != placeInfo.id)
+                                    continue;
+
+                                isRemovalAllowed = true;
+                                break;
+                            }
+                        }
+
                         AddPlaceTag(new CommunityPlace
                         {
                             Id = placeInfo.id,
                             IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
                             Name = $"{placeInfo.title} ({placeInfo.base_position})",
-                        }, updateScrollPosition: false);
+                        }, isRemovalAllowed, updateScrollPosition: false);
                     }
                 }
             }
