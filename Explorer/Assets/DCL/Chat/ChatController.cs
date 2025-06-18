@@ -18,6 +18,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
@@ -76,9 +77,10 @@ namespace DCL.Chat
         private readonly IThumbnailCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
+        private readonly bool isCommunitiesIncluded;
 
-        private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
-        private readonly List<Profile> participantProfileBuffer = new ();
+        private readonly List<ChatUserData> membersBuffer = new ();
+        private readonly List<ChatUserData> participantProfileBuffer = new ();
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> userCommunities = new();
 
         private SingleInstanceEntity cameraEntity;
@@ -91,6 +93,7 @@ namespace DCL.Chat
         private CancellationTokenSource chatUsersUpdateCts = new();
         private CancellationTokenSource communitiesServiceCts = new();
         private CancellationTokenSource errorNotificationCts = new();
+        private CancellationTokenSource memberListCts = new();
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
@@ -129,7 +132,8 @@ namespace DCL.Chat
             ICommunitiesDataProvider communitiesDataProvider,
             IThumbnailCache thumbnailCache,
             IMVCManager mvcManager,
-            WarningNotificationView warningNotificationView) : base(viewFactory)
+            WarningNotificationView warningNotificationView,
+            bool isCommunitiesIncluded) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -152,6 +156,7 @@ namespace DCL.Chat
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
+            this.isCommunitiesIncluded = isCommunitiesIncluded;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -175,10 +180,13 @@ namespace DCL.Chat
 
             memberListHelper = new ChatControllerMemberListHelper(
                 roomHub,
-                profileCache,
                 membersBuffer,
+                GetChannelMembersAsync,
                 participantProfileBuffer,
-                this);
+                this,
+                chatHistory,
+                userCommunities,
+                communitiesDataProvider);
         }
 
 #region Panel Visibility
@@ -260,7 +268,7 @@ namespace DCL.Chat
 
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
-            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus, thumbnailCache, OpenContextMenuAsync);
+            viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -285,7 +293,7 @@ namespace DCL.Chat
         {
             chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
-            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
             chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
         }
 
@@ -304,7 +312,10 @@ namespace DCL.Chat
                 viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
             }
 
-            await InitializeCommunityCoversationsAsync();
+            if (isCommunitiesIncluded)
+            {
+                await InitializeCommunityCoversationsAsync();
+            }
         }
 
         protected override void OnViewClose()
@@ -323,7 +334,7 @@ namespace DCL.Chat
             // Obtains all the communities of the user
             const int ALL_COMMUNITIES_OF_USER = 100;
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync();
+            Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
             {
@@ -334,12 +345,7 @@ namespace DCL.Chat
                 GetUserCommunitiesResponse response = result.Value;
 
                 for (int i = 0; i < response.data.results.Length; ++i)
-                {
-                    // TODO remove this when there are real thumbnails
-                    response.data.results[i].thumbnails ??= new CommunityThumbnails { raw = "https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png" };
-
                     userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.results[i].id), response.data.results[i]);
-                }
 
                 // Gives the data to the view so it can fill the items UI when new conversations are added
                 viewInstance!.SetCommunitiesData(userCommunities);
@@ -360,16 +366,15 @@ namespace DCL.Chat
         // TODO: Ready to be called by a notification
         private async UniTask AddCommunityCoversationAsync(string communityId)
         {
+            // TODO Add the feature flag somewhere in the place where the incoming notifications are processed
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
-            Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync();
+            Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
             {
                 await UniTask.SwitchToMainThread();
 
                 GetCommunityResponse response = result.Value;
-                // TODO remove this
-                response.data.thumbnails ??= new CommunityThumbnails { raw = "https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png" };
 
                 userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.id), new GetUserCommunitiesData.CommunityData()
                     {
@@ -395,6 +400,7 @@ namespace DCL.Chat
         // TODO: Ready to be called by a notification
         private void RemoveCommunityConversation(string communityId)
         {
+            // TODO Add the feature flag somewhere in the place where the incoming notifications are processed
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(communityId);
             userCommunities.Remove(communityChannelId);
             chatHistory.RemoveChannel(communityChannelId);
@@ -429,6 +435,7 @@ namespace DCL.Chat
             chatUsersUpdateCts.SafeCancelAndDispose();
             communitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
+            memberListCts.SafeCancelAndDispose();
         }
 
 #endregion
@@ -530,30 +537,34 @@ namespace DCL.Chat
                     viewInstance!.RefreshMessages();
                     viewInstance.ShowLastMessage();
                 }
-
-                return;
             }
-
-            HandleMessageAudioFeedback(addedMessage);
-
-            if (IsViewReady)
+            else
             {
-                bool shouldMarkChannelAsRead = viewInstance is { IsMessageListVisible: true, IsScrollAtBottom: true };
-                bool isCurrentChannel = destinationChannel.Id.Equals(viewInstance!.CurrentChannelId);
+                HandleMessageAudioFeedback(addedMessage);
 
-                if (isCurrentChannel)
+                if (IsViewReady)
                 {
-                    if (shouldMarkChannelAsRead)
-                        MarkCurrentChannelAsRead();
+                    bool shouldMarkChannelAsRead = viewInstance is { IsMessageListVisible: true, IsScrollAtBottom: true };
+                    bool isCurrentChannel = destinationChannel.Id.Equals(viewInstance!.CurrentChannelId);
 
-                    HandleUnreadMessagesSeparator(destinationChannel);
-                    viewInstance.RefreshMessages();
-                }
-                else
-                {
-                    viewInstance.RefreshUnreadMessages(destinationChannel.Id);
+                    if (isCurrentChannel)
+                    {
+                        if (shouldMarkChannelAsRead)
+                            MarkCurrentChannelAsRead();
+
+                        HandleUnreadMessagesSeparator(destinationChannel);
+                        viewInstance.RefreshMessages();
+                    }
+                    else
+                    {
+                        viewInstance.RefreshUnreadMessages(destinationChannel.Id);
+                    }
                 }
             }
+
+            // Moves the conversation icon to the top, beneath nearby
+            if(destinationChannel.ChannelType != ChatChannel.ChatChannelType.NEARBY)
+                viewInstance?.MoveChannelToTop(destinationChannel.Id);
         }
 
         private void HandleMessageAudioFeedback(ChatMessage message)
@@ -604,7 +615,7 @@ namespace DCL.Chat
                 chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
 
                 if (chatHistory.Channels[viewInstance.CurrentChannelId].Messages.Count == 0)
-                    chatHistory.AddMessage(viewInstance.CurrentChannelId, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+                    chatHistory.AddMessage(viewInstance.CurrentChannelId, chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
 
                 viewInstance.RefreshMessages();
             }
@@ -673,7 +684,8 @@ namespace DCL.Chat
 
         private void RefreshMemberList()
         {
-            memberListHelper.RefreshMemberList();
+            memberListCts = memberListCts.SafeRestart();
+            memberListHelper.RefreshMemberListAsync(memberListCts.Token).Forget();
         }
 
 #endregion
@@ -700,16 +712,16 @@ namespace DCL.Chat
             nametagsData.showNameTags = !nametagsData.showNameTags;
         }
 
-        private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatMessage chatMessage)
+        private void OnChatBusMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage chatMessage)
         {
             if (!chatMessage.IsSystemMessage)
             {
                 string formattedText = hyperlinkTextFormatter.FormatText(chatMessage.Message);
                 var newChatMessage = ChatMessage.CopyWithNewMessage(formattedText, chatMessage);
-                chatHistory.AddMessage(channelId, newChatMessage);
+                chatHistory.AddMessage(channelId, channelType, newChatMessage);
             }
             else
-                chatHistory.AddMessage(channelId, chatMessage);
+                chatHistory.AddMessage(channelId, channelType, chatMessage);
         }
 
 #endregion
@@ -813,15 +825,59 @@ namespace DCL.Chat
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
-        private void GetProfilesFromParticipants(List<Profile> outProfiles)
+        private async UniTask GetChannelMembersAsync(List<ChatUserData> outMembers, CancellationToken ct)
         {
-            outProfiles.Clear();
-// TODO with communities
-            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
+            outMembers.Clear();
+
+            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.NEARBY)
             {
-                // TODO: Use new endpoint to get a bunch of profile info
-                if (profileCache.TryGet(identity, out var profile))
-                    outProfiles.Add(profile);
+                foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
+                {
+                    if(ct.IsCancellationRequested)
+                        break;
+
+                    // TODO: Use new endpoint to get a bunch of profile info
+                    if (profileCache.TryGet(identity, out var profile))
+                        outMembers.Add(new ChatUserData()
+                        {
+                            WalletAddress = profile.UserId,
+                            FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl,
+                            Name = profile.ValidatedName,
+                            ConnectionStatus = ChatMemberConnectionStatus.Online,
+                            ProfileColor = ProfileNameColorHelper.GetNameColor(profile.ValidatedName),
+                            WalletId = profile.WalletId
+                        });
+                }
+            }
+            else if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(userCommunities[viewInstance!.CurrentChannelId].id, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (result.Success)
+                {
+                    GetCommunityMembersResponse response = result.Value;
+
+                    foreach(GetCommunityMembersResponse.MemberData memberData in response.data.results)
+                    {
+                        // Skips the user of the player
+                        if(memberData.memberAddress == web3IdentityCache.Identity.Address)
+                            continue;
+
+                        outMembers.Add(new ChatUserData()
+                            {
+                                WalletAddress = memberData.memberAddress,
+                                FaceSnapshotUrl = memberData.profilePictureUrl,
+                                Name = memberData.name,
+                                ConnectionStatus = ChatMemberConnectionStatus.Online,
+                                ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name),
+                                WalletId = memberData.memberAddress = $"#{memberData.memberAddress[^4..]}"
+                            });
+                    }
+                }
+                else
+                {
+                    // TODO
+                }
             }
         }
 

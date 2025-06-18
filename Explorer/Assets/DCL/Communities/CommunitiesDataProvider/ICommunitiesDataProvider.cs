@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.PlacesAPIService;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -8,6 +9,9 @@ namespace DCL.Communities
 {
     public interface ICommunitiesDataProvider
     {
+        public event Action CommunityCreated;
+        public event Action CommunityDeleted;
+
         UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct);
         UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct);
@@ -16,9 +20,10 @@ namespace DCL.Communities
         UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct);
-        UniTask<GetOnlineCommunityMembersResponse> GetOnlineCommunityMembersAsync(CancellationToken ct);
         UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct);
         UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
+        UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct);
+        UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct);
 
         UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);
         UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct);

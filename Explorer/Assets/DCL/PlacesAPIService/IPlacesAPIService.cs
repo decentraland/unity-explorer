@@ -15,7 +15,7 @@ namespace DCL.PlacesAPIService
 
         UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct, bool renewCache = false);
 
-        UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct);
 
         UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(CancellationToken ct,
             int pageNumber = -1, int pageSize = -1,
@@ -23,6 +23,8 @@ namespace DCL.PlacesAPIService
 
         UniTask<PoolExtensions.Scope<List<PlacesData.PlaceInfo>>> GetPlacesByCoordsListAsync(IEnumerable<Vector2Int> coordsList, CancellationToken ct, bool renewCache = false);
         UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.PlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
+        UniTask<PlacesData.PlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false);
 
         UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct);
 

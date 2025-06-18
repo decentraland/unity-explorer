@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -69,15 +68,22 @@ namespace DCL.PlacesAPIService
             return place;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct, bool renewCache = false)
+        public async UniTask<PlacesData.PlaceInfo?> GetWorldAsync(string placeId, CancellationToken ct)
         {
-            if (renewCache)
-                placesById.Remove(placeId);
-            else if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
+            if (placesById.TryGetValue(placeId, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo? place = await client.GetPlaceAsync(placeId, ct);
+            PlacesData.PlacesAPIResponse response = await client.GetWorldAsync(placeId, ct);
+
+            if (!response.ok)
+                return null;
+
+            if (response.data.Count == 0)
+                return null;
+
+            PlacesData.PlaceInfo place = response.data[0];
             TryCachePlace(place);
+
             return place;
         }
 
@@ -122,6 +128,12 @@ namespace DCL.PlacesAPIService
 
         public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false) =>
             client.GetPlacesByIdsAsync(placeIds, ct);
+
+        public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
+            client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
+
+        public UniTask<PlacesData.PlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
+            client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
 
         public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct) =>
             await client.GetOptimizedPlacesFromTheMapAsync(category, ct);
@@ -173,7 +185,7 @@ namespace DCL.PlacesAPIService
 
         private void TryCachePlace(PlacesData.PlaceInfo? placeInfo)
         {
-            if (placeInfo == null)
+            if (placeInfo?.id == null)
                 return;
 
             placesById[placeInfo.id] = placeInfo;

@@ -7,10 +7,8 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
-using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities.Extensions;
-using DCL.Web3;
 using DCL.WebRequests;
 using MVC;
 using System.Collections.Generic;
@@ -35,11 +33,9 @@ namespace DCL.Communities.CommunityCreation
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly ICommunitiesDataProvider dataProvider;
-        private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IWebRequestController webRequestController;
-        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -59,26 +55,25 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
+        private byte[] lastSelectedImageData;
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
             ICommunitiesDataProvider dataProvider,
-            INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
-            IWebRequestController webRequestController,
-            CommunityCreationEditionEventBus communityCreationEditionEventBus) : base(viewFactory)
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.dataProvider = dataProvider;
-            this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
-            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
+
+            FileBrowser.Instance.AllowSyncCalls = true;
         }
 
         protected override void OnViewInstantiated()
@@ -96,6 +91,7 @@ namespace DCL.Communities.CommunityCreation
 
         protected override void OnBeforeViewShow()
         {
+            lastSelectedImageData = null;
             closeTaskCompletionSource = new UniTaskCompletionSource();
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
@@ -187,6 +183,7 @@ namespace DCL.Communities.CommunityCreation
                 }
 
                 viewInstance!.SetProfileSelectedImage(data.CTToSprite(texture));
+                lastSelectedImageData = data;
             }
         }
 
@@ -201,8 +198,7 @@ namespace DCL.Communities.CommunityCreation
             if (ownProfile != null)
             {
                 // Lands owned or managed by the user
-                // TODO (Santi): Get places correctly when the API is ready
-                PlacesData.IPlacesAPIResponse placesResponse = await placesAPIService.SearchPlacesAsync(0, 1000, ct, "santi");
+                PlacesData.IPlacesAPIResponse placesResponse = await placesAPIService.GetPlacesByOwnerAsync(ownProfile.UserId, ct);
 
                 foreach (PlacesData.PlaceInfo placeInfo in placesResponse.Data)
                 {
@@ -217,18 +213,16 @@ namespace DCL.Communities.CommunityCreation
                 }
 
                 // Worlds
-                // TODO (Santi): Get worlds correctly when the API is ready
-                INftNamesProvider.PaginatedNamesResponse names = await nftNamesProvider.GetAsync(new Web3Address(ownProfile.UserId), 1, 1000, ct);
+                PlacesData.IPlacesAPIResponse worlds = await placesAPIService.GetWorldsByOwnerAsync(ownProfile.UserId, ct);
 
-                foreach (string name in names.Names)
+                foreach (PlacesData.PlaceInfo worldInfo in worlds.Data)
                 {
-                    var worldText = $"{name}.dcl.eth";
-                    placesToAdd.Add(worldText);
+                    placesToAdd.Add(worldInfo.world_name);
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
-                        Id = worldText,
+                        Id = worldInfo.id,
                         IsWorld = true,
-                        Name = worldText,
+                        Name = worldInfo.world_name,
                     });
                 }
             }
@@ -279,16 +273,16 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.SetCreationPanelAsLoading(false);
         }
 
-        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail)
+        private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            CreateCommunityAsync(name, description, lands, worlds, thumbnail, createCommunityCts.Token).Forget();
+            CreateCommunityAsync(name, description, lands, worlds, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail, CancellationToken ct)
+        private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, thumbnail, lands, worlds, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)
@@ -300,19 +294,18 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
-            communityCreationEditionEventBus.OnCommunityCreated();
         }
 
-        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail)
+        private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds)
         {
             createCommunityCts = createCommunityCts.SafeRestart();
-            UpdateCommunityAsync(inputData.CommunityId, name, description, lands, worlds, thumbnail, createCommunityCts.Token).Forget();
+            UpdateCommunityAsync(inputData.CommunityId, name, description, lands, worlds, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds, byte[] thumbnail, CancellationToken ct)
+        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
-            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, thumbnail, lands, worlds, ct)
+            var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!result.Success)
@@ -324,7 +317,6 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
-            communityCreationEditionEventBus.OnCommunityCreated();
         }
     }
 }

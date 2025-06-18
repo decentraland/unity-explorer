@@ -522,7 +522,7 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY))
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), includeCommunities)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -587,7 +587,7 @@ namespace Global.Dynamic
 
             // TODO: Remove fakeCommunitiesDataProvider when all the whole communitiesDataProvider implementation is ready.
             ICommunitiesDataProvider fakeCommunitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -613,8 +613,6 @@ namespace Global.Dynamic
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
-
-            var communityCreationEditionEventBus = new CommunityCreationEditionEventBus();
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -643,8 +641,8 @@ namespace Global.Dynamic
                     sceneThroughputBunch
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
-                new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument, exposedGlobalDataContainer.ExposedCameraData),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, dclInput),
+                new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
@@ -676,7 +674,7 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
+                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits, includeCommunities,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
@@ -713,7 +711,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     communitiesDataProvider,
                     thumbnailCache,
-                    mainUIView.WarningNotification),
+                    mainUIView.WarningNotification,
+                    includeCommunities),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -769,8 +768,7 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
                     communitiesDataProvider,
-                    realmNftNamesProvider,
-                    communityCreationEditionEventBus
+                    realmNftNamesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -967,7 +965,6 @@ namespace Global.Dynamic
                 globalPlugins.Add(new CommunitiesPlugin(
                     mvcManager,
                     assetsProvisioner,
-                    webBrowser,
                     staticContainer.InputBlock,
                     cameraReelStorageService,
                     cameraReelScreenshotsStorage,
@@ -975,14 +972,15 @@ namespace Global.Dynamic
                     friendServiceProxy,
                     communitiesDataProvider,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    mainUIView.WarningNotification,
-                    realmNftNamesProvider,
                     placesAPIService,
                     selfProfile,
                     realmNavigator,
                     clipboard,
+                    webBrowser,
                     eventsApiService,
-                    communityCreationEditionEventBus));
+                    identityCache,
+                    sharedSpaceManager,
+                    chatEventBus));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

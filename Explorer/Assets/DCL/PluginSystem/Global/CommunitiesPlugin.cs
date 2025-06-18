@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.Chat.EventBus;
 using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
@@ -15,7 +16,9 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -30,7 +33,6 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IMVCManager mvcManager;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
@@ -38,14 +40,15 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
-        private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmNavigator realmNavigator;
         private readonly ISystemClipboard clipboard;
+        private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
-        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IChatEventBus chatEventBus;
 
         private CommunityCardController? communityCardController;
 
@@ -54,7 +57,6 @@ namespace DCL.PluginSystem.Global
         public CommunitiesPlugin(
             IMVCManager mvcManager,
             IAssetsProvisioner assetsProvisioner,
-            IWebBrowser webBrowser,
             IInputBlock inputBlock,
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
@@ -62,18 +64,18 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView,
-            INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IRealmNavigator realmNavigator,
             ISystemClipboard clipboard,
+            IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
-            CommunityCreationEditionEventBus communityCreationEditionEventBus)
+            IWeb3IdentityCache web3IdentityCache,
+            ISharedSpaceManager sharedSpaceManager,
+            IChatEventBus chatEventBus)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
-            this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
@@ -81,14 +83,15 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
-            this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.realmNavigator = realmNavigator;
             this.clipboard = clipboard;
+            this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
+            this.web3IdentityCache = web3IdentityCache;
+            this.sharedSpaceManager = sharedSpaceManager;
+            this.chatEventBus = chatEventBus;
         }
 
         public void Dispose()
@@ -118,7 +121,10 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 clipboard,
                 webBrowser,
-                eventsApiService);
+                eventsApiService,
+                web3IdentityCache,
+                sharedSpaceManager,
+                chatEventBus);
 
             mvcManager.RegisterController(communityCardController);
 
@@ -129,11 +135,9 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inputBlock,
                 communitiesDataProvider,
-                nftNamesProvider,
                 placesAPIService,
                 selfProfile,
-                webRequestController,
-                communityCreationEditionEventBus);
+                webRequestController);
             mvcManager.RegisterController(communityCreationEditionController);
         }
     }

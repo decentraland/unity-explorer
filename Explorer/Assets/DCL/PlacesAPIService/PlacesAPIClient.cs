@@ -8,10 +8,11 @@ using DCL.WebRequests;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility.Times;
-using Random = UnityEngine.Random;
 
 namespace DCL.PlacesAPIService
 {
@@ -26,8 +27,9 @@ namespace DCL.PlacesAPIService
 
         private readonly URLBuilder urlBuilder = new ();
 
-        private string baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
-        private URLDomain baseURLDomain => URLDomain.FromString(baseURL);
+        private string basePlacesURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
+        private string baseWorldsURL => decentralandUrlsSource.Url(DecentralandUrl.ApiWorlds);
+        private URLDomain baseURLDomain => URLDomain.FromString(basePlacesURL);
         private URLAddress poiURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.POI));
         private URLAddress mapApiUrl => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.Map));
         private URLAddress contentModerationReportURL => URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport));
@@ -46,10 +48,11 @@ namespace DCL.PlacesAPIService
             bool? onlyFavorites = null,
             bool? addRealmDetails = null,
             IReadOnlyList<string>? positions = null,
-            List<PlacesData.PlaceInfo>? resultBuffer = null)
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            string? ownerAddress = null)
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(baseURL));
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
 
             if (!string.IsNullOrEmpty(searchString))
                 urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
@@ -79,6 +82,9 @@ namespace DCL.PlacesAPIService
                 foreach (string xy in positions)
                     urlBuilder.AppendParameter(new URLParameter("positions", xy));
 
+            if (!string.IsNullOrEmpty(ownerAddress))
+                urlBuilder.AppendParameter(new URLParameter("owner", ownerAddress));
+
             URLAddress url = urlBuilder.Build();
 
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
@@ -103,69 +109,127 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldsAsync(CancellationToken ct,
+            string? searchString = null,
+            (int pageNumber, int pageSize)? pagination = null,
+            string? sortBy = null, string? sortDirection = null,
+            string? category = null,
+            bool? onlyFavorites = null,
+            IReadOnlyList<string>? names = null,
+            List<PlacesData.PlaceInfo>? resultBuffer = null,
+            bool? showDisabled = null,
+            string? ownerAddress = null)
         {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(baseWorldsURL));
+
+            if (!string.IsNullOrEmpty(searchString))
+                urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
+
+            if (pagination != null)
+            {
+                urlBuilder.AppendParameter(new URLParameter("offset", (pagination?.pageNumber * pagination?.pageSize).ToString()!));
+                urlBuilder.AppendParameter(new URLParameter("limit", pagination?.pageSize.ToString()!));
+            }
+
+            if (!string.IsNullOrEmpty(sortBy))
+                urlBuilder.AppendParameter(new URLParameter("order_by", sortBy));
+
+            if (!string.IsNullOrEmpty(sortDirection))
+                urlBuilder.AppendParameter(new URLParameter("order", sortDirection));
+
+            if (!string.IsNullOrEmpty(category))
+                urlBuilder.AppendParameter(new URLParameter("categories", category.ToLower()));
+
+            if (onlyFavorites != null)
+                urlBuilder.AppendParameter(ONLY_FAVORITES);
+
+            if (names != null)
+                foreach (string name in names)
+                    urlBuilder.AppendParameter(new URLParameter("names", name));
+
+            if (showDisabled != null)
+                urlBuilder.AppendParameter(new URLParameter("disabled", showDisabled.ToString()));
+
+            if (!string.IsNullOrEmpty(ownerAddress))
+                urlBuilder.AppendParameter(new URLParameter("owner", ownerAddress));
+
+            URLAddress url = urlBuilder.Build();
+
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            var url = $"{baseURL}/{placeId}?with_realms_detail=true";
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
-                url, ct, ReportCategory.UI,
+                url, ct,
+                ReportCategory.UI,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            PlacesData.PlacesAPIGetParcelResponse response = await result.CreateFromJson<PlacesData.PlacesAPIGetParcelResponse>(WRJsonParser.Unity,
-                                                                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing place info:", text))
-                                                                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
+            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
+
+            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+
+            if (response.data == null)
+                throw new PlacesAPIException($"No world info retrieved:\n{searchString}");
+
+            resultBuffer?.AddRange(response.data);
+
+            return response;
+        }
+
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
+        {
+            var url = $"{baseWorldsURL}?names={placeId}";
+            ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
+                url, ct,
+                ReportCategory.UI,
+                signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
+
+            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
+
+            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+
+
 
             if (!response.ok)
                 throw new NotAPlaceException(placeId);
 
             // At this moment WR is already disposed
-            return response.data;
+            return response;
         }
 
-        //TODO: This method currently return made up data: fetch actual data from the endpoint when it is available
         public async UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct)
         {
-            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
+            var placeIdsList = placeIds.ToList();
 
-            List<string> placeIdsList = new List<string>(placeIds);
-
-            List<PlacesData.PlaceInfo> result = new List<PlacesData.PlaceInfo>(placeIdsList.Count);
-
-            bool userLike = Random.Range(0, 100) > 50;
-            bool userDislike = false;
-
-            if (!userLike)
-                userDislike = Random.Range(0, 100) > 50;
-
-            for (int i = 0; i < placeIdsList.Count; i++)
+            StringBuilder jsonBody = new StringBuilder("[");
+            for (var i = 0; i < placeIdsList.Count; i++)
             {
-                result.Add(new PlacesData.PlaceInfo(new Vector2Int(Random.Range(-150, 151), Random.Range(-150, 151)))
-                {
-                    id = placeIdsList[i],
-                    title = $"Place {i + 1}",
-                    description = $"Description for Place {i + 1}",
-                    user_count = Random.Range(0, 100),
-                    user_like = userLike,
-                    user_dislike = userDislike,
-                    user_favorite = Random.Range(0, 100) > 50,
-                    world_name = Random.Range(0, 100) > 50 ? $"WorldName{i}.dcl.eth" : string.Empty,
-                });
+                jsonBody.Append($"\"{placeIdsList[i]}\"");
+                if (i < placeIdsList.Count - 1)
+                    jsonBody.Append(", ");
             }
+            jsonBody.Append("]");
 
-            return new PlacesData.PlacesAPIResponse()
-            {
-                ok = true,
-                total = placeIdsList.Count,
-                data = result
-            };
+            if (placeIdsList.Count == 0)
+                jsonBody.Clear();
+
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(basePlacesURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
+                                                                              .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
+
+            return response;
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            string url = baseURL + "/{0}/favorites";
+            string url = basePlacesURL + "/{0}/favorites";
             const string FAVORITE_PAYLOAD = "{\"favorites\": true}";
             const string NOT_FAVORITE_PAYLOAD = "{\"favorites\": false}";
 
@@ -183,7 +247,7 @@ namespace DCL.PlacesAPIService
 
         public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {
-            string url = baseURL + "/{0}/likes";
+            string url = basePlacesURL + "/{0}/likes";
             const string LIKE_PAYLOAD = "{\"like\": true}";
             const string DISLIKE_PAYLOAD = "{\"like\": false}";
             const string NO_LIKE_PAYLOAD = "{\"like\": null}";
