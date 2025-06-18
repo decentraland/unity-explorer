@@ -139,7 +139,7 @@ namespace DCL.VoiceChat
                     if (!isOrderedDisconnection)
                     {
                         Debug.Log("[VoiceChatLivekitRoomHandler] Unexpected disconnection detected - waiting for potential ordered disconnection");
-                        //WaitForOrderedDisconnectionAsync().Forget();
+                        WaitForOrderedDisconnectionAsync().Forget();
                     }
                     break;
                 case ConnectionUpdate.Reconnecting:
@@ -300,6 +300,13 @@ namespace DCL.VoiceChat
 
         private void HandleUnexpectedDisconnection()
         {
+            var remoteCount = voiceChatRoom.Participants.RemoteParticipantIdentities().Count;
+            if (remoteCount == 0)
+            {
+                Debug.Log("[VoiceChatLivekitRoomHandler] No remote participants in room, skipping reconnection attempts");
+                voiceChatCallStatusService.HandleLivekitConnectionFailed();
+                return;
+            }
             reconnectionAttempts = 0;
             reconnectionCts = reconnectionCts.SafeRestart();
             Debug.Log("[VoiceChatLivekitRoomHandler] Starting reconnection attempts");
