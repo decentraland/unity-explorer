@@ -614,8 +614,6 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
-            var communityCreationEditionEventBus = new CommunityCreationEditionEventBus();
-
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -643,8 +641,8 @@ namespace Global.Dynamic
                     sceneThroughputBunch
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
-                new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument, exposedGlobalDataContainer.ExposedCameraData),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, dclInput),
+                new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, assetBundlesURL, staticContainer.CacheCleaner, wearableCatalog, builderContentURL.Value, builderCollectionsPreview),
@@ -769,8 +767,7 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
                     communitiesDataProvider,
-                    realmNftNamesProvider,
-                    communityCreationEditionEventBus
+                    realmNftNamesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -983,7 +980,6 @@ namespace Global.Dynamic
                     webBrowser,
                     eventsApiService,
                     identityCache,
-                    communityCreationEditionEventBus,
                     sharedSpaceManager,
                     chatEventBus));
 

@@ -74,6 +74,7 @@ MonoBehaviour:
   defaultChatTitlebar: {fileID: 5554480968708598910}
   nearbyMemberListTitlebar: {fileID: 9061095220331220801}
   communitiesMemberListTitlebar: {fileID: 369065757951985827}
+  communitiesMemberListTitlebarText: {fileID: 7706685827551752396}
   memberCountObject: {fileID: 6177869427546414279}
   nearbyChannelContainer: {fileID: 5174794944162340121}
   profileView: {fileID: 1310678421051852368}
@@ -1376,6 +1377,17 @@ RectTransform:
 --- !u!114 &3603435867378355716 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6890569302098547117, guid: 5a7de2a40f1a67d4dbeea3c775a39776, type: 3}
+  m_PrefabInstance: {fileID: 7899808053694209961}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7706685827551752396 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 527594591318503269, guid: 5a7de2a40f1a67d4dbeea3c775a39776, type: 3}
   m_PrefabInstance: {fileID: 7899808053694209961}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
