@@ -121,6 +121,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
+                viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
             }
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
@@ -196,6 +197,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
+            viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -291,6 +293,7 @@ namespace DCL.Communities.CommunitiesCard
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
+                    viewInstance!.CameraReelGalleryConfigs.PhotosView.SetAdminEmptyTextActive(communityData.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
                     cameraReelGalleryController!.ShowPlacesGalleryAsync(communityPlaceIds, sectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
