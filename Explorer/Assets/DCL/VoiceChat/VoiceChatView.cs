@@ -29,6 +29,9 @@ namespace DCL.VoiceChat
         public VoiceChatOutgoingCallView OutgoingCallView;
 
         [field: SerializeField]
+        public VoiceChatErrorView ErrorView;
+
+        [field: SerializeField]
         public AudioClipConfig MuteMicrophoneAudio { get; private set; }
 
         [field: SerializeField]
@@ -56,7 +59,12 @@ namespace DCL.VoiceChat
             VoiceChatCanvasGroup.alpha = 0;
             VoiceChatCanvasGroup
                 .DOFade(1, SHOW_HIDE_ANIMATION_DURATION)
-                .SetEase(Ease.Flash);
+                .SetEase(Ease.Flash)
+                .OnComplete(() =>
+                {
+                    VoiceChatContainer.SetActive(true);
+                    VoiceChatCanvasGroup.alpha = 1;
+                });
         }
 
         public void Hide()
@@ -68,7 +76,7 @@ namespace DCL.VoiceChat
                 .OnComplete(() =>
                 {
                     VoiceChatContainer.SetActive(false);
-                    DisableAllSections();
+                    VoiceChatCanvasGroup.alpha = 0;
                 });
         }
 
@@ -90,6 +98,10 @@ namespace DCL.VoiceChat
                     OutgoingCallView.gameObject.SetActive(true);
                     OutgoingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;
+                case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
+                    ErrorView.SetActive(true);
+                    ErrorView.StartErrorPanelDisableFlow();
+                    break;
             }
         }
 
@@ -98,6 +110,7 @@ namespace DCL.VoiceChat
             InCallView.gameObject.SetActive(false);
             IncomingCallView.gameObject.SetActive(false);
             OutgoingCallView.gameObject.SetActive(false);
+            ErrorView.SetActive(false);
         }
     }
 }
