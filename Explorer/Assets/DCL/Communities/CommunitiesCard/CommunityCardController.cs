@@ -246,6 +246,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();
+            viewInstance!.SetDefaults(imageController);
             LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
 
