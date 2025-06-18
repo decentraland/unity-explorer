@@ -11,6 +11,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -90,10 +91,10 @@ namespace ECS.Unity.Materials.Tests
 
         internal static MaterialComponent CreateMaterialComponent() =>
             new (MaterialData.CreatePBRMaterial(
-                new TextureComponent("albedo",string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
-                new TextureComponent("alpha",string.Empty, TextureWrapMode.Mirror, FilterMode.Trilinear),
-                new TextureComponent("emissive",string.Empty, TextureWrapMode.Mirror, FilterMode.Bilinear),
-                new TextureComponent("bump",string.Empty, TextureWrapMode.Mirror, FilterMode.Point, TextureType.NormalMap),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("http://www.albedo.com")), string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("http://www.alpha.com")), string.Empty, TextureWrapMode.Mirror, FilterMode.Trilinear),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("http://www.emissive.com")), string.Empty, TextureWrapMode.Mirror),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("http://www.bump.com")), string.Empty, TextureWrapMode.Mirror, FilterMode.Point, TextureType.NormalMap),
                 0.5f,
                 true,
                 Color.red,

@@ -1,26 +1,30 @@
 using DCL.WebRequests;
+using Decentraland.Common;
 using System;
 using UnityEngine;
+using TextureWrapMode = UnityEngine.TextureWrapMode;
+using Vector2 = UnityEngine.Vector2;
 
 namespace ECS.Unity.Textures.Components
 {
     public readonly struct TextureComponent : IEquatable<TextureComponent>
     {
-        public readonly string Src;
+        public readonly TextureSource Src;
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
         public readonly TextureType TextureType;
         public readonly bool IsVideoTexture;
-        public readonly bool IsAvatarTexture;
         public readonly int VideoPlayerEntity;
         public readonly Vector2 TextureOffset;
         public readonly Vector2 TextureTiling;
         public readonly string FileHash;
 
-        private string cacheKey => string.IsNullOrEmpty(FileHash) ? Src : FileHash;
+        private string cacheKey => string.IsNullOrEmpty(FileHash) ? Src.Id : FileHash;
+
+        public bool IsAvatarTexture => Src.TextureType == TextureUnion.TexOneofCase.AvatarTexture;
 
         public TextureComponent(
-            string src,
+            TextureSource src,
             string fileHash,
             TextureWrapMode wrapMode = TextureWrapMode.Clamp,
             FilterMode filterMode = FilterMode.Bilinear,
@@ -28,8 +32,7 @@ namespace ECS.Unity.Textures.Components
             Vector2 textureOffset = default,
             Vector2 textureTiling = default,
             bool isVideoTexture = false,
-            int videoPlayerEntity = 0,
-            bool isAvatarTexture = false)
+            int videoPlayerEntity = 0)
         {
             Src = src;
             FileHash = fileHash;
@@ -40,7 +43,6 @@ namespace ECS.Unity.Textures.Components
             VideoPlayerEntity = videoPlayerEntity;
             TextureOffset = textureOffset;
             TextureTiling = textureTiling;
-            IsAvatarTexture = isAvatarTexture;
         }
 
         public bool Equals(TextureComponent other) =>

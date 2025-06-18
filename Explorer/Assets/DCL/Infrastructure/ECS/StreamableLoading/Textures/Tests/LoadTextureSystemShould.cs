@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
 using ECS.TestSuite;
+using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -20,7 +21,7 @@ namespace ECS.StreamableLoading.Textures.Tests
         private Uri wrongTypePath => new ($"file://{Application.dataPath + "/../TestResources/CRDT/arraybuffer.test"}");
 
         protected override GetTextureIntention CreateSuccessIntention() =>
-            new (successPath.OriginalString, string.Empty, TextureWrapMode.MirrorOnce, FilterMode.Trilinear, TextureType.Albedo);
+            new (TextureSource.CreateFromUri(successPath), string.Empty, TextureWrapMode.MirrorOnce, FilterMode.Trilinear, TextureType.Albedo);
 
         protected override GetTextureIntention CreateNotFoundIntention() =>
             new () { CommonArguments = new CommonLoadingArguments(failPath) };

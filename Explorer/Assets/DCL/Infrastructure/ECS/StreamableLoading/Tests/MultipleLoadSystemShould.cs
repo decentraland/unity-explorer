@@ -3,6 +3,7 @@ using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -15,7 +16,7 @@ namespace ECS.StreamableLoading.Tests
     [TestFixture]
     public class MultipleLoadSystemShould
     {
-        private string successPath => $"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}";
+        private Uri successPath => new ($"file://{Application.dataPath + "/../TestResources/Images/alphaTexture.png"}");
 
         private const int REQUESTS_COUNT = 1000;
 
@@ -41,7 +42,7 @@ namespace ECS.StreamableLoading.Tests
 
         private Promise NewPromise(World world)
         {
-            var intention = new GetTextureIntention(successPath, string.Empty, TextureWrapMode.Repeat, FilterMode.Bilinear, TextureType.Albedo);
+            var intention = new GetTextureIntention(TextureSource.CreateFromUri(successPath), string.Empty, TextureWrapMode.Repeat, FilterMode.Bilinear, TextureType.Albedo);
 
             var partition = PartitionComponent.TOP_PRIORITY;
             return Promise.Create(world, intention, partition);

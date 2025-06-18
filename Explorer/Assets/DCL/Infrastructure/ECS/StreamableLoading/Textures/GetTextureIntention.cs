@@ -1,10 +1,13 @@
 ﻿using CRDT;
 using DCL.WebRequests;
+using Decentraland.Common;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.Textures.Components;
 using System;
 using System.Threading;
 using UnityEngine;
+using TextureWrapMode = UnityEngine.TextureWrapMode;
 
 namespace ECS.StreamableLoading.Textures
 {
@@ -15,45 +18,40 @@ namespace ECS.StreamableLoading.Textures
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
         public readonly TextureType TextureType;
-
-        // OR
-        public readonly bool IsVideoTexture;
-        public readonly bool IsAvatarTexture;
         public readonly CRDTEntity VideoPlayerEntity;
         public readonly string FileHash;
-        public readonly Uri Src => CommonArguments.URL;
 
         public readonly string? AvatarId;
+
+        public readonly TextureSource Src;
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
         // Note: Depending on the origin of the texture, it may not have a file hash, so the source URL is used in equality comparisons
         private readonly string cacheKey => string.IsNullOrEmpty(FileHash) ? CommonArguments.URL.OriginalString : FileHash;
 
-        public GetTextureIntention(string uri, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
-            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT, bool isAvatarTexture = false)
+        public GetTextureIntention(TextureSource textureSource, string fileHash, TextureWrapMode wrapMode, FilterMode filterMode, TextureType textureType,
+            int attemptsCount = StreamableLoadingDefaults.ATTEMPTS_COUNT)
         {
-            CommonArguments = new CommonLoadingArguments(isAvatarTexture ? null : new Uri(uri), attempts: attemptsCount);
+            Src = textureSource;
+            CommonArguments = new CommonLoadingArguments(textureSource.TextureType == TextureUnion.TexOneofCase.Texture ? textureSource.GetUri() : null!, attempts: attemptsCount);
             WrapMode = wrapMode;
             FilterMode = filterMode;
             TextureType = textureType;
-            IsVideoTexture = false;
             VideoPlayerEntity = -1;
             FileHash = fileHash;
-            IsAvatarTexture = false;
             AvatarId = null;
         }
 
         public GetTextureIntention(CRDTEntity videoPlayerEntity)
         {
             CommonArguments = new CommonLoadingArguments(null!);
+            Src = TextureSource.CreateVideoTexture();
             FileHash = string.Empty;
             WrapMode = TextureWrapMode.Clamp;
             FilterMode = FilterMode.Bilinear;
-            IsVideoTexture = true;
             VideoPlayerEntity = videoPlayerEntity;
             TextureType = TextureType.Albedo; //Ignored
-            IsAvatarTexture = false;
             AvatarId = null;
         }
 
@@ -61,17 +59,17 @@ namespace ECS.StreamableLoading.Textures
             cacheKey == other.cacheKey &&
             WrapMode == other.WrapMode &&
             FilterMode == other.FilterMode &&
-            IsVideoTexture == other.IsVideoTexture &&
+            Src.TextureType == other.Src.TextureType &&
             VideoPlayerEntity.Equals(other.VideoPlayerEntity);
 
         public override bool Equals(object obj) =>
             obj is GetTextureIntention other && Equals(other);
 
         public readonly override int GetHashCode() =>
-            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity);
+            HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, Src, VideoPlayerEntity);
 
         public readonly override string ToString() =>
-            $"Get Texture: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
+            $"Get Texture: {(Src.TextureType == TextureUnion.TexOneofCase.VideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetTextureIntention>
         {
@@ -84,7 +82,7 @@ namespace ECS.StreamableLoading.Textures
                 keyPayload.Put(asset.cacheKey);
                 keyPayload.Put((int)asset.WrapMode);
                 keyPayload.Put((int)asset.FilterMode);
-                keyPayload.Put(asset.IsVideoTexture);
+                keyPayload.Put((int)asset.Src.TextureType);
                 keyPayload.Put(asset.VideoPlayerEntity.Id);
             }
         }

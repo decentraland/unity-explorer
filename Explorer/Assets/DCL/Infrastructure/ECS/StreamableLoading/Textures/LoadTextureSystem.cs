@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
+using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
@@ -41,11 +42,12 @@ namespace ECS.StreamableLoading.Textures
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetTextureIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
-            if (intention.IsVideoTexture) throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
+            if (intention.Src.TextureType == TextureUnion.TexOneofCase.VideoTexture)
+                throw new NotSupportedException($"{nameof(LoadTextureSystem)} does not support video textures. They should be handled by {nameof(VideoTextureUtils)}");
 
             IOwnedTexture2D? result;
 
-            if (intention.IsAvatarTexture)
+            if (intention.Src.TextureType == TextureUnion.TexOneofCase.AvatarTexture)
             {
                 URLAddress? url = await avatarTextureUrlProvider.GetAsync(intention.AvatarId!, ct);
 

@@ -18,33 +18,35 @@ namespace ECS.Unity.Textures.Components.Extensions
 
             if (self.IsVideoTexture())
             {
-                var textureComponent = new TextureComponent(null!, string.Empty, self.GetWrapMode(), self.GetFilterMode(), isVideoTexture: true, videoPlayerEntity: self.GetVideoTextureId());
+                var textureComponent = new TextureComponent(TextureSource.CreateVideoTexture(), string.Empty, self.GetWrapMode(), self.GetFilterMode(), isVideoTexture: true, videoPlayerEntity: self.GetVideoTextureId());
                 return textureComponent;
             }
 
-            bool success = self.TryGetTextureUrl(data, out Uri url);
+            bool success = self.TryGetTextureSource(data, out TextureSource source);
             self.TryGetTextureFileHash(data, out string fileHash);
 
             return success
-                ? new TextureComponent(url.OriginalString, fileHash, self.GetWrapMode(), self.GetFilterMode(),
+                ? new TextureComponent(source, fileHash, self.GetWrapMode(), self.GetFilterMode(),
                     textureOffset: self.GetOffset(),
-                    textureTiling: self.GetTiling(),
-                    isAvatarTexture: self.TexCase == TextureUnion.TexOneofCase.AvatarTexture)
+                    textureTiling: self.GetTiling())
                 : null;
         }
 
-        public static bool TryGetTextureUrl(this TextureUnion self, ISceneData data, out Uri url)
+        /// <summary>
+        ///     The texture can be represented either by the URL or by the userId
+        /// </summary>
+        public static bool TryGetTextureSource(this TextureUnion self, ISceneData data, out TextureSource source)
         {
             switch (self.TexCase)
             {
                 case TextureUnion.TexOneofCase.AvatarTexture:
-                    return self.AvatarTexture.TryGetTextureUrl(out url);
+                    return self.AvatarTexture.TryCreateFromUserId(out source);
                 case TextureUnion.TexOneofCase.VideoTexture:
-                    url = URLAddress.EMPTY; // just ignore to not break the loop
+                    source = TextureSource.CreateVideoTexture();
                     return false;
                 case TextureUnion.TexOneofCase.Texture:
                 default:
-                    return self.Texture.TryGetTextureUrl(data, out url);
+                    return self.Texture.TryCreateFromTextureUrl(data, out source);
             }
         }
 
@@ -131,23 +133,32 @@ namespace ECS.Unity.Textures.Components.Extensions
             }
         }
 
-        public static bool TryGetTextureUrl(this Texture self, ISceneData data, out Uri url) =>
-            data.TryGetMediaUrl(self.Src, out url);
+        public static bool TryCreateFromTextureUrl(this Texture self, ISceneData data, out TextureSource source)
+        {
+            if (data.TryGetMediaUrl(self.Src, out Uri mediaUrl))
+            {
+                source = TextureSource.CreateFromUri(mediaUrl);
+                return true;
+            }
+
+            source = default(TextureSource);
+            return false;
+        }
 
         public static bool TryGetTextureFileHash(this Texture self, ISceneData data, out string fileHash) =>
             data.TryGetMediaFileHash(self.Src, out fileHash);
 
-        public static bool TryGetTextureUrl(this AvatarTexture self, out Uri url)
+        public static bool TryCreateFromUserId(this AvatarTexture self, out TextureSource textureSource)
         {
             if (!string.IsNullOrEmpty(self.UserId))
             {
                 // The user id will be later used to determine the real url of the texture
                 // We cannot do it here, since we need to fetch the profile and then solve the face256 picture
-                url = URLAddress.FromString(self.UserId);
+                textureSource = TextureSource.CreateFromUserId(self.UserId);
                 return true;
             }
 
-            url = null!;
+            textureSource = default(TextureSource);
             return false;
         }
 
