@@ -29,7 +29,7 @@ namespace DCL.VoiceChat
         private ITrack microphoneTrack;
         private CancellationTokenSource cts;
         private bool isMediaOpen;
-        private OptimizedRtcAudioSource rtcAudioSource;
+        private OptimizedMonoRtcAudioSource monoRtcAudioSource;
         private int reconnectionAttempts;
         private CancellationTokenSource? reconnectionCts;
         private bool isOrderedDisconnection;
@@ -185,9 +185,9 @@ namespace DCL.VoiceChat
 
         private void PublishTrack(CancellationToken ct)
         {
-            rtcAudioSource = new OptimizedRtcAudioSource(microphoneAudioFilter);
-            rtcAudioSource.Start();
-            microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(voiceChatRoom.Participants.LocalParticipant().Name, rtcAudioSource);
+            monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneAudioFilter);
+            monoRtcAudioSource.Start();
+            microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(voiceChatRoom.Participants.LocalParticipant().Name, monoRtcAudioSource);
 
             var options = new TrackPublishOptions
             {
@@ -293,7 +293,7 @@ namespace DCL.VoiceChat
                 combinedAudioSource.Free();
             }
 
-            rtcAudioSource?.Stop();
+            monoRtcAudioSource?.Stop();
             voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
         }
