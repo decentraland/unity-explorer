@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -8,13 +7,15 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Communities
 {
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
+        public event Action CommunityCreated;
+        public event Action CommunityDeleted;
+
         private readonly List<GetUserCommunitiesData.CommunityData> currentCommunities;
 
         public FakeCommunitiesDataProvider(IWebRequestController webRequestController,

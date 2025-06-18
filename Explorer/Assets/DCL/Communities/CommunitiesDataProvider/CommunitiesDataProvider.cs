@@ -14,6 +14,9 @@ namespace DCL.Communities
 {
     public class CommunitiesDataProvider : ICommunitiesDataProvider
     {
+        public event Action CommunityCreated;
+        public event Action CommunityDeleted;
+
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -93,6 +96,8 @@ namespace DCL.Communities
 
                 response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
+
+                CommunityCreated?.Invoke();
             }
             else
             {
@@ -220,6 +225,9 @@ namespace DCL.Communities
             var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                       .WithNoOpAsync()
                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (result.Success)
+                CommunityDeleted?.Invoke();
 
             return result.Success;
         }
