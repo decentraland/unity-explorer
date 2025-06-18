@@ -343,14 +343,14 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetPlacesGalleryStorageInfoAsync(placeIds, ct);
 
-            if (storageStatus.ScreenshotsAmount == 0)
+            if (storageStatus.MaxScreenshots == 0)
             {
                 view.emptyState.SetActive(true);
                 FinishShowGallery();
                 return;
             }
 
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeIds), storageStatus.ScreenshotsAmount, view.PaginationLimit);
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeIds), storageStatus.MaxScreenshots, view.PaginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.MaxScreenshots];
 
             await LoadMorePageAsync(ct);

@@ -71,6 +71,7 @@ namespace DCL.EventsApi
 
         public async UniTask<EventWithPlaceIdDTOListResponse> GetEventsByPlaceIdsAsync(string[] placeIds, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
+            urlBuilder.Clear();
             urlBuilder.AppendDomain(baseUrl)
                       .AppendSubDirectory(URLSubdirectory.FromString("by-places"))
                       .AppendParameter(new URLParameter("limit", elementsPerPage.ToString()))
@@ -80,7 +81,6 @@ namespace DCL.EventsApi
                 urlBuilder.AppendParameter(new URLParameter(PLACE_ID_PARAMETER, placeId));
 
             URLAddress url = urlBuilder.Build();
-            urlBuilder.Clear();
 
             EventWithPlaceIdDTOListResponse responseData = await webRequestController
                                                                 .SignedFetchPostAsync(url,  GenericPostArguments.CreateJson("{}"), string.Empty, ct)
