@@ -160,13 +160,8 @@ namespace DCL.Multiplayer.Connections.Systems
                 CollectAndDraw(bufferBunch.Outgoing, outgoing);
             }
 
-            public (ulong incoming, ulong outgoing) Collect()
-            {
-                ulong incomingBytes = bufferBunch.Incoming.CurrentAmount();
-                ulong outgoingBytes = bufferBunch.Outgoing.CurrentAmount();
-
-                return (incomingBytes, outgoingBytes);
-            }
+            public (ulong incoming, ulong outgoing) Collect() =>
+                (bufferBunch.Incoming.CurrentAmount(), bufferBunch.Outgoing.CurrentAmount());
 
             public void Reset()
             {
