@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -12,13 +13,14 @@ namespace DCL.Communities.CommunitiesCard
         public struct DialogData
         {
             public readonly string Text;
+            public readonly string SubText;
             public readonly string CancelButtonText;
             public readonly string ConfirmButtonText;
             public readonly Sprite Image;
             public readonly bool ShowImageRim;
             public readonly bool ShowQuitImage;
 
-            public DialogData(string text, string cancelButtonText, string confirmButtonText, Sprite image, bool showImageRim, bool showQuitImage)
+            public DialogData(string text, string cancelButtonText, string confirmButtonText, Sprite image, bool showImageRim, bool showQuitImage, string subText = "")
             {
                 Text = text;
                 CancelButtonText = cancelButtonText;
@@ -26,6 +28,7 @@ namespace DCL.Communities.CommunitiesCard
                 Image = image;
                 ShowImageRim = showImageRim;
                 ShowQuitImage = showQuitImage;
+                SubText = subText;
             }
         }
 
@@ -43,6 +46,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private TMP_Text confirmButtonText { get; set; }
         [field: SerializeField] private float fadeDuration { get; set; } = 0.3f;
         [field: SerializeField] private TMP_Text mainText { get; set; }
+        [field: SerializeField] private TMP_Text subText { get; set; }
         [field: SerializeField] private Image mainImage { get; set; }
         [field: SerializeField] private GameObject quitImage { get; set; }
         [field: SerializeField] private Image rimImage { get; set; }
@@ -65,6 +69,8 @@ namespace DCL.Communities.CommunitiesCard
             confirmButton.gameObject.SetActive(true);
 
             mainText.text = dialogData.Text;
+            subText.text = dialogData.SubText;
+            subText.gameObject.SetActive(!string.IsNullOrEmpty(dialogData.SubText));
             cancelButtonText.text = dialogData.CancelButtonText;
             confirmButtonText.text = dialogData.ConfirmButtonText;
             rimImage.enabled = dialogData.ShowImageRim;

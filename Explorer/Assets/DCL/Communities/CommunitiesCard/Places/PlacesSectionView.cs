@@ -21,6 +21,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const int PLACE_PREFAB_INDEX = 1;
 
         private const string DELETE_PLACE_TEXT_FORMAT = "Are you sure you want to delete [{0}] from [{1}]'s Places?";
+        private const string DELETE_PLACE_SUB_TEXT = "Photos and events associated with this Place won't appear on the Community's profile anymore.";
         private const string DELETE_PLACE_CANCEL_TEXT = "CANCEL";
         private const string DELETE_PLACE_CONFIRM_TEXT = "DELETE";
 
@@ -147,7 +148,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                         DELETE_PLACE_CANCEL_TEXT,
                         DELETE_PLACE_CONFIRM_TEXT,
                         deleteSprite,
-                        false, false),
+                        false, false,
+                        DELETE_PLACE_SUB_TEXT),
                     ct);
 
                 if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
