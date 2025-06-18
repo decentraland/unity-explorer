@@ -64,9 +64,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly BuildData buildData;
-#if !UNITY_EDITOR
-        private readonly FeatureFlagsCache featureFlagsCache;
-#endif
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
 
@@ -98,9 +95,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
-#if !UNITY_EDITOR
-            this.featureFlagsCache = featureFlagsCache;
-#endif
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -138,11 +132,10 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
 
-#if UNITY_EDITOR
-            viewInstance.VersionText.text = $"editor-version - {buildData.InstallSource}";
-#else
-            viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
-#endif
+            viewInstance.VersionText.text = Application.isEditor
+                ? $"editor-version - {buildData.InstallSource}"
+                : $"{Application.version} - {buildData.InstallSource}";
+
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
