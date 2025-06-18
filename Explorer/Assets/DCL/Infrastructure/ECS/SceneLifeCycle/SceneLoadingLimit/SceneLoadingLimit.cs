@@ -49,8 +49,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             initialKey = SceneLimitsKey.MAX_MEMORY;
             currentSceneLimits = constantSceneLimits[initialKey];
-
-            UpdateMemoryCap();
         }
 
         public void ResetCurrentUsage()
