@@ -136,6 +136,14 @@ namespace DCL.PlacesAPIService
         {
             var placeIdsList = placeIds.ToList();
 
+            if (placeIdsList.Count == 0)
+                return new PlacesData.PlacesAPIResponse()
+                {
+                    ok = true,
+                    data = new List<PlacesData.PlaceInfo>(),
+                    total = 0
+                };
+
             StringBuilder jsonBody = new StringBuilder("[");
             for (var i = 0; i < placeIdsList.Count; i++)
             {
