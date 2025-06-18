@@ -10,6 +10,7 @@ namespace DCL.VoiceChat
     public class VoiceChatCombinedAudioSource : MonoBehaviour
     {
         [field: SerializeField] private AudioSource audioSource;
+        private const int DEFAULT_LIVEKIT_CHANNELS = 1;
 
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
@@ -51,7 +52,7 @@ namespace DCL.VoiceChat
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
-                    stream.ReadAudio(tempBuffer, channels, sampleRate);
+                    stream.ReadAudio(tempBuffer, DEFAULT_LIVEKIT_CHANNELS, sampleRate);
 
                     for (var i = 0; i < data.Length; i++)
                         data[i] += tempBuffer[i];

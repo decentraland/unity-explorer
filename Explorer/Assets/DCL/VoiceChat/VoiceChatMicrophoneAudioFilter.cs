@@ -12,10 +12,10 @@ namespace DCL.VoiceChat
     /// </summary>
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
-        private const int DEFAULT_LIVEKIT_CHANNELS = 2;
+        private const int DEFAULT_LIVEKIT_CHANNELS = 1;
         private const int DEFAULT_BUFFER_SIZE = 8192;
 
-        private VoiceChatAudioProcessor audioProcessor;
+        private IVoiceChatAudioProcessor audioProcessor;
         private bool isFilterActive = true;
         private int outputSampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
         private float[] resampleBuffer;
@@ -23,11 +23,6 @@ namespace DCL.VoiceChat
         private float[] tempBuffer;
         private VoiceChatConfiguration voiceChatConfiguration;
         private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
-
-        private void Awake()
-        {
-            if (voiceChatConfiguration != null) audioProcessor = new VoiceChatAudioProcessor(voiceChatConfiguration);
-        }
 
         private void OnEnable()
         {
@@ -44,7 +39,6 @@ namespace DCL.VoiceChat
         {
             AudioRead = null!;
 
-            audioProcessor?.Dispose();
             audioProcessor = null;
             tempBuffer = null;
             resampleBuffer = null;
@@ -122,11 +116,10 @@ namespace DCL.VoiceChat
                 samplesPerChannel = targetSamplesPerChannel;
             }
 
-            // Ensure 2-channel output with processed audio in left channel only
+            // Output processed mono audio back to data array
             for (var i = 0; i < samplesPerChannel; i++)
             {
-                data[i * 2] = monoSpan[i];     // Left channel: processed audio
-                data[i * 2 + 1] = 0f;         // Right channel: silence
+                data[i] = monoSpan[i];
             }
         }
 
@@ -138,8 +131,7 @@ namespace DCL.VoiceChat
         public void Initialize(VoiceChatConfiguration configuration)
         {
             voiceChatConfiguration = configuration;
-            audioProcessor?.Dispose();
-            audioProcessor = new VoiceChatAudioProcessor(configuration);
+            audioProcessor = new OptimizedVoiceChatAudioProcessor(configuration);
         }
 
         public void SetFilterActive(bool active)
