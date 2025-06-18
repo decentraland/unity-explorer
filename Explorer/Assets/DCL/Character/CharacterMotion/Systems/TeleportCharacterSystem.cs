@@ -41,7 +41,6 @@ namespace DCL.CharacterMotion.Systems
         private void TeleportPlayer(Entity entity, in PlayerTeleportIntent teleportIntent, CharacterController controller,
             CharacterPlatformComponent platformComponent, CharacterRigidTransform rigidTransform)
         {
-
             AsyncLoadProcessReport? loadReport = teleportIntent.AssetsResolution;
 
             if (loadReport == null)
@@ -54,16 +53,22 @@ namespace DCL.CharacterMotion.Systems
                 switch (status.TaskStatus)
                 {
                     case UniTaskStatus.Pending:
-                        // Teleport the character to a far away place while the teleport is executed
-                        controller.transform.position = MordorConstants.PLAYER_MORDOR_POSITION;
+                        controller.transform.position = teleportIntent.Position;
+                        // Disable collisions so the scene does not interact with the character, and we avoid possible issues at startup
+                        // For example: teleport to Genesis Plaza. The dialog with the barman should not show at the spawn point
+                        // See https://github.com/decentraland/unity-explorer/issues/3289 for more info
+                        controller.detectCollisions = false;
                         return;
                     case UniTaskStatus.Succeeded:
+                        controller.detectCollisions = true;
                         ResolveAsSuccess(entity, in teleportIntent, controller, platformComponent, rigidTransform);
                         return;
                     case UniTaskStatus.Canceled:
+                        controller.detectCollisions = true;
                         ResolveAsCancelled(entity, in teleportIntent);
                         return;
                     case UniTaskStatus.Faulted:
+                        controller.detectCollisions = true;
                         ResolveAsFailure(entity, in teleportIntent, status.Exception!);
                         return;
                 }

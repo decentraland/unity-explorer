@@ -54,7 +54,7 @@ namespace DCL.Web3.Identities
 
             public Default(IWeb3AccountFactory? web3AccountFactory = null)
             {
-                origin = new LogWeb3IdentityCache(
+                origin =
                     new ProxyIdentityCache(
                         new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(
@@ -67,8 +67,7 @@ namespace DCL.Web3.Identities
                             new MemoryMappedFilePlayerPrefsIdentityProviderKeyStrategy()
 #endif
                         )
-                    )
-                );
+                    );
             }
 
             public event Action? OnIdentityCleared
