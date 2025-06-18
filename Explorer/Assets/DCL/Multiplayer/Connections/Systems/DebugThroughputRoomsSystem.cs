@@ -78,12 +78,12 @@ namespace DCL.Multiplayer.Connections.Systems
 #if ENABLE_PROFILER
             if (UnityEngine.Profiling.Profiler.enabled && UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
             {
-                (ulong incoming, ulong outgoing) = island.Collect();
+                (ulong incoming, ulong outgoing) = island.CollectFrame();
 
                 NetworkProfilerCounters.LIVEKIT_ISLAND_RECEIVED.Value = incoming;
                 NetworkProfilerCounters.LIVEKIT_ISLAND_SEND.Value = outgoing;
 
-                (incoming, outgoing) = scene.Collect();
+                (incoming, outgoing) = scene.CollectFrame();
 
                 NetworkProfilerCounters.LIVEKIT_SCENE_RECEIVED.Value = incoming;
                 NetworkProfilerCounters.LIVEKIT_SCENE_SEND.Value = outgoing;
@@ -160,8 +160,8 @@ namespace DCL.Multiplayer.Connections.Systems
                 CollectAndDraw(bufferBunch.Outgoing, outgoing);
             }
 
-            public (ulong incoming, ulong outgoing) Collect() =>
-                (bufferBunch.Incoming.CurrentAmount(), bufferBunch.Outgoing.CurrentAmount());
+            public (ulong incoming, ulong outgoing) CollectFrame() =>
+                (bufferBunch.Incoming.CurrentAmountFrame(), bufferBunch.Outgoing.CurrentAmountFrame());
 
             public void Reset()
             {
