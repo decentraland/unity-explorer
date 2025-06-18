@@ -262,7 +262,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.ConfigureCommunity(communityData, imageController);
                 viewInstance.ConfigureContextMenu(mvcManager, ct);
 
-                viewInstance.ResetToggle();
+                viewInstance.ResetToggle(true);
 
                 eventListController?.ShowEvents(communityData, ct);
             }
@@ -275,6 +275,7 @@ namespace DCL.Communities.CommunitiesCard
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
             ResetSubControllers();
+            viewInstance.ResetToggle(false);
         }
 
         private void ResetSubControllers()

@@ -207,8 +207,8 @@ namespace DCL.Communities.CommunitiesCard
             backgroundImage.material.SetColor(shaderProperty, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
-        public void ResetToggle() =>
-            ToggleSection(Sections.MEMBERS);
+        public void ResetToggle(bool invokeEvent) =>
+            ToggleSection(Sections.MEMBERS, invokeEvent);
 
         public void SetLoadingState(bool isLoading)
         {
@@ -219,7 +219,7 @@ namespace DCL.Communities.CommunitiesCard
             loadingObject.SetActive(isLoading);
         }
 
-        private void ToggleSection(Sections section)
+        private void ToggleSection(Sections section, bool invokeEvent = true)
         {
             photosSectionSelection.SetActive(section == Sections.PHOTOS);
             membersSectionSelection.SetActive(section == Sections.MEMBERS);
@@ -230,7 +230,8 @@ namespace DCL.Communities.CommunitiesCard
             MembersListView.SetActive(section == Sections.MEMBERS);
             PlacesSectionView.SetActive(section == Sections.PLACES);
 
-            SectionChanged?.Invoke(section);
+            if (invokeEvent)
+                SectionChanged?.Invoke(section);
         }
 
         public void ConfigureInteractionButtons(CommunityMemberRole role)
