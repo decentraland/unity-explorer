@@ -30,7 +30,6 @@ using LiveKit.Rooms;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
 using Utility.Arch;
@@ -554,7 +553,6 @@ namespace DCL.Chat
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
-            // NOTE: this doesn't trigger any more (or it never did)
             // NOTE: it's wired in the ChatPlugin
             //TODO FRAN: This should take us to the nearby channel and send the command there
             viewInstance!.Focus("/");
