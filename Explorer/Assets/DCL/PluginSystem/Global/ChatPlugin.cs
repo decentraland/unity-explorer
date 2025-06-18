@@ -69,6 +69,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
+        private readonly bool isCommunitiesIncluded;
 
         private ChatController chatController;
         private IRealmData realmData;
@@ -105,7 +106,8 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             ICommunitiesDataProvider communityDataProvider,
             ISpriteCache thumbnailCache,
-            WarningNotificationView warningNotificationView)
+            WarningNotificationView warningNotificationView,
+            bool isCommunitiesIncluded)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -139,6 +141,7 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
+            this.isCommunitiesIncluded = isCommunitiesIncluded;
         }
 
         public void Dispose()
@@ -189,7 +192,8 @@ namespace DCL.PluginSystem.Global
                 communityDataProvider,
                 thumbnailCache,
                 mvcManager,
-                warningNotificationView
+                warningNotificationView,
+                isCommunitiesIncluded
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

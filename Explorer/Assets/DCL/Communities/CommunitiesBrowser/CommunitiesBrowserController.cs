@@ -42,7 +42,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly CommunityCreationEditionEventBus communityCreationEditionEventBus;
         private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
 
         private CancellationTokenSource loadMyCommunitiesCts;
@@ -71,8 +70,7 @@ namespace DCL.Communities.CommunitiesBrowser
             IMVCManager mvcManager,
             ProfileRepositoryWrapper profileDataProvider,
             ISelfProfile selfProfile,
-            INftNamesProvider nftNamesProvider,
-            CommunityCreationEditionEventBus communityCreationEditionEventBus)
+            INftNamesProvider nftNamesProvider)
         {
             this.view = view;
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -84,7 +82,6 @@ namespace DCL.Communities.CommunitiesBrowser
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
-            this.communityCreationEditionEventBus = communityCreationEditionEventBus;
 
             spriteCache.SetObject(new SpriteCache(webRequestController));
 
@@ -101,7 +98,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
-            communityCreationEditionEventBus.CommunityCreated += Activate;
+            dataProvider.CommunityCreated += ReloadBrowser;
+            dataProvider.CommunityDeleted += ReloadBrowser;
         }
 
         public void Activate()
@@ -112,11 +110,7 @@ namespace DCL.Communities.CommunitiesBrowser
             isSectionActivated = true;
             view.SetViewActive(true);
             cursor.Unlock();
-
-            // Each time we open the Communities section, we load both my communities and Decentraland communities
-            loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
-            LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
-            LoadAllCommunitiesResults();
+            ReloadBrowser();
         }
 
         public void Deactivate()
@@ -153,7 +147,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened -= OpenCommunityProfile;
             view.CommunityJoined -= JoinCommunity;
             view.CreateCommunityButtonClicked -= CreateCommunity;
-            communityCreationEditionEventBus.CommunityCreated -= Activate;
+            dataProvider.CommunityCreated -= ReloadBrowser;
+            dataProvider.CommunityDeleted -= ReloadBrowser;
 
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
@@ -161,6 +156,14 @@ namespace DCL.Communities.CommunitiesBrowser
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
             spriteCache.StrictObject.Clear();
+        }
+
+        private void ReloadBrowser()
+        {
+            // Each time we open the Communities section, we load both my communities and Decentraland communities
+            loadMyCommunitiesCts = loadMyCommunitiesCts.SafeRestart();
+            LoadMyCommunitiesAsync(loadMyCommunitiesCts.Token).Forget();
+            LoadAllCommunitiesResults();
         }
 
         private void ConfigureMyCommunitiesList() =>

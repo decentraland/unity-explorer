@@ -523,7 +523,7 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY))
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), includeCommunities)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -614,8 +614,6 @@ namespace Global.Dynamic
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
-
-            var communityCreationEditionEventBus = new CommunityCreationEditionEventBus();
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -714,7 +712,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     communitiesDataProvider,
                     thumbnailCache,
-                    mainUIView.WarningNotification),
+                    mainUIView.WarningNotification,
+                    includeCommunities),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -770,8 +769,7 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
                     communitiesDataProvider,
-                    realmNftNamesProvider,
-                    communityCreationEditionEventBus
+                    realmNftNamesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -984,7 +982,6 @@ namespace Global.Dynamic
                     webBrowser,
                     eventsApiService,
                     identityCache,
-                    communityCreationEditionEventBus,
                     sharedSpaceManager,
                     chatEventBus));
 
