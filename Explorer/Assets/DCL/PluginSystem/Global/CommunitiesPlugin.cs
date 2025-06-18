@@ -40,8 +40,6 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
-        private readonly WarningNotificationView inWorldWarningNotificationView;
-        private readonly INftNamesProvider nftNamesProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmNavigator realmNavigator;
@@ -66,8 +64,6 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
-            WarningNotificationView inWorldWarningNotificationView,
-            INftNamesProvider nftNamesProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IRealmNavigator realmNavigator,
@@ -87,8 +83,6 @@ namespace DCL.PluginSystem.Global
             this.friendServiceProxy = friendServiceProxy;
             this.communitiesDataProvider = communitiesDataProvider;
             this.webRequestController = webRequestController;
-            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
-            this.nftNamesProvider = nftNamesProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
             this.realmNavigator = realmNavigator;
@@ -141,7 +135,6 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 inputBlock,
                 communitiesDataProvider,
-                nftNamesProvider,
                 placesAPIService,
                 selfProfile,
                 webRequestController);
