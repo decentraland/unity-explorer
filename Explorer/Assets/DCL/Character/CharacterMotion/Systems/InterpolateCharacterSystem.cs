@@ -69,12 +69,10 @@ namespace DCL.CharacterMotion.Systems
 
             CollisionFlags collisionFlags = CollisionFlags.None;
             if (characterController.enabled)
-            {
                 collisionFlags = characterController.Move(
                     movementDelta
                     + gravityDelta
                     + slopeModifier);
-            }
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
             bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
