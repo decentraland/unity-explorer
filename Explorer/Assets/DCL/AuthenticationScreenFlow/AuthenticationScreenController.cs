@@ -17,11 +17,14 @@ using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Threading;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 #if !UNITY_EDITOR
 using DCL.Web3;
