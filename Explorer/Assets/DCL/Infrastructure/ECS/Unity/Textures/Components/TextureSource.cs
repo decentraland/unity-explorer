@@ -7,8 +7,8 @@ namespace ECS.Unity.Textures.Components
     {
         public readonly TextureUnion.TexOneofCase TextureType;
 
-        private readonly Uri? Uri;
-        private readonly string? UserId;
+        private readonly Uri? uri;
+        private readonly string? userId;
 
         public string Id
         {
@@ -16,9 +16,9 @@ namespace ECS.Unity.Textures.Components
             {
                 return TextureType switch
                        {
-                           TextureUnion.TexOneofCase.Texture => Uri!.OriginalString,
+                           TextureUnion.TexOneofCase.Texture => uri!.OriginalString,
                            TextureUnion.TexOneofCase.VideoTexture => string.Empty,
-                           TextureUnion.TexOneofCase.AvatarTexture => UserId!,
+                           TextureUnion.TexOneofCase.AvatarTexture => userId!,
                            _ => throw new ArgumentOutOfRangeException(nameof(TextureType), TextureType, "Unknown texture type"),
                        };
             }
@@ -27,7 +27,7 @@ namespace ECS.Unity.Textures.Components
         public Uri GetUri() =>
             TextureType switch
             {
-                TextureUnion.TexOneofCase.Texture => Uri!,
+                TextureUnion.TexOneofCase.Texture => uri!,
                 _ => throw new ArgumentOutOfRangeException(nameof(TextureType), TextureType, "Doesn't have a URI"),
             };
 
@@ -37,8 +37,8 @@ namespace ECS.Unity.Textures.Components
         /// <param name="uri"></param>
         private TextureSource(Uri uri)
         {
-            Uri = uri;
-            UserId = null;
+            this.uri = uri;
+            userId = null;
             TextureType = TextureUnion.TexOneofCase.Texture;
         }
 
@@ -47,16 +47,16 @@ namespace ECS.Unity.Textures.Components
         /// </summary>
         private TextureSource(string userId)
         {
-            UserId = userId;
-            Uri = null;
+            this.userId = userId;
+            uri = null;
             TextureType = TextureUnion.TexOneofCase.AvatarTexture;
         }
 
         private TextureSource(TextureUnion.TexOneofCase type)
         {
             TextureType = type;
-            Uri = null;
-            UserId = null;
+            uri = null;
+            userId = null;
         }
 
         public static TextureSource CreateVideoTexture() =>
@@ -69,13 +69,13 @@ namespace ECS.Unity.Textures.Components
             new (userId);
 
         public bool Equals(TextureSource other) =>
-            TextureType == other.TextureType && Equals(Uri, other.Uri) && UserId == other.UserId;
+            TextureType == other.TextureType && Equals(uri?.OriginalString, other.uri?.OriginalString) && userId == other.userId;
 
         public override bool Equals(object? obj) =>
             obj is TextureSource other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine((int)TextureType, Uri, UserId);
+            HashCode.Combine((int)TextureType, uri?.OriginalString ?? string.Empty, userId);
 
         public static bool operator ==(TextureSource left, TextureSource right) =>
             left.Equals(right);
