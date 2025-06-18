@@ -40,6 +40,8 @@ namespace DCL.AvatarRendering.Loading
         void SetOwnedNft(URN urn, NftBlockchainOperationEntry operation);
 
         bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry);
+
+        void ClearOwnedNftRegistry();
     }
 
     public static class AvatarElementCache

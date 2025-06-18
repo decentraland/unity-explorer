@@ -114,6 +114,14 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
+        public void ClearOwnedNftRegistry()
+        {
+            lock (lockObject)
+            {
+                ownedNftsRegistry.Clear();
+            }
+        }
+
         private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)
         {
             emotes.Add(urn, wearable);
