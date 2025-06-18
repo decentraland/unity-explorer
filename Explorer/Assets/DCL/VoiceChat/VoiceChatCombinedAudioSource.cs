@@ -37,9 +37,9 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            if (tempBuffer == null || tempBuffer.Length != data.Length)
+            if (tempBuffer == null || tempBuffer.Length != (channels == 2 ? data.Length / 2 : data.Length))
             {
-                tempBuffer = new float[data.Length];
+                tempBuffer = new float[channels == 2 ? data.Length / 2 : data.Length];
                 lastDataLength = data.Length;
             }
 
@@ -52,10 +52,24 @@ namespace DCL.VoiceChat
                 if (weakStream.TryGetTarget(out IAudioStream stream))
                 {
                     Array.Clear(tempBuffer, 0, tempBuffer.Length);
+
+                    // Read mono data
                     stream.ReadAudio(tempBuffer, DEFAULT_LIVEKIT_CHANNELS, sampleRate);
 
-                    for (var i = 0; i < data.Length; i++)
-                        data[i] += tempBuffer[i];
+                    if (channels == 2)
+                    {
+                        // Upmix mono to stereo
+                        for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+                        {
+                            data[i] += tempBuffer[j];     // Left
+                            data[i + 1] += tempBuffer[j]; // Right
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < data.Length; i++)
+                            data[i] += tempBuffer[i];
+                    }
 
                     activeStreams++;
                 }
@@ -65,17 +79,8 @@ namespace DCL.VoiceChat
             if (activeStreams > 1)
             {
                 float norm = 1f / activeStreams;
-
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
-            }
-
-            // Copy left channel to right channel for proper stereo output
-            // Because LiveKit audio arrives with audio only on the left channel
-            if (channels == 2)
-            {
-                for (var i = 0; i < data.Length; i += 2)
-                    data[i + 1] = data[i];
             }
         }
 
