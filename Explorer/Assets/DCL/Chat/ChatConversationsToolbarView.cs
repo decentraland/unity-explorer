@@ -298,7 +298,7 @@ namespace DCL.Chat
 
         private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, ISpriteCache thumbnailCache)
         {
-            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : "");
+            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails?.raw);
             newItem.SetConversationName(communityData.name);
         }
 
