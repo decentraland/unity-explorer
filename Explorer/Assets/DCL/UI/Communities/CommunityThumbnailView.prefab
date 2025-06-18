@@ -118,12 +118,24 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1592991949209245285, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: _spritePixelsPerUnitMultiplier
-      value: 6
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 3566865946185505719, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
+    - target: {fileID: 3699725487446150570, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3699725487446150570, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3699725487446150570, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4561718667523275783, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
       propertyPath: m_IsActive
       value: 0
