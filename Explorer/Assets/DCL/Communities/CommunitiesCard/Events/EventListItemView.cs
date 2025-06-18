@@ -71,7 +71,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, offlineShareButton.transform.position));
         }
 
-        private static string GetEventTimeText(CommunityEventsResponse.CommunityEvent data)
+        private static string GetEventTimeText(IEventDTO data)
         {
             string schedule = string.Empty;
 

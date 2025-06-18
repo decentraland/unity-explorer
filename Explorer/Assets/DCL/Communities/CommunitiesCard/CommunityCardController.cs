@@ -234,8 +234,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
-                realmNavigator,
-                communitiesDataProvider);
+                realmNavigator);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
@@ -264,7 +263,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.ResetToggle(true);
 
-                eventListController?.ShowEvents(communityData, ct);
+                eventListController?.ShowEvents(communityData, communityPlaceIds, ct);
             }
         }
 

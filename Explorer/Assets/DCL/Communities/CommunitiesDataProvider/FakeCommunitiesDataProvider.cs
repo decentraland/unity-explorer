@@ -189,51 +189,6 @@ namespace DCL.Communities
             return places;
         }
 
-        public async UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
-        {
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
-
-            int totalAmount = UnityEngine.Random.Range(0, elementsPerPage);
-            CommunityEventsResponse.CommunityEvent[] events = new CommunityEventsResponse.CommunityEvent[totalAmount];
-
-            DateTime now = DateTime.UtcNow;
-
-            for (int i = 0; i < totalAmount; i++)
-            {
-                DateTime eventStartAt = DateTime.UtcNow.AddHours(UnityEngine.Random.Range(-100, 100));
-
-                events[i] = new CommunityEventsResponse.CommunityEvent
-                {
-                    id = $"event_{i}",
-                    start_at = eventStartAt.ToString("o"),
-                    name = $"Event {i}",
-                    total_attendees = UnityEngine.Random.Range(0, 100),
-                    attending = UnityEngine.Random.Range(0, 100) > 50,
-                    live = now > eventStartAt,
-                    image = "https://picsum.photos/280/280",
-                    placeId = $"place_{i}",
-                };
-            }
-
-            return new CommunityEventsResponse
-            {
-                data = events
-                      .OrderByDescending(e => e.live)
-                      .ThenBy(e =>
-                       {
-                           if (DateTime.TryParse(e.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt))
-                               return startAt.CompareTo(now);
-
-                           return 1;
-                       })
-                      .ToArray(),
-                total = totalAmount,
-                page = pageNumber,
-                pages = (int)Math.Ceiling((double)totalAmount / elementsPerPage),
-                limit = elementsPerPage
-            };
-        }
-
         public async UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             true;
 

@@ -17,6 +17,7 @@ namespace DCL.EventsApi
         private const string LIST_PARAMETER = "list";
         private const string POSITION_PARAMETER = "position";
         private const string POSITIONS_PARAMETER = "positions[]";
+        private const string PLACE_ID_PARAMETER = "places_ids[]";
         private readonly IWebRequestController webRequestController;
         private readonly URLDomain baseUrl;
         private readonly URLBuilder urlBuilder = new ();
@@ -67,6 +68,27 @@ namespace DCL.EventsApi
 
             return await FetchEventListAsync(urlBuilder.Build(), ct);
         }
+
+        public async UniTask<EventWithPlaceIdDTOListResponse> GetEventsByPlaceIdsAsync(string[] placeIds, int pageNumber, int elementsPerPage, CancellationToken ct)
+        {
+            urlBuilder.AppendDomain(baseUrl)
+                      .AppendSubDirectory(URLSubdirectory.FromString("by-places"))
+                      .AppendParameter(new URLParameter("limit", elementsPerPage.ToString()))
+                      .AppendParameter(new URLParameter("offset", (pageNumber * elementsPerPage).ToString()));
+
+            foreach (string placeId in placeIds)
+                urlBuilder.AppendParameter(new URLParameter(PLACE_ID_PARAMETER, placeId));
+
+            URLAddress url = urlBuilder.Build();
+            urlBuilder.Clear();
+
+            EventWithPlaceIdDTOListResponse responseData = await webRequestController
+                                                                .SignedFetchPostAsync(url,  GenericPostArguments.CreateJson("{}"), string.Empty, ct)
+                                                                .CreateFromJson<EventWithPlaceIdDTOListResponse>(WRJsonParser.Unity);
+
+            return responseData;
+        }
+
 
         public async UniTask MarkAsInterestedAsync(string eventId, CancellationToken ct)
         {

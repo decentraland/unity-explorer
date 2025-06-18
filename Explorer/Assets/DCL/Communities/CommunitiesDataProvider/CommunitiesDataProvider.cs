@@ -146,9 +146,6 @@ namespace DCL.Communities
             return placesIds;
         }
 
-        public UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);
-
         public UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             RemoveMemberFromCommunityAsync(userId, communityId, ct);
 
