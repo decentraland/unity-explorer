@@ -90,7 +90,6 @@ namespace DCL.EventsApi
             }
             placeIdsBuilder.Append("]");
 
-
             URLAddress url = urlBuilder.Build();
 
             EventWithPlaceIdDTOListResponse responseData = await webRequestController
