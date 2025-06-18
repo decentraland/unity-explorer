@@ -90,7 +90,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.chatEventBus = chatEventBus;
 
             contextMenu = new GenericContextMenu(view.ContextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButton))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings(HandleContextMenuUserProfileButtonAsync))
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ViewProfileText, view.ContextMenuSettings.ViewProfileSprite, () => OpenProfilePassport(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(view.ContextMenuSettings.ChatText, view.ContextMenuSettings.ChatSprite, () => OpenChatWithUserAsync(lastClickedProfileCtx!)))
@@ -311,7 +311,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             base.Reset();
         }
 
-        private async void HandleContextMenuUserProfileButton(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
+        private async void HandleContextMenuUserProfileButtonAsync(UserProfileContextMenuControlSettings.UserData userData, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
             try
             {
@@ -460,7 +460,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private void OnFriendButtonClicked(MemberData profile) =>
-            HandleContextMenuUserProfileButton(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
+            HandleContextMenuUserProfileButtonAsync(profile.ToUserData(), ConvertFriendshipStatus(profile.friendshipStatus));
 
         private void OnUnbanButtonClicked(MemberData profile)
         {
