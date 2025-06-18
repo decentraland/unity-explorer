@@ -229,7 +229,7 @@ MonoBehaviour:
   m_Active: 1
   settings:
     passTag: RenderNameTags
-    Event: 550
+    Event: 150
     filterSettings:
       RenderQueueType: 1
       LayerMask:
