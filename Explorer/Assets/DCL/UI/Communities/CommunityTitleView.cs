@@ -50,7 +50,10 @@ namespace DCL.UI.Communities
 
             openContextMenu = openContextMenuAction;
             userNameElement.text = communityName;
-            await thumbnailView.LoadThumbnailAsync(thumbnailCache, thumbnailUrl, communityId, ct);
+            thumbnailView.SetDefaultThumbnail();
+
+            if (thumbnailUrl != null)
+                await thumbnailView.LoadThumbnailAsync(thumbnailCache, thumbnailUrl, communityId, ct);
         }
 
         private void Awake()

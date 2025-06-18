@@ -339,12 +339,7 @@ namespace DCL.Chat
                 GetUserCommunitiesResponse response = result.Value;
 
                 for (int i = 0; i < response.data.results.Length; ++i)
-                {
-                    // TODO remove this when there are real thumbnails
-                    response.data.results[i].thumbnails ??= new CommunityThumbnails { raw = "https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png" };
-
                     userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.results[i].id), response.data.results[i]);
-                }
 
                 // Gives the data to the view so it can fill the items UI when new conversations are added
                 viewInstance!.SetCommunitiesData(userCommunities);
@@ -373,8 +368,6 @@ namespace DCL.Chat
                 await UniTask.SwitchToMainThread();
 
                 GetCommunityResponse response = result.Value;
-                // TODO remove this
-                response.data.thumbnails ??= new CommunityThumbnails { raw = "https://profile-images.decentraland.org/entities/bafkreierrpokjlha5fqj43n3yxe2jkgrrbgekre6ymeh7bi6enkgxcwa3e/face.png" };
 
                 userCommunities.Add(ChatChannel.NewCommunityChannelId(response.data.id), new GetUserCommunitiesData.CommunityData()
                     {
