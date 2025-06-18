@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
+using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
 
@@ -7,11 +9,13 @@ namespace DCL.RuntimeDeepLink
 {
     public class DeepLinkHandleImplementation
     {
+        private readonly StartParcel startParcel;
         private readonly IRealmNavigator realmNavigator;
         private readonly CancellationToken token;
 
-        public DeepLinkHandleImplementation(IRealmNavigator realmNavigator, CancellationToken token)
+        public DeepLinkHandleImplementation(StartParcel startParcel, IRealmNavigator realmNavigator, CancellationToken token)
         {
+            this.startParcel = startParcel;
             this.realmNavigator = realmNavigator;
             this.token = token;
         }
@@ -22,7 +26,13 @@ namespace DCL.RuntimeDeepLink
 
             if (position.HasValue)
             {
-                realmNavigator.TeleportToParcelAsync(position.Value, token, false).Forget();
+                var parcel = position.Value;
+
+                if (startParcel.IsConsumed())
+                    realmNavigator.TeleportToParcelAsync(position.Value, token, false).Forget();
+                else
+                    startParcel.Assign(parcel);
+
                 return HandleResult.Ok();
             }
 
@@ -31,7 +41,7 @@ namespace DCL.RuntimeDeepLink
 
         private static Vector2Int? PositionFrom(DeepLink deeplink)
         {
-            string? rawPosition = deeplink.ValueOf("position");
+            string? rawPosition = deeplink.ValueOf(AppArgsFlags.POSITION);
             string[]? parts = rawPosition?.Split(',');
 
             if (parts == null || parts.Length < 2)

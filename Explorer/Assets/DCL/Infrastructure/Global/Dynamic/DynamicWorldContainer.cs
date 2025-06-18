@@ -478,7 +478,7 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 mapPathEventBus,
                 staticContainer.SceneRestrictionBusController,
-                dynamicWorldParams.StartParcel,
+                dynamicWorldParams.StartParcel.Peek(),
                 sharedSpaceManager
             );
 
@@ -567,7 +567,7 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
-            DeepLinkHandleImplementation deepLinkHandleImplementation = new DeepLinkHandleImplementation(realmNavigator, ct);
+            DeepLinkHandleImplementation deepLinkHandleImplementation = new DeepLinkHandleImplementation(dynamicWorldParams.StartParcel, realmNavigator, ct);
             DeepLinkHandle deepLinkHandle = DeepLinkHandle.FromDeepLinkHandleImplementation(deepLinkHandleImplementation);
             DeepLinkSentinel.StartListenForDeepLinksAsync(deepLinkHandle, ct).Forget();
 

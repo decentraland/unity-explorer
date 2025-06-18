@@ -12,6 +12,7 @@ using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
@@ -173,6 +174,8 @@ namespace Global.Dynamic
             string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
 
+
+
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
@@ -181,7 +184,7 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     DefaultStartingRealm = defaultStartingRealm,
-                    StartParcel = realmLaunchSettings.targetScene,
+                    StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
