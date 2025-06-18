@@ -6,7 +6,9 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner;
 using SceneRunner.Scene;
+using System;
 #if UNITY_EDITOR
+using DCL.Diagnostics;
 using System.Net.NetworkInformation;
 #endif
 
@@ -33,15 +35,12 @@ namespace DCL.Profiling.ECS
             this.scenesCache = scenesCache;
 
 #if UNITY_EDITOR
-            foreach (NetworkInterface? ns in NetworkInterface.GetAllNetworkInterfaces())
-                if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
-                {
-                    var netStats = ns.GetIPv4Statistics();
-                    startBytesSent = prevBytesSent = lastSecondBytesSent = (ulong)netStats.BytesSent;
-                    startBytesReceived = prevBytesReceived = lastSecondBytesReceived = (ulong)netStats.BytesReceived;
-                    lastBandwidthCheck = UnityEngine.Time.unscaledTime;
-                    break;
-                }
+            if (TryGetWiFiIPv4Stats(out IPv4InterfaceStatistics? netStats))
+            {
+                startBytesSent = prevBytesSent = lastSecondBytesSent = (ulong)netStats!.BytesSent;
+                startBytesReceived = prevBytesReceived = lastSecondBytesReceived = (ulong)netStats.BytesReceived;
+                lastBandwidthCheck = UnityEngine.Time.unscaledTime;
+            }
 
             // NetworkInterface.GetAllNetworkInterfaces() call is expensive (~5 ms). So it is used only for debug purposes.
             UnityEngine.Profiling.Profiler.SetCategoryEnabled(NetworkProfilerCounters.CATEGORY, false);
@@ -95,37 +94,54 @@ namespace DCL.Profiling.ECS
 #endif
 
 #if UNITY_EDITOR && ENABLE_PROFILER
-            if (UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
+            if (UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY) && TryGetWiFiIPv4Stats(out IPv4InterfaceStatistics? netStats))
+            {
+                var currentSent = (ulong)netStats.BytesSent;
+                var currentReceived = (ulong)netStats.BytesReceived;
+
+                NetworkProfilerCounters.WIFI_IPV4_BYTES_SENT.Value = currentSent - startBytesSent;
+                NetworkProfilerCounters.WIFI_IPV4_BYTES_RECEIVED.Value = currentReceived - startBytesReceived;
+
+                NetworkProfilerCounters.WIFI_IPV4_BYTES_FRAME_SENT.Value = currentSent - prevBytesSent;
+                NetworkProfilerCounters.WIFI_IPV4_BYTES_FRAME_RECEIVED.Value = currentReceived - prevBytesReceived;
+
+                prevBytesSent = currentSent;
+                prevBytesReceived = currentReceived;
+
+                if (UnityEngine.Time.unscaledTime - lastBandwidthCheck > 1f)
+                {
+                    lastBandwidthCheck = UnityEngine.Time.unscaledTime;
+
+                    NetworkProfilerCounters.WIFI_IPV4_MBPS_SENT.Value = (currentSent - lastSecondBytesSent) * 8f / 1_000_000f;
+                    NetworkProfilerCounters.WIFI_IPV4_MBPS_RECEIVED.Value = (currentReceived - lastSecondBytesReceived) * 8f / 1_000_000f;
+                    lastSecondBytesSent = currentSent;
+                    lastSecondBytesReceived = currentReceived;
+                }
+            }
+#endif
+        }
+
+#if UNITY_EDITOR
+        private static bool TryGetWiFiIPv4Stats(out IPv4InterfaceStatistics? stats)
+        {
+            try
             {
                 foreach (NetworkInterface? ns in NetworkInterface.GetAllNetworkInterfaces())
                     if (ns is { NetworkInterfaceType: NetworkInterfaceType.Wireless80211, OperationalStatus: OperationalStatus.Up })
                     {
-                        var netStats = ns.GetIPv4Statistics();
-                        var currentSent = (ulong)netStats.BytesSent;
-                        var currentReceived = (ulong)netStats.BytesReceived;
-
-                        NetworkProfilerCounters.WIFI_IPV4_BYTES_SENT.Value = currentSent - startBytesSent;
-                        NetworkProfilerCounters.WIFI_IPV4_BYTES_RECEIVED.Value = currentReceived - startBytesReceived;
-
-                        NetworkProfilerCounters.WIFI_IPV4_BYTES_FRAME_SENT.Value = currentSent - prevBytesSent;
-                        NetworkProfilerCounters.WIFI_IPV4_BYTES_FRAME_RECEIVED.Value = currentReceived - prevBytesReceived;
-
-                        prevBytesSent = currentSent;
-                        prevBytesReceived = currentReceived;
-
-                        if (UnityEngine.Time.unscaledTime - lastBandwidthCheck > 1f)
-                        {
-                            lastBandwidthCheck = UnityEngine.Time.unscaledTime;
-
-                            NetworkProfilerCounters.WIFI_IPV4_MBPS_SENT.Value = (currentSent - lastSecondBytesSent) * 8f / 1_000_000f;
-                            NetworkProfilerCounters.WIFI_IPV4_MBPS_RECEIVED.Value = (currentReceived - lastSecondBytesReceived) * 8f / 1_000_000f;
-                            lastSecondBytesSent = currentSent;
-                            lastSecondBytesReceived = currentReceived;
-                        }
+                        stats = ns.GetIPv4Statistics();
+                        return true;
                     }
             }
-#endif
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.PROFILE, $"Exception while trying to get IPv4 Statistics {e.Message}");
+            }
+
+            stats = null;
+            return false;
         }
+#endif
 
         [Query]
         private void SumSceneRuntimeHeapInfos(ISceneFacade scene0)
