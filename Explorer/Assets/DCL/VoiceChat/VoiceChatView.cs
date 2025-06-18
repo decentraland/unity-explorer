@@ -47,6 +47,7 @@ namespace DCL.VoiceChat
         public AudioClipConfig CallTuneAudio { get; private set; }
 
         private CancellationTokenSource cts;
+        private Sequence? isSpeakingCurrentSequence;
 
         private void Start()
         {
@@ -78,6 +79,29 @@ namespace DCL.VoiceChat
                     VoiceChatContainer.SetActive(false);
                     VoiceChatCanvasGroup.alpha = 0;
                 });
+        }
+
+        public void SetSpeakingStatus(int speakingCount, string userName)
+        {
+            InCallView.PeopleTalkingContainer.gameObject.SetActive(speakingCount >= 1);
+            InCallView.MultiplePeopleTalking.gameObject.SetActive(speakingCount > 1);
+            InCallView.PlayerNameTalking.gameObject.SetActive(speakingCount == 1);
+            InCallView.NoPlayerTalking.gameObject.SetActive(speakingCount == 0);
+
+            if (speakingCount >= 1)
+            {
+                isSpeakingCurrentSequence = DOTween.Sequence();
+                isSpeakingCurrentSequence.Append(InCallView.isSpeakingIconRect.DOScaleY(0.2f, SHOW_HIDE_ANIMATION_DURATION));
+                isSpeakingCurrentSequence.Join(InCallView.isSpeakingIconOuterRect.DOScaleY(1, SHOW_HIDE_ANIMATION_DURATION));
+                isSpeakingCurrentSequence.Append(InCallView.isSpeakingIconOuterRect.DOScaleY(0.2f, SHOW_HIDE_ANIMATION_DURATION));
+                isSpeakingCurrentSequence.Join(InCallView.isSpeakingIconRect.DOScaleY(1, SHOW_HIDE_ANIMATION_DURATION));
+                isSpeakingCurrentSequence.SetLoops(-1);
+                isSpeakingCurrentSequence.Play();
+            }
+            else
+            {
+                isSpeakingCurrentSequence.Kill();
+            }
         }
 
         public void SetActiveSection(VoiceChatStatus status, Web3Address walletId, ProfileRepositoryWrapper profileDataProvider)

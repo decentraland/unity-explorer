@@ -611,6 +611,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: VoiceChatErrorTitlebar
       objectReference: {fileID: 0}
+    - target: {fileID: 3070954394337283396, guid: c8dbace2f67dd4abe9e59c394e314088, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5120042419587732536, guid: c8dbace2f67dd4abe9e59c394e314088, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
