@@ -339,6 +339,7 @@ namespace DCL.Chat
             viewInstance?.RemoveAllConversations();
             memberListHelper.StopUpdating();
             chatUsersUpdateCts.SafeCancelAndDispose();
+            callButtonController?.Dispose();
         }
 
 #endregion

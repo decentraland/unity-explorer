@@ -122,6 +122,7 @@ namespace DCL.VoiceChat
                     OutgoingCallView.gameObject.SetActive(true);
                     OutgoingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;
+                case VoiceChatStatus.VOICE_CHAT_USER_BUSY:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     ErrorView.SetActive(true);
                     ErrorView.StartErrorPanelDisableFlow();

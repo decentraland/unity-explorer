@@ -31,6 +31,7 @@ namespace DCL.VoiceChat
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
+            voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
         }
 
         public void Reset()
@@ -123,6 +124,21 @@ namespace DCL.VoiceChat
             view.TooltipParentCanvas.interactable = true;
             view.TooltipParentCanvas.blocksRaycasts = true;
             view.TooltipParentCanvas.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
+        }
+
+        private void OnVoiceChatStatusChanged(VoiceChatStatus newStatus)
+        {
+            if (isClickedOnce && newStatus == VoiceChatStatus.VOICE_CHAT_USER_BUSY)
+            {
+                EnableTooltipParent(cts.Token);
+                view.TooltipText.text = USER_ALREADY_IN_CALL_TOOLTIP_TEXT;
+            }
+        }
+
+        public void Dispose()
+        {
+            voiceChatCallStatusService.StatusChanged -= OnVoiceChatStatusChanged;
+            view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
         }
 
         public enum OtherUserCallStatus
