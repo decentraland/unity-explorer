@@ -547,7 +547,7 @@ namespace Global.Dynamic
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
-            var stpController = new STPController(characterPreviewEventBus);
+            var stpController = new UpscalingController(characterPreviewEventBus);
 
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);

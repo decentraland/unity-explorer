@@ -40,7 +40,7 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            STPController stpController,
+            UpscalingController upscalingController,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = Object.Instantiate(View, parent);

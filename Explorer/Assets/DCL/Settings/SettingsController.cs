@@ -45,7 +45,7 @@ namespace DCL.Settings
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
-        private readonly STPController stpController;
+        private readonly UpscalingController upscalingController;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -63,7 +63,7 @@ namespace DCL.Settings
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
             WorldVolumeMacBus worldVolumeMacBus,
-            STPController stpController
+            UpscalingController upscalingController
         )
         {
             this.view = view;
@@ -79,7 +79,7 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
-            this.stpController = stpController;
+            this.upscalingController = upscalingController;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -156,7 +156,7 @@ namespace DCL.Settings
                     generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, stpController, worldVolumeMacBus));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, upscalingController, worldVolumeMacBus));
             }
         }
 

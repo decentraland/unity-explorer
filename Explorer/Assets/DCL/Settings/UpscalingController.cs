@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace DCL.Utilities
 {
-    public class STPController
+    public class UpscalingController
     {
         private const float STP_VALUE_FOR_CHARACTER_PREVIEW = 1f;
         private const float STP_HIGH_RESOLUTION_WINDOWS = 0.5f;
@@ -22,14 +22,14 @@ namespace DCL.Utilities
 
         private readonly SettingsDataStore settingsDataStore;
 
-        private float savedSTPDuringCharacterPreview;
+        private float savedUpscalingDuringCharacterPreview;
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
         private bool ignoreFirstResolutionChange;
 
         [CanBeNull] private SettingsSliderModuleView sliderView;
 
-        public STPController(CharacterPreviewEventBus characterPreviewEventBus)
+        public UpscalingController(CharacterPreviewEventBus characterPreviewEventBus)
         {
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
             {
@@ -44,7 +44,7 @@ namespace DCL.Utilities
 
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += CharacterViewOpened;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += CharacterViewClosed;
-            savedSTPDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+            savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
 
             settingsDataStore = new SettingsDataStore();
 
@@ -56,11 +56,11 @@ namespace DCL.Utilities
         }
 
         private void CharacterViewClosed(CharacterPreviewControllerBase obj) =>
-            SetSTPSetting(savedSTPDuringCharacterPreview, false, false);
+            SetSTPSetting(savedUpscalingDuringCharacterPreview, false, false);
 
         private void CharacterViewOpened(CharacterPreviewControllerBase obj)
         {
-            savedSTPDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+            savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
             SetSTPSetting(STP_VALUE_FOR_CHARACTER_PREVIEW, false, false);
         }
 
@@ -103,7 +103,7 @@ namespace DCL.Utilities
             sliderView!.SliderView.Slider.onValueChanged.AddListener(newValue =>
             {
                 //If there is a slider change, we want it to persist when the menu is closed
-                savedSTPDuringCharacterPreview = newValue;
+                savedUpscalingDuringCharacterPreview = newValue;
                 SetSTPSetting(newValue, false, true);
             });
             sliderView.SliderView.Slider.SetValueWithoutNotify(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY));

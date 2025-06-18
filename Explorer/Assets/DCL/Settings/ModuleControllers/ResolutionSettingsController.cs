@@ -15,12 +15,12 @@ namespace DCL.Settings.ModuleControllers
 
         private readonly SettingsDropdownModuleView view;
         private readonly List<Resolution> possibleResolutions = new ();
-        private readonly STPController stpController;
+        private readonly UpscalingController upscalingController;
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view, STPController stpController)
+        public ResolutionSettingsController(SettingsDropdownModuleView view, UpscalingController upscalingController)
         {
             this.view = view;
-            this.stpController = stpController;
+            this.upscalingController = upscalingController;
 
             LoadResolutionOptions();
 
@@ -98,7 +98,7 @@ namespace DCL.Settings.ModuleControllers
             Resolution selectedResolution = possibleResolutions[index];
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
             settingsDataStore.SetDropdownValue(RESOLUTION_DATA_STORE_KEY, index, save: true);
-            stpController.ResolutionChanged(selectedResolution);
+            upscalingController.ResolutionChanged(selectedResolution);
         }
 
         public override void Dispose()

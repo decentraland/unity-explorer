@@ -8,10 +8,10 @@ namespace DCL.Settings.ModuleControllers
     {
         private readonly SettingsSliderModuleView view;
 
-        public STPSettingsController(SettingsSliderModuleView viewInstance, STPController stpController)
+        public STPSettingsController(SettingsSliderModuleView viewInstance, UpscalingController upscalingController)
         {
             view = viewInstance;
-            stpController.SetSliderModuleView(view);
+            upscalingController.SetSliderModuleView(view);
         }
 
         public override void Dispose()

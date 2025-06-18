@@ -131,7 +131,7 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private ViewDependencies viewDependencies;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly STPController stpController;
+        private readonly UpscalingController upscalingController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -184,7 +184,7 @@ namespace DCL.PluginSystem.Global
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
-            STPController stpController)
+            UpscalingController upscalingController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -238,7 +238,7 @@ namespace DCL.PluginSystem.Global
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.stpController = stpController;
+            this.upscalingController = upscalingController;
         }
 
         public void Dispose()
@@ -360,7 +360,7 @@ namespace DCL.PluginSystem.Global
                 userBlockingCacheProxy,
                 sceneLoadingLimit,
                 worldVolumeMacBus,
-                stpController);
+                upscalingController);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,
