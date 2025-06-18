@@ -28,9 +28,11 @@ MonoBehaviour:
   TargetPeakLevel: 0.7
   GainAdjustSpeed: 4
   MinGain: 1
-  MaxGain: 20
+  MaxGain: 15
   MinPeakThreshold: 0.0001
   PeakTrackingWindow: 0.5
   MicrophoneReinitDelayMs: 500
   MaxFreshDataWaitTimeMs: 1000
   FreshDataCheckDelayMs: 50
+  MaxReconnectionAttempts: 3
+  ReconnectionDelayMs: 2000
