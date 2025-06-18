@@ -144,6 +144,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (connectionLoopHealth != IConnectiveRoom.ConnectionLoopHealth.Stopped)
                 await room.ResetRoomAsync(cts.Token);
 
+            room.SimulateConnectionStateChanged();
             roomState.Set(IConnectiveRoom.State.Stopped);
             connectionString = string.Empty;
         }
@@ -151,8 +152,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTaskVoid RunAsync(CancellationToken ct)
         {
             roomState.Set(IConnectiveRoom.State.Starting);
-
-            SendConnectionStatusAsync(ct).Forget();
 
             while (ct.IsCancellationRequested == false)
             {
@@ -169,7 +168,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             while (ct.IsCancellationRequested == false)
             {
                 if (CurrentState() == IConnectiveRoom.State.Running)
-                    room.SimulateConnectionStateChanged();
 
                 await UniTask.Delay(CONNECTION_UPDATE_INTERVAL, cancellationToken: ct);
             }
@@ -203,11 +201,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private UniTask RecoveryDelayAsync(CancellationToken ct) =>
             UniTask.Delay(CONNECTION_LOOP_RECOVER_INTERVAL, cancellationToken: ct);
 
-        private async UniTask<bool> TryConnectToRoomAsync(CancellationToken token)
+        private async UniTask<bool> TryConnectToRoomAsync(CancellationToken ct)
         {
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+            bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
 
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
@@ -216,6 +214,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             {
                 room.Assign(roomInstance, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
+                room.SimulateConnectionStateChanged();
             }
 
             return connectResult;

@@ -82,11 +82,13 @@ namespace DCL.VoiceChat
                         orderedDisconnectionCts?.Cancel();
                         DisconnectFromRoomAsync().Forget();
                     }
+
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     ConnectToRoomAsync().Forget();
                     break;
             }
+
             currentStatus = newStatus;
         }
 
@@ -114,12 +116,11 @@ namespace DCL.VoiceChat
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
         {
-            Debug.Log($"[VoiceChatLivekitRoomHandler] Connection update: {connectionUpdate}, IsOrderedDisconnection: {isOrderedDisconnection}");
-
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
                     CleanupReconnectionState();
+
                     if (!isMediaOpen)
                     {
                         isMediaOpen = true;
@@ -127,6 +128,7 @@ namespace DCL.VoiceChat
                         SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
+
                     break;
                 case ConnectionUpdate.Disconnected:
                     CleanupReconnectionState();
@@ -152,6 +154,7 @@ namespace DCL.VoiceChat
         private async UniTaskVoid WaitForOrderedDisconnectionAsync()
         {
             orderedDisconnectionCts = orderedDisconnectionCts.SafeRestart();
+
             try
             {
                 await UniTask.Delay(500, cancellationToken: orderedDisconnectionCts.Token);
@@ -161,15 +164,9 @@ namespace DCL.VoiceChat
                     Debug.Log("[VoiceChatLivekitRoomHandler] No ordered disconnection received after 5 seconds - starting reconnection attempts");
                     HandleUnexpectedDisconnection();
                 }
-                else
-                {
-                    Debug.Log("[VoiceChatLivekitRoomHandler] Ordered disconnection received during grace period - no reconnection needed");
-                }
+                else { Debug.Log("[VoiceChatLivekitRoomHandler] Ordered disconnection received during grace period - no reconnection needed"); }
             }
-            catch (OperationCanceledException)
-            {
-                Debug.Log("[VoiceChatLivekitRoomHandler] Grace period cancelled - ordered disconnection received");
-            }
+            catch (OperationCanceledException) { Debug.Log("[VoiceChatLivekitRoomHandler] Grace period cancelled - ordered disconnection received"); }
         }
 
         private void CleanupReconnectionState()
@@ -265,20 +262,14 @@ namespace DCL.VoiceChat
 
         private void CloseMedia()
         {
-            if (!PlayerLoopHelper.IsMainThread)
-            {
-                CloseMediaAsync().Forget();
-            }
+            if (!PlayerLoopHelper.IsMainThread) { CloseMediaAsync().Forget(); }
 
             CloseMediaInternal();
         }
 
         private async UniTaskVoid CloseMediaAsync()
         {
-            if (!PlayerLoopHelper.IsMainThread)
-            {
-                await UniTask.SwitchToMainThread();
-            }
+            if (!PlayerLoopHelper.IsMainThread) { await UniTask.SwitchToMainThread(); }
 
             CloseMediaInternal();
         }
@@ -298,13 +289,15 @@ namespace DCL.VoiceChat
 
         private void HandleUnexpectedDisconnection()
         {
-            var remoteCount = voiceChatRoom.Participants.RemoteParticipantIdentities().Count;
+            int remoteCount = voiceChatRoom.Participants.RemoteParticipantIdentities().Count;
+
             if (remoteCount == 0)
             {
                 Debug.Log("[VoiceChatLivekitRoomHandler] No remote participants in room, skipping reconnection attempts");
                 voiceChatCallStatusService.HandleLivekitConnectionFailed();
                 return;
             }
+
             reconnectionAttempts = 0;
             reconnectionCts = reconnectionCts.SafeRestart();
             Debug.Log("[VoiceChatLivekitRoomHandler] Starting reconnection attempts");
@@ -335,10 +328,8 @@ namespace DCL.VoiceChat
                     CleanupReconnectionState();
                     return;
                 }
-                else
-                {
-                    Debug.Log($"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts} failed");
-                }
+
+                Debug.Log($"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts} failed");
             }
         }
     }
