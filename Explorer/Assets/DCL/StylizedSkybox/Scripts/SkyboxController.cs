@@ -1,12 +1,17 @@
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Ipfs;
 using DCL.StylizedSkybox.Scripts;
-using System;
+using ECS.SceneLifeCycle;
+using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 public class SkyboxController : MonoBehaviour
 {
+    private const float MIN_FIXED_TIME_OF_DAY = 0;
     private const int SECONDS_IN_DAY = 86400;
     private const float DEFAULT_TIME = 0.5f; // Midday
     private const float DEFAULT_SPEED = 1 * 60f; // 1 minute per second
@@ -27,7 +32,7 @@ public class SkyboxController : MonoBehaviour
     [SerializeField] private Material skyboxMaterial;
 
     [Header("Refresh Time")]
-    [SerializeField] private float refreshTime = 5;
+    [SerializeField] private float skyboxRefreshTime = 5;
 
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
@@ -66,45 +71,56 @@ public class SkyboxController : MonoBehaviour
     [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
 
     public float SpeedMultiplier { get; set; } = DEFAULT_SPEED;
-    public bool UseDynamicTime { get; set; } = true;
-    public float DynamicTimeNormalized { get; private set; }
-    public float CurrentTimeNormalized { get; private set; }
+    public float GlobalTimeOfDay { get; private set; }
+    public float CurrentTimeOfDay { get; private set; }
 
     private StylizedSkyboxSettingsAsset settingsAsset;
     private bool isInitialized;
     private Animation lightAnimator;
-    private float sinceLastRefresh = 5;
+    private float sinceLastSkyboxRefresh = 5;
+    private FeatureFlagsCache featureFlagsCache;
+    private IDebugContainerBuilder debugContainerBuilder;
+    private bool useFeatureFlagSkyboxSettings;
+
+    private ElementBinding<float> debugTimeOfDay;
+    private ElementBinding<string> debugTimeSource;
 
     private void Update()
     {
         if (!isInitialized)
             return;
 
-        // We always track dynamic time so we can switch back to using it
-        DynamicTimeNormalized += Time.deltaTime * SpeedMultiplier / SECONDS_IN_DAY;
+        float deltaTime = Time.deltaTime;
+
+        // We always track the time of day so we can switch back to using it
+        GlobalTimeOfDay += deltaTime * SpeedMultiplier / SECONDS_IN_DAY;
 
         // Loop around at EOD
-        if (DynamicTimeNormalized >= 1f) { DynamicTimeNormalized = 0f; }
+        if (GlobalTimeOfDay >= 1f)
+            GlobalTimeOfDay = 0f;
 
-        // Auto refresh the skybox when using dynamic time
-        if (UseDynamicTime)
+        // Auto refresh the skybox when using Day Night Cycle
+        if (settingsAsset.IsDayNightCycleEnabled)
         {
-            sinceLastRefresh += Time.deltaTime;
+            sinceLastSkyboxRefresh += deltaTime;
 
-            if (sinceLastRefresh >= refreshTime)
+            if (sinceLastSkyboxRefresh >= skyboxRefreshTime)
             {
-                CurrentTimeNormalized = DynamicTimeNormalized;
+                sinceLastSkyboxRefresh = 0;
+                CurrentTimeOfDay = GlobalTimeOfDay;
                 UpdateSkybox();
-                sinceLastRefresh = 0;
             }
         }
     }
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache, StylizedSkyboxSettingsAsset settingsAsset)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache, StylizedSkyboxSettingsAsset settingsAsset,
+        IScenesCache scenesCache, IDebugContainerBuilder debugContainerBuilder)
     {
+        this.featureFlagsCache = featureFlagsCache;
         this.settingsAsset = settingsAsset;
+        this.debugContainerBuilder = debugContainerBuilder;
 
-        if (skyboxMat != null)
+        if (skyboxMat)
         {
 #if UNITY_EDITOR
 
@@ -115,93 +131,186 @@ public class SkyboxController : MonoBehaviour
             skyboxMaterial = skyboxMat;
         }
 
-        if (dirLight != null)
+        if (dirLight)
             directionalLight = dirLight;
 
-        if (skyboxAnimationClip != null)
+        if (skyboxAnimationClip)
             lightAnimation = skyboxAnimationClip;
 
         //setup skybox material
-        if (!skyboxMaterial) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: No skybox material assigned"); }
+        if (!skyboxMaterial)
+            ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: No skybox material assigned");
         else
-        {
-            //assign skybox to render settings
-            RenderSettings.skybox = skyboxMaterial;
-        }
+            RenderSettings.skybox = skyboxMaterial; //assign skybox to render settings
 
         //setup directional light
-        if (directionalLight == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light has not been assigned"); }
+        if (!directionalLight)
+            ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light has not been assigned");
         else
         {
             //assign light to render settings
             RenderSettings.sun = directionalLight;
 
             //create animation component in runtime and assign animation clip
-            if (directionalLight.gameObject.GetComponent<Animation>() == null) { lightAnimator = directionalLight.gameObject.AddComponent<Animation>(); }
-            else { lightAnimator = directionalLight.gameObject.GetComponent<Animation>(); }
+            lightAnimator = directionalLight.gameObject.GetComponent<Animation>();
 
-            if (lightAnimation == null) { ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned"); }
-            else { lightAnimator.AddClip(lightAnimation, lightAnimation.name); }
+            if (!lightAnimator)
+                lightAnimator = directionalLight.gameObject.AddComponent<Animation>();
+
+            if (!lightAnimation)
+                ReportHub.LogWarning(ReportCategory.LANDSCAPE, "Skybox Controller: Directional Light animation has not been assigned");
+            else
+                lightAnimator.AddClip(lightAnimation, lightAnimation.name);
         }
 
         //setup indirect light
-        if (indirectLight) { RenderSettings.ambientMode = AmbientMode.Trilight; }
+        if (indirectLight)
+            RenderSettings.ambientMode = AmbientMode.Trilight;
 
         //setup fog
-        if (fog) { RenderSettings.fog = true; }
+        if (fog)
+            RenderSettings.fog = true;
 
-        bool useRemoteSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
+        scenesCache.OnCurrentSceneChanged += HandleSceneChanged;
 
-        if (useRemoteSkyboxSettings &&
-            featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
-        {
-            SpeedMultiplier = skyboxSettings.speed;
-            DynamicTimeNormalized = (float)skyboxSettings.time / SECONDS_IN_DAY;
-        }
-        else { DynamicTimeNormalized = DEFAULT_TIME; }
+        GlobalTimeOfDay = GetInitialTimeOfDay();
 
-        settingsAsset.NormalizedTime =DynamicTimeNormalized;
-        settingsAsset.NormalizedTimeChanged += OnNormalizedTimeChanged;
-        settingsAsset.UseDynamicTime = UseDynamicTime;
-        settingsAsset.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
+        settingsAsset.TimeOfDayNormalized = GlobalTimeOfDay;
+        ResetToGlobalTime();
+
+        settingsAsset.TimeOfDayChanged += OnTimeOfDayChanged;
+        settingsAsset.DayNightCycleEnabledChanged += OnDayNightCycleEnabledChanged;
+        settingsAsset.SkyboxTimeSourceChanged += OnSkyboxTimeSourceChanged;
+
+        SetupDebugPanel();
 
         isInitialized = true;
     }
 
+    private void SetupDebugPanel()
+    {
+        debugTimeOfDay = new ElementBinding<float>(0);
+        debugTimeSource = new ElementBinding<string>(string.Empty);
+
+        debugContainerBuilder.TryAddWidget("Skybox")
+                            ?.AddSingleButton("Play", ()=> SetDayNightCycleEnabled(true, SkyboxTimeSource.GLOBAL))
+                             .AddSingleButton("Pause", () =>
+                              {
+                                  SetDayNightCycleEnabled(false, SkyboxTimeSource.PLAYER_FIXED);
+                              })
+                             .AddFloatSliderField("Time", debugTimeOfDay, 0, 1)
+                             .AddSingleButton("SetTime", () =>
+                              {
+                                  SetTimeOfDay(debugTimeOfDay.Value, SkyboxTimeSource.PLAYER_FIXED);
+                              }) //TODO: replace this by a system to update the value
+                             .AddCustomMarker("TimeSource", debugTimeSource);
+    }
+
+    private void HandleSceneChanged(ISceneFacade scene)
+    {
+        if (scene == null || !settingsAsset)
+        {
+            ResetToGlobalTime();
+            return;
+        }
+
+        SceneMetadata sceneMetadata = scene.SceneData
+                                           .SceneEntityDefinition
+                                           .metadata;
+
+        if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTimeOfDay: var worldTime } } })
+        {
+            ApplySceneControlledFixedTime(worldTime);
+            return;
+        }
+
+        if (sceneMetadata is { skyboxConfig: { fixedTimeOfDay: var sceneTime } })
+        {
+            ApplySceneControlledFixedTime(sceneTime);
+            return;
+        }
+
+        ResetToGlobalTime();
+    }
+
+    private void ApplySceneControlledFixedTime(float sceneTime)
+    {
+        if (!settingsAsset) return;
+
+        settingsAsset.IsDayNightCycleEnabled = false;
+        settingsAsset.SkyboxTimeSource = SkyboxTimeSource.SCENE_FIXED;
+        settingsAsset.TimeOfDayNormalized = Mathf.Clamp(sceneTime, MIN_FIXED_TIME_OF_DAY, SECONDS_IN_DAY) / (float)SECONDS_IN_DAY;
+
+        debugTimeOfDay.Value = sceneTime;
+    }
+
+    private void OnSkyboxTimeSourceChanged(SkyboxTimeSource newSkyboxTimeSource)
+    {
+        debugTimeSource.Value = newSkyboxTimeSource.ToString();
+    }
+
+    private void ResetToGlobalTime()
+    {
+        //triggers immediate skybox graphics refresh
+        sinceLastSkyboxRefresh = skyboxRefreshTime;
+
+        settingsAsset.SkyboxTimeSource = useFeatureFlagSkyboxSettings ? SkyboxTimeSource.FEATURE_FLAG : SkyboxTimeSource.GLOBAL;
+        settingsAsset.IsDayNightCycleEnabled = true;
+    }
+
+    public void SetDayNightCycleEnabled(bool cycleEnabled, SkyboxTimeSource newSource)
+    {
+        if (!settingsAsset) return;
+
+        settingsAsset.SkyboxTimeSource = newSource;
+        settingsAsset.IsDayNightCycleEnabled = cycleEnabled;
+    }
+
+    private float GetInitialTimeOfDay()
+    {
+        // Fetch feature flag settings to see if there are settings to override from there
+        useFeatureFlagSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
+
+        if (useFeatureFlagSkyboxSettings && featureFlagsCache!.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
+        {
+            settingsAsset.SkyboxTimeSource = SkyboxTimeSource.FEATURE_FLAG;
+            SpeedMultiplier = skyboxSettings.speed;
+            return (float)skyboxSettings.time / SECONDS_IN_DAY;
+        }
+
+        return DEFAULT_TIME;
+    }
+
     private void OnSkyboxUpdated()
     {
-        // When skybox gets dynamically updated we refresh the
+        // When skybox gets dynamically updated, we refresh the
         // settings value so it reflects the current state
 
-        if (UseDynamicTime)
-        {
-            settingsAsset!.NormalizedTime = DynamicTimeNormalized;
-        }
+        if (settingsAsset.IsDayNightCycleEnabled)
+            settingsAsset!.TimeOfDayNormalized = GlobalTimeOfDay;
     }
 
-    private void OnUseDynamicTimeChanged(bool dynamic)
+    private void OnDayNightCycleEnabledChanged(bool isProgressing)
     {
-        UseDynamicTime = dynamic;
+        settingsAsset.IsDayNightCycleEnabled = isProgressing;
 
-        if (dynamic)
-            settingsAsset!.NormalizedTime = DynamicTimeNormalized;
+        if (isProgressing)
+            settingsAsset!.TimeOfDayNormalized = GlobalTimeOfDay;
     }
 
-    private void OnNormalizedTimeChanged(float tod)
+    private void OnTimeOfDayChanged(float timeOfDay)
     {
-        if (!UseDynamicTime) // Ignore updates to the value when they come from the skybox
-        {
-            SetTimeOverride(tod);
-        }
+        if (!settingsAsset.IsDayNightCycleEnabled) // Ignore updates to the value when they come from the skybox
+            SetTimeOfDay(timeOfDay, SkyboxTimeSource.GLOBAL);
     }
 
     /// <summary>
-    ///     Sets the time of the skybox to an specific amount (normalized).
+    ///     Sets the time of the skybox to a specific amount (normalized).
     /// </summary>
-    public void SetTimeOverride(float time)
+    public void SetTimeOfDay(float timeOfDay, SkyboxTimeSource source)
     {
-        UseDynamicTime = false;
-        CurrentTimeNormalized = time;
+        CurrentTimeOfDay = timeOfDay;
+        SetDayNightCycleEnabled(false, source);
         UpdateSkybox();
     }
 
@@ -224,13 +333,13 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateSkyboxColor()
     {
-        RenderSettings.skybox.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(SUN_COLOR, sunColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(RIM_COLOR, rimColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetColor(SUN_COLOR, sunColorRamp.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetColor(RIM_COLOR, rimColorRamp.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(CurrentTimeOfDay));
     }
 
     /// <summary>
@@ -239,43 +348,43 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateIndirectLight()
     {
-        if (indirectLight)
-        {
-            RenderSettings.ambientSkyColor = indirectSkyRamp.Evaluate(CurrentTimeNormalized);
-            RenderSettings.ambientEquatorColor = indirectEquatorRamp.Evaluate(CurrentTimeNormalized);
-            RenderSettings.ambientGroundColor = groundEquatorRamp.Evaluate(CurrentTimeNormalized);
-        }
+        if (!indirectLight) return;
+
+        RenderSettings.ambientSkyColor = indirectSkyRamp.Evaluate(CurrentTimeOfDay);
+        RenderSettings.ambientEquatorColor = indirectEquatorRamp.Evaluate(CurrentTimeOfDay);
+        RenderSettings.ambientGroundColor = groundEquatorRamp.Evaluate(CurrentTimeOfDay);
     }
 
     /// <summary>
     ///     Updates the directional light color by sampling the colors
-    ///     from the defined gradient an plays the correspoding animation frame
+    ///     from the defined gradient and plays the corresponding animation frame
     /// </summary>
     private void UpdateDirectionalLight()
     {
         if (!directionalLight) return;
 
         //change the color of the light based on the color ramp
-        directionalLight.color = directionalColorRamp.Evaluate(CurrentTimeNormalized);
+        directionalLight.color = directionalColorRamp.Evaluate(CurrentTimeOfDay);
 
         //sample the right frame of the animation
         if (lightAnimation)
         {
-            lightAnimator[lightAnimation.name].time = CurrentTimeNormalized * lightAnimator[lightAnimation.name].length;
+            lightAnimator[lightAnimation.name].time = CurrentTimeOfDay * lightAnimator[lightAnimation.name].length;
             lightAnimator.Play(lightAnimation.name);
             lightAnimator.Sample();
             lightAnimator.Stop();
         }
 
-        RenderSettings.skybox.SetFloat(SUN_SIZE, directionalLight.gameObject.transform.localScale.x);
-        RenderSettings.skybox.SetFloat(SUN_OPACITY, directionalLight.gameObject.transform.localScale.y);
+        var directionalLightLocalScale = directionalLight.gameObject.transform.localScale;
+        RenderSettings.skybox.SetFloat(SUN_SIZE, directionalLightLocalScale.x);
+        RenderSettings.skybox.SetFloat(SUN_OPACITY, directionalLightLocalScale.y);
 
-        //sampling sun randiance and intensity curves
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(CurrentTimeNormalized));
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(CurrentTimeNormalized));
+        //sampling sun radiance and intensity curves
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(CurrentTimeOfDay));
 
         //change size of moon mask
-        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(CurrentTimeNormalized));
+        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(CurrentTimeOfDay));
     }
 
     /// <summary>
@@ -283,11 +392,11 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateFog()
     {
-        if (fog) { RenderSettings.fogColor = fogColorRamp.Evaluate(CurrentTimeNormalized); }
+        if (fog)
+            RenderSettings.fogColor = fogColorRamp.Evaluate(CurrentTimeOfDay);
     }
 
 #if UNITY_EDITOR
-
     public bool editMode;
 
     public void Awake()
@@ -295,7 +404,7 @@ public class SkyboxController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null, null, null);
+            Initialize(null, null, null, null, null, null, null);
     }
 #endif
 
