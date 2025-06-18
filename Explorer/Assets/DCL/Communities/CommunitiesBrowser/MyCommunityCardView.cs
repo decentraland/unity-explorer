@@ -38,10 +38,10 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunityThumbnail(string imageUrl)
         {
+            imageController.SetImage(defaultThumbnailSprite);
+
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
-            else
-                imageController.SetImage(defaultThumbnailSprite);
         }
 
         public void SetCommunityId(string id) =>
