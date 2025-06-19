@@ -69,6 +69,7 @@ namespace DCL.VoiceChat
                     break;
                 case PrivateVoiceChatStatus.VoiceChatRequested:
                     CallId = update.CallId;
+                    CurrentTargetWallet = new Web3Address(update.Caller.Address);
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                     break;
             }

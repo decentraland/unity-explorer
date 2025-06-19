@@ -71,7 +71,7 @@ namespace DCL.VoiceChat
         private async UniTaskVoid OnActiveSpeakersUpdatedAsync()
         {
             await UniTask.SwitchToMainThread();
-            view.SetSpeakingStatus(voiceChatRoom.ActiveSpeakers.Count, "");
+            view.SetSpeakingStatus(voiceChatRoom.ActiveSpeakers.Count, string.Empty);
         }
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)

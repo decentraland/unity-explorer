@@ -45,6 +45,7 @@ namespace DCL.VoiceChat
         private void StopAnimation()
         {
             pulseAnimation?.Kill(true);
+            pulseAnimation = null;
         }
 
         private void CreatePulseAnimation()

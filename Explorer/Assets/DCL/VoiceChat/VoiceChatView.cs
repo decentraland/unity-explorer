@@ -90,6 +90,7 @@ namespace DCL.VoiceChat
             InCallView.MultiplePeopleTalking.gameObject.SetActive(speakingCount > 1);
             InCallView.PlayerNameTalking.gameObject.SetActive(speakingCount == 1);
             InCallView.NoPlayerTalking.gameObject.SetActive(speakingCount == 0);
+            InCallView.PlayerNameTalking.text = userName;
 
             if (speakingCount >= 1)
             {
@@ -144,7 +145,7 @@ namespace DCL.VoiceChat
         private void DisableAllSections()
         {
             InCallView.gameObject.SetActive(false);
-            IncomingCallView.gameObject.SetActive(false);
+            IncomingCallView.SetActive(false);
             OutgoingCallView.gameObject.SetActive(false);
             ErrorView.SetActive(false);
             ConnectingView.gameObject.SetActive(false);
