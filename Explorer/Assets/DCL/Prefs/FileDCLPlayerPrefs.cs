@@ -119,10 +119,10 @@ namespace DCL.Prefs
             dataChanged = false;
 
             // Run save on a background thread
-            // Task.Run(() =>
-            // {
-            //     lock (fileStream)
-            //     {
+            Task.Run(() =>
+            {
+                lock (fileStream)
+                {
                     fileStream.Seek(0, SeekOrigin.Begin);
                     fileStream.SetLength(0);
 
@@ -130,8 +130,8 @@ namespace DCL.Prefs
                     string json = JsonConvert.SerializeObject(userData);
                     writer.Write(json);
                     writer.Flush();
-            //     }
-            // });
+                }
+            });
         }
 
         private void MigrateString(string key)
