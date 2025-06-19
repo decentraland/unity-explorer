@@ -10,7 +10,7 @@ namespace DCL.Prefs
 {
     public class FileDCLPlayerPrefs : IDCLPrefs
     {
-        private const int CONCURRENT_CLIENTS = 4;
+        private const int CONCURRENT_CLIENTS = 16;
         private const string PREFS_FILENAME = "userdata_{0}.json";
 
         private readonly FileStream fileStream;
