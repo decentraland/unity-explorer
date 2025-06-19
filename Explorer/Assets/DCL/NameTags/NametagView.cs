@@ -261,7 +261,7 @@ namespace DCL.Nametags
                     true);
                 BackgroundSprite.size = backgroundSize;
                 mentionBackgroundSprite.size = backgroundSize;
-                
+
                 if (isSpeaking)
                 {
                     BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
@@ -283,7 +283,7 @@ namespace DCL.Nametags
                     false);
                 BackgroundSprite.size = backgroundSize;
                 mentionBackgroundSprite.size = backgroundSize;
-                
+
                 if (isSpeaking)
                 {
                     BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
@@ -374,9 +374,10 @@ namespace DCL.Nametags
                 BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
                 mentionBackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
             }
-            else 
-            { 
+            else
+            {
                 isSpeakingCurrentSequence?.Kill();
+                isSpeakingCurrentSequence = null;
                 BackgroundSprite.transform.localPosition = Vector3.zero;
                 mentionBackgroundSprite.transform.localPosition = Vector3.zero;
             }
