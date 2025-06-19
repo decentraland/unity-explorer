@@ -16,8 +16,6 @@ namespace DCL.Character.CharacterCamera.Systems
     [UpdateInGroup(typeof(CameraGroup))]
     public partial class ApplyCinemachineSettingsSystem : BaseUnityLoopSystem
     {
-        private const string PPREF_SENS = "CameraSensitivity";
-
         private readonly ElementBinding<float> sensitivitySlider;
         private readonly ElementBinding<float> noiseSlider;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
@@ -27,7 +25,7 @@ namespace DCL.Character.CharacterCamera.Systems
 
         public ApplyCinemachineSettingsSystem(World world, IDebugContainerBuilder debugBuilder, ControlsSettingsAsset controlsSettingsAsset) : base(world)
         {
-            currentSens = DCLPlayerPrefs.GetFloat(PPREF_SENS, 10);
+            currentSens = DCLPlayerPrefs.GetFloat(DCLPrefKeys.CAMERA_SENSITIVITY, 10);
             sensitivitySlider = new ElementBinding<float>(currentSens);
             noiseSlider = new ElementBinding<float>(0.5f);
             this.controlsSettingsAsset = controlsSettingsAsset;
@@ -48,7 +46,7 @@ namespace DCL.Character.CharacterCamera.Systems
             if (!Mathf.Approximately(sensitivitySlider.Value, currentSens))
             {
                 currentSens = sensitivitySlider.Value;
-                DCLPlayerPrefs.SetFloat(PPREF_SENS, currentSens);
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.CAMERA_SENSITIVITY, currentSens);
             }
 
             UpdateCameraSettingsQuery(World);
