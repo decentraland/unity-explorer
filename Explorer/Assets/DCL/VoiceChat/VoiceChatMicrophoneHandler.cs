@@ -24,7 +24,6 @@ namespace DCL.VoiceChat
 
         private AudioClip microphoneAudioClip;
         private VoiceChatStatus voiceChatStatus;
-        private bool isMicrophoneEnabledBeforeCall;
         private bool isMicrophoneInitialized;
         private bool isInCall;
         private bool isTalking { get; set; }
@@ -57,7 +56,6 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
             voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
-            isMicrophoneEnabledBeforeCall = true;
             isInCall = false;
         }
 
@@ -115,17 +113,14 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.DISCONNECTED:
                     if (!isInCall) return;
                     isInCall = false;
-                    isMicrophoneEnabledBeforeCall = true;
                     DisableMicrophone();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
-                    if (isMicrophoneEnabledBeforeCall)
-                        isTalking = true;
+                    isTalking = true;
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     isInCall = true;
-                    if (isMicrophoneEnabledBeforeCall)
-                        isTalking = true;
+                    isTalking = true;
                     EnableMicrophone();
                     break;
             }
@@ -167,10 +162,8 @@ namespace DCL.VoiceChat
         public void ToggleMicrophone()
         {
             if (voiceChatStatus != VoiceChatStatus.VOICE_CHAT_IN_CALL)
-            {
-                isMicrophoneEnabledBeforeCall = !isMicrophoneEnabledBeforeCall;
                 return;
-            }
+
             if (!isTalking)
                 EnableMicrophone();
             else
@@ -187,7 +180,6 @@ namespace DCL.VoiceChat
                 audioFilter.SetFilterActive(true);
             }
 
-            isMicrophoneEnabledBeforeCall = true;
             isTalking = false;
 
             if (isMicrophoneInitialized)
@@ -197,6 +189,7 @@ namespace DCL.VoiceChat
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone handler reset for new call");
         }
+
         private void InitializeMicrophone()
         {
             if (isMicrophoneInitialized)
@@ -265,11 +258,17 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophoneInternal()
         {
-            audioSource.loop = false;
-            StopAudioSource();
-            audioSource.volume = 0f;
-            audioFilter.enabled = false;
-            audioFilter.SetFilterActive(false);
+            if (audioSource != null)
+            {
+                audioSource.loop = false;
+                audioSource.Stop();
+                audioSource.volume = 0f;
+            }
+            if (audioFilter != null)
+            {
+                audioFilter.enabled = false;
+                audioFilter.SetFilterActive(false);
+            }
             DisabledMicrophone?.Invoke();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Disabled microphone");
         }

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using LiveKit.Rooms.Streaming.Audio;
-using Utility.Multithreading;
 using Cysharp.Threading.Tasks;
 
 namespace DCL.VoiceChat
@@ -14,7 +13,6 @@ namespace DCL.VoiceChat
 
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
-        private int lastDataLength;
         private int sampleRate = 48000;
         private float[] tempBuffer;
 
@@ -32,7 +30,6 @@ namespace DCL.VoiceChat
 
             streams.Clear();
             isPlaying = false;
-            lastDataLength = 0;
             sampleRate = 48000;
         }
 
@@ -47,7 +44,6 @@ namespace DCL.VoiceChat
             if (tempBuffer == null || tempBuffer.Length != (channels == 2 ? data.Length / 2 : data.Length))
             {
                 tempBuffer = new float[channels == 2 ? data.Length / 2 : data.Length];
-                lastDataLength = data.Length;
             }
 
             Span<float> dataSpan = data.AsSpan();
@@ -74,7 +70,7 @@ namespace DCL.VoiceChat
                     }
                     else
                     {
-                        for (int i = 0; i < data.Length; i++)
+                        for (var i = 0; i < data.Length; i++)
                             data[i] += tempBuffer[i];
                     }
 
@@ -110,7 +106,6 @@ namespace DCL.VoiceChat
         {
             streams.Clear();
             isPlaying = false;
-            lastDataLength = 0;
 
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
