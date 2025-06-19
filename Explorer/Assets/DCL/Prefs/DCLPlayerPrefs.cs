@@ -34,8 +34,6 @@ namespace DCL.Prefs
             if (dclPrefs != null)
                 throw new InvalidOperationException("DCLPrefs already initialized.");
 
-            Debug.Log($"DCLPrefs using mode {mode}");
-
             dclPrefs = mode switch
                        {
                            Mode.Disk => new DefaultDCLPlayerPrefs(),
