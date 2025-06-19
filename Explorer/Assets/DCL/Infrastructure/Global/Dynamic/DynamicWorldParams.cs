@@ -2,6 +2,7 @@
 using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -10,7 +11,6 @@ using SceneRunner.Debugging;
 using System.Collections.Generic;
 using SceneRunner.Scene;
 using Unity.Mathematics;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Global.Dynamic
@@ -67,7 +67,7 @@ namespace Global.Dynamic
     {
         public IReadOnlyList<int2> StaticLoadPositions { get; init; }
         public List<string> Realms { get; init; }
-        public Vector2Int StartParcel { get; init; }
+        public StartParcel StartParcel { get; init; }
         public bool IsolateScenesCommunication { get; init; }
         public bool EnableLandscape { get; init; }
         public bool EnableLOD { get; init; }
@@ -77,6 +77,7 @@ namespace Global.Dynamic
         public IAppArgs AppParameters { get; init; }
         public string DefaultStartingRealm { get; init; }
     }
+
 
     public struct HybridSceneParams
     {
