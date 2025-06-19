@@ -1,5 +1,5 @@
+using DCL.Prefs;
 using System;
-using UnityEngine;
 
 namespace DCL.Web3.Identities
 {
@@ -15,8 +15,8 @@ namespace DCL.Web3.Identities
         {
             get
             {
-                if (!PlayerPrefs.HasKey(keyStrategy.PlayerPrefsKey)) return null;
-                string json = PlayerPrefs.GetString(keyStrategy.PlayerPrefsKey, string.Empty)!;
+                if (!DCLPlayerPrefs.HasKey(keyStrategy.PlayerPrefsKey)) return null;
+                string json = DCLPlayerPrefs.GetString(keyStrategy.PlayerPrefsKey, string.Empty)!;
                 if (string.IsNullOrEmpty(json)) return null;
                 return identitySerializer.Deserialize(json);
             }
@@ -27,7 +27,7 @@ namespace DCL.Web3.Identities
                     Clear();
                 else
                 {
-                    PlayerPrefs.SetString(keyStrategy.PlayerPrefsKey, identitySerializer.Serialize(value));
+                    DCLPlayerPrefs.SetString(keyStrategy.PlayerPrefsKey, identitySerializer.Serialize(value));
                     OnIdentityChanged?.Invoke();
                 }
             }
@@ -46,7 +46,7 @@ namespace DCL.Web3.Identities
 
         public void Clear()
         {
-            PlayerPrefs.DeleteKey(keyStrategy.PlayerPrefsKey);
+            DCLPlayerPrefs.DeleteKey(keyStrategy.PlayerPrefsKey);
             OnIdentityCleared?.Invoke();
         }
     }
