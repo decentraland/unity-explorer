@@ -1,3 +1,4 @@
+using DCL.Prefs;
 using Segment.Serialization;
 using UnityEngine;
 
@@ -13,10 +14,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public static void Initialize(IAnalyticsController analyticsController)
         {
-            if (PlayerPrefs.HasKey(PREFS_FLAG))
+            if (DCLPlayerPrefs.HasKey(PREFS_FLAG))
             {
                 // Application crashed on previous run
-                string previousSessionID = PlayerPrefs.GetString(PREFS_SESSION_ID, string.Empty);
+                string previousSessionID = DCLPlayerPrefs.GetString(PREFS_SESSION_ID, string.Empty);
 
                 analyticsController.Track(AnalyticsEvents.General.CRASH, new JsonObject
                 {
@@ -24,9 +25,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 });
             }
 
-            PlayerPrefs.SetString(PREFS_FLAG, string.Empty);
-            PlayerPrefs.SetString(PREFS_SESSION_ID, analyticsController.SessionID);
-            PlayerPrefs.Save();
+            DCLPlayerPrefs.SetString(PREFS_FLAG, string.Empty);
+            DCLPlayerPrefs.SetString(PREFS_SESSION_ID, analyticsController.SessionID);
+            DCLPlayerPrefs.Save();
 
             var go = new GameObject("CrashDetector");
             go.AddComponent<CrashDetector>();
@@ -35,8 +36,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnApplicationQuit()
         {
-            PlayerPrefs.DeleteKey(PREFS_FLAG);
-            PlayerPrefs.Save();
+            DCLPlayerPrefs.DeleteKey(PREFS_FLAG);
+            DCLPlayerPrefs.Save();
         }
     }
 }
