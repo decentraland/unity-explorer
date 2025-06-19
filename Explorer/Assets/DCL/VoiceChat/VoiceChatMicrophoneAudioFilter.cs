@@ -40,6 +40,8 @@ namespace DCL.VoiceChat
         private VoiceChatCombinedAudioSource combinedAudioSource;
         private VoiceChatAudioFeedbackSuppressor feedbackSuppressor;
 
+        private float[] feedbackBuffer = new float[4096]; // Dedicated buffer for feedback suppression (matches speakerOutputBuffer size)
+
         private Thread processingThread;
         private readonly ConcurrentQueue<AudioProcessingJob> processingQueue = new();
         private readonly ConcurrentQueue<ProcessedAudioData> processedQueue = new();
@@ -143,10 +145,10 @@ namespace DCL.VoiceChat
         private void ApplyFeedbackSuppression(float[] data, int channels, int samplesPerChannel)
         {
             // Get current speaker output for feedback detection
-            if (combinedAudioSource.TryGetCurrentSpeakerOutput(tempBuffer, out int speakerSamples))
+            if (combinedAudioSource.TryGetCurrentSpeakerOutput(feedbackBuffer, out int speakerSamples))
             {
                 // Process audio through feedback suppressor (lightweight operation)
-                bool suppressionApplied = feedbackSuppressor.ProcessAudio(data, channels, samplesPerChannel, tempBuffer, speakerSamples);
+                bool suppressionApplied = feedbackSuppressor.ProcessAudio(data, channels, samplesPerChannel, feedbackBuffer, speakerSamples);
                 
                 // Apply suppression if needed (simple gain reduction)
                 if (suppressionApplied)
@@ -341,6 +343,8 @@ namespace DCL.VoiceChat
 
             if (resampleBuffer != null)
                 Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
+
+            Array.Clear(feedbackBuffer, 0, feedbackBuffer.Length);
 
             // Clear processing queues when filter is reset
             while (processingQueue.TryDequeue(out _)) { }

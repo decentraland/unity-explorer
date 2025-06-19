@@ -70,10 +70,8 @@ namespace DCL.VoiceChat
 
                     if (channels == 2)
                     {
-                        // Store mono data for feedback detection
                         tempBuffer.CopyTo(monoBuffer, 0);
                         
-                        // Upmix mono to stereo
                         for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                         {
                             data[i] += tempBuffer[j];     // Left
@@ -98,7 +96,6 @@ namespace DCL.VoiceChat
                     data[i] *= norm;
             }
 
-            // Store speaker output for feedback detection - use mono data if available
             if (channels == 2 && monoBuffer != null)
             {
                 StoreSpeakerOutputMono(monoBuffer);
