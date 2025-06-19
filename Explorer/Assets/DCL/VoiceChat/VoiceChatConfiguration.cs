@@ -9,6 +9,26 @@ namespace DCL.VoiceChat
         [Tooltip("Enable to hear your own voice through the audio output (may cause echo)")]
         public bool EnableLocalTrackPlayback;
 
+        [Header("Feedback Suppression")]
+        [Tooltip("Enable feedback loop detection and suppression to prevent echo from speakers")]
+        public bool EnableFeedbackSuppression = true;
+
+        [Tooltip("Correlation threshold for feedback detection (higher = more sensitive)")]
+        [Range(0.5f, 0.9f)]
+        public float FeedbackCorrelationThreshold = 0.7f;
+
+        [Tooltip("Maximum suppression strength when feedback is detected")]
+        [Range(0.1f, 0.5f)]
+        public float FeedbackSuppressionStrength = 0.3f;
+
+        [Tooltip("How quickly suppression increases when feedback is detected")]
+        [Range(0.05f, 0.2f)]
+        public float FeedbackSuppressionAttackRate = 0.1f;
+
+        [Tooltip("How quickly suppression decreases when feedback stops")]
+        [Range(0.01f, 0.1f)]
+        public float FeedbackSuppressionReleaseRate = 0.05f;
+
         [Header("Voice Detection Configurations")]
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
         public float HoldThresholdInSeconds = 0.5f;

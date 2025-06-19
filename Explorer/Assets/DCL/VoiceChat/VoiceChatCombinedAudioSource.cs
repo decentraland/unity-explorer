@@ -18,6 +18,11 @@ namespace DCL.VoiceChat
         private int sampleRate = 48000;
         private float[] tempBuffer;
 
+        // Feedback detection support
+        private readonly float[] speakerOutputBuffer = new float[4096]; // ~85ms at 48kHz
+        private int speakerBufferIndex = 0;
+        private readonly object speakerBufferLock = new object();
+
         private void OnEnable()
         {
             OnAudioConfigurationChanged(false);
@@ -81,6 +86,57 @@ namespace DCL.VoiceChat
                 float norm = 1f / activeStreams;
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
+            }
+
+            // Store speaker output for feedback detection
+            StoreSpeakerOutput(data, channels);
+        }
+
+        /// <summary>
+        ///     Stores the current speaker output for feedback detection
+        /// </summary>
+        private void StoreSpeakerOutput(float[] data, int channels)
+        {
+            lock (speakerBufferLock)
+            {
+                int samplesPerChannel = data.Length / channels;
+                
+                // Convert to mono and store in circular buffer
+                for (int i = 0; i < samplesPerChannel; i++)
+                {
+                    float sample;
+                    if (channels == 2)
+                    {
+                        // Average stereo channels
+                        sample = (data[i * 2] + data[i * 2 + 1]) * 0.5f;
+                    }
+                    else
+                    {
+                        sample = data[i];
+                    }
+                    
+                    speakerOutputBuffer[speakerBufferIndex] = sample;
+                    speakerBufferIndex = (speakerBufferIndex + 1) % speakerOutputBuffer.Length;
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Gets the current speaker output buffer for feedback detection
+        /// </summary>
+        public bool TryGetCurrentSpeakerOutput(float[] outputBuffer, out int sampleCount)
+        {
+            lock (speakerBufferLock)
+            {
+                if (outputBuffer.Length >= speakerOutputBuffer.Length)
+                {
+                    speakerOutputBuffer.CopyTo(outputBuffer, 0);
+                    sampleCount = speakerOutputBuffer.Length;
+                    return true;
+                }
+                
+                sampleCount = 0;
+                return false;
             }
         }
 
