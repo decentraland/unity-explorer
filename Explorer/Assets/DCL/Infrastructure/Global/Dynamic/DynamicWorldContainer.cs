@@ -561,7 +561,7 @@ namespace Global.Dynamic
 
             IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
             ISystemClipboard clipboard = new UnityClipboard();
-            IClipboardManager clipboardManager = new ClipboardManager(clipboard);
+            var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);

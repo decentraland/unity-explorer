@@ -13,13 +13,13 @@ namespace MVC
     {
         public readonly IEventSystem EventSystem;
         public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
-        public readonly IClipboardManager ClipboardManager;
+        public readonly ClipboardManager ClipboardManager;
         public readonly ICursor Cursor;
 
         // TODO: Remove this from here
         public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
 
-        public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
+        public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, ClipboardManager clipboardManager, ICursor cursor,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
         {
             EventSystem = eventSystem;
