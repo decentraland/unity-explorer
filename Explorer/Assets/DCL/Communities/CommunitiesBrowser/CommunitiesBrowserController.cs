@@ -8,6 +8,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.WebRequests;
@@ -35,13 +36,13 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
         private readonly ICommunitiesDataProvider dataProvider;
-        private readonly IWebRequestController webRequestController;
         private readonly IInputBlock inputBlock;
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -75,13 +76,14 @@ namespace DCL.Communities.CommunitiesBrowser
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
             this.cursor = cursor;
             this.dataProvider = dataProvider;
-            this.webRequestController = webRequestController;
             this.inputBlock = inputBlock;
             this.profileRepositoryWrapper = profileDataProvider;
             this.warningNotificationView = warningNotificationView;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
+
+            spriteCache.SetObject(new SpriteCache(webRequestController));
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -120,6 +122,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            spriteCache.StrictObject.Clear();
         }
 
         public void Animate(int triggerId) =>
@@ -152,6 +155,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            spriteCache.StrictObject.Clear();
         }
 
         private void ReloadBrowser()
@@ -163,11 +167,11 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private void ConfigureMyCommunitiesList() =>
-            view.InitializeMyCommunitiesList(0, webRequestController);
+            view.InitializeMyCommunitiesList(0, spriteCache);
 
         private void ConfigureResultsGrid()
         {
-            view.InitializeResultsGrid(0, webRequestController, profileRepositoryWrapper);
+            view.InitializeResultsGrid(0, profileRepositoryWrapper, spriteCache);
             view.ResultsLoopGridScrollChanged += LoadMoreResults;
         }
 
@@ -360,7 +364,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private void OpenCommunityProfile(string communityId) =>
-            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId))).Forget();
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId, spriteCache.StrictObject))).Forget();
 
         private void CreateCommunity()
         {

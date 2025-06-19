@@ -1,4 +1,5 @@
 using DCL.UI;
+using DCL.Utilities;
 using DCL.WebRequests;
 using System;
 using TMPro;
@@ -28,12 +29,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnDestroy() =>
             mainButton.onClick.RemoveAllListeners();
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(communityThumbnail, webRequestController);
+            imageController = new ImageController(communityThumbnail, spriteCache);
         }
 
         public void SetCommunityThumbnail(string imageUrl)

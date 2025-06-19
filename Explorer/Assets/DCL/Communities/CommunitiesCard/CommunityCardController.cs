@@ -69,6 +69,8 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
+        private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
+        private bool isSpriteCacheExternal;
 
         private GetCommunityResponse.CommunityData communityData;
 
@@ -202,7 +204,7 @@ namespace DCL.Communities.CommunitiesCard
                 chatEventBus);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
-                webRequestController,
+                spriteCache,
                 communitiesDataProvider,
                 placesAPIService,
                 viewInstance.warningNotificationView,
@@ -215,7 +217,7 @@ namespace DCL.Communities.CommunitiesCard
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
                 placesAPIService,
-                webRequestController,
+                spriteCache,
                 mvcManager,
                 viewInstance.warningNotificationView,
                 viewInstance.successNotificationView,
@@ -224,7 +226,7 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 communitiesDataProvider);
 
-            imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
+            imageController = new ImageController(viewInstance.CommunityThumbnail, spriteCache);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
@@ -239,6 +241,17 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
                 viewInstance!.SetLoadingState(true);
+
+                isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
+
+                if (isSpriteCacheExternal)
+                {
+                    spriteCache.SetObject(inputData.ThumbnailSpriteCache);
+                }
+                else
+                {
+                    spriteCache.SetObject(new SpriteCache(webRequestController));
+                }
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
                 communityData = response.data;
@@ -263,6 +276,9 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Reset();
             placesSectionController?.Reset();
             eventListController?.Reset();
+
+            if(!isSpriteCacheExternal)
+                spriteCache.StrictObject.Clear();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>

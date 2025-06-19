@@ -217,7 +217,7 @@ namespace DCL.Chat
         private CancellationTokenSource privateConversationItemCts = new CancellationTokenSource();
         private CancellationTokenSource communityTitleCts;
 
-        private IThumbnailCache thumbnailCache;
+        private ISpriteCache thumbnailCache;
         private CommunityTitleView.OpenContextMenuDelegate openContextMenuAction;
         private Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communitiesData = new ();
 
@@ -499,7 +499,7 @@ namespace DCL.Chat
             GetChannelMembersDelegate getParticipantProfilesDelegate,
             ILoadingStatus loadingStatus,
             IProfileCache profileCache,
-            IThumbnailCache thumbnailCache,
+            ISpriteCache thumbnailCache,
             CommunityTitleView.OpenContextMenuDelegate openContextMenuAction)
         {
             this.thumbnailCache = thumbnailCache;
@@ -794,7 +794,7 @@ namespace DCL.Chat
         /// </summary>
         /// <param name="channelToAdd">The channel for which the item will be created.</param>
         /// <param name="thumbnailCache">A reference to the thumbnail cache to get the icon of the toolbar.</param>
-        public void AddCommunityConversation(ChatChannel channelToAdd, IThumbnailCache thumbnailCache)
+        public void AddCommunityConversation(ChatChannel channelToAdd, ISpriteCache thumbnailCache)
         {
             conversationsToolbar.AddConversation(channelToAdd);
             GetUserCommunitiesData.CommunityData communityData = communitiesData[channelToAdd.Id];

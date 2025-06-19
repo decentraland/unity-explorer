@@ -118,7 +118,7 @@ namespace DCL.Chat
             conversationItem.SetClaimedNameIconVisibility(false);
         }
 
-        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, IThumbnailCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData)
+        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, ISpriteCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData)
         {
             CommunityChatConversationsToolbarViewItem conversationItem = (CommunityChatConversationsToolbarViewItem)items[channelId];
             SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache);
@@ -290,15 +290,15 @@ namespace DCL.Chat
 
             if (profile != null)
             {
-                newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 newItem.SetConversationName(profile.ValidatedName);
                 newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
             }
         }
 
-        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, IThumbnailCache thumbnailCache)
+        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, ISpriteCache thumbnailCache)
         {
-            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : "", communityData.id);
+            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails?.raw);
             newItem.SetConversationName(communityData.name);
         }
 

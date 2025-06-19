@@ -1,4 +1,5 @@
 using DCL.UI;
+using DCL.Utilities;
 using DCL.WebRequests;
 using DG.Tweening;
 using System;
@@ -82,11 +83,11 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceInfo placeInfo, IWebRequestController webRequestController)
+        public void Configure(PlaceInfo placeInfo, ObjectProxy<ISpriteCache> spriteCache)
         {
             currentPlaceInfo = placeInfo;
 
-            imageController ??= new ImageController(placeThumbnailImage, webRequestController);
+            imageController ??= new ImageController(placeThumbnailImage, spriteCache);
 
             imageController.RequestImage(placeInfo.image);
 

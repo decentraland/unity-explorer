@@ -1,7 +1,7 @@
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
-using DCL.WebRequests;
+using DCL.Utilities;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -63,8 +63,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
-        private IWebRequestController webRequestController;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
+        private ObjectProxy<ISpriteCache> spriteCache;
 
         private void Awake()
         {
@@ -156,11 +156,11 @@ namespace DCL.Communities.CommunitiesBrowser
                 searchBar.inputField.onValueChanged = originalEvent;
         }
 
-        public void InitializeMyCommunitiesList(int itemTotalCount, IWebRequestController webRequestCtrl)
+        public void InitializeMyCommunitiesList(int itemTotalCount, ObjectProxy<ISpriteCache> thumbnailCache)
         {
             myCommunitiesLoopList.InitListView(itemTotalCount, SetupMyCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            webRequestController ??= webRequestCtrl;
+            this.spriteCache = thumbnailCache;
         }
 
         public void ClearMyCommunitiesItems()
@@ -178,12 +178,12 @@ namespace DCL.Communities.CommunitiesBrowser
             myCommunitiesLoopList.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
-        public void InitializeResultsGrid(int itemTotalCount, IWebRequestController webRequestCtrl, ProfileRepositoryWrapper profileDataProvider)
+        public void InitializeResultsGrid(int itemTotalCount, ProfileRepositoryWrapper profileDataProvider, ObjectProxy<ISpriteCache> thumbnailCache)
         {
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            webRequestController ??= webRequestCtrl;
             profileRepositoryWrapper = profileDataProvider;
+            this.spriteCache = thumbnailCache;
         }
 
         public void ClearResultsItems()
@@ -234,7 +234,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(webRequestController);
+            cardView.ConfigureImageController(spriteCache);
             cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
 
             // Setup card events
@@ -259,7 +259,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(webRequestController);
+            cardView.ConfigureImageController(spriteCache);
             cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
             cardView.SetJoiningLoadingActive(false);
 

@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -58,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public EventListController(EventListView view,
             IEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
-            IWebRequestController webRequestController,
+            ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
             IMVCManager mvcManager,
             WarningNotificationView inWorldWarningNotificationView,
             WarningNotificationView inWorldSuccessNotificationView,
@@ -77,7 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.realmNavigator = realmNavigator;
             this.communitiesDataProvider = communitiesDataProvider;
 
-            view.InitList(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
+            view.InitList(() => currentSectionFetchData, eventThumbnailSpriteCache, mvcManager, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
             view.MainButtonClicked += OnMainButtonClicked;

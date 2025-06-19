@@ -7,6 +7,7 @@ using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.PlacesAPIService;
 using DCL.UI;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -58,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private CancellationTokenSource placeCardOperationsCts = new ();
 
         public PlacesSectionController(PlacesSectionView view,
-            IWebRequestController webRequestController,
+            ObjectProxy<ISpriteCache> placeSpriteCache,
             ICommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
@@ -78,7 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
 
-            view.InitGrid(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
+            view.InitGrid(() => currentSectionFetchData, placeSpriteCache, mvcManager, cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
