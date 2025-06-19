@@ -31,7 +31,6 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IRealmData realmData;
         private readonly IRemoteMetadata remoteMetadata;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         private ProvidedAsset<MultiplayerMovementSettings> settings;
 
@@ -39,7 +38,7 @@ namespace DCL.PluginSystem.Global
 
         public MultiplayerMovementPlugin(IAssetsProvisioner assetsProvisioner, MultiplayerMovementMessageBus messageBus, IDebugContainerBuilder debugBuilder
           , RemoteEntities remoteEntities, ExposedTransform playerTransform, ProvidedAsset<MultiplayerDebugSettings> debugSettings, IAppArgs appArgs,
-            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata, FeatureFlagsCache featureFlagsCache)
+            IReadOnlyEntityParticipantTable entityParticipantTable, IRealmData realmData, IRemoteMetadata remoteMetadata)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.messageBus = messageBus;
@@ -51,7 +50,6 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.realmData = realmData;
             this.remoteMetadata = remoteMetadata;
-            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose()
@@ -78,9 +76,9 @@ namespace DCL.PluginSystem.Global
             }
 
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
-                this.settings.Value.UseCompression = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN);
+                settings.Value.UseCompression = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN);
             else if (IPlatform.DEFAULT.Is(IPlatform.Kind.Mac))
-                this.settings.Value.UseCompression = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC);
+                settings.Value.UseCompression = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

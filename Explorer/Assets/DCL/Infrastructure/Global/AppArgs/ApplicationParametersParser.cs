@@ -1,3 +1,4 @@
+using CodeLess.Interfaces;
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using UnityEngine;
 
 namespace Global.AppArgs
 {
+    [AutoInterface]
     public class ApplicationParametersParser : IAppArgs
     {
         private readonly Dictionary<string, string> appParameters = new ();

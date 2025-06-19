@@ -8,17 +8,15 @@ namespace DCL.UI.Controls
     public class ControlsPanelController : ControllerBase<ControlsPanelView>
     {
         private readonly IMVCManager mvcManager;
-        private readonly DCLInput input;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         private bool closePanel;
 
-        public ControlsPanelController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, DCLInput input) : base(viewFactory)
+        public ControlsPanelController(ViewFactoryMethod viewFactory, IMVCManager mvcManager) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
-            this.input = input;
 
-            input.Shortcuts.Controls.performed += OnShortcutPressed;
+            DCLInput.Instance.Shortcuts.Controls.performed += OnShortcutPressed;
         }
 
         private void OnShortcutPressed(InputAction.CallbackContext ctx)
@@ -37,12 +35,12 @@ namespace DCL.UI.Controls
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
                 viewInstance!.closeButton.OnClickAsync(ct),
-                UniTask.WaitUntil(() => input.UI.Close.WasPerformedThisFrame() || closePanel, cancellationToken: ct)
+                UniTask.WaitUntil(() => DCLInput.Instance.UI.Close.WasPerformedThisFrame() || closePanel, cancellationToken: ct)
             );
 
         public override void Dispose()
         {
-            input.Shortcuts.Controls.performed -= OnShortcutPressed;
+            DCLInput.Instance.Shortcuts.Controls.performed -= OnShortcutPressed;
         }
     }
 }

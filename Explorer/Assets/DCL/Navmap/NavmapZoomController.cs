@@ -15,7 +15,6 @@ namespace DCL.Navmap
         private const float MOUSE_WHEEL_THRESHOLD = 0.04f;
 
         private readonly NavmapZoomView view;
-        private readonly DCLInput dclInput;
         private readonly INavmapBus navmapBus;
 
         private AnimationCurve normalizedCurve;
@@ -32,13 +31,9 @@ namespace DCL.Navmap
         private IMapCameraController cameraController;
         private bool blockZoom;
 
-        public NavmapZoomController(
-            NavmapZoomView view,
-            DCLInput dclInput,
-            INavmapBus navmapBus)
+        public NavmapZoomController(NavmapZoomView view, INavmapBus navmapBus)
         {
             this.view = view;
-            this.dclInput = dclInput;
             this.navmapBus = navmapBus;
 
             normalizedCurve = view.normalizedZoomCurve;
@@ -108,7 +103,8 @@ namespace DCL.Navmap
 
                 Deactivate();
             }
-            dclInput.UI.ScrollWheel.performed += MouseWheel;
+
+            DCLInput.Instance.UI.ScrollWheel.performed += MouseWheel;
 
             cts = new CancellationTokenSource();
 
@@ -125,7 +121,7 @@ namespace DCL.Navmap
         {
             if (!active) return;
 
-            dclInput.UI.ScrollWheel.performed -= MouseWheel;
+            DCLInput.Instance.UI.ScrollWheel.performed -= MouseWheel;
             cts.Cancel();
             cts.Dispose();
             cts = null;

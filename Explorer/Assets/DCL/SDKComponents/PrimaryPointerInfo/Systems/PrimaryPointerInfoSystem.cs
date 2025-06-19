@@ -12,6 +12,7 @@ using SceneRunner.Scene;
 using UnityEngine;
 using InputAction = UnityEngine.InputSystem.InputAction;
 using Vector2 = UnityEngine.Vector2;
+using Vector3 = Decentraland.Common.Vector3;
 
 namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 {
@@ -20,7 +21,6 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
     public partial class PrimaryPointerInfoSystem : BaseUnityLoopSystem
     {
         private readonly World globalWorld;
-        private readonly ObjectProxy<DCLInput> inputProxy;
         private InputAction inputPoint;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
         private Vector2 previousPosition = Vector2.zero;
@@ -31,13 +31,11 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
         internal PrimaryPointerInfoSystem(
             World world,
             World globalWorld,
-            ObjectProxy<DCLInput> inputProxy,
             ISceneStateProvider sceneStateProvider,
             IECSToCRDTWriter ecsToCRDTWriter
         ) : base(world)
         {
             this.globalWorld = globalWorld;
-            this.inputProxy = inputProxy;
             this.sceneStateProvider = sceneStateProvider;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
@@ -48,7 +46,7 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             cachedCamera = globalWorld.CacheCamera().GetCameraComponent(globalWorld).Camera;
 
-            inputPoint = inputProxy.StrictObject.Camera.Point;
+            inputPoint = DCLInput.Instance.Camera.Point;
 
             UpdatePointerInfo(Vector2.zero);
         }
@@ -67,14 +65,14 @@ namespace DCL.SDKComponents.PrimaryPointerInfo.Systems
 
             var ray = cachedCamera.ScreenPointToRay(pointerPos);
 
-            var worldRayDirection = new Decentraland.Common.Vector3
+            var worldRayDirection = new Vector3
             {
                 X = ray.direction.x,
                 Y = ray.direction.y,
                 Z = ray.direction.z,
             };
 
-            ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Decentraland.Common.Vector3 rayDir)>(static (component, data) =>
+            ecsToCRDTWriter.PutMessage<PBPrimaryPointerInfo, (Vector2 pos, Vector2 delta, Vector3 rayDir)>(static (component, data) =>
             {
                 component.ScreenCoordinates = new Decentraland.Common.Vector2 { X = data.pos.x, Y = data.pos.y };
                 component.ScreenDelta = new Decentraland.Common.Vector2 { X = data.delta.x, Y = data.delta.y };

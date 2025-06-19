@@ -59,7 +59,6 @@ namespace DCL.ExplorePanel
             CameraReelController cameraReelController,
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
-            DCLInput dclInput,
             IExplorePanelEscapeAction explorePanelEscapeAction,
             INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
@@ -72,7 +71,7 @@ namespace DCL.ExplorePanel
             this.backpackController = backpackController;
             CameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());

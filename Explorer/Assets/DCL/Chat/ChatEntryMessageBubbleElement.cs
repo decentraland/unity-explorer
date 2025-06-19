@@ -49,14 +49,6 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        ///     Setup the dependencies needed for the hyperlink handler.
-        /// </summary>
-        public void SetupHyperlinkHandlerDependencies(ViewDependencies dependencies)
-        {
-            messageContentElement.textHyperlinkHandler.InjectDependencies(dependencies);
-        }
-
-        /// <summary>
         ///  Sets the chat message data into the chat bubble, adapting the background size accordingly and changing the color & outline if it's a mention
         /// </summary>
         /// <param name="data"> a ChatMessage </param>

@@ -46,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly SelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
-        private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly AudioClipsCache audioClipsCache;
@@ -71,7 +70,6 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             SelfProfile selfProfile,
             IMVCManager mvcManager,
-            DCLInput dclInput,
             CacheCleaner cacheCleaner,
             IWeb3IdentityCache web3IdentityCache,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -91,7 +89,6 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
-            this.dclInput = dclInput;
             this.web3IdentityCache = web3IdentityCache;
             this.entityParticipantTable = entityParticipantTable;
             this.assetBundleURL = assetBundleURL;
@@ -164,7 +161,7 @@ namespace DCL.PluginSystem.Global
 
             emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                 selfProfile, emoteStorage, emoteWheelRarityBackgrounds, world, playerEntity, thumbnailProvider,
-                inputBlock, dclInput, cursor, sharedSpaceManager);
+                inputBlock, cursor, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.EmotesWheel, emotesWheelController);
 

@@ -100,7 +100,7 @@ public class SkyboxController : MonoBehaviour
         }
     }
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache, StylizedSkyboxSettingsAsset settingsAsset)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, StylizedSkyboxSettingsAsset settingsAsset, FeatureFlagsConfiguration featureFlags)
     {
         this.settingsAsset = settingsAsset;
 
@@ -150,10 +150,10 @@ public class SkyboxController : MonoBehaviour
         //setup fog
         if (fog) { RenderSettings.fog = true; }
 
-        bool useRemoteSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
+        bool useRemoteSkyboxSettings = featureFlags.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
 
         if (useRemoteSkyboxSettings &&
-            featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
+            featureFlags.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
         {
             SpeedMultiplier = skyboxSettings.speed;
             DynamicTimeNormalized = (float)skyboxSettings.time / SECONDS_IN_DAY;
@@ -295,7 +295,7 @@ public class SkyboxController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null, null, null);
+            Initialize(null, null, null, null, new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
     }
 #endif
 

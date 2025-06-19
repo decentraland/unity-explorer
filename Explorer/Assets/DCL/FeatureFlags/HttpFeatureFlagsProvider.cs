@@ -11,15 +11,12 @@ namespace DCL.FeatureFlags
     public class HttpFeatureFlagsProvider : IFeatureFlagsProvider
     {
         private readonly IWebRequestController webRequestController;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, string> headers = new ();
 
-        public HttpFeatureFlagsProvider(IWebRequestController webRequestController,
-            FeatureFlagsCache featureFlagsCache)
+        public HttpFeatureFlagsProvider(IWebRequestController webRequestController)
         {
             this.webRequestController = webRequestController;
-            this.featureFlagsCache = featureFlagsCache;
         }
 
         public async UniTask<FeatureFlagsConfiguration> GetAsync(FeatureFlagOptions options, CancellationToken ct)
@@ -46,7 +43,7 @@ namespace DCL.FeatureFlags
 
             var config = new FeatureFlagsConfiguration(response);
 
-            featureFlagsCache.Configuration = config;
+            FeatureFlagsConfiguration.Initialize(config);
 
             return config;
         }

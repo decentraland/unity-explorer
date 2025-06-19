@@ -34,7 +34,6 @@ namespace DCL.PluginSystem.World
         private readonly WorldVolumeMacBus worldVolumeMacBus;
         private readonly ExposedCameraData exposedCameraData;
         private readonly ObjectProxy<IRoomHub> roomHub;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private MediaPlayer mediaPlayerPrefab;
         private MediaPlayerPluginWrapper mediaPlayerPluginWrapper;
 
@@ -46,8 +45,7 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             WorldVolumeMacBus worldVolumeMacBus,
             ExposedCameraData exposedCameraData,
-            ObjectProxy<IRoomHub> roomHub,
-            FeatureFlagsCache featureFlagsCache)
+            ObjectProxy<IRoomHub> roomHub)
         {
             this.frameTimeBudget = frameTimeBudget;
             this.videoTexturePool = videoTexturePool;
@@ -57,14 +55,13 @@ namespace DCL.PluginSystem.World
             this.worldVolumeMacBus = worldVolumeMacBus;
             this.exposedCameraData = exposedCameraData;
             this.roomHub = roomHub;
-            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities _, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems, featureFlagsCache);
+            mediaPlayerPluginWrapper.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter, finalizeWorldSystems);
         }
 
         public async UniTask InitializeAsync(MediaPlayerPluginSettings settings, CancellationToken ct)

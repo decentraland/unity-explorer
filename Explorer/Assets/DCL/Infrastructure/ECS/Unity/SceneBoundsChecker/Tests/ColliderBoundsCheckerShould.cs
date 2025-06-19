@@ -36,14 +36,12 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
                 new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f),
                 50.0f);
 
-            IPhysicsTickProvider physicsTickProvider = Substitute.For<IPhysicsTickProvider>();
-            physicsTickProvider.Tick.Returns(2);
+            PhysicsTickProvider.Tick = 2;
 
             system = new CheckColliderBoundsSystem(
                 world,
                 scenePartition,
-                sceneGeometry,
-                physicsTickProvider);
+                sceneGeometry);
 
             collider = new GameObject(nameof(ColliderBoundsCheckerShould)).AddComponent<BoxCollider>();
             testRoot = new GameObject("TestRoot");
@@ -268,8 +266,8 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone, assetPromise);
             component.State = LoadingState.Finished;
             component.NeedsColliderBoundsCheck = true; // Set the flag to true - this is the key change
-            
-            // Ensure the result is available 
+
+            // Ensure the result is available
             bool resultRetrieved = component.Promise.TryGetResult(world, out _);
             Assert.IsTrue(resultRetrieved, "Failed to retrieve result from promise");
 
@@ -280,9 +278,9 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             system.Update(0);
 
             // Check if the collider was processed and active
-            Assert.IsTrue(gltfAsset.DecodedVisibleSDKColliders[0].IsActiveBySceneBounds, 
+            Assert.IsTrue(gltfAsset.DecodedVisibleSDKColliders[0].IsActiveBySceneBounds,
                 "Collider should be processed due to NeedsColliderBoundsCheck flag");
-            
+
             // Verify the flag was reset after processing
             component = world.Get<GltfContainerComponent>(entity);
             Assert.IsFalse(component.NeedsColliderBoundsCheck, "NeedsColliderBoundsCheck should be reset after processing");
@@ -290,7 +288,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             // Clean up
             UnityObjectUtils.SafeDestroy(colliderObj);
         }
-        
+
         [Test]
         public void DoNotProcessGltfColliderWhenNeedsColliderBoundsCheckIsFalse()
         {
@@ -305,7 +303,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             // Create an SDKCollider
             var sdkCollider = new SDKCollider(boxCollider);
             sdkCollider.IsActiveByEntity = true;
-            
+
             // Explicitly set IsActiveBySceneBounds to false to verify it doesn't change
             sdkCollider.ForceActiveBySceneBounds(false);
 
@@ -334,8 +332,8 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new GltfContainerComponent(ColliderLayer.ClNone, ColliderLayer.ClNone, assetPromise);
             component.State = LoadingState.Finished;
             component.NeedsColliderBoundsCheck = false; // Set the flag to false - key for this test
-            
-            // Ensure the result is available 
+
+            // Ensure the result is available
             bool resultRetrieved = component.Promise.TryGetResult(world, out _);
             Assert.IsTrue(resultRetrieved, "Failed to retrieve result from promise");
 
@@ -347,7 +345,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             system.Update(0);
 
             // Check if the collider remains inactive - it should not be processed
-            Assert.IsFalse(gltfAsset.DecodedVisibleSDKColliders[0].IsActiveBySceneBounds, 
+            Assert.IsFalse(gltfAsset.DecodedVisibleSDKColliders[0].IsActiveBySceneBounds,
                 "Collider should not be processed when NeedsColliderBoundsCheck is false and transform hasn't moved");
 
             // Clean up

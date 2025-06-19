@@ -12,12 +12,10 @@ namespace DCL.PluginSystem.World
     public class PrimaryPointerInfoPlugin : IDCLWorldPlugin<NoExposedPluginSettings>
     {
         private readonly Arch.Core.World globalWorld;
-        private readonly ObjectProxy<DCLInput> containerInputProxy;
 
-        public PrimaryPointerInfoPlugin(Arch.Core.World globalWorld, ObjectProxy<DCLInput> containerInputProxy)
+        public PrimaryPointerInfoPlugin(Arch.Core.World globalWorld)
         {
             this.globalWorld = globalWorld;
-            this.containerInputProxy = containerInputProxy;
         }
 
         public void Dispose()
@@ -30,7 +28,6 @@ namespace DCL.PluginSystem.World
             PrimaryPointerInfoSystem.InjectToWorld(
                 ref builder,
                 globalWorld,
-                containerInputProxy,
                 sharedDependencies.SceneStateProvider,
                 sharedDependencies.EcsToCRDTWriter
             );

@@ -12,19 +12,20 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
 
-#if !UNITY_EDITOR
-using DCL.Web3;
-using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEditor;
 #endif
 
 namespace DCL.AuthenticationScreenFlow
@@ -63,9 +64,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly BuildData buildData;
-#if !UNITY_EDITOR
-        private readonly FeatureFlagsCache featureFlagsCache;
-#endif
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
 
@@ -85,7 +83,6 @@ namespace DCL.AuthenticationScreenFlow
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
             ISelfProfile selfProfile,
-            FeatureFlagsCache featureFlagsCache,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -98,9 +95,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
-#if !UNITY_EDITOR
-            this.featureFlagsCache = featureFlagsCache;
-#endif
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -138,11 +132,10 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
 
-#if UNITY_EDITOR
-            viewInstance.VersionText.text = $"editor-version - {buildData.InstallSource}";
-#else
-            viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
-#endif
+            viewInstance.VersionText.text = Application.isEditor
+                ? $"editor-version - {buildData.InstallSource}"
+                : $"{Application.version} - {buildData.InstallSource}";
+
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
@@ -230,18 +223,20 @@ namespace DCL.AuthenticationScreenFlow
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
         {
-#if UNITY_EDITOR
-            return true;
-#else
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT)) return true;
-            if (!featureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT, out List<List<string>>? allowedUsersCsv))
+            if (Application.isEditor)
+                return true;
+
+            FeatureFlagsConfiguration flags = FeatureFlagsConfiguration.Instance;
+
+            if (!flags.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT)) return true;
+
+            if (!flags.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT, out List<List<string>>? allowedUsersCsv))
                 return true;
 
             bool isUserAllowed = allowedUsersCsv![0]
                .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
 
             return isUserAllowed;
-#endif
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -459,7 +454,7 @@ namespace DCL.AuthenticationScreenFlow
         private void ExitApp()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+            EditorApplication.isPlaying = false;
             return;
 #endif
             Application.Quit();

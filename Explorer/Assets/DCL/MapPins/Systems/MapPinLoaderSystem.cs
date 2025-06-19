@@ -37,14 +37,13 @@ namespace DCL.SDKComponents.MapPins.Systems
         private int xRounded;
         private int yRounded;
 
-        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent, FeatureFlagsCache featureFlagsCache,
-            IMapPinsEventBus mapPinsEventBus) : base(world)
+        public MapPinLoaderSystem(World world, ISceneData sceneData, World globalWorld, IPartitionComponent partitionComponent, IMapPinsEventBus mapPinsEventBus) : base(world)
         {
             this.sceneData = sceneData;
             this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
             this.mapPinsEventBus = mapPinsEventBus;
-            useCustomMapPinIcons = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
+            useCustomMapPinIcons = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
         }
 
         protected override void Update(float t)

@@ -10,11 +10,8 @@ namespace DCL.Time.Systems
     [UpdateInGroup(typeof(PhysicsSystemGroup))]
     public partial class UpdatePhysicsTickSystem : BaseUnityLoopSystem
     {
-        private readonly PhysicsTickProvider physicsTickProvider;
-
-        public UpdatePhysicsTickSystem(World world, PhysicsTickProvider physicsTickProvider) : base(world)
+        public UpdatePhysicsTickSystem(World world) : base(world)
         {
-            this.physicsTickProvider = physicsTickProvider;
             World.Create<PhysicsTickComponent>();
         }
 
@@ -27,7 +24,7 @@ namespace DCL.Time.Systems
         private void UpdateTick(ref PhysicsTickComponent tickComponent)
         {
             tickComponent.Tick++;
-            physicsTickProvider.Tick++;
+            PhysicsTickProvider.Tick++;
         }
     }
 }

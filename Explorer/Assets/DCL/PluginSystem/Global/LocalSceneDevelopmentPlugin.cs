@@ -18,12 +18,12 @@ namespace DCL.PluginSystem.Global
         private const int RETRY_DELAY_MS = 5000;
 
         private readonly IReloadScene reloadSceneController;
-        private readonly IRealmUrls realmUrls;
+        private readonly RealmUrls realmUrls;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
         private CancellationTokenSource? lifeCycleCancellationTokenSource;
 
         public LocalSceneDevelopmentPlugin(IReloadScene reloadSceneController,
-            IRealmUrls realmUrls)
+            RealmUrls realmUrls)
         {
             this.reloadSceneController = reloadSceneController;
             this.realmUrls = realmUrls;

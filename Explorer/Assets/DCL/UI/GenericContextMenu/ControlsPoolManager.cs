@@ -21,7 +21,6 @@ namespace DCL.UI.GenericContextMenu
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
-            ViewDependencies viewDependencies,
             ProfileRepositoryWrapper profileDataProvider,
             Transform controlsParent,
             GenericContextMenuSeparatorView separatorPrefab,
@@ -59,7 +58,6 @@ namespace DCL.UI.GenericContextMenu
                 createFunc: () =>
                 {
                     GenericContextMenuUserProfileView profileView = Object.Instantiate(userProfilePrefab, controlsParent);
-                    profileView.InjectDependencies(viewDependencies);
                     profileView.SetProfileDataProvider(profileDataProvider);
                     return profileView;
                 },

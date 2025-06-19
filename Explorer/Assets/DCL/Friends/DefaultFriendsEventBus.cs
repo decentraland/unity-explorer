@@ -1,19 +1,23 @@
+using CodeLess.Interfaces;
 using System;
 
 namespace DCL.Friends
 {
+    [AutoInterface]
     public class DefaultFriendsEventBus : IFriendsEventBus
     {
+        public delegate void UserIdOperation(string userId);
+
         public event Action<FriendRequest>? OnFriendRequestReceived;
-        public event IFriendsEventBus.UserIdOperation? OnOtherUserRemovedTheFriendship;
-        public event IFriendsEventBus.UserIdOperation? OnOtherUserAcceptedYourRequest;
-        public event IFriendsEventBus.UserIdOperation? OnOtherUserRejectedYourRequest;
-        public event IFriendsEventBus.UserIdOperation? OnOtherUserCancelledTheRequest;
+        public event UserIdOperation? OnOtherUserRemovedTheFriendship;
+        public event UserIdOperation? OnOtherUserAcceptedYourRequest;
+        public event UserIdOperation? OnOtherUserRejectedYourRequest;
+        public event UserIdOperation? OnOtherUserCancelledTheRequest;
         public event Action<FriendRequest>? OnYouSentFriendRequestToOtherUser;
-        public event IFriendsEventBus.UserIdOperation? OnYouRemovedFriend;
-        public event IFriendsEventBus.UserIdOperation? OnYouCancelledFriendRequestSentToOtherUser;
-        public event IFriendsEventBus.UserIdOperation? OnYouAcceptedFriendRequestReceivedFromOtherUser;
-        public event IFriendsEventBus.UserIdOperation? OnYouRejectedFriendRequestReceivedFromOtherUser;
+        public event UserIdOperation? OnYouRemovedFriend;
+        public event UserIdOperation? OnYouCancelledFriendRequestSentToOtherUser;
+        public event UserIdOperation? OnYouAcceptedFriendRequestReceivedFromOtherUser;
+        public event UserIdOperation? OnYouRejectedFriendRequestReceivedFromOtherUser;
         public event Action<FriendProfile>? OnFriendConnected;
         public event Action<FriendProfile>? OnFriendDisconnected;
         public event Action<FriendProfile>? OnFriendAway;

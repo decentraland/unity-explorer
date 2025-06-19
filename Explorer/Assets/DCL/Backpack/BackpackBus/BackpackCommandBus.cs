@@ -1,7 +1,9 @@
+using CodeLess.Interfaces;
 using System;
 
 namespace DCL.Backpack.BackpackBus
 {
+    [AutoInterface]
     public class BackpackCommandBus : IBackpackCommandBus
     {
         public event Action<BackpackEquipWearableCommand>? EquipWearableMessageReceived;

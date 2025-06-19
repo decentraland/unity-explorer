@@ -21,7 +21,7 @@ namespace DCL.Chat
     /// <summary>
     /// A UI element that displays a list of chat messages.
     /// </summary>
-    public class ChatMessageViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
+    public class ChatMessageViewerElement : MonoBehaviour, IDisposable
     {
         public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
         public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
@@ -78,7 +78,6 @@ namespace DCL.Chat
         private int separatorPositionIndex;
         private int messageCountWhenSeparatorWasSet;
 
-        private ViewDependencies viewDependencies;
         private CancellationTokenSource popupCts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
@@ -276,11 +275,6 @@ namespace DCL.Chat
             IsSeparatorVisible = false;
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-        }
-
         /// <summary>
         /// Checks whether an item of the scroll view is in a position where the user can see it or not.
         /// </summary>
@@ -355,7 +349,6 @@ namespace DCL.Chat
                     messageOptionsButton?.onClick.RemoveAllListeners();
 
                     SetItemDataAsync(index, itemData, itemScript).Forget();
-                    itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
                     if (itemData is { IsSentByOwnUser: false, IsSystemMessage: false })
@@ -369,15 +362,12 @@ namespace DCL.Chat
             return item;
         }
 
-        private bool IsUserBlocked(string userAddress) =>
-            viewDependencies.UserBlockingCacheProxy.Configured && viewDependencies.UserBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
-
         private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
         {
             popupCts = popupCts.SafeRestart();
             contextMenuTask?.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)

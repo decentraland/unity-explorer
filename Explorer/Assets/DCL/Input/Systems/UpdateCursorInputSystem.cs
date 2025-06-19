@@ -41,14 +41,14 @@ namespace DCL.Input.Systems
         private readonly DCLInput.ShortcutsActions shortcuts;
         private readonly InteractionCache interactionCache;
 
-        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
+        internal UpdateCursorInputSystem(World world, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
         {
             this.eventSystem = eventSystem;
             this.cursor = cursor;
             this.crosshairCanvas = crosshairCanvas;
-            cameraActions = dclInput.Camera;
-            uiActions = dclInput.UI;
-            shortcuts = dclInput.Shortcuts;
+            cameraActions = DCLInput.Instance.Camera;
+            uiActions = DCLInput.Instance.UI;
+            shortcuts = DCLInput.Instance.Shortcuts;
             mouseDevice = InputSystem.GetDevice<Mouse>().EnsureNotNull("Mouse not found");
             interactionCache = new InteractionCache();
         }

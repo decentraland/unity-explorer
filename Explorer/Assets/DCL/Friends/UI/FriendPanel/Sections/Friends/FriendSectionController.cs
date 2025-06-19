@@ -18,7 +18,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly ViewDependencies viewDependencies;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -31,14 +30,12 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            ViewDependencies viewDependencies,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-            this.viewDependencies = viewDependencies;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
 
@@ -66,7 +63,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenuTask = new UniTaskCompletionSource();
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
 
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address), buttonPosition, default(Vector2),
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address), buttonPosition, default(Vector2),
                 popupCts.Token, menuTask, onHide: () => elementView.CanUnHover = true, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 

@@ -21,22 +21,18 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private SkyboxController? skyboxController;
         private readonly ElementBinding<float> timeOfDay;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         private StylizedSkyboxSettingsAsset? settingsAsset;
 
         public StylizedSkyboxPlugin(
             IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
-            IDebugContainerBuilder debugContainerBuilder,
-            FeatureFlagsCache featureFlagsCache
-        )
+            IDebugContainerBuilder debugContainerBuilder)
         {
             timeOfDay = new ElementBinding<float>(0);
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.debugContainerBuilder = debugContainerBuilder;
-            this.featureFlagsCache = featureFlagsCache;
         }
 
         public void Dispose() { }
@@ -50,7 +46,7 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
             skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
             AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.SkyboxAnimationCycle, ct: ct)).Value;
 
-            skyboxController.Initialize(settingsAsset.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache, settingsAsset);
+            skyboxController.Initialize(settingsAsset.SkyboxMaterial, directionalLight, skyboxAnimation, settingsAsset, FeatureFlagsConfiguration.Instance);
 
             debugContainerBuilder.TryAddWidget("Skybox")
                                 ?.AddSingleButton("Play", () => skyboxController.UseDynamicTime = true)

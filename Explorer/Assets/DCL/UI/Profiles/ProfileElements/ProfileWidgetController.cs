@@ -14,7 +14,7 @@ namespace DCL.UI.ProfileElements
 
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private CancellationTokenSource? loadProfileCts;
@@ -24,7 +24,7 @@ namespace DCL.UI.ProfileElements
         public ProfileWidgetController(ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            IProfileChangesBus profileChangesBus,
+            ProfileChangesBus profileChangesBus,
             ProfileRepositoryWrapper profileDataProvider
         ) : base(viewFactory)
         {

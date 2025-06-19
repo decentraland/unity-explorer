@@ -44,7 +44,6 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
@@ -73,8 +72,7 @@ namespace DCL.UI.Sidebar
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
-            IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            IRealmData realmData)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -93,7 +91,6 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.featureFlagsCache = featureFlagsCache;
         }
 
         public override void Dispose()
@@ -250,7 +247,6 @@ namespace DCL.UI.Sidebar
             includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
                 includeMarketplaceCredits,
                 ownProfile.UserId,
-                featureFlagsCache,
                 ct);
 
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);

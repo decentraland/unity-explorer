@@ -37,7 +37,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
 
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
         private readonly IChatEventBus chatEventBus;
         private readonly bool includeUserBlocking;
@@ -71,7 +71,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             bool includeUserBlocking,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.friendServiceProxy = friendServiceProxy;

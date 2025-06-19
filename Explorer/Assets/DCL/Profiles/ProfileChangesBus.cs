@@ -1,7 +1,9 @@
 
+using System;
+
 namespace DCL.Profiles
 {
-    public class ProfileChangesBusController : IProfileChangesBus
+    public class ProfileChangesBus : IDisposable
     {
         public delegate void ProfileChangedDelegate(Profile profile);
 

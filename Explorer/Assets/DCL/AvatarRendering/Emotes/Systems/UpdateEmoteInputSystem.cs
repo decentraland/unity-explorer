@@ -33,10 +33,9 @@ namespace DCL.AvatarRendering.Emotes
         private bool isWheelBlocked;
         private int framesAfterWheelWasClosed;
 
-        private UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
-            IMVCManager mvcManager) : base(world)
+        private UpdateEmoteInputSystem(World world, IEmotesMessageBus messageBus, IMVCManager mvcManager) : base(world)
         {
-            emotesActions = dclInput.Emotes;
+            emotesActions = DCLInput.Instance.Emotes;
             this.messageBus = messageBus;
             this.mvcManager = mvcManager;
 

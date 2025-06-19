@@ -9,9 +9,9 @@ namespace DCL.UI
 {
     public class ChatEntryMenuPopupController : ControllerBase<ChatEntryMenuPopupView, ChatEntryMenuPopupData>
     {
-        private readonly IClipboardManager clipboardManager;
+        private readonly ClipboardManager clipboardManager;
 
-        public ChatEntryMenuPopupController(ViewFactoryMethod viewFactory, IClipboardManager clipboardManager) : base(viewFactory)
+        public ChatEntryMenuPopupController(ViewFactoryMethod viewFactory, ClipboardManager clipboardManager) : base(viewFactory)
         {
             this.clipboardManager = clipboardManager;
         }

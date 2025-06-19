@@ -1,10 +1,12 @@
 using System.Linq;
 using Arch.Core;
+using CodeLess.Interfaces;
 using DCL.Input.Component;
 using ECS.Abstract;
 
 namespace DCL.Input
 {
+    [AutoInterface]
     public class ECSInputBlock : IInputBlock
     {
         private readonly World globalWorld;

@@ -9,9 +9,9 @@ namespace DCL.UI
 {
     public class PastePopupToastController : ControllerBase<PastePopupToastView, PastePopupToastData>
     {
-        private readonly IClipboardManager clipboardManager;
+        private readonly ClipboardManager clipboardManager;
 
-        public PastePopupToastController(ViewFactoryMethod viewFactory, IClipboardManager clipboardManager) : base(viewFactory)
+        public PastePopupToastController(ViewFactoryMethod viewFactory, ClipboardManager clipboardManager) : base(viewFactory)
         {
             this.clipboardManager = clipboardManager;
         }

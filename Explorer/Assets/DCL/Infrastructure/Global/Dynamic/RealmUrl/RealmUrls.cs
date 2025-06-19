@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Global.Dynamic.RealmUrl
 {
-    public class RealmUrls : IRealmUrls
+    public class RealmUrls
     {
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly IRealmNamesMap realmNames;

@@ -35,7 +35,7 @@ namespace MVC
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IProfileRepository profileRepository;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -52,7 +52,7 @@ namespace MVC
             bool includeUserBlocking,
             IAnalyticsController analytics,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator, ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            IRealmNavigator realmNavigator, ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IProfileRepository profileRepository,
             ISharedSpaceManager sharedSpaceManager)
         {

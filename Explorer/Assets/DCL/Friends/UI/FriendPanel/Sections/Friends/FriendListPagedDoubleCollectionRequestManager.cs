@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource addFriendProfileCts = new ();
-        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly List<FriendProfile> onlineFriends = new ();
         private readonly List<FriendProfile> offlineFriends = new ();
 
@@ -33,7 +33,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public FriendListPagedDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             LoopListView2 loopListView,
             ProfileRepositoryWrapper profileDataProvider,
             int pageSize,

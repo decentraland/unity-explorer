@@ -1,7 +1,6 @@
-﻿using DCL.Clipboard;
-using DCL.Friends.UserBlocking;
+﻿using CodeLess.Attributes;
+using DCL.Clipboard;
 using DCL.Input;
-using DCL.Utilities;
 
 namespace MVC
 {
@@ -9,27 +8,20 @@ namespace MVC
     ///     A set of references to the only systems and managers a view can use directly, without the need of a controller.
     ///     These should not be able to change the state of the game in a meaningful way, but allow for easier access to certain functionalities needed to display data.
     /// </summary>
-    public class ViewDependencies
+    [Singleton(SingletonGenerationBehavior.GENERATE_STATIC_ACCESSORS)]
+    public partial class ViewDependencies
     {
-        public readonly DCLInput DclInput;
-        public readonly IEventSystem EventSystem;
-        public readonly IMVCManagerMenusAccessFacade GlobalUIViews;
-        public readonly IClipboardManager ClipboardManager;
-        public readonly ICursor Cursor;
+        internal IEventSystem eventSystem { get; }
+        internal IMVCManagerMenusAccessFacade globalUIViews { get; }
+        internal ClipboardManager clipboardManager { get; }
+        internal ICursor cursor { get; }
 
-        // TODO: Remove this from here
-        public readonly ObjectProxy<IUserBlockingCache> UserBlockingCacheProxy;
-
-        public ViewDependencies(DCLInput dclInput, IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, IClipboardManager clipboardManager, ICursor cursor,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy)
+        public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, ClipboardManager clipboardManager, ICursor cursor)
         {
-            DclInput = dclInput;
-            EventSystem = eventSystem;
-            GlobalUIViews = globalUIViews;
-            ClipboardManager = clipboardManager;
-            Cursor = cursor;
-            this.UserBlockingCacheProxy = userBlockingCacheProxy;
+            this.eventSystem = eventSystem;
+            this.globalUIViews = globalUIViews;
+            this.clipboardManager = clipboardManager;
+            this.cursor = cursor;
         }
-
     }
 }

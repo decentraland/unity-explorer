@@ -15,9 +15,6 @@ using SceneRunner.Debugging;
 using Segment.Serialization;
 using System;
 using System.Threading;
-using DCL.FeatureFlags;
-using DCL.Utilities;
-using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
@@ -57,12 +54,11 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
-            ObjectProxy<FeatureFlagsCache> featureFlagsCache,
             CancellationToken ct
         )
         {
             (StaticContainer? container, bool isSuccess) result = await core.LoadStaticContainerAsync(
-                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, featureFlagsCache, ct);
+                bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
 
             analytics.SetCommonParam(result.container!.RealmData, bootstrapContainer.IdentityCache, result.container.CharacterContainer.Transform);
 
@@ -101,7 +97,7 @@ namespace Global.Dynamic
         {
             await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
 
-            FeatureFlagsConfiguration configuration = staticContainer.FeatureFlagsCache.Configuration;
+            FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
             var enabledFeatureFlags = new JsonArray();
 
@@ -169,9 +165,9 @@ namespace Global.Dynamic
             });
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            core.ApplyFeatureFlagConfigs(featureFlagsCache);
+            core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache);
 
             //No analytics to track on this step
         }

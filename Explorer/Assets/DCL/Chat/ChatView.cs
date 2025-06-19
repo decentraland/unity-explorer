@@ -26,7 +26,7 @@ namespace DCL.Chat
     public delegate void GetParticipantProfilesDelegate(List<Profile> outProfiles);
 
     // Note: The view never changes any data (chatMessages), that's done by the controller
-    public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
@@ -181,7 +181,6 @@ namespace DCL.Chat
         /// </summary>
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
-        private ViewDependencies viewDependencies;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
 
@@ -444,18 +443,9 @@ namespace DCL.Chat
             chatInputBox.InputChanged -= OnInputChanged;
             chatInputBox.InputSubmitted -= OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
-            viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
+            DCLInput.Instance.UI.Click.performed -= OnClickUIInputPerformed;
+            DCLInput.Instance.UI.Close.performed -= OnCloseUIInputPerformed;
             return base.HideAsync(ct, isInstant);
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-            chatInputBox.InjectDependencies(dependencies);
-            chatMessageViewer.InjectDependencies(dependencies);
-            memberListView.InjectDependencies(dependencies);
-            chatTitleBar.InjectDependencies(dependencies);
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
@@ -488,10 +478,10 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
+            DCLInput.Instance.UI.Close.performed += OnCloseUIInputPerformed;
+            DCLInput.Instance.UI.Click.performed += OnClickUIInputPerformed;
             SubscribeToSubmitEvent();
-            
+
             closePopupTask = new UniTaskCompletionSource();
 
             conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
@@ -785,7 +775,7 @@ namespace DCL.Chat
             else
                 chatMessageViewer.StartChatEntriesFadeout();
         }
-        
+
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
             if (isChatFocused)
@@ -798,7 +788,7 @@ namespace DCL.Chat
                 // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
                 if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
-        
+
                 Focus();
             }
         }
@@ -808,7 +798,7 @@ namespace DCL.Chat
             if(!IsUnfolded)
                 return;
 
-            IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
+            IReadOnlyList<RaycastResult> raycastResults = ViewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
             bool hasClickedOnPanel = false;
             bool hasClickedOnCloseButton = false;
             bool hasClickedOnEmojiPanel = false;
@@ -886,7 +876,7 @@ namespace DCL.Chat
                 closePopupTask.Task);
 
             popupCts = popupCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token);
+            await ViewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token);
 
             isChatViewerMessageContextMenuOpen = false;
         }
@@ -1019,7 +1009,7 @@ namespace DCL.Chat
                 return;
             }
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
+            DCLInput.Instance.UI.Submit.performed += OnSubmitUIInputPerformed;
             isSubmitHooked = true;
         }
 
@@ -1031,7 +1021,7 @@ namespace DCL.Chat
                 return;
             }
 
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            DCLInput.Instance.UI.Submit.performed -= OnSubmitUIInputPerformed;
             isSubmitHooked = false;
         }
     }

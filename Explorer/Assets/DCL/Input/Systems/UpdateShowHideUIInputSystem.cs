@@ -27,14 +27,13 @@ namespace DCL.Input.Systems
 
         private UpdateShowHideUIInputSystem(
             World world,
-            DCLInput dclInput,
             IMVCManager mvcManager,
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument sceneUIDocument,
             UIDocument cursorUIDocument) : base(world)
         {
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             this.mvcManager = mvcManager;
             this.debugContainerBuilder = debugContainerBuilder;
             this.rootUIDocument = rootUIDocument;

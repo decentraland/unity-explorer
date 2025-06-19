@@ -21,9 +21,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly ViewDependencies viewDependencies;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -45,10 +44,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager,
-            ViewDependencies viewDependencies)
+            ISharedSpaceManager sharedSpaceManager)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
@@ -57,7 +55,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.viewDependencies = viewDependencies;
 
             doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
             doubleCollectionRequestManager.ContextMenuClicked += OnContextMenuClicked;
@@ -133,7 +130,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenuTask = new UniTaskCompletionSource();
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
 
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address),
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address),
                 buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: menuTask, onHide: () => elementView.CanUnHover = true
                 ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
