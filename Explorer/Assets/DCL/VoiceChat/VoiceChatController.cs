@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using LiveKit.Rooms;
@@ -7,6 +8,8 @@ using LiveKit.Rooms.Participants;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Utility;
 
 namespace DCL.VoiceChat
 {
@@ -18,6 +21,8 @@ namespace DCL.VoiceChat
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly IRoom voiceChatRoom;
         private readonly MicrophoneButtonController micController;
+
+        private CancellationTokenSource cts;
 
         public VoiceChatController(
             VoiceChatView view,
@@ -67,13 +72,26 @@ namespace DCL.VoiceChat
 
         private void OnActiveSpeakersUpdated()
         {
-            OnActiveSpeakersUpdatedAsync().Forget();
+            cts?.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            OnActiveSpeakersUpdatedAsync(cts.Token).Forget();
         }
 
-        private async UniTaskVoid OnActiveSpeakersUpdatedAsync()
+        private async UniTaskVoid OnActiveSpeakersUpdatedAsync(CancellationToken ct)
         {
+            string userName = string.Empty;
             await UniTask.SwitchToMainThread();
-            view.SetSpeakingStatus(voiceChatRoom.ActiveSpeakers.Count, string.Empty);
+
+            if (voiceChatRoom.ActiveSpeakers.Count == 1)
+            {
+                foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
+                {
+                    Profile profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct);
+                    if (profileAsync != null) userName = profileAsync.Name;
+                }
+            }
+
+            view.SetSpeakingStatus(voiceChatRoom.ActiveSpeakers.Count, userName);
         }
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
