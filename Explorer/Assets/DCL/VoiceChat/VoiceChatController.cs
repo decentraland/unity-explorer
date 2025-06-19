@@ -43,6 +43,8 @@ namespace DCL.VoiceChat
             view.InCallView.HangUpButton.onClick.AddListener(HangUp);
             view.InCallView.ProfileView.InjectDependencies(dependencies);
 
+            view.ConnectingView.ProfileView.InjectDependencies(dependencies);
+
             var list = new List<MicrophoneButton>
             {
                 view.OutgoingCallView.MicrophoneButton,

@@ -117,8 +117,8 @@ namespace DCL.VoiceChat
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     ConnectingView.gameObject.SetActive(true);
-                    InCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     ConnectingView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
+                    InCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
                     IncomingCallView.SetActive(true);
