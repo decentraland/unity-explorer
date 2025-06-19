@@ -97,7 +97,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
             dataProvider.CommunityCreated += ReloadBrowser;
-            dataProvider.CommunityUpdated += ReloadBrowser;
+            dataProvider.CommunityUpdated += OnCommunityUpdated;
             dataProvider.CommunityDeleted += ReloadBrowser;
         }
 
@@ -146,7 +146,7 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityJoined -= JoinCommunity;
             view.CreateCommunityButtonClicked -= CreateCommunity;
             dataProvider.CommunityCreated -= ReloadBrowser;
-            dataProvider.CommunityUpdated -= ReloadBrowser;
+            dataProvider.CommunityUpdated -= OnCommunityUpdated;
             dataProvider.CommunityDeleted -= ReloadBrowser;
 
             loadMyCommunitiesCts?.SafeCancelAndDispose();
@@ -386,5 +386,8 @@ namespace DCL.Communities.CommunitiesBrowser
                     canCreateCommunities: canCreate,
                     communityId: string.Empty)), ct).Forget();
         }
+
+        private void OnCommunityUpdated(string communityId) =>
+            ReloadBrowser();
     }
 }

@@ -15,9 +15,8 @@ namespace DCL.Communities
     public class CommunitiesDataProvider : ICommunitiesDataProvider
     {
         public event Action CommunityCreated;
-        public event Action CommunityUpdated;
+        public event Action<string> CommunityUpdated;
         public event Action CommunityDeleted;
-        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
 
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
@@ -108,7 +107,7 @@ namespace DCL.Communities
                 response = await webRequestController.SignedFetchPutAsync(communityEditionUrl, GenericPutArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
 
-                CommunityUpdated?.Invoke();
+                CommunityUpdated?.Invoke(communityId);
             }
 
             return response;
