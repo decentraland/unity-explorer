@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DCL.Web3;
 using MVC;
@@ -40,6 +41,7 @@ namespace DCL.Chat
         private List<MemberData> members = new ();
 
         private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
         private bool isInitialized;
         private bool isVisible;
         private UniTaskCompletionSource contextMenuTask = new ();
@@ -75,6 +77,11 @@ namespace DCL.Chat
             viewDependencies = dependencies;
         }
 
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            profileRepositoryWrapper = profileDataProvider;
+        }
+
         /// <summary>
         /// Replaces the data to be represented by the view.
         /// </summary>
@@ -102,7 +109,7 @@ namespace DCL.Chat
             ChatMemberListViewItem memberItem = newItem.GetComponent<ChatMemberListViewItem>();
             memberItem.Id = members[index].Id;
             memberItem.Name = members[index].Name;
-            memberItem.SetupProfilePicture(viewDependencies, members[index].ProfileColor, members[index].FaceSnapshotUrl, members[index].Id);
+            memberItem.SetupProfilePicture(profileRepositoryWrapper, members[index].ProfileColor, members[index].FaceSnapshotUrl, members[index].Id);
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
             memberItem.NameTextColor = members[index].ProfileColor;

@@ -1,6 +1,7 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.AssetBundles;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -61,19 +62,17 @@ namespace DCL.AvatarRendering.Loading.Assets
 
         public readonly struct RendererInfo
         {
-            public readonly SkinnedMeshRenderer SkinnedMeshRenderer;
             public readonly Material Material;
 
-            public RendererInfo(SkinnedMeshRenderer skinnedMeshRenderer, Material material)
+            public RendererInfo(Material material)
             {
-                SkinnedMeshRenderer = skinnedMeshRenderer;
                 Material = material != null ? material : DefaultMaterial.New();
             }
         }
 
         public string GetInstanceName()
         {
-            var assetBundleData = assetData as ECS.StreamableLoading.AssetBundles.AssetBundleData;
+            var assetBundleData = assetData as AssetBundleData;
             return assetBundleData != null ? assetBundleData.GetInstanceName() : $"NOT_AB_{MainAsset.name}";
         }
     }
@@ -83,7 +82,7 @@ namespace DCL.AvatarRendering.Loading.Assets
     /// </summary>
     public abstract class AttachmentAssetBase : IDisposable
     {
-        protected readonly IStreamableRefCountData assetData;
+        internal readonly IStreamableRefCountData assetData;
 
         private bool disposed;
 

@@ -14,6 +14,7 @@ using DCL.Profiles;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -204,7 +205,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.CancelFriendshipAsync(userAddress, ct);
+                await friendService.CancelFriendshipAsync(userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -249,16 +250,16 @@ namespace DCL.UI.GenericContextMenu.Controllers
             closeContextMenuTask.TrySetResult();
 
             //Per design request we need to add an extra character after adding the mention to the chat.
-            ShowChat(() => chatEventBus.InsertText(userName + " ")).Forget();
+            ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            ShowChat(() => chatEventBus.OpenConversationUsingUserId(userId)).Forget();
+            ShowChatAsync(() => chatEventBus.OpenConversationUsingUserId(userId)).Forget();
         }
 
-        private async UniTaskVoid ShowChat(Action onChatShown)
+        private async UniTaskVoid ShowChatAsync(Action onChatShown)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             onChatShown?.Invoke();

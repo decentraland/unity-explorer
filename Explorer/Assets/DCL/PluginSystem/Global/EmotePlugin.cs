@@ -4,6 +4,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.Systems;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
@@ -15,12 +16,12 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.ResourcesUnloading;
-using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
+using Global.AppArgs;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -57,7 +58,10 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private bool localSceneDevelopment;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly bool builderCollectionsPreview;
+        private readonly IAppArgs appArgs;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteStorage emoteStorage,
@@ -77,7 +81,10 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity,
             string builderContentURL,
-            ISharedSpaceManager sharedSpaceManager)
+            bool localSceneDevelopment,
+            ISharedSpaceManager sharedSpaceManager,
+            bool builderCollectionsPreview,
+            IAppArgs appArgs)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -96,7 +103,10 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.inputBlock = inputBlock;
+            this.localSceneDevelopment = localSceneDevelopment;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.builderCollectionsPreview = builderCollectionsPreview;
+            this.appArgs = appArgs;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -121,7 +131,10 @@ namespace DCL.PluginSystem.Global
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
                 emoteStorage, builderContentURL);
 
-            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder);
+            if(builderCollectionsPreview)
+                ResolveBuilderEmotePromisesSystem.InjectToWorld(ref builder, emoteStorage);
+
+            CharacterEmoteSystem.InjectToWorld(ref builder, emoteStorage, messageBus, audioSourceReference, debugBuilder, localSceneDevelopment, appArgs);
 
             LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 

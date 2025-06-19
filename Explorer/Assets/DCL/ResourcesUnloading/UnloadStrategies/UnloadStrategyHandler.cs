@@ -1,31 +1,29 @@
-using System;
-using ECS.Prioritization;
+using UnityEngine;
 
 namespace DCL.ResourcesUnloading.UnloadStrategies
 {
     public class UnloadStrategyHandler
     {
         internal UnloadStrategyBase[] unloadStrategies;
-        private readonly ICacheCleaner cacheCleaner;
-
         private readonly int DEFAULT_FRAME_FAILURE_THRESHOLD = 250;
+        private UnloadStrategyState unloadStrategyState;
 
-        public UnloadStrategyHandler(IRealmPartitionSettings realmPartitionSettings,
-            ICacheCleaner cacheCleaner)
+
+        public UnloadStrategyHandler(ICacheCleaner cacheCleaner)
         {
-            this.cacheCleaner = cacheCleaner;
 
             //The base strategy at 0 will always run
             //On top of that, we adds logic that run only if the previous one fails in an additive manner
             unloadStrategies = new UnloadStrategyBase[]
             {
                 new StandardUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, cacheCleaner),
-                new ReduceLoadingRadiusUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD, realmPartitionSettings),
                 new UnloadUnusedAssetUnloadStrategy(DEFAULT_FRAME_FAILURE_THRESHOLD)
             };
+
+            unloadStrategyState = UnloadStrategyState.Normal;
         }
 
-        public void TryUnload()
+        private void TryUnload()
         {
             for (var i = unloadStrategies.Length - 1; i >= 0; i--)
             {
@@ -34,10 +32,39 @@ namespace DCL.ResourcesUnloading.UnloadStrategies
             }
         }
 
-        public void ResetToNormal()
+        private void ResetToNormal()
         {
             for (var i = 0; i < unloadStrategies.Length; i++)
                 unloadStrategies[i].ResetStrategy();
+        }
+
+        public void ReportMemoryState(bool isMemoryNormal, bool isInAbundance)
+        {
+            switch (unloadStrategyState)
+            {
+                case UnloadStrategyState.Normal:
+                    if (!isMemoryNormal)
+                    {
+                        unloadStrategyState = UnloadStrategyState.Unloading;
+                        TryUnload();
+                    }
+                    break;
+                case UnloadStrategyState.Unloading:
+                    if (isInAbundance)
+                    {
+                        ResetToNormal();
+                        unloadStrategyState = UnloadStrategyState.Normal;
+                    }
+                    else
+                        TryUnload();
+                    break;
+            }
+        }
+
+        private enum UnloadStrategyState
+        {
+            Normal,
+            Unloading
         }
 
     }

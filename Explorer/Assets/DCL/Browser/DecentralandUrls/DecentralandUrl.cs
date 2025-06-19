@@ -10,6 +10,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ArchipelagoHotScenes,
 
         DiscordLink,
+        DiscordDirectLink,
         TwitterLink,
         NewsletterSubscriptionLink,
         MarketplaceLink,
@@ -20,6 +21,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         ApiChunks,
 
         ApiPlaces,
+        ApiWorlds,
         POI,
         Map,
         ContentModerationReport,

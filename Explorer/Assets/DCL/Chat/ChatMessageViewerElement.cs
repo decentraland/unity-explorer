@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.Diagnostics;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DCL.Web3;
@@ -72,6 +73,7 @@ namespace DCL.Chat
 
         private IReadOnlyList<ChatMessage>? chatMessages;
         private CancellationTokenSource? fadeoutCts;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private int separatorPositionIndex;
         private int messageCountWhenSeparatorWasSet;
@@ -389,12 +391,12 @@ namespace DCL.Chat
                 itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
             else
             {
-                Profile? profile = await viewDependencies.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
+                Profile? profile = await profileRepositoryWrapper.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {
                     itemView.usernameElement.userName.color = profile.UserNameColor;
-                    itemView.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                    itemView.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
                 }
             }
 
@@ -427,6 +429,11 @@ namespace DCL.Chat
         private void OnEnable()
         {
             loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
+        }
+
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileRepositoryWrapper)
+        {
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
     }
 }

@@ -25,10 +25,10 @@ namespace DCL.InWorldCamera
 
         private readonly List<VisiblePerson> visiblePeople = new (32);
 
-        private Plane[] frustumPlanes;
+        private Plane[]? frustumPlanes;
         private Vector2Int sceneParcel;
 
-        private ScreenshotMetadata metadata;
+        private ScreenshotMetadata? metadata;
 
         public bool MetadataIsReady { get; private set; }
 
@@ -57,7 +57,7 @@ namespace DCL.InWorldCamera
             AddProfile(selfProfile.OwnProfile, characterObjectController);
         }
 
-        public void AddProfile(Profile profile, Collider avatarCollider)
+        public void AddProfile(Profile? profile, Collider avatarCollider)
         {
             if (GeometryUtility.TestPlanesAABB(frustumPlanes, avatarCollider.bounds))
             {
@@ -82,10 +82,12 @@ namespace DCL.InWorldCamera
 
         private async UniTask<(string, string)> GetSceneInfoAsync(Vector2Int at, CancellationToken ct)
         {
-            if (realmData.ScenesAreFixed)
-                return (realmData.RealmName.Replace(".dcl.eth", string.Empty), WORLD_PLACE_ID);
+            PlacesData.PlaceInfo? placeInfo;
 
-            PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
+            if (realmData.ScenesAreFixed)
+                placeInfo = await placesAPIService.GetWorldAsync(realmData.RealmName, ct);
+            else
+                placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 
             return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, placeInfo.id);
         }
@@ -101,14 +103,14 @@ namespace DCL.InWorldCamera
             return wearables.ToArray();
         }
 
-        internal void FillMetadata(Profile profile, RealmData realm, Vector2Int playerPosition,
+        internal void FillMetadata(Profile? profile, RealmData realm, Vector2Int playerPosition,
             string sceneName, string placeId, VisiblePerson[] visiblePeople)
         {
             if (metadata == null)
                 metadata = new ScreenshotMetadata
                 {
-                    userName = profile.Name,
-                    userAddress = profile.UserId,
+                    userName = profile?.Name ?? UNKNOWN_USER,
+                    userAddress = profile?.UserId ?? UNKNOWN_USER,
                     dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                     realm = realm?.RealmName,
                     placeId = placeId,
@@ -121,8 +123,8 @@ namespace DCL.InWorldCamera
                 };
             else
             {
-                metadata.userName = profile.Name;
-                metadata.userAddress = profile.UserId;
+                metadata.userName = profile?.Name ?? UNKNOWN_USER;
+                metadata.userAddress = profile?.UserId ?? UNKNOWN_USER;
                 metadata.dateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
                 metadata.realm = realm?.RealmName;
                 metadata.placeId = placeId;

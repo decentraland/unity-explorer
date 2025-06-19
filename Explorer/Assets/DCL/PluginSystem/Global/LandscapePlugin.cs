@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
@@ -16,6 +17,7 @@ using ECS.SceneLifeCycle;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine;
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
@@ -42,6 +44,9 @@ namespace DCL.PluginSystem.Global
         private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
+        private IGPUIWrapper gpuiWrapper;
+        private readonly bool isGPUIEnabledFF;
+
         public LandscapePlugin(IRealmData realmData,
             ILoadingStatus loadingStatus,
             IScenesCache sceneCache,
@@ -52,7 +57,8 @@ namespace DCL.PluginSystem.Global
             MapRendererTextureContainer textureContainer,
             IWebRequestController webRequestController,
             bool enableLandscape,
-            bool isZone)
+            bool isZone,
+            bool isGpuiEnabledFf)
         {
             this.realmData = realmData;
             this.loadingStatus = loadingStatus;
@@ -61,11 +67,13 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
+            isGPUIEnabledFF = isGpuiEnabledFf;
             this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
 
             parcelService = new LandscapeParcelService(webRequestController, isZone);
+
         }
 
         public void Dispose()
@@ -104,9 +112,37 @@ namespace DCL.PluginSystem.Global
                 parcelChecksum = fetchParcelResult.Checksum;
             }
 
+            CheckGPUIFF();
+            gpuiWrapper.SetupLandscapeData(landscapeData.Value);
             terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone);
-            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
+                parcelChecksum, isZone, gpuiWrapper, gpuiWrapper.GetDetailSetter());
+
+            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData, new CPUTerrainDetailSetter());
+        }
+
+        private void CheckGPUIFF()
+        {
+#if GPUI_PRO_PRESENT
+            //HACK to be removed
+            //This if should go when we decide to keep GPUI enabled or not.
+            //As of now, if we have to turn it off because of an emergency situation, we need to regenerate the cache.
+            //GPUI cache and regular terrain cache are not compatible
+            //Also, when decision is taken, make `forceCacheRegen` private again
+            int storedGPUIValue = PlayerPrefs.GetInt(FeatureFlagsStrings.GPUI_ENABLED, 0);
+            bool wasEnabled = storedGPUIValue == 1;
+
+            if (isGPUIEnabledFF != wasEnabled)
+                terrainGenerator.forceCacheRegen = true;
+
+            PlayerPrefs.SetInt(FeatureFlagsStrings.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
+
+            if (isGPUIEnabledFF)
+                gpuiWrapper = new GPUIWrapper();
+            else
+                gpuiWrapper = new MockGPUIWrapper();
+#else
+            gpuiWrapper = new MockGPUIWrapper();
+#endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -119,6 +155,8 @@ namespace DCL.PluginSystem.Global
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeCollidersCullingSystem.InjectToWorld(ref builder, terrainGenerator, scenesCache, loadingStatus);
+
+            gpuiWrapper.InjectDebugSystem(ref builder, debugContainerBuilder);
         }
     }
 }

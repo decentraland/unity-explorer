@@ -16,6 +16,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
@@ -26,6 +27,8 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using ECS;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -57,12 +60,15 @@ namespace DCL.PluginSystem.Global
         private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
-        private readonly ObjectProxy<IRPCSocialServices> socialServiceProxy;
+        private readonly IRPCSocialServices socialServiceProxy;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ChatController chatController;
-
+        private IRealmData realmData;
+        private IRealmNavigator realmNavigator;
+        
         public ChatPlugin(
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
@@ -84,11 +90,14 @@ namespace DCL.PluginSystem.Global
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            ObjectProxy<IRPCSocialServices> socialServiceProxy,
+            IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
             FeatureFlagsCache featureFlagsCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy)
+            ProfileRepositoryWrapper profileDataProvider,
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            IRealmData realmData,
+            IRealmNavigator realmNavigator)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -116,6 +125,9 @@ namespace DCL.PluginSystem.Global
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
+            this.profileRepositoryWrapper = profileDataProvider;
+            this.realmData = realmData;
+            this.realmNavigator = realmNavigator;
         }
 
         public void Dispose()
@@ -150,7 +162,6 @@ namespace DCL.PluginSystem.Global
                 playerEntity,
                 inputBlock,
                 viewDependencies,
-                chatCommandsBus,
                 roomHub,
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,
@@ -162,7 +173,8 @@ namespace DCL.PluginSystem.Global
                 privacySettings,
                 friendsEventBus,
                 chatStorage,
-                friendsServiceProxy
+                friendsServiceProxy,
+                profileRepositoryWrapper
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
@@ -171,21 +183,19 @@ namespace DCL.PluginSystem.Global
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
-            web3IdentityCache.OnIdentityChanged += OnIdentityChanged;
+            loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
+        }
+
+        private void OnLoadingStatusUpdate(LoadingStatus.LoadingStage status)
+        {
+            if (status == LoadingStatus.LoadingStage.Completed)
+                sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
 
         private void OnIdentityCleared()
         {
             if (chatController.IsVisibleInSharedSpace)
                 chatController.HideViewAsync(CancellationToken.None).Forget();
-        }
-
-        private void OnIdentityChanged()
-        {
-            //This might pose a problem if we havent logged in yet (so we change session before first login), it works, but we are trying to show the chat twice
-            //Once from here and once from the MainUIController. We need to account for this.
-
-            sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, false)).Forget();
         }
     }
 

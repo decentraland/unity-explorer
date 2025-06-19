@@ -9,17 +9,16 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Rooms;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Transforms.Components;
+#if UNITY_EDITOR
 using RenderHeads.Media.AVProVideo;
+#endif
 using SceneRunner.Scene;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using UnityEngine;
@@ -60,26 +59,26 @@ namespace DCL.SDKComponents.MediaStream
 
         protected override void Update(float t)
         {
-            CreateAudioStreamQuery(World);
-            CreateVideoPlayerQuery(World);
+            CreateAudioStreamQuery(World, t);
+            CreateVideoPlayerQuery(World, t);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
-        private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
+        private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent, [Data] float dt)
         {
-            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(dt, entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
         [All(typeof(VideoTextureConsumer))]
-        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
+        private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent, [Data] float dt)
         {
-            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            CreateMediaPlayer(dt, entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
-        private void CreateMediaPlayer(Entity entity, string url, bool hasVolume, float volume)
+        private void CreateMediaPlayer(float dt, Entity entity, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
@@ -91,7 +90,8 @@ namespace DCL.SDKComponents.MediaStream
             // There is no way to set this from the scene code, at the moment
             // If the player has no transform, it will appear at 0,0,0 and nobody will hear it if it is in 3D
             if (component.MediaPlayer.TryGetAvProPlayer(out var player) && player!.TryGetComponent(out AudioSource mediaPlayerAudio))
-                mediaPlayerAudio!.spatialBlend = World!.Has<TransformComponent>(entity) ? 1.0f : 0.0f;
+                // At the moment we consider streams as global audio always, until there is a way to change it from the scene
+                mediaPlayerAudio!.spatialBlend = 0.0f;
 
             World.Add(entity, component);
         }
@@ -125,12 +125,11 @@ namespace DCL.SDKComponents.MediaStream
 
             var address = MediaAddress.New(url);
 
-            MultiMediaPlayer player = address.MediaKind switch
-                                      {
-                                          MediaAddress.Kind.URL => MultiMediaPlayer.NewAvProMediaPlayer(url, mediaPlayerPool),
-                                          MediaAddress.Kind.LIVEKIT => MultiMediaPlayer.NewLiveKitMediaPlayer(new LivekitPlayer(roomHub.StrictObject)),
-                                          _ => throw new ArgumentOutOfRangeException()
-                                      };
+            MultiMediaPlayer player = address.Match(
+                (room: roomHub.StrictObject, mediaPlayerPool),
+                onUrlMediaAddress: static (ctx, address) => MultiMediaPlayer.FromAvProPlayer(new AvProPlayer(ctx.mediaPlayerPool.GetOrCreateReusableMediaPlayer(address.Url), ctx.mediaPlayerPool)),
+                onLivekitAddress: static (ctx, _) => MultiMediaPlayer.FromLivekitPlayer(new LivekitPlayer(ctx.room))
+            );
 
             var component = new MediaPlayerComponent
             {

@@ -43,7 +43,8 @@ namespace DCL.Chat.MessageBus
 
             if (message[0] == '/') // User tried running a command
             {
-                HandleChatCommandAsync(channel.Id, message).Forget();
+                //We send the results of the command to the nearby channel
+                HandleChatCommandAsync(ChatChannel.NEARBY_CHANNEL_ID, message).Forget();
                 return;
             }
 

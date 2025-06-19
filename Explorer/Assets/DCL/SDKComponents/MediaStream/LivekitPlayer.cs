@@ -33,6 +33,7 @@ namespace DCL.SDKComponents.MediaStream
         private bool disposed;
 
         public bool MediaOpened => currentStream != null;
+        public float Volume { get; private set; }
 
         public PlayerState State => playerState;
 
@@ -52,28 +53,24 @@ namespace DCL.SDKComponents.MediaStream
         {
             CloseCurrentStream();
 
-            switch (livekitAddress.StreamKind)
-            {
-                case LivekitAddress.Kind.CURRENT_STREAM:
-                    var videoTrack = FirstVideo();
-                    var audioTrack = FirstAudio();
-                    currentStream = (videoTrack, audioTrack);
+            currentStream = livekitAddress.Match(
+                this,
+                onUserStream: static (self, userStream) => //Audio via user stream are not supported yet
+                    (self.room.VideoStreams.ActiveStream(userStream.Identity, userStream.Sid), null),
+                onCurrentStream: static self =>
+                {
+                    var videoTrack = self.FirstVideo();
+                    var audioTrack = self.FirstAudio();
 
                     if (audioTrack != null)
                     {
-                        audioSource.Construct(audioTrack);
-                        audioSource.Play();
+                        self.audioSource.Construct(audioTrack);
+                        self.audioSource.Play();
                     }
 
-                    break;
-                case LivekitAddress.Kind.USER_STREAM:
-                    (string identity, string sid) = livekitAddress.UserStream;
-
-                    //Audio via user stream are not supported yet
-                    currentStream = (room.VideoStreams.ActiveStream(identity, sid), null);
-                    break;
-                default: throw new ArgumentOutOfRangeException();
-            }
+                    return (videoTrack, audioTrack);
+                }
+            );
 
             playerState = PlayerState.PLAYING;
             playingAddress = livekitAddress;
@@ -171,7 +168,21 @@ namespace DCL.SDKComponents.MediaStream
 
         public void SetVolume(float target)
         {
+            Volume = target;
             audioSource.SetVolume(target);
+        }
+
+        public void SetVolumeFaded(bool isCurrentScene, float targetVolume, float volumeDelta)
+        {
+            switch (isCurrentScene)
+            {
+                case true when Volume < targetVolume:
+                    SetVolume(Mathf.Min(targetVolume, Volume + volumeDelta));
+                    break;
+                case false when Volume > 0:
+                    SetVolume(Mathf.Max(0, targetVolume - volumeDelta));
+                    break;
+            }
         }
 
         public void PlaceAudioAt(Vector3 position)

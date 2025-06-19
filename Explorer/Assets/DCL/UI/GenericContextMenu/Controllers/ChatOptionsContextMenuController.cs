@@ -10,12 +10,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
 {
     public class ChatOptionsContextMenuController
     {
-        private const int CONTEXT_MENU_WIDTH = 280;
+        private const int CONTEXT_MENU_WIDTH = 210;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 8;
         private static readonly RectOffset CONTEXT_MENU_VERTICAL_LAYOUT_PADDING = new (15, 15, 14, 14);
         private static readonly RectOffset HORIZONTAL_LAYOUT_PADDING = new (0, 0, 0, 0);
         private static readonly int HORIZONTAL_LAYOUT_SPACING = 8;
-        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (0, -30);
+        private static readonly Vector2 CONTEXT_MENU_OFFSET = new (0, 80);
 
         private readonly IMVCManager mvcManager;
         private readonly Controls.Configs.GenericContextMenu contextMenu;

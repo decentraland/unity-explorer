@@ -15,7 +15,9 @@
         public const string STRING_VARIANT = "string-variant";
         public const string WALLETS_VARIANT = "wallet";
         public const string ONBOARDING = "onboarding";
+        public const string GREETING_ONBOARDING = "greeting-onboarding";
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
+        public const string ONBOARDING_GREETINGS_VARIANT = "greetings";
         public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
         public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
         public const string SKYBOX_SETTINGS_VARIANT = "settings";
@@ -28,10 +30,14 @@
         public const string FRIENDS_USER_BLOCKING = "alfa-friends-user-blocking";
         public const string FRIENDS_ONLINE_STATUS = "alfa-friends-online-status";
         public const string PROFILE_NAME_EDITOR = "alfa-profile-name-editor";
+        public const string SCENE_MEMORY_LIMIT = "alfa-use-scene-memory-limit";
         public const string KTX2_CONVERSION = "ktx2-conversion";
         public const string MARKETPLACE_CREDITS = "alfa-marketplace-credits";
         public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
 
         public const string AUTH_CODE_VALIDATION = "number-validation";
+
+        public const string GPUI_ENABLED = "alfa-gpui";
+
     }
 }

@@ -1,6 +1,8 @@
+using Utility.Multithreading;
+
 namespace SceneRunner.Scene
 {
-    public partial class SceneStateProvider : ISceneStateProvider
+    public class SceneStateProvider : ISceneStateProvider
     {
         private SceneEngineStartInfo engineStartInfo;
 
@@ -9,7 +11,7 @@ namespace SceneRunner.Scene
         /// </summary>
         public bool IsCurrent { get; set; }
 
-        public SceneState State { get; set; } = SceneState.NotStarted;
+        public Atomic<SceneState> State { get; set; } = new (SceneState.NotStarted);
 
         public uint TickNumber { get; set; }
 
@@ -17,7 +19,7 @@ namespace SceneRunner.Scene
 
         public void SetRunning(SceneEngineStartInfo startInfo)
         {
-            State = SceneState.Running;
+            State.Set(SceneState.Running);
             engineStartInfo = startInfo;
             TickNumber = 0;
         }

@@ -17,20 +17,28 @@ using UnityEngine;
 using Utility.Arch;
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
 
 namespace CrdtEcsBridge.RestrictedActions
 {
     public class GlobalWorldActions : IGlobalWorldActions
     {
+        private const string SCENE_EMOTE_NAMING = "_emote.glb";
+
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IEmotesMessageBus messageBus;
+        private readonly bool localSceneDevelopment;
+        private readonly bool useRemoteAssetBundles;
 
-        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus)
+        public GlobalWorldActions(World world, Entity playerEntity, IEmotesMessageBus messageBus, bool localSceneDevelopment, bool useRemoteAssetBundles)
         {
             this.world = world;
             this.playerEntity = playerEntity;
             this.messageBus = messageBus;
+            this.localSceneDevelopment = localSceneDevelopment;
+            this.useRemoteAssetBundles = useRemoteAssetBundles;
         }
 
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget, Vector3? newAvatarTarget)
@@ -61,7 +69,33 @@ namespace CrdtEcsBridge.RestrictedActions
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        public async UniTask TriggerSceneEmoteAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
+        public void TriggerEmote(URN urn, bool isLooping)
+        {
+            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
+
+            // If it's just Add() there are inconsistencies when the intent is processed at CharacterEmoteSystem for rapidly triggered emotes...
+            world.AddOrSet(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
+            messageBus.Send(urn, isLooping);
+        }
+
+        public async UniTask TriggerSceneEmoteAsync(ISceneData sceneData, string src, string hash, bool loop, CancellationToken ct)
+        {
+            if (localSceneDevelopment && !useRemoteAssetBundles)
+            {
+                // For consistent behavior, we only play local scene emotes if they have the same requirements we impose on the Asset
+                // Bundle Converter, otherwise creators may end up seeing scene emotes playing locally that won't play in deployed scenes
+                if (src.ToLower().EndsWith(SCENE_EMOTE_NAMING))
+                    await TriggerSceneEmoteFromLocalSceneAsync(sceneData, src, hash, loop, ct);
+            }
+            else
+            {
+                await TriggerSceneEmoteFromRealmAsync(
+                    sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
+                    sceneData.AssetBundleManifest, hash, loop, ct);
+            }
+        }
+
+        private async UniTask TriggerSceneEmoteFromRealmAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
@@ -82,12 +116,22 @@ namespace CrdtEcsBridge.RestrictedActions
             TriggerEmote(urn, isLooping);
         }
 
-        public void TriggerEmote(URN urn, bool isLooping)
+        private async UniTask TriggerSceneEmoteFromLocalSceneAsync(ISceneData sceneData, string emotePath, string emoteHash, bool loop, CancellationToken ct)
         {
-            if (world.TryGet(playerEntity, out AvatarShapeComponent avatarShape) && !avatarShape.IsVisible) return;
+            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
+                throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
-            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true, TriggerSource = TriggerSource.SCENE });
-            messageBus.Send(urn, isLooping);
+            var promise = LocalSceneEmotePromise.Create(world,
+                new GetSceneEmoteFromLocalSceneIntention(sceneData, emotePath, emoteHash,
+                    avatarShape.BodyShape, loop),
+                PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+            var consumed = promise.Result!.Value.Asset.ConsumeEmotes();
+            var value = consumed.Value[0]!;
+            URN urn = value.GetUrn();
+
+            TriggerEmote(urn, loop);
         }
     }
 }

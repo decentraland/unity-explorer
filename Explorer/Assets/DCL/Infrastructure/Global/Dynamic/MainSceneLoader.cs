@@ -148,7 +148,12 @@ namespace Global.Dynamic
 
             const bool KTX_ENABLED = true;
 
-            ISystemMemoryCap memoryCap = new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY); // we use max memory on the loading screen
+            // Memory limit
+            bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
+            int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+            ISystemMemoryCap memoryCap = hasSimulatedMemory
+                ? new SystemMemoryCap(systemMemory)
+                : new SystemMemoryCap();
 
             ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
@@ -211,7 +216,9 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                //TODO: This is a hack. Feature flags should be the first thing to be initialized
                 bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
+                staticContainer.SceneLoadingLimit.SetEnabled(staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
@@ -280,7 +287,6 @@ namespace Global.Dynamic
                 logoAnimation.StopPlayback();
                 logoAnimation.runtimeAnimatorController = null;
 
-                memoryCap.Mode = MemoryCapMode.FROM_SETTINGS;
                 RestoreInputs();
             }
             catch (OperationCanceledException)

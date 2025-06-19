@@ -610,7 +610,7 @@
                     "name": "ZoomOut",
                     "type": "Button",
                     "id": "2b54f45b-5428-4ae3-893b-fcdabddca74d",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -1382,7 +1382,7 @@
                     "name": "Submit",
                     "type": "Button",
                     "id": "71506014-7297-4064-8fa5-cbf7ff21d68e",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -1509,6 +1509,15 @@
                     "type": "Button",
                     "id": "88b91896-4abe-4728-b828-0e6a082b00f7",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Tab",
+                    "type": "Button",
+                    "id": "d2214e71-9264-42e6-bf3b-bb20c1d57ad0",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -1792,6 +1801,17 @@
                 },
                 {
                     "name": "",
+                    "id": "68736c60-8e28-4f69-918b-3b4c3dbb24ff",
+                    "path": "<Keyboard>/numpadEnter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse;Gamepad;Touch;Joystick;XR",
+                    "action": "Submit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "189346e5-9eff-42e6-ad3d-f686936c3416",
                     "path": "*/{Cancel}",
                     "interactions": "",
@@ -2053,6 +2073,17 @@
                     "action": "ActionDown",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "03b828e1-ae5d-496f-a570-0f53946f190c",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Tab",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -2064,7 +2095,7 @@
                     "name": "MainMenu",
                     "type": "Button",
                     "id": "20936db2-9a40-404f-97ac-eee3c350d7ec",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false

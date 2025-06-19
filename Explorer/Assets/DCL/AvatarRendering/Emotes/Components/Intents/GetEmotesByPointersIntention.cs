@@ -56,6 +56,7 @@ namespace DCL.AvatarRendering.Emotes
             POINTERS_POOL.Release(pointers);
             POINTERS_HASHSET_POOL.Release(RequestedPointers);
             POINTERS_HASHSET_POOL.Release(SuccessfulPointers);
+            CancellationTokenSource.Cancel();
             isDisposed = true;
         }
     }

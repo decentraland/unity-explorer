@@ -73,12 +73,14 @@ namespace DCL.Browser.DecentralandUrls
             decentralandUrl switch
             {
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
+                DecentralandUrl.DiscordDirectLink => "https://discord.gg/decentraland",
                 DecentralandUrl.TwitterLink => "https://x.com/decentraland",
                 DecentralandUrl.NewsletterSubscriptionLink => "https://decentraland.beehiiv.com/?utm_org=dcl&utm_source=client&utm_medium=organic&utm_campaign=marketplacecredits&utm_term=trialend",
                 DecentralandUrl.MarketplaceLink => $"https://decentraland.{ENV}/marketplace",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
                 DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
+                DecentralandUrl.ApiWorlds => $"https://places.decentraland.{ENV}/api/worlds",
                 DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
                 DecentralandUrl.ApiRpc => $"wss://rpc.decentraland.{ENV}",
                 DecentralandUrl.AuthSignatureWebApp => $"https://decentraland.{ENV}/auth/requests",
@@ -120,7 +122,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
-                DecentralandUrl.MediaConverter => $"https://media-opticonverter.decentraland.{ENV}/convert?ktx2=true&fileUrl={{0}}",
+                DecentralandUrl.MediaConverter => $"https://metamorph-api.decentraland.{ENV}/convert?url={{0}}",
                 DecentralandUrl.MarketplaceCredits => $"https://credits.decentraland.{ENV}",
                 DecentralandUrl.GoShoppingWithMarketplaceCredits => $"https://decentraland.{ENV}/marketplace/browse?sortBy=newest&status=on_sale&withCredits=true",
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",

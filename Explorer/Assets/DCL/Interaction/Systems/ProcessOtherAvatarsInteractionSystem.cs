@@ -38,7 +38,8 @@ namespace DCL.Interaction.Systems
             World world,
             IEventSystem eventSystem,
             DCLInput dclInput,
-            IMVCManagerMenusAccessFacade menusAccessFacade) : base(world)
+            IMVCManagerMenusAccessFacade menusAccessFacade,
+            IMVCManager mvcManager) : base(world)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
@@ -73,9 +74,9 @@ namespace DCL.Interaction.Systems
             if (!raycastResultForGlobalEntities.IsValidHit || !canHover || entityInfo == null)
                 return;
 
-            EntityReference entityRef = entityInfo.Value.EntityReference;
+            Entity entityRef = entityInfo.Value.EntityReference;
 
-            if (!entityRef.IsAlive(World!)
+            if (!World.IsAlive(entityRef)
                 || !World!.TryGet(entityRef, out Profile? profile)
                 || World.Has<BlockedPlayerComponent>(entityRef)
                 || World.Has<IgnoreInteractionComponent>(entityRef))

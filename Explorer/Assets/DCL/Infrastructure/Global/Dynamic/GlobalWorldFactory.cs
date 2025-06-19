@@ -71,8 +71,10 @@ namespace Global.Dynamic
         private readonly HybridSceneParams hybridSceneParams;
         private readonly bool localSceneDevelopment;
         private readonly IProfileRepository profileRepository;
+        private readonly bool useRemoteAssetBundles;
         private readonly HashSet<Vector2Int> roadCoordinates;
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
@@ -88,7 +90,9 @@ namespace Global.Dynamic
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             bool localSceneDevelopment,
             IProfileRepository profileRepository,
-            RoadAssetsPool roadAssetPool)
+            bool useRemoteAssetBundles,
+            RoadAssetsPool roadAssetPool,
+            SceneLoadingLimit sceneLoadingLimit)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -115,7 +119,9 @@ namespace Global.Dynamic
             this.profileRepository = profileRepository;
             this.roadCoordinates = roadCoordinates;
             this.lodSettingsAsset = lodSettingsAsset;
+            this.useRemoteAssetBundles = useRemoteAssetBundles;
             this.roadAssetPool = roadAssetPool;
+            this.sceneLoadingLimit = sceneLoadingLimit;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -126,7 +132,7 @@ namespace Global.Dynamic
             // not synced by mutex, for compatibility only
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
-            globalSceneStateProvider.State = SceneState.Running;
+            globalSceneStateProvider.State.Set(SceneState.Running);
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
 
@@ -165,10 +171,8 @@ namespace Global.Dynamic
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings, sceneReadinessReportQueue, scenesCache, roadCoordinates, realmData);
 
-
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
-
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache, sceneReadinessReportQueue);
 
@@ -196,9 +200,6 @@ namespace Global.Dynamic
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
-            var sceneLoadingLimit
-                = SceneLoadingLimit.CreateMax();
-
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, localSceneDevelopment),
@@ -215,7 +216,7 @@ namespace Global.Dynamic
 
             var globalWorld = new GlobalWorld(world, worldSystems, finalizeWorldSystems, cameraSamplingData, realmSamplingData, destroyCancellationSource);
 
-            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus));
+            sceneFactory.SetGlobalWorldActions(new GlobalWorldActions(globalWorld.EcsWorld, playerEntity, emotesMessageBus, localSceneDevelopment, useRemoteAssetBundles));
 
             return globalWorld;
         }

@@ -7,6 +7,7 @@ using DCL.Optimization.AdaptivePerformance.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS;
 using ECS.Abstract;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.Versioning;
 using System;
 using System.Collections.Generic;
@@ -30,10 +31,13 @@ namespace DCL.Profiling.ECS
         private readonly IRealmData realmData;
         private readonly IProfiler profiler;
         private readonly MemoryBudget memoryBudget;
+        private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly PerformanceBottleneckDetector bottleneckDetector = new ();
 
         private DebugWidgetVisibilityBinding performanceVisibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
+        private DebugWidgetVisibilityBinding memoryLimitsVisibilityBinding;
+
 
         private ElementBinding<string> hiccups;
         private ElementBinding<string> fps;
@@ -52,6 +56,8 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> gcUsedMemory;
+        private ElementBinding<string> isInAbundance;
+
 
         private ElementBinding<string> jsHeapUsedSize;
         private ElementBinding<string> jsHeapTotalSize;
@@ -62,18 +68,24 @@ namespace DCL.Profiling.ECS
 
         private ElementBinding<string> memoryCheckpoints;
 
+        private ElementBinding<string> maxAmountOfScenesThatCanLoadInMB;
+        private ElementBinding<string> maxAmountOfReductedLODsThatCanLoadInMB;
+
+
         private int framesSinceMetricsUpdate;
 
         private bool frameTimingsEnabled;
         private bool sceneMetricsEnabled;
+        private bool memoryLimitsEnabled;
 
         private DebugViewProfilingSystem(World world, IRealmData realmData, IProfiler profiler,
-            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings)
+            MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder, DCLVersion dclVersion, AdaptivePhysicsSettings adaptivePhysicsSettings, SceneLoadingLimit sceneLoadingLimit)
             : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
             this.memoryBudget = memoryBudget;
+            this.sceneLoadingLimit = sceneLoadingLimit;
 
             CreateView();
             return;
@@ -110,15 +122,29 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("System Used Memory [MB]:", usedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Gc Used Memory [MB]:", gcUsedMemory = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Memory Budget Thresholds [MB]:", memoryCheckpoints = new ElementBinding<string>(string.Empty))
+                            .AddCustomMarker("Is In Abundances:", isInAbundance = new ElementBinding<string>("YES"))
                             .AddSingleButton("Memory NORMAL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.NORMAL)
                             .AddSingleButton("Memory WARNING", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.WARNING)
                             .AddSingleButton("Memory FULL", () => this.memoryBudget.SimulatedMemoryUsage = MemoryUsageStatus.FULL)
+                            .AddSingleButton("Toggle Abundance", () => this.memoryBudget.SimulateLackOfAbundance = !this.memoryBudget.SimulateLackOfAbundance)
                             .AddToggleField("Enable Scene Metrics", evt => sceneMetricsEnabled = evt.newValue, sceneMetricsEnabled)
                             .AddCustomMarker("Js-Heap Total [MB]:", jsHeapTotalSize = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js-Heap Used [MB]:", jsHeapUsedSize = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js-Heap Total Exec [MB]:", jsHeapTotalExecutable = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Heap Limit per engine [MB]:", jsHeapLimit = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Js Engines Count:", jsEnginesCount = new ElementBinding<string>(string.Empty));
+
+                DebugWidgetBuilder? memoryLimitsBuilder = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.MEMORY_LIMITS);
+
+                if (memoryLimitsBuilder != null)
+                {
+                    memoryLimitsBuilder.SetVisibilityBinding(memoryLimitsVisibilityBinding = new DebugWidgetVisibilityBinding(true))
+                                       .AddCustomMarker("Upper scene limit [MB]:", maxAmountOfScenesThatCanLoadInMB = new ElementBinding<string>(string.Empty))
+                                       .AddCustomMarker("Upperd Reducted LOD [MB]:", maxAmountOfReductedLODsThatCanLoadInMB = new ElementBinding<string>(string.Empty));
+
+                    memoryLimitsEnabled = true;
+                }
+
 
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CRASH)?
                             .AddSingleButton("FatalError", () => { Utils.ForceCrash(ForcedCrashCategory.FatalError); })
@@ -167,6 +193,12 @@ namespace DCL.Profiling.ECS
 
                 if(sceneMetricsEnabled)
                     UpdateSceneMetrics();
+            }
+
+            if (memoryLimitsEnabled && memoryLimitsVisibilityBinding.IsExpanded)
+            {
+                maxAmountOfScenesThatCanLoadInMB.Value = sceneLoadingLimit.currentSceneLimits.SceneMaxAmountOfUsableMemoryInMB.ToString("F");
+                maxAmountOfReductedLODsThatCanLoadInMB.Value = sceneLoadingLimit.currentSceneLimits.QualityReductedLODMaxAmountOfUsableMemoryInMB.ToString("F");
             }
 
             if (performanceVisibilityBinding.IsExpanded)
@@ -221,17 +253,18 @@ namespace DCL.Profiling.ECS
 
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
+            isInAbundance.Value = memoryBudget.IsInAbundance() ? "YES" : "NO";
             return;
 
             string GetMemoryUsageColor()
             {
-                return memoryBudget.GetMemoryUsageStatus() switch
-                       {
-                           MemoryUsageStatus.NORMAL => "green",
-                           MemoryUsageStatus.WARNING => "yellow",
-                           MemoryUsageStatus.FULL => "red",
-                           _ => throw new ArgumentOutOfRangeException(),
-                       };
+                if (memoryBudget.IsMemoryNormal())
+                    return "green";
+
+                if (memoryBudget.IsMemoryFull())
+                    return "red";
+
+                return "yellow";
             }
         }
 

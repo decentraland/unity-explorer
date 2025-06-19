@@ -62,7 +62,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public List<BuilderWearableMetadataDto> data;
 
             [JsonIgnore]
-            public IReadOnlyList<BuilderWearableMetadataDto> WearablesCollection => data;
+            public IReadOnlyList<BuilderWearableMetadataDto> CollectionElements => data;
         }
 
         [Serializable]
@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             [JsonIgnore]
             public IReadOnlyDictionary<string, string> Contents => contents;
 
-            public BuilderWearableDTO BuildWearableDTO(string contentDownloadUrl)
+            public BuilderWearableDTO BuildElementDTO(string contentDownloadUrl)
             {
                 Content[] parsedContent = new Content[contents.Count];
 

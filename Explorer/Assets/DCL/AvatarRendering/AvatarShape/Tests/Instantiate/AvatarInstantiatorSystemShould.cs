@@ -154,13 +154,13 @@ namespace DCL.AvatarRendering.AvatarShape.Tests.Instantiate
             skinnedMeshRenderer.material = fakeABMaterial;
 
             var dto = new EmoteDTO();
-            dto.metadata = new EmoteDTO.Metadata();
-            dto.metadata.emoteDataADR74 = new EmoteDTO.Metadata.Data();
+            dto.metadata = new EmoteDTO.EmoteMetadataDto();
+            dto.metadata.emoteDataADR74 = new EmoteDTO.EmoteMetadataDto.Data();
             dto.metadata.emoteDataADR74.category = category;
 
             mockWearable.DTO.Returns(dto);
 
-            var rendererInfo = new AttachmentRegularAsset.RendererInfo(skinnedMeshRenderer, fakeABMaterial);
+            var rendererInfo = new AttachmentRegularAsset.RendererInfo(fakeABMaterial);
 
             var wearableAsset = new AttachmentRegularAsset(avatarGameObject, new List<AttachmentRegularAsset.RendererInfo> { rendererInfo }, null);
             wearableAsset.AddReference();

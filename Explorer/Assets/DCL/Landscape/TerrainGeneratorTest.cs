@@ -37,7 +37,7 @@ namespace DCL.Landscape
         private void OnValidate()
         {
             wGen = new WorldTerrainGenerator();
-            wGen.Initialize(genData);
+            wGen.Initialize(genData, new CPUTerrainDetailSetter());
         }
 
         public TerrainGenerator GetGenerator() =>
@@ -67,7 +67,7 @@ namespace DCL.Landscape
                 if (clearNoiseCacheForWorlds)
                 {
                     wGen = new WorldTerrainGenerator();
-                    wGen.Initialize(genData);
+                    wGen.Initialize(genData, new CPUTerrainDetailSetter());
                 }
 
                 await wGen.GenerateTerrainAsync(ownedParcels, worldSeed);
@@ -76,8 +76,8 @@ namespace DCL.Landscape
             {
                 IMemoryProfiler memoryProfiler = new Profiler();
                 gen = new TerrainGenerator(memoryProfiler, true, clearCache);
-                gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "", false);
-                await gen.GenerateTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
+                gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "", false, new MockGPUIWrapper(), new CPUTerrainDetailSetter());
+                await gen.GenerateGenesisTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
             }
 
             emptyParcels.Dispose();

@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
@@ -11,7 +12,7 @@ namespace DCL.UI.ProfileElements
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private UserNameElementController nameElementController;
         private UserWalletAddressElementController walletAddressElementController;
         private CancellationTokenSource cts;
@@ -20,11 +21,11 @@ namespace DCL.UI.ProfileElements
             ViewFactoryMethod viewFactory,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
-            ViewDependencies viewDependencies) : base(viewFactory)
+            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         protected override void OnViewInstantiated()
@@ -49,7 +50,7 @@ namespace DCL.UI.ProfileElements
 
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
-            viewInstance!.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+            viewInstance!.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;

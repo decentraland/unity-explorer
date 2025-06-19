@@ -210,6 +210,7 @@ namespace DCL.AuthenticationScreenFlow
                         ShowRestrictedUserPopup();
                     }
                 }
+                catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
                 catch (Exception e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
@@ -290,6 +291,8 @@ namespace DCL.AuthenticationScreenFlow
                     }
                 }
                 catch (OperationCanceledException) { SwitchState(ViewState.Login); }
+                catch (SignatureExpiredException) { SwitchState(ViewState.Login); }
+                catch (ProfileNotFoundException) { SwitchState(ViewState.Login); }
                 catch (Exception e)
                 {
                     SwitchState(ViewState.Login);
@@ -317,7 +320,10 @@ namespace DCL.AuthenticationScreenFlow
 
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
-            Profile profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            Profile? profile = await selfProfile.ProfileAsync(ct);
+
+            if (profile == null)
+                throw new ProfileNotFoundException();
 
             // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;

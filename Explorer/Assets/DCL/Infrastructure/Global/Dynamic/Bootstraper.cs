@@ -196,6 +196,7 @@ namespace Global.Dynamic
                 appArgs,
                 coroutineRunner,
                 dclVersion,
+                realmUrls,
                 ct);
 
             if (tuple.container != null)
@@ -289,6 +290,7 @@ namespace Global.Dynamic
         {
             realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsCache);
             webRequestsContainer.SetKTXEnabled(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
+
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,

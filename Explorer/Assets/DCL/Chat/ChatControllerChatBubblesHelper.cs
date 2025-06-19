@@ -6,7 +6,7 @@ using DCL.Profiles;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using Utility.Arch;
-using DCL.UI.Profiles.Helpers;
+using DCL.Profiles.Helpers;
 
 namespace DCL.Chat
 {

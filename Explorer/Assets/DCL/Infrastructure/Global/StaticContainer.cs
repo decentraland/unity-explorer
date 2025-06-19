@@ -45,6 +45,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -88,6 +89,8 @@ namespace Global
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         public ISystemMemoryCap MemoryCap { get; private set; }
+
+        public SceneLoadingLimit SceneLoadingLimit { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
@@ -166,8 +169,10 @@ namespace Global
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new Profiler();
-
             var container = new StaticContainer();
+            var dclInput = new DCLInput();
+
+            container.InputProxy.SetObject(dclInput);
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;
@@ -233,6 +238,14 @@ namespace Global
                     diagnosticsContainer.Sentry!.AddCurrentSceneToScope(scope, container.ScenesCache.CurrentScene.Info);
             });
 
+            diagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                diagnosticsContainer.Sentry?.AddRealmInfoToScope(scope,
+                    container.RealmData.Ipfs.CatalystBaseUrl.Value,
+                    container.RealmData.Ipfs.ContentBaseUrl.Value,
+                    container.RealmData.Ipfs.LambdasBaseUrl.Value);
+            });
+
             var renderFeature = container.QualityContainer.RendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>();
             if (enableGPUInstancing && renderFeature != null && renderFeature.Settings != null && renderFeature.Settings.FrustumCullingAndLODGenComputeShader != null)
             {
@@ -251,7 +264,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, container.FeatureFlagsCache),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, container.FeatureFlagsCache, videoTexturePool),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
@@ -277,17 +290,19 @@ namespace Global
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
+                new PrimaryPointerInfoPlugin(globalWorld, container.InputProxy),
                 promisesAnalyticsPlugin,
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
             };
 
+            container.SceneLoadingLimit = new SceneLoadingLimit(container.MemoryCap);
+
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
                 assetBundlePlugin,
-                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner,
-                    container.RealmPartitionSettings),
+                new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner, container.SceneLoadingLimit),
                 new AdaptivePerformancePlugin(container.assetsProvisioner, container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,
