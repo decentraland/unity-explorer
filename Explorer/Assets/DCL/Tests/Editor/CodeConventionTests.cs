@@ -25,12 +25,20 @@ namespace DCL.Tests
                                              !assetPath.StartsWith("Packages/") && !EXCLUDED_PATHS.Any(assetPath.Contains));
 
         [TestCaseSource(nameof(AllCSharpFiles))]
-        public void ClassShouldBeInNamespaces(string file)
+        public void VerifyConventions(string filePath)
         {
             // Arrange
-            string fileContent = File.ReadAllText(file);
+            string fileContent = File.ReadAllText(filePath);
             SyntaxNode root = CSharpSyntaxTree.ParseText(fileContent).GetRoot();
 
+            ClassShouldBeInNamespaces(root, filePath);
+            ShouldNotUsePlayerPrefsDirectly(fileContent, filePath);
+            AllAsyncMethodsShouldEndWithAsyncSuffix(root, fileContent, filePath);
+            UsingUnityEditorShouldBeSurroundedByDirectives(root, filePath);
+        }
+
+        private static void ClassShouldBeInNamespaces(SyntaxNode root, string file)
+        {
             // Act
             var classesOutsideNamespaces = root.DescendantNodesAndSelf()
                                                .OfType<ClassDeclarationSyntax>()
@@ -45,13 +53,10 @@ namespace DCL.Tests
                 $"File {Path.GetFileName(file)}: Found {classesOutsideNamespaces.Count} non-partial classes outside of namespaces. All non-partial classes should be within a namespace.");
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
-        public void ShouldNotUsePlayerPrefsDirectly(string file)
+        private static void ShouldNotUsePlayerPrefsDirectly(string fileContent, string filePath)
         {
             // Ignore prefs plugin as it uses PlayerPrefs intentionally
-            if (file.StartsWith("Assets/DCL/Prefs/")) return;
-
-            string fileContent = File.ReadAllText(file);
+            if (filePath.StartsWith("Assets/DCL/Prefs/")) return;
 
             string[]? lines = fileContent.Split('\n');
             var violations = new List<string>();
@@ -74,19 +79,13 @@ namespace DCL.Tests
 
             // Assert
             Assert.IsTrue(violations.Count == 0,
-                $"File {Path.GetFileName(file)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
+                $"File {Path.GetFileName(filePath)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
-        public void AllAsyncMethodsShouldEndWithAsyncSuffix(string file)
+        private static void AllAsyncMethodsShouldEndWithAsyncSuffix(SyntaxNode root, string fileContent, string filePath)
         {
-            // Arrange
-            string fileContent = File.ReadAllText(file);
-
             if (fileContent.Contains("[IgnoreAsyncNaming"))
                 return;
-
-            SyntaxNode root = CSharpSyntaxTree.ParseText(fileContent).GetRoot();
 
             var asyncMethods = root.DescendantNodesAndSelf()
                                    .Where(n => (n is MethodDeclarationSyntax m && m.Modifiers.Any(SyntaxKind.AsyncKeyword)) ||
@@ -101,16 +100,11 @@ namespace DCL.Tests
 
             // Assert
             Assert.AreEqual(0, methodsWithoutProperSuffix.Count,
-                $"File {Path.GetFileName(file)}: Found async methods/functions without 'Async' suffix: \n{string.Join("\n", methodsWithoutProperSuffix)}");
+                $"File {Path.GetFileName(filePath)}: Found async methods/functions without 'Async' suffix: \n{string.Join("\n", methodsWithoutProperSuffix)}");
         }
 
-        [TestCaseSource(nameof(AllCSharpFiles))]
-        public void UsingUnityEditorShouldBeSurroundedByDirectives(string file)
+        private static void UsingUnityEditorShouldBeSurroundedByDirectives(SyntaxNode root, string file)
         {
-            string fileContent = File.ReadAllText(file);
-            SyntaxTree tree = CSharpSyntaxTree.ParseText(fileContent);
-            SyntaxNode root = tree.GetRoot();
-
             // Find all using directives for UnityEditor.
             var usingUnityEditorDirectives = root.DescendantNodes(descendIntoTrivia: true) // descendIntoTrivia to get preprocessor directives
                                                  .OfType<UsingDirectiveSyntax>()
