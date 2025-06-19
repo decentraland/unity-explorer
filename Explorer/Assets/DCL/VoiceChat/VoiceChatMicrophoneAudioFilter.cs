@@ -24,7 +24,7 @@ namespace DCL.VoiceChat
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
         private const int DEFAULT_BUFFER_SIZE = 8192;
         private const int LIVEKIT_FRAME_SIZE = 960; // 20ms at 48kHz
-        private const int PROCESSING_QUEUE_SIZE = 10; // Buffer for processing thread
+        private const int PROCESSING_QUEUE_SIZE = 10; // Queue size for processing thread
 
         private IVoiceChatAudioProcessor audioProcessor;
         private bool isFilterActive = true;
@@ -38,7 +38,6 @@ namespace DCL.VoiceChat
         private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
 
         private VoiceChatCombinedAudioSource combinedAudioSource;
-        private VoiceChatAudioFeedbackSuppressor feedbackSuppressor;
 
         private float[] feedbackBuffer = new float[4096]; // Dedicated buffer for feedback suppression (matches speakerOutputBuffer size)
 
@@ -83,7 +82,6 @@ namespace DCL.VoiceChat
             audioProcessor = null;
             tempBuffer = null;
             resampleBuffer = null;
-            feedbackSuppressor = null;
         }
 
         /// <summary>
@@ -98,7 +96,7 @@ namespace DCL.VoiceChat
             int samplesPerChannel = data.Length / channels;
             Span<float> sendBuffer = data;
 
-            if (feedbackSuppressor != null && combinedAudioSource != null)
+            if (combinedAudioSource != null)
             {
                 ApplyFeedbackSuppression(data, channels, samplesPerChannel);
             }
@@ -148,12 +146,12 @@ namespace DCL.VoiceChat
             if (combinedAudioSource.TryGetCurrentSpeakerOutput(feedbackBuffer, out int speakerSamples))
             {
                 // Process audio through feedback suppressor (lightweight operation)
-                bool suppressionApplied = feedbackSuppressor.ProcessAudio(data, channels, samplesPerChannel, feedbackBuffer, speakerSamples);
-                
+                bool suppressionApplied = VoiceChatAudioFeedbackSuppressor.ProcessAudio(data, channels, samplesPerChannel, feedbackBuffer, speakerSamples);
+
                 // Apply suppression if needed (simple gain reduction)
                 if (suppressionApplied)
                 {
-                    feedbackSuppressor.ApplySuppression(data, channels, samplesPerChannel);
+                    VoiceChatAudioFeedbackSuppressor.ApplySuppression(data, channels, samplesPerChannel);
                 }
             }
         }
@@ -325,10 +323,9 @@ namespace DCL.VoiceChat
         {
             voiceChatConfiguration = configuration;
             audioProcessor = new OptimizedVoiceChatAudioProcessor(configuration);
-            
-            feedbackSuppressor = new VoiceChatAudioFeedbackSuppressor();
-            feedbackSuppressor.Initialize(configuration);
-            
+
+            VoiceChatAudioFeedbackSuppressor.Initialize(configuration);
+
             this.combinedAudioSource = combinedAudioSource;
         }
 
@@ -336,7 +333,7 @@ namespace DCL.VoiceChat
         {
             isFilterActive = active;
             audioProcessor?.Reset();
-            feedbackSuppressor?.Reset();
+            VoiceChatAudioFeedbackSuppressor.Reset();
 
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);

@@ -4,7 +4,7 @@ using DCL.Diagnostics;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatAudioFeedbackSuppressor
+    public static class VoiceChatAudioFeedbackSuppressor
     {
         private const int FEEDBACK_DETECTION_BUFFER_SIZE = 4096; // ~85ms at 48kHz
         private const float DEFAULT_CORRELATION_THRESHOLD = 0.7f;
@@ -12,24 +12,24 @@ namespace DCL.VoiceChat
         private const float DEFAULT_ATTACK_RATE = 0.1f;
         private const float DEFAULT_RELEASE_RATE = 0.05f;
 
-        private readonly float[] speakerBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
-        private readonly float[] microphoneBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
-        private int bufferIndex = 0;
-        private bool feedbackDetected = false;
-        private float feedbackSuppressionLevel = 0f;
-        private VoiceChatConfiguration configuration;
+        private static readonly float[] speakerBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
+        private static readonly float[] microphoneBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
+        private static int bufferIndex = 0;
+        private static bool feedbackDetected = false;
+        private static float feedbackSuppressionLevel = 0f;
+        private static VoiceChatConfiguration configuration;
 
-        public bool IsEnabled => configuration?.EnableFeedbackSuppression == true;
-        public bool IsFeedbackDetected => feedbackDetected;
-        public float CurrentSuppressionLevel => feedbackSuppressionLevel;
+        public static bool IsEnabled => configuration?.EnableFeedbackSuppression == true;
+        public static bool IsFeedbackDetected => feedbackDetected;
+        public static float CurrentSuppressionLevel => feedbackSuppressionLevel;
 
-        public void Initialize(VoiceChatConfiguration config)
+        public static void Initialize(VoiceChatConfiguration config)
         {
             configuration = config;
             Reset();
         }
 
-        public void Reset()
+        public static void Reset()
         {
             feedbackDetected = false;
             feedbackSuppressionLevel = 0f;
@@ -39,7 +39,7 @@ namespace DCL.VoiceChat
             Array.Clear(microphoneBuffer, 0, microphoneBuffer.Length);
         }
 
-        public bool ProcessAudio(float[] microphoneData, int channels, int samplesPerChannel, 
+        public static bool ProcessAudio(float[] microphoneData, int channels, int samplesPerChannel, 
                                float[] speakerData, int speakerSamples)
         {
             if (!IsEnabled || microphoneData == null || speakerData == null)
@@ -75,9 +75,6 @@ namespace DCL.VoiceChat
                 float attackRate = configuration?.FeedbackSuppressionAttackRate ?? DEFAULT_ATTACK_RATE;
                 float maxStrength = configuration?.FeedbackSuppressionStrength ?? DEFAULT_SUPPRESSION_STRENGTH;
                 feedbackSuppressionLevel = Mathf.Min(feedbackSuppressionLevel + attackRate, maxStrength);
-                
-                if (!wasFeedbackDetected)
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Feedback detected! Correlation: {correlation:F3}, Suppression: {feedbackSuppressionLevel:F3}");
             }
             else
             {
@@ -88,7 +85,7 @@ namespace DCL.VoiceChat
             return feedbackSuppressionLevel > 0.01f;
         }
 
-        public void ApplySuppression(float[] data, int channels, int samplesPerChannel)
+        public static void ApplySuppression(float[] data, int channels, int samplesPerChannel)
         {
             if (feedbackSuppressionLevel <= 0.01f)
                 return;
@@ -105,7 +102,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void UpdateBuffers(Span<float> microphoneData, float[] speakerData, int speakerSamples)
+        private static void UpdateBuffers(Span<float> microphoneData, float[] speakerData, int speakerSamples)
         {
             for (int i = 0; i < microphoneData.Length; i++)
             {
@@ -121,7 +118,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private float CalculateCrossCorrelation()
+        private static float CalculateCrossCorrelation()
         {
             float correlation = 0f;
             float micEnergy = 0f;
@@ -144,14 +141,6 @@ namespace DCL.VoiceChat
             }
 
             return Mathf.Abs(correlation);
-        }
-
-        public VoiceChatConfiguration GetConfiguration() => configuration;
-
-        public void UpdateConfiguration(VoiceChatConfiguration newConfig)
-        {
-            configuration = newConfig;
-            Reset();
         }
     }
 } 
