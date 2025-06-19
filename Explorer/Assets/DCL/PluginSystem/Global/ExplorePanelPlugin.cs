@@ -128,7 +128,6 @@ namespace DCL.PluginSystem.Global
         private PlaceInfoPanelController? placeInfoPanelController;
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
-        private ViewDependencies viewDependencies;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -174,7 +173,7 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
-            IAppArgs appArgs, ViewDependencies viewDependencies,
+            IAppArgs appArgs,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
             ProfileChangesBus profileChangesBus,
@@ -226,7 +225,6 @@ namespace DCL.PluginSystem.Global
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
             this.appArgs = appArgs;
-            this.viewDependencies = viewDependencies;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;

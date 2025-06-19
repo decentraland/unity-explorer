@@ -45,7 +45,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
-        private readonly ViewDependencies viewDependencies;
         private readonly IRoomHub roomHub;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
@@ -77,7 +76,6 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            ViewDependencies viewDependencies,
             IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
@@ -103,7 +101,6 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.viewDependencies = viewDependencies;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
@@ -156,7 +153,6 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 inputBlock,
-                viewDependencies,
                 roomHub,
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,

@@ -51,7 +51,6 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly World world;
         private readonly IInputBlock inputBlock;
-        private readonly ViewDependencies viewDependencies;
         private readonly IRoom islandRoom;
         private readonly IProfileCache profileCache;
         private readonly ITextFormatter hyperlinkTextFormatter;
@@ -102,7 +101,6 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies,
             IRoomHub roomHub,
             ChatSettingsAsset chatSettings,
             ITextFormatter hyperlinkTextFormatter,
@@ -122,7 +120,6 @@ namespace DCL.Chat
             this.nametagsData = nametagsData;
             this.world = world;
             this.inputBlock = inputBlock;
-            this.viewDependencies = viewDependencies;
             this.islandRoom = roomHub.IslandRoom();
             this.roomHub = roomHub;
             this.chatSettings = chatSettings;
@@ -240,7 +237,6 @@ namespace DCL.Chat
         {
             cameraEntity = world.CacheCamera();
 
-            viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
@@ -709,7 +705,7 @@ namespace DCL.Chat
                 view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
                 view.ConversationSelected += OnSelectConversation;
                 view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
-                
+
             }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
@@ -726,8 +722,8 @@ namespace DCL.Chat
             chatUserStateEventBus.UserBlocked += OnUserBlockedByOwnUser;
             chatUserStateEventBus.UserConnectionStateChanged += OnUserConnectionStateChanged;
 
-            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
         }
 
         private void OnViewDeleteChatHistoryRequested()
@@ -776,8 +772,8 @@ namespace DCL.Chat
             chatUserStateEventBus.UserBlocked -= OnUserBlockedByOwnUser;
             chatUserStateEventBus.UserConnectionStateChanged -= OnUserConnectionStateChanged;
 
-            viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
-            viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+            DCLInput.Instance.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
+            DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
         }
     }
 }

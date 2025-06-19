@@ -48,7 +48,6 @@ namespace DCL.PluginSystem.Global
         private readonly IInputBlock inputBlock;
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
-        private readonly ViewDependencies viewDependencies;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
@@ -85,7 +84,6 @@ namespace DCL.PluginSystem.Global
             bool useAnalytics,
             IAnalyticsController? analyticsController,
             IChatEventBus chatEventBus,
-            ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
             IRPCSocialServices socialServicesRPC,
@@ -104,7 +102,6 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
-            this.viewDependencies = viewDependencies;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
@@ -138,7 +135,6 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 chatEventBus,
-                viewDependencies,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,

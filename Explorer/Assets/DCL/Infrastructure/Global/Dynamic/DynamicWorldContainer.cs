@@ -595,12 +595,11 @@ namespace Global.Dynamic
                 profileRepository,
                 sharedSpaceManager);
 
-            var viewDependencies = new ViewDependencies(
+            ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
                 menusAccessFacade,
                 clipboardManager,
-                dclCursor,
-                userBlockingCacheProxy);
+                dclCursor));
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
@@ -681,7 +680,6 @@ namespace Global.Dynamic
                     staticContainer.InputBlock,
                     globalWorld,
                     playerEntity,
-                    viewDependencies,
                     roomHub,
                     assetsProvisioner,
                     hyperlinkTextFormatter,
@@ -743,7 +741,6 @@ namespace Global.Dynamic
                     explorePanelNavmapBus,
                     includeCameraReel,
                     appArgs,
-                    viewDependencies,
                     userBlockingCacheProxy,
                     sharedSpaceManager,
                     profileChangesBus,
@@ -821,7 +818,6 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     realmNavigator,
                     identityCache,
-                    viewDependencies,
                     realmNftNamesProvider,
                     profileChangesBus,
                     includeFriends,
@@ -832,7 +828,7 @@ namespace Global.Dynamic
                     profileRepositoryWrapper
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
-                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies, profileRepositoryWrapper),
+                new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
             };
@@ -876,7 +872,6 @@ namespace Global.Dynamic
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
                     chatEventBus,
-                    viewDependencies,
                     sharedSpaceManager,
                     socialServiceEventBus,
                     socialServiceContainer.socialServicesRPC,

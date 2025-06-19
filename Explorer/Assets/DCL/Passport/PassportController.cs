@@ -169,7 +169,6 @@ namespace DCL.Passport
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
-            ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,

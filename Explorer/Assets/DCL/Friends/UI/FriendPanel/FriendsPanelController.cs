@@ -65,7 +65,6 @@ namespace DCL.Friends.UI.FriendPanel
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
-            ViewDependencies viewDependencies,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
@@ -89,8 +88,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     friendsConnectivityStatusTracker,
                     chatEventBus,
-                    sharedSpaceManager,
-                    viewDependencies);
+                    sharedSpaceManager);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
@@ -102,7 +100,6 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    viewDependencies,
                     chatEventBus,
                     sharedSpaceManager);
 

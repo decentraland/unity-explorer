@@ -62,7 +62,6 @@ namespace DCL.PluginSystem.Global
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ViewDependencies viewDependencies;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
         private readonly bool enableFriends;
@@ -101,7 +100,6 @@ namespace DCL.PluginSystem.Global
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
-            ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
             bool enableFriends,
@@ -134,7 +132,6 @@ namespace DCL.PluginSystem.Global
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
-            this.viewDependencies = viewDependencies;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
             this.enableFriends = enableFriends;
@@ -192,7 +189,6 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 web3IdentityCache,
-                viewDependencies,
                 nftNamesProvider,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
