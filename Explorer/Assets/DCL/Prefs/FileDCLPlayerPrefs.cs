@@ -26,8 +26,11 @@ namespace DCL.Prefs
                 try
                 {
                     string path = Path.Combine(Application.persistentDataPath, string.Format(PREFS_FILENAME, i));
-                    fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-                    fileStream.Lock(0, 0); // Lock the whole file
+
+                    // Note that FileShare.None should lock the file to other processes, and it does,
+                    // but only on Windows. And .Lock(0, 0) does the same, but only on MacOS.
+                    fileStream = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                    fileStream.Lock(0, 0);
 
                     // We use this to migrate existing keys, but only for the first running instance
                     if (i == 0)
