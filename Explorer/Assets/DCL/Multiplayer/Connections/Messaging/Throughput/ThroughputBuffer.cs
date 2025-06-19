@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Connections.Systems.Throughput
             }
         }
 
-        public ulong CurrentAmountFrame()
+        public ulong ConsumeFrameAmount()
         {
             lock (this)
             {

@@ -161,7 +161,7 @@ namespace DCL.Multiplayer.Connections.Systems
             }
 
             public (ulong incoming, ulong outgoing) CollectFrame() =>
-                (bufferBunch.Incoming.CurrentAmountFrame(), bufferBunch.Outgoing.CurrentAmountFrame());
+                (bufferBunch.Incoming.ConsumeFrameAmount(), bufferBunch.Outgoing.ConsumeFrameAmount());
 
             public void Reset()
             {
