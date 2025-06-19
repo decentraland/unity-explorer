@@ -248,6 +248,23 @@ namespace DCL.VoiceChat
 
         private void DisableMicrophone()
         {
+            if (!PlayerLoopHelper.IsMainThread)
+            {
+                DisableMicrophoneAsync().Forget();
+                return;
+            }
+
+            DisableMicrophoneInternal();
+        }
+
+        private async UniTaskVoid DisableMicrophoneAsync()
+        {
+            await UniTask.SwitchToMainThread();
+            DisableMicrophoneInternal();
+        }
+
+        private void DisableMicrophoneInternal()
+        {
             audioSource.loop = false;
             StopAudioSource();
             audioSource.volume = 0f;
