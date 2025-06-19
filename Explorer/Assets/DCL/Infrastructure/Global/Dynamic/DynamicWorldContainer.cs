@@ -122,6 +122,7 @@ namespace Global.Dynamic
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
+        private readonly ISelfProfile selfProfile;
 
         public IMVCManager MvcManager { get; }
 
@@ -153,7 +154,8 @@ namespace Global.Dynamic
             IRemoteMetadata remoteMetadata,
             IProfileBroadcast profileBroadcast,
             IRoomHub roomHub,
-            SocialServicesContainer socialServicesContainer)
+            SocialServicesContainer socialServicesContainer,
+            ISelfProfile selfProfile)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -167,6 +169,7 @@ namespace Global.Dynamic
             this.chatMessagesBus = chatMessagesBus;
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
+            this.selfProfile = selfProfile;
         }
 
         public override void Dispose()
@@ -175,6 +178,7 @@ namespace Global.Dynamic
             profileBroadcast.Dispose();
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
+            selfProfile.Dispose();
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -645,7 +649,7 @@ namespace Global.Dynamic
                     voiceChatRoom
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
-                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
+                new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue, dclInput),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, mvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.ScenesUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, unityEventSystem, mvcManager, menusAccessFacade),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dynamicWorldDependencies.CommandLineArgs, dclInput),
@@ -1025,7 +1029,8 @@ namespace Global.Dynamic
                 remoteMetadata,
                 profileBroadcast,
                 roomHub,
-                socialServiceContainer
+                socialServiceContainer,
+                selfProfile
             );
 
             // Init itself
