@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b81b82a7a1344de8ff8b1b31ae820b7, type: 3}
   m_Name: CommunityPlaceContextMenuSettings
   m_EditorClassIdentifier: 
-  contextMenuWidth: 250
+  contextMenuWidth: 180
   elementsSpacing: 5
   verticalPadding:
     m_Left: 15

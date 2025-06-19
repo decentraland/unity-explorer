@@ -295,7 +295,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1.5
+  m_PixelsPerUnitMultiplier: 3
 --- !u!114 &8404404177922087950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,7 +321,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.25286132, g: 0.23589355, b: 0.2924528, a: 1}
     m_PressedColor: {r: 0.13333334, g: 0.12941177, b: 0.14117648, a: 1}
     m_SelectedColor: {r: 0.2509804, g: 0.23529412, b: 0.29411766, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.2509804, g: 0.23529412, b: 0.29411766, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -411,11 +411,6 @@ MonoBehaviour:
   openTitleButton: {fileID: 8404404177922087950}
   userNameElement: {fileID: 887170052482478408}
   contextMenuSettings: {fileID: 11400000, guid: f0417a22b41fa694aa86da5a95090393, type: 2}
-  contextMenuWidth: 210
-  contextMenuElementsSpacing: 8
-  contextMenuOffset: {x: 0, y: 100}
-  horizontalPadding: 15
-  verticalPadding: 15
 --- !u!1001 &7858872255811826341
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -71,6 +71,7 @@ namespace DCL.Communities.CommunitiesCard
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
 
         private GetCommunityResponse.CommunityData communityData;
+        private string[] communityPlaceIds;
 
         public CommunityCardController(ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
@@ -107,6 +108,7 @@ namespace DCL.Communities.CommunitiesCard
             this.chatEventBus = chatEventBus;
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
+            communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
         }
 
         public override void Dispose()
@@ -119,9 +121,11 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.JoinCommunity -= JoinCommunity;
                 viewInstance.LeaveCommunityRequested -= LeaveCommunityRequested;
                 viewInstance.DeleteCommunityRequested -= OnDeleteCommunityRequested;
+                viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked -= OnOpenCommunityWizard;
             }
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
+            communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -134,6 +138,14 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+        }
+
+        private void OnCommunityUpdated(string communityId)
+        {
+            if (!communityId.Equals(communityData.id)) return;
+
+            ResetSubControllers();
+            SetDefaultsAndLoadData();
         }
 
         private void CloseCardOnConversationRequested(string _) =>
@@ -185,6 +197,7 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.JoinCommunity += JoinCommunity;
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
+            viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
@@ -210,7 +223,8 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 mvcManager,
                 clipboard,
-                webBrowser);
+                webBrowser,
+                web3IdentityCache);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
@@ -221,18 +235,22 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.successNotificationView,
                 clipboard,
                 webBrowser,
-                realmNavigator,
-                communitiesDataProvider);
+                realmNavigator);
 
             imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
-        protected override void OnViewShow()
+        protected override void OnViewShow() =>
+            SetDefaultsAndLoadData();
+
+        private void SetDefaultsAndLoadData()
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();
+            viewInstance!.SetDefaults(imageController);
+            viewInstance.MembersListView.SetSectionButtonsActive(false);
             LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
 
@@ -241,6 +259,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance!.SetLoadingState(true);
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
+                communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
                 communityData = response.data;
 
                 viewInstance.SetLoadingState(false);
@@ -248,9 +267,9 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.ConfigureCommunity(communityData, imageController);
                 viewInstance.ConfigureContextMenu(mvcManager, ct);
 
-                viewInstance.ResetToggle();
+                viewInstance.ResetToggle(true);
 
-                eventListController?.ShowEvents(communityData, ct);
+                eventListController?.ShowEvents(communityData, communityPlaceIds, ct);
             }
         }
 
@@ -260,6 +279,12 @@ namespace DCL.Communities.CommunitiesCard
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
 
+            ResetSubControllers();
+            viewInstance.ResetToggle(false);
+        }
+
+        private void ResetSubControllers()
+        {
             membersListController?.Reset();
             placesSectionController?.Reset();
             eventListController?.Reset();
@@ -274,14 +299,14 @@ namespace DCL.Communities.CommunitiesCard
             switch (section)
             {
                 case CommunityCardView.Sections.PHOTOS:
-                    //TODO: fix the place ids
-                    cameraReelGalleryController!.ShowCommunityGalleryAsync(communityData.id, Array.Empty<string>(), sectionCancellationTokenSource.Token).Forget();
+                    viewInstance!.CameraReelGalleryConfigs.PhotosView.SetAdminEmptyTextActive(communityData.role is CommunityMemberRole.moderator or CommunityMemberRole.owner);
+                    cameraReelGalleryController!.ShowPlacesGalleryAsync(communityPlaceIds, sectionCancellationTokenSource.Token).Forget();
                     break;
                 case CommunityCardView.Sections.MEMBERS:
                     membersListController!.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
                     break;
                 case CommunityCardView.Sections.PLACES:
-                    placesSectionController!.ShowPlaces(communityData, sectionCancellationTokenSource.Token);
+                    placesSectionController!.ShowPlaces(communityData, communityPlaceIds, sectionCancellationTokenSource.Token);
                     break;
             }
         }

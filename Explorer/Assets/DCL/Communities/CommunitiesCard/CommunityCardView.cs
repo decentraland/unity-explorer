@@ -125,7 +125,7 @@ namespace DCL.Communities.CommunitiesCard
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, () => LeaveCommunityRequested?.Invoke()))
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested)));
         }
 
@@ -207,8 +207,8 @@ namespace DCL.Communities.CommunitiesCard
             backgroundImage.material.SetColor(shaderProperty, Color.HSVToRGB(h, s, Mathf.Clamp01(v - 0.3f)));
         }
 
-        public void ResetToggle() =>
-            ToggleSection(Sections.MEMBERS);
+        public void ResetToggle(bool invokeEvent) =>
+            ToggleSection(Sections.MEMBERS, invokeEvent);
 
         public void SetLoadingState(bool isLoading)
         {
@@ -219,7 +219,7 @@ namespace DCL.Communities.CommunitiesCard
             loadingObject.SetActive(isLoading);
         }
 
-        private void ToggleSection(Sections section)
+        private void ToggleSection(Sections section, bool invokeEvent = true)
         {
             photosSectionSelection.SetActive(section == Sections.PHOTOS);
             membersSectionSelection.SetActive(section == Sections.MEMBERS);
@@ -230,7 +230,8 @@ namespace DCL.Communities.CommunitiesCard
             MembersListView.SetActive(section == Sections.MEMBERS);
             PlacesSectionView.SetActive(section == Sections.PLACES);
 
-            SectionChanged?.Invoke(section);
+            if (invokeEvent)
+                SectionChanged?.Invoke(section);
         }
 
         public void ConfigureInteractionButtons(CommunityMemberRole role)
@@ -242,6 +243,22 @@ namespace DCL.Communities.CommunitiesCard
             joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
         }
 
+        public void SetDefaults(ImageController imageController)
+        {
+            imageController.SetImage(defaultCommunityImage);
+            communityName.text = string.Empty;
+            communityMembersNumber.text = string.Empty;
+            communityDescription.text = string.Empty;
+
+            openChatButton.gameObject.SetActive(false);
+            openWizardButton.gameObject.SetActive(false);
+            openContextMenuButton.gameObject.SetActive(false);
+            joinedButton.gameObject.SetActive(false);
+            joinButton.gameObject.SetActive(false);
+            placesWithSignButton.gameObject.SetActive(false);
+            placesButton.gameObject.SetActive(true);
+        }
+
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData,
             ImageController imageController)
         {
@@ -249,10 +266,8 @@ namespace DCL.Communities.CommunitiesCard
             communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
             communityDescription.text = communityData.description;
 
-            imageController.SetImage(defaultCommunityImage);
-
             if (communityData.thumbnails != null)
-                imageController.RequestImage(communityData.thumbnails.Value.raw, true, true);
+                imageController.RequestImage(communityData.thumbnails.Value.raw);
 
             deleteCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.owner;
 

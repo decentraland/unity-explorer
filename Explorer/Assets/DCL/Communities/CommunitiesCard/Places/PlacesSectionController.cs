@@ -8,6 +8,7 @@ using DCL.Diagnostics;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -30,6 +31,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string DISLIKE_PLACE_ERROR_MESSAGE = "There was an error disliking the place. Please try again.";
         private const string FAVORITE_PLACE_ERROR_MESSAGE = "There was an error setting the place as favorite. Please try again.";
         private const string COMMUNITY_PLACES_FETCH_ERROR_MESSAGE = "There was an error fetching the community places. Please try again.";
+        private const string COMMUNITY_PLACES_DELETE_ERROR_MESSAGE = "There was an error deleting the community place. Please try again.";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
 
@@ -66,7 +68,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser) : base (view, PAGE_SIZE)
+            IWebBrowser webBrowser,
+            IWeb3IdentityCache web3IdentityCache) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -78,7 +81,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
 
-            view.InitGrid(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken);
+            view.InitGrid(() => currentSectionFetchData, webRequestController, mvcManager, cancellationToken, web3IdentityCache);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
@@ -89,6 +92,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementCopyLinkButtonClicked += OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked += OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked += OnElementJumpInButtonClicked;
+            view.ElementDeleteButtonClicked += OnElementDeleteButtonClicked;
         }
 
         public override void Dispose()
@@ -102,6 +106,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             view.ElementCopyLinkButtonClicked -= OnElementCopyLinkButtonClicked;
             view.ElementInfoButtonClicked -= OnElementInfoButtonClicked;
             view.ElementJumpInButtonClicked -= OnElementJumpInButtonClicked;
+            view.ElementDeleteButtonClicked -= OnElementDeleteButtonClicked;
 
             placeCardOperationsCts.SafeCancelAndDispose();
 
@@ -114,6 +119,28 @@ namespace DCL.Communities.CommunitiesCard.Places
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
                     communityId: communityData!.Value.id)));
+        }
+
+        private void OnElementDeleteButtonClicked(PlaceInfo placeInfo)
+        {
+            placeCardOperationsCts = placeCardOperationsCts.SafeRestart();
+            DeletePlaceAsync(placeCardOperationsCts.Token).Forget();
+            return;
+
+            async UniTaskVoid DeletePlaceAsync(CancellationToken ct)
+            {
+                var result = await communitiesDataProvider.RemovePlaceFromCommunityAsync(communityData!.Value.id, placeInfo.id, ct)
+                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!result.Success)
+                {
+                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    return;
+                }
+
+                placesFetchData.items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
+                view.RefreshGrid();
+            }
         }
 
         private void OnElementJumpInButtonClicked(PlaceInfo placeInfo)
@@ -236,27 +263,12 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             communityData = null;
             placesFetchData.Reset();
-            communityPlaceIds = null;
             view.SetCanModify(false);
             base.Reset();
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            if (communityPlaceIds == null || communityPlaceIds.Length == 0)
-            {
-                Result<List<string>> placeIdsResult = await communitiesDataProvider.GetCommunityPlacesAsync(communityData!.Value.id, ct)
-                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                if (!placeIdsResult.Success)
-                {
-                    placesFetchData.pageNumber--;
-                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
-                    return placesFetchData.totalToFetch;
-                }
-
-                communityPlaceIds = placeIdsResult.Value.ToArray();
-            }
-
             int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
 
@@ -280,15 +292,17 @@ namespace DCL.Communities.CommunitiesCard.Places
             return response.Value.total;
         }
 
-        public void ShowPlaces(CommunityData community, CancellationToken token)
+        public void ShowPlaces(CommunityData community, string[] placeIds, CancellationToken token)
         {
             cancellationToken = token;
 
             if (communityData is not null && community.id.Equals(communityData.Value.id)) return;
 
             communityData = community;
+            communityPlaceIds = placeIds;
             userCanModify = communityData.Value.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
             view.SetCanModify(userCanModify);
+            view.SetCommunityData(community);
 
             FetchNewDataAsync(token).Forget();
         }

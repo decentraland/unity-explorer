@@ -337,12 +337,20 @@ namespace DCL.InWorldCamera.CameraReelGallery
             FinishShowGallery();
         }
 
-        public async UniTask ShowCommunityGalleryAsync(string communityId, string[] placeIds, CancellationToken ct)
+        public async UniTask ShowPlacesGalleryAsync(string[] placeIds, CancellationToken ct)
         {
             PrepareShowGallery(ct);
 
-            CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetCommunityGalleryStorageInfoAsync(communityId, ct);
-            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeIds), storageStatus.ScreenshotsAmount, view.PaginationLimit);
+            CameraReelStorageStatus storageStatus = await cameraReelStorageService.GetPlacesGalleryStorageInfoAsync(placeIds, ct);
+
+            if (storageStatus.MaxScreenshots == 0)
+            {
+                view.emptyState.SetActive(true);
+                FinishShowGallery();
+                return;
+            }
+
+            pagedCameraReelManager = new PagedCameraReelManager(cameraReelStorageService, new PagedCameraReelManagerParameters(placeIds), storageStatus.MaxScreenshots, view.PaginationLimit);
             thumbnailImages = new ReelThumbnailController[storageStatus.MaxScreenshots];
 
             await LoadMorePageAsync(ct);
