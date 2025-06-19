@@ -38,8 +38,7 @@ namespace DCL.Interaction.Systems
             World world,
             IEventSystem eventSystem,
             DCLInput dclInput,
-            IMVCManagerMenusAccessFacade menusAccessFacade,
-            IMVCManager mvcManager) : base(world)
+            IMVCManagerMenusAccessFacade menusAccessFacade) : base(world)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
