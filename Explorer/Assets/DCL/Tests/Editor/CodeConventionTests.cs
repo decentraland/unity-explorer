@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace DCL.Tests
     [Category(CODE_CONVENTIONS)]
     public class CodeConventionsTests
     {
-        private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test" , "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
+        private static readonly string[] EXCLUDED_PATHS = { "/Editor/", "/Test", "/Playground", "/EditorTests/", "/Rendering/SkyBox/", "/Ipfs/", "/Plugins/SocketIO" };
 
         private static IEnumerable<string> AllCSharpFiles() =>
             AssetDatabase.FindAssets("t:Script")
@@ -42,6 +43,38 @@ namespace DCL.Tests
             // Assert
             Assert.AreEqual(0, classesOutsideNamespaces.Count,
                 $"File {Path.GetFileName(file)}: Found {classesOutsideNamespaces.Count} non-partial classes outside of namespaces. All non-partial classes should be within a namespace.");
+        }
+
+        [TestCaseSource(nameof(AllCSharpFiles))]
+        public void ShouldNotUsePlayerPrefsDirectly(string file)
+        {
+            // Ignore prefs plugin as it uses PlayerPrefs intentionally
+            if (file.StartsWith("Assets/DCL/Prefs/")) return;
+
+            string fileContent = File.ReadAllText(file);
+
+            string[]? lines = fileContent.Split('\n');
+            var violations = new List<string>();
+
+            for (var i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                int index = line.IndexOf("PlayerPrefs.", StringComparison.Ordinal);
+
+                while (index != -1)
+                {
+                    bool isDclPrefixed = index >= 3 && line.Substring(index - 3, 3) == "DCL";
+
+                    if (!isDclPrefixed)
+                        violations.Add($"Line {i + 1}: {line.Trim()}");
+
+                    index = line.IndexOf("PlayerPrefs.", index + 1, StringComparison.Ordinal);
+                }
+            }
+
+            // Assert
+            Assert.IsTrue(violations.Count == 0,
+                $"File {Path.GetFileName(file)}: Detected direct use of 'PlayerPrefs.':\n{string.Join("\n", violations)}");
         }
 
         [TestCaseSource(nameof(AllCSharpFiles))]
