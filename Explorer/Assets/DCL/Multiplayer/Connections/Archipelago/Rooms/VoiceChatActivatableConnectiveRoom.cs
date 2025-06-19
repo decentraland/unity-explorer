@@ -34,7 +34,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
-        private readonly IRoom roomInstance;
         private CancellationTokenSource? cts;
         private string connectionString = string.Empty;
         public bool Activated { get; private set; }
@@ -43,28 +42,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public VoiceChatActivatableConnectiveRoom()
         {
-            var hub = new ParticipantsHub();
-            var videoStreams = new VideoStreams(hub);
-            var audioRemixConveyor = new ThreadedAudioRemixConveyor();
-            var audioStreams = new AudioStreams(hub, audioRemixConveyor);
-            var tracksFactory = new TracksFactory();
-
-            var newRoom = new Room(
-                new ArrayMemoryPool(),
-                new DefaultActiveSpeakers(),
-                hub,
-                tracksFactory,
-                new FfiHandleFactory(),
-                new ParticipantFactory(),
-                new TrackPublicationFactory(),
-                new DataPipe(),
-                new MemoryRoomInfo(),
-                videoStreams,
-                audioStreams,
-                null!
-            );
-
-            roomInstance = new LogRoom(newRoom);
         }
 
         public void Dispose()
@@ -206,19 +183,48 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<bool> TryConnectToRoomAsync(CancellationToken ct)
         {
             var credentials = new ConnectionStringCredentials(connectionString);
+            
+            // Create a fresh room instance each time to ensure clean state
+            var freshRoom = CreateFreshRoom();
 
-            bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
+            bool connectResult = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
 
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
             if (connectResult)
             {
-                room.Assign(roomInstance, out IRoom _);
+                room.Assign(freshRoom, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
             }
 
             return connectResult;
+        }
+
+        private static IRoom CreateFreshRoom()
+        {
+            var hub = new ParticipantsHub();
+            var videoStreams = new VideoStreams(hub);
+            var audioRemixConveyor = new ThreadedAudioRemixConveyor();
+            var audioStreams = new AudioStreams(hub, audioRemixConveyor);
+            var tracksFactory = new TracksFactory();
+
+            var newRoom = new Room(
+                new ArrayMemoryPool(),
+                new DefaultActiveSpeakers(),
+                hub,
+                tracksFactory,
+                new FfiHandleFactory(),
+                new ParticipantFactory(),
+                new TrackPublicationFactory(),
+                new DataPipe(),
+                new MemoryRoomInfo(),
+                videoStreams,
+                audioStreams,
+                null!
+            );
+
+            return new LogRoom(newRoom);
         }
 
         public static class Null
