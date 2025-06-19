@@ -332,9 +332,7 @@ namespace DCL.VoiceChat
 
             if (resampleBuffer != null)
                 Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
-
-            outputSampleRate = AudioSettings.outputSampleRate;
-
+            
             while (processingQueue.TryDequeue(out _)) { }
             while (processedQueue.TryDequeue(out _)) { }
 

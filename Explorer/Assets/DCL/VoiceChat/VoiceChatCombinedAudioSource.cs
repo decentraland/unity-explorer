@@ -29,7 +29,7 @@ namespace DCL.VoiceChat
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
-            
+
             streams.Clear();
             isPlaying = false;
             lastDataLength = 0;
@@ -111,8 +111,7 @@ namespace DCL.VoiceChat
             streams.Clear();
             isPlaying = false;
             lastDataLength = 0;
-            sampleRate = AudioSettings.outputSampleRate;
-            
+
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
         }
