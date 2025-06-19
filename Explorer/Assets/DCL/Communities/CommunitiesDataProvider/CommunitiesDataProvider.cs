@@ -16,6 +16,7 @@ namespace DCL.Communities
     {
         public event Action CommunityCreated;
         public event Action CommunityDeleted;
+        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
 
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
@@ -103,6 +104,7 @@ namespace DCL.Communities
             {
                 // Updating an existing community
                 throw new NotImplementedException("Updating communities is not implemented yet.");
+                CommunityUpdated?.Invoke(communityId);
             }
 
             return response;
@@ -164,9 +166,6 @@ namespace DCL.Communities
 
             return placesIds;
         }
-
-        public UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);
 
         public UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             RemoveMemberFromCommunityAsync(userId, communityId, ct);
@@ -237,6 +236,17 @@ namespace DCL.Communities
             string url = $"{communitiesBaseUrl}/communities/{communityId}/members/{userId}";
 
             var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> RemovePlaceFromCommunityAsync(string communityId, string placeId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/places/{placeId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

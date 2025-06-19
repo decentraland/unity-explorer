@@ -3,8 +3,9 @@ using System;
 namespace DCL.EventsApi
 {
     [Serializable]
-    public struct EventDTO
+    public class EventWithPlaceIdDTO
     {
+        public string place_id;
         public string id;
         public string name;
         public string image;
