@@ -200,9 +200,12 @@ namespace DCL.Communities.CommunitiesCard.Events
                 return eventsFetchData.totalToFetch;
             }
 
+            if (eventResponse.Value.data.total == 0)
+                return 0;
+
             eventPlaceIds.Clear();
 
-            foreach (var item in eventResponse.Value.data)
+            foreach (var item in eventResponse.Value.data.events)
                 eventPlaceIds.Add(item.place_id);
 
             Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
@@ -221,14 +224,14 @@ namespace DCL.Communities.CommunitiesCard.Events
             foreach (var place in placesResponse.Value.data)
                 placeInfoCache.Add(place.id, place);
 
-            foreach (var item in eventResponse.Value.data)
+            foreach (var item in eventResponse.Value.data.events)
                 eventsFetchData.items.Add(new PlaceAndEventDTO
                 {
                     Place = placeInfoCache[item.place_id],
                     Event = item
                 });
 
-            return eventResponse.Value.total;
+            return eventResponse.Value.data.total;
         }
 
         public void ShowEvents(CommunityData community, string[] placeIds, CancellationToken token)
