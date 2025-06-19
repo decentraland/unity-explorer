@@ -2,6 +2,7 @@ using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Wearables.Helpers;
+using ECS.StreamableLoading;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -27,7 +28,7 @@ namespace DCL.AvatarRendering.Emotes
         public GameObject prefab;
         public GameObject male;
         public GameObject female;
-        public EmoteDTO.Metadata.Data entity;
+        public EmoteDTO.EmoteMetadataDto.Data entity;
     }
 
     [CreateAssetMenu(menuName = "DCL/Avatar/Embedded Emotes Data")]
@@ -54,7 +55,7 @@ namespace DCL.AvatarRendering.Emotes
                 model.pointers = new[] { embeddedEmote.id };
                 model.type = "emote";
                 model.version = "v3";
-                model.metadata = new EmoteDTO.Metadata();
+                model.metadata = new EmoteDTO.EmoteMetadataDto();
                 model.metadata.id = embeddedEmote.id;
                 model.metadata.name = embeddedEmote.name;
 
@@ -122,9 +123,9 @@ namespace DCL.AvatarRendering.Emotes
             var rendererInfos = new List<AttachmentRegularAsset.RendererInfo>();
 
             foreach (SkinnedMeshRenderer? renderer in glb.GetComponentsInChildren<SkinnedMeshRenderer>())
-                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(renderer, renderer.sharedMaterial));
+                rendererInfos.Add(new AttachmentRegularAsset.RendererInfo(renderer.sharedMaterial));
 
-            return new AttachmentRegularAsset(glb, rendererInfos, ECS.StreamableLoading.IStreamableRefCountData.Null.INSTANCE);
+            return new AttachmentRegularAsset(glb, rendererInfos, IStreamableRefCountData.Null.INSTANCE);
         }
     }
 }

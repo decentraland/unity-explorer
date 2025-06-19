@@ -212,7 +212,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider, decentralandUrlsSource, profileChangesBus));
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
         }
 
         public class PassportSettings : IDCLPluginSettings

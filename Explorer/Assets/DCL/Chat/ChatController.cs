@@ -85,6 +85,8 @@ namespace DCL.Chat
         public event ConversationClosedDelegate? ConversationClosed;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
+        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+
         public bool TryGetView(out ChatView view)
         {
             view = viewInstance!;
@@ -131,6 +133,7 @@ namespace DCL.Chat
             this.loadingStatus = loadingStatus;
             this.chatStorage = chatStorage;
             this.profileRepositoryWrapper = profileDataProvider;
+            friendsServiceProxy = friendsService;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -258,12 +261,26 @@ namespace DCL.Chat
 
             AddNearbyChannelAndSendWelcomeMessage();
 
-            memberListHelper.StartUpdating();
-
-            InitializeChannelsAndConversationsAsync().Forget();
-
             IsUnfolded = inputData.Unfold;
             viewInstance.Blur();
+
+            //We need the friends service enabled to be able to interact with them via chat.
+            //If there is no friends service (like in LSD) these two methods should not be invoked
+            if (friendsServiceProxy.Configured)
+            {
+                memberListHelper.StartUpdating();
+                InitializeChannelsAndConversationsAsync().Forget();
+            }
+        }
+
+        protected override void OnBlur()
+        {
+            viewInstance?.UnsubscribeToSubmitEvent();
+        }
+
+        protected override void OnFocus()
+        {
+            viewInstance?.SubscribeToSubmitEvent();
         }
 
         private void AddNearbyChannelAndSendWelcomeMessage()
@@ -744,6 +761,7 @@ namespace DCL.Chat
                 view.CurrentChannelChanged += OnViewCurrentChannelChangedAsync;
                 view.ConversationSelected += OnSelectConversation;
                 view.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
+                
             }
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
