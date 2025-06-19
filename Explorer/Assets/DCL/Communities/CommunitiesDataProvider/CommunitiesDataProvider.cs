@@ -17,6 +17,8 @@ namespace DCL.Communities
         public event Action CommunityCreated;
         public event Action<string> CommunityUpdated;
         public event Action CommunityDeleted;
+        public event Action<string, bool> CommunityJoined;
+        public event Action<string, bool> CommunityLeft;
 
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
@@ -203,6 +205,9 @@ namespace DCL.Communities
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (web3IdentityCache.Identity?.Address == userId)
+                CommunityLeft?.Invoke(communityId, result.Success);
+
             return result.Success;
         }
 
@@ -216,6 +221,8 @@ namespace DCL.Communities
             var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            CommunityJoined?.Invoke(communityId, result.Success);
 
             return result.Success;
         }
