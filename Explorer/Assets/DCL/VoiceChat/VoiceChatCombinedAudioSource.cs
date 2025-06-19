@@ -87,9 +87,11 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void AddStream(WeakReference<IAudioStream> stream)
+        public void AddStream(WeakReference<IAudioStream> weakStream)
         {
-            streams.Add(stream);
+            streams.Add(weakStream);
+            if (weakStream.TryGetTarget(out IAudioStream stream))
+                stream.Reset();
         }
 
         public void RemoveStream(WeakReference<IAudioStream> stream)
@@ -97,13 +99,15 @@ namespace DCL.VoiceChat
             streams.Remove(stream);
         }
 
-        public void Free()
-        {
-            streams.Clear();
-        }
-
         public void Reset()
         {
+            // Reset all active audio streams to clear their buffers
+            foreach (WeakReference<IAudioStream> weakStream in streams)
+            {
+                if (weakStream.TryGetTarget(out IAudioStream stream))
+                    stream.Reset();
+            }
+
             streams.Clear();
             isPlaying = false;
 
