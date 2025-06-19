@@ -33,6 +33,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnApplicationQuit()
         {
+            // NOTE: If you remove this, make sure to call DCLPlayerPrefs.Save() in another OnApplicationQuit method
             DCLPlayerPrefs.DeleteKey(DCLPrefKeys.CRASH_DETECTOR_FLAG);
             DCLPlayerPrefs.Save();
         }
