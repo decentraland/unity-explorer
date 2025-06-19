@@ -52,6 +52,13 @@ namespace DCL.VoiceChat
             dataSpan.Clear();
             var activeStreams = 0;
 
+            // Create a mono buffer for feedback detection
+            float[] monoBuffer = null;
+            if (channels == 2)
+            {
+                monoBuffer = new float[data.Length / 2];
+            }
+
             foreach (WeakReference<IAudioStream> weakStream in streams)
             {
                 if (weakStream.TryGetTarget(out IAudioStream stream))
@@ -63,6 +70,9 @@ namespace DCL.VoiceChat
 
                     if (channels == 2)
                     {
+                        // Store mono data for feedback detection
+                        tempBuffer.CopyTo(monoBuffer, 0);
+                        
                         // Upmix mono to stereo
                         for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                         {
@@ -88,8 +98,30 @@ namespace DCL.VoiceChat
                     data[i] *= norm;
             }
 
-            // Store speaker output for feedback detection
-            StoreSpeakerOutput(data, channels);
+            // Store speaker output for feedback detection - use mono data if available
+            if (channels == 2 && monoBuffer != null)
+            {
+                StoreSpeakerOutputMono(monoBuffer);
+            }
+            else
+            {
+                StoreSpeakerOutput(data, channels);
+            }
+        }
+
+        /// <summary>
+        ///     Stores the current speaker output for feedback detection (mono data)
+        /// </summary>
+        private void StoreSpeakerOutputMono(float[] monoData)
+        {
+            lock (speakerBufferLock)
+            {
+                for (int i = 0; i < monoData.Length; i++)
+                {
+                    speakerOutputBuffer[speakerBufferIndex] = monoData[i];
+                    speakerBufferIndex = (speakerBufferIndex + 1) % speakerOutputBuffer.Length;
+                }
+            }
         }
 
         /// <summary>
