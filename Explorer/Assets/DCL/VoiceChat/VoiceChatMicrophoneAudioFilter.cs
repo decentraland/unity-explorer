@@ -2,12 +2,9 @@ using DCL.Diagnostics;
 using UnityEngine;
 using LiveKit;
 using System;
-using DCL.VoiceChat;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Collections.Concurrent;
-using Cysharp.Threading.Tasks;
 using Utility.Multithreading;
 using Utility;
 
@@ -40,7 +37,7 @@ namespace DCL.VoiceChat
         private Thread processingThread;
         private readonly ConcurrentQueue<AudioProcessingJob> processingQueue = new();
         private readonly ConcurrentQueue<ProcessedAudioData> processedQueue = new();
-        private volatile bool shouldStopProcessing = false;
+        private volatile bool shouldStopProcessing;
         private readonly ManualResetEvent processingEvent = new(false);
         private CancellationTokenSource processingCancellationTokenSource;
 
@@ -69,6 +66,16 @@ namespace DCL.VoiceChat
         {
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
             StopProcessingThread();
+
+            liveKitBuffer.Clear();
+
+            if (tempBuffer != null)
+                Array.Clear(tempBuffer, 0, tempBuffer.Length);
+
+            if (resampleBuffer != null)
+                Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
+
+            outputSampleRate = AudioSettings.outputSampleRate;
         }
 
         private void OnDestroy()
@@ -127,6 +134,10 @@ namespace DCL.VoiceChat
             }
         }
 
+        /// <summary>
+        ///     Event called from the Unity audio thread when audio data is available
+        /// </summary>
+        // ReSharper disable once NotNullOrRequiredMemberIsNotInitialized
         public event IAudioFilter.OnAudioDelegate AudioRead;
 
         public bool IsValid => audioProcessor != null && voiceChatConfiguration != null;
@@ -135,7 +146,7 @@ namespace DCL.VoiceChat
         {
             if (processingQueue.Count >= PROCESSING_QUEUE_SIZE)
             {
-                // Drop oldest job if queue is full to prevent memory buildup
+                // Drop the oldest job if the queue is full to prevent memory buildup
                 processingQueue.TryDequeue(out _);
             }
 
@@ -154,7 +165,7 @@ namespace DCL.VoiceChat
 
         private void StartProcessingThread()
         {
-            if (processingThread != null && processingThread.IsAlive)
+            if (processingThread is { IsAlive: true })
                 return;
 
             shouldStopProcessing = false;
@@ -310,6 +321,24 @@ namespace DCL.VoiceChat
             // Clear processing queues when filter is reset
             while (processingQueue.TryDequeue(out _)) { }
             while (processedQueue.TryDequeue(out _)) { }
+        }
+
+        public void Reset()
+        {
+            liveKitBuffer.Clear();
+
+            if (tempBuffer != null)
+                Array.Clear(tempBuffer, 0, tempBuffer.Length);
+
+            if (resampleBuffer != null)
+                Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
+
+            outputSampleRate = AudioSettings.outputSampleRate;
+
+            while (processingQueue.TryDequeue(out _)) { }
+            while (processedQueue.TryDequeue(out _)) { }
+
+            audioProcessor?.Reset();
         }
     }
 }

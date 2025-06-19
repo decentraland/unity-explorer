@@ -11,7 +11,7 @@ namespace DCL.VoiceChat
         // Voice chat sample rate constraints
         private const int MIN_ACCEPTABLE_SAMPLE_RATE = 8000;  // Below this is too low quality for voice
         private const int MAX_DESIRED_SAMPLE_RATE = 48000;    // Above this is unnecessary for voice chat
-        private const int FALLBACK_SAMPLE_RATE = 16000;
+        private const int FALLBACK_SAMPLE_RATE = 48000;
 
         /// <summary>
         /// Determines the optimal sample rate for the given microphone device.
@@ -23,17 +23,17 @@ namespace DCL.VoiceChat
             {
                 Microphone.GetDeviceCaps(deviceName, out int minFreq, out int maxFreq);
                 int unityOutputRate = AudioSettings.outputSampleRate;
-                
+
                 if (unityOutputRate >= minFreq && unityOutputRate <= maxFreq)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
                         $"Selected sample rate {unityOutputRate}Hz for microphone '{deviceName}' (matches Unity output rate, no resampling needed)");
                     return unityOutputRate;
                 }
-                
+
                 int effectiveMin = Mathf.Max(minFreq, MIN_ACCEPTABLE_SAMPLE_RATE);
                 int effectiveMax = Mathf.Min(maxFreq, MAX_DESIRED_SAMPLE_RATE);
-                
+
                 if (effectiveMin <= effectiveMax)
                 {
                     // Use the minimum rate within our acceptable range for efficiency
@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
                         $"Selected sample rate {effectiveMin}Hz for microphone '{deviceName}' (Unity rate {unityOutputRate}Hz not supported, using minimum viable from range: {minFreq}-{maxFreq}Hz)");
                     return effectiveMin;
                 }
-                
+
                 // Device doesn't support our preferred range
                 if (maxFreq < MIN_ACCEPTABLE_SAMPLE_RATE)
                 {
@@ -73,4 +73,4 @@ namespace DCL.VoiceChat
             }
         }
     }
-} 
+}

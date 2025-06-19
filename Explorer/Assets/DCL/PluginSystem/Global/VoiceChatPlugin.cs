@@ -110,7 +110,7 @@ namespace DCL.PluginSystem.Global
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
 
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, microphoneAudioFilter.Value, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration);
+            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, voiceChatHandler, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration);
 
             nametagsHandler = new VoiceChatNametagsHandler(
                 roomHub.VoiceChatRoom().Room(),

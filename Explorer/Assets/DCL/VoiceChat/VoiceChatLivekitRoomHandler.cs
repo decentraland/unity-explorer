@@ -19,7 +19,7 @@ namespace DCL.VoiceChat
     public class VoiceChatLivekitRoomHandler : IDisposable
     {
         private readonly VoiceChatCombinedAudioSource combinedAudioSource;
-        private readonly VoiceChatMicrophoneAudioFilter microphoneAudioFilter;
+        private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
@@ -38,14 +38,14 @@ namespace DCL.VoiceChat
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedAudioSource combinedAudioSource,
-            VoiceChatMicrophoneAudioFilter microphoneAudioFilter,
+            VoiceChatMicrophoneHandler microphoneHandler,
             IRoom voiceChatRoom,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             IRoomHub roomHub,
             VoiceChatConfiguration configuration)
         {
             this.combinedAudioSource = combinedAudioSource;
-            this.microphoneAudioFilter = microphoneAudioFilter;
+            this.microphoneHandler = microphoneHandler;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.roomHub = roomHub;
@@ -125,6 +125,9 @@ namespace DCL.VoiceChat
                     {
                         isMediaOpen = true;
                         cts = cts.SafeRestart();
+                        
+                        microphoneHandler.Reset();
+                        
                         SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
@@ -180,7 +183,7 @@ namespace DCL.VoiceChat
 
         private void PublishTrack(CancellationToken ct)
         {
-            monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneAudioFilter);
+            monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);
             monoRtcAudioSource.Start();
             microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(voiceChatRoom.Participants.LocalParticipant().Name, monoRtcAudioSource);
 
@@ -198,6 +201,8 @@ namespace DCL.VoiceChat
 
         private void SubscribeToRemoteTracks()
         {
+            combinedAudioSource.Reset();
+            
             foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
                 Participant participant = voiceChatRoom.Participants.RemoteParticipant(remoteParticipantIdentity);
@@ -279,7 +284,12 @@ namespace DCL.VoiceChat
             if (combinedAudioSource != null)
             {
                 combinedAudioSource.Stop();
-                combinedAudioSource.Free();
+                combinedAudioSource.Reset();
+            }
+
+            if (microphoneHandler != null)
+            {
+                microphoneHandler.Reset();
             }
 
             monoRtcAudioSource?.Stop();

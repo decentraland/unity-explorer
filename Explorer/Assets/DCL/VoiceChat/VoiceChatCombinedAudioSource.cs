@@ -27,6 +27,13 @@ namespace DCL.VoiceChat
         private void OnDisable()
         {
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+            if (tempBuffer != null)
+                Array.Clear(tempBuffer, 0, tempBuffer.Length);
+            
+            streams.Clear();
+            isPlaying = false;
+            lastDataLength = 0;
+            sampleRate = 48000;
         }
 
         private void OnAudioFilterRead(float[] data, int channels)
@@ -97,6 +104,17 @@ namespace DCL.VoiceChat
         public void Free()
         {
             streams.Clear();
+        }
+
+        public void Reset()
+        {
+            streams.Clear();
+            isPlaying = false;
+            lastDataLength = 0;
+            sampleRate = AudioSettings.outputSampleRate;
+            
+            if (tempBuffer != null)
+                Array.Clear(tempBuffer, 0, tempBuffer.Length);
         }
 
         public void Play()
