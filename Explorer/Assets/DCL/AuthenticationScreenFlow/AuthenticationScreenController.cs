@@ -22,6 +22,10 @@ using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 #if !UNITY_EDITOR
 using DCL.Web3;
 using System.Collections.Generic;
@@ -420,6 +424,8 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+                    characterPreviewController?.OnShow();
+
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
@@ -459,7 +465,7 @@ namespace DCL.AuthenticationScreenFlow
         private void ExitApp()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+            EditorApplication.isPlaying = false;
             return;
 #endif
             Application.Quit();
