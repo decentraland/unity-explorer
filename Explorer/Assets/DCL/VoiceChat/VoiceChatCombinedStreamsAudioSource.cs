@@ -6,7 +6,7 @@ using Cysharp.Threading.Tasks;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatCombinedAudioSource : MonoBehaviour
+    public class VoiceChatCombinedStreamsAudioSource : MonoBehaviour
     {
         [field: SerializeField] private AudioSource audioSource;
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
@@ -90,8 +90,6 @@ namespace DCL.VoiceChat
         public void AddStream(WeakReference<IAudioStream> weakStream)
         {
             streams.Add(weakStream);
-            if (weakStream.TryGetTarget(out IAudioStream stream))
-                stream.Reset();
         }
 
         public void RemoveStream(WeakReference<IAudioStream> stream)
@@ -101,13 +99,6 @@ namespace DCL.VoiceChat
 
         public void Reset()
         {
-            // Reset all active audio streams to clear their buffers
-            foreach (WeakReference<IAudioStream> weakStream in streams)
-            {
-                if (weakStream.TryGetTarget(out IAudioStream stream))
-                    stream.Reset();
-            }
-
             streams.Clear();
             isPlaying = false;
 

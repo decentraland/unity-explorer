@@ -18,7 +18,7 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatLivekitRoomHandler : IDisposable
     {
-        private readonly VoiceChatCombinedAudioSource combinedAudioSource;
+        private readonly VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
@@ -37,14 +37,14 @@ namespace DCL.VoiceChat
         private CancellationTokenSource? orderedDisconnectionCts;
 
         public VoiceChatLivekitRoomHandler(
-            VoiceChatCombinedAudioSource combinedAudioSource,
+            VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource,
             VoiceChatMicrophoneHandler microphoneHandler,
             IRoom voiceChatRoom,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             IRoomHub roomHub,
             VoiceChatConfiguration configuration)
         {
-            this.combinedAudioSource = combinedAudioSource;
+            this.combinedStreamsAudioSource = combinedStreamsAudioSource;
             this.microphoneHandler = microphoneHandler;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
@@ -125,9 +125,9 @@ namespace DCL.VoiceChat
                     {
                         isMediaOpen = true;
                         cts = cts.SafeRestart();
-                        
+
                         microphoneHandler.Reset();
-                        
+
                         SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
@@ -201,8 +201,8 @@ namespace DCL.VoiceChat
 
         private void SubscribeToRemoteTracks()
         {
-            combinedAudioSource.Reset();
-            
+            combinedStreamsAudioSource.Reset();
+
             foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
                 Participant participant = voiceChatRoom.Participants.RemoteParticipant(remoteParticipantIdentity);
@@ -215,14 +215,14 @@ namespace DCL.VoiceChat
                         WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity, sid);
 
                         if (stream != null)
-                            combinedAudioSource.AddStream(stream);
+                            combinedStreamsAudioSource.AddStream(stream);
                     }
                 }
             }
 
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed += OnTrackUnsubscribed;
-            combinedAudioSource.Play();
+            combinedStreamsAudioSource.Play();
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
@@ -231,7 +231,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.AddStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.AddStream(stream); }
             }
         }
 
@@ -241,7 +241,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.RemoveStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.RemoveStream(stream); }
             }
         }
 
@@ -251,7 +251,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.AddStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.AddStream(stream); }
             }
         }
 
@@ -261,7 +261,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.RemoveStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.RemoveStream(stream); }
             }
         }
 
@@ -281,10 +281,10 @@ namespace DCL.VoiceChat
 
         private void CloseMediaInternal()
         {
-            if (combinedAudioSource != null)
+            if (combinedStreamsAudioSource != null)
             {
-                combinedAudioSource.Stop();
-                combinedAudioSource.Reset();
+                combinedStreamsAudioSource.Stop();
+                combinedStreamsAudioSource.Reset();
             }
 
             if (microphoneHandler != null)

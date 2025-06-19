@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
         private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
         private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
-        private ProvidedInstance<VoiceChatCombinedAudioSource> audioSource;
+        private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> audioSource;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
         private VoiceChatController? controller;
