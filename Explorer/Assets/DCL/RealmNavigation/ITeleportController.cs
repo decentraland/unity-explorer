@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Utilities;
 using ECS.SceneLifeCycle.Reporting;
-using REnum;
 using System.Threading;
 using UnityEngine;
 using Utility.Types;
@@ -39,9 +38,9 @@ namespace DCL.RealmNavigation
 
         public AssignResult Assign(Vector2Int newParcel)
         {
-            if (consumed) return AssignResult.ParcelAlreadyConsumed();
+            if (consumed) return AssignResult.ParcelAlreadyConsumed;
             value = newParcel;
-            return AssignResult.Ok();
+            return AssignResult.Ok;
         }
 
         public Vector2Int ConsumeByTeleportOperation()
@@ -54,8 +53,9 @@ namespace DCL.RealmNavigation
             value;
     }
 
-    [REnum]
-    [REnumFieldEmpty("Ok")]
-    [REnumFieldEmpty("ParcelAlreadyConsumed")]
-    public partial struct AssignResult { }
+    public enum AssignResult
+    {
+        Ok,
+        ParcelAlreadyConsumed,
+    }
 }

@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using System;
 using System.IO;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {
@@ -41,17 +43,21 @@ namespace DCL.RuntimeDeepLink
         {
             while (token.IsCancellationRequested == false)
             {
-                await UniTask.Delay(CHECK_IN_PERIOD, cancellationToken: token);
+                bool delayResult = await UniTask.Delay(CHECK_IN_PERIOD, cancellationToken: token).SuppressCancellationThrow();
+
+                // Delay was cancelled
+                if (delayResult == false) continue;
 
                 // File.Exists method is lightweight and can be used in this loop
                 if (!File.Exists(DEEP_LINK_BRIDGE_PATH)) continue;
 
-                string content = await File.ReadAllTextAsync(DEEP_LINK_BRIDGE_PATH, token)!;
+                Result<string> contentResult = await File.ReadAllTextAsync(DEEP_LINK_BRIDGE_PATH, token)!.SuppressToResultAsync<string>(ReportCategory.RUNTIME_DEEPLINKS);
+                if (contentResult.Success == false) continue;
 
                 // Notify emitter that file has been consumed
                 File.Delete(DEEP_LINK_BRIDGE_PATH);
 
-                DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(content);
+                DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(contentResult.Value);
                 string? raw = dto.deeplink;
                 DeepLinkCreateResult deepLinkCreateResult = DeepLink.FromRaw(raw);
 
