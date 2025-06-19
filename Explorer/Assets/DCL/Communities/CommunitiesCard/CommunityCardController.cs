@@ -145,7 +145,7 @@ namespace DCL.Communities.CommunitiesCard
             if (!communityId.Equals(communityData.id)) return;
 
             ResetSubControllers();
-            OnViewShow();
+            SetDefaultsAndLoadData();
         }
 
         private void CloseCardOnConversationRequested(string _) =>
@@ -242,7 +242,10 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
-        protected override void OnViewShow()
+        protected override void OnViewShow() =>
+            SetDefaultsAndLoadData();
+
+        private void SetDefaultsAndLoadData()
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();

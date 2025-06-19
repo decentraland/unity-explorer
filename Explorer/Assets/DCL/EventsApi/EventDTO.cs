@@ -3,7 +3,7 @@ using System;
 namespace DCL.EventsApi
 {
     [Serializable]
-    public class EventDTO
+    public struct EventDTO
     {
         public string id;
         public string name;

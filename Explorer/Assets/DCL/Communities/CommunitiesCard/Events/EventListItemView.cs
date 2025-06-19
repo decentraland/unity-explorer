@@ -71,13 +71,13 @@ namespace DCL.Communities.CommunitiesCard.Events
             offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, offlineShareButton.transform.position));
         }
 
-        private static string GetEventTimeText(EventDTO data)
+        private static string GetEventTimeText(string dateString, bool live)
         {
             string schedule = string.Empty;
 
-            if (!DateTime.TryParse(data.start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt)) return schedule;
+            if (!DateTime.TryParse(dateString, null, DateTimeStyles.RoundtripKind, out DateTime startAt)) return schedule;
 
-            if (data.live)
+            if (live)
             {
                 TimeSpan elapsed = DateTime.UtcNow - startAt;
 
@@ -103,7 +103,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             imageController ??= new ImageController(eventThumbnailImage, webRequestController);
 
             imageController.RequestImage(data.Event.image);
-            eventTimeText.text = GetEventTimeText(data.Event);
+            eventTimeText.text = GetEventTimeText(data.Event.start_at, data.Event.live);
             eventNameText.text = data.Event.name;
             UpdateInterestedCounter();
             eventOnlineUsersText.text = data.Place.user_count.ToString();

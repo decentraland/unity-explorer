@@ -188,7 +188,7 @@ namespace DCL.Navmap
 
         private void Share()
         {
-            shareContextMenu.Set(@event!);
+            shareContextMenu.Set(@event!.Value);
             shareContextMenu.Show(view.SharePivot);
         }
 
