@@ -23,7 +23,6 @@ namespace DCL.VoiceChat
         private readonly AudioSource audioSource;
 
         private AudioClip microphoneAudioClip;
-        private VoiceChatStatus voiceChatStatus;
         private bool isMicrophoneInitialized;
         private bool isInCall;
         private bool isTalking { get; set; }
@@ -55,7 +54,6 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.performed += OnPressed;
             dclInput.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
-            voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
             isInCall = false;
         }
 
@@ -64,7 +62,6 @@ namespace DCL.VoiceChat
             dclInput.VoiceChat.Talk.performed -= OnPressed;
             dclInput.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
-            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
 
             microphoneChangeCts?.SafeCancelAndDispose();
 
@@ -104,31 +101,9 @@ namespace DCL.VoiceChat
                 audioSource.Stop();
         }
 
-        private void OnCallStatusChanged(VoiceChatStatus newStatus)
-        {
-            voiceChatStatus = newStatus;
-            switch (newStatus)
-            {
-                case VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
-                case VoiceChatStatus.DISCONNECTED:
-                    if (!isInCall) return;
-                    isInCall = false;
-                    DisableMicrophone();
-                    break;
-                case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
-                    isTalking = true;
-                    break;
-                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
-                    isInCall = true;
-                    isTalking = true;
-                    EnableMicrophone();
-                    break;
-            }
-        }
-
         private void OnPressed(InputAction.CallbackContext obj)
         {
-            if (voiceChatStatus == VoiceChatStatus.DISCONNECTED) return;
+            if (!isInCall) return;
 
             buttonPressStartTime = Time.time;
 
@@ -140,7 +115,7 @@ namespace DCL.VoiceChat
 
         private void OnReleased(InputAction.CallbackContext obj)
         {
-            if (voiceChatStatus == VoiceChatStatus.DISCONNECTED) return;
+            if (!isInCall) return;
 
             float pressDuration = Time.time - buttonPressStartTime;
 
@@ -161,7 +136,7 @@ namespace DCL.VoiceChat
 
         public void ToggleMicrophone()
         {
-            if (voiceChatStatus != VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            if (!isInCall)
                 return;
 
             if (!isTalking)
@@ -181,11 +156,6 @@ namespace DCL.VoiceChat
             }
 
             isTalking = false;
-
-            if (isMicrophoneInitialized)
-            {
-                DisableMicrophone();
-            }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone handler reset for new call");
         }
@@ -386,6 +356,24 @@ namespace DCL.VoiceChat
                 audioSource.time = 0f;
                 audioSource.timeSamples = 0;
             }
+        }
+
+        public void EnableMicrophoneForCall()
+        {
+            if (!isMicrophoneInitialized)
+                InitializeMicrophone();
+                
+            isInCall = true;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone enabled for call (room connected)");
+        }
+
+        public void DisableMicrophoneForCall()
+        {
+            if (!isInCall) return;
+            isInCall = false;
+            isTalking = false;
+            DisableMicrophone();
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone disabled for call (room disconnected)");
         }
     }
 }

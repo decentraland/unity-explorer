@@ -35,11 +35,12 @@ namespace DCL.PluginSystem.Global
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
         private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
         private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
-        private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> audioSource;
+        private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
         private VoiceChatController? controller;
         private VoiceChatNametagsHandler? nametagsHandler;
+        private VoiceChatMicrophoneStateManager? microphoneStateManager;
 
         public VoiceChatPlugin(
             ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
@@ -72,11 +73,12 @@ namespace DCL.PluginSystem.Global
                 return;
             }
 
+            microphoneStateManager?.Dispose();
+            nametagsHandler?.Dispose();
             voiceChatHandler.Dispose();
             livekitRoomHandler.Dispose();
-            nametagsHandler?.Dispose();
 
-            audioSource.Dispose();
+            combinedAudioSource.Dispose();
             voiceChatConfigurationAsset.Dispose();
             voiceChatSettingsAsset.Dispose();
             microphoneAudioFilter.Dispose();
@@ -106,11 +108,12 @@ namespace DCL.PluginSystem.Global
             VoiceChatConfiguration voiceChatConfiguration = voiceChatConfigurationAsset.Value;
 
             microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
-            audioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
+            combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(dclInput, voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value, voiceChatCallStatusService);
+            microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatCallStatusService);
 
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(audioSource.Value, voiceChatHandler, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration);
+            livekitRoomHandler = new VoiceChatLivekitRoomHandler(combinedAudioSource.Value, voiceChatHandler, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration, microphoneStateManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
                 roomHub.VoiceChatRoom().Room(),
@@ -120,6 +123,7 @@ namespace DCL.PluginSystem.Global
                 playerEntity);
 
             controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, dependencies, profileDataProvider, roomHub.VoiceChatRoom().Room());
+
         }
 
         [Serializable]

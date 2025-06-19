@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.VoiceChat
@@ -16,14 +16,13 @@ namespace DCL.VoiceChat
         public VoiceChatStatus Status { get; private set; }
         public Web3Address CurrentTargetWallet { get; private set; }
 
-
         /// <summary>
-        /// CallId is set when starting a call and when receiving a call
+        ///     CallId is set when starting a call and when receiving a call
         /// </summary>
         public string CallId { get; private set; }
 
         /// <summary>
-        /// Room url and Token are retrieved when accepting a call
+        ///     Room url and Token are retrieved when accepting a call
         /// </summary>
         public string RoomUrl { get; private set; }
 
@@ -48,6 +47,7 @@ namespace DCL.VoiceChat
                 voiceChatService.Disconnected -= OnRCPDisconnected;
                 voiceChatService.Dispose();
             }
+
             cts.SafeCancelAndDispose();
         }
 
@@ -82,7 +82,8 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid CheckIncomingCallAsync(CancellationToken ct)
         {
-            var response = await voiceChatService.GetIncomingPrivateVoiceChatRequestAsync(ct);
+            GetIncomingPrivateVoiceChatRequestResponse response = await voiceChatService.GetIncomingPrivateVoiceChatRequestAsync(ct);
+
             if (response.ResponseCase == GetIncomingPrivateVoiceChatRequestResponse.ResponseOneofCase.Ok)
             {
                 CallId = response.Ok.CallId;
@@ -224,7 +225,7 @@ namespace DCL.VoiceChat
 
         private void UpdateStatus(VoiceChatStatus newStatus)
         {
-            Debug.Log($"New status is {newStatus}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"New status is {newStatus}");
             Status = newStatus;
             StatusChanged?.Invoke(Status);
         }
