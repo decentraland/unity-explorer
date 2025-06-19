@@ -64,38 +64,38 @@ namespace DCL.Communities
 
         public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CancellationToken ct)
         {
-            var url = $"{communitiesBaseUrl}/communities";
-
             CreateOrUpdateCommunityResponse response;
+
+            var formData = new List<IMultipartFormSection>
+            {
+                new MultipartFormDataSection("name", name),
+                new MultipartFormDataSection("description", description),
+            };
+
+            List<string> landsAndWorlds = new (lands);
+            landsAndWorlds.AddRange(worlds);
+            if (landsAndWorlds.Count > 0)
+            {
+                StringBuilder placeIdsJsonString = new StringBuilder("[");
+                for (var i = 0; i < landsAndWorlds.Count; i++)
+                {
+                    placeIdsJsonString.Append($"\"{landsAndWorlds[i]}\"");
+                    if (i < landsAndWorlds.Count - 1)
+                        placeIdsJsonString.Append(", ");
+                }
+                placeIdsJsonString.Append("]");
+
+                formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
+            }
+
+            if (thumbnail != null)
+                formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
+
             if (string.IsNullOrEmpty(communityId))
             {
                 // Creating a new community
-                var formData = new List<IMultipartFormSection>
-                {
-                    new MultipartFormDataSection("name", name),
-                    new MultipartFormDataSection("description", description),
-                };
-
-                List<string> landsAndWorlds = new (lands);
-                landsAndWorlds.AddRange(worlds);
-                if (landsAndWorlds.Count > 0)
-                {
-                    StringBuilder placeIdsJsonString = new StringBuilder("[");
-                    for (var i = 0; i < landsAndWorlds.Count; i++)
-                    {
-                        placeIdsJsonString.Append($"\"{landsAndWorlds[i]}\"");
-                        if (i < landsAndWorlds.Count - 1)
-                            placeIdsJsonString.Append(", ");
-                    }
-                    placeIdsJsonString.Append("]");
-
-                    formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
-                }
-
-                if (thumbnail != null)
-                    formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
-
-                response = await webRequestController.SignedFetchPostAsync(url, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
+                var communityCreationUrl = $"{communitiesBaseUrl}/communities";
+                response = await webRequestController.SignedFetchPostAsync(communityCreationUrl, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
 
                 CommunityCreated?.Invoke();
@@ -103,7 +103,9 @@ namespace DCL.Communities
             else
             {
                 // Updating an existing community
-                throw new NotImplementedException("Updating communities is not implemented yet.");
+                var communityEditionUrl = $"{communitiesBaseUrl}/communities/{communityId}";
+                response = await webRequestController.SignedFetchPutAsync(communityEditionUrl, GenericPutArguments.CreateMultipartForm(formData), string.Empty, ct)
+                                                     .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
 
                 CommunityUpdated?.Invoke();
             }
