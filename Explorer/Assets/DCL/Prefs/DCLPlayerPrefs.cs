@@ -56,5 +56,20 @@ namespace DCL.Prefs
 
             dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
         }
+
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
+        private static void ClearDCLPlayerPrefs()
+        {
+            string[] files = System.IO.Directory.GetFiles(Application.persistentDataPath, "userdata_*");
+
+            foreach (string file in files)
+                System.IO.File.Delete(file);
+        }
+
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
+        private static bool ValidateClearDCLPlayerPrefs() =>
+            !Application.isPlaying;
+#endif
     }
 }
