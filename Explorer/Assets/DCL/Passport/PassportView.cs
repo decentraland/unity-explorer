@@ -3,7 +3,6 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using MVC;
@@ -110,6 +109,9 @@ namespace DCL.Passport
         [field: SerializeField]
         public Button ChatButton { get; private set; }
 
+        [field: SerializeField]
+        public Button CallButton { get; private set; }
+
         [field: Header("Context menu")]
         [field: SerializeField]
         public Button ContextMenuButton { get; private set; }
@@ -144,7 +146,7 @@ namespace DCL.Passport
 #if UNITY_EDITOR
         private void Awake()
         {
-            // Copy material in editor so we don't get asset changes
+            // Copy material in the editor so we don't get asset changes
             BackgroundImage.material = new Material(BackgroundImage.material);
         }
 #endif

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
@@ -13,6 +14,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         private readonly IConnectiveRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IConnectiveRoom chatRoom;
+        private readonly VoiceChatActivatableConnectiveRoom voiceChatRoom;
 
         private readonly IParticipantsHub islandParticipantsHub;
         private readonly IParticipantsHub sceneParticipantsHub;
@@ -21,11 +23,12 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         private long participantsUpdateLastFrame = -1;
 
-        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom chatRoom)
+        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom chatRoom, VoiceChatActivatableConnectiveRoom voiceChatRoom)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
             this.chatRoom = chatRoom;
+            this.voiceChatRoom = voiceChatRoom;
 
             islandParticipantsHub = this.archipelagoIslandRoom.Room().Participants;
             sceneParticipantsHub = this.gateKeeperSceneRoom.Room().Participants;
@@ -33,33 +36,42 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             AllLocalRoomsRemoteParticipantIdentities();
         }
 
-        public IRoom IslandRoom() =>
-            archipelagoIslandRoom.Room();
+        public IRoom IslandRoom() => archipelagoIslandRoom.Room();
 
-        public IGateKeeperSceneRoom SceneRoom() =>
-            gateKeeperSceneRoom;
+        public IGateKeeperSceneRoom SceneRoom() => gateKeeperSceneRoom;
 
-        public IRoom ChatRoom() =>
-            chatRoom.Room();
+        public IRoom ChatRoom() => chatRoom.Room();
 
+        public VoiceChatActivatableConnectiveRoom VoiceChatRoom() => voiceChatRoom;
+
+        /// <summary>
+        /// Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going
+        /// </summary>
+        /// <returns>True if all rooms connected correctly</returns>
         public async UniTask<bool> StartAsync()
         {
             var result = await UniTask.WhenAll(
                 archipelagoIslandRoom.StartIfNotAsync(),
                 gateKeeperSceneRoom.StartIfNotAsync(),
-                chatRoom.StartIfNotAsync()
-            );
+                chatRoom.StartIfNotAsync());
 
             return result is { Item1: true, Item2: true, Item3: true };
         }
 
+        /// <summary>
+        /// We stop all rooms when logging out as we need to change profiles.
+        /// </summary>
         public UniTask StopAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),
                 gateKeeperSceneRoom.StopIfNotAsync(),
-                chatRoom.StopIfNotAsync()
+                chatRoom.StopIfNotAsync(),
+                voiceChatRoom.StopIfNotAsync()
             );
 
+        /// <summary>
+        /// Stops only local rooms, that is, only the Island Room and Scene Room, as the other rooms are needed for the chat and voice chat
+        /// </summary>
         public UniTask StopLocalRoomsAsync() =>
             UniTask.WhenAll(
                 archipelagoIslandRoom.StopIfNotAsync(),

@@ -1,6 +1,6 @@
+using DCL.Prefs;
 using System;
 using System.Globalization;
-using UnityEngine;
 
 namespace DCL.BadgesAPIService
 {
@@ -17,26 +17,26 @@ namespace DCL.BadgesAPIService
 
         public static bool IsBadgeNew(string badgeId)
         {
-            string allNewBadges = PlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
+            string allNewBadges = DCLPlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
             return allNewBadges.Contains(badgeId);
         }
 
         public static void SetBadgeAsNew(string badgeId)
         {
-            string allNewBadges = PlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
+            string allNewBadges = DCLPlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
 
             if (allNewBadges.Contains(badgeId))
                 return;
 
-            PlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, $"{allNewBadges}{badgeId},");
-            PlayerPrefs.Save();
+            DCLPlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, $"{allNewBadges}{badgeId},");
+            DCLPlayerPrefs.Save();
         }
 
         public static void SetBadgeAsRead(string badgeId)
         {
-            string allNewBadges = PlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
-            PlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, allNewBadges.Replace($"{badgeId},", string.Empty));
-            PlayerPrefs.Save();
+            string allNewBadges = DCLPlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
+            DCLPlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, allNewBadges.Replace($"{badgeId},", string.Empty));
+            DCLPlayerPrefs.Save();
         }
 
         public static string GetTierCompletedDate(this BadgeInfo badgeInfo, string tierId)
