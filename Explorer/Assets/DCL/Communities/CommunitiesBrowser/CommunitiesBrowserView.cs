@@ -217,7 +217,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (isJoined)
                     currentMyCommunities.Add(resultCommunityData);
                 else if (myCommunityData != null)
-                    currentMyCommunities.Remove(myCommunityData);
+                    currentMyCommunities.RemoveAll(c => c.id == myCommunityData.id);
 
                 myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
                 SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
