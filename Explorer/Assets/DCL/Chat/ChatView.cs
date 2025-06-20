@@ -87,8 +87,8 @@ namespace DCL.Chat
 
         [Header("Title bar")]
 
-        [SerializeField]
-        private ChatTitleBarView chatTitleBar;
+        [field: SerializeField]
+        public ChatTitleBarView chatTitleBar { get; private set; }
 
         [SerializeField]
         private CanvasGroup titlebarCanvasGroup;
@@ -266,7 +266,7 @@ namespace DCL.Chat
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
@@ -491,7 +491,7 @@ namespace DCL.Chat
             viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
             viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
             SubscribeToSubmitEvent();
-            
+
             closePopupTask = new UniTaskCompletionSource();
 
             conversationsToolbar.ConversationSelected += OnConversationsToolbarConversationSelected;
@@ -753,14 +753,16 @@ namespace DCL.Chat
         }
 #endregion
 
-        public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
-            SetInputWithUserStateAsync(userState, isOtherUserConnected).Forget();
+
+            chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            SetupViewWithUserStateAsync(userState, isOtherUserConnected).Forget();
         }
 
-        private async UniTaskVoid SetInputWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
+        private async UniTaskVoid SetupViewWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
         {
             await UniTask.SwitchToMainThread();
 
@@ -785,7 +787,7 @@ namespace DCL.Chat
             else
                 chatMessageViewer.StartChatEntriesFadeout();
         }
-        
+
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
             if (isChatFocused)
@@ -798,7 +800,7 @@ namespace DCL.Chat
                 // If the Enter key is pressed while the member list is visible, it is hidden and the chat appears
                 if (memberListView.IsVisible)
                     memberListView.IsVisible = false;
-        
+
                 Focus();
             }
         }
