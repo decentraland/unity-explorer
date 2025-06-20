@@ -94,16 +94,20 @@ namespace DCL.SDKComponents.MediaStream
 
         private (string identity, string sid)? FirstAvailableTrackSid(TrackKind kind)
         {
-            foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
+            // See: https://github.com/decentraland/unity-explorer/issues/3796
+            lock (room.Participants)
             {
-                var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
+                foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
+                {
+                    var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
 
-                if (participant == null)
-                    continue;
+                    if (participant == null)
+                        continue;
 
-                foreach ((string sid, TrackPublication value) in participant.Tracks)
-                    if (value.Kind == kind)
-                        return (remoteParticipantIdentity, sid);
+                    foreach ((string sid, TrackPublication value) in participant.Tracks)
+                        if (value.Kind == kind)
+                            return (remoteParticipantIdentity, sid);
+                }
             }
 
             return null;

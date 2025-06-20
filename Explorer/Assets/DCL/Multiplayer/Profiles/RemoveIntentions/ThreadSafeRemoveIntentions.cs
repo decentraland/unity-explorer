@@ -53,10 +53,14 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             {
                 using var _ = multithreadSync.GetScope();
 
-                foreach (string identity in room.Participants.RemoteParticipantIdentities())
+                // See: https://github.com/decentraland/unity-explorer/issues/3796
+                lock (room.Participants)
                 {
-                    Participant participant = room.Participants.RemoteParticipant(identity).EnsureNotNull();
-                    list.Add(new RemoveIntention(participant.Identity, roomSource));
+                    foreach (string identity in room.Participants.RemoteParticipantIdentities())
+                    {
+                        Participant participant = room.Participants.RemoteParticipant(identity).EnsureNotNull();
+                        list.Add(new RemoveIntention(participant.Identity, roomSource));
+                    }
                 }
             }
         }

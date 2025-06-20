@@ -62,10 +62,14 @@ namespace SceneRuntime.Apis.Modules.Players
 
                 using PooledObject<List<Player>> pooledObj = ListPool<Player>.Get(out List<Player>? players);
 
-                foreach (string identity in identities)
+                // See: https://github.com/decentraland/unity-explorer/issues/3796
+                lock (identities)
                 {
-                    Participant remote = participantsHub.RemoteParticipant(identity)!;
-                    players!.Add(new Player(remote));
+                    foreach (string identity in identities)
+                    {
+                        Participant remote = participantsHub.RemoteParticipant(identity)!;
+                        players!.Add(new Player(remote));
+                    }
                 }
 
                 playersJson = JsonConvert.SerializeObject(players);
