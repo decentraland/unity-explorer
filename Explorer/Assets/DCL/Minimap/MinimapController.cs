@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
@@ -14,9 +15,12 @@ using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DG.Tweening;
 using ECS;
@@ -49,11 +53,14 @@ namespace DCL.Minimap
         private readonly Vector2Int startParcelInGenesis;
         private readonly CancellationTokenSource disposeCts;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly IDecentralandUrlsSource decentralandUrls;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
+        private GenericContextMenu contextMenu;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -71,7 +78,9 @@ namespace DCL.Minimap
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             Vector2Int startParcelInGenesis,
-            ISharedSpaceManager sharedSpaceManager
+            ISharedSpaceManager sharedSpaceManager,
+            ISystemClipboard systemClipboard,
+            IDecentralandUrlsSource decentralandUrls
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -84,9 +93,26 @@ namespace DCL.Minimap
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.systemClipboard = systemClipboard;
+            this.decentralandUrls = decentralandUrls;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
+
+            contextMenu = new GenericContextMenu(190)
+               .AddControl(new ButtonContextMenuControlSettings("Copy Link", null, CopyJumpInLink));
         }
+
+        public override void Dispose()
+        {
+            placesApiCts.SafeCancelAndDispose();
+            disposeCts.Cancel();
+            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
+            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+            sceneRestrictionsController?.Dispose();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
             AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
@@ -119,6 +145,19 @@ namespace DCL.Minimap
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
+            viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
+        }
+
+        private void ShowContextMenu()
+        {
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
+                new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuButton.transform.position)))
+                      .Forget();
+        }
+
+        private void CopyJumpInLink()
+        {
+            systemClipboard.Set($"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?position={previousParcelPosition.x},{previousParcelPosition.y}");
         }
 
         private void ExpandMinimap()
@@ -270,18 +309,6 @@ namespace DCL.Minimap
 
             viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }
-
-        public override void Dispose()
-        {
-            placesApiCts.SafeCancelAndDispose();
-            disposeCts.Cancel();
-            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
-            sceneRestrictionsController?.Dispose();
-        }
-
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]

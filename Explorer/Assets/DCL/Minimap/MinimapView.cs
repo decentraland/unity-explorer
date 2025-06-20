@@ -79,6 +79,8 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal MinimapPinMarkerObject destinationPinMarker { get; private set; }
 
+        [SerializeField] internal Button contextMenuButton;
+
         private void Start()
         {
             minimapRendererButton.OnButtonHover += OnHoverMap;
