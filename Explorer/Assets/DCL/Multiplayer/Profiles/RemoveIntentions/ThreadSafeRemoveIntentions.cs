@@ -53,6 +53,7 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             {
                 using var _ = multithreadSync.GetScope();
 
+                // See: https://github.com/decentraland/unity-explorer/issues/3796
                 lock (room.Participants)
                 {
                     foreach (string identity in room.Participants.RemoteParticipantIdentities())
