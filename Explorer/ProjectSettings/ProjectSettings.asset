@@ -904,7 +904,7 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 0
   scriptingDefineSymbols:
-    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS
+    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;AV_PRO_PRESENT
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

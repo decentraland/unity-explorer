@@ -7,13 +7,6 @@
       "dependencies": {},
       "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
     },
-    "avprovideo": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "21358a186f934f16d49f2989f1ef0c535046600f"
-    },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
       "depth": 0,
