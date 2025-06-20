@@ -39,7 +39,7 @@ namespace DCL.RuntimeDeepLink
         /// <summary>
         /// Runs for the lifetime of the app.
         /// </summary>
-        public static async UniTaskVoid StartListenForDeepLinksAsync(DeepLinkHandle handle, CancellationToken token)
+        public static async UniTaskVoid StartListenForDeepLinksAsync(this DeepLinkController controller, CancellationToken token)
         {
             while (token.IsCancellationRequested == false)
             {
@@ -59,16 +59,13 @@ namespace DCL.RuntimeDeepLink
 
                 DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(contentResult.Value);
                 string? raw = dto.deeplink;
-                DeepLinkCreateResult deepLinkCreateResult = DeepLink.FromRaw(raw);
 
-                deepLinkCreateResult.Match((handle, raw),
-                    onDeepLink: static (tuple, link) =>
-                        tuple.handle.HandleDeepLink(link),
-                    onWrongFormat: static tuple =>
-                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content, wrong format: {tuple.raw}"),
-                    onEmptyInput: static _ =>
-                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content, empty content")
-                );
+                Result deepLinkHandleResult = controller.HandleDeepLink(raw);
+
+                if (deepLinkHandleResult.Success)
+                    ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{controller.GetType().Name} successfully handled deeplink");
+                else
+                    ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, deepLinkHandleResult.ErrorMessage!);
             }
         }
     }

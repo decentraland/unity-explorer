@@ -2,27 +2,38 @@ using Cysharp.Threading.Tasks;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {
-    public class DeepLinkHandleImplementation
+    public class DeepLinkController
     {
         private readonly StartParcel startParcel;
         private readonly IRealmNavigator realmNavigator;
         private readonly CancellationToken token;
 
-        public DeepLinkHandleImplementation(StartParcel startParcel, IRealmNavigator realmNavigator, CancellationToken token)
+        public DeepLinkController(StartParcel startParcel, IRealmNavigator realmNavigator, CancellationToken token)
         {
             this.startParcel = startParcel;
             this.realmNavigator = realmNavigator;
             this.token = token;
         }
 
-        public HandleResult HandleDeepLink(DeepLink deeplink)
+        public Result HandleDeepLink(string? deepLinkRawContent)
         {
-            Vector2Int? position = PositionFrom(deeplink);
+            if (string.IsNullOrWhiteSpace(deepLinkRawContent!))
+                return Result.ErrorResult("Cannot deserialize deeplink content, empty content");
+
+            if (deepLinkRawContent.StartsWith("decentraland://", StringComparison.Ordinal) == false)
+                return Result.ErrorResult($"Cannot deserialize deeplink content, wrong format: {deepLinkRawContent}");
+
+            Dictionary<string, string> map = ApplicationParametersParser.ProcessDeepLinkParameters(deepLinkRawContent);
+
+            Vector2Int? position = PositionFrom(map);
 
             if (position.HasValue)
             {
@@ -33,15 +44,15 @@ namespace DCL.RuntimeDeepLink
                 else
                     startParcel.Assign(parcel);
 
-                return HandleResult.Ok();
+                return Result.SuccessResult();
             }
 
-            return HandleResult.FromHandleError(new HandleError("no matches"));
+            return Result.ErrorResult("No matches");
         }
 
-        private static Vector2Int? PositionFrom(DeepLink deeplink)
+        private static Vector2Int? PositionFrom(Dictionary<string, string> deeplinkMap)
         {
-            string? rawPosition = deeplink.ValueOf(AppArgsFlags.POSITION);
+            string? rawPosition = deeplinkMap.GetValueOrDefault(AppArgsFlags.POSITION);
             string[]? parts = rawPosition?.Split(',');
 
             if (parts == null || parts.Length < 2)
