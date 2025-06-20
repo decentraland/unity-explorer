@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
+using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI.SharedSpaceManager;
+using MVC;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using System;
