@@ -82,12 +82,19 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid CheckIncomingCallAsync(CancellationToken ct)
         {
-            GetIncomingPrivateVoiceChatRequestResponse response = await voiceChatService.GetIncomingPrivateVoiceChatRequestAsync(ct);
-
-            if (response.ResponseCase == GetIncomingPrivateVoiceChatRequestResponse.ResponseOneofCase.Ok)
+            try
             {
-                CallId = response.Ok.CallId;
-                UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
+                GetIncomingPrivateVoiceChatRequestResponse response = await voiceChatService.GetIncomingPrivateVoiceChatRequestAsync(ct);
+
+                if (response.ResponseCase == GetIncomingPrivateVoiceChatRequestResponse.ResponseOneofCase.Ok)
+                {
+                    CallId = response.Ok.CallId;
+                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
+                }
+            }
+            catch (System.InvalidOperationException e)
+            {
+                HandleVoiceChatServiceDisabled(e, resetData: false);
             }
         }
 
@@ -117,26 +124,33 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid StartCallAsync(Web3Address walletId, CancellationToken ct)
         {
-            StartPrivateVoiceChatResponse response = await voiceChatService.StartPrivateVoiceChatAsync(walletId.ToString(), ct);
-
-            switch (response.ResponseCase)
+            try
             {
-                //When the call can be started
-                case StartPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    CallId = response.Ok.CallId;
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
-                    break;
+                StartPrivateVoiceChatResponse response = await voiceChatService.StartPrivateVoiceChatAsync(walletId.ToString(), ct);
 
-                //When the other user is already in a call or is already being called
-                case StartPrivateVoiceChatResponse.ResponseOneofCase.InvalidRequest:
-                case StartPrivateVoiceChatResponse.ResponseOneofCase.ConflictingError:
-                    ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
-                    break;
-                default:
-                    ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
-                    break;
+                switch (response.ResponseCase)
+                {
+                    //When the call can be started
+                    case StartPrivateVoiceChatResponse.ResponseOneofCase.Ok:
+                        CallId = response.Ok.CallId;
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
+                        break;
+
+                    //When the other user is already in a call or is already being called
+                    case StartPrivateVoiceChatResponse.ResponseOneofCase.InvalidRequest:
+                    case StartPrivateVoiceChatResponse.ResponseOneofCase.ConflictingError:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
+                        break;
+                    default:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                        break;
+                }
+            }
+            catch (System.InvalidOperationException e)
+            {
+                HandleVoiceChatServiceDisabled(e, resetData: true);
             }
         }
 
@@ -153,18 +167,25 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid AcceptCallAsync(string callId, CancellationToken ct)
         {
-            AcceptPrivateVoiceChatResponse response = await voiceChatService.AcceptPrivateVoiceChatAsync(callId, ct);
-
-            switch (response.ResponseCase)
+            try
             {
-                //When the call has been ended
-                case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    RoomUrl = response.Ok.Credentials.Url;
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
-                    break;
-                default:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
-                    break;
+                AcceptPrivateVoiceChatResponse response = await voiceChatService.AcceptPrivateVoiceChatAsync(callId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    //When the call has been ended
+                    case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
+                        RoomUrl = response.Ok.Credentials.Url;
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                        break;
+                    default:
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                        break;
+                }
+            }
+            catch (System.InvalidOperationException e)
+            {
+                HandleVoiceChatServiceDisabled(e, resetData: false);
             }
         }
 
@@ -180,19 +201,26 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid HangUpAsync(string callId, CancellationToken ct)
         {
-            EndPrivateVoiceChatResponse response = await voiceChatService.EndPrivateVoiceChatAsync(callId, ct);
-
-            switch (response.ResponseCase)
+            try
             {
-                //When the call has been ended
-                case EndPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
-                    break;
-                default:
-                    ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
-                    break;
+                EndPrivateVoiceChatResponse response = await voiceChatService.EndPrivateVoiceChatAsync(callId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    //When the call has been ended
+                    case EndPrivateVoiceChatResponse.ResponseOneofCase.Ok:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.DISCONNECTED);
+                        break;
+                    default:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                        break;
+                }
+            }
+            catch (System.InvalidOperationException e)
+            {
+                HandleVoiceChatServiceDisabled(e, resetData: true);
             }
         }
 
@@ -209,17 +237,24 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid RejectCallAsync(string callId, CancellationToken ct)
         {
-            RejectPrivateVoiceChatResponse response = await voiceChatService.RejectPrivateVoiceChatAsync(callId, ct);
-
-            switch (response.ResponseCase)
+            try
             {
-                //When the call has been ended
-                case RejectPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
-                    break;
-                default:
-                    UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
-                    break;
+                RejectPrivateVoiceChatResponse response = await voiceChatService.RejectPrivateVoiceChatAsync(callId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    //When the call has been ended
+                    case RejectPrivateVoiceChatResponse.ResponseOneofCase.Ok:
+                        UpdateStatus(VoiceChatStatus.DISCONNECTED);
+                        break;
+                    default:
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                        break;
+                }
+            }
+            catch (System.InvalidOperationException e)
+            {
+                HandleVoiceChatServiceDisabled(e, resetData: false);
             }
         }
 
@@ -234,6 +269,16 @@ namespace DCL.VoiceChat
         {
             CallId = string.Empty;
             RoomUrl = string.Empty;
+        }
+
+        private void HandleVoiceChatServiceDisabled(System.InvalidOperationException e, bool resetData = false)
+        {
+            ReportHub.LogWarning($"Voice chat service is disabled: {e.Message}", new ReportData(ReportCategory.VOICE_CHAT));
+            if (resetData)
+            {
+                ResetVoiceChatData();
+            }
+            UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 
         public void HandleLivekitConnectionFailed()
