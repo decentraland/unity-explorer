@@ -364,6 +364,8 @@ namespace DCL.VoiceChat
                 InitializeMicrophone();
                 
             isInCall = true;
+            isTalking = true;
+            EnableMicrophone();
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Microphone enabled for call (room connected)");
         }
 
