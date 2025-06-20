@@ -261,8 +261,8 @@ namespace DCL.Nametags
 
                 if (isSpeaking)
                 {
-                    BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
-                    mentionBackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+                    BackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth - verifiedIconWidth) / 2, 0, 0);
+                    mentionBackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth - verifiedIconWidth) / 2, 0, 0);
                     isSpeakingIconInitialPosition = CalculateTalkingIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, hasClaimedName, bubbleMarginOffsetWidth);
                     isSpeakingIcon.anchoredPosition = isSpeakingIconInitialPosition;
                 }
@@ -282,14 +282,14 @@ namespace DCL.Nametags
                     false);
                 BackgroundSprite.size = backgroundSize;
                 mentionBackgroundSprite.size = backgroundSize;
-            }
 
-            if (isSpeaking)
-            {
-                isSpeakingIconInitialPosition = CalculateTalkingIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, hasClaimedName, nametagMarginOffsetHeight);
-                isSpeakingIcon.anchoredPosition = isSpeakingIconInitialPosition;
-                BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
-                mentionBackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+                if (isSpeaking)
+                {
+                    isSpeakingIconInitialPosition = CalculateTalkingIconPosition(usernamePos.x, cachedUsernameWidth, verifiedIconWidth, hasClaimedName, nametagMarginOffsetHeight);
+                    isSpeakingIcon.anchoredPosition = isSpeakingIconInitialPosition;
+                    BackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+                    mentionBackgroundSprite.transform.localPosition = new Vector3(isSpeakingIconWidth / 2, 0, 0);
+                }
             }
         }
 
@@ -468,7 +468,9 @@ namespace DCL.Nametags
 
             preferredSize = CalculatePreferredSize(out float availableWidthForPrivateMessage);
             messageContentRectTransform.sizeDelta = preferredSize;
+
             textContentInitialPosition = NametagViewConstants.ZERO_VECTOR;
+            BackgroundSprite.transform.localPosition = Vector3.zero;
 
             preferredSize.x += bubbleMarginOffsetWidth;
             preferredSize.y = messageContent.preferredHeight + bubbleMarginOffsetHeight;
@@ -613,6 +615,12 @@ namespace DCL.Nametags
             messageContent.gameObject.SetActive(false);
             BackgroundSprite.gameObject.SetActive(true);
             mentionBackgroundSprite.gameObject.SetActive(false);
+
+            if (isSpeaking)
+            {
+                BackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth) / 2, 0, 0);
+                mentionBackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth) / 2, 0, 0);
+            }
         }
 
         private Vector2 CalculatePreferredSize(out float availableWidthForPrivateMessage) =>
