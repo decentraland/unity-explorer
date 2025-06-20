@@ -28,7 +28,9 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly float audioFadeSpeed;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly ObjectProxy<IRoomHub> roomHub;
+#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
         private readonly MediaPlayerCustomPool mediaPlayerCustomPool;
+#endif
 
         public MediaPlayerPluginWrapper(IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
