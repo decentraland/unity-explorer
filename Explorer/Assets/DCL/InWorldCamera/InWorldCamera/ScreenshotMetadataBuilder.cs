@@ -82,10 +82,12 @@ namespace DCL.InWorldCamera
 
         private async UniTask<(string, string)> GetSceneInfoAsync(Vector2Int at, CancellationToken ct)
         {
-            if (realmData.ScenesAreFixed)
-                return (realmData.RealmName.Replace(".dcl.eth", string.Empty), WORLD_PLACE_ID);
+            PlacesData.PlaceInfo? placeInfo;
 
-            PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
+            if (realmData.ScenesAreFixed)
+                placeInfo = await placesAPIService.GetWorldAsync(realmData.RealmName, ct);
+            else
+                placeInfo = await placesAPIService.GetPlaceAsync(at, ct);
 
             return placeInfo == null ? (UNKNOWN_PLACE, UNKNOWN_PLACE) : (placeInfo.title, placeInfo.id);
         }

@@ -56,6 +56,13 @@
       "dependencies": {},
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
+    "com.dcl.gpui-assets": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "232e2c6e028e35f5ae55cd644e6ae2c5dcbf441b"
+    },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
@@ -259,6 +266,15 @@
         "com.unity.mathematics": "1.2.1",
         "com.unity.profiling.core": "1.0.0",
         "com.unity.editorcoroutines": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.multiplayer.playmode": {
+      "version": "1.3.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "2.0.2"
       },
       "url": "https://packages.unity.com"
     },
