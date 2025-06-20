@@ -15,11 +15,11 @@ namespace DCL.UI.Profiles.Helpers
     /// </remarks>
     public class ProfileRepositoryWrapper
     {
-        private readonly IProfileThumbnailCache thumbnailCache;
+        private readonly IThumbnailCache thumbnailCache;
         private readonly IProfileRepository profileRepository;
         private readonly IRemoteMetadata remoteMetadata;
 
-        public ProfileRepositoryWrapper(IProfileRepository profileRepository, IProfileThumbnailCache thumbnailCache, IRemoteMetadata remoteMetadata)
+        public ProfileRepositoryWrapper(IProfileRepository profileRepository, IThumbnailCache thumbnailCache, IRemoteMetadata remoteMetadata)
         {
             this.thumbnailCache = thumbnailCache;
             this.profileRepository = profileRepository;

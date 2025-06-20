@@ -17,7 +17,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly IProfileCache profileCache;
         private readonly SelfProfile selfProfile;
 
-        public event Action<ChatChannel.ChannelId, ChatMessage> MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
 
         public ChatMessagesBusAnalyticsDecorator(IChatMessagesBus core, IAnalyticsController analytics, IProfileCache profileCache, SelfProfile selfProfile)
         {
@@ -34,12 +34,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.MessageAdded -= ReEmit;
         }
 
-        private void ReEmit(ChatChannel.ChannelId channelId, ChatMessage obj) =>
-            MessageAdded?.Invoke(channelId, obj);
+        private void ReEmit(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage obj) =>
+            MessageAdded?.Invoke(channelId, channelType, obj);
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
-            core.Send(channel, message, origin);
+            core.Send(channel, message, origin, topic);
 
             JsonObject jsonObject = new JsonObject
                 {
@@ -47,6 +47,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     { "origin", origin },
                     { "is_mention", CheckIfIsMention(message)},
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
+                    // TODO: Add community id
 
                     //TODO FRAN: Add here array of mentioned players.
                     // { "emoji_count", emoji_count },

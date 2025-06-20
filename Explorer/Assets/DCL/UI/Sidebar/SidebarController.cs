@@ -46,6 +46,7 @@ namespace DCL.UI.Sidebar
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
         private bool includeMarketplaceCredits;
+        private bool includeCommunities;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
@@ -69,6 +70,7 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
+            bool includeCommunities,
             ChatView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
@@ -86,6 +88,7 @@ namespace DCL.UI.Sidebar
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
+            this.includeCommunities = includeCommunities;
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
@@ -115,6 +118,7 @@ namespace DCL.UI.Sidebar
             });
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
+            viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
 
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
@@ -143,6 +147,7 @@ namespace DCL.UI.Sidebar
                 viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
+            viewInstance.communitiesButton.gameObject.SetActive(includeCommunities);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;

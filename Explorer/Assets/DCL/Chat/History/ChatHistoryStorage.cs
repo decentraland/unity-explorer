@@ -620,9 +620,10 @@ namespace DCL.Chat.History
             }
         }
 
-        private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel)
+        private void OnChatHistoryChannelRemoved(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType)
         {
-            if (!channelFiles.TryGetValue(removedChannel, out var channelFile)) return;
+            if (channelType != ChatChannel.ChatChannelType.USER || !channelFiles.TryGetValue(removedChannel, out var channelFile))
+                return;
 
             lock (channelsLocker)
             {

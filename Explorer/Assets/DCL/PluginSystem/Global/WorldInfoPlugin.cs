@@ -54,12 +54,12 @@ namespace DCL.PluginSystem.Global
 
                 if (world == null)
                 {
-                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
+                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
                     return;
                 }
 
                 var message = ChatMessage.NewFromSystem(world.EntityComponentsInfo(entityIdBinding.Value));
-                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, message);
+                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, message);
             }
 
             void OnClickShowAllEntities()
@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.Global
 
                 if (world == null)
                 {
-                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
+                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem($"World not found: {poseBinding.Value}"));
                     return;
                 }
 
@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.Global
 
                 if (idList.Count == 0)
                 {
-                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatMessage.NewFromSystem("No entities found"));
+                    chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem("No entities found"));
                     return;
                 }
 
@@ -87,7 +87,7 @@ namespace DCL.PluginSystem.Global
                     sb.AppendLine(id.ToString());
 
                 var message = ChatMessage.NewFromSystem(sb.ToString());
-                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, message);
+                chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, message);
             }
 
             return UniTask.CompletedTask;
