@@ -10,6 +10,7 @@ using ECS.Prioritization;
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
+using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.Landscape.Systems
 {
@@ -20,44 +21,48 @@ namespace DCL.Landscape.Systems
         private readonly SatelliteFloor floor;
         private readonly RealmPartitionSettingsAsset realmPartitionSettings;
         private readonly LandscapeData landscapeData;
+        private readonly TerrainData terrainData;
         private readonly ElementBinding<int> lodBias;
         private readonly ElementBinding<int> detailDensity;
         private readonly ElementBinding<int> detailDistance;
-        private readonly ElementBinding<int> cullDistance;
+        private readonly ElementBinding<int> environmentDistance;
 
-        private int lastCullDistanceApplied;
+        private int lastEnvironmentDistanceApplied;
 
-        public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, SatelliteFloor floor, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
+        private LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder,
+            SatelliteFloor floor, RealmPartitionSettingsAsset realmPartitionSettings,
+            LandscapeData landscapeData, TerrainData terrainData) : base(world)
         {
             this.floor = floor;
             this.realmPartitionSettings = realmPartitionSettings;
             this.landscapeData = landscapeData;
+            this.terrainData = terrainData;
 
             lodBias = new ElementBinding<int>(180);
             detailDensity = new ElementBinding<int>(100);
             detailDistance = new ElementBinding<int>(80);
-            cullDistance = new ElementBinding<int>((int)landscapeData.DetailDistance);
-            lastCullDistanceApplied = (int)landscapeData.DetailDistance;
+            environmentDistance = new ElementBinding<int>((int)landscapeData.EnvironmentDistance);
+            lastEnvironmentDistanceApplied = (int)landscapeData.EnvironmentDistance;
 
             debugBuilder.TryAddWidget("Landscape")
                         ?.AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
                         .AddIntSliderField("LOD bias %", lodBias, 1, 250)
                         .AddIntSliderField("Detail Density %", detailDensity, 0, 100)
-                        .AddIntSliderField("Grass Distance", detailDistance, 0, 300)
-                        .AddIntSliderField("Chunk Cull Distance", cullDistance, 1, 10000)
-                        .AddToggleField("Terrain", OnTerrainToggle, landscapeData.drawTerrain)
-                        .AddToggleField("Details", OnDetailToggle, landscapeData.drawTerrainDetails)
+                        .AddIntSliderField("Detail Distance", detailDistance, 0, 300)
+                        .AddIntSliderField("Environment Distance", environmentDistance, 1, 10000)
+                        .AddToggleField("Ground", OnTerrainToggle, terrainData.renderGround)
+                        .AddToggleField("Trees and Detail", OnDetailToggle, terrainData.renderTreesAndDetail)
                         .AddToggleField("Satellite", OnSatelliteToggle, landscapeData.showSatelliteView);
         }
 
         private void OnTerrainToggle(ChangeEvent<bool> evt)
         {
-            landscapeData.drawTerrain = evt.newValue;
+            terrainData.renderGround = evt.newValue;
         }
 
         private void OnDetailToggle(ChangeEvent<bool> evt)
         {
-            landscapeData.drawTerrainDetails = evt.newValue;
+            terrainData.renderTreesAndDetail = evt.newValue;
         }
 
         private void OnSatelliteToggle(ChangeEvent<bool> evt)
@@ -85,10 +90,10 @@ namespace DCL.Landscape.Systems
             if (Math.Abs(QualitySettings.terrainDetailDistance - tempDistance) > 0.005f)
                 QualitySettings.terrainDetailDistance = tempDistance;
 
-            if (lastCullDistanceApplied != cullDistance.Value)
+            if (lastEnvironmentDistanceApplied != environmentDistance.Value)
             {
-                landscapeData.DetailDistance = cullDistance.Value;
-                lastCullDistanceApplied = cullDistance.Value;
+                landscapeData.EnvironmentDistance = environmentDistance.Value;
+                lastEnvironmentDistanceApplied = environmentDistance.Value;
             }
         }
     }

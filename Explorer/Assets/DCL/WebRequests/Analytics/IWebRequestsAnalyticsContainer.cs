@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -34,6 +35,10 @@ namespace DCL.WebRequests.Analytics
             {
                 analyticsContainer.OnRequestStarted(request);
                 await innerTask;
+            }
+            catch (UnityWebRequestException ex)
+            {
+                ReportHub.LogWarning( ReportCategory.ANALYTICS, ex.Message);
             }
             finally
             {
