@@ -1,61 +1,60 @@
-﻿using System;
-using UnityEngine;
+﻿using DCL.Prefs;
 
 namespace DCL.Settings
 {
     public class SettingsDataStore : ISettingsDataStore
     {
         public bool HasKey(string key) =>
-            PlayerPrefs.HasKey(key);
+            DCLPlayerPrefs.HasKey(key);
 
 
         public void SetStringValue(string key, string value, bool save = false)
         {
-            PlayerPrefs.SetString(key, value);
+            DCLPlayerPrefs.SetString(key, value);
 
             if (save)
-                PlayerPrefs.Save();
+                DCLPlayerPrefs.Save();
         }
 
         public string GetStringValue(string key) =>
-            PlayerPrefs.GetString(key);
+            DCLPlayerPrefs.GetString(key);
 
         public void SetToggleValue(string key, bool value, bool save = false)
         {
-            PlayerPrefs.SetInt(key, value ? 1 : 0);
+            DCLPlayerPrefs.SetInt(key, value ? 1 : 0);
 
             if (save)
-                PlayerPrefs.Save();
+                DCLPlayerPrefs.Save();
         }
 
         public bool GetToggleValue(string key) =>
-            PlayerPrefs.GetInt(key) == 1;
+            DCLPlayerPrefs.GetInt(key) == 1;
 
         public void SetSliderValue(string key, float value, bool save = false)
         {
-            PlayerPrefs.SetFloat(key, value);
+            DCLPlayerPrefs.SetFloat(key, value);
 
             if (save)
-                PlayerPrefs.Save();
+                DCLPlayerPrefs.Save();
         }
 
         public float GetSliderValue(string key) =>
-            PlayerPrefs.GetFloat(key);
+            DCLPlayerPrefs.GetFloat(key);
 
         public void SetDropdownValue(string key, int value, bool save = false)
         {
-            PlayerPrefs.SetInt(key, value);
+            DCLPlayerPrefs.SetInt(key, value);
 
             if (save)
-                PlayerPrefs.Save();
+                DCLPlayerPrefs.Save();
         }
 
         public int GetDropdownValue(string key) =>
-            PlayerPrefs.GetInt(key);
+            DCLPlayerPrefs.GetInt(key);
 
         public void Save()
         {
-            PlayerPrefs.Save();
+            DCLPlayerPrefs.Save();
         }
     }
 }

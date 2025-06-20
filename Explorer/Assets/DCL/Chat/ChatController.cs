@@ -257,7 +257,7 @@ namespace DCL.Chat
             viewInstance!.InjectDependencies(viewDependencies);
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
-            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService);
+            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService, chatEventBus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();

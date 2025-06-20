@@ -21,8 +21,6 @@ namespace DCL.Quality
         /// </summary>
         [SerializeField] internal List<ScriptableRendererFeature> allRendererFeatures;
 
-        [SerializeField] internal bool updateInEditor;
-
         [Serializable]
         public class QualityCustomLevel
         {

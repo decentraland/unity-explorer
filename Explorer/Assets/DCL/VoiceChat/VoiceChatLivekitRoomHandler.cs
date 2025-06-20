@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -11,19 +11,18 @@ using LiveKit.Rooms.Tracks;
 using System;
 using System.Threading;
 using Utility;
-using Utility.Multithreading;
-using UnityEngine;
 
 namespace DCL.VoiceChat
 {
     public class VoiceChatLivekitRoomHandler : IDisposable
     {
-        private readonly VoiceChatCombinedAudioSource combinedAudioSource;
-        private readonly VoiceChatMicrophoneAudioFilter microphoneAudioFilter;
+        private readonly VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource;
+        private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly VoiceChatConfiguration configuration;
+        private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
 
         private bool disposed;
         private ITrack microphoneTrack;
@@ -37,19 +36,21 @@ namespace DCL.VoiceChat
         private CancellationTokenSource? orderedDisconnectionCts;
 
         public VoiceChatLivekitRoomHandler(
-            VoiceChatCombinedAudioSource combinedAudioSource,
-            VoiceChatMicrophoneAudioFilter microphoneAudioFilter,
+            VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource,
+            VoiceChatMicrophoneHandler microphoneHandler,
             IRoom voiceChatRoom,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             IRoomHub roomHub,
-            VoiceChatConfiguration configuration)
+            VoiceChatConfiguration configuration,
+            VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager)
         {
-            this.combinedAudioSource = combinedAudioSource;
-            this.microphoneAudioFilter = microphoneAudioFilter;
+            this.combinedStreamsAudioSource = combinedStreamsAudioSource;
+            this.microphoneHandler = microphoneHandler;
             this.voiceChatRoom = voiceChatRoom;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.roomHub = roomHub;
             this.configuration = configuration;
+            this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
             voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
@@ -99,19 +100,19 @@ namespace DCL.VoiceChat
 
             if (!success)
             {
-                Debug.Log($"[VoiceChatLivekitRoomHandler] Initial connection failed for room {voiceChatCallStatusService.RoomUrl}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatCallStatusService.RoomUrl}");
                 voiceChatCallStatusService.HandleLivekitConnectionFailed();
             }
         }
 
         private async UniTaskVoid DisconnectFromRoomAsync()
         {
-            Debug.Log("[VoiceChatLivekitRoomHandler] Starting ordered disconnection");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Starting ordered disconnection");
             isOrderedDisconnection = true;
             CleanupReconnectionState();
             await roomHub.VoiceChatRoom().DeactivateAsync();
             isOrderedDisconnection = false;
-            Debug.Log("[VoiceChatLivekitRoomHandler] Completed ordered disconnection");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Completed ordered disconnection");
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
@@ -125,28 +126,36 @@ namespace DCL.VoiceChat
                     {
                         isMediaOpen = true;
                         cts = cts.SafeRestart();
+
                         SubscribeToRemoteTracks();
                         PublishTrack(cts.Token);
                     }
 
+                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                     break;
                 case ConnectionUpdate.Disconnected:
                     CleanupReconnectionState();
                     isMediaOpen = false;
+
+                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
+
                     voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
                     CloseMedia();
 
                     if (!isOrderedDisconnection)
                     {
-                        Debug.Log("[VoiceChatLivekitRoomHandler] Unexpected disconnection detected - waiting for potential ordered disconnection");
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Unexpected disconnection detected - waiting for potential ordered disconnection");
                         WaitForOrderedDisconnectionAsync().Forget();
                     }
+
                     break;
                 case ConnectionUpdate.Reconnecting:
-                    Debug.Log("[VoiceChatLivekitRoomHandler] Reconnecting...");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnecting...");
+                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
                     break;
                 case ConnectionUpdate.Reconnected:
-                    Debug.Log("[VoiceChatLivekitRoomHandler] Reconnected successfully");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnected successfully");
+                    voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                     break;
             }
         }
@@ -161,12 +170,12 @@ namespace DCL.VoiceChat
 
                 if (!isOrderedDisconnection)
                 {
-                    Debug.Log("[VoiceChatLivekitRoomHandler] No ordered disconnection received after 5 seconds - starting reconnection attempts");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] No ordered disconnection received after 5 seconds - starting reconnection attempts");
                     HandleUnexpectedDisconnection();
                 }
-                else { Debug.Log("[VoiceChatLivekitRoomHandler] Ordered disconnection received during grace period - no reconnection needed"); }
+                else { ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Ordered disconnection received during grace period - no reconnection needed"); }
             }
-            catch (OperationCanceledException) { Debug.Log("[VoiceChatLivekitRoomHandler] Grace period cancelled - ordered disconnection received"); }
+            catch (OperationCanceledException) { ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Grace period cancelled - ordered disconnection received"); }
         }
 
         private void CleanupReconnectionState()
@@ -180,7 +189,7 @@ namespace DCL.VoiceChat
 
         private void PublishTrack(CancellationToken ct)
         {
-            monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneAudioFilter);
+            monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);
             monoRtcAudioSource.Start();
             microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(voiceChatRoom.Participants.LocalParticipant().Name, monoRtcAudioSource);
 
@@ -198,6 +207,8 @@ namespace DCL.VoiceChat
 
         private void SubscribeToRemoteTracks()
         {
+            combinedStreamsAudioSource.Reset();
+
             foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
                 Participant participant = voiceChatRoom.Participants.RemoteParticipant(remoteParticipantIdentity);
@@ -210,14 +221,14 @@ namespace DCL.VoiceChat
                         WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(remoteParticipantIdentity, sid);
 
                         if (stream != null)
-                            combinedAudioSource.AddStream(stream);
+                            combinedStreamsAudioSource.AddStream(stream);
                     }
                 }
             }
 
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed += OnTrackUnsubscribed;
-            combinedAudioSource.Play();
+            combinedStreamsAudioSource.Play();
         }
 
         private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
@@ -226,7 +237,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.AddStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.AddStream(stream); }
             }
         }
 
@@ -236,7 +247,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.RemoveStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.RemoveStream(stream); }
             }
         }
 
@@ -246,7 +257,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.AddStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.AddStream(stream); }
             }
         }
 
@@ -256,7 +267,7 @@ namespace DCL.VoiceChat
             {
                 WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
 
-                if (stream != null) { combinedAudioSource.RemoveStream(stream); }
+                if (stream != null) { combinedStreamsAudioSource.RemoveStream(stream); }
             }
         }
 
@@ -276,10 +287,10 @@ namespace DCL.VoiceChat
 
         private void CloseMediaInternal()
         {
-            if (combinedAudioSource != null)
+            if (combinedStreamsAudioSource != null)
             {
-                combinedAudioSource.Stop();
-                combinedAudioSource.Free();
+                combinedStreamsAudioSource.Stop();
+                combinedStreamsAudioSource.Reset();
             }
 
             monoRtcAudioSource?.Stop();
@@ -293,14 +304,14 @@ namespace DCL.VoiceChat
 
             if (remoteCount == 0)
             {
-                Debug.Log("[VoiceChatLivekitRoomHandler] No remote participants in room, skipping reconnection attempts");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] No remote participants in room, skipping reconnection attempts");
                 voiceChatCallStatusService.HandleLivekitConnectionFailed();
                 return;
             }
 
             reconnectionAttempts = 0;
             reconnectionCts = reconnectionCts.SafeRestart();
-            Debug.Log("[VoiceChatLivekitRoomHandler] Starting reconnection attempts");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Starting reconnection attempts");
             AttemptReconnectionAsync(reconnectionCts.Token).Forget();
         }
 
@@ -311,25 +322,25 @@ namespace DCL.VoiceChat
                 if (reconnectionAttempts >= configuration.MaxReconnectionAttempts)
                 {
                     reconnectionAttempts = 0;
-                    Debug.Log($"[VoiceChatLivekitRoomHandler] Max reconnection attempts ({configuration.MaxReconnectionAttempts}) reached - calling HandleLivekitConnectionFailed");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Max reconnection attempts ({configuration.MaxReconnectionAttempts}) reached - calling HandleLivekitConnectionFailed");
                     voiceChatCallStatusService.HandleLivekitConnectionFailed();
                     return;
                 }
 
                 reconnectionAttempts++;
-                Debug.Log($"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts}/{configuration.MaxReconnectionAttempts}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts}/{configuration.MaxReconnectionAttempts}");
                 await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct);
 
                 bool success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
 
                 if (success)
                 {
-                    Debug.Log("[VoiceChatLivekitRoomHandler] Reconnection successful");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnection successful");
                     CleanupReconnectionState();
                     return;
                 }
 
-                Debug.Log($"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts} failed");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts} failed");
             }
         }
     }

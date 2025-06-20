@@ -92,6 +92,12 @@ namespace DCL.VoiceChat
             InCallView.NoPlayerTalking.gameObject.SetActive(speakingCount == 0);
             InCallView.PlayerNameTalking.text = userName;
 
+            if (isSpeakingCurrentSequence != null)
+            {
+                isSpeakingCurrentSequence?.Kill();
+                isSpeakingCurrentSequence = null;
+            }
+
             if (speakingCount >= 1)
             {
                 isSpeakingCurrentSequence = DOTween.Sequence();
@@ -101,11 +107,6 @@ namespace DCL.VoiceChat
                 isSpeakingCurrentSequence.Join(InCallView.isSpeakingIconRect.DOScaleY(1, SHOW_HIDE_ANIMATION_DURATION));
                 isSpeakingCurrentSequence.SetLoops(-1);
                 isSpeakingCurrentSequence.Play();
-            }
-            else
-            {
-                isSpeakingCurrentSequence.Kill();
-                isSpeakingCurrentSequence = null;
             }
         }
 

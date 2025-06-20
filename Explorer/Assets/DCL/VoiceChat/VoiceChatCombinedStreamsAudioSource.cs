@@ -2,19 +2,17 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using LiveKit.Rooms.Streaming.Audio;
-using Utility.Multithreading;
 using Cysharp.Threading.Tasks;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatCombinedAudioSource : MonoBehaviour
+    public class VoiceChatCombinedStreamsAudioSource : MonoBehaviour
     {
         [field: SerializeField] private AudioSource audioSource;
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
 
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
         private bool isPlaying;
-        private int lastDataLength;
         private int sampleRate = 48000;
         private float[] tempBuffer;
 
@@ -32,6 +30,12 @@ namespace DCL.VoiceChat
         private void OnDisable()
         {
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+            if (tempBuffer != null)
+                Array.Clear(tempBuffer, 0, tempBuffer.Length);
+
+            streams.Clear();
+            isPlaying = false;
+            sampleRate = 48000;
         }
 
         private void OnAudioFilterRead(float[] data, int channels)
@@ -45,7 +49,6 @@ namespace DCL.VoiceChat
             if (tempBuffer == null || tempBuffer.Length != (channels == 2 ? data.Length / 2 : data.Length))
             {
                 tempBuffer = new float[channels == 2 ? data.Length / 2 : data.Length];
-                lastDataLength = data.Length;
             }
 
             Span<float> dataSpan = data.AsSpan();
@@ -80,7 +83,7 @@ namespace DCL.VoiceChat
                     }
                     else
                     {
-                        for (int i = 0; i < data.Length; i++)
+                        for (var i = 0; i < data.Length; i++)
                             data[i] += tempBuffer[i];
                     }
 
@@ -169,9 +172,9 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void AddStream(WeakReference<IAudioStream> stream)
+        public void AddStream(WeakReference<IAudioStream> weakStream)
         {
-            streams.Add(stream);
+            streams.Add(weakStream);
         }
 
         public void RemoveStream(WeakReference<IAudioStream> stream)
@@ -179,9 +182,13 @@ namespace DCL.VoiceChat
             streams.Remove(stream);
         }
 
-        public void Free()
+        public void Reset()
         {
             streams.Clear();
+            isPlaying = false;
+
+            if (tempBuffer != null)
+                Array.Clear(tempBuffer, 0, tempBuffer.Length);
         }
 
         public void Play()

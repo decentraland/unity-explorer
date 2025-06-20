@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
-        public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedAudioSource>
+        public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedStreamsAudioSource>
         {
             public CombinedAudioSourceReference(string guid) : base(guid) { }
         }

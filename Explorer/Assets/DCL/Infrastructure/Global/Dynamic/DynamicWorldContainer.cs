@@ -433,9 +433,9 @@ namespace Global.Dynamic
             livekitHealthCheck.WithRetries();
 
             bool includeCameraReel = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
-            bool includeFriends = (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
+            bool includeFriends = !localSceneDevelopment && (staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor);
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
-            bool includeCall = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT));
+            bool includeCall = includeFriends && includeUserBlocking && (Application.isEditor || staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT)));
             bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
@@ -859,19 +859,23 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, viewDependencies, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
-                new VoiceChatPlugin(
-                    voiceChatSettingsAssetProxy,
-                    assetsProvisioner,
-                    dclInput,
-                    roomHub,
-                    mainUIView,
-                    voiceChatCallStatusService,
-                    viewDependencies,
-                    profileRepositoryWrapper,
-                    entityParticipantTable,
-                    globalWorld,
-                    playerEntity),
             };
+
+            if (includeCall)
+                globalPlugins.Add(
+                    new VoiceChatPlugin(
+                        voiceChatSettingsAssetProxy,
+                        assetsProvisioner,
+                        dclInput,
+                        roomHub,
+                        mainUIView,
+                        voiceChatCallStatusService,
+                        viewDependencies,
+                        profileRepositoryWrapper,
+                        entityParticipantTable,
+                        globalWorld,
+                        playerEntity));
+
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
