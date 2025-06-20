@@ -13,6 +13,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Threading;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility;
@@ -66,6 +67,7 @@ namespace DCL.Friends.UI.FriendPanel
             IRealmNavigator realmNavigator,
             IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
+            IChatMessagesBus chatMessageBus,
             ViewDependencies viewDependencies,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
@@ -90,6 +92,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     friendsConnectivityStatusTracker,
                     chatEventBus,
+                    chatMessageBus,
                     sharedSpaceManager,
                     viewDependencies);
 
@@ -105,6 +108,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     viewDependencies,
                     chatEventBus,
+                    chatMessageBus,
                     sharedSpaceManager);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,

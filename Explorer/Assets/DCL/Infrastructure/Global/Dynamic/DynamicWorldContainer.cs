@@ -498,8 +498,10 @@ namespace Global.Dynamic
             var currentSceneInfo = new CurrentSceneInfo();
 
             var connectionStatusPanelPlugin = new ConnectionStatusPanelPlugin(initializationFlowContainer.InitializationFlow, mvcManager, mainUIView, roomsStatus, currentSceneInfo, reloadSceneController, globalWorld, playerEntity, debugBuilder, chatCommandsBus);
-
-            var chatTeleporter = new ChatTeleporter(realmNavigator, new ChatEnvironmentValidator(bootstrapContainer.Environment), bootstrapContainer.DecentralandUrlsSource);
+            
+            var chatTeleporter = new ChatTeleporter(globalWorld,playerEntity,realmNavigator,
+                new ChatEnvironmentValidator(bootstrapContainer.Environment), 
+                bootstrapContainer.DecentralandUrlsSource);
 
             var chatCommands = new List<IChatCommand>
             {
@@ -589,6 +591,7 @@ namespace Global.Dynamic
                 profileCache,
                 friendServiceProxy,
                 chatEventBus,
+                chatMessagesBus,
                 genericUserProfileContextMenuSettingsSo,
                 includeUserBlocking,
                 bootstrapContainer.Analytics,
@@ -836,6 +839,7 @@ namespace Global.Dynamic
                     includeUserBlocking,
                     isNameEditorEnabled,
                     chatEventBus,
+                    chatMessagesBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper
                 ),
@@ -886,6 +890,7 @@ namespace Global.Dynamic
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
                     chatEventBus,
+                    chatMessagesBus,
                     viewDependencies,
                     sharedSpaceManager,
                     socialServiceEventBus,

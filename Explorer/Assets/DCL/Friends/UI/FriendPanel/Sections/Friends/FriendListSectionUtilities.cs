@@ -1,17 +1,17 @@
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.CommunicationData.URLHelpers;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.Web3;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using UnityEngine;
 using Utility;
 
@@ -24,62 +24,49 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private const int CONTEXT_MENU_SEPARATOR_HEIGHT = 20;
         private const int CONTEXT_MENU_ELEMENTS_SPACING = 5;
 
-        public static void JumpToFriendLocation(string targetUserAddress,
-            CancellationTokenSource? jumpToFriendLocationCts,
-            string[] getUserPositionBuffer,
+        /// <summary>
+        /// Public entry:
+        /// restarts the CTS and fires off the teleport lookup & send.
+        /// </summary>
+        public static void TeleportToTargetAsync(
+            string userId,
             IOnlineUsersProvider onlineUsersProvider,
-            IRealmNavigator realmNavigator,
-            Action<Vector2Int>? parcelCalculatedCallback = null)
+            IChatMessagesBus chatMessageBus,
+            CancellationTokenSource? cts)
         {
-            jumpToFriendLocationCts = jumpToFriendLocationCts.SafeRestart();
-            JumpToFriendLocationAsync(jumpToFriendLocationCts.Token).Forget();
-            return;
-
-            async UniTaskVoid JumpToFriendLocationAsync(CancellationToken ct = default)
-            {
-                getUserPositionBuffer[0] = targetUserAddress;
-
-                IReadOnlyCollection<OnlineUserData> onlineData = await onlineUsersProvider.GetAsync(getUserPositionBuffer, ct);
-
-                if (onlineData.Count == 0)
-                    return;
-
-                OnlineUserData userData = onlineData.First();
-
-                if (userData.IsInWorld)
-                {
-                    realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(userData.worldName).ConvertEnsToWorldUrl()), ct).Forget();
-                }
-                else
-                {
-                    Vector2Int parcel = userData.position.ToParcel();
-                    realmNavigator.TeleportToParcelAsync(parcel, ct, false).Forget();
-                    parcelCalculatedCallback?.Invoke(parcel);
-                }
-            }
+            cts = cts.SafeRestart();
+            
+            ExecuteTeleportLookupAndSendAsync(userId, onlineUsersProvider, chatMessageBus, cts.Token).Forget();
         }
 
-        internal static (GenericContextMenu, GenericContextMenuElement) BuildContextMenu(
-            FriendListContextMenuConfiguration contextMenuSettings,
-            UserProfileContextMenuControlSettings userProfileContextMenuControlSettings,
-            bool includeUserBlocking,
-            Action openProfilePassportCallback,
-            Action jumpToFriendCallback,
-            Action blockUserCallback)
+        /// <summary>
+        /// Actually does the async lookup and chat send.
+        /// </summary>
+        private static async UniTask ExecuteTeleportLookupAndSendAsync(
+            string userId,
+            IOnlineUsersProvider onlineUsersProvider,
+            IChatMessagesBus chatMessageBus,
+            CancellationToken ct)
         {
-            GenericContextMenuElement jumpInElement;
+            IReadOnlyCollection<OnlineUserData> onlineData =
+                await onlineUsersProvider.GetAsync(new[] { userId }, ct);
+            if (onlineData.Count == 0)
+                return;
 
-            GenericContextMenu contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, elementsSpacing: CONTEXT_MENU_ELEMENTS_SPACING)
-                                            .AddControl(userProfileContextMenuControlSettings)
-                                            .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
-                                            .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, openProfilePassportCallback))
-                                            .AddControl(jumpInElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.JumpToLocationText,
-                                                 contextMenuSettings.JumpToLocationSprite, jumpToFriendCallback), false))
-                                            .AddControl(new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BlockText, contextMenuSettings.BlockSprite, blockUserCallback), includeUserBlocking));
+            var userData = onlineData.First();
+            Vector2Int parcel = userData.position.ToParcel();
 
-            return (contextMenu, jumpInElement);
+            string parameters = userData.IsInWorld
+                ? userData.worldName!
+                : $"{parcel.x},{parcel.y}";
+
+            chatMessageBus.Send(
+                ChatChannel.NEARBY_CHANNEL,
+                $"/{ChatCommandsUtils.COMMAND_GOTO} {parameters}",
+                "passport-jump"
+            );
         }
-
+        
         public static void BlockUserClicked(IMVCManager mvcManager, Web3Address targetUserAddress, string targetUserName) =>
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 

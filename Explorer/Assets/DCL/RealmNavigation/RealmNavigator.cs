@@ -76,6 +76,13 @@ namespace DCL.RealmNavigation
 
             return true;
         }
+        
+        private bool CheckIfItsSameParcel()
+        {
+            
+
+            return true;
+        }
 
         public async UniTask<EnumResult<ChangeRealmError>> TryChangeRealmAsync(
             URLDomain realm,
