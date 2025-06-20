@@ -33,7 +33,7 @@ namespace DCL.Character.CharacterCamera.Systems
 
         public ApplyCinemachineSettingsSystem(World world, IDebugContainerBuilder debugBuilder, ControlsSettingsAsset controlsSettingsAsset, bool isDebug) : base(world)
         {
-            currentSens = DCLPlayerPrefs.GetFloat(PDCLPrefKeys.CAMERA_SENSITIVITY, 10);
+            currentSens = DCLPlayerPrefs.GetFloat(DCLPrefKeys.CAMERA_SENSITIVITY, 10);
 
             sensitivitySlider = new ElementBinding<float>(currentSens);
             noiseSlider = new ElementBinding<float>(0.5f);
