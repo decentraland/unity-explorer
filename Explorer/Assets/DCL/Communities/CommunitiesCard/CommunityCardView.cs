@@ -126,7 +126,8 @@ namespace DCL.Communities.CommunitiesCard
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog))
-                         .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested)));
+                         .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
+                              new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested, textColor: Color.red, iconColor: Color.red)));
         }
 
         private void OnDeleteCommunityRequested()
