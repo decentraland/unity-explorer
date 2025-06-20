@@ -452,7 +452,7 @@ GameObject:
   - component: {fileID: 7294387402829280573}
   - component: {fileID: 8617367578070487853}
   m_Layer: 5
-  m_Name: DynamicTitle
+  m_Name: TimeProgressionTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -505,7 +505,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Dynamic
+  m_text: Time progression
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -857,7 +857,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Time
+  m_text: Time of day
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -938,7 +938,7 @@ GameObject:
   m_Component:
   - component: {fileID: 705553140416455877}
   m_Layer: 5
-  m_Name: Dynamic
+  m_Name: TimeProgression
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1130,7 +1130,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1326869274718830892}
   <raycaster>k__BackingField: {fileID: 1000022871862360222}
   <viewAnimationElement>k__BackingField: {fileID: 2099558127564310200}
-  <DynamicToggle>k__BackingField: {fileID: 6409291411393466949}
+  <TimeProgressionToggle>k__BackingField: {fileID: 6409291411393466949}
   <TimeSlider>k__BackingField: {fileID: 7213994172632849929}
   <TimeText>k__BackingField: {fileID: 283481863282831205}
   <CloseButton>k__BackingField: {fileID: 5744729127824224158}
@@ -1435,7 +1435,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7225474628005434785, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_Name
-      value: DynamicToggle
+      value: TimeProgressionToggle
       objectReference: {fileID: 0}
     - target: {fileID: 7625753975028379600, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_IsOn

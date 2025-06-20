@@ -42,15 +42,15 @@ namespace DCL.UI.Skybox
 
             viewInstance!.CloseButton.onClick.AddListener(OnClose);
 
-            viewInstance.TimeSlider.value = skyboxSettings.NormalizedTime;
-            skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
-            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
+            viewInstance.TimeSlider.value = skyboxSettings.TimeOfDayNormalized;
+            skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
+            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeOfDaySliderValueChanged);
 
-            viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
-            skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
-            viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
+            viewInstance.TimeProgressionToggle.isOn = skyboxSettings.IsDayNightCycleEnabled;
+            skyboxSettings.DayNightCycleEnabledChanged += OnDayNightCycleEnabledChanged;
+            viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleValueChanged);
 
-            SetTimeEnabled(!skyboxSettings.UseDynamicTime);
+            SetTimeEnabled(!skyboxSettings.IsDayNightCycleEnabled);
         }
 
         protected override void OnBeforeViewShow()
@@ -59,33 +59,37 @@ namespace DCL.UI.Skybox
             skyboxMenuCts = skyboxMenuCts.SafeRestart();
         }
 
-        private void OnUseDynamicTimeChanged(bool dynamic)
+        private void OnDayNightCycleEnabledChanged(bool timeProgressionEnabled)
         {
-            SetTimeEnabled(!dynamic);
-            viewInstance!.DynamicToggle.isOn = dynamic;
+            SetTimeEnabled(timeProgressionEnabled);
+            viewInstance!.TimeProgressionToggle.isOn = timeProgressionEnabled;
         }
 
-        private void OnDynamicToggleValueChanged(bool dynamic)
+        private void OnTimeProgressionToggleValueChanged(bool dynamic)
         {
-            skyboxSettings.UseDynamicTime = dynamic;
+            skyboxSettings.IsDayNightCycleEnabled = dynamic;
+
+            skyboxSettings.SkyboxTimeSource = dynamic ? SkyboxTimeSource.GLOBAL : SkyboxTimeSource.PLAYER_FIXED;
         }
 
-        private void OnNormalizedTimeChanged(float time)
+        private void OnTimeOfDayChanged(float time)
         {
             viewInstance!.TimeSlider.SetValueWithoutNotify(time);
             viewInstance.TimeText.text = GetFormatedTime(time);
         }
 
-        private void OnTimeSliderValueChanged(float time)
+        private void OnTimeOfDaySliderValueChanged(float time)
         {
-            skyboxSettings.UseDynamicTime = false;
-            skyboxSettings.NormalizedTime = time;
+            skyboxSettings.IsDayNightCycleEnabled = false;
+            skyboxSettings.TimeOfDayNormalized = time;
+
+            skyboxSettings.SkyboxTimeSource = SkyboxTimeSource.PLAYER_FIXED;
         }
 
         private void SetTimeEnabled(bool enabled)
         {
-            viewInstance!.TopSliderGroup.enabled = !enabled;
-            viewInstance!.TextSliderGroup.enabled = !enabled;
+            viewInstance!.TopSliderGroup.enabled = enabled;
+            viewInstance!.TextSliderGroup.enabled = enabled;
         }
 
         private string GetFormatedTime(float time)
@@ -107,8 +111,8 @@ namespace DCL.UI.Skybox
         {
             base.Dispose();
             skyboxMenuCts.SafeCancelAndDispose();
-            skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
-            skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
+            skyboxSettings.DayNightCycleEnabledChanged -= OnDayNightCycleEnabledChanged;
+            skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
         }
     }
 }
