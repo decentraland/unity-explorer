@@ -463,10 +463,9 @@
       "dependencies": {
         "com.unity.burst": "1.8.21",
         "com.unity.collections": "2.5.1",
-        "com.unity.mathematics": "1.3.2",
-        "com.unity.modules.imageconversion": "1.0.0"
+        "com.unity.mathematics": "1.3.2"
       },
-      "hash": "a6d3566336887b55af90dc03dab4dfb472827c00"
+      "hash": "459bf703e734a2a876a9bfadcf0adacf8cac7e6c"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

@@ -15,7 +15,7 @@ namespace DCL.Multiplayer.Movement
         {
             this.encodingSettings = encodingSettings;
             this.timestampEncoder = new TimestampEncoder(encodingSettings);
-            parcelEncoder = new ParcelEncoder(encodingSettings.landscapeData.terrainData);
+            parcelEncoder = new ParcelEncoder(encodingSettings.landscapeData.genesisCityData);
         }
 
         public CompressedNetworkMovementMessage Compress(NetworkMovementMessage message) =>

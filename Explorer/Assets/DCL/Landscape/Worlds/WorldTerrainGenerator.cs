@@ -1,42 +1,32 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Landscape.Settings;
+﻿using DCL.Landscape.Settings;
 using DCL.Utilities;
 using System;
-using System.Threading;
-using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.Landscape
 {
-    public class WorldTerrainGenerator : IDisposable, IContainParcel
+    public sealed class WorldTerrainGenerator : IContainParcel
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
 
         private int parcelSize;
         private TerrainGenerationData terrainGenData;
-
+        private TerrainData terrainData;
         private TerrainFactory factory;
         private TerrainBoundariesGenerator boundariesGenerator;
 
         private Transform rootGo;
         private Transform ocean;
 
-        private NativeParallelHashMap<int2, int> emptyParcelsData;
-        private NativeList<int2> emptyParcels;
-
         public bool IsInitialized { get; private set; }
 
         private TerrainModel terrainModel;
 
-        public WorldTerrainGenerator(bool measureTime = false)
+        public WorldTerrainGenerator()
         {
-        }
-
-        public void Dispose()
-        {
-            // If we destroy rootGo here it causes issues on application exit
         }
 
         public bool Contains(Vector2Int parcel)
@@ -47,9 +37,10 @@ namespace DCL.Landscape
             return false;
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData)
+        public void Initialize(TerrainGenerationData terrainGenData, TerrainData terrainData)
         {
             this.terrainGenData = terrainGenData;
+            this.terrainData = terrainData;
 
             parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
@@ -58,21 +49,22 @@ namespace DCL.Landscape
             IsInitialized = true;
         }
 
-        public void SwitchVisibility(bool isVisible)
+        public void Hide()
         {
             if (!IsInitialized) return;
 
             if (rootGo != null)
-                rootGo.gameObject.SetActive(isVisible);
+                rootGo.gameObject.SetActive(false);
         }
 
-        public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1,
-            AsyncLoadProcessReport processReport = null, CancellationToken cancellationToken = default)
+        public void GenerateTerrain(int2[] occupied, AsyncLoadProcessReport processReport = null)
         {
             if (!IsInitialized) return;
 
-            var worldModel = new WorldModel(ownedParcels);
-            terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
+            int2[] none = Array.Empty<int2>();
+
+            terrainModel = new TerrainModel(occupied, none, none, parcelSize,
+                terrainGenData.borderPadding, 0.05f);
 
             rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
@@ -82,16 +74,9 @@ namespace DCL.Landscape
             boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
             boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
 
-            if (processReport != null) processReport.SetProgress(0.5f);
+            terrainModel.WriteTo(terrainData);
 
-            FreeMemory();
             processReport?.SetProgress(1f);
-        }
-
-        private void FreeMemory()
-        {
-            emptyParcelsData.Dispose();
-            emptyParcels.Dispose();
         }
     }
 }

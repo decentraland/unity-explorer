@@ -4,7 +4,6 @@ using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
 using DCL.Landscape;
-using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.Landscape.Utils;
@@ -14,11 +13,11 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
+using System;
 using System.Threading;
-using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
+using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.PluginSystem.Global
 {
@@ -33,15 +32,11 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
-        private readonly bool isZone;
         private readonly LandscapeParcelService parcelService;
-        private readonly IScenesCache scenesCache;
 
+        private bool disposed;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
-        private ProvidedAsset<ParcelData> parcelData;
-        private NativeList<int2> emptyParcels;
-        private NativeParallelHashSet<int2> ownedParcels;
         private SatelliteFloor? floor;
 
         public LandscapePlugin(IRealmData realmData,
@@ -59,12 +54,10 @@ namespace DCL.PluginSystem.Global
         {
             this.realmData = realmData;
             this.loadingStatus = loadingStatus;
-            this.scenesCache = sceneCache;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
-            this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
 
@@ -76,42 +69,56 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             if (enableLandscape)
-            {
                 terrainGenerator.Dispose();
-                worldTerrainGenerator.Dispose();
-            }
+
+            disposed = true;
         }
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
+            // Do this first and await it last because it takes the longest because it talks to the
+            // Internet.
+            var fetchParcelTask = enableLandscape ? parcelService.LoadManifestAsync(ct) : default;
+
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+            //landscapeData.Value.terrainData.detailDistance = landscapeData.Value.EnvironmentDistance;
 
             floor = new SatelliteFloor(realmData, landscapeData.Value);
 
             if (!enableLandscape) return;
 
-            parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
-
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
 
-            FetchParcelResult fetchParcelResult = await parcelService.LoadManifestAsync(ct);
-            string parcelChecksum = string.Empty;
+            worldTerrainGenerator.Initialize(landscapeData.Value.worldData,
+                landscapeData.Value.terrainData);
+
+            FetchParcelResult fetchParcelResult = await fetchParcelTask;
+
+            int2[] roads;
+            int2[] occupied;
+            int2[] empty;
 
             if (!fetchParcelResult.Succeeded)
             {
-                emptyParcels = parcelData.Value.GetEmptyParcels();
-                ownedParcels = parcelData.Value.GetOwnedParcels();
+                var parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels,
+                    ct);
+
+                roads = Array.Empty<int2>();
+                occupied = parcelData.Value.ownedParcels;
+                empty = parcelData.Value.emptyParcels;
             }
             else
             {
-                emptyParcels = fetchParcelResult.Manifest.GetEmptyParcels();
-                ownedParcels = fetchParcelResult.Manifest.GetOwnedParcels();
-                parcelChecksum = fetchParcelResult.Checksum;
+                roads = fetchParcelResult.Manifest.roads;
+                occupied = fetchParcelResult.Manifest.occupied;
+                empty = fetchParcelResult.Manifest.empty;
             }
 
-            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels,
-                parcelChecksum, isZone);
-            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
+            terrainGenerator.Initialize(landscapeData.Value.genesisCityData,
+                landscapeData.Value.terrainData, roads, occupied, empty);
+
+            if (disposed)
+                throw new ObjectDisposedException(nameof(LandscapePlugin));
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -120,8 +127,12 @@ namespace DCL.PluginSystem.Global
 
             if (!enableLandscape) return;
 
-            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings.Value, landscapeData.Value);
+            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor,
+                realmPartitionSettings.Value, landscapeData.Value,
+                landscapeData.Value.terrainData);
+
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
+            RenderTerrainSystem.InjectToWorld(ref builder, landscapeData.Value.terrainData);
         }
     }
 }

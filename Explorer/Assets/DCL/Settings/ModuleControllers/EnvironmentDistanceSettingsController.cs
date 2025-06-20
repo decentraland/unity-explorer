@@ -21,11 +21,11 @@ namespace DCL.Settings.ModuleControllers
             view.SliderView.Slider.onValueChanged.AddListener(SetEnvironmentDistanceSettings);
             SetEnvironmentDistanceSettings(view.SliderView.Slider.value);
 
-            landscapeData.OnDetailDistanceChanged += OnEnvironmentDistanceSettingsChangedFromOutside;
+            landscapeData.OnEnvironmentDistanceChanged += OnEnvironmentDistanceSettingsChangedFromOutside;
         }
 
         private void SetEnvironmentDistanceSettings(float distance) =>
-            landscapeData.DetailDistance = distance;
+            landscapeData.EnvironmentDistance = distance;
 
         private void OnEnvironmentDistanceSettingsChangedFromOutside(float newDistance)
         {
@@ -36,7 +36,7 @@ namespace DCL.Settings.ModuleControllers
         public override void Dispose()
         {
             view.SliderView.Slider.onValueChanged.RemoveListener(SetEnvironmentDistanceSettings);
-            landscapeData.OnDetailDistanceChanged -= OnEnvironmentDistanceSettingsChangedFromOutside;
+            landscapeData.OnEnvironmentDistanceChanged -= OnEnvironmentDistanceSettingsChangedFromOutside;
         }
     }
 }

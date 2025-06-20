@@ -1,17 +1,14 @@
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
-using StylizedGrass;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using DCL.Profiling;
 using DCL.Utilities;
-using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
+using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.Landscape
 {
@@ -25,81 +22,47 @@ namespace DCL.Landscape
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
         private readonly IMemoryProfiler profilingProvider;
-        private readonly List<Terrain> terrains;
-        private readonly List<Collider> terrainChunkColliders;
 
         private int parcelSize;
         private TerrainGenerationData terrainGenData;
+        private TerrainData terrainData;
         private TerrainBoundariesGenerator boundariesGenerator;
         private TerrainFactory factory;
 
-        private NativeList<int2> emptyParcels;
-        private NativeParallelHashSet<int2> ownedParcels;
-        private int maxHeightIndex;
-        private int processedTerrainDataCount;
-        private int spawnedTerrainDataCount;
+        private int2[] roads;
+        private int2[] occupied;
+        private int2[] empty;
 
         private Transform rootGo;
-        private GrassColorMapRenderer grassRenderer;
         private bool isInitialized;
-        private int activeChunk = -1;
 
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
 
-        public IReadOnlyList<Terrain> Terrains => terrains;
+        public IReadOnlyList<Terrain> Terrains => Array.Empty<Terrain>();
 
         public bool IsTerrainGenerated { get; private set; }
         public bool IsTerrainShown { get; private set; }
 
-        public Action<List<Terrain>> GenesisTerrainGenerated;
-
         private TerrainModel terrainModel;
 
-        public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
-            bool forceCacheRegen = false)
+        public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false)
         {
             this.profilingProvider = profilingProvider;
 
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
-
-            // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
-            terrains = new List<Terrain>();
-            terrainChunkColliders = new List<Collider>();
         }
 
-        // TODO : pre-calculate once and re-use
-        public void SetTerrainCollider(Vector2Int parcel, bool isEnabled)
+        public void Initialize(TerrainGenerationData terrainGenData, TerrainData terrainData,
+            int2[] roads, int2[] occupied, int2[] empty)
         {
-            if(terrainModel == null) return;
-
-            int offsetX = parcel.x - terrainModel.MinParcel.x;
-            int offsetY = parcel.y - terrainModel.MinParcel.y;
-
-            int chunkX = offsetX / terrainModel.ChunkSizeInParcels;
-            int chunkY = offsetY / terrainModel.ChunkSizeInParcels;
-
-            int chunkIndex = chunkX + (chunkY * terrainModel.SizeInChunks);
-
-            if (chunkIndex < 0 || chunkIndex >= terrainChunkColliders.Count)
-                return;
-
-            if (chunkIndex != activeChunk && activeChunk >= 0)
-                terrainChunkColliders[activeChunk].enabled = false;
-
-            terrainChunkColliders[chunkIndex].enabled = isEnabled;
-            activeChunk = chunkIndex;
-
-        }
-
-        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone)
-        {
-            this.ownedParcels = ownedParcels;
-            this.emptyParcels = emptyParcels;
             this.terrainGenData = terrainGenData;
+            this.terrainData = terrainData;
+            this.roads = roads;
+            this.occupied = occupied;
+            this.empty = empty;
 
             parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
@@ -128,15 +91,14 @@ namespace DCL.Landscape
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
-        public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
+        public void Show(AsyncLoadProcessReport postRealmLoadReport)
         {
             if (!isInitialized) return;
 
             if (rootGo != null)
                 rootGo.gameObject.SetActive(true);
 
-            UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
-
+            terrainModel.WriteTo(terrainData);
             IsTerrainShown = true;
 
             postRealmLoadReport.SetProgress(1f);
@@ -149,26 +111,16 @@ namespace DCL.Landscape
             if (rootGo != null && rootGo.gameObject.activeSelf)
             {
                 rootGo.gameObject.SetActive(false);
-
-                foreach (var collider in terrainChunkColliders)
-                    if (collider.enabled) collider.enabled = false;
-
                 IsTerrainShown = false;
             }
         }
 
-        public async UniTask GenerateGenesisTerrainAndShowAsync(
-            uint worldSeed = 1,
-            bool withHoles = true,
-            bool hideTrees = false,
-            bool hideDetails = false,
-            AsyncLoadProcessReport processReport = null,
-            CancellationToken cancellationToken = default)
+        public void GenerateAndShow(AsyncLoadProcessReport processReport = null)
         {
             if (!isInitialized) return;
 
-            var worldModel = new WorldModel(ownedParcels);
-            terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding);
+            terrainModel = new TerrainModel(roads, occupied, empty, parcelSize,
+                terrainGenData.borderPadding);
 
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
@@ -189,10 +141,9 @@ namespace DCL.Landscape
                     }
 
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
-
-                    processedTerrainDataCount = 0;
-
                     processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
+
+                    terrainModel.WriteTo(terrainData);
 
                     if (processReport != null) processReport.SetProgress(1f);
                 }
@@ -210,9 +161,6 @@ namespace DCL.Landscape
                 IsTerrainGenerated = true;
                 IsTerrainShown = true;
 
-                emptyParcels.Dispose();
-                ownedParcels.Dispose();
-
                 float afterCleaning = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
                 ReportHub.Log(ReportCategory.LANDSCAPE,
                     $"The landscape cleaning process cleaned {afterCleaning - beforeCleaning}MB of memory");
@@ -220,8 +168,6 @@ namespace DCL.Landscape
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
-
-            GenesisTerrainGenerated?.Invoke(terrains);
         }
     }
 }

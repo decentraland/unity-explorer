@@ -36,7 +36,7 @@ namespace DCL.Settings.ModuleControllers
             SetGraphicsQualitySettings(view.DropdownView.Dropdown.value);
 
             realmPartitionSettingsAsset.OnMaxLoadingDistanceInParcelsChanged += OnMaxLoadingDistanceInParcelsChanged;
-            landscapeData.OnDetailDistanceChanged += OnDetailDistanceChanged;
+            landscapeData.OnEnvironmentDistanceChanged += OnDetailDistanceChanged;
         }
 
         private void LoadGraphicsQualityOptions()
@@ -92,7 +92,7 @@ namespace DCL.Settings.ModuleControllers
 
             var lastQualityLevel = qualitySettingsAsset.customSettings[QualitySettings.GetQualityLevel()];
             if (lastQualityLevel.environmentSettings.sceneLoadRadius == realmPartitionSettingsAsset.MaxLoadingDistanceInParcels &&
-                Mathf.Approximately(lastQualityLevel.environmentSettings.chunkCullDistance, landscapeData.DetailDistance))
+                Mathf.Approximately(lastQualityLevel.environmentSettings.chunkCullDistance, landscapeData.EnvironmentDistance))
                 return;
 
             // Set the custom label
@@ -103,7 +103,7 @@ namespace DCL.Settings.ModuleControllers
         {
             view.DropdownView.Dropdown.onValueChanged.RemoveListener(SetGraphicsQualitySettings);
             realmPartitionSettingsAsset.OnMaxLoadingDistanceInParcelsChanged -= OnMaxLoadingDistanceInParcelsChanged;
-            landscapeData.OnDetailDistanceChanged -= OnDetailDistanceChanged;
+            landscapeData.OnEnvironmentDistanceChanged -= OnDetailDistanceChanged;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Movement.Tests
             }
         }
 
-        private static ParcelEncoder parcelEncoder => new (Settings.landscapeData.terrainData);
+        private static ParcelEncoder parcelEncoder => new (Settings.landscapeData.genesisCityData);
 
         [SetUp]
         public void SetUp()
