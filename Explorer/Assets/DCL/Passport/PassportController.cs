@@ -113,7 +113,7 @@ namespace DCL.Passport
         private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
-        private CancellationTokenSource? openPassportFromBadgeNotificationCts;
+        private CancellationTokenSource? openPassportFromNotificationCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
         private CancellationTokenSource? photoLoadingCts;
         private CancellationTokenSource? friendshipStatusCts;
@@ -221,6 +221,7 @@ namespace DCL.Passport
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((_, _) => { });
         }
@@ -318,12 +319,14 @@ namespace DCL.Passport
             isOwnProfile = inputData.IsOwnProfile;
             alreadyLoadedSections = PassportSection.NONE;
             cursor.Unlock();
+
             if (string.IsNullOrEmpty(inputData.BadgeIdSelected))
                 OpenOverviewSection();
             else
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+
             //We disable the buttons, they will be enabled further down if they meet the requisites
             viewInstance!.JumpInButton.gameObject.SetActive(false);
             viewInstance.ChatButton.gameObject.SetActive(false);
@@ -372,7 +375,7 @@ namespace DCL.Passport
         public override void Dispose()
         {
             passportErrorsController?.Hide(true);
-            openPassportFromBadgeNotificationCts.SafeCancelAndDispose();
+            openPassportFromNotificationCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController?.Dispose();
             friendshipStatusCts.SafeCancelAndDispose();
@@ -514,8 +517,24 @@ namespace DCL.Passport
             if (parameters.Length > 0 && parameters[0] is BadgeGrantedNotification badgeNotification)
                 badgeIdToOpen = badgeNotification.Metadata.Id;
 
-            openPassportFromBadgeNotificationCts = openPassportFromBadgeNotificationCts.SafeRestart();
-            OpenPassportFromBadgeNotificationAsync(badgeIdToOpen, openPassportFromBadgeNotificationCts.Token).Forget();
+            openPassportFromNotificationCts = openPassportFromNotificationCts.SafeRestart();
+            OpenPassportFromBadgeNotificationAsync(badgeIdToOpen, openPassportFromNotificationCts.Token).Forget();
+        }
+
+        private void OnReferralUserAcceptedNotificationClicked(object[] parameters)
+        {
+            if (parameters.Length <= 0) return;
+            ReferralNotification notification = (ReferralNotification) parameters[0];
+            openPassportFromNotificationCts = openPassportFromNotificationCts.SafeRestart();
+            OpenPassportAsync(openPassportFromNotificationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid OpenPassportAsync(CancellationToken ct)
+            {
+                try { await mvcManager.ShowAsync(IssueCommand(new Params(notification.Metadata.invitedUserAddress)), ct); }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+            }
         }
 
         private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(string badgeIdToOpen, CancellationToken ct)
@@ -562,6 +581,7 @@ namespace DCL.Passport
             {
                 // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
                 Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
                 // Dont show any interaction for our own user
                 if (ownProfile?.UserId == inputData.UserId) return;
 
@@ -588,6 +608,7 @@ namespace DCL.Passport
 
                 bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
                 viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
+
                 //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
                 viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
 
@@ -619,6 +640,7 @@ namespace DCL.Passport
         private void BlockUserClicked()
         {
             BlockUserClickedAsync(friendshipStatusCts!.Token).Forget();
+
             async UniTaskVoid BlockUserClickedAsync(CancellationToken ct)
             {
                 await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(targetProfile!.UserId), targetProfile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct);

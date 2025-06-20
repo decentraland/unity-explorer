@@ -6,6 +6,7 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly IDecentralandUrlsSource decentralandUrls;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -85,7 +87,8 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            IDecentralandUrlsSource decentralandUrls)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -112,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.featureFlagsCache = featureFlagsCache;
+            this.decentralandUrls = decentralandUrls;
         }
 
         public void Dispose() { }
@@ -148,7 +152,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                featureFlagsCache
+                featureFlagsCache,
+                decentralandUrls
             ));
         }
 
