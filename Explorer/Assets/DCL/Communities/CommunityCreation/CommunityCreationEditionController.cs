@@ -44,6 +44,7 @@ namespace DCL.Communities.CommunityCreation
         private CancellationTokenSource loadLandsAndWorldsCts;
         private CancellationTokenSource loadCommunityDataCts;
         private CancellationTokenSource showErrorCts;
+        private CancellationTokenSource openImageSelectionCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -120,6 +121,7 @@ namespace DCL.Communities.CommunityCreation
             loadLandsAndWorldsCts?.SafeCancelAndDispose();
             loadCommunityDataCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
+            openImageSelectionCts?.SafeCancelAndDispose();
         }
 
         public override void Dispose()
@@ -139,6 +141,7 @@ namespace DCL.Communities.CommunityCreation
             loadLandsAndWorldsCts?.SafeCancelAndDispose();
             loadCommunityDataCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
+            openImageSelectionCts?.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -169,8 +172,21 @@ namespace DCL.Communities.CommunityCreation
 
         private void OpenImageSelection()
         {
+            openImageSelectionCts = openImageSelectionCts.SafeRestart();
+            OpenImageSelectionAsync(openImageSelectionCts.Token).Forget();
+        }
+
+        private async UniTaskVoid OpenImageSelectionAsync(CancellationToken ct)
+        {
+            viewInstance!.backgroundCloseButton.enabled = false;
+
             FileBrowser.Instance.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
             byte[] data = FileBrowser.Instance.CurrentOpenSingleFileData;
+
+            // Due to a bug in the file browser (for Mac), we need to wait 2 frames after we close it to ensure we don't click accidentally in the background close button.
+            // TODO: Investigate how to fix this properly.
+            await UniTask.DelayFrame(2, cancellationToken: ct);
+            viewInstance!.backgroundCloseButton.enabled = true;
 
             if (data != null)
             {
