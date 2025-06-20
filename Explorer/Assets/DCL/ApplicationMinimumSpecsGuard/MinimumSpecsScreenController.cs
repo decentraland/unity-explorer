@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Prefs;
 using MVC;
 using System;
 using System.Threading;
@@ -32,8 +33,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnToggleChanged(bool dontShowAgain)
         {
-            PlayerPrefs.SetInt(PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY, dontShowAgain ? 1 : 0);
-            PlayerPrefs.Save();
+            DCLPlayerPrefs.SetInt(PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY, dontShowAgain ? 1 : 0);
+            DCLPlayerPrefs.Save();
         }
 
         public override void Dispose()

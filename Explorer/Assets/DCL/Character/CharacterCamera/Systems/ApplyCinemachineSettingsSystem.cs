@@ -6,6 +6,7 @@ using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Prefs;
 using DCL.Settings.Settings;
 using ECS.Abstract;
 using UnityEngine;
@@ -34,7 +35,7 @@ namespace DCL.Character.CharacterCamera.Systems
 
         public ApplyCinemachineSettingsSystem(World world, IDebugContainerBuilder debugBuilder, ControlsSettingsAsset controlsSettingsAsset, bool isDebug) : base(world)
         {
-            currentSens = PlayerPrefs.GetFloat(PPREF_SENS, 10);
+            currentSens = DCLPlayerPrefs.GetFloat(PPREF_SENS, 10);
 
             sensitivitySlider = new ElementBinding<float>(currentSens);
             noiseSlider = new ElementBinding<float>(0.5f);
@@ -92,7 +93,7 @@ namespace DCL.Character.CharacterCamera.Systems
             if (!Mathf.Approximately(sensitivitySlider.Value, currentSens))
             {
                 currentSens = sensitivitySlider.Value;
-                PlayerPrefs.SetFloat(PPREF_SENS, currentSens);
+                DCLPlayerPrefs.SetFloat(PPREF_SENS, currentSens);
             }
 
             UpdateCameraSettingsQuery(World);
