@@ -159,8 +159,21 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private void BlockUserClicked(MemberData profile) =>
-            mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(profile.memberAddress), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)), cancellationToken).Forget();
+        private async void BlockUserClicked(MemberData profile)
+        {
+            try
+            {
+                await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(
+                    new BlockUserPromptParams(new Web3Address(profile.memberAddress), profile.name, BlockUserPromptParams.UserBlockAction.BLOCK)),
+                    cancellationToken);
+                await FetchFriendshipStatusAndRefreshAsync(profile.memberAddress, cancellationToken);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
+            }
+        }
 
         private void OnBanUser(MemberData profile)
         {
@@ -290,7 +303,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
                 chatEventBus.OpenPrivateConversationUsingUserId(profile.memberAddress);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
@@ -353,17 +367,23 @@ namespace DCL.Communities.CommunitiesCard.Members
                         break;
                 }
 
-                Friends.FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userData.userAddress, ct);
-
-                currentSectionFetchData.items.Find(item => item.memberAddress.Equals(userData.userAddress))
-                                       .friendshipStatus = ConvertFriendshipStatus(status);
-
-                view.RefreshGrid();
+                await FetchFriendshipStatusAndRefreshAsync(userData.userAddress, ct);
             }
-            catch (Exception ex) when (ex is OperationCanceledException)
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
+        }
+
+        private async UniTask FetchFriendshipStatusAndRefreshAsync(string userId, CancellationToken ct)
+        {
+            Friends.FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userId, ct);
+
+            currentSectionFetchData.items.Find(item => item.memberAddress.Equals(userId))
+                                   .friendshipStatus = ConvertFriendshipStatus(status);
+
+            view.RefreshGrid();
         }
 
         private static FriendshipStatus ConvertFriendshipStatus(Friends.FriendshipStatus status)

@@ -183,7 +183,8 @@ namespace DCL.Communities.CommunitiesCard
                 chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
                 CloseController();
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
