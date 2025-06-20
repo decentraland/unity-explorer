@@ -98,6 +98,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CreateCommunityButtonClicked += CreateCommunity;
             dataProvider.CommunityCreated += ReloadBrowser;
             dataProvider.CommunityDeleted += ReloadBrowser;
+            dataProvider.CommunityUpdated += OnCommunityUpdated;
+            dataProvider.CommunityJoined += OnCommunityJoined;
+            dataProvider.CommunityLeft += OnCommunityLeft;
         }
 
         public void Activate()
@@ -146,6 +149,9 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CreateCommunityButtonClicked -= CreateCommunity;
             dataProvider.CommunityCreated -= ReloadBrowser;
             dataProvider.CommunityDeleted -= ReloadBrowser;
+            dataProvider.CommunityUpdated -= OnCommunityUpdated;
+            dataProvider.CommunityJoined -= OnCommunityJoined;
+            dataProvider.CommunityLeft -= OnCommunityLeft;
 
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
@@ -343,10 +349,10 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CleanSearchBar(raiseOnChangeEvent: false);
         }
 
-        private void JoinCommunity(int index, string communityId) =>
-            JoinCommunityAsync(index, communityId, CancellationToken.None).Forget();
+        private void JoinCommunity(string communityId) =>
+            JoinCommunityAsync(communityId, CancellationToken.None).Forget();
 
-        private async UniTaskVoid JoinCommunityAsync(int index, string communityId, CancellationToken ct)
+        private async UniTaskVoid JoinCommunityAsync(string communityId, CancellationToken ct)
         {
             var result = await dataProvider.JoinCommunityAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -355,8 +361,6 @@ namespace DCL.Communities.CommunitiesBrowser
                 showErrorCts = showErrorCts.SafeRestart();
                 await warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
             }
-
-            view.UpdateJoinedCommunity(index, result.Value);
         }
 
         private void OpenCommunityProfile(string communityId) =>
@@ -384,5 +388,14 @@ namespace DCL.Communities.CommunitiesBrowser
                     canCreateCommunities: canCreate,
                     communityId: string.Empty)), ct).Forget();
         }
+
+        private void OnCommunityUpdated(string _) =>
+            ReloadBrowser();
+
+        private void OnCommunityJoined(string communityId, bool success) =>
+            view.UpdateJoinedCommunity(communityId, true, success);
+
+        private void OnCommunityLeft(string communityId, bool success) =>
+            view.UpdateJoinedCommunity(communityId, false, success);
     }
 }

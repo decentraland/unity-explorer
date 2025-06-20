@@ -3,7 +3,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,8 +13,10 @@ namespace DCL.Communities
     public class FakeCommunitiesDataProvider : ICommunitiesDataProvider
     {
         public event Action CommunityCreated;
+        public event Action<string> CommunityUpdated;
         public event Action CommunityDeleted;
-        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
+        public event Action<string, bool> CommunityJoined;
+        public event Action<string, bool> CommunityLeft;
 
         private readonly List<GetUserCommunitiesData.CommunityData> currentCommunities;
 

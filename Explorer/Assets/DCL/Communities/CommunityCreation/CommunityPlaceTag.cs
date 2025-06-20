@@ -28,11 +28,12 @@ namespace DCL.Communities.CommunityCreation
         private void OnDestroy() =>
             removeButton.onClick.RemoveAllListeners();
 
-        public void Setup(string id, bool isWorld, string text)
+        public void Setup(string id, bool isWorld, string text, bool allowRemove)
         {
             Id = id;
             IsWorld = isWorld;
             Text = text;
+            removeButton.gameObject.SetActive(allowRemove);
         }
     }
 }
