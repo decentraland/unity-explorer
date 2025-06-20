@@ -110,6 +110,8 @@ namespace DCL.Prefs
             userData.Strings.Clear();
             userData.Ints.Clear();
             userData.Floats.Clear();
+            PlayerPrefs.DeleteAll();
+            dataChanged = true;
         }
 
         public void Save()
