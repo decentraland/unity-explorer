@@ -15,6 +15,9 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             if (SystemInfo.graphicsMemorySize < MINIMUM_VRAM)
                 return false;
+            
+            if (!SystemInfo.supportsComputeShaders)
+                return false;
 
             return true;
         }
