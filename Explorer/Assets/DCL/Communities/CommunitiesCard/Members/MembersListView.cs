@@ -25,8 +25,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         }
 
         private const int ELEMENT_MISSING_THRESHOLD = 5;
-        private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to kick '{0}' from {1}?";
-        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban '{0}' from {1}?";
+        private const string KICK_MEMBER_TEXT_FORMAT = "Are you sure you want to remove [{0}] from the [{1}] Community?";
+        private const string BAN_MEMBER_TEXT_FORMAT = "Are you sure you want to ban [{0}] from the [{1}] Community?";
         private const string KICK_MEMBER_CANCEL_TEXT = "CANCEL";
         private const string KICK_MEMBER_CONFIRM_TEXT = "KICK";
         private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
@@ -145,7 +145,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                         KICK_MEMBER_CANCEL_TEXT,
                         KICK_MEMBER_CONFIRM_TEXT,
                         kickSprite,
-                        false, false),
+                        false, false,
+                        userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
                     ct);
 
                 if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
@@ -167,7 +168,8 @@ namespace DCL.Communities.CommunitiesCard.Members
                         BAN_MEMBER_CANCEL_TEXT,
                         BAN_MEMBER_CONFIRM_TEXT,
                         banSprite,
-                        false, false),
+                        false, false,
+                        userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
                     ct);
 
                 if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;

@@ -200,6 +200,8 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
 
+            viewInstance.SetConfirmationDialogDependencies(profileRepositoryWrapper);
+
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
                     viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
