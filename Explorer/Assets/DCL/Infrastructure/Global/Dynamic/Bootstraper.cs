@@ -11,6 +11,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
@@ -211,7 +212,11 @@ namespace Global.Dynamic
         {
             var anyFailure = false;
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            foreach (IDCLWorldPlugin staticContainerECSWorldPlugin in staticContainer.ECSWorldPlugins) { await scenePluginSettingsContainer.InitializePluginAsync(staticContainerECSWorldPlugin, ct); }
+
+            staticContainer.ECSWorldPlugins.ForEach(plugin => scenePluginSettingsContainer.InitializePluginAsync(plugin, ct));
+
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => { return scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized); }).EnsureNotNull());
             await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin

@@ -21,13 +21,13 @@ namespace DCL.Utilities
         private const string STP_DATA_STORE_KEY = "Settings_STP";
 
         private readonly SettingsDataStore settingsDataStore;
-
-        private float savedUpscalingDuringCharacterPreview;
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
-        private bool ignoreFirstResolutionChange;
 
+        private float savedUpscalingDuringCharacterPreview;
+        private bool ignoreFirstResolutionChange;
         [CanBeNull] private SettingsSliderModuleView sliderView;
+        private float stepMultiplier;
 
         public UpscalingController(CharacterPreviewEventBus characterPreviewEventBus)
         {
@@ -64,6 +64,7 @@ namespace DCL.Utilities
             SetSTPSetting(STP_VALUE_FOR_CHARACTER_PREVIEW, false, false);
         }
 
+        //Should always get in decimal form
         private void SetSTPSetting(float sliderValue, bool updateSlider, bool updateStoredValue)
         {
             foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
@@ -73,7 +74,7 @@ namespace DCL.Utilities
                 settingsDataStore.SetSliderValue(STP_DATA_STORE_KEY, sliderValue);
 
             if (updateSlider)
-                sliderView?.SliderView.Slider.SetValueWithoutNotify(sliderValue);
+                sliderView?.SliderView.Slider.SetValueWithoutNotify(sliderValue * stepMultiplier);
         }
 
         public void ResolutionChanged(Resolution resolution)
@@ -99,14 +100,15 @@ namespace DCL.Utilities
         public void SetSliderModuleView(SettingsSliderModuleView stpSettingsView)
         {
             sliderView = stpSettingsView;
-
+            stepMultiplier = sliderView!.stepMultiplier;
             sliderView!.SliderView.Slider.onValueChanged.AddListener(newValue =>
             {
                 //If there is a slider change, we want it to persist when the menu is closed
                 savedUpscalingDuringCharacterPreview = newValue;
-                SetSTPSetting(newValue, false, true);
+                SetSTPSetting(newValue / 10f, false, true);
             });
-            sliderView.SliderView.Slider.SetValueWithoutNotify(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY));
+
+            sliderView.SliderView.Slider.SetValueWithoutNotify(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY) * stepValue);
         }
     }
 }
