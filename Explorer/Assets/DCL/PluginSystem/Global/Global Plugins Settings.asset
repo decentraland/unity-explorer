@@ -86,6 +86,13 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
+        <EmotesSettings>k__BackingField:
+          <TimeBetweenEmotes>k__BackingField: 3
+          <IntroEmoteURN>k__BackingField: raiseHand
+          <JumpInEmoteURN>k__BackingField: fistpump
+          <FunnyEmotes>k__BackingField:
+          - robot
+          - disco
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

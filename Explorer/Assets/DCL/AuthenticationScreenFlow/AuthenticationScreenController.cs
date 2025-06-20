@@ -68,6 +68,7 @@ namespace DCL.AuthenticationScreenFlow
 #endif
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
+        private readonly AuthScreenEmotesSettings emotesSettings;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -93,7 +94,8 @@ namespace DCL.AuthenticationScreenFlow
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
-            World world)
+            World world,
+            AuthScreenEmotesSettings emotesSettings)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -109,6 +111,7 @@ namespace DCL.AuthenticationScreenFlow
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.buildData = buildData;
             this.world = world;
+            this.emotesSettings = emotesSettings;
         }
 
         public override void Dispose()
@@ -143,7 +146,7 @@ namespace DCL.AuthenticationScreenFlow
 #else
             viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
 #endif
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);
@@ -351,8 +354,12 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            AnimateAndAwaitAsync().Forget();
+            return;
+
             async UniTaskVoid AnimateAndAwaitAsync()
             {
+                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
@@ -360,8 +367,6 @@ namespace DCL.AuthenticationScreenFlow
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
-
-            AnimateAndAwaitAsync().Forget();
         }
 
         private void SwitchState(ViewState state)
