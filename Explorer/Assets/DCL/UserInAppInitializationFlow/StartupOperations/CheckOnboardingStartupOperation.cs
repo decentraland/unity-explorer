@@ -86,9 +86,6 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         private async UniTask<EnumResult<TaskError>> TryToChangeToOnBoardingRealmAsync(CancellationToken ct)
         {
-            //TODO: REMOVE THIS BEFORE MERGING, THIS IS JUST TO AVOID AN ERROR CURRENTLY ON ZONE!!!!!!!!!!!
-            return EnumResult<TaskError>.SuccessResult();
-
             // It the app is open from any external way, we will ignore the onboarding flow
             if (appParameters.HasFlag(AppArgsFlags.REALM) || appParameters.HasFlag(AppArgsFlags.POSITION) || appParameters.HasFlag(AppArgsFlags.LOCAL_SCENE))
                 return EnumResult<TaskError>.SuccessResult();
