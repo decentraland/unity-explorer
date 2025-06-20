@@ -5,7 +5,6 @@ using DCL.Backpack;
 using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
-using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
@@ -132,7 +131,6 @@ namespace DCL.Passport
         private GenericContextMenuElement contextMenuSeparator;
         private GenericContextMenuElement contextMenuJumpInButton;
         private GenericContextMenuElement contextMenuBlockUserButton;
-        private CallButtonController? callButtonController;
 
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
@@ -174,7 +172,6 @@ namespace DCL.Passport
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
-            ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
@@ -241,8 +238,6 @@ namespace DCL.Passport
         {
             Assert.IsNotNull(world);
 
-            callButtonController = new CallButtonController(viewInstance.VoiceChatButton, voiceChatCallStatusService);
-            callButtonController.StartCall += OnStartCall;
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider, decentralandUrlsSource, isNameEditorEnabled);
@@ -273,6 +268,10 @@ namespace DCL.Passport
             viewInstance.JumpInButton.onClick.AddListener(OnJumpToFriendButtonClicked);
             viewInstance.ChatButton.onClick.AddListener(OnChatButtonClicked);
 
+            viewInstance.CallButton.gameObject.SetActive(isCallEnabled);
+            if (isCallEnabled)
+                viewInstance.CallButton.onClick.AddListener(OnStartCallButtonClicked);
+
             viewInstance.PhotosSectionButton.gameObject.SetActive(enableCameraReel);
             viewInstance.FriendInteractionContainer.SetActive(enableFriendshipInteractions);
             viewInstance.MutualFriends.Root.SetActive(enableFriendshipInteractions);
@@ -286,9 +285,18 @@ namespace DCL.Passport
                          .AddControl(contextMenuBlockUserButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(viewInstance.BlockText, viewInstance.BlockSprite, BlockUserClicked), false));
         }
 
-        private void OnStartCall(string userId)
+        private void OnStartCallButtonClicked()
         {
-            voiceChatCallStatusService.StartCall(new Web3Address(userId));
+            OnStartCallAsync().Forget();
+        }
+
+        private async UniTaskVoid OnStartCallAsync()
+        {
+            //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            chatEventBus.OpenConversationUsingUserId(inputData.UserId);
+            await UniTask.Delay(500);
+            chatEventBus.StartCallInCurrentConversation();
         }
 
         private void OnChatButtonClicked()
@@ -340,10 +348,10 @@ namespace DCL.Passport
                 OpenBadgesSection(inputData.BadgeIdSelected);
 
             inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
-            //We disable the buttons, they will be enabled further down if they meet the requisites
+
+            //We disable the optional buttons, they will be enabled further down if they meet the requisites
             viewInstance!.JumpInButton.gameObject.SetActive(false);
             viewInstance.ChatButton.gameObject.SetActive(false);
-            viewInstance.VoiceChatButton.gameObject.SetActive(false);
 
             viewInstance.ErrorNotification.Hide(true);
 
@@ -352,9 +360,6 @@ namespace DCL.Passport
                 ShowFriendshipInteraction();
                 ShowMutualFriends();
             }
-
-            //TODO: Change the user call status to the one provided by backend as soon as we have the integrations
-            callButtonController.SetCallStatusForUser(CallButtonController.OtherUserCallStatus.USER_AVAILABLE, currentUserId);
             PassportOpened?.Invoke(currentUserId, isOwnProfile);
         }
 
@@ -379,7 +384,6 @@ namespace DCL.Passport
 
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
-            callButtonController?.Reset();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -388,7 +392,7 @@ namespace DCL.Passport
                 viewInstance.BackgroundButton.OnClickAsync(ct),
                 viewInstance.JumpInButton.OnClickAsync(ct),
                 viewInstance.ChatButton.OnClickAsync(ct),
-                viewInstance.VoiceChatButton.CallButton.OnClickAsync(ct));
+                viewInstance.CallButton.OnClickAsync(ct));
 
         public override void Dispose()
         {
@@ -401,12 +405,9 @@ namespace DCL.Passport
             fetchMutualFriendsCts?.SafeCancelAndDispose();
             photoLoadingCts.SafeCancelAndDispose();
             jumpToFriendLocationCts.SafeCancelAndDispose();
-            callButtonController?.Dispose();
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
 
-            if(callButtonController != null)
-                callButtonController.StartCall -= OnStartCall;
 
             foreach (IPassportModuleController module in commonPassportModules)
                 module.Dispose();
@@ -612,6 +613,7 @@ namespace DCL.Passport
 
                 bool friendOnlineStatus = friendOnlineStatusCacheProxy.Object!.GetFriendStatus(inputData.UserId) != OnlineStatus.OFFLINE;
                 viewInstance!.JumpInButton.gameObject.SetActive(friendOnlineStatus);
+
                 //TODO FRAN: We need to add here the other reasons why this button could be disabled. For now, only if blocked or blocked by.
                 viewInstance.ChatButton.gameObject.SetActive(friendshipStatus != FriendshipStatus.BLOCKED && friendshipStatus != FriendshipStatus.BLOCKED_BY);
 

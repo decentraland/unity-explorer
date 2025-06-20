@@ -202,7 +202,6 @@ namespace DCL.PluginSystem.Global
                 onlineUsersProvider,
                 realmNavigator,
                 web3IdentityCache,
-                viewDependencies,
                 nftNamesProvider,
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,

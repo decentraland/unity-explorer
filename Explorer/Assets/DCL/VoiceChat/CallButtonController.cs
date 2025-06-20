@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using DCL.Chat.EventBus;
 using System;
 using System.Threading;
 using Utility;
@@ -21,17 +22,25 @@ namespace DCL.VoiceChat
 
         private readonly CallButtonView view;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IChatEventBus chatEventBus;
         private bool isClickedOnce = false;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
 
-        public CallButtonController(CallButtonView view, IVoiceChatCallStatusService voiceChatCallStatusService)
+        public CallButtonController(CallButtonView view, IVoiceChatCallStatusService voiceChatCallStatusService, IChatEventBus chatEventBus)
         {
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.chatEventBus = chatEventBus;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
             voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
+            chatEventBus.StartCall += OnChatEventBusStartCall;
+        }
+
+        private void OnChatEventBusStartCall()
+        {
+            OnCallButtonClicked();
         }
 
         public void Reset()
@@ -138,6 +147,7 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             voiceChatCallStatusService.StatusChanged -= OnVoiceChatStatusChanged;
+            chatEventBus.StartCall -= OnChatEventBusStartCall;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
         }
 
