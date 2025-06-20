@@ -1,4 +1,5 @@
 ﻿using DCL.Friends.UserBlocking;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Utilities;
 
@@ -6,7 +7,6 @@ namespace DCL.Settings.ModuleControllers
 {
     public class HideBlockedUsersChatMessagesController : SettingsFeatureController
     {
-        private const string HIDE_ENABLED_DATA_STORE_KEY = "Settings_HideBlockedUsersChatMessages";
 
         private readonly SettingsToggleModuleView view;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
@@ -17,8 +17,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
 
-            if (settingsDataStore.HasKey(HIDE_ENABLED_DATA_STORE_KEY))
-                view.ToggleView.Toggle.isOn = settingsDataStore.GetToggleValue(HIDE_ENABLED_DATA_STORE_KEY);
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES))
+                view.ToggleView.Toggle.isOn = settingsDataStore.GetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES);
 
             view.ToggleView.Toggle.onValueChanged.AddListener(SetToggle);
             SetToggle(view.ToggleView.Toggle.isOn);
@@ -30,7 +30,7 @@ namespace DCL.Settings.ModuleControllers
 
             userBlockingCacheProxy.Object.HideChatMessages = enabled;
 
-            settingsDataStore.SetToggleValue(HIDE_ENABLED_DATA_STORE_KEY, enabled, save: true);
+            settingsDataStore.SetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES, enabled, save: true);
         }
 
         public override void Dispose() =>

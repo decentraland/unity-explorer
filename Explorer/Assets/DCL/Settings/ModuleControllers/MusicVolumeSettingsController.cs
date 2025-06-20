@@ -1,4 +1,5 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.Prefs;
+using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
 
@@ -7,7 +8,6 @@ namespace DCL.Settings.ModuleControllers
     public class MusicVolumeSettingsController : SettingsFeatureController
     {
         private const string MUSIC_VOLUME_EXPOSED_PARAM = "Music_Volume";
-        private const string MUSIC_VOLUME_DATA_STORE_KEY = "Settings_MusicVolume";
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
@@ -17,8 +17,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
 
-            if (settingsDataStore.HasKey(MUSIC_VOLUME_DATA_STORE_KEY))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(MUSIC_VOLUME_DATA_STORE_KEY);
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_MUSIC_VOLUME))
+                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_MUSIC_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetMusicVolumeSettings);
             SetMusicVolumeSettings(view.SliderView.Slider.value);
@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetMusicVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(MUSIC_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            settingsDataStore.SetSliderValue(MUSIC_VOLUME_DATA_STORE_KEY, volumePercentage, save: true);
+            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_MUSIC_VOLUME, volumePercentage, save: true);
         }
 
         public override void Dispose()

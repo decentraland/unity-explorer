@@ -36,7 +36,7 @@ namespace DCL.DebugUtilities.Views
         }
 
         private static string ConstructPrefsKey(string title) =>
-            $"DebugWidget_Foldout_{title}";
+            string.Format(DCLPrefKeys.DEBUG_WIDGET_FOLDOUT, title);
 
         public new class UxmlFactory : UxmlFactory<DebugWidget> { }
     }

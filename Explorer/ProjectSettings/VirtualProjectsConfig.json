@@ -1,9 +1,6 @@
 {
   "PlayerTags": [
-    "PrefsInMemory",
-    "PrefsDiskPrefix1",
-    "PrefsDiskPrefix2",
-    "PrefsDiskPrefix3"
+    "PrefsInMemory"
   ],
   "version": "1.3.3"
 }

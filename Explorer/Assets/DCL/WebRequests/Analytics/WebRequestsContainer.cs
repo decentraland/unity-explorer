@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Prefs;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
 using DCL.WebRequests.RequestsHub;
@@ -168,8 +169,8 @@ namespace DCL.WebRequests.Analytics
             private readonly PersistentSetting<float> delaySetting;
 
             public ElementBindingOptions() : this(
-                PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false),
-                PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10)
+                PersistentSetting.CreateBool(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED, false),
+                PersistentSetting.CreateFloat(DCLPrefKeys.WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS, 10)
             ) { }
 
             public ElementBindingOptions(PersistentSetting<bool> enableSetting, PersistentSetting<float> delaySetting)

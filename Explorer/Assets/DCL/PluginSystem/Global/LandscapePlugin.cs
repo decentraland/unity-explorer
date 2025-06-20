@@ -129,13 +129,13 @@ namespace DCL.PluginSystem.Global
             //As of now, if we have to turn it off because of an emergency situation, we need to regenerate the cache.
             //GPUI cache and regular terrain cache are not compatible
             //Also, when decision is taken, make `forceCacheRegen` private again
-            int storedGPUIValue = DCLPlayerPrefs.GetInt(FeatureFlagsStrings.GPUI_ENABLED, 0);
+            int storedGPUIValue = DCLPlayerPrefs.GetInt(DCLPrefKeys.GPUI_ENABLED);
             bool wasEnabled = storedGPUIValue == 1;
 
             if (isGPUIEnabledFF != wasEnabled)
                 terrainGenerator.forceCacheRegen = true;
 
-            DCLPlayerPrefs.SetInt(FeatureFlagsStrings.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
 
             if (isGPUIEnabledFF)
                 gpuiWrapper = new GPUIWrapper();

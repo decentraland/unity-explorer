@@ -1,12 +1,11 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class EnvironmentDistanceSettingsController : SettingsFeatureController
     {
-        private const string ENVIRONMENT_DISTANCE_DATA_STORE_KEY = "Settings_EnvironmentDistance";
-
         private readonly SettingsSliderModuleView view;
         private readonly LandscapeData landscapeData;
 
@@ -15,8 +14,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.landscapeData = landscapeData;
 
-            if (settingsDataStore.HasKey(ENVIRONMENT_DISTANCE_DATA_STORE_KEY))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(ENVIRONMENT_DISTANCE_DATA_STORE_KEY);
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE))
+                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetEnvironmentDistanceSettings);
             SetEnvironmentDistanceSettings(view.SliderView.Slider.value);
@@ -30,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void OnEnvironmentDistanceSettingsChangedFromOutside(float newDistance)
         {
             view.SliderView.Slider.value = newDistance;
-            settingsDataStore.SetSliderValue(ENVIRONMENT_DISTANCE_DATA_STORE_KEY, newDistance, save: true);
+            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE, newDistance, save: true);
         }
 
         public override void Dispose()

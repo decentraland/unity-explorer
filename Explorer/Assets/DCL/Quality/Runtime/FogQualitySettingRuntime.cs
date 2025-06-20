@@ -1,3 +1,4 @@
+using DCL.Prefs;
 using UnityEngine;
 using Utility.Storage;
 
@@ -20,7 +21,7 @@ namespace DCL.Quality.Runtime
         /// <param name="currentPreset"></param>
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset)
         {
-            active = PersistentSetting.CreateBool("FogActive", currentPreset.fogSettings.m_Fog);
+            active = PersistentSetting.CreateBool(DCLPrefKeys.PS_FOG_ACTIVE, currentPreset.fogSettings.m_Fog);
 
             // Apply RenderSettings
             RenderSettings.fog = active.Value;

@@ -1,4 +1,5 @@
 ﻿using DCL.Optimization.PerformanceBudgeting;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
@@ -9,8 +10,6 @@ namespace DCL.Settings.ModuleControllers
 {
     public class MemoryLimitSettingController : SettingsFeatureController
     {
-        private const string MEMORY_CAP_DATA_STORE_KEY = "Settings_MemoryCap";
-
         private readonly SettingsDropdownModuleView view;
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
@@ -21,8 +20,8 @@ namespace DCL.Settings.ModuleControllers
             this.systemMemoryCap = systemMemoryCap;
             this.sceneLoadingLimit = sceneLoadingLimit;
 
-            if (settingsDataStore.HasKey(MEMORY_CAP_DATA_STORE_KEY))
-                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY) < view.DropdownView.Dropdown.options.Count ? settingsDataStore.GetDropdownValue(MEMORY_CAP_DATA_STORE_KEY) : DefaultMemoryCap();
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_MEMORY_CAP))
+                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_MEMORY_CAP) < view.DropdownView.Dropdown.options.Count ? settingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_MEMORY_CAP) : DefaultMemoryCap();
             else
                 view.DropdownView.Dropdown.value = DefaultMemoryCap();
 
@@ -52,7 +51,7 @@ namespace DCL.Settings.ModuleControllers
 
             sceneLoadingLimit.UpdateMemoryCap();
 
-            settingsDataStore.SetDropdownValue(MEMORY_CAP_DATA_STORE_KEY, index, save: true);
+            settingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_MEMORY_CAP, index, save: true);
         }
     }
 }
