@@ -160,7 +160,7 @@ MonoBehaviour:
           <ModuleName>k__BackingField: Upscaler
           <Description>k__BackingField: Rendering Upscaler
           <IsEnabled>k__BackingField: 1
-          sliderType: 1
+          sliderType: 3
           minValue: 5
           maxValue: 12
           wholeNumbers: 1
