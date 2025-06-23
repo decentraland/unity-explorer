@@ -15,6 +15,8 @@ namespace DCL.Nametags
 {
     public class NametagView : MonoBehaviour
     {
+        private const float COMMUNITY_TEXT_MARGIN = 0.02f;
+
         private static NativeArray<Keyframe> alphaCurveKeysNative;
         private static AnimationCurveEvaluator curveEvaluator;
         private static float verifiedIconWidth;
@@ -59,7 +61,8 @@ namespace DCL.Nametags
         [field: SerializeField] internal SpriteRenderer privateMessageIconRenderer { get; private set; }
         [field: SerializeField] internal TMP_Text privateMessageText { get; private set; }
         [field: SerializeField] internal TMP_Text communityNameText { get; private set; }
-        [field: SerializeField] internal SpriteRenderer communityNameTextBackground { get; private set; }
+        [field: SerializeField] internal RectTransform communityNameTextBackground { get; private set; }
+        [field: SerializeField] internal SpriteRenderer communityNameTextBackgroundRenderer { get; private set; }
 
         private enum AnimationState
         {
@@ -89,7 +92,6 @@ namespace DCL.Nametags
         private Vector2 backgroundFinalSize;
         private Vector2 privateMessageFinalPosition;
         private Vector2 privateMessageTextFinalPosition;
-        private Vector2 communityTextFinalPosition;
         private Vector2 tempSizeDelta;
         private CancellationTokenSource? cts;
         private Sequence? currentSequence;
@@ -143,8 +145,9 @@ namespace DCL.Nametags
             mentionBackgroundSprite.sharedMaterial = sharedMaterial;
             bubbleTailSprite.sharedMaterial = sharedMaterial;
             verifiedIconRenderer.sharedMaterial = sharedMaterial;
+            communityNameTextBackgroundRenderer.sharedMaterial = sharedMaterial;
             communityNameColor = communityNameText.color;
-            communityNameBackgroundColor = communityNameTextBackground.color;
+            communityNameBackgroundColor = communityNameTextBackgroundRenderer.color;
         }
 
         private void OnEnable()
@@ -273,7 +276,7 @@ namespace DCL.Nametags
             privateMessageText.color = currentRecipientNameColor;
 
             communityNameText.color = new Color(communityNameText.color.r, communityNameText.color.g, communityNameText.color.b, NameTagAlpha);
-            communityNameTextBackground.color = new Color(communityNameTextBackground.color.r, communityNameTextBackground.color.g, communityNameTextBackground.color.b, NameTagAlpha);
+            communityNameTextBackgroundRenderer.color = new Color(communityNameTextBackgroundRenderer.color.r, communityNameTextBackgroundRenderer.color.g, communityNameTextBackgroundRenderer.color.b, NameTagAlpha);
 
             // Update the bubble tail sprite color as it changes depending on mention state
             currentBubbleTailSpriteColor = bubbleTailSprite.color;
@@ -408,6 +411,9 @@ namespace DCL.Nametags
             preferredSize.x += bubbleMarginOffsetWidth;
             preferredSize.y = messageContent.preferredHeight + bubbleMarginOffsetHeight;
 
+            if(isCommunityMessage)
+                preferredSize.y += communityNameText.preferredHeight + communityNameText.preferredHeight * 1.5f + COMMUNITY_TEXT_MARGIN;
+
             usernameFinalPosition = CalculateUsernameFinalPosition(preferredSize.x, usernameText.preferredWidth, bubbleMarginOffsetWidth);
             usernameFinalPosition.y = messageContent.preferredHeight + bubbleMarginOffsetHeightThird;
 
@@ -465,13 +471,14 @@ namespace DCL.Nametags
             }
             else if (isCommunityMessage)
             {
-                preferredSize.y += communityNameText.preferredHeight * 1.5f;
-                communityTextFinalPosition = usernameFinalPosition + new Vector2((communityNameText.preferredWidth - usernameText.preferredWidth) * 0.5f, usernameText.preferredHeight + communityNameText.preferredHeight * 0.5f);
+                Vector2 communityTextFinalPosition = usernameFinalPosition + new Vector2((communityNameText.preferredWidth - usernameText.preferredWidth) * 0.5f + COMMUNITY_TEXT_MARGIN, usernameText.preferredHeight + communityNameText.preferredHeight * 0.5f);
+                Vector2 textBackgroundTargetSize = new Vector2((communityNameText.preferredWidth + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.x, (communityNameText.preferredHeight + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.y);
+
                 currentSequence.Join(communityNameText.rectTransform.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
-                                Join(communityNameText.DOColor(communityNameColor, animationInDuration)).
-                                Join(DOTween.To(() => communityNameTextBackground.size, v => communityNameTextBackground.size = v, (Vector2)communityNameText.bounds.size, animationInDuration).SetEase(backgroundEaseAnimationCurve)).
-                                Join(communityNameTextBackground.transform.DOMove(communityTextFinalPosition, animationOutDurationTenth)).
-                                Join(communityNameTextBackground.DOColor(communityNameBackgroundColor, animationInDuration));
+                                Join(communityNameText.DOColor(communityNameColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(DOTween.To(() => communityNameTextBackgroundRenderer.size, v => communityNameTextBackgroundRenderer.size = v, textBackgroundTargetSize, animationInDuration).SetEase(backgroundEaseAnimationCurve)).
+                                Join(communityNameTextBackground.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(communityNameTextBackgroundRenderer.DOColor(communityNameBackgroundColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve);
             }
 
             currentSequence.Join(usernameText.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
@@ -541,9 +548,9 @@ namespace DCL.Nametags
             else if (isCommunityMessage)
             {
                 currentSequence.Join(communityNameText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
-                               .Join(communityNameText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth))
-                               .Join(communityNameTextBackground.transform.DOMove(NametagViewConstants.ZERO_VECTOR, animationOutDurationTenth))
-                               .Join(communityNameTextBackground.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
+                               .Join(communityNameText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve)
+                               .Join(communityNameTextBackground.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve)
+                               .Join(communityNameTextBackgroundRenderer.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve);
             }
 
             currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
@@ -568,11 +575,11 @@ namespace DCL.Nametags
         private Vector2 CalculatePreferredSize(out float availableWidthForPrivateMessage) =>
             CalculatePreferredSize(preferredSize, cachedUsernameWidth, nametagMarginOffsetWidth, verifiedIconWidth, messageContent.preferredWidth, NametagViewConstants.MAX_BUBBLE_WIDTH,
                 additionalHeight, messageContent.preferredHeight, isClaimedName, isPrivateMessage,
-                privateMessageText.preferredWidth, privateMessageIconWidth, isCommunityMessage ? communityNameText.preferredHeight : 0.0f, out availableWidthForPrivateMessage);
+                privateMessageText.preferredWidth, privateMessageIconWidth, out availableWidthForPrivateMessage);
 
         [BurstCompile]
         private static float2 CalculatePreferredSize(float2 preferredSize, float usernameWidth, float nametagMarginWidth, float verifiedIconWidth, float messageWidth, float maxWidth,
-            float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, float privateMessageTextWidth, float privateMessageIconWidth, float communityNameHeight, out float availableWidthForPrivateMessage)
+            float additionalHeight, float preferredHeight, bool isClaimedName, bool hasPrivateMessageIcon, float privateMessageTextWidth, float privateMessageIconWidth, out float availableWidthForPrivateMessage)
         {
             float baseWidth = usernameWidth + (isClaimedName ? verifiedIconWidth : 0) + (hasPrivateMessageIcon ? privateMessageIconWidth : 0);
 
@@ -582,7 +589,7 @@ namespace DCL.Nametags
             float totalWidth = baseWidth + adjustedPrivateMessageWidth;
 
             float width = Mathf.Min(Mathf.Max(totalWidth, messageWidth), maxWidth);
-            float height = preferredHeight + additionalHeight + communityNameHeight;
+            float height = preferredHeight + additionalHeight;
 
             preferredSize.x = width;
             preferredSize.y = height;
