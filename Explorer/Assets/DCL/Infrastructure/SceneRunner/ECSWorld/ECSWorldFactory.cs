@@ -37,7 +37,8 @@ namespace SceneRunner.ECSWorld
             ECSWorldSingletonSharedDependencies sharedDependencies,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData cameraSamplingData,
-            IReadOnlyList<IDCLWorldPlugin> plugins)
+            IReadOnlyList<IDCLWorldPlugin> plugins
+        )
         {
             this.plugins = plugins;
             singletonDependencies = sharedDependencies;

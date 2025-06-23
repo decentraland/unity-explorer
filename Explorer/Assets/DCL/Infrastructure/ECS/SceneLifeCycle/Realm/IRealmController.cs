@@ -1,7 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Optimization.PerformanceBudgeting;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Realm

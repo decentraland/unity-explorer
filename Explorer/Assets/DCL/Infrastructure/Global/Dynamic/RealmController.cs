@@ -5,7 +5,6 @@ using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
