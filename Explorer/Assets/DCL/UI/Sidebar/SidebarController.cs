@@ -13,6 +13,8 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -44,12 +46,14 @@ namespace DCL.UI.Sidebar
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
         private const string IDLE_ICON_ANIMATOR = "Empty";
         private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
+        private bool? pendingSkyboxInteractableState;
 
         public event Action? HelpOpened;
 
@@ -73,7 +77,8 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            ISceneRestrictionBusController sceneRestrictionBusController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -93,6 +98,9 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.featureFlagsCache = featureFlagsCache;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+
+            sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
 
         public override void Dispose()
@@ -101,6 +109,8 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
+
+            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
 
         protected override void OnViewInstantiated()
@@ -159,6 +169,24 @@ namespace DCL.UI.Sidebar
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
+
+            if (pendingSkyboxInteractableState.HasValue)
+            {
+                viewInstance.skyboxButton.interactable = pendingSkyboxInteractableState.Value;
+                pendingSkyboxInteractableState = null;
+            }
+        }
+
+        private void OnSceneRestrictionChanged(SceneRestriction restriction)
+        {
+            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_BLOCKED)
+            {
+                bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
+                if (viewInstance)
+                    viewInstance.skyboxButton.interactable = !isRestricted;
+                else
+                    pendingSkyboxInteractableState = !isRestricted;
+            }
         }
 
         private void OnMvcManagerViewClosed(IController closedController)
@@ -252,6 +280,7 @@ namespace DCL.UI.Sidebar
                 featureFlagsCache,
                 ct);
 
+            includeMarketplaceCredits = false;
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);

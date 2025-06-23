@@ -9,28 +9,28 @@ public class SkyboxControllerEditor : Editor
     {
         SkyboxController skyboxController = (SkyboxController)target;
 
-        skyboxController.SetTimeOfDay(EditorGUILayout.Slider("Time", skyboxController.CurrentTimeOfDay, 0, 1), SkyboxTimeSource.PLAYER_FIXED);
+        skyboxController.ForceSetTimeOfDay(EditorGUILayout.Slider("Time", skyboxController.CurrentTimeOfDay, 0, 1), SkyboxTimeSource.PLAYER_FIXED);
         GUILayout.BeginHorizontal();
         {
             if (GUILayout.Button("00:00"))
             {
-                skyboxController.SetTimeOfDay(0, SkyboxTimeSource.PLAYER_FIXED);
+                skyboxController.ForceSetTimeOfDay(0, SkyboxTimeSource.PLAYER_FIXED);
             }
             if (GUILayout.Button("06:00"))
             {
-                skyboxController.SetTimeOfDay(6*60*60, SkyboxTimeSource.PLAYER_FIXED);
+                skyboxController.ForceSetTimeOfDay(6*60*60, SkyboxTimeSource.PLAYER_FIXED);
             }
             if (GUILayout.Button("12:00"))
             {
-                skyboxController.SetTimeOfDay(12*60*60, SkyboxTimeSource.PLAYER_FIXED);
+                skyboxController.ForceSetTimeOfDay(12*60*60, SkyboxTimeSource.PLAYER_FIXED);
             }
             if (GUILayout.Button("18:00"))
             {
-                skyboxController.SetTimeOfDay(18*60*60, SkyboxTimeSource.PLAYER_FIXED);
+                skyboxController.ForceSetTimeOfDay(18*60*60, SkyboxTimeSource.PLAYER_FIXED);
             }
             if (GUILayout.Button("23:59"))
             {
-                skyboxController.SetTimeOfDay(24*60*60, SkyboxTimeSource.PLAYER_FIXED);
+                skyboxController.ForceSetTimeOfDay(24*60*60, SkyboxTimeSource.PLAYER_FIXED);
             }
         }
         GUILayout.EndHorizontal();
@@ -38,11 +38,11 @@ public class SkyboxControllerEditor : Editor
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("\u25B6 Play"))
         {
-            skyboxController.SetDayNightCycleEnabled(true, SkyboxTimeSource.GLOBAL);
+            skyboxController.ForceSetDayCycleEnabled(true, SkyboxTimeSource.GLOBAL);
         }
         if (GUILayout.Button("\u25AE\u25AE Pause"))
         {
-            skyboxController.SetDayNightCycleEnabled(false, SkyboxTimeSource.PLAYER_FIXED);
+            skyboxController.ForceSetDayCycleEnabled(false, SkyboxTimeSource.PLAYER_FIXED);
         }
         GUILayout.EndHorizontal();
 

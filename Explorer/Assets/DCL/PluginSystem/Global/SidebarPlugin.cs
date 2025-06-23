@@ -12,6 +12,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
@@ -59,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -85,7 +87,8 @@ namespace DCL.PluginSystem.Global
             IProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -112,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.featureFlagsCache = featureFlagsCache;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
         public void Dispose() { }
@@ -148,7 +152,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                featureFlagsCache
+                featureFlagsCache,
+                sceneRestrictionBusController
             ));
         }
 

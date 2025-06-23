@@ -1,21 +1,13 @@
-using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
-using DCL.Ipfs;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.StylizedSkybox.Scripts;
 using ECS.SceneLifeCycle;
-using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class SkyboxController : MonoBehaviour
+public partial class SkyboxController : MonoBehaviour
 {
-    private const float MIN_FIXED_TIME_OF_DAY = 0;
-    private const int SECONDS_IN_DAY = 86400;
-    private const float DEFAULT_TIME = 0.5f; // Midday
-    private const float DEFAULT_SPEED = 1 * 60f; // 1 minute per second
-
     private static readonly int ZENIT_COLOR = Shader.PropertyToID("_ZenitColor");
     private static readonly int HORIZON_COLOR = Shader.PropertyToID("_HorizonColor");
     private static readonly int NADIR_COLOR = Shader.PropertyToID("_NadirColor");
@@ -70,20 +62,10 @@ public class SkyboxController : MonoBehaviour
     [InspectorName("Enabled")] [SerializeField] private bool fog = true;
     [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
 
-    public float SpeedMultiplier { get; set; } = DEFAULT_SPEED;
-    public float GlobalTimeOfDay { get; private set; }
-    public float CurrentTimeOfDay { get; private set; }
-
-    private StylizedSkyboxSettingsAsset settingsAsset;
+    private StylizedSkyboxSettingsAsset skyboxSettings;
     private bool isInitialized;
     private Animation lightAnimator;
     private float sinceLastSkyboxRefresh = 5;
-    private FeatureFlagsCache featureFlagsCache;
-    private IDebugContainerBuilder debugContainerBuilder;
-    private bool useFeatureFlagSkyboxSettings;
-
-    private ElementBinding<float> debugTimeOfDay;
-    private ElementBinding<string> debugTimeSource;
 
     private void Update()
     {
@@ -91,34 +73,26 @@ public class SkyboxController : MonoBehaviour
             return;
 
         float deltaTime = Time.deltaTime;
-
-        // We always track the time of day so we can switch back to using it
-        GlobalTimeOfDay += deltaTime * SpeedMultiplier / SECONDS_IN_DAY;
-
-        // Loop around at EOD
-        if (GlobalTimeOfDay >= 1f)
-            GlobalTimeOfDay = 0f;
+        skyboxTimeManager.Update(deltaTime);
 
         // Auto refresh the skybox when using Day Night Cycle
-        if (settingsAsset.IsDayNightCycleEnabled)
+        if (skyboxSettings.IsDayCycleEnabled)
         {
             sinceLastSkyboxRefresh += deltaTime;
 
             if (sinceLastSkyboxRefresh >= skyboxRefreshTime)
             {
                 sinceLastSkyboxRefresh = 0;
-                CurrentTimeOfDay = GlobalTimeOfDay;
+                CurrentTimeOfDay = skyboxTimeManager.GlobalTimeOfDay;
                 UpdateSkybox();
             }
         }
     }
 
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache, StylizedSkyboxSettingsAsset settingsAsset,
-        IScenesCache scenesCache, IDebugContainerBuilder debugContainerBuilder)
+        IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController)
     {
-        this.featureFlagsCache = featureFlagsCache;
-        this.settingsAsset = settingsAsset;
-        this.debugContainerBuilder = debugContainerBuilder;
+        this.skyboxSettings = settingsAsset;
 
         if (skyboxMat)
         {
@@ -171,147 +145,11 @@ public class SkyboxController : MonoBehaviour
         if (fog)
             RenderSettings.fog = true;
 
-        scenesCache.OnCurrentSceneChanged += HandleSceneChanged;
+        InitializeSkyboxTimeHandling(scenesCache, sceneRestrictionBusController, featureFlagsCache);
 
-        GlobalTimeOfDay = GetInitialTimeOfDay();
-
-        settingsAsset.TimeOfDayNormalized = GlobalTimeOfDay;
-        ResetToGlobalTime();
-
-        settingsAsset.TimeOfDayChanged += OnTimeOfDayChanged;
-        settingsAsset.DayNightCycleEnabledChanged += OnDayNightCycleEnabledChanged;
-        settingsAsset.SkyboxTimeSourceChanged += OnSkyboxTimeSourceChanged;
-
-        SetupDebugPanel();
+        UpdateSkybox();
 
         isInitialized = true;
-    }
-
-    private void SetupDebugPanel()
-    {
-        debugTimeOfDay = new ElementBinding<float>(0);
-        debugTimeSource = new ElementBinding<string>(string.Empty);
-
-        debugContainerBuilder.TryAddWidget("Skybox")
-                            ?.AddSingleButton("Play", ()=> SetDayNightCycleEnabled(true, SkyboxTimeSource.GLOBAL))
-                             .AddSingleButton("Pause", () =>
-                              {
-                                  SetDayNightCycleEnabled(false, SkyboxTimeSource.PLAYER_FIXED);
-                              })
-                             .AddFloatSliderField("Time", debugTimeOfDay, 0, 1)
-                             .AddSingleButton("SetTime", () =>
-                              {
-                                  SetTimeOfDay(debugTimeOfDay.Value, SkyboxTimeSource.PLAYER_FIXED);
-                              }) //TODO: replace this by a system to update the value
-                             .AddCustomMarker("TimeSource", debugTimeSource);
-    }
-
-    private void HandleSceneChanged(ISceneFacade scene)
-    {
-        if (scene == null || !settingsAsset)
-        {
-            ResetToGlobalTime();
-            return;
-        }
-
-        SceneMetadata sceneMetadata = scene.SceneData
-                                           .SceneEntityDefinition
-                                           .metadata;
-
-        if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTimeOfDay: var worldTime } } })
-        {
-            ApplySceneControlledFixedTime(worldTime);
-            return;
-        }
-
-        if (sceneMetadata is { skyboxConfig: { fixedTimeOfDay: var sceneTime } })
-        {
-            ApplySceneControlledFixedTime(sceneTime);
-            return;
-        }
-
-        ResetToGlobalTime();
-    }
-
-    private void ApplySceneControlledFixedTime(float sceneTime)
-    {
-        if (!settingsAsset) return;
-
-        settingsAsset.IsDayNightCycleEnabled = false;
-        settingsAsset.SkyboxTimeSource = SkyboxTimeSource.SCENE_FIXED;
-        settingsAsset.TimeOfDayNormalized = Mathf.Clamp(sceneTime, MIN_FIXED_TIME_OF_DAY, SECONDS_IN_DAY) / (float)SECONDS_IN_DAY;
-
-        debugTimeOfDay.Value = sceneTime;
-    }
-
-    private void OnSkyboxTimeSourceChanged(SkyboxTimeSource newSkyboxTimeSource)
-    {
-        debugTimeSource.Value = newSkyboxTimeSource.ToString();
-    }
-
-    private void ResetToGlobalTime()
-    {
-        //triggers immediate skybox graphics refresh
-        sinceLastSkyboxRefresh = skyboxRefreshTime;
-
-        settingsAsset.SkyboxTimeSource = useFeatureFlagSkyboxSettings ? SkyboxTimeSource.FEATURE_FLAG : SkyboxTimeSource.GLOBAL;
-        settingsAsset.IsDayNightCycleEnabled = true;
-    }
-
-    public void SetDayNightCycleEnabled(bool cycleEnabled, SkyboxTimeSource newSource)
-    {
-        if (!settingsAsset) return;
-
-        settingsAsset.SkyboxTimeSource = newSource;
-        settingsAsset.IsDayNightCycleEnabled = cycleEnabled;
-    }
-
-    private float GetInitialTimeOfDay()
-    {
-        // Fetch feature flag settings to see if there are settings to override from there
-        useFeatureFlagSkyboxSettings = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
-
-        if (useFeatureFlagSkyboxSettings && featureFlagsCache!.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out SkyboxSettings skyboxSettings))
-        {
-            settingsAsset.SkyboxTimeSource = SkyboxTimeSource.FEATURE_FLAG;
-            SpeedMultiplier = skyboxSettings.speed;
-            return (float)skyboxSettings.time / SECONDS_IN_DAY;
-        }
-
-        return DEFAULT_TIME;
-    }
-
-    private void OnSkyboxUpdated()
-    {
-        // When skybox gets dynamically updated, we refresh the
-        // settings value so it reflects the current state
-
-        if (settingsAsset.IsDayNightCycleEnabled)
-            settingsAsset!.TimeOfDayNormalized = GlobalTimeOfDay;
-    }
-
-    private void OnDayNightCycleEnabledChanged(bool isProgressing)
-    {
-        settingsAsset.IsDayNightCycleEnabled = isProgressing;
-
-        if (isProgressing)
-            settingsAsset!.TimeOfDayNormalized = GlobalTimeOfDay;
-    }
-
-    private void OnTimeOfDayChanged(float timeOfDay)
-    {
-        if (!settingsAsset.IsDayNightCycleEnabled) // Ignore updates to the value when they come from the skybox
-            SetTimeOfDay(timeOfDay, SkyboxTimeSource.GLOBAL);
-    }
-
-    /// <summary>
-    ///     Sets the time of the skybox to a specific amount (normalized).
-    /// </summary>
-    public void SetTimeOfDay(float timeOfDay, SkyboxTimeSource source)
-    {
-        CurrentTimeOfDay = timeOfDay;
-        SetDayNightCycleEnabled(false, source);
-        UpdateSkybox();
     }
 
     /// <summary>
@@ -323,8 +161,6 @@ public class SkyboxController : MonoBehaviour
         UpdateDirectionalLight();
         UpdateSkyboxColor();
         UpdateFog();
-
-        OnSkyboxUpdated();
     }
 
     /// <summary>
@@ -407,10 +243,4 @@ public class SkyboxController : MonoBehaviour
             Initialize(null, null, null, null, null, null, null);
     }
 #endif
-
-    private struct SkyboxSettings
-    {
-        public int time;
-        public int speed;
-    }
 }
