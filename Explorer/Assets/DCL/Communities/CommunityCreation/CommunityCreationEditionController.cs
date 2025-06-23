@@ -291,7 +291,7 @@ namespace DCL.Communities.CommunityCreation
             }
 
             viewInstance.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw);
-            viewInstance.SetCommunityName(getCommunityResult.Value.data.name);
+            viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCreationPanelAsLoading(false);
 

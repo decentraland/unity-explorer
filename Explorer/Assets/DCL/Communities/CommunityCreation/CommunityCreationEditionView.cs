@@ -192,9 +192,10 @@ namespace DCL.Communities.CommunityCreation
             imageController.SetImage(sprite);
         }
 
-        public void SetCommunityName(string text)
+        public void SetCommunityName(string text, bool isInteractable)
         {
             creationPanelCommunityNameInputField.text = text;
+            creationPanelCommunityNameInputField.interactable = isInteractable;
             UpdateCreateButtonAvailability();
         }
 
@@ -261,7 +262,7 @@ namespace DCL.Communities.CommunityCreation
         {
             SetCommunityCreationInProgress(false);
             SetProfileSelectedImage(sprite: null);
-            SetCommunityName(string.Empty);
+            SetCommunityName(string.Empty, true);
             SetCommunityDescription(string.Empty);
             SetPlacesSelector(new List<string>());
 
