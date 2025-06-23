@@ -97,9 +97,6 @@ MonoBehaviour:
           maxValue: 2
           wholeNumbers: 0
           defaultValue: 1
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 2
     - rid: 3126482891795070977
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -114,9 +111,6 @@ MonoBehaviour:
           maxValue: 2
           wholeNumbers: 0
           defaultValue: 1
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 3
     - rid: 4494877371389181952
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -171,9 +165,6 @@ MonoBehaviour:
           maxValue: 12
           wholeNumbers: 1
           defaultValue: 10
-          displayStepValue: 1
-          stepMultiplier: 10
-          stepOffset: 0
         <Feature>k__BackingField: 9
     - rid: 5242998342527483906
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -200,9 +191,6 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 40
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 0
     - rid: 5242998342527483910
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -217,9 +205,6 @@ MonoBehaviour:
           maxValue: 7000
           wholeNumbers: 1
           defaultValue: 4000
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 1
     - rid: 5242998342527483917
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -234,9 +219,6 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 4
     - rid: 5242998342527483918
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -251,9 +233,6 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 5
     - rid: 5242998342527483919
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -268,9 +247,6 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 8
     - rid: 5242998342527483920
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -285,9 +261,6 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 7
     - rid: 5242998342527483921
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -302,9 +275,6 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-          displayStepValue: 0
-          stepMultiplier: 1
-          stepOffset: 0
         <Feature>k__BackingField: 6
     - rid: 5242998500334764034
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
