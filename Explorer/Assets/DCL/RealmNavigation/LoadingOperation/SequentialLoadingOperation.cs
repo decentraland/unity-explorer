@@ -60,7 +60,7 @@ namespace DCL.RealmNavigation.LoadingOperation
                                 $"Operation failed on {processName} attempt {attempt + 1}/{attemptsCount}: {lastOpResult.AsResult().ErrorMessage}"
                             );
 
-                            //break;
+                            break;
                         }
                     }
                     catch (Exception e)
