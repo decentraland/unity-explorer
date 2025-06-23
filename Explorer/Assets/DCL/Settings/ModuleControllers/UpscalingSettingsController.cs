@@ -22,7 +22,9 @@ namespace DCL.Settings.ModuleControllers
             upscalingController.OnUpscalingChanged += UpdateSliderText;
             viewInstance.SliderView.Slider.onValueChanged.AddListener(UpdateUpscalingValue);
 
-            UpdateSliderText(upscalingController.GetCurrentUpscale());
+            float currentValue = upscalingController.GetCurrentUpscale();
+            viewInstance.SliderView.Slider.SetValueWithoutNotify(currentValue * STEP_MULTIPLIER);
+            UpdateSliderText(currentValue);
         }
 
         private void UpdateUpscalingValue(float value)
