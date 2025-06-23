@@ -110,7 +110,7 @@ namespace DCL.VoiceChat
         public void StartCall(Web3Address walletId)
         {
             //We can start a call only if we are not connected or trying to start a call
-            if (Status != VoiceChatStatus.DISCONNECTED && Status != VoiceChatStatus.VOICE_CHAT_USER_BUSY) return;
+            if (Status is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_USER_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
 
             CurrentTargetWallet = walletId;
 
