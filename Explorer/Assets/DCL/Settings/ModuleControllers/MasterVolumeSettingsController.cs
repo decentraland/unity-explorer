@@ -1,4 +1,5 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.Prefs;
+using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
 
@@ -7,7 +8,6 @@ namespace DCL.Settings.ModuleControllers
     public class MasterVolumeSettingsController : SettingsFeatureController
     {
         private const string MASTER_VOLUME_EXPOSED_PARAM = "Master_Volume";
-        private const string MASTER_VOLUME_DATA_STORE_KEY = "Settings_MasterVolume";
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
@@ -19,8 +19,8 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
             this.worldVolumeMacBus = worldVolumeMacBus;
 
-            if (settingsDataStore.HasKey(MASTER_VOLUME_DATA_STORE_KEY))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(MASTER_VOLUME_DATA_STORE_KEY);
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
+                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_MASTER_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetMasterVolumeSettings);
             SetMasterVolumeSettings(view.SliderView.Slider.value);
@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetMasterVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            settingsDataStore.SetSliderValue(MASTER_VOLUME_DATA_STORE_KEY, volumePercentage, save: true);
+            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
 
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.SetMasterVolume(volumePercentage / 100);

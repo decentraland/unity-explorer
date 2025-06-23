@@ -1,3 +1,4 @@
+using DCL.Prefs;
 using UnityEngine.Rendering.Universal;
 using Utility.Storage;
 
@@ -30,7 +31,7 @@ namespace DCL.Quality.Runtime
             // Renderer Features comes directly from the currently selected quality asset (we can't override that)
             bool isActive = IsActive;
 
-            active = PersistentSetting.CreateBool($"RendererFeature_{typeof(T).Name}", isActive);
+            active = PersistentSetting.CreateBool(string.Format(DCLPrefKeys.PS_RENDERER_FEATURE_ACTIVE, typeof(T).Name),isActive);
             rendererFeaturesCache.GetRendererFeature<T>()?.SetActive(isActive);
         }
 
