@@ -103,11 +103,7 @@ namespace Global.Dynamic
                     plugin.SafeDispose(ReportCategory.ENGINE);
 
                 if (globalWorld != null)
-                {
-                    // Blocking call without async
-                    var enumerator = dynamicWorldContainer.RealmController.BudgetedDisposeGlobalWorld();
-                    while (enumerator.MoveNext()) { }
-                }
+                    dynamicWorldContainer.RealmController.DisposeGlobalWorld();
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }
@@ -321,6 +317,7 @@ namespace Global.Dynamic
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
         {
             MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
+
             if (DCLPlayerPrefs.GetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
                 return;
 

@@ -21,7 +21,7 @@ namespace ECS.SceneLifeCycle.Realm
         /// <summary>
         ///     Dispose everything on application quit
         /// </summary>
-        IEnumerator<Unit> BudgetedDisposeGlobalWorld();
+        void DisposeGlobalWorld();
 
         class Fake : IRealmController
         {
@@ -42,10 +42,9 @@ namespace ECS.SceneLifeCycle.Realm
             public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
                 false;
 
-            public IEnumerator<Unit> BudgetedDisposeGlobalWorld()
+            public void DisposeGlobalWorld()
             {
                 //ignore
-                yield break;
             }
         }
     }

@@ -197,7 +197,7 @@ namespace Global.Dynamic
             return null;
         }
 
-        public IEnumerator<Unit> BudgetedDisposeGlobalWorld()
+        public void DisposeGlobalWorld()
         {
             List<ISceneFacade> loadedScenes = allScenes;
 
@@ -206,8 +206,6 @@ namespace Global.Dynamic
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
 
                 // Destroy everything without awaiting as it's Application Quit
-                // ReSharper disable once MethodHasAsyncOverload
-                // Actually ReSharper assumption is wrong
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
 
@@ -217,7 +215,10 @@ namespace Global.Dynamic
                 var enumerator = scene.SafeBudgetedDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
                     static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
 
-                while (enumerator.MoveNext()) yield return enumerator.Current;
+                while (enumerator.MoveNext())
+                {
+                    // consume all
+                }
             }
         }
 

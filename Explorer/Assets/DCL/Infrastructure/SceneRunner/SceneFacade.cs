@@ -225,8 +225,6 @@ namespace SceneRunner
         /// </summary>
         public IEnumerator<Unit> BudgetedDispose()
         {
-            // Because of multithreading Disposing is not synced with the update loop
-            // so just mark it as disposed and let the update loop handle the disposal
             SceneStateProvider.State.Set(SceneState.Disposing);
 
             runtimeInstance.SetIsDisposing();
