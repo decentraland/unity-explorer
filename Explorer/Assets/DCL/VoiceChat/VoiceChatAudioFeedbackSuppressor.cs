@@ -20,12 +20,11 @@ namespace DCL.VoiceChat
         private static VoiceChatConfiguration configuration;
 
         public static bool IsEnabled => configuration?.EnableFeedbackSuppression == true;
-        public static bool IsFeedbackDetected => feedbackDetected;
-        public static float CurrentSuppressionLevel => feedbackSuppressionLevel;
 
         public static void Initialize(VoiceChatConfiguration config)
         {
             configuration = config;
+            Debug.LogWarning("SUPRESSOR: Initializing audio feedback suppressor");
             Reset();
         }
 
@@ -34,19 +33,20 @@ namespace DCL.VoiceChat
             feedbackDetected = false;
             feedbackSuppressionLevel = 0f;
             bufferIndex = 0;
-            
+
             Array.Clear(speakerBuffer, 0, speakerBuffer.Length);
             Array.Clear(microphoneBuffer, 0, microphoneBuffer.Length);
+            Debug.LogWarning("SUPRESSOR: Reset feedback detection buffers and state");
         }
 
-        public static bool ProcessAudio(float[] microphoneData, int channels, int samplesPerChannel, 
+        public static bool ProcessAudio(float[] microphoneData, int channels, int samplesPerChannel,
                                float[] speakerData, int speakerSamples)
         {
             if (!IsEnabled || microphoneData == null || speakerData == null)
                 return false;
 
             Span<float> monoSpan = microphoneBuffer.AsSpan(0, samplesPerChannel);
-            
+
             if (channels > 1)
             {
                 for (int i = 0; i < samplesPerChannel; i++)
@@ -65,19 +65,31 @@ namespace DCL.VoiceChat
             UpdateBuffers(monoSpan, speakerData, speakerSamples);
 
             float correlation = CalculateCrossCorrelation();
-            
+
             bool wasFeedbackDetected = feedbackDetected;
             float threshold = configuration?.FeedbackCorrelationThreshold ?? DEFAULT_CORRELATION_THRESHOLD;
             feedbackDetected = correlation > threshold;
-            
+
             if (feedbackDetected)
             {
+                if (!wasFeedbackDetected)
+                {
+                    Debug.LogWarning($"SUPRESSOR: Feedback detected! Correlation: {correlation:F3}, Threshold: {threshold:F3}");
+                }
+                
                 float attackRate = configuration?.FeedbackSuppressionAttackRate ?? DEFAULT_ATTACK_RATE;
                 float maxStrength = configuration?.FeedbackSuppressionStrength ?? DEFAULT_SUPPRESSION_STRENGTH;
                 feedbackSuppressionLevel = Mathf.Min(feedbackSuppressionLevel + attackRate, maxStrength);
+                
+                Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {feedbackSuppressionLevel:F3}, Max: {maxStrength:F3}");
             }
             else
             {
+                if (wasFeedbackDetected)
+                {
+                    Debug.LogWarning($"SUPRESSOR: Feedback cleared. Correlation: {correlation:F3}, Threshold: {threshold:F3}");
+                }
+                
                 float releaseRate = configuration?.FeedbackSuppressionReleaseRate ?? DEFAULT_RELEASE_RATE;
                 feedbackSuppressionLevel = Mathf.Max(feedbackSuppressionLevel - releaseRate, 0f);
             }
@@ -91,7 +103,8 @@ namespace DCL.VoiceChat
                 return;
 
             float suppression = 1f - feedbackSuppressionLevel;
-            
+            Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {feedbackSuppressionLevel:F3}, Gain: {suppression:F3}");
+
             for (int i = 0; i < samplesPerChannel; i++)
             {
                 for (int ch = 0; ch < channels; ch++)
@@ -129,7 +142,7 @@ namespace DCL.VoiceChat
             {
                 float mic = microphoneBuffer[i];
                 float spk = speakerBuffer[i];
-                
+
                 micEnergy += mic * mic;
                 speakerEnergy += spk * spk;
                 crossEnergy += mic * spk;
@@ -143,4 +156,4 @@ namespace DCL.VoiceChat
             return Mathf.Abs(correlation);
         }
     }
-} 
+}
