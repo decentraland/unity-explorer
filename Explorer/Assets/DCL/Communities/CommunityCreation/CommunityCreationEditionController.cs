@@ -342,7 +342,7 @@ namespace DCL.Communities.CommunityCreation
                         {
                             Id = placeInfo.id,
                             IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
-                            Name = $"{placeInfo.title} ({placeInfo.base_position})",
+                            Name = string.IsNullOrEmpty(placeInfo.world_name) ? $"{placeInfo.title} ({placeInfo.base_position})" : placeInfo.world_name,
                         }, isRemovalAllowed, updateScrollPosition: false);
                     }
                 }

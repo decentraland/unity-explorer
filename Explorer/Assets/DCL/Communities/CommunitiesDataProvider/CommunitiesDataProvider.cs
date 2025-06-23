@@ -76,19 +76,15 @@ namespace DCL.Communities
 
             List<string> landsAndWorlds = new (lands);
             landsAndWorlds.AddRange(worlds);
-            if (landsAndWorlds.Count > 0)
+            StringBuilder placeIdsJsonString = new StringBuilder("[");
+            for (var i = 0; i < landsAndWorlds.Count; i++)
             {
-                StringBuilder placeIdsJsonString = new StringBuilder("[");
-                for (var i = 0; i < landsAndWorlds.Count; i++)
-                {
-                    placeIdsJsonString.Append($"\"{landsAndWorlds[i]}\"");
-                    if (i < landsAndWorlds.Count - 1)
-                        placeIdsJsonString.Append(", ");
-                }
-                placeIdsJsonString.Append("]");
-
-                formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
+                placeIdsJsonString.Append($"\"{landsAndWorlds[i]}\"");
+                if (i < landsAndWorlds.Count - 1)
+                    placeIdsJsonString.Append(", ");
             }
+            placeIdsJsonString.Append("]");
+            formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
 
             if (thumbnail != null)
                 formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
