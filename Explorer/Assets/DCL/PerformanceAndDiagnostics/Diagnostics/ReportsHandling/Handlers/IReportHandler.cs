@@ -12,6 +12,6 @@ namespace DCL.Diagnostics
 
         void LogException<T>(T ecsSystemException) where T: Exception, IDecentralandException;
 
-        void LogException(Exception exception, ReportData reportData, Object context);
+        void LogException(Exception exception, ReportData reportData, Object? context);
     }
 }

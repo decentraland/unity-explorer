@@ -35,7 +35,7 @@ namespace DCL.Diagnostics
         /// <summary>
         ///     Provides a way to override default Unity DebugLogHandler
         /// </summary>
-        void ILogHandler.LogException(Exception exception, Object context)
+        void ILogHandler.LogException(Exception exception, Object? context)
         {
             for (var i = 0; i < reportHandlers.Count; i++)
             {

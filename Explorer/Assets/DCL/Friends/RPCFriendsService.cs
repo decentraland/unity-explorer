@@ -5,7 +5,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
 using DCL.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using Google.Protobuf.Collections;
@@ -13,11 +12,60 @@ using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using Type = System.Type;
 
 namespace DCL.Friends
 {
     public class RPCFriendsService : IFriendsService
     {
+        internal class ServerStreamReportsDebouncer : FrameDebouncer<ServerStreamReportsDebouncer.ExceptionFingerprint>
+        {
+            /// <summary>
+            ///     Simplified representation of the exception for this particular case only.
+            ///     There is no easy way to compare exceptions properly so we use a very simplified scheme instead.
+            /// </summary>
+            public readonly struct ExceptionFingerprint : IEquatable<ExceptionFingerprint>
+            {
+                public readonly Type Type;
+                public readonly Type? InnerType;
+                public readonly string Message;
+
+                public ExceptionFingerprint(Exception e)
+                {
+                    Type = e.GetType();
+                    InnerType = e.InnerException?.GetType();
+                    Message = e.Message;
+                }
+
+                public bool Equals(ExceptionFingerprint other) =>
+                    Type.Equals(other.Type) && Equals(InnerType, other.InnerType) && Message == other.Message;
+
+                public override bool Equals(object? obj) =>
+                    obj is ExceptionFingerprint other && Equals(other);
+
+                public override int GetHashCode() =>
+                    HashCode.Combine(Type, InnerType, Message);
+            }
+
+            public ServerStreamReportsDebouncer() : base(1)
+            {
+                // Tasks can be distributed across 2 frames so the threshold distance is 1 frame
+            }
+
+            protected override ExceptionFingerprint GetKey(in object message, ReportData reportData, LogType log) =>
+                throw new NotSupportedException();
+
+            protected override ExceptionFingerprint GetKey(in Exception exception, ReportData reportData, LogType log) =>
+                new (exception);
+
+            public override bool Equals(ExceptionFingerprint x, ExceptionFingerprint y) =>
+                x.Equals(y);
+
+            public override int GetHashCode(ExceptionFingerprint obj) =>
+                obj.GetHashCode();
+        }
+
         /// <summary>
         ///     Timeout used for foreground operations, such as fetching the list of friends
         /// </summary>
@@ -37,7 +85,7 @@ namespace DCL.Friends
         private const string BLOCK_USER = "BlockUser";
         private const string UNBLOCK_USER = "UnblockUser";
 
-        private const int RETRY_STREAM_THROTTLE_MS = 5000;
+        private readonly ServerStreamReportsDebouncer serverStreamReportsDebouncer = new ();
 
         private readonly IFriendsEventBus eventBus;
         private readonly FriendsCache friendsCache;
@@ -78,7 +126,7 @@ namespace DCL.Friends
                     await openStreamFunc().AttachExternalCancellation(ct);
                 }
                 catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS)); }
+                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS, debouncer: serverStreamReportsDebouncer)); }
             }
         }
 

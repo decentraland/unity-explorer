@@ -9,7 +9,7 @@ namespace DCL.Diagnostics
     {
         private readonly SceneDebugConsole sceneDebugConsole;
 
-        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(matrix, debounceEnabled)
+        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(ReportHandler.None, matrix, debounceEnabled)
         {
             sceneDebugConsole = GameObject.Instantiate(Resources.Load<GameObject>("SceneDebugConsole")).GetComponent<SceneDebugConsole>();
         }
@@ -27,7 +27,7 @@ namespace DCL.Diagnostics
             sceneDebugConsole.Log(ecsSystemException.Message, ecsSystemException.StackTrace, LogType.Exception);
         }
 
-        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
+        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
             sceneDebugConsole.Log(exception.Message, exception.StackTrace, LogType.Exception);
         }

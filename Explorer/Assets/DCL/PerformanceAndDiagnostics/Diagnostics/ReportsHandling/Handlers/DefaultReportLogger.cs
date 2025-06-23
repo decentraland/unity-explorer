@@ -24,7 +24,7 @@ namespace DCL.Diagnostics
             Debug.unityLogger.LogException(ecsSystemException);
         }
 
-        public void LogException(Exception exception, ReportData reportData, Object context)
+        public void LogException(Exception exception, ReportData reportData, Object? context)
         {
             Debug.unityLogger.LogException(exception, context);
         }

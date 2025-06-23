@@ -1,6 +1,7 @@
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using Sentry;
+using Sentry.Extensibility;
 using Sentry.Unity;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace DCL.Diagnostics.Sentry
         private readonly PerReportScope.Pool scopesPool;
 
         public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
-            : base(matrix, debounceEnabled)
+            : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
 
