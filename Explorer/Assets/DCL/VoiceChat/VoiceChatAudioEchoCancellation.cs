@@ -6,33 +6,38 @@ namespace DCL.VoiceChat
 {
     public static class VoiceChatAudioEchoCancellation
     {
-        private const int FEEDBACK_DETECTION_BUFFER_SIZE = 8192;
-        private const int DELAY_ESTIMATION_BUFFER_SIZE = 16384;
+        private const int FFT_SIZE = 512;
+        private const int FRAME_SIZE = FFT_SIZE / 2;
+        private const int NUM_PARTITIONS = 12;
+        private const int BUFFER_SIZE = FRAME_SIZE * NUM_PARTITIONS;
         
-        private const float DEFAULT_CORRELATION_THRESHOLD = 0.25f;
-        private const float DEFAULT_SUPPRESSION_STRENGTH = 0.7f;
-        private const float DEFAULT_ATTACK_RATE = 0.2f;
-        private const float DEFAULT_RELEASE_RATE = 0.02f;
+        private const float DEFAULT_CORRELATION_THRESHOLD = 0.15f;
+        private const float DEFAULT_SUPPRESSION_STRENGTH = 0.8f;
+        private const float DEFAULT_ATTACK_RATE = 0.25f;
+        private const float DEFAULT_RELEASE_RATE = 0.01f;
         
-        private const int MIN_DELAY_SAMPLES = 512;
-        private const int MAX_DELAY_SAMPLES = 8192;
-        private const float DELAY_ESTIMATION_ALPHA = 0.95f;
+        private const float ADAPTIVE_FILTER_LEARNING_RATE = 0.1f;
+        private const float ECHO_PATH_LEARNING_RATE = 0.05f;
+        private const float MIN_ECHO_PATH_GAIN = 0.01f;
+        private const float MAX_ECHO_PATH_GAIN = 2.0f;
 
-        private static readonly float[] speakerBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
-        private static readonly float[] microphoneBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
-        private static readonly float[] delayEstimationBuffer = new float[DELAY_ESTIMATION_BUFFER_SIZE];
+        private static readonly float[] speakerBuffer = new float[BUFFER_SIZE];
+        private static readonly float[] microphoneBuffer = new float[BUFFER_SIZE];
+        private static readonly float[] echoPathBuffer = new float[BUFFER_SIZE];
+        private static readonly float[] adaptiveFilter = new float[BUFFER_SIZE];
+        private static readonly float[] fftBuffer = new float[FFT_SIZE * 2];
+        private static readonly float[] fftOutput = new float[FFT_SIZE * 2];
         
         private static int bufferIndex = 0;
-        private static int delayBufferIndex = 0;
         private static bool feedbackDetected = false;
         private static float feedbackSuppressionLevel = 0f;
         private static VoiceChatConfiguration configuration;
         
-        private static int estimatedDelay = 0;
-        private static bool delayEstimationInitialized = false;
-        private static float lastCorrelation = 0f;
+        private static float echoPathGain = 1.0f;
+        private static float adaptiveFilterGain = 1.0f;
         private static int consecutiveDetections = 0;
         private static int consecutiveNonDetections = 0;
+        private static float lastEchoLevel = 0f;
         
         private static int logCounter = 0;
         private const int LOG_INTERVAL = 100;
@@ -42,9 +47,8 @@ namespace DCL.VoiceChat
         public static void Initialize(VoiceChatConfiguration config)
         {
             configuration = config;
-            Debug.LogWarning("SUPRESSOR: Initializing audio feedback suppressor with improved detection");
-            Debug.LogWarning($"SUPRESSOR: Buffer sizes - Detection: {FEEDBACK_DETECTION_BUFFER_SIZE}, Delay: {DELAY_ESTIMATION_BUFFER_SIZE}");
-            Debug.LogWarning($"SUPRESSOR: Default threshold: {DEFAULT_CORRELATION_THRESHOLD}, Strength: {DEFAULT_SUPPRESSION_STRENGTH}");
+            Debug.LogWarning("SUPRESSOR: Initializing advanced AEC with frequency-domain processing");
+            Debug.LogWarning($"SUPRESSOR: FFT size: {FFT_SIZE}, Frame size: {FRAME_SIZE}, Partitions: {NUM_PARTITIONS}");
             Reset();
         }
 
@@ -53,18 +57,21 @@ namespace DCL.VoiceChat
             feedbackDetected = false;
             feedbackSuppressionLevel = 0f;
             bufferIndex = 0;
-            delayBufferIndex = 0;
-            estimatedDelay = 0;
-            delayEstimationInitialized = false;
-            lastCorrelation = 0f;
+            echoPathGain = 1.0f;
+            adaptiveFilterGain = 1.0f;
             consecutiveDetections = 0;
             consecutiveNonDetections = 0;
+            lastEchoLevel = 0f;
             logCounter = 0;
 
             Array.Clear(speakerBuffer, 0, speakerBuffer.Length);
             Array.Clear(microphoneBuffer, 0, microphoneBuffer.Length);
-            Array.Clear(delayEstimationBuffer, 0, delayEstimationBuffer.Length);
-            Debug.LogWarning("SUPRESSOR: Reset feedback detection buffers and state");
+            Array.Clear(echoPathBuffer, 0, echoPathBuffer.Length);
+            Array.Clear(adaptiveFilter, 0, adaptiveFilter.Length);
+            Array.Clear(fftBuffer, 0, fftBuffer.Length);
+            Array.Clear(fftOutput, 0, fftOutput.Length);
+            
+            Debug.LogWarning("SUPRESSOR: Reset all AEC buffers and state");
         }
 
         public static bool ProcessAudio(float[] microphoneData, int channels, int samplesPerChannel,
@@ -78,7 +85,7 @@ namespace DCL.VoiceChat
 
             if (shouldLog)
             {
-                Debug.LogWarning($"SUPRESSOR: Processing audio - Mic: {samplesPerChannel} samples, Speaker: {speakerSamples} samples, Channels: {channels}");
+                Debug.LogWarning($"SUPRESSOR: Processing audio - Mic: {samplesPerChannel} samples, Speaker: {speakerSamples} samples");
             }
 
             Span<float> monoSpan = microphoneBuffer.AsSpan(0, samplesPerChannel);
@@ -98,21 +105,23 @@ namespace DCL.VoiceChat
                 microphoneData.AsSpan(0, samplesPerChannel).CopyTo(monoSpan);
             }
 
-            UpdateBuffersWithDelay(monoSpan, speakerData, speakerSamples);
+            UpdateBuffers(monoSpan, speakerData, speakerSamples);
 
-            float correlation = CalculateCrossCorrelationWithDelay();
+            float echoLevel = CalculateEchoLevel();
+            float correlation = CalculateFrequencyDomainCorrelation();
 
-            UpdateDelayEstimation(correlation);
+            UpdateEchoPathModel(echoLevel, correlation);
 
             bool wasFeedbackDetected = feedbackDetected;
             float threshold = configuration?.FeedbackCorrelationThreshold ?? DEFAULT_CORRELATION_THRESHOLD;
             
             if (shouldLog)
             {
-                Debug.LogWarning($"SUPRESSOR: Correlation: {correlation:F3}, Threshold: {threshold:F3}, Delay: {estimatedDelay} samples, Initialized: {delayEstimationInitialized}");
+                Debug.LogWarning($"SUPRESSOR: Echo level: {echoLevel:F3}, Correlation: {correlation:F3}, Threshold: {threshold:F3}");
+                Debug.LogWarning($"SUPRESSOR: Echo path gain: {echoPathGain:F3}, Adaptive gain: {adaptiveFilterGain:F3}");
             }
             
-            if (correlation > threshold)
+            if (echoLevel > threshold || correlation > threshold)
             {
                 consecutiveDetections++;
                 consecutiveNonDetections = 0;
@@ -137,7 +146,7 @@ namespace DCL.VoiceChat
                     Debug.LogWarning($"SUPRESSOR: Below threshold - Consecutive non-detections: {consecutiveNonDetections}");
                 }
                 
-                if (consecutiveNonDetections >= 8)
+                if (consecutiveNonDetections >= 10)
                 {
                     feedbackDetected = false;
                 }
@@ -147,7 +156,7 @@ namespace DCL.VoiceChat
             {
                 if (!wasFeedbackDetected)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Feedback detected! Correlation: {correlation:F3}, Threshold: {threshold:F3}, Delay: {estimatedDelay} samples");
+                    Debug.LogWarning($"SUPRESSOR: Feedback detected! Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
                 }
 
                 float attackRate = configuration?.FeedbackSuppressionAttackRate ?? DEFAULT_ATTACK_RATE;
@@ -156,14 +165,14 @@ namespace DCL.VoiceChat
 
                 if (shouldLog)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {feedbackSuppressionLevel:F3}, Max: {maxStrength:F3}, Attack rate: {attackRate:F3}");
+                    Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {feedbackSuppressionLevel:F3}, Max: {maxStrength:F3}");
                 }
             }
             else
             {
                 if (wasFeedbackDetected)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Feedback cleared. Correlation: {correlation:F3}, Threshold: {threshold:F3}");
+                    Debug.LogWarning($"SUPRESSOR: Feedback cleared. Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
                 }
 
                 float releaseRate = configuration?.FeedbackSuppressionReleaseRate ?? DEFAULT_RELEASE_RATE;
@@ -171,10 +180,11 @@ namespace DCL.VoiceChat
                 
                 if (shouldLog && feedbackSuppressionLevel > 0.01f)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Releasing suppression. Level: {feedbackSuppressionLevel:F3}, Release rate: {releaseRate:F3}");
+                    Debug.LogWarning($"SUPRESSOR: Releasing suppression. Level: {feedbackSuppressionLevel:F3}");
                 }
             }
 
+            lastEchoLevel = echoLevel;
             return feedbackSuppressionLevel > 0.01f;
         }
 
@@ -187,7 +197,7 @@ namespace DCL.VoiceChat
             
             if (logCounter % LOG_INTERVAL == 0)
             {
-                Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {feedbackSuppressionLevel:F3}, Gain: {suppression:F3}, Samples: {samplesPerChannel}");
+                Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {feedbackSuppressionLevel:F3}, Gain: {suppression:F3}");
             }
 
             for (int i = 0; i < samplesPerChannel; i++)
@@ -200,161 +210,168 @@ namespace DCL.VoiceChat
             }
         }
 
-        private static void UpdateBuffersWithDelay(Span<float> microphoneData, float[] speakerData, int speakerSamples)
+        private static void UpdateBuffers(Span<float> microphoneData, float[] speakerData, int speakerSamples)
         {
             for (int i = 0; i < microphoneData.Length; i++)
             {
                 microphoneBuffer[bufferIndex] = microphoneData[i];
-                bufferIndex = (bufferIndex + 1) % FEEDBACK_DETECTION_BUFFER_SIZE;
-            }
-
-            for (int i = 0; i < Mathf.Min(speakerSamples, DELAY_ESTIMATION_BUFFER_SIZE); i++)
-            {
-                delayEstimationBuffer[delayBufferIndex] = speakerData[i];
-                delayBufferIndex = (delayBufferIndex + 1) % DELAY_ESTIMATION_BUFFER_SIZE;
+                bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
             }
 
             int speakerBufferIndex = bufferIndex;
-            for (int i = 0; i < Mathf.Min(speakerSamples, FEEDBACK_DETECTION_BUFFER_SIZE); i++)
+            for (int i = 0; i < Mathf.Min(speakerSamples, BUFFER_SIZE); i++)
             {
                 speakerBuffer[speakerBufferIndex] = speakerData[i];
-                speakerBufferIndex = (speakerBufferIndex + 1) % FEEDBACK_DETECTION_BUFFER_SIZE;
+                speakerBufferIndex = (speakerBufferIndex + 1) % BUFFER_SIZE;
             }
         }
 
-        private static float CalculateCrossCorrelationWithDelay()
+        private static float CalculateEchoLevel()
         {
-            if (!delayEstimationInitialized || estimatedDelay <= 0)
+            float totalEcho = 0f;
+            float totalSpeaker = 0f;
+            float totalMicrophone = 0f;
+
+            for (int i = 0; i < BUFFER_SIZE; i++)
             {
-                float simpleCorrelation = CalculateCrossCorrelation();
-                if (logCounter % LOG_INTERVAL == 0)
-                {
-                    Debug.LogWarning($"SUPRESSOR: Using simple correlation: {simpleCorrelation:F3} (delay not estimated yet)");
-                }
-                return simpleCorrelation;
+                float speaker = speakerBuffer[i];
+                float microphone = microphoneBuffer[i];
+                float predictedEcho = speaker * echoPathGain * adaptiveFilterGain;
+
+                totalSpeaker += speaker * speaker;
+                totalMicrophone += microphone * microphone;
+                totalEcho += predictedEcho * predictedEcho;
             }
+
+            if (totalSpeaker > 0.001f && totalMicrophone > 0.001f)
+            {
+                float echoRatio = totalEcho / totalSpeaker;
+                return Mathf.Sqrt(echoRatio);
+            }
+
+            return 0f;
+        }
+
+        private static float CalculateFrequencyDomainCorrelation()
+        {
+            if (FFT_SIZE > BUFFER_SIZE)
+                return 0f;
+
+            for (int i = 0; i < FFT_SIZE; i++)
+            {
+                fftBuffer[i * 2] = speakerBuffer[i];
+                fftBuffer[i * 2 + 1] = 0f;
+            }
+
+            FFT(fftBuffer, FFT_SIZE, false);
+
+            for (int i = 0; i < FFT_SIZE; i++)
+            {
+                fftOutput[i * 2] = microphoneBuffer[i];
+                fftOutput[i * 2 + 1] = 0f;
+            }
+
+            FFT(fftOutput, FFT_SIZE, false);
 
             float correlation = 0f;
-            float micEnergy = 0f;
             float speakerEnergy = 0f;
+            float microphoneEnergy = 0f;
             float crossEnergy = 0f;
 
-            for (int i = 0; i < FEEDBACK_DETECTION_BUFFER_SIZE - estimatedDelay; i++)
+            for (int i = 0; i < FFT_SIZE / 2; i++)
             {
-                float mic = microphoneBuffer[i];
-                float spk = speakerBuffer[(i + estimatedDelay) % FEEDBACK_DETECTION_BUFFER_SIZE];
+                float speakerReal = fftBuffer[i * 2];
+                float speakerImag = fftBuffer[i * 2 + 1];
+                float micReal = fftOutput[i * 2];
+                float micImag = fftOutput[i * 2 + 1];
 
-                micEnergy += mic * mic;
-                speakerEnergy += spk * spk;
-                crossEnergy += mic * spk;
+                float speakerMag = Mathf.Sqrt(speakerReal * speakerReal + speakerImag * speakerImag);
+                float micMag = Mathf.Sqrt(micReal * micReal + micImag * micImag);
+
+                speakerEnergy += speakerMag * speakerMag;
+                microphoneEnergy += micMag * micMag;
+                crossEnergy += speakerMag * micMag;
             }
 
-            if (micEnergy > 0.001f && speakerEnergy > 0.001f)
+            if (speakerEnergy > 0.001f && microphoneEnergy > 0.001f)
             {
-                correlation = crossEnergy / Mathf.Sqrt(micEnergy * speakerEnergy);
-            }
-
-            if (logCounter % LOG_INTERVAL == 0)
-            {
-                Debug.LogWarning($"SUPRESSOR: Delay-compensated correlation: {correlation:F3}, Delay: {estimatedDelay} samples, Mic energy: {micEnergy:F6}, Spk energy: {speakerEnergy:F6}");
+                correlation = crossEnergy / Mathf.Sqrt(speakerEnergy * microphoneEnergy);
             }
 
             return Mathf.Abs(correlation);
         }
 
-        private static float CalculateCrossCorrelation()
+        private static void UpdateEchoPathModel(float echoLevel, float correlation)
         {
-            float correlation = 0f;
-            float micEnergy = 0f;
-            float speakerEnergy = 0f;
-            float crossEnergy = 0f;
-
-            for (int i = 0; i < FEEDBACK_DETECTION_BUFFER_SIZE; i++)
+            if (echoLevel > 0.1f && correlation > 0.2f)
             {
-                float mic = microphoneBuffer[i];
-                float spk = speakerBuffer[i];
-
-                micEnergy += mic * mic;
-                speakerEnergy += spk * spk;
-                crossEnergy += mic * spk;
-            }
-
-            if (micEnergy > 0.001f && speakerEnergy > 0.001f)
-            {
-                correlation = crossEnergy / Mathf.Sqrt(micEnergy * speakerEnergy);
-            }
-
-            return Mathf.Abs(correlation);
-        }
-
-        private static void UpdateDelayEstimation(float correlation)
-        {
-            if (correlation > 0.2f)
-            {
-                int bestDelay = FindBestDelay();
+                float targetGain = echoLevel / (correlation + 0.1f);
+                targetGain = Mathf.Clamp(targetGain, MIN_ECHO_PATH_GAIN, MAX_ECHO_PATH_GAIN);
                 
-                if (bestDelay >= MIN_DELAY_SAMPLES && bestDelay <= MAX_DELAY_SAMPLES)
-                {
-                    if (!delayEstimationInitialized)
-                    {
-                        estimatedDelay = bestDelay;
-                        delayEstimationInitialized = true;
-                        Debug.LogWarning($"SUPRESSOR: Delay estimation initialized! Best delay: {bestDelay} samples ({bestDelay / 48f:F1}ms)");
-                    }
-                    else
-                    {
-                        int oldDelay = estimatedDelay;
-                        estimatedDelay = (int)(DELAY_ESTIMATION_ALPHA * estimatedDelay + (1f - DELAY_ESTIMATION_ALPHA) * bestDelay);
-                        
-                        if (logCounter % LOG_INTERVAL == 0 && Mathf.Abs(oldDelay - estimatedDelay) > 10)
-                        {
-                            Debug.LogWarning($"SUPRESSOR: Delay updated: {oldDelay} -> {estimatedDelay} samples (best: {bestDelay})");
-                        }
-                    }
-                }
+                echoPathGain = Mathf.Lerp(echoPathGain, targetGain, ECHO_PATH_LEARNING_RATE);
+                adaptiveFilterGain = Mathf.Lerp(adaptiveFilterGain, 1.0f / echoPathGain, ADAPTIVE_FILTER_LEARNING_RATE);
             }
         }
 
-        private static int FindBestDelay()
+        private static void FFT(float[] buffer, int size, bool inverse)
         {
-            int bestDelay = 0;
-            float bestCorrelation = 0f;
+            int n = size;
+            int j = 0;
 
-            for (int delay = MIN_DELAY_SAMPLES; delay <= MAX_DELAY_SAMPLES; delay += 64)
+            for (int i = 0; i < n - 1; i++)
             {
-                float delayCorrelation = 0f;
-                float micEnergy = 0f;
-                float spkEnergy = 0f;
-                float crossEnergy = 0f;
-
-                for (int i = 0; i < FEEDBACK_DETECTION_BUFFER_SIZE - delay; i++)
+                if (i < j)
                 {
-                    float mic = microphoneBuffer[i];
-                    float spk = delayEstimationBuffer[(delayBufferIndex - delay - i + DELAY_ESTIMATION_BUFFER_SIZE) % DELAY_ESTIMATION_BUFFER_SIZE];
-
-                    micEnergy += mic * mic;
-                    spkEnergy += spk * spk;
-                    crossEnergy += mic * spk;
+                    float tempReal = buffer[i * 2];
+                    float tempImag = buffer[i * 2 + 1];
+                    buffer[i * 2] = buffer[j * 2];
+                    buffer[i * 2 + 1] = buffer[j * 2 + 1];
+                    buffer[j * 2] = tempReal;
+                    buffer[j * 2 + 1] = tempImag;
                 }
 
-                if (micEnergy > 0.001f && spkEnergy > 0.001f)
+                int k = n >> 1;
+                while (k <= j)
                 {
-                    delayCorrelation = crossEnergy / Mathf.Sqrt(micEnergy * spkEnergy);
-                    
-                    if (delayCorrelation > bestCorrelation)
+                    j -= k;
+                    k >>= 1;
+                }
+                j += k;
+            }
+
+            for (int step = 1; step < n; step <<= 1)
+            {
+                float omega = (inverse ? 2.0f : -2.0f) * Mathf.PI / (step * 2);
+                float wReal = 1.0f;
+                float wImag = 0.0f;
+
+                for (int group = 0; group < step; group++)
+                {
+                    for (int pair = group; pair < n; pair += step * 2)
                     {
-                        bestCorrelation = delayCorrelation;
-                        bestDelay = delay;
+                        int match = pair + step;
+                        float productReal = wReal * buffer[match * 2] - wImag * buffer[match * 2 + 1];
+                        float productImag = wReal * buffer[match * 2 + 1] + wImag * buffer[match * 2];
+
+                        buffer[match * 2] = buffer[pair * 2] - productReal;
+                        buffer[match * 2 + 1] = buffer[pair * 2 + 1] - productImag;
+                        buffer[pair * 2] += productReal;
+                        buffer[pair * 2 + 1] += productImag;
                     }
+
+                    float tempReal = wReal;
+                    wReal = tempReal * Mathf.Cos(omega) - wImag * Mathf.Sin(omega);
+                    wImag = tempReal * Mathf.Sin(omega) + wImag * Mathf.Cos(omega);
                 }
             }
 
-            if (logCounter % LOG_INTERVAL == 0 && bestCorrelation > 0.2f)
+            if (inverse)
             {
-                Debug.LogWarning($"SUPRESSOR: Delay search found best delay: {bestDelay} samples with correlation: {bestCorrelation:F3}");
+                for (int i = 0; i < n * 2; i++)
+                {
+                    buffer[i] /= n;
+                }
             }
-
-            return bestDelay;
         }
     }
 } 
