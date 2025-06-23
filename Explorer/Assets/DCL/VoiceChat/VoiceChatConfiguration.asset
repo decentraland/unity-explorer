@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcc266991aac5dd4d8eefcb174ba92dd, type: 3}
   m_Name: VoiceChatConfiguration
   m_EditorClassIdentifier: 
-  EnableLocalTrackPlayback: 1
+  EnableLocalTrackPlayback: 0
   EnableFeedbackSuppression: 1
   FeedbackCorrelationThreshold: 0.3
   FeedbackSuppressionStrength: 0.8
