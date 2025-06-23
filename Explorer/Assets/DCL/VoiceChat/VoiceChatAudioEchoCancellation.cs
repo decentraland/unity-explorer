@@ -341,7 +341,7 @@ namespace DCL.VoiceChat
             // Search for the delay that gives the highest correlation
             for (int delay = MIN_DELAY_SAMPLES; delay <= MAX_DELAY_SAMPLES; delay += 64) // Step by 64 samples for performance
             {
-                float correlation = 0f;
+                float delayCorrelation = 0f;
                 float micEnergy = 0f;
                 float spkEnergy = 0f;
                 float crossEnergy = 0f;
@@ -358,11 +358,11 @@ namespace DCL.VoiceChat
 
                 if (micEnergy > 0.001f && spkEnergy > 0.001f)
                 {
-                    correlation = crossEnergy / Mathf.Sqrt(micEnergy * spkEnergy);
+                    delayCorrelation = crossEnergy / Mathf.Sqrt(micEnergy * spkEnergy);
                     
-                    if (correlation > bestCorrelation)
+                    if (delayCorrelation > bestCorrelation)
                     {
-                        bestCorrelation = correlation;
+                        bestCorrelation = delayCorrelation;
                         bestDelay = delay;
                     }
                 }
