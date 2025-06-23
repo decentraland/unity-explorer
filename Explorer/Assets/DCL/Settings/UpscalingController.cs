@@ -1,5 +1,6 @@
 using DCL.CharacterPreview;
 using DCL.Platforms;
+using DCL.Prefs;
 using DCL.Settings;
 using System;
 using UnityEngine;
@@ -15,7 +16,6 @@ namespace DCL.Utilities
         private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
         private const float STP_MID_RESOLUTION_MAC = 0.6f;
         private const float STP_MID_RESOLUTION_WINDOWS = 1f;
-        private const string STP_DATA_STORE_KEY = "Settings_Upscaler";
         private const float INITIAL_UPSCALE_VALUE = 1f;
 
         private readonly SettingsDataStore settingsDataStore;
@@ -47,9 +47,9 @@ namespace DCL.Utilities
 
             settingsDataStore = new SettingsDataStore();
 
-            if (settingsDataStore.HasKey(STP_DATA_STORE_KEY))
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
-                SetUpscalingValue(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY), false);
+                SetUpscalingValue(settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER), true);
                 ignoreFirstResolutionChange = true;
             }
             else
@@ -82,7 +82,7 @@ namespace DCL.Utilities
 
             if (updateStoredValue)
             {
-                settingsDataStore.SetSliderValue(STP_DATA_STORE_KEY, sliderValue);
+                settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
                 OnUpscalingChanged?.Invoke(sliderValue);
             }
         }
@@ -108,6 +108,6 @@ namespace DCL.Utilities
         }
 
         public float GetCurrentUpscale() =>
-            settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY);
+            settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER);
     }
 }
