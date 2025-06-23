@@ -1,0 +1,43 @@
+import { abilityAccessCtrl, Permissions } from '@kit.AbilityKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import AVProVideoLib from 'libavprovideolib.so';
+
+export class Manager {
+  static Bootstrap() {
+	hilog.debug(0x0000, 'AVProVideo', 'AVProVideo: Bootstrap in ArkTS CALLED');
+
+	getPermission();
+
+	// Get the context
+	// https://blog.csdn.net/m_cainiaokuaifei/article/details/138571926
+//	let context = GetFromGlobalThis('AbilityContext');
+	let context = globalThis.context;
+
+	if( context == null || context == undefined )
+	{
+		hilog.debug(0x0000, 'AVProVideo', 'AVProVideo: Bootstrap in ArkTS | Context is not valid');
+	}
+	else
+	{
+		hilog.debug(0x0000, 'AVProVideo', 'AVProVideo: Bootstrap in ArkTS | Context is valid');
+
+		// Call to setup the resource manager on the c++ side, so we can open local video files
+		AVProVideoLib.setupResourceManager(context.resourceManager);
+	}
+  }
+}
+
+export function RegisterManager() {
+	var register = {}
+	register["Manager"] = Manager;
+	return register;
+}
+
+function getPermission() {
+	let permissionName2: Permissions = 'ohos.permission.MEDIA_LOCATION';
+	let permissionName3: Permissions = 'ohos.permission.READ_MEDIA';
+	let permissionName4: Permissions = 'ohos.permission.WRITE_MEDIA';
+	let permissionNames: Array<Permissions> = [permissionName2, permissionName3, permissionName4];
+	abilityAccessCtrl.createAtManager().requestPermissionsFromUser(/*this.context*/globalThis.context, permissionNames, (data) => {
+	});
+}

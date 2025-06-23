@@ -1,0 +1,17 @@
+{
+    "name": "_AVProVideo.Extensions.VideoPlayer",
+    "rootNamespace": "",
+    "references": [
+        "GUID:3ca842002c51d0a43b73e45298809a13",
+        "GUID:3bd657f68851a7f448c82186c6797ee0"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
