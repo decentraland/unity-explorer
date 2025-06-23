@@ -411,8 +411,21 @@ namespace DCL.Nametags
             preferredSize.x += bubbleMarginOffsetWidth;
             preferredSize.y = messageContent.preferredHeight + bubbleMarginOffsetHeight;
 
-            if(isCommunityMessage)
+            Vector2 textBackgroundTargetSize = Vector2.zero;
+
+            if (isCommunityMessage)
+            {
+                // Size of the background of the community name
+                textBackgroundTargetSize = new Vector2((communityNameText.preferredWidth + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.x, (communityNameText.preferredHeight + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.y);
+
+                // Size of the bubble, its width cannot be lower than the width of the name of the community
+                preferredSize.x = textBackgroundTargetSize.x * communityNameTextBackgroundRenderer.transform.localScale.x + bubbleMarginOffsetWidth > preferredSize.x ? textBackgroundTargetSize.x * communityNameTextBackgroundRenderer.transform.localScale.x + bubbleMarginOffsetWidth : preferredSize.x;
+                preferredSize.x = Mathf.Min(NametagViewConstants.MAX_BUBBLE_WIDTH, preferredSize.x);
                 preferredSize.y += communityNameText.preferredHeight + communityNameText.preferredHeight * 1.5f + COMMUNITY_TEXT_MARGIN;
+
+                // The width of the message text is adapted according to the updated size of the bubble
+                messageContentRectTransform.sizeDelta = new Vector2(preferredSize.x - bubbleMarginOffsetWidth, preferredSize.y - bubbleMarginOffsetHeight);
+            }
 
             usernameFinalPosition = CalculateUsernameFinalPosition(preferredSize.x, usernameText.preferredWidth, bubbleMarginOffsetWidth);
             usernameFinalPosition.y = messageContent.preferredHeight + bubbleMarginOffsetHeightThird;
@@ -472,13 +485,13 @@ namespace DCL.Nametags
             else if (isCommunityMessage)
             {
                 Vector2 communityTextFinalPosition = usernameFinalPosition + new Vector2((communityNameText.preferredWidth - usernameText.preferredWidth) * 0.5f + COMMUNITY_TEXT_MARGIN, usernameText.preferredHeight + communityNameText.preferredHeight * 0.5f);
-                Vector2 textBackgroundTargetSize = new Vector2((communityNameText.preferredWidth + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.x, (communityNameText.preferredHeight + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.y);
 
                 currentSequence.Join(communityNameText.rectTransform.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
                                 Join(communityNameText.DOColor(communityNameColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
                                 Join(DOTween.To(() => communityNameTextBackgroundRenderer.size, v => communityNameTextBackgroundRenderer.size = v, textBackgroundTargetSize, animationInDuration).SetEase(backgroundEaseAnimationCurve)).
                                 Join(communityNameTextBackground.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
                                 Join(communityNameTextBackgroundRenderer.DOColor(communityNameBackgroundColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve);
+
             }
 
             currentSequence.Join(usernameText.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
