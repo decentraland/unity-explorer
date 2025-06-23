@@ -19,12 +19,10 @@ namespace DCL.Settings.ModuleControllers
         {
             this.viewInstance = viewInstance;
             this.upscalingController = upscalingController;
-            upscalingController.OnUpscalingChanged += UpdateSliderText;
+            upscalingController.OnUpscalingChanged += UpdateSliderView;
             viewInstance.SliderView.Slider.onValueChanged.AddListener(UpdateUpscalingValue);
 
-            float currentValue = upscalingController.GetCurrentUpscale();
-            viewInstance.SliderView.Slider.SetValueWithoutNotify(currentValue * STEP_MULTIPLIER);
-            UpdateSliderText(currentValue);
+            UpdateSliderView(upscalingController.GetCurrentUpscale());
         }
 
         private void UpdateUpscalingValue(float value)
@@ -33,9 +31,10 @@ namespace DCL.Settings.ModuleControllers
             upscalingController.SetUpscalingValue(value / STEP_MULTIPLIER, true);
         }
 
-        private void UpdateSliderText(float value)
+        private void UpdateSliderView(float value)
         {
             //Comes in decimal form
+            viewInstance.SliderView.Slider.SetValueWithoutNotify(value * STEP_MULTIPLIER);
             viewInstance.SliderValueText.text = $"{value * STEP_MULTIPLIER_DISPLAY}%";
         }
 
