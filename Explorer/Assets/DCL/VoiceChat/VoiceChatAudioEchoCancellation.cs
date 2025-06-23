@@ -241,12 +241,12 @@ namespace DCL.VoiceChat
         {
             if (!delayEstimationInitialized || estimatedDelay <= 0)
             {
-                float correlation = CalculateCrossCorrelation();
+                float simpleCorrelation = CalculateCrossCorrelation();
                 if (logCounter % LOG_INTERVAL == 0)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Using simple correlation: {correlation:F3} (delay not estimated yet)");
+                    Debug.LogWarning($"SUPRESSOR: Using simple correlation: {simpleCorrelation:F3} (delay not estimated yet)");
                 }
-                return correlation;
+                return simpleCorrelation;
             }
 
             // Calculate correlation with delay compensation
