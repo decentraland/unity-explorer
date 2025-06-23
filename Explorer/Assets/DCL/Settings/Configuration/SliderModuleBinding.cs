@@ -64,7 +64,7 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
-                                                       SliderFeatures.STP_FEATURE => new STPSettingsController(viewInstance, upscalingController),
+                                                       SliderFeatures.STP_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(),
                                                    };

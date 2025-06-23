@@ -11,14 +11,13 @@ namespace DCL.Settings.ModuleViews
         Numeric,
         Percentage,
         Time,
+        Custom,
     }
     public class SettingsSliderModuleView : SettingsModuleView<SettingsSliderModuleView.Config>
     {
         private const float MAX_TIME_VALUE = 23.998f;
-
         private SliderType sliderType;
-        public float stepMultiplier { get; private set; }
-        private bool displayStepValues;
+
 
         [Serializable]
         public class Config : SettingsModuleViewConfiguration
@@ -28,10 +27,6 @@ namespace DCL.Settings.ModuleViews
             public float maxValue;
             public bool wholeNumbers;
             public float defaultValue;
-
-            // Step slider configuration - maps slider values to display values
-            public bool displayStepValue;
-            public float stepMultiplier = 1f;
         }
 
         [field: SerializeField] public SliderView SliderView { get; private set; }
@@ -58,30 +53,27 @@ namespace DCL.Settings.ModuleViews
             SliderView.Slider.wholeNumbers = configuration.wholeNumbers;
             SliderView.Slider.value = configuration.defaultValue;
             sliderType = configuration.sliderType;
-            stepMultiplier = configuration.stepMultiplier;
-            displayStepValues = configuration.displayStepValue;
         }
 
         private void OnSliderValueChanged(float value)
         {
-            float valueToDisplay = value;
-
-            if (displayStepValues)
-                valueToDisplay = value * stepMultiplier;
-
             switch (sliderType)
             {
                 case SliderType.Numeric:
-                    SliderValueText.text = valueToDisplay.ToString(SliderView.Slider.wholeNumbers ? "0" : "0.00", CultureInfo.InvariantCulture);
+                    SliderValueText.text = value.ToString(SliderView.Slider.wholeNumbers ? "0" : "0.00", CultureInfo.InvariantCulture);
                     break;
                 case SliderType.Percentage:
-                    SliderValueText.text = $"{valueToDisplay.ToString(SliderView.Slider.wholeNumbers ? "0" : "0.00", CultureInfo.InvariantCulture)}%";
+                    SliderValueText.text = $"{value.ToString(SliderView.Slider.wholeNumbers ? "0" : "0.00", CultureInfo.InvariantCulture)}%";
                     break;
                 case SliderType.Time:
                     value = Mathf.Clamp(value, 0, MAX_TIME_VALUE);
                     var hourSection = (int)value;
                     var minuteSection = (int)((value - hourSection) * 60);
                     SliderValueText.text = $"{hourSection:00}:{minuteSection:00}";
+                    break;
+
+                //If we want to do a custom control for displaying text, we can do it on the respective controller
+                case SliderType.Custom:
                     break;
             }
 

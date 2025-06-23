@@ -26,8 +26,8 @@ namespace DCL.Utilities
 
         private float savedUpscalingDuringCharacterPreview;
         private bool ignoreFirstResolutionChange;
-        [CanBeNull] private SettingsSliderModuleView sliderView;
-        private float stepMultiplier;
+
+        public Action<float> OnUpscalingChanged;
 
         public UpscalingController(CharacterPreviewEventBus characterPreviewEventBus)
         {
@@ -50,31 +50,31 @@ namespace DCL.Utilities
 
             if (settingsDataStore.HasKey(STP_DATA_STORE_KEY))
             {
-                SetSTPSetting(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY), false, false);
+                SetSTPSetting(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY), false);
                 ignoreFirstResolutionChange = true;
             }
         }
 
         private void CharacterViewClosed(CharacterPreviewControllerBase obj) =>
-            SetSTPSetting(savedUpscalingDuringCharacterPreview, false, false);
+            SetSTPSetting(savedUpscalingDuringCharacterPreview, false);
 
         private void CharacterViewOpened(CharacterPreviewControllerBase obj)
         {
             savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-            SetSTPSetting(STP_VALUE_FOR_CHARACTER_PREVIEW, false, false);
+            SetSTPSetting(STP_VALUE_FOR_CHARACTER_PREVIEW, false);
         }
 
         //Should always get in decimal form
-        private void SetSTPSetting(float sliderValue, bool updateSlider, bool updateStoredValue)
+        public void SetSTPSetting(float sliderValue, bool updateStoredValue)
         {
             foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
                 ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = sliderValue;
 
             if (updateStoredValue)
+            {
                 settingsDataStore.SetSliderValue(STP_DATA_STORE_KEY, sliderValue);
-
-            if (updateSlider)
-                sliderView?.SliderView.Slider.SetValueWithoutNotify(sliderValue * stepMultiplier);
+                OnUpscalingChanged?.Invoke(sliderValue);
+            }
         }
 
         public void ResolutionChanged(Resolution resolution)
@@ -94,21 +94,8 @@ namespace DCL.Utilities
             else if (resolution.width > 2000 || resolution.height > 2000)
                 newSTPScale = midResolutionPreset;
 
-            SetSTPSetting(newSTPScale, true, true);
+            SetSTPSetting(newSTPScale, true);
         }
 
-        public void SetSliderModuleView(SettingsSliderModuleView stpSettingsView)
-        {
-            sliderView = stpSettingsView;
-            stepMultiplier = sliderView!.stepMultiplier;
-            sliderView!.SliderView.Slider.onValueChanged.AddListener(newValue =>
-            {
-                //If there is a slider change, we want it to persist when the menu is closed
-                savedUpscalingDuringCharacterPreview = newValue;
-                SetSTPSetting(newValue / stepMultiplier, false, true);
-            });
-
-            sliderView.SliderView.Slider.SetValueWithoutNotify(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY) * stepMultiplier);
-        }
     }
 }
