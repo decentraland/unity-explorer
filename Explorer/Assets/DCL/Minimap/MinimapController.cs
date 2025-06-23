@@ -39,7 +39,7 @@ namespace DCL.Minimap
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
         private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
-        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { {"onboardingdcl.dcl.eth", "EXIT TUTORIAL"} };
+        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" } };
         private const float ANIMATION_TIME = 0.2f;
 
         private readonly IMapRenderer mapRenderer;
@@ -55,12 +55,12 @@ namespace DCL.Minimap
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrls;
+        private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
         private Vector2Int previousParcelPosition;
         private SceneRestrictionsController? sceneRestrictionsController;
-        private GenericContextMenu contextMenu;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -97,9 +97,6 @@ namespace DCL.Minimap
             this.decentralandUrls = decentralandUrls;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
-
-            contextMenu = new GenericContextMenu(190)
-               .AddControl(new ButtonContextMenuControlSettings("Copy Link", null, CopyJumpInLink));
         }
 
         public override void Dispose()
@@ -145,13 +142,17 @@ namespace DCL.Minimap
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
-            viewInstance.contextMenuButton.onClick.AddListener(ShowContextMenu);
+
+            contextMenu = new GenericContextMenu(190)
+                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
+
+            viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
         }
 
         private void ShowContextMenu()
         {
             mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuButton.transform.position)))
+                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
                       .Forget();
         }
 

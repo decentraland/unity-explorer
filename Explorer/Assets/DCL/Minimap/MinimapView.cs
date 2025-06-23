@@ -4,6 +4,7 @@ using DCL.MapRenderer.MapLayers.Pins;
 using DCL.UI;
 using DCL.UI.Buttons;
 using MVC;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -79,7 +80,7 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal MinimapPinMarkerObject destinationPinMarker { get; private set; }
 
-        [SerializeField] internal Button contextMenuButton;
+        [SerializeField] internal ContextMenuConfig contextMenuConfig;
 
         private void Start()
         {
@@ -92,5 +93,12 @@ namespace DCL.Minimap
 
         private void OnUnHoverMap() =>
             minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
+
+        [Serializable]
+        public struct ContextMenuConfig
+        {
+            public Sprite copyLinkIcon;
+            public Button button;
+        }
     }
 }
