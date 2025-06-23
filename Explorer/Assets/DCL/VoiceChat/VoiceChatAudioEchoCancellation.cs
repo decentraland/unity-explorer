@@ -6,20 +6,17 @@ namespace DCL.VoiceChat
 {
     public static class VoiceChatAudioEchoCancellation
     {
-        // Increased buffer size for better detection (WebRTC uses much larger buffers)
-        private const int FEEDBACK_DETECTION_BUFFER_SIZE = 8192; // ~170ms at 48kHz
-        private const int DELAY_ESTIMATION_BUFFER_SIZE = 16384; // ~340ms for delay estimation
+        private const int FEEDBACK_DETECTION_BUFFER_SIZE = 8192;
+        private const int DELAY_ESTIMATION_BUFFER_SIZE = 16384;
         
-        // More sensitive thresholds based on WebRTC patterns
-        private const float DEFAULT_CORRELATION_THRESHOLD = 0.25f; // Lowered from 0.4f for more sensitivity
-        private const float DEFAULT_SUPPRESSION_STRENGTH = 0.7f; // Increased from 0.5f for stronger suppression
-        private const float DEFAULT_ATTACK_RATE = 0.2f; // Increased from 0.15f for faster response
-        private const float DEFAULT_RELEASE_RATE = 0.02f; // Decreased from 0.03f for slower release
+        private const float DEFAULT_CORRELATION_THRESHOLD = 0.25f;
+        private const float DEFAULT_SUPPRESSION_STRENGTH = 0.7f;
+        private const float DEFAULT_ATTACK_RATE = 0.2f;
+        private const float DEFAULT_RELEASE_RATE = 0.02f;
         
-        // Delay estimation constants
-        private const int MIN_DELAY_SAMPLES = 512; // ~10ms at 48kHz
-        private const int MAX_DELAY_SAMPLES = 8192; // ~170ms at 48kHz
-        private const float DELAY_ESTIMATION_ALPHA = 0.95f; // Smoothing factor
+        private const int MIN_DELAY_SAMPLES = 512;
+        private const int MAX_DELAY_SAMPLES = 8192;
+        private const float DELAY_ESTIMATION_ALPHA = 0.95f;
 
         private static readonly float[] speakerBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
         private static readonly float[] microphoneBuffer = new float[FEEDBACK_DETECTION_BUFFER_SIZE];
@@ -31,16 +28,14 @@ namespace DCL.VoiceChat
         private static float feedbackSuppressionLevel = 0f;
         private static VoiceChatConfiguration configuration;
         
-        // Delay estimation state
         private static int estimatedDelay = 0;
         private static bool delayEstimationInitialized = false;
         private static float lastCorrelation = 0f;
         private static int consecutiveDetections = 0;
         private static int consecutiveNonDetections = 0;
         
-        // Logging state
         private static int logCounter = 0;
-        private const int LOG_INTERVAL = 100; // Log every 100 frames
+        private const int LOG_INTERVAL = 100;
 
         public static bool IsEnabled => configuration?.EnableFeedbackSuppression == true;
 
@@ -86,7 +81,6 @@ namespace DCL.VoiceChat
                 Debug.LogWarning($"SUPRESSOR: Processing audio - Mic: {samplesPerChannel} samples, Speaker: {speakerSamples} samples, Channels: {channels}");
             }
 
-            // Convert microphone to mono
             Span<float> monoSpan = microphoneBuffer.AsSpan(0, samplesPerChannel);
 
             if (channels > 1)
@@ -104,13 +98,10 @@ namespace DCL.VoiceChat
                 microphoneData.AsSpan(0, samplesPerChannel).CopyTo(monoSpan);
             }
 
-            // Update buffers with proper delay compensation
             UpdateBuffersWithDelay(monoSpan, speakerData, speakerSamples);
 
-            // Calculate correlation with delay compensation
             float correlation = CalculateCrossCorrelationWithDelay();
 
-            // Update delay estimation
             UpdateDelayEstimation(correlation);
 
             bool wasFeedbackDetected = feedbackDetected;
@@ -121,7 +112,6 @@ namespace DCL.VoiceChat
                 Debug.LogWarning($"SUPRESSOR: Correlation: {correlation:F3}, Threshold: {threshold:F3}, Delay: {estimatedDelay} samples, Initialized: {delayEstimationInitialized}");
             }
             
-            // Use hysteresis to prevent rapid switching
             if (correlation > threshold)
             {
                 consecutiveDetections++;
@@ -132,7 +122,6 @@ namespace DCL.VoiceChat
                     Debug.LogWarning($"SUPRESSOR: Above threshold - Consecutive detections: {consecutiveDetections}");
                 }
                 
-                // Require fewer consecutive detections to trigger (more sensitive)
                 if (consecutiveDetections >= 2)
                 {
                     feedbackDetected = true;
@@ -148,7 +137,6 @@ namespace DCL.VoiceChat
                     Debug.LogWarning($"SUPRESSOR: Below threshold - Consecutive non-detections: {consecutiveNonDetections}");
                 }
                 
-                // Require more consecutive non-detections to clear (more stable)
                 if (consecutiveNonDetections >= 8)
                 {
                     feedbackDetected = false;
@@ -214,21 +202,18 @@ namespace DCL.VoiceChat
 
         private static void UpdateBuffersWithDelay(Span<float> microphoneData, float[] speakerData, int speakerSamples)
         {
-            // Update microphone buffer
             for (int i = 0; i < microphoneData.Length; i++)
             {
                 microphoneBuffer[bufferIndex] = microphoneData[i];
                 bufferIndex = (bufferIndex + 1) % FEEDBACK_DETECTION_BUFFER_SIZE;
             }
 
-            // Update delay estimation buffer (larger buffer for delay estimation)
             for (int i = 0; i < Mathf.Min(speakerSamples, DELAY_ESTIMATION_BUFFER_SIZE); i++)
             {
                 delayEstimationBuffer[delayBufferIndex] = speakerData[i];
                 delayBufferIndex = (delayBufferIndex + 1) % DELAY_ESTIMATION_BUFFER_SIZE;
             }
 
-            // Update speaker buffer with delay compensation
             int speakerBufferIndex = bufferIndex;
             for (int i = 0; i < Mathf.Min(speakerSamples, FEEDBACK_DETECTION_BUFFER_SIZE); i++)
             {
@@ -249,7 +234,6 @@ namespace DCL.VoiceChat
                 return simpleCorrelation;
             }
 
-            // Calculate correlation with delay compensation
             float correlation = 0f;
             float micEnergy = 0f;
             float speakerEnergy = 0f;
@@ -305,7 +289,6 @@ namespace DCL.VoiceChat
 
         private static void UpdateDelayEstimation(float correlation)
         {
-            // Only update delay estimation when we have significant correlation (lowered threshold)
             if (correlation > 0.2f)
             {
                 int bestDelay = FindBestDelay();
@@ -321,7 +304,6 @@ namespace DCL.VoiceChat
                     else
                     {
                         int oldDelay = estimatedDelay;
-                        // Smooth delay updates
                         estimatedDelay = (int)(DELAY_ESTIMATION_ALPHA * estimatedDelay + (1f - DELAY_ESTIMATION_ALPHA) * bestDelay);
                         
                         if (logCounter % LOG_INTERVAL == 0 && Mathf.Abs(oldDelay - estimatedDelay) > 10)
@@ -338,8 +320,7 @@ namespace DCL.VoiceChat
             int bestDelay = 0;
             float bestCorrelation = 0f;
 
-            // Search for the delay that gives the highest correlation
-            for (int delay = MIN_DELAY_SAMPLES; delay <= MAX_DELAY_SAMPLES; delay += 64) // Step by 64 samples for performance
+            for (int delay = MIN_DELAY_SAMPLES; delay <= MAX_DELAY_SAMPLES; delay += 64)
             {
                 float delayCorrelation = 0f;
                 float micEnergy = 0f;
@@ -376,4 +357,4 @@ namespace DCL.VoiceChat
             return bestDelay;
         }
     }
-}
+} 
