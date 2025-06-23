@@ -9,6 +9,7 @@ using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.Landscape.Utils;
 using DCL.MapRenderer.ComponentsFactory;
+using DCL.Prefs;
 using DCL.RealmNavigation;
 using DCL.WebRequests;
 using ECS;
@@ -128,13 +129,13 @@ namespace DCL.PluginSystem.Global
             //As of now, if we have to turn it off because of an emergency situation, we need to regenerate the cache.
             //GPUI cache and regular terrain cache are not compatible
             //Also, when decision is taken, make `forceCacheRegen` private again
-            int storedGPUIValue = PlayerPrefs.GetInt(FeatureFlagsStrings.GPUI_ENABLED, 0);
+            int storedGPUIValue = DCLPlayerPrefs.GetInt(FeatureFlagsStrings.GPUI_ENABLED, 0);
             bool wasEnabled = storedGPUIValue == 1;
 
             if (isGPUIEnabledFF != wasEnabled)
                 terrainGenerator.forceCacheRegen = true;
 
-            PlayerPrefs.SetInt(FeatureFlagsStrings.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
+            DCLPlayerPrefs.SetInt(FeatureFlagsStrings.GPUI_ENABLED, isGPUIEnabledFF ? 1 : 0);
 
             if (isGPUIEnabledFF)
                 gpuiWrapper = new GPUIWrapper();

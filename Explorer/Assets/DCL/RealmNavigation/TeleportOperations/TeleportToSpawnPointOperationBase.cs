@@ -10,7 +10,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using System;
+using Microsoft.ClearScript;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
@@ -45,6 +45,15 @@ namespace DCL.RealmNavigation.TeleportOperations
             AsyncLoadProcessReport teleportLoadReport = args.Report.CreateChildReport(finalizationProgress);
             EnumResult<TaskError> res = await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcel);
             args.Report.SetProgress(finalizationProgress);
+
+            // See https://github.com/decentraland/unity-explorer/issues/4470: we should teleport the player even if the scene has javascript errors
+            // We need to prevent the error propagation, otherwise the load state remains invalid which provokes issues like the incapability of typing another command in the chat
+            if (res.Error is { Exception: ScriptEngineException })
+            {
+                ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Error on teleport to spawn point {parcel}: {res.Error.Value.Exception}");
+                return EnumResult<TaskError>.SuccessResult();
+            }
+
             return res;
         }
 
