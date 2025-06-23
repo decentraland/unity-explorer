@@ -3,7 +3,6 @@ using UnityEditor;
 using UnityEditor.Rendering.Universal;
 using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UIElements;
 
@@ -24,14 +23,12 @@ namespace DCL.Quality
         private SerializedObject qualitySettingSerializedObject;
         private UnityEditor.Editor rendererDataEditor;
         private new QualitySettingsAsset target;
-        private SerializedProperty updateInEditor;
 
         private void OnEnable()
         {
             target = (QualitySettingsAsset)base.target;
             customSettings = serializedObject.FindProperty(nameof(QualitySettingsAsset.customSettings));
             allRendererFeatures = serializedObject.FindProperty(nameof(QualitySettingsAsset.allRendererFeatures));
-            updateInEditor = serializedObject.FindProperty(nameof(QualitySettingsAsset.updateInEditor));
 
             qualitySettingsEditor = CreateEditor(QualitySettings.GetQualitySettings());
         }
@@ -55,7 +52,6 @@ namespace DCL.Quality
 
             VisualElement customSettingsFoldout = CreateHeaderFoldout("Custom Settings");
 
-            customSettingsFoldout.Add(DrawUpdateInEditor());
             currentLevelContainer = new VisualElement();
             currentLevelContainer.style.paddingLeft = 20;
             currentLevelContainer.style.paddingTop = 10;
@@ -211,22 +207,6 @@ namespace DCL.Quality
             GUI.enabled = false;
             EditorGUILayout.PropertyField(allRendererFeatures);
             GUI.enabled = true;
-        }
-
-        private VisualElement DrawUpdateInEditor()
-        {
-            var propertyField = new PropertyField(updateInEditor);
-            propertyField.Bind(serializedObject);
-
-            propertyField.RegisterValueChangeCallback(evt =>
-            {
-                if (evt.changedProperty.boolValue)
-                    QualitySettingsEditorListener.Start(target);
-                else
-                    QualitySettingsEditorListener.Stop();
-            });
-
-            return propertyField;
         }
 
         private void InitStyles()

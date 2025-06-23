@@ -67,10 +67,12 @@ namespace DCL.CharacterMotion.Systems
                 Physics.SyncTransforms();
             }
 
-            CollisionFlags collisionFlags = characterController.Move(
-                movementDelta
-                + gravityDelta
-                + slopeModifier);
+            CollisionFlags collisionFlags = CollisionFlags.None;
+            if (characterController.enabled)
+                collisionFlags = characterController.Move(
+                    movementDelta
+                    + gravityDelta
+                    + slopeModifier);
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
             bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);

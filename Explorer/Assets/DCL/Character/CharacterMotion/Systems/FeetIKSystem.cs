@@ -14,6 +14,7 @@ using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using Utility.Animations;
 
 namespace DCL.CharacterMotion.Systems
 {
@@ -109,7 +110,7 @@ namespace DCL.CharacterMotion.Systems
             bool isEnabled = rigidTransform.IsGrounded
                              && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck) // disable IK while stuck or sliding
                              && !stunComponent.IsStunned // disable IK while stunned
-                             && emoteComponent.CurrentEmoteReference == null // disable IK while doing an emote
+                             && !emoteComponent.IsPlayingEmote() // disable IK while doing an emote
                              && !disableByPlatform; // disable IK on moving platforms
 
             // First: Raycast down from right/left constraints and update IK targets
