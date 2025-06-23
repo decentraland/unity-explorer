@@ -11,10 +11,10 @@ namespace DCL.VoiceChat
         private const int DELAY_ESTIMATION_BUFFER_SIZE = 16384; // ~340ms for delay estimation
         
         // More sensitive thresholds based on WebRTC patterns
-        private const float DEFAULT_CORRELATION_THRESHOLD = 0.4f; // Lowered from 0.7f
-        private const float DEFAULT_SUPPRESSION_STRENGTH = 0.5f; // Increased from 0.3f
-        private const float DEFAULT_ATTACK_RATE = 0.15f; // Increased from 0.1f
-        private const float DEFAULT_RELEASE_RATE = 0.03f; // Decreased from 0.05f
+        private const float DEFAULT_CORRELATION_THRESHOLD = 0.25f; // Lowered from 0.4f for more sensitivity
+        private const float DEFAULT_SUPPRESSION_STRENGTH = 0.7f; // Increased from 0.5f for stronger suppression
+        private const float DEFAULT_ATTACK_RATE = 0.2f; // Increased from 0.15f for faster response
+        private const float DEFAULT_RELEASE_RATE = 0.02f; // Decreased from 0.03f for slower release
         
         // Delay estimation constants
         private const int MIN_DELAY_SAMPLES = 512; // ~10ms at 48kHz
@@ -132,8 +132,8 @@ namespace DCL.VoiceChat
                     Debug.LogWarning($"SUPRESSOR: Above threshold - Consecutive detections: {consecutiveDetections}");
                 }
                 
-                // Require multiple consecutive detections to trigger
-                if (consecutiveDetections >= 3)
+                // Require fewer consecutive detections to trigger (more sensitive)
+                if (consecutiveDetections >= 2)
                 {
                     feedbackDetected = true;
                 }
@@ -148,8 +148,8 @@ namespace DCL.VoiceChat
                     Debug.LogWarning($"SUPRESSOR: Below threshold - Consecutive non-detections: {consecutiveNonDetections}");
                 }
                 
-                // Require multiple consecutive non-detections to clear
-                if (consecutiveNonDetections >= 5)
+                // Require more consecutive non-detections to clear (more stable)
+                if (consecutiveNonDetections >= 8)
                 {
                     feedbackDetected = false;
                 }
@@ -305,8 +305,8 @@ namespace DCL.VoiceChat
 
         private static void UpdateDelayEstimation(float correlation)
         {
-            // Only update delay estimation when we have significant correlation
-            if (correlation > 0.3f)
+            // Only update delay estimation when we have significant correlation (lowered threshold)
+            if (correlation > 0.2f)
             {
                 int bestDelay = FindBestDelay();
                 
@@ -368,7 +368,7 @@ namespace DCL.VoiceChat
                 }
             }
 
-            if (logCounter % LOG_INTERVAL == 0 && bestCorrelation > 0.3f)
+            if (logCounter % LOG_INTERVAL == 0 && bestCorrelation > 0.2f)
             {
                 Debug.LogWarning($"SUPRESSOR: Delay search found best delay: {bestDelay} samples with correlation: {bestCorrelation:F3}");
             }

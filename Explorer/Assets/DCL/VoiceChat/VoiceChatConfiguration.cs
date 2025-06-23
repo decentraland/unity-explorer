@@ -14,20 +14,20 @@ namespace DCL.VoiceChat
         public bool EnableFeedbackSuppression = true;
 
         [Tooltip("Correlation threshold for feedback detection (lower = more sensitive)")]
-        [Range(0.2f, 0.8f)]
-        public float FeedbackCorrelationThreshold = 0.4f;
+        [Range(0.1f, 0.6f)]
+        public float FeedbackCorrelationThreshold = 0.25f;
 
         [Tooltip("Maximum suppression strength when feedback is detected")]
-        [Range(0.2f, 0.8f)]
-        public float FeedbackSuppressionStrength = 0.5f;
+        [Range(0.3f, 0.9f)]
+        public float FeedbackSuppressionStrength = 0.7f;
 
         [Tooltip("How quickly suppression increases when feedback is detected")]
-        [Range(0.05f, 0.3f)]
-        public float FeedbackSuppressionAttackRate = 0.15f;
+        [Range(0.05f, 0.4f)]
+        public float FeedbackSuppressionAttackRate = 0.2f;
 
         [Tooltip("How quickly suppression decreases when feedback stops")]
-        [Range(0.01f, 0.1f)]
-        public float FeedbackSuppressionReleaseRate = 0.03f;
+        [Range(0.005f, 0.05f)]
+        public float FeedbackSuppressionReleaseRate = 0.02f;
 
         [Header("Voice Detection Configurations")]
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]

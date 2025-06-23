@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 0
   EnableFeedbackSuppression: 1
-  FeedbackCorrelationThreshold: 0.4
-  FeedbackSuppressionStrength: 0.5
-  FeedbackSuppressionAttackRate: 0.15
-  FeedbackSuppressionReleaseRate: 0.03
+  FeedbackCorrelationThreshold: 0.25
+  FeedbackSuppressionStrength: 0.7
+  FeedbackSuppressionAttackRate: 0.2
+  FeedbackSuppressionReleaseRate: 0.02
   HoldThresholdInSeconds: 0.5
   EnableAudioProcessing: 1
   EnableNoiseGate: 1
