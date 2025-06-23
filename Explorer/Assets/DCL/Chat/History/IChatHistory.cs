@@ -9,7 +9,7 @@ namespace DCL.Chat.History
     {
         public delegate void AllChannelsRemovedDelegate();
         public delegate void ChannelAddedDelegate(ChatChannel addedChannel);
-        public delegate void ChannelRemovedDelegate(ChatChannel.ChannelId removedChannel);
+        public delegate void ChannelRemovedDelegate(ChatChannel.ChannelId removedChannel, ChatChannel.ChatChannelType channelType);
         public delegate void ChannelClearedDelegate(ChatChannel claredChannel);
         public delegate void MessageAddedDelegate(ChatChannel destinationChannel, ChatMessage addedMessage);
         public delegate void ReadMessagesChangedDelegate(ChatChannel changedChannel);
@@ -62,7 +62,7 @@ namespace DCL.Chat.History
         /// <returns>
         /// The id of the new channel.
         /// </returns>
-        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.UNDEFINED);
+        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type);
 
         /// <summary>
         /// Removes a channel along with its messages (which implies a change in the amount of read messages).
@@ -74,8 +74,9 @@ namespace DCL.Chat.History
         /// Adds a new message to a channel.
         /// </summary>
         /// <param name="channelId">The id of the channel.</param>
+        /// <param name="channelType">The type of channel (user, community, etc.).</param>
         /// <param name="newMessage">The new message.</param>
-        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage);
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage newMessage);
 
         /// <summary>
         /// Deletes all the messages in all the channels and then removes all the channels.

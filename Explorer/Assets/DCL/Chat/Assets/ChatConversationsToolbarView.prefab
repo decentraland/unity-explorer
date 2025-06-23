@@ -288,7 +288,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemsContainer: {fileID: 8630798346737684634}
-  itemPrefab: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+  nearbyConversationItemPrefab: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
+  privateConversationItemPrefab: {fileID: 4111530681574439981, guid: 9aa01414a8609a74d9e7a38295a6ba1f, type: 3}
+  communityConversationItemPrefab: {fileID: 6633483077033816363, guid: 954dae08a8ee75d449d12698e42bf923, type: 3}
   scrollButtons: {fileID: 448445699823031147}
   scrollView: {fileID: 251376968611252006}
   scrollUpButton: {fileID: 3625281021071649238}

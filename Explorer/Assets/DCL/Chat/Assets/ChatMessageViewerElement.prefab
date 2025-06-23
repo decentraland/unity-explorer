@@ -162,11 +162,11 @@ MonoBehaviour:
   - mItemPrefab: {fileID: 315238571471859014, guid: d845292f5e8993041befc3df2e68e96e, type: 3}
     mPadding: 4
     mInitCreateCount: 3
-    mStartPosOffset: 0
+    mStartPosOffset: 4
   - mItemPrefab: {fileID: 315238571471859014, guid: 52e1c4c3ef9524f3a9d48c3c2216036d, type: 3}
     mPadding: 4
     mInitCreateCount: 3
-    mStartPosOffset: 0
+    mStartPosOffset: -4
   - mItemPrefab: {fileID: 6049988091948713917}
     mPadding: 4
     mInitCreateCount: 2
@@ -174,7 +174,7 @@ MonoBehaviour:
   - mItemPrefab: {fileID: 315238571471859014, guid: efdc5e8175a88de4eaaf5800a0e3bea8, type: 3}
     mPadding: 4
     mInitCreateCount: 2
-    mStartPosOffset: 0
+    mStartPosOffset: 4
   - mItemPrefab: {fileID: 1823520394044014357, guid: 1b4c7601aebf5ee4a93458e183292915, type: 3}
     mPadding: 8
     mInitCreateCount: 1

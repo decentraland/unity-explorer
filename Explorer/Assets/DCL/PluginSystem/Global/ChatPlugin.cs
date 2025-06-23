@@ -8,6 +8,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.EventBus;
+using DCL.Communities;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.FeatureFlags;
@@ -20,6 +21,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
@@ -64,11 +66,15 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly ICommunitiesDataProvider communityDataProvider;
+        private readonly IThumbnailCache thumbnailCache;
+        private readonly WarningNotificationView warningNotificationView;
+        private readonly bool isCommunitiesIncluded;
 
         private ChatController chatController;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
-        
+
         public ChatPlugin(
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
@@ -97,7 +103,11 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             IRealmData realmData,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            ICommunitiesDataProvider communityDataProvider,
+            IThumbnailCache thumbnailCache,
+            WarningNotificationView warningNotificationView,
+            bool isCommunitiesIncluded)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -128,6 +138,10 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.realmData = realmData;
             this.realmNavigator = realmNavigator;
+            this.communityDataProvider = communityDataProvider;
+            this.thumbnailCache = thumbnailCache;
+            this.warningNotificationView = warningNotificationView;
+            this.isCommunitiesIncluded = isCommunitiesIncluded;
         }
 
         public void Dispose()
@@ -174,7 +188,12 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 chatStorage,
                 friendsServiceProxy,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                communityDataProvider,
+                thumbnailCache,
+                mvcManager,
+                warningNotificationView,
+                isCommunitiesIncluded
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
