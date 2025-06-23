@@ -128,7 +128,7 @@ namespace DCL.Communities.CommunitiesCard
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
-                              new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested, textColor: Color.red, iconColor: Color.red)));
+                              new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested, textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
         }
 
         public void SetConfirmationDialogDependencies(ProfileRepositoryWrapper profileRepositoryWrapper)

@@ -15,6 +15,7 @@ namespace DCL.Communities.CommunitiesCard
         [Space(10)]
         [SerializeField] private Sprite deleteCommunitySprite;
         [SerializeField] private string deleteCommunityText = "Delete Community";
+        [SerializeField] private Color deleteCommunityTextColor = Color.red;
 
         public int ContextMenuWidth => contextMenuWidth;
         public int ElementsSpacing => elementsSpacing;
@@ -26,5 +27,6 @@ namespace DCL.Communities.CommunitiesCard
 
         public Sprite DeleteCommunitySprite => deleteCommunitySprite;
         public string DeleteCommunityText => deleteCommunityText;
+        public Color DeleteCommunityTextColor => deleteCommunityTextColor;
     }
 }
