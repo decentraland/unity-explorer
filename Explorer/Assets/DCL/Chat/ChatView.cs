@@ -207,6 +207,9 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
 
+        public event Action OnCloseButtonClicked = () => { };
+        public event Action OnInputButtonClicked = () => { };
+        
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
@@ -865,8 +868,9 @@ namespace DCL.Chat
             {
                 if (!IsUnfolded)
                 {
-                    IsUnfolded = true;
-                    Focus();
+                    // NOTE: notify controller to handle opening the chat
+                    // NOTE: instead of handling it here in the view
+                    OnInputButtonClicked();
                     chatMessageViewer.ShowLastMessage();
                 }
             }
@@ -894,7 +898,10 @@ namespace DCL.Chat
         private void OnCloseChatButtonClicked()
         {
             popupCts.SafeCancelAndDispose();
-            IsUnfolded = false;
+            
+            // NOTE: notify controller to handle closing the chat
+            // NOTE: instead of handling it here in the view
+            OnCloseButtonClicked();
         }
 
         private void OnInputChanged(string inputText)
@@ -999,10 +1006,7 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)
         {
             if (currentChannel == null || !CurrentChannelId.Equals(channelId))
-                if (!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                    ConversationSelected?.Invoke(channelId);
-                else
-                    CurrentChannelId = channelId;
+                ConversationSelected?.Invoke(channelId);
         }
 
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
