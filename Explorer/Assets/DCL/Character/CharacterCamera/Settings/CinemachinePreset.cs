@@ -10,7 +10,7 @@ namespace DCL.CharacterCamera.Settings
         [SerializeField] private CinemachineThirdPersonCameraData thirdPersonCameraData = null!;
         [SerializeField] private CinemachineThirdPersonCameraData droneViewCameraData = null!;
         [SerializeField] private CinemachineFreeCameraData freeCameraData = null!;
-        [SerializeField] private  CinemachineFreeCameraData inWorldCameraData = null!;
+        [SerializeField] private CinemachineFreeCameraData inWorldCameraData = null!;
 
         [SerializeField] private int shoulderChangeSpeed;
 
@@ -23,6 +23,9 @@ namespace DCL.CharacterCamera.Settings
         }
 
         [field: SerializeField]
+        public CameraFarClipPlaneSettings FarClipPlaneSettings { get; set; }
+
+        [field: SerializeField]
         public CameraMode DefaultCameraMode { get; private set; }
 
         [field: SerializeField]
@@ -31,6 +34,7 @@ namespace DCL.CharacterCamera.Settings
         ICinemachineThirdPersonCameraData ICinemachinePreset.ThirdPersonCameraData => thirdPersonCameraData;
 
         ICinemachineFirstPersonCameraData ICinemachinePreset.FirstPersonCameraData => firstPersonCameraData;
+
         ICinemachineThirdPersonCameraData ICinemachinePreset.DroneViewCameraData => droneViewCameraData;
 
         ICinemachineFreeCameraData ICinemachinePreset.FreeCameraData => freeCameraData;
