@@ -46,8 +46,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             sceneTransitionState = SceneTransitionState.NORMAL;
             systemMemoryCap = memoryCap;
-            isEnabled = false;
-            UpdateMemoryCap();
+
+            initialKey = SceneLimitsKey.MAX_MEMORY;
+            currentSceneLimits = constantSceneLimits[initialKey];
         }
 
         public void ResetCurrentUsage()
@@ -95,10 +96,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         public void UpdateMemoryCap()
         {
             if (!isEnabled)
-            {
-                initialKey = SceneLimitsKey.MAX_MEMORY;
                 return;
-            }
 
             if (systemMemoryCap.MemoryCapInMB < SceneLoadingMemoryConstants.LOW_MEMORY_RIG_THRESHOLD)
                 initialKey = SceneLimitsKey.LOW_MEMORY;

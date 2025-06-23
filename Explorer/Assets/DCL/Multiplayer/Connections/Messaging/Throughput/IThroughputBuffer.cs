@@ -4,6 +4,8 @@
     {
         ulong CurrentAmount();
 
+        ulong ConsumeFrameAmount();
+
         void Register(ulong bytesAmount);
 
         void Clear();
