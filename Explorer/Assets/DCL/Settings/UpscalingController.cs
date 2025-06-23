@@ -1,9 +1,6 @@
 using DCL.CharacterPreview;
 using DCL.Platforms;
 using DCL.Settings;
-using DCL.Settings.ModuleControllers;
-using DCL.Settings.ModuleViews;
-using JetBrains.Annotations;
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
