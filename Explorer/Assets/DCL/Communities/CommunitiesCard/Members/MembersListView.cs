@@ -115,7 +115,8 @@ namespace DCL.Communities.CommunitiesCard.Members
         private void OnContextMenuButtonClicked(MemberData profile, Vector2 buttonPosition, MemberListItemView elementView)
         {
             lastClickedProfileCtx = profile;
-            userProfileContextMenuControlSettings.SetInitialData(profile.ToUserData(), profile.friendshipStatus.Convert());
+            UserProfileContextMenuControlSettings.FriendshipStatus status = profile.friendshipStatus.Convert();
+            userProfileContextMenuControlSettings.SetInitialData(profile.ToUserData(), status == UserProfileContextMenuControlSettings.FriendshipStatus.BLOCKED ? UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED : status);
             elementView.CanUnHover = false;
 
             removeModeratorContextMenuElement.Enabled = profile.role == CommunityMemberRole.moderator && communityData?.role is CommunityMemberRole.owner;
