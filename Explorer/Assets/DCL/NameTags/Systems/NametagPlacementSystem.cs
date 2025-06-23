@@ -106,8 +106,7 @@ namespace DCL.Nametags
         [All(typeof(PBAvatarShape))]
         private void AddTagForNonPlayerAvatars([Data] in CameraComponent camera, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (avatarShape.HiddenByModifierArea ||
-                partitionComponent.IsBehind ||
+            if (partitionComponent.IsBehind ||
                 NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr) ||
                 string.IsNullOrEmpty(avatarShape.Name))
                 return;
@@ -162,10 +161,9 @@ namespace DCL.Nametags
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in AvatarShapeComponent avatarShape)
+        private void UpdateTag([Data] in CameraComponent camera, [Data] in float fovScaleFactor, [Data] in float3 cameraForward, [Data] in float3 cameraUp, Entity e, NametagView nametagView, in AvatarCustomSkinningComponent avatarSkinningComponent, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (avatarShape.HiddenByModifierArea ||
-                partitionComponent.IsBehind
+            if (partitionComponent.IsBehind
                 || NametagMathHelper.IsOutOfRenderRange(camera.Camera.transform.position, characterTransform.Position, maxDistanceSqr)
                 || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))
                 || World.Has<BlockedPlayerComponent>(e))
