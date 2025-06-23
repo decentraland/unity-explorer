@@ -1,3 +1,4 @@
+using DCL.Prefs;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
@@ -38,7 +39,7 @@ namespace DCL.Quality.Runtime
 
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset)
         {
-            enabled = PersistentSetting.CreateBool("LensFlare_Enabled", currentPreset.lensFlareEnabled);
+            enabled = PersistentSetting.CreateBool(DCLPrefKeys.PS_LENS_FLARE_ENABLED, currentPreset.lensFlareEnabled);
 
             if (currentPreset.lensFlareEnabled)
                 InstantiatePreset(currentPreset);

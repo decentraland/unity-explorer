@@ -91,11 +91,19 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
             identityHashCache.EnsureCapacity(islandIdentities.Count + sceneIdentities.Count);
 
-            foreach (string? id in islandIdentities)
-                identityHashCache.Add(id);
+            // See: https://github.com/decentraland/unity-explorer/issues/3796
+            lock (islandIdentities)
+            {
+                foreach (string? id in islandIdentities)
+                    identityHashCache.Add(id);
+            }
 
-            foreach (string? id in sceneIdentities)
-                identityHashCache.Add(id);
+            // See: https://github.com/decentraland/unity-explorer/issues/3796
+            lock (sceneIdentities)
+            {
+                foreach (string? id in sceneIdentities)
+                    identityHashCache.Add(id);
+            }
 
             participantsUpdateLastFrame = MultithreadingUtility.FrameCount;
 
