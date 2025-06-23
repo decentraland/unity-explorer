@@ -110,7 +110,7 @@ namespace DCL.CharacterMotion.Systems
             bool isEnabled = rigidTransform.IsGrounded
                              && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck) // disable IK while stuck or sliding
                              && !stunComponent.IsStunned // disable IK while stunned
-                             && emoteComponent.CurrentAnimationTag != AnimationHashes.EMOTE && emoteComponent.CurrentAnimationTag != AnimationHashes.EMOTE_LOOP // disable IK while doing an emote
+                             && !emoteComponent.IsPlayingEmote() // disable IK while doing an emote
                              && !disableByPlatform; // disable IK on moving platforms
 
             // First: Raycast down from right/left constraints and update IK targets

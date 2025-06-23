@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -15,6 +16,14 @@ namespace DCL.AvatarRendering.Emotes
             EmoteLoop = false;
             CurrentEmoteReference = null;
             StopEmote = false;
+        }
+
+        /// <summary>
+        ///     Whether the avatar is currently playing an emote.
+        /// </summary>
+        public readonly bool IsPlayingEmote()
+        {
+            return CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
         }
     }
 }
