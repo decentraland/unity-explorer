@@ -37,6 +37,10 @@ namespace DCL.VoiceChat
         private static float lastCorrelation = 0f;
         private static int consecutiveDetections = 0;
         private static int consecutiveNonDetections = 0;
+        
+        // Logging state
+        private static int logCounter = 0;
+        private const int LOG_INTERVAL = 100; // Log every 100 frames
 
         public static bool IsEnabled => configuration?.EnableFeedbackSuppression == true;
 
@@ -44,6 +48,8 @@ namespace DCL.VoiceChat
         {
             configuration = config;
             Debug.LogWarning("SUPRESSOR: Initializing audio feedback suppressor with improved detection");
+            Debug.LogWarning($"SUPRESSOR: Buffer sizes - Detection: {FEEDBACK_DETECTION_BUFFER_SIZE}, Delay: {DELAY_ESTIMATION_BUFFER_SIZE}");
+            Debug.LogWarning($"SUPRESSOR: Default threshold: {DEFAULT_CORRELATION_THRESHOLD}, Strength: {DEFAULT_SUPPRESSION_STRENGTH}");
             Reset();
         }
 
@@ -58,6 +64,7 @@ namespace DCL.VoiceChat
             lastCorrelation = 0f;
             consecutiveDetections = 0;
             consecutiveNonDetections = 0;
+            logCounter = 0;
 
             Array.Clear(speakerBuffer, 0, speakerBuffer.Length);
             Array.Clear(microphoneBuffer, 0, microphoneBuffer.Length);
@@ -70,6 +77,14 @@ namespace DCL.VoiceChat
         {
             if (!IsEnabled || microphoneData == null || speakerData == null)
                 return false;
+
+            logCounter++;
+            bool shouldLog = logCounter % LOG_INTERVAL == 0;
+
+            if (shouldLog)
+            {
+                Debug.LogWarning($"SUPRESSOR: Processing audio - Mic: {samplesPerChannel} samples, Speaker: {speakerSamples} samples, Channels: {channels}");
+            }
 
             // Convert microphone to mono
             Span<float> monoSpan = microphoneBuffer.AsSpan(0, samplesPerChannel);
@@ -101,11 +116,21 @@ namespace DCL.VoiceChat
             bool wasFeedbackDetected = feedbackDetected;
             float threshold = configuration?.FeedbackCorrelationThreshold ?? DEFAULT_CORRELATION_THRESHOLD;
             
+            if (shouldLog)
+            {
+                Debug.LogWarning($"SUPRESSOR: Correlation: {correlation:F3}, Threshold: {threshold:F3}, Delay: {estimatedDelay} samples, Initialized: {delayEstimationInitialized}");
+            }
+            
             // Use hysteresis to prevent rapid switching
             if (correlation > threshold)
             {
                 consecutiveDetections++;
                 consecutiveNonDetections = 0;
+                
+                if (shouldLog)
+                {
+                    Debug.LogWarning($"SUPRESSOR: Above threshold - Consecutive detections: {consecutiveDetections}");
+                }
                 
                 // Require multiple consecutive detections to trigger
                 if (consecutiveDetections >= 3)
@@ -117,6 +142,11 @@ namespace DCL.VoiceChat
             {
                 consecutiveNonDetections++;
                 consecutiveDetections = 0;
+                
+                if (shouldLog)
+                {
+                    Debug.LogWarning($"SUPRESSOR: Below threshold - Consecutive non-detections: {consecutiveNonDetections}");
+                }
                 
                 // Require multiple consecutive non-detections to clear
                 if (consecutiveNonDetections >= 5)
@@ -136,7 +166,10 @@ namespace DCL.VoiceChat
                 float maxStrength = configuration?.FeedbackSuppressionStrength ?? DEFAULT_SUPPRESSION_STRENGTH;
                 feedbackSuppressionLevel = Mathf.Min(feedbackSuppressionLevel + attackRate, maxStrength);
 
-                Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {feedbackSuppressionLevel:F3}, Max: {maxStrength:F3}");
+                if (shouldLog)
+                {
+                    Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {feedbackSuppressionLevel:F3}, Max: {maxStrength:F3}, Attack rate: {attackRate:F3}");
+                }
             }
             else
             {
@@ -147,6 +180,11 @@ namespace DCL.VoiceChat
 
                 float releaseRate = configuration?.FeedbackSuppressionReleaseRate ?? DEFAULT_RELEASE_RATE;
                 feedbackSuppressionLevel = Mathf.Max(feedbackSuppressionLevel - releaseRate, 0f);
+                
+                if (shouldLog && feedbackSuppressionLevel > 0.01f)
+                {
+                    Debug.LogWarning($"SUPRESSOR: Releasing suppression. Level: {feedbackSuppressionLevel:F3}, Release rate: {releaseRate:F3}");
+                }
             }
 
             return feedbackSuppressionLevel > 0.01f;
@@ -158,7 +196,11 @@ namespace DCL.VoiceChat
                 return;
 
             float suppression = 1f - feedbackSuppressionLevel;
-            Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {feedbackSuppressionLevel:F3}, Gain: {suppression:F3}");
+            
+            if (logCounter % LOG_INTERVAL == 0)
+            {
+                Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {feedbackSuppressionLevel:F3}, Gain: {suppression:F3}, Samples: {samplesPerChannel}");
+            }
 
             for (int i = 0; i < samplesPerChannel; i++)
             {
@@ -199,7 +241,12 @@ namespace DCL.VoiceChat
         {
             if (!delayEstimationInitialized || estimatedDelay <= 0)
             {
-                return CalculateCrossCorrelation();
+                float correlation = CalculateCrossCorrelation();
+                if (logCounter % LOG_INTERVAL == 0)
+                {
+                    Debug.LogWarning($"SUPRESSOR: Using simple correlation: {correlation:F3} (delay not estimated yet)");
+                }
+                return correlation;
             }
 
             // Calculate correlation with delay compensation
@@ -221,6 +268,11 @@ namespace DCL.VoiceChat
             if (micEnergy > 0.001f && speakerEnergy > 0.001f)
             {
                 correlation = crossEnergy / Mathf.Sqrt(micEnergy * speakerEnergy);
+            }
+
+            if (logCounter % LOG_INTERVAL == 0)
+            {
+                Debug.LogWarning($"SUPRESSOR: Delay-compensated correlation: {correlation:F3}, Delay: {estimatedDelay} samples, Mic energy: {micEnergy:F6}, Spk energy: {speakerEnergy:F6}");
             }
 
             return Mathf.Abs(correlation);
@@ -264,11 +316,18 @@ namespace DCL.VoiceChat
                     {
                         estimatedDelay = bestDelay;
                         delayEstimationInitialized = true;
+                        Debug.LogWarning($"SUPRESSOR: Delay estimation initialized! Best delay: {bestDelay} samples ({bestDelay / 48f:F1}ms)");
                     }
                     else
                     {
+                        int oldDelay = estimatedDelay;
                         // Smooth delay updates
                         estimatedDelay = (int)(DELAY_ESTIMATION_ALPHA * estimatedDelay + (1f - DELAY_ESTIMATION_ALPHA) * bestDelay);
+                        
+                        if (logCounter % LOG_INTERVAL == 0 && Mathf.Abs(oldDelay - estimatedDelay) > 10)
+                        {
+                            Debug.LogWarning($"SUPRESSOR: Delay updated: {oldDelay} -> {estimatedDelay} samples (best: {bestDelay})");
+                        }
                     }
                 }
             }
@@ -307,6 +366,11 @@ namespace DCL.VoiceChat
                         bestDelay = delay;
                     }
                 }
+            }
+
+            if (logCounter % LOG_INTERVAL == 0 && bestCorrelation > 0.3f)
+            {
+                Debug.LogWarning($"SUPRESSOR: Delay search found best delay: {bestDelay} samples with correlation: {bestCorrelation:F3}");
             }
 
             return bestDelay;
