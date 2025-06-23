@@ -24,7 +24,7 @@ MonoBehaviour:
   - Name: Player 2
     <CorrespondingNodeId>k__BackingField: 
     m_Nodes: []
-    m_PlayerTag: PrefsDiskPrefix1
+    m_PlayerTag: 
     m_InitialScene: {fileID: 0}
     m_AdvancedConfiguration:
       StreamLogsToMainEditor: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
   - Name: Player 3
     <CorrespondingNodeId>k__BackingField: 
     m_Nodes: []
-    m_PlayerTag: PrefsDiskPrefix2
+    m_PlayerTag: 
     m_InitialScene: {fileID: 0}
     m_AdvancedConfiguration:
       StreamLogsToMainEditor: 0
