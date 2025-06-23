@@ -44,36 +44,45 @@ namespace DCL.Chat
 
             if (chatMessage.IsSentByOwnUser == false && entityParticipantTable.TryGet(chatMessage.SenderWalletAddress, out IReadOnlyEntityParticipantTable.Entry entry))
             {
-                bool isPrivateMessage = channel.ChannelType == ChatChannel.ChatChannelType.USER;
-
-                // Chat bubbles appear if the channel is nearby or if settings allow them to appear for private conversations
-                if (!isPrivateMessage || chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
-                    GenerateChatBubbleComponent(entry.Entity, chatMessage, DEFAULT_COLOR, isPrivateMessage, channel.Id);
+                switch (channel.ChannelType)
+                {
+                    case ChatChannel.ChatChannelType.NEARBY:
+                        GenerateChatBubbleComponent(entry.Entity, chatMessage, DEFAULT_COLOR, false, channel.Id);
+                        break;
+                    case ChatChannel.ChatChannelType.COMMUNITY:
+                        GenerateChatBubbleComponent(entry.Entity, chatMessage, DEFAULT_COLOR, false, channel.Id, null, null, true, communityName);
+                        break;
+                    case ChatChannel.ChatChannelType.USER:
+                        GenerateChatBubbleComponent(entry.Entity, chatMessage, DEFAULT_COLOR, true, channel.Id);
+                        break;
+                }
             }
             else if (isSentByOwnUser)
             {
-                if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
+                switch (channel.ChannelType)
                 {
-                    // Chat bubbles appear if the channel is nearby or if settings allow them to appear for private conversations
-                    if (chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
-                    {
-                        if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                    case ChatChannel.ChatChannelType.NEARBY:
+                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id);
+                        break;
+                    case ChatChannel.ChatChannelType.COMMUNITY:
+                        GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id, null, null, true, communityName);
+                        break;
+                    case ChatChannel.ChatChannelType.USER:
+                        // Chat bubbles appear if the channel is nearby or if settings allow them to appear for private conversations
+                        if (chatSettings.chatBubblesVisibilitySettings == ChatBubbleVisibilitySettings.ALL)
                         {
-                            GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
+                            if (!profileCache.TryGet(channel.Id.Id, out var profile))
+                            {
+                                GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, true, channel.Id);
+                            }
+                            else
+                            {
+                                Color nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
+                                GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
+                            }
                         }
-                        else
-                        {
-                            Color nameColor = profile.UserNameColor != DEFAULT_COLOR ? profile.UserNameColor : ProfileNameColorHelper.GetNameColor(profile.DisplayName);
-                            GenerateChatBubbleComponent(playerEntity, chatMessage, nameColor, true, channel.Id, profile.ValidatedName, profile.WalletId);
-                        }
-                    }
+                        break;
                 }
-                else if (channel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
-                {
-                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id, null, null, true, communityName);
-                }
-                else
-                    GenerateChatBubbleComponent(playerEntity, chatMessage, DEFAULT_COLOR, false, channel.Id);
             }
         }
 
