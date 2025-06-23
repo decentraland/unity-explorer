@@ -7,7 +7,7 @@ namespace DCL.Settings.ModuleControllers
     public class UpscalingSettingsController : SettingsFeatureController
     {
         //This is a special case slider. To be able to step values, the min and max alue are 5 and 12, respectively.
-        //Then again, the value to setp to de UpscalerController is in the decimals, 0.5 to 1.2.
+        //Then again, the value to set up the UpscalerController is in decimals, 0.5 to 1.2
         //Finally, the text should be set that comes from the UpscalingController comes in decimals and should be shown between 50% and 120%.
         private const float STEP_MULTIPLIER = 10f;
         private const float STEP_MULTIPLIER_DISPLAY = 100f;
