@@ -36,10 +36,6 @@ namespace DCL.WebRequests.Analytics
                 analyticsContainer.OnRequestStarted(request);
                 await innerTask;
             }
-            catch (UnityWebRequestException ex)
-            {
-                ReportHub.LogWarning( ReportCategory.ANALYTICS, ex.Message);
-            }
             finally
             {
                 // Regardless of the exception at this moment request is not disposed of, and, thus, can be read from
