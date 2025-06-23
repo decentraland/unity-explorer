@@ -18,7 +18,8 @@ namespace DCL.Utilities
         private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
         private const float STP_MID_RESOLUTION_MAC = 0.6f;
         private const float STP_MID_RESOLUTION_WINDOWS = 1f;
-        private const string STP_DATA_STORE_KEY = "Settings_STP";
+        private const string STP_DATA_STORE_KEY = "Settings_Upscaler";
+        private const float INITIAL_UPSCALE_VALUE = 1f;
 
         private readonly SettingsDataStore settingsDataStore;
         private readonly float highResolutionPreset;
@@ -26,6 +27,7 @@ namespace DCL.Utilities
 
         private float savedUpscalingDuringCharacterPreview;
         private bool ignoreFirstResolutionChange;
+        private bool isCharacterPreviewActive;
 
         public Action<float> OnUpscalingChanged;
 
@@ -50,22 +52,35 @@ namespace DCL.Utilities
 
             if (settingsDataStore.HasKey(STP_DATA_STORE_KEY))
             {
-                SetSTPSetting(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY), false);
+                SetUpscalingValue(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY), false);
                 ignoreFirstResolutionChange = true;
+            }
+            else
+            {
+                SetUpscalingValue(INITIAL_UPSCALE_VALUE, true);
             }
         }
 
-        private void CharacterViewClosed(CharacterPreviewControllerBase obj) =>
-            SetSTPSetting(savedUpscalingDuringCharacterPreview, false);
+        private void CharacterViewClosed(CharacterPreviewControllerBase obj)
+        {
+            if (isCharacterPreviewActive)
+            {
+                SetUpscalingValue(savedUpscalingDuringCharacterPreview, false);
+                isCharacterPreviewActive = false;
+            }
+        }
 
         private void CharacterViewOpened(CharacterPreviewControllerBase obj)
         {
+            isCharacterPreviewActive = true;
             savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-            SetSTPSetting(STP_VALUE_FOR_CHARACTER_PREVIEW, false);
+
+            //Render scale for character view should have a fixed value
+            SetUpscalingValue(STP_VALUE_FOR_CHARACTER_PREVIEW, false);
         }
 
         //Should always get in decimal form
-        public void SetSTPSetting(float sliderValue, bool updateStoredValue)
+        public void SetUpscalingValue(float sliderValue, bool updateStoredValue)
         {
             foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
                 ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = sliderValue;
@@ -94,8 +109,10 @@ namespace DCL.Utilities
             else if (resolution.width > 2000 || resolution.height > 2000)
                 newSTPScale = midResolutionPreset;
 
-            SetSTPSetting(newSTPScale, true);
+            SetUpscalingValue(newSTPScale, true);
         }
 
+        public float GetCurrentUpscale() =>
+            settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY);
     }
 }
