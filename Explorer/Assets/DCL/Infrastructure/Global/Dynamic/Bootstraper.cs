@@ -212,11 +212,7 @@ namespace Global.Dynamic
         {
             var anyFailure = false;
 
-            foreach (IDCLWorldPlugin staticContainerECSWorldPlugin in staticContainer.ECSWorldPlugins) { await scenePluginSettingsContainer.InitializePluginAsync(staticContainerECSWorldPlugin, ct); }
-
-            staticContainer.ECSWorldPlugins.ForEach(plugin => scenePluginSettingsContainer.InitializePluginAsync(plugin, ct));
-
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => { return scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized); }).EnsureNotNull());
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
             await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin

@@ -105,10 +105,10 @@ namespace DCL.Utilities
             {
                 //If there is a slider change, we want it to persist when the menu is closed
                 savedUpscalingDuringCharacterPreview = newValue;
-                SetSTPSetting(newValue / 10f, false, true);
+                SetSTPSetting(newValue / stepMultiplier, false, true);
             });
 
-            sliderView.SliderView.Slider.SetValueWithoutNotify(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY) * stepValue);
+            sliderView.SliderView.Slider.SetValueWithoutNotify(settingsDataStore.GetSliderValue(STP_DATA_STORE_KEY) * stepMultiplier);
         }
     }
 }
