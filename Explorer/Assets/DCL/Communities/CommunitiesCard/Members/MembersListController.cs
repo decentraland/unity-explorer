@@ -83,7 +83,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.view.OpenProfilePassportRequested += OpenProfilePassport;
             this.view.OpenUserChatRequested += OpenChatWithUserAsync;
             this.view.CallUserRequested += CallUser;
-            this.view.BlockUserRequested += BlockUserClicked;
+            this.view.BlockUserRequested += BlockUserClickedAsync;
             this.view.RemoveModeratorRequested += RemoveModerator;
             this.view.AddModeratorRequested += AddModerator;
             this.view.KickUserRequested += OnKickUser;
@@ -105,7 +105,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             view.OpenProfilePassportRequested -= OpenProfilePassport;
             view.OpenUserChatRequested -= OpenChatWithUserAsync;
             view.CallUserRequested -= CallUser;
-            view.BlockUserRequested -= BlockUserClicked;
+            view.BlockUserRequested -= BlockUserClickedAsync;
             view.RemoveModeratorRequested -= RemoveModerator;
             view.AddModeratorRequested -= AddModerator;
             view.KickUserRequested -= OnKickUser;
@@ -142,7 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             }
         }
 
-        private async void BlockUserClicked(MemberData profile)
+        private async void BlockUserClickedAsync(MemberData profile)
         {
             try
             {
