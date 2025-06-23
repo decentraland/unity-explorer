@@ -56,9 +56,7 @@ namespace DCL.Utilities
                 ignoreFirstResolutionChange = true;
             }
             else
-            {
                 SetUpscalingValue(INITIAL_UPSCALE_VALUE, true);
-            }
         }
 
         private void CharacterViewClosed(CharacterPreviewControllerBase obj)
