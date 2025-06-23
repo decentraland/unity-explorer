@@ -103,7 +103,8 @@ namespace Global.Dynamic
                     plugin.SafeDispose(ReportCategory.ENGINE);
 
                 if (globalWorld != null)
-                    dynamicWorldContainer.RealmController.DisposeGlobalWorld();
+                    // Blocking call, we need it since DisposeGlobalWorld method is async
+                    dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync().GetAwaiter().GetResult();
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }

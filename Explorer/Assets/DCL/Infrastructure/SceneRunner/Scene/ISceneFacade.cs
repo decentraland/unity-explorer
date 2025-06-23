@@ -1,13 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.World;
-using System;
+using DCL.Utilities.Extensions;
 using System.Threading;
 using UnityEngine;
 
 namespace SceneRunner.Scene
 {
-    public interface ISceneFacade : IUniTaskAsyncDisposable, IDisposable
+    public interface ISceneFacade : IThreadSafeUniTaskAsyncDisposable
     {
         SceneShortInfo Info { get; }
         ISceneStateProvider SceneStateProvider { get; }

@@ -54,17 +54,17 @@ namespace SceneRunner
         /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
         /// shall be the chain of Dispose calls.
         /// </remarks>
-        public void Dispose()
-        {
-            MultithreadingUtility.AssertMainThread(nameof(Dispose), true);
-
-            SceneStateProvider.State.Set(SceneState.Disposing);
-            runtimeInstance.SetIsDisposing();
-
-            DisposeInternal();
-
-            SceneStateProvider.State.Set(SceneState.Disposed);
-        }
+        // public void Dispose()
+        // {
+        //     MultithreadingUtility.AssertMainThread(nameof(Dispose), true);
+        //
+        //     SceneStateProvider.State.Set(SceneState.Disposing);
+        //     runtimeInstance.SetIsDisposing();
+        //
+        //     await deps.DisposeAsync();
+        //
+        //     SceneStateProvider.State.Set(SceneState.Disposed);
+        // }
 
         public void SetTargetFPS(int fps)
         {
@@ -226,14 +226,9 @@ namespace SceneRunner
             while (sceneCodeIsRunning)
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
-            DisposeInternal();
+            await deps.DisposeAsync();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
-        }
-
-        private void DisposeInternal()
-        {
-            deps.Dispose();
         }
     }
 }

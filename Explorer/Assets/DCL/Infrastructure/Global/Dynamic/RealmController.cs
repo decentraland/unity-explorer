@@ -198,7 +198,7 @@ namespace Global.Dynamic
             return null;
         }
 
-        public void DisposeGlobalWorld()
+        public async UniTask DisposeGlobalWorldAsync()
         {
             List<ISceneFacade> loadedScenes = allScenes;
 
@@ -207,13 +207,15 @@ namespace Global.Dynamic
                 loadedScenes = FindLoadedScenesAndClearSceneCache(true);
 
                 // Destroy everything without awaiting as it's Application Quit
+                // ReSharper disable once MethodHasAsyncOverload
+                // Actually ReSharper assumption is wrong
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
 
             foreach (ISceneFacade scene in loadedScenes)
 
                 // Scene Info is contained in the ReportData, don't include it into the exception
-                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
+                await scene.SafeDisposeAsync(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
                     static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
         }
 

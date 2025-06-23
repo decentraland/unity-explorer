@@ -15,6 +15,7 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
+using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.World.Dependencies;
@@ -25,7 +26,6 @@ using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using MVC;
-using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -37,7 +37,6 @@ using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
-using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -47,7 +46,7 @@ namespace SceneRunner
     ///     Dependencies that are unique for each instance of the scene,
     ///     this class itself contains the first stage of dependencies
     /// </summary>
-    public class SceneInstanceDependencies : IDisposable
+    public class SceneInstanceDependencies : IThreadSafeUniTaskAsyncDisposable
     {
         public readonly ICRDTProtocol CRDTProtocol;
         public readonly IInstancePoolsProvider PoolsProvider;
@@ -161,10 +160,13 @@ namespace SceneRunner
                 SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
         }
 
-        public void Dispose()
+        public async UniTask DisposeAsync()
         {
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
             // The order can make a difference here
-            ECSWorldFacade.Dispose();
+
+            await ECSWorldFacade.DisposeAsync();
+
             CRDTProtocol.Dispose();
             OutgoingCRDTMessagesProvider.Dispose();
             CRDTWorldSynchronizer.Dispose();
@@ -182,7 +184,7 @@ namespace SceneRunner
         /// <summary>
         ///     The base class is for Observables
         /// </summary>
-        public abstract class WithRuntimeAndJsAPIBase : IDisposable
+        public abstract class WithRuntimeAndJsAPIBase : IUniTaskAsyncDisposable
         {
             public readonly IRestrictedActionsAPI RestrictedActionsAPI;
             public readonly IRuntime RuntimeImplementation;
@@ -241,12 +243,12 @@ namespace SceneRunner
                     syncDeps,
                     sceneRuntime) { }
 
-            public void Dispose()
+            public UniTask DisposeAsync()
             {
                 // Runtime is responsible to dispose APIs
 
                 Runtime.Dispose();
-                SyncDeps.Dispose();
+                return SyncDeps.DisposeAsync();
             }
         }
 

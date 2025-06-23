@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using ECS.LifeCycle;
 using NSubstitute;
@@ -25,7 +26,8 @@ namespace SceneRunner.Tests
             ecsWorldFacade = new ECSWorldFacade(builder.Finish(), world,
                 new PersistentEntities(),
                 new[] { finalizeWorldSystem = Substitute.For<IFinalizeWorldSystem>() },
-                new[] { sceneIsCurrentListener = Substitute.For<ISceneIsCurrentListener>() });
+                new[] { sceneIsCurrentListener = Substitute.For<ISceneIsCurrentListener>() },
+                NullPerformanceBudget.INSTANCE);
         }
 
         private ECSWorldFacade ecsWorldFacade;
@@ -52,7 +54,7 @@ namespace SceneRunner.Tests
         [Test]
         public void DisposeProperly()
         {
-            ecsWorldFacade.Dispose();
+            ecsWorldFacade.DisposeAsync().GetAwaiter().GetResult();
 
             finalizeWorldSystem.Received(1).FinalizeComponents(Arg.Any<Query>());
 

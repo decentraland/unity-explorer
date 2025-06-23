@@ -168,8 +168,7 @@ namespace SceneRunner
 
             if (ct.IsCancellationRequested)
             {
-                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-                deps.Dispose();
+                await deps.DisposeAsync();
                 sceneRuntime?.Dispose();
                 throw new OperationCanceledException();
             }
@@ -263,14 +262,13 @@ namespace SceneRunner
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IDisposable
+        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IUniTaskAsyncDisposable
         {
             // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is ScriptEngineException scriptEngineException)
                 exceptionsHandler.OnJavaScriptException(new ScriptEngineException(scriptEngineException.ErrorDetails));
 
-            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-            deps.Dispose();
+            await deps.DisposeAsync();
         }
     }
 }

@@ -68,7 +68,7 @@ namespace DCL.LOD
 
         public void Dispose()
         {
-            Unload(new NullPerformanceBudget(), int.MaxValue);
+            Unload(NullPerformanceBudget.INSTANCE, int.MaxValue);
             UnityObjectUtils.SafeDestroyGameObject(roadAssetParent);
         }
 
