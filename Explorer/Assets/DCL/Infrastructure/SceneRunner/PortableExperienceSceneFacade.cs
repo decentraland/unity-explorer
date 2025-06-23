@@ -1,4 +1,5 @@
-﻿using SceneRunner.Scene;
+﻿using DCL.Optimization.PerformanceBudgeting;
+using SceneRunner.Scene;
 
 namespace SceneRunner
 {
@@ -6,7 +7,9 @@ namespace SceneRunner
     {
         public PortableExperienceSceneFacade(
             ISceneData sceneData,
-            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps) : base(sceneData, deps)
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps,
+            IPerformanceBudget performanceBudget
+        ) : base(sceneData, deps, performanceBudget)
         {
             SetIsCurrent(true);
         }

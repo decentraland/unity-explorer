@@ -5,6 +5,7 @@ using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -21,9 +22,9 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
- using DCL.RealmNavigation;
- using Global.AppArgs;
- using Unity.Mathematics;
+using DCL.RealmNavigation;
+using Global.AppArgs;
+using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
@@ -54,8 +55,6 @@ namespace Global.Dynamic
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
-
-
 
         public IRealmData RealmData => realmData;
 
@@ -198,7 +197,7 @@ namespace Global.Dynamic
             return null;
         }
 
-        public async UniTask DisposeGlobalWorldAsync()
+        public IEnumerator<Unit> BudgetedDisposeGlobalWorld()
         {
             List<ISceneFacade> loadedScenes = allScenes;
 
@@ -213,10 +212,13 @@ namespace Global.Dynamic
             }
 
             foreach (ISceneFacade scene in loadedScenes)
-
+            {
                 // Scene Info is contained in the ReportData, don't include it into the exception
-                await scene.SafeDisposeAsync(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
+                var enumerator = scene.SafeBudgetedDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
                     static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
+
+                while (enumerator.MoveNext()) yield return enumerator.Current;
+            }
         }
 
         private async UniTask UnloadCurrentRealmAsync()

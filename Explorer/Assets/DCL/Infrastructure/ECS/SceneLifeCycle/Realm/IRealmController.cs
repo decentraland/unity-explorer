@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using System;
+using DCL.Optimization.PerformanceBudgeting;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Realm
@@ -20,7 +21,7 @@ namespace ECS.SceneLifeCycle.Realm
         /// <summary>
         ///     Dispose everything on application quit
         /// </summary>
-        UniTask DisposeGlobalWorldAsync();
+        IEnumerator<Unit> BudgetedDisposeGlobalWorld();
 
         class Fake : IRealmController
         {
@@ -41,9 +42,11 @@ namespace ECS.SceneLifeCycle.Realm
             public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
                 false;
 
-            public UniTask DisposeGlobalWorldAsync() =>
+            public IEnumerator<Unit> BudgetedDisposeGlobalWorld()
+            {
                 //ignore
-                UniTask.CompletedTask;
+                yield break;
+            }
         }
     }
 }

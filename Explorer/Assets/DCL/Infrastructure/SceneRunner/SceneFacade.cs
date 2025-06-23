@@ -1,11 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +19,7 @@ namespace SceneRunner
     public class SceneFacade : ISceneFacade
     {
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
+        private readonly IPerformanceBudget performanceBudget;
 
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
@@ -37,9 +40,11 @@ namespace SceneRunner
 
         public SceneFacade(
             ISceneData sceneData,
-            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps)
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps,
+            IPerformanceBudget performanceBudget)
         {
             this.deps = deps;
+            this.performanceBudget = performanceBudget;
             SceneData = sceneData;
         }
 
@@ -91,6 +96,7 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             sceneCodeIsRunning.Set();
+
             try
             {
                 // Start the scene
@@ -122,6 +128,7 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
+
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
@@ -208,7 +215,24 @@ namespace SceneRunner
             while (sceneCodeIsRunning)
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
-            await deps.DisposeAsync();
+            await deps.AsAsyncDisposable(performanceBudget).DisposeAsync();
+
+            SceneStateProvider.State.Set(SceneState.Disposed);
+        }
+
+        /// <summary>
+        /// Safe only on MainThread.
+        /// </summary>
+        public IEnumerator<Unit> BudgetedDispose()
+        {
+            // Because of multithreading Disposing is not synced with the update loop
+            // so just mark it as disposed and let the update loop handle the disposal
+            SceneStateProvider.State.Set(SceneState.Disposing);
+
+            runtimeInstance.SetIsDisposing();
+
+            var enumerator = deps.BudgetedDispose();
+            while (enumerator.MoveNext()) yield return enumerator.Current;
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }

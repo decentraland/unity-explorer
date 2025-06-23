@@ -12,6 +12,7 @@ using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -29,7 +30,6 @@ using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Factory;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -59,6 +59,7 @@ namespace SceneRunner
         private readonly IPortableExperiencesController portableExperiencesController;
         private readonly ISceneCommunicationPipe messagePipesHub;
         private readonly IRemoteMetadata remoteMetadata;
+        private readonly IPerformanceBudget performanceBudget;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -80,7 +81,8 @@ namespace SceneRunner
             IRealmData? realmData,
             IPortableExperiencesController portableExperiencesController,
             ISceneCommunicationPipe messagePipesHub,
-            IRemoteMetadata remoteMetadata)
+            IRemoteMetadata remoteMetadata,
+            IPerformanceBudget performanceBudget)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -99,6 +101,7 @@ namespace SceneRunner
             this.realmData = realmData;
             this.messagePipesHub = messagePipesHub;
             this.remoteMetadata = remoteMetadata;
+            this.performanceBudget = performanceBudget;
             this.portableExperiencesController = portableExperiencesController;
         }
 
@@ -162,13 +165,13 @@ namespace SceneRunner
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
             {
-                await ReportExceptionAsync(e, deps, deps.ExceptionsHandler);
+                await ReportExceptionAsync(e, deps.AsAsyncDisposable(performanceBudget), deps.ExceptionsHandler);
                 throw;
             }
 
             if (ct.IsCancellationRequested)
             {
-                await deps.DisposeAsync();
+                await deps.AsAsyncDisposable(performanceBudget).DisposeAsync();
                 sceneRuntime?.Dispose();
                 throw new OperationCanceledException();
             }
@@ -238,13 +241,10 @@ namespace SceneRunner
                 );
             }
 
-            try
-            {
-                sceneRuntime.ExecuteSceneJson();
-            }
+            try { sceneRuntime.ExecuteSceneJson(); }
             catch (Exception e)
             {
-                await ReportExceptionAsync(e, runtimeDeps, deps.ExceptionsHandler);
+                await ReportExceptionAsync(e, runtimeDeps.AsAsyncDisposable(performanceBudget), deps.ExceptionsHandler);
                 throw;
             }
 
@@ -252,17 +252,19 @@ namespace SceneRunner
             {
                 return new PortableExperienceSceneFacade(
                     sceneData,
-                    runtimeDeps
+                    runtimeDeps,
+                    performanceBudget
                 );
             }
 
             return new SceneFacade(
                 sceneData,
-                runtimeDeps
+                runtimeDeps,
+                performanceBudget
             );
         }
 
-        private static async Task ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T : IUniTaskAsyncDisposable
+        private static async UniTask ReportExceptionAsync<T>(Exception e, T deps, ISceneExceptionsHandler exceptionsHandler) where T: IUniTaskAsyncDisposable
         {
             // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
             if (e is ScriptEngineException scriptEngineException)

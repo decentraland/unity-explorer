@@ -18,6 +18,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Time;
 using DCL.Utilities.Extensions;
@@ -46,7 +47,7 @@ namespace SceneRunner
     ///     Dependencies that are unique for each instance of the scene,
     ///     this class itself contains the first stage of dependencies
     /// </summary>
-    public class SceneInstanceDependencies : IThreadSafeUniTaskAsyncDisposable
+    public class SceneInstanceDependencies : IBudgetedDisposable
     {
         public readonly ICRDTProtocol CRDTProtocol;
         public readonly IInstancePoolsProvider PoolsProvider;
@@ -160,12 +161,15 @@ namespace SceneRunner
                 SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
         }
 
-        public async UniTask DisposeAsync()
+        public IEnumerator<Unit> BudgetedDispose()
         {
-            await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-            // The order can make a difference here
+            MultithreadingUtility.AssertMainThread(nameof(BudgetedDispose), isMainThread: true);
 
-            await ECSWorldFacade.DisposeAsync();
+            // The order can make a difference here
+            var enumerator = ECSWorldFacade.BudgetedDispose();
+
+            while (enumerator.MoveNext())
+                yield return enumerator.Current;
 
             CRDTProtocol.Dispose();
             OutgoingCRDTMessagesProvider.Dispose();
@@ -179,12 +183,14 @@ namespace SceneRunner
             worldTimeProvider.Dispose();
             ecsMultiThreadSync.Dispose();
             ExceptionsHandler.Dispose();
+
+            yield return new Unit();
         }
 
         /// <summary>
         ///     The base class is for Observables
         /// </summary>
-        public abstract class WithRuntimeAndJsAPIBase : IUniTaskAsyncDisposable
+        public abstract class WithRuntimeAndJsAPIBase : IBudgetedDisposable
         {
             public readonly IRestrictedActionsAPI RestrictedActionsAPI;
             public readonly IRuntime RuntimeImplementation;
@@ -243,12 +249,11 @@ namespace SceneRunner
                     syncDeps,
                     sceneRuntime) { }
 
-            public UniTask DisposeAsync()
+            public IEnumerator<Unit> BudgetedDispose()
             {
                 // Runtime is responsible to dispose APIs
-
                 Runtime.Dispose();
-                return SyncDeps.DisposeAsync();
+                return SyncDeps.BudgetedDispose();
             }
         }
 

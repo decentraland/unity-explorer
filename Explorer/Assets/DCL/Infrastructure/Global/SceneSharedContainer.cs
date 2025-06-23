@@ -50,8 +50,7 @@ namespace Global
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
-                staticContainer.ECSWorldPlugins,
-                sharedDependencies.FrameTimeBudget);
+                staticContainer.ECSWorldPlugins);
 
             return new SceneSharedContainer
             {
@@ -73,7 +72,10 @@ namespace Global
                     roomHub,
                     realmData,
                     staticContainer.PortableExperiencesController,
-                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()), remoteMetadata),
+                    new SceneCommunicationPipe(messagePipesHub, roomHub.SceneRoom()),
+                    remoteMetadata,
+                    sharedDependencies.FrameTimeBudget
+                ),
             };
         }
     }

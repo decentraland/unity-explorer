@@ -103,8 +103,11 @@ namespace Global.Dynamic
                     plugin.SafeDispose(ReportCategory.ENGINE);
 
                 if (globalWorld != null)
-                    // Blocking call, we need it since DisposeGlobalWorld method is async
-                    dynamicWorldContainer.RealmController.DisposeGlobalWorldAsync().GetAwaiter().GetResult();
+                {
+                    // Blocking call without async
+                    var enumerator = dynamicWorldContainer.RealmController.BudgetedDisposeGlobalWorld();
+                    while (enumerator.MoveNext()) { }
+                }
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }
@@ -153,6 +156,7 @@ namespace Global.Dynamic
             // Memory limit
             bool hasSimulatedMemory = applicationParametersParser.TryGetValue(AppArgsFlags.SIMULATE_MEMORY, out string simulatedMemory);
             int systemMemory = hasSimulatedMemory ? int.Parse(simulatedMemory) : SystemInfo.systemMemorySize;
+
             ISystemMemoryCap memoryCap = hasSimulatedMemory
                 ? new SystemMemoryCap(systemMemory)
                 : new SystemMemoryCap();
@@ -317,6 +321,7 @@ namespace Global.Dynamic
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
         {
             MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
+
             if (DCLPlayerPrefs.GetInt(MinimumSpecsScreenController.PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
                 return;
 

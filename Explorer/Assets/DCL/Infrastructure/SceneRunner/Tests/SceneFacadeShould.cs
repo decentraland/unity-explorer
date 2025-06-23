@@ -84,7 +84,7 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>(), NullPerformanceBudget.INSTANCE);
+                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>());
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>().EnsureNotNull();
@@ -109,7 +109,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>(),
-                Substitute.For<IRemoteMetadata>());
+                Substitute.For<IRemoteMetadata>(),
+                NullPerformanceBudget.INSTANCE);
         }
 
         [OneTimeTearDown]
@@ -253,7 +254,8 @@ namespace SceneRunner.Tests
 
             var sceneFacade = new SceneFacade(
                 Substitute.For<ISceneData>(),
-                new TestDeps(ecsWorldFactory)
+                new TestDeps(ecsWorldFactory),
+                NullPerformanceBudget.INSTANCE
             );
 
             var apis = new List<JsApiWrapper>();
@@ -318,7 +320,8 @@ namespace SceneRunner.Tests
 
             var sceneFacade = new SceneFacade(
                 Substitute.For<ISceneData>(),
-                new TestDeps(ecsWorldFactory)
+                new TestDeps(ecsWorldFactory),
+                NullPerformanceBudget.INSTANCE
             );
 
             await UniTask.SwitchToThreadPool();

@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using CRDT;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
@@ -13,14 +12,13 @@ using SystemGroups.Visualiser;
 
 namespace SceneRunner.ECSWorld
 {
-    public readonly struct ECSWorldFacade : IUniTaskAsyncDisposable
+    public readonly struct ECSWorldFacade : IBudgetedDisposable
     {
         public readonly World EcsWorld;
         public readonly PersistentEntities PersistentEntities;
 
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
         private readonly IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners;
-        private readonly IPerformanceBudget performanceBudget;
 
         private readonly SystemGroupWorld systemGroupWorld;
 
@@ -29,14 +27,12 @@ namespace SceneRunner.ECSWorld
             World ecsWorld,
             PersistentEntities persistentEntities,
             IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems,
-            IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners,
-            IPerformanceBudget performanceBudget)
+            IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             this.systemGroupWorld = systemGroupWorld;
             EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
             this.sceneIsCurrentListeners = sceneIsCurrentListeners;
-            this.performanceBudget = performanceBudget;
             PersistentEntities = persistentEntities;
         }
 
@@ -54,7 +50,7 @@ namespace SceneRunner.ECSWorld
             }
         }
 
-        public async UniTask DisposeAsync()
+        public IEnumerator<Unit> BudgetedDispose()
         {
             Query finalizeSDKComponentsQuery = EcsWorld.Query(new QueryDescription().WithAll<CRDTEntity>());
 
@@ -62,12 +58,11 @@ namespace SceneRunner.ECSWorld
 
             for (var i = 0; i < finalizeWorldSystems.Count; i++)
             {
-                if (performanceBudget.TrySpendBudget() == false)
-                    await UniTask.NextFrame();
-
                 // We must be able to finalize world no matter what
                 try { finalizeWorldSystems[i].FinalizeComponents(in finalizeSDKComponentsQuery); }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.ECS); }
+
+                yield return new Unit();
             }
 
             Profiler.EndSample();
@@ -76,6 +71,7 @@ namespace SceneRunner.ECSWorld
 
             systemGroupWorld.Dispose();
             EcsWorld.Dispose();
+            yield return new Unit();
         }
     }
 }
