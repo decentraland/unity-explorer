@@ -74,6 +74,13 @@ namespace DCL.VoiceChat
             Debug.LogWarning("SUPRESSOR: Reset all AEC buffers and state");
         }
 
+        public static void ForceResetEchoPath()
+        {
+            echoPathGain = 1.0f;
+            adaptiveFilterGain = 1.0f;
+            Debug.LogWarning("SUPRESSOR: Force reset echo path model");
+        }
+
         public static bool ProcessAudio(float[] microphoneData, int channels, int samplesPerChannel,
                                float[] speakerData, int speakerSamples)
         {
@@ -121,7 +128,7 @@ namespace DCL.VoiceChat
                 Debug.LogWarning($"SUPRESSOR: Echo path gain: {echoPathGain:F3}, Adaptive gain: {adaptiveFilterGain:F3}");
             }
             
-            if (echoLevel > threshold || correlation > threshold)
+            if (echoLevel > threshold && correlation > threshold * 0.5f)
             {
                 consecutiveDetections++;
                 consecutiveNonDetections = 0;
@@ -310,6 +317,18 @@ namespace DCL.VoiceChat
                 
                 echoPathGain = Mathf.Lerp(echoPathGain, targetGain, ECHO_PATH_LEARNING_RATE);
                 adaptiveFilterGain = Mathf.Lerp(adaptiveFilterGain, 1.0f / echoPathGain, ADAPTIVE_FILTER_LEARNING_RATE);
+            }
+            else if (correlation < 0.1f && echoLevel > 0.5f)
+            {
+                echoPathGain = Mathf.Lerp(echoPathGain, MIN_ECHO_PATH_GAIN, ECHO_PATH_LEARNING_RATE * 2f);
+                adaptiveFilterGain = Mathf.Lerp(adaptiveFilterGain, 1.0f, ADAPTIVE_FILTER_LEARNING_RATE * 2f);
+            }
+
+            if (echoPathGain > MAX_ECHO_PATH_GAIN * 1.5f || echoPathGain < MIN_ECHO_PATH_GAIN * 0.5f)
+            {
+                echoPathGain = 1.0f;
+                adaptiveFilterGain = 1.0f;
+                Debug.LogWarning($"SUPRESSOR: Echo path gain out of bounds, resetting to 1.0");
             }
         }
 
