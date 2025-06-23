@@ -12,12 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcc266991aac5dd4d8eefcb174ba92dd, type: 3}
   m_Name: VoiceChatConfiguration
   m_EditorClassIdentifier: 
-  EnableLocalTrackPlayback: 0
-  EnableFeedbackSuppression: 1
-  FeedbackCorrelationThreshold: 0.3
-  FeedbackSuppressionStrength: 0.8
-  FeedbackSuppressionAttackRate: 0.25
-  FeedbackSuppressionReleaseRate: 0.01
+  EnableAudioEchoCancellation: 1
+  EchoCorrelationThreshold: 0.3
+  EchoCancellationStrength: 0.8
+  EchoCancellationAttackRate: 0.25
+  EchoCancellationReleaseRate: 0.01
   HoldThresholdInSeconds: 0.5
   EnableAudioProcessing: 1
   EnableNoiseGate: 1

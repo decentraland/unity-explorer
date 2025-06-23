@@ -36,7 +36,7 @@ namespace DCL.VoiceChat
 
         private VoiceChatCombinedStreamsAudioSource combinedAudioSource;
 
-        private float[] feedbackBuffer = new float[4096]; // Dedicated buffer for feedback suppression (matches speakerOutputBuffer size)
+        private float[] echoBuffer = new float[4096]; // Dedicated buffer for echo cancellation (matches speakerOutputBuffer size)
 
         private Thread processingThread;
         private readonly ConcurrentQueue<AudioProcessingJob> processingQueue = new();
@@ -105,7 +105,7 @@ namespace DCL.VoiceChat
 
             if (combinedAudioSource != null)
             {
-                ApplyFeedbackSuppression(data, channels, samplesPerChannel);
+                ApplyEchoCancellation(data, channels, samplesPerChannel);
             }
 
             if (isProcessingEnabled && audioProcessor != null && data.Length > 0)
@@ -144,16 +144,16 @@ namespace DCL.VoiceChat
         }
 
         /// <summary>
-        ///     Apply feedback suppression using the dedicated suppressor
+        ///     Apply echo cancellation using the dedicated suppressor
         ///     Optimized for audio thread performance - minimal work here
         /// </summary>
-        private void ApplyFeedbackSuppression(float[] data, int channels, int samplesPerChannel)
+        private void ApplyEchoCancellation(float[] data, int channels, int samplesPerChannel)
         {
-            // Get current speaker output for feedback detection
-            if (combinedAudioSource.TryGetCurrentSpeakerOutput(feedbackBuffer, out int speakerSamples))
+            // Get current speaker output for echo detection
+            if (combinedAudioSource.TryGetCurrentSpeakerOutput(echoBuffer, out int speakerSamples))
             {
-                // Process audio through feedback suppressor (lightweight operation)
-                bool suppressionApplied = VoiceChatAudioEchoCancellation.ProcessAudio(data, channels, samplesPerChannel, feedbackBuffer, speakerSamples);
+                // Process audio through echo suppressor (lightweight operation)
+                bool suppressionApplied = VoiceChatAudioEchoCancellation.ProcessAudio(data, channels, samplesPerChannel, echoBuffer, speakerSamples);
 
                 // Apply suppression if needed (simple gain reduction)
                 if (suppressionApplied)
@@ -352,7 +352,7 @@ namespace DCL.VoiceChat
             if (resampleBuffer != null)
                 Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
 
-            Array.Clear(feedbackBuffer, 0, feedbackBuffer.Length);
+            Array.Clear(echoBuffer, 0, echoBuffer.Length);
 
             // Clear processing queues when filter is reset
             while (processingQueue.TryDequeue(out _)) { }

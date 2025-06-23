@@ -29,8 +29,8 @@ namespace DCL.VoiceChat
         private static readonly float[] fftOutput = new float[FFT_SIZE * 2];
         
         private static int bufferIndex = 0;
-        private static bool feedbackDetected = false;
-        private static float feedbackSuppressionLevel = 0f;
+        private static bool echoDetected = false;
+        private static float echoCancellationLevel = 0f;
         private static VoiceChatConfiguration configuration;
         
         private static float echoPathGain = 1.0f;
@@ -42,7 +42,7 @@ namespace DCL.VoiceChat
         private static int logCounter = 0;
         private const int LOG_INTERVAL = 100;
 
-        public static bool IsEnabled => configuration?.EnableFeedbackSuppression == true;
+        public static bool IsEnabled => configuration?.EnableAudioEchoCancellation == true;
 
         public static void Initialize(VoiceChatConfiguration config)
         {
@@ -54,8 +54,8 @@ namespace DCL.VoiceChat
 
         public static void Reset()
         {
-            feedbackDetected = false;
-            feedbackSuppressionLevel = 0f;
+            echoDetected = false;
+            echoCancellationLevel = 0f;
             bufferIndex = 0;
             echoPathGain = 1.0f;
             adaptiveFilterGain = 1.0f;
@@ -119,8 +119,8 @@ namespace DCL.VoiceChat
 
             UpdateEchoPathModel(echoLevel, correlation);
 
-            bool wasFeedbackDetected = feedbackDetected;
-            float threshold = configuration?.FeedbackCorrelationThreshold ?? DEFAULT_CORRELATION_THRESHOLD;
+            bool wasEchoDetected = echoDetected;
+            float threshold = configuration?.EchoCorrelationThreshold ?? DEFAULT_CORRELATION_THRESHOLD;
             
             if (shouldLog)
             {
@@ -140,7 +140,7 @@ namespace DCL.VoiceChat
                 
                 if (consecutiveDetections >= 2)
                 {
-                    feedbackDetected = true;
+                    echoDetected = true;
                 }
             }
             else
@@ -155,56 +155,56 @@ namespace DCL.VoiceChat
                 
                 if (consecutiveNonDetections >= 10)
                 {
-                    feedbackDetected = false;
+                    echoDetected = false;
                 }
             }
 
-            if (feedbackDetected)
+            if (echoDetected)
             {
-                if (!wasFeedbackDetected)
+                if (!wasEchoDetected)
                 {
                     Debug.LogWarning($"SUPRESSOR: Feedback detected! Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
                 }
 
-                float attackRate = configuration?.FeedbackSuppressionAttackRate ?? DEFAULT_ATTACK_RATE;
-                float maxStrength = configuration?.FeedbackSuppressionStrength ?? DEFAULT_SUPPRESSION_STRENGTH;
-                feedbackSuppressionLevel = Mathf.Min(feedbackSuppressionLevel + attackRate, maxStrength);
+                float attackRate = configuration?.EchoCancellationAttackRate ?? DEFAULT_ATTACK_RATE;
+                float maxStrength = configuration?.EchoCancellationStrength ?? DEFAULT_SUPPRESSION_STRENGTH;
+                echoCancellationLevel = Mathf.Min(echoCancellationLevel + attackRate, maxStrength);
 
                 if (shouldLog)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {feedbackSuppressionLevel:F3}, Max: {maxStrength:F3}");
+                    Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {echoCancellationLevel:F3}, Max: {maxStrength:F3}");
                 }
             }
             else
             {
-                if (wasFeedbackDetected)
+                if (wasEchoDetected)
                 {
                     Debug.LogWarning($"SUPRESSOR: Feedback cleared. Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
                 }
 
-                float releaseRate = configuration?.FeedbackSuppressionReleaseRate ?? DEFAULT_RELEASE_RATE;
-                feedbackSuppressionLevel = Mathf.Max(feedbackSuppressionLevel - releaseRate, 0f);
+                float releaseRate = configuration?.EchoCancellationReleaseRate ?? DEFAULT_RELEASE_RATE;
+                echoCancellationLevel = Mathf.Max(echoCancellationLevel - releaseRate, 0f);
                 
-                if (shouldLog && feedbackSuppressionLevel > 0.01f)
+                if (shouldLog && echoCancellationLevel > 0.01f)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Releasing suppression. Level: {feedbackSuppressionLevel:F3}");
+                    Debug.LogWarning($"SUPRESSOR: Releasing suppression. Level: {echoCancellationLevel:F3}");
                 }
             }
 
             lastEchoLevel = echoLevel;
-            return feedbackSuppressionLevel > 0.01f;
+            return echoCancellationLevel > 0.01f;
         }
 
         public static void ApplySuppression(float[] data, int channels, int samplesPerChannel)
         {
-            if (feedbackSuppressionLevel <= 0.01f)
+            if (echoCancellationLevel <= 0.01f)
                 return;
 
-            float suppression = 1f - feedbackSuppressionLevel;
+            float suppression = 1f - echoCancellationLevel;
             
             if (logCounter % LOG_INTERVAL == 0)
             {
-                Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {feedbackSuppressionLevel:F3}, Gain: {suppression:F3}");
+                Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {echoCancellationLevel:F3}, Gain: {suppression:F3}");
             }
 
             for (int i = 0; i < samplesPerChannel; i++)

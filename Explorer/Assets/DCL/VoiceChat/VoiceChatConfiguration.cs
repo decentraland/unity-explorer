@@ -8,26 +8,24 @@ namespace DCL.VoiceChat
         [Header("Local Audio Feedback")]
         [Tooltip("Enable to hear your own voice through the audio output (may cause echo)")]
         public bool EnableLocalTrackPlayback;
+        [Tooltip("Enable audio echo cancellation to prevent echo from speakers")]
+        public bool EnableAudioEchoCancellation = true;
 
-        [Header("Feedback Suppression")]
-        [Tooltip("Enable feedback loop detection and suppression to prevent echo from speakers")]
-        public bool EnableFeedbackSuppression = true;
-
-        [Tooltip("Correlation threshold for feedback detection (lower = more sensitive)")]
+        [Tooltip("Correlation threshold for echo detection (lower = more sensitive)")]
         [Range(0.1f, 0.6f)]
-        public float FeedbackCorrelationThreshold = 0.25f;
+        public float EchoCorrelationThreshold = 0.25f;
 
-        [Tooltip("Maximum suppression strength when feedback is detected")]
+        [Tooltip("Maximum cancellation strength when echo is detected")]
         [Range(0.3f, 0.9f)]
-        public float FeedbackSuppressionStrength = 0.7f;
+        public float EchoCancellationStrength = 0.7f;
 
-        [Tooltip("How quickly suppression increases when feedback is detected")]
+        [Tooltip("How quickly cancellation increases when echo is detected")]
         [Range(0.05f, 0.4f)]
-        public float FeedbackSuppressionAttackRate = 0.2f;
+        public float EchoCancellationAttackRate = 0.2f;
 
-        [Tooltip("How quickly suppression decreases when feedback stops")]
+        [Tooltip("How quickly cancellation decreases when echo stops")]
         [Range(0.005f, 0.05f)]
-        public float FeedbackSuppressionReleaseRate = 0.02f;
+        public float EchoCancellationReleaseRate = 0.02f;
 
         [Header("Voice Detection Configurations")]
         [Tooltip("Defines the threshold in seconds to identify push to talk or microphone toggle")]
