@@ -57,7 +57,7 @@ MonoBehaviour:
   image: {fileID: 7613893095782860729}
   selectedColor: {r: 1, g: 0.74509805, b: 0.2784314, a: 1}
   unselectedColor: {r: 1, g: 1, b: 1, a: 0.2}
-  selectedScale: 1.1
+  selectedScale: 1.05
 --- !u!114 &4788667542077531807
 MonoBehaviour:
   m_ObjectHideFlags: 0
