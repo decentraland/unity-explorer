@@ -162,7 +162,11 @@ namespace DCL.Minimap
 
         private void CopyJumpInLink()
         {
-            systemClipboard.Set($"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?position={previousParcelPosition.x},{previousParcelPosition.y}");
+            string link = realmData.ScenesAreFixed
+                ? $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?realm={realmData.RealmName}&position={previousParcelPosition.x},{previousParcelPosition.y}"
+                : $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?position={previousParcelPosition.x},{previousParcelPosition.y}";
+
+            systemClipboard.Set(link);
         }
 
         private void ExpandMinimap()
