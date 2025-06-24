@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace DCL.UI.SuggestionPanel
 {
-    public class InputSuggestionPanelView : MonoBehaviour, IViewWithGlobalDependencies
+    public class InputSuggestionPanelView : MonoBehaviour
     {
         public event SuggestionSelectedDelegate SuggestionSelected;
 
@@ -30,15 +30,13 @@ namespace DCL.UI.SuggestionPanel
         private InputSuggestionType currentSuggestionType;
         private int currentIndex;
         private BaseInputSuggestionElement lastSelectedInputSuggestion;
-        private ViewDependencies viewDependencies;
         private int firstVisibleSuggestionIndex;
         private int lastVisibleSuggestionIndex;
         private int visibleSuggestionsCount;
         private bool needToScroll;
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void InjectDependencies()
         {
-            viewDependencies = dependencies;
             CreateSuggestionPools();
         }
 
@@ -237,19 +235,19 @@ namespace DCL.UI.SuggestionPanel
         {
             if (isVisible)
             {
-                viewDependencies.DclInput.UI.ActionUp.performed += OnArrowUp;
-                viewDependencies.DclInput.UI.ActionDown.performed += OnArrowDown;
-                viewDependencies.DclInput.UI.Submit.performed += OnSubmit;
-                viewDependencies.DclInput.UI.Tab.performed += OnSubmit;
+                DCLInput.Instance.UI.ActionUp.performed += OnArrowUp;
+                DCLInput.Instance.UI.ActionDown.performed += OnArrowDown;
+                DCLInput.Instance.UI.Submit.performed += OnSubmit;
+                DCLInput.Instance.UI.Tab.performed += OnSubmit;
             }
             else
             {
                 needToScroll = false;
                 lastSelectedInputSuggestion?.SetSelectionState(false);
-                viewDependencies.DclInput.UI.ActionUp.performed -= OnArrowUp;
-                viewDependencies.DclInput.UI.ActionDown.performed -= OnArrowDown;
-                viewDependencies.DclInput.UI.Submit.performed -= OnSubmit;
-                viewDependencies.DclInput.UI.Tab.performed -= OnSubmit;
+                DCLInput.Instance.UI.ActionUp.performed -= OnArrowUp;
+                DCLInput.Instance.UI.ActionDown.performed -= OnArrowDown;
+                DCLInput.Instance.UI.Submit.performed -= OnSubmit;
+                DCLInput.Instance.UI.Tab.performed -= OnSubmit;
             }
 
             gameObject.SetActive(isVisible);
