@@ -143,7 +143,11 @@ namespace DCL.Minimap
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
 
-            contextMenu = new GenericContextMenu(190)
+            contextMenu = new GenericContextMenu()
+                          // Add title control to prevent incorrect layout height when the context menu has a single control
+                          // May be removed if a new control is added
+                         .AddControl(new TextContextMenuControlSettings("Minimap"))
+                         .AddControl(new SeparatorContextMenuControlSettings())
                          .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
 
             viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
