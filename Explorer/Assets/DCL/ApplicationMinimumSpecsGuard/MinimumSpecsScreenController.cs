@@ -11,8 +11,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class MinimumSpecsScreenController : ControllerBase<MinimumSpecsScreenView>
     {
-        public const string PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY = "dontShowMinSpecsScreen";
-
         private readonly IWebBrowser webBrowser;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         public readonly UniTaskCompletionSource HoldingTask;
@@ -33,7 +31,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnToggleChanged(bool dontShowAgain)
         {
-            DCLPlayerPrefs.SetInt(PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY, dontShowAgain ? 1 : 0);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, dontShowAgain ? 1 : 0);
             DCLPlayerPrefs.Save();
         }
 

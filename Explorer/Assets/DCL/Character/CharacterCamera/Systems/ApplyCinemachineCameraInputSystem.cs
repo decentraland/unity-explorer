@@ -19,12 +19,10 @@ namespace DCL.CharacterCamera.Systems
     [UpdateAfter(typeof(ControlCinemachineVirtualCameraSystem))]
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
-        private readonly DCLInput input;
         private readonly bool isFreeCameraAllowed;
 
-        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, bool isFreeCameraAllowed) : base(world)
+        internal ApplyCinemachineCameraInputSystem(World world, bool isFreeCameraAllowed) : base(world)
         {
-            this.input = input;
             this.isFreeCameraAllowed = isFreeCameraAllowed;
         }
 
@@ -65,9 +63,9 @@ namespace DCL.CharacterCamera.Systems
                     break;
             }
 
-            cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly!.triggered;
-            cameraInput.SwitchState = input.Camera.SwitchState!.WasPressedThisFrame();
-            cameraInput.ChangeShoulder = input.Camera.ChangeShoulder!.WasPressedThisFrame();
+            cameraInput.SetFreeFly = isFreeCameraAllowed && DCLInput.Instance.Camera.ToggleFreeFly!.triggered;
+            cameraInput.SwitchState = DCLInput.Instance.Camera.SwitchState!.WasPressedThisFrame();
+            cameraInput.ChangeShoulder = DCLInput.Instance.Camera.ChangeShoulder!.WasPressedThisFrame();
         }
 
         [Query]

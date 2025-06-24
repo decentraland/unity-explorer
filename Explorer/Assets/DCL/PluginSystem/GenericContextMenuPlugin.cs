@@ -17,7 +17,6 @@ namespace DCL.PluginSystem
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly ViewDependencies viewDependencies;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private GenericContextMenuController? genericContextMenuController;
@@ -25,12 +24,10 @@ namespace DCL.PluginSystem
         public GenericContextMenuPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            ViewDependencies viewDependencies,
             ProfileRepositoryWrapper profileDataProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.viewDependencies = viewDependencies;
             this.profileRepositoryWrapper = profileDataProvider;
         }
 
@@ -57,7 +54,7 @@ namespace DCL.PluginSystem
             GenericContextMenuButtonWithStringDelegateView buttonWithStringDelegatePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonWithStringDelegatePrefab, ct)).GetComponent<GenericContextMenuButtonWithStringDelegateView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
-                new ControlsPoolManager(viewDependencies, profileRepositoryWrapper, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab));
+                new ControlsPoolManager(profileRepositoryWrapper, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab));
             mvcManager.RegisterController(genericContextMenuController);
         }
 

@@ -1,7 +1,9 @@
+using CodeLess.Interfaces;
 using UnityEngine;
 
 namespace DCL.Clipboard
 {
+    [AutoInterface]
     public class UnityClipboard : ISystemClipboard
     {
         public void Set(string text)
