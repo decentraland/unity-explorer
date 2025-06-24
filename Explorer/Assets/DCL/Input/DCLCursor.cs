@@ -10,6 +10,7 @@ namespace DCL.Input
         Interaction,
         CameraPan,
     }
+
     public class DCLCursor : ICursor
     {
         private readonly IEventSystem eventSystem;

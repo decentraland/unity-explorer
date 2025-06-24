@@ -22,7 +22,6 @@ namespace DCL.CharacterCamera.Tests
         private ICinemachineFreeCameraData freeCameraData;
         private ICinemachineThirdPersonCameraData thirdPersonCameraData;
         private ICinemachineThirdPersonCameraData droneViewData;
-        private DCLInput dclInput;
         private World world;
         private ApplyCinemachineCameraInputSystem system;
 
@@ -77,11 +76,10 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
 
             // Setup Input
-            dclInput = new DCLInput();
-            dclInput.Enable();
+            DCLInput.Instance.Enable();
 
             // Create system with free camera allowed
-            system = new ApplyCinemachineCameraInputSystem(world, dclInput, true);
+            system = new ApplyCinemachineCameraInputSystem(world, true);
 
             // Create entity with camera components
             entity = world.Create(
