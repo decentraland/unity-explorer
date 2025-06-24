@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Optimization.PerformanceBudgeting;
+using System;
 
 namespace ECS.LifeCycle
 {
@@ -12,9 +13,17 @@ namespace ECS.LifeCycle
         ///     Executes certain clean-up logic on SDK Components
         /// </summary>
         /// <param name="query">All = typeof(CRDTEntity)</param>
+        void FinalizeComponents(in Query query);
+
+        bool IsBudgetedFinalizeSupported => false;
+
+        /// <summary>
+        ///     Executes certain clean-up logic on SDK Components in budgeted manner preventing spikes
+        /// </summary>
+        /// <param name="query">All = typeof(CRDTEntity)</param>
         /// <param name="budget">Budget the implementing system must consider to avoid spikes</param>
         /// <param name="cleanUpMarker">System marks the marker if it didn't succeed to fully clean its resources due budget limitation</param>
-        void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker);
+        void BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker) { }
     }
 
     public class CleanUpMarker

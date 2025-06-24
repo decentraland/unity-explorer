@@ -24,8 +24,10 @@ namespace ECS.ComponentsPooling.Systems
         private readonly QueryDescription finalizeQuery = new QueryDescription()
            .WithAll<TProvider>();
 
-        private readonly Finalize finalize;
+        private Finalize finalize;
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
+
+        public bool IsBudgetedFinalizeSupported => true;
 
         public ReleasePoolableComponentSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
@@ -38,7 +40,12 @@ namespace ECS.ComponentsPooling.Systems
             World.InlineQuery<ReleaseOnEntityDestroy, TProvider, DeleteEntityIntention>(in entityDestroyQuery, ref releaseOnEntityDestroy);
         }
 
-        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        public void FinalizeComponents(in Query query)
+        {
+            World.InlineQuery<Finalize, TProvider>(in finalizeQuery, ref finalize);
+        }
+
+        public void BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
         {
             var budgetedFinalize = new BudgetedFinalize<Finalize, TProvider>(finalize, budget, cleanUpMarker);
             World.InlineQuery<BudgetedFinalize<Finalize, TProvider>, TProvider>(in finalizeQuery, ref budgetedFinalize);
