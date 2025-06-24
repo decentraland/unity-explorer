@@ -17,8 +17,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
 
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_MUSIC_VOLUME))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_MUSIC_VOLUME);
+            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_MUSIC_VOLUME))
+                view.SliderView.Slider.value = SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_MUSIC_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetMusicVolumeSettings);
             SetMusicVolumeSettings(view.SliderView.Slider.value);
@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetMusicVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(MUSIC_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_MUSIC_VOLUME, volumePercentage, save: true);
+            SettingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_MUSIC_VOLUME, volumePercentage, save: true);
         }
 
         public override void Dispose()

@@ -14,8 +14,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.landscapeData = landscapeData;
 
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE);
+            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE))
+                view.SliderView.Slider.value = SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetEnvironmentDistanceSettings);
             SetEnvironmentDistanceSettings(view.SliderView.Slider.value);
@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void OnEnvironmentDistanceSettingsChangedFromOutside(float newDistance)
         {
             view.SliderView.Slider.value = newDistance;
-            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE, newDistance, save: true);
+            SettingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE, newDistance, save: true);
         }
 
         public override void Dispose()

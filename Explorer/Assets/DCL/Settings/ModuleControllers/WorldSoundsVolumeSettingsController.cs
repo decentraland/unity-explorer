@@ -19,8 +19,8 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
             this.worldVolumeMacBus = worldVolumeMacBus;
 
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_WORLD_VOLUME))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_WORLD_VOLUME);
+            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_WORLD_VOLUME))
+                view.SliderView.Slider.value = SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_WORLD_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetWorldVolumeSettings);
             SetWorldVolumeSettings(view.SliderView.Slider.value);
@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetWorldVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_WORLD_VOLUME, volumePercentage, save: true);
+            SettingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_WORLD_VOLUME, volumePercentage, save: true);
 
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.SetWorldVolume(volumePercentage / 100);
