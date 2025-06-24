@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
 using UnityEngine.Pool;
 using Utility.Multithreading;
 
@@ -9,54 +7,39 @@ namespace DCL.Diagnostics
     /// <summary>
     ///     Permits every message only once per N frames.
     /// </summary>
-    public abstract class FrameDebouncer<TKey> : IReportsDebouncer, IEqualityComparer<TKey>
+    public class FrameDebouncer : TimingBasedDebouncer<long>
     {
-        private readonly Dictionary<TKey, long> messageFrameCounters;
-
         private readonly int frameDebounceThreshold;
         private readonly int cleanUpThreshold;
 
         private long cleanUpTargetFrame;
 
-        protected FrameDebouncer(int frameDebounceThreshold)
-        {
-            messageFrameCounters = new Dictionary<TKey, long>(1000, this);
+        public override ReportHandler AppliedTo => ReportHandler.All;
 
+        public FrameDebouncer(int frameDebounceThreshold)
+        {
             this.frameDebounceThreshold = frameDebounceThreshold;
             cleanUpThreshold = frameDebounceThreshold * 100; // Clean up every 100x the debounce threshold
             cleanUpTargetFrame = MultithreadingUtility.FrameCount + cleanUpThreshold;
         }
 
-        public virtual ReportHandler AppliedTo => ReportHandler.All;
-
-        public bool Debounce(object message, ReportData reportData, LogType log) =>
-            Debounce(GetKey(message, reportData, log));
-
-        public bool Debounce(Exception exception, ReportData reportData, LogType log) =>
-            Debounce(GetKey(exception, reportData, log));
-
-        private bool Debounce(in TKey key)
+        protected override bool Debounce<TKey>(Dictionary<TKey, long> dictionary, TKey key)
         {
-            long frameCount = MultithreadingUtility.FrameCount;
+            long currentTiming = MultithreadingUtility.FrameCount;
 
-            // Clean up old messages
-            if (frameCount >= cleanUpTargetFrame)
-            {
-                CleanUp();
-                cleanUpTargetFrame = frameCount + cleanUpThreshold;
-            }
+            CleanUp(currentTiming);
 
-            lock (messageFrameCounters)
+            lock (dictionary)
             {
-                if (!messageFrameCounters.TryGetValue(key, out long lastFrame))
+                if (!dictionary.TryGetValue(key, out long storedTiming))
                 {
-                    messageFrameCounters[key] = frameCount;
+                    dictionary[key] = currentTiming;
                     return false; // First time we see this message
                 }
 
-                if (frameCount - lastFrame > frameDebounceThreshold)
+                if (CanPass(storedTiming, currentTiming))
                 {
-                    messageFrameCounters[key] = frameCount;
+                    dictionary[key] = currentTiming;
                     return false; // Enough frames passed, we can log it again
                 }
 
@@ -64,27 +47,39 @@ namespace DCL.Diagnostics
             }
         }
 
-        protected abstract TKey GetKey(in object message, ReportData reportData, LogType log);
+        private bool CanPass(long storedTiming, long currentTiming) =>
+            currentTiming - storedTiming > frameDebounceThreshold;
 
-        protected abstract TKey GetKey(in Exception exception, ReportData reportData, LogType log);
-
-        private void CleanUp()
+        private bool ShouldCleanUp(long currentTiming)
         {
-            long frameCount = MultithreadingUtility.FrameCount;
-            using PooledObject<List<TKey>> pooled = ListPool<TKey>.Get(out List<TKey>? keysToRemove);
-
-            lock (messageFrameCounters)
+            if (currentTiming >= cleanUpTargetFrame)
             {
-                foreach (KeyValuePair<TKey, long> kvp in messageFrameCounters)
-                    if (frameCount - kvp.Value > frameDebounceThreshold)
-                        keysToRemove.Add(kvp.Key);
-
-                foreach (TKey key in keysToRemove) { messageFrameCounters.Remove(key); }
+                cleanUpTargetFrame = currentTiming + cleanUpThreshold;
+                return true;
             }
+
+            return false;
         }
 
-        public abstract bool Equals(TKey x, TKey y);
+        private void CleanUp(long timing)
+        {
+            if (!ShouldCleanUp(timing))
+                return;
 
-        public abstract int GetHashCode(TKey obj);
+            lock (messages) { ExecuteCleanUp(timing, messages); }
+
+            lock (exceptions) { ExecuteCleanUp(timing, exceptions); }
+        }
+
+        private void ExecuteCleanUp<TKey>(long timing, Dictionary<TKey, long> dict)
+        {
+            using PooledObject<List<TKey>> pooled = ListPool<TKey>.Get(out List<TKey>? keysToRemove);
+
+            foreach (KeyValuePair<TKey, long> kvp in dict)
+                if (!CanPass(kvp.Value, timing))
+                    keysToRemove.Add(kvp.Key);
+
+            foreach (TKey key in keysToRemove) dict.Remove(key);
+        }
     }
 }

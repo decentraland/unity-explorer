@@ -1,6 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Diagnostics.ReportsHandling;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
@@ -13,57 +14,19 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Type = System.Type;
 
 namespace DCL.Friends
 {
     public class RPCFriendsService : IFriendsService
     {
-        internal class ServerStreamReportsDebouncer : FrameDebouncer<ServerStreamReportsDebouncer.ExceptionFingerprint>
+        internal class ServerStreamReportsDebouncer : FrameDebouncer
         {
-            /// <summary>
-            ///     Simplified representation of the exception for this particular case only.
-            ///     There is no easy way to compare exceptions properly so we use a very simplified scheme instead.
-            /// </summary>
-            public readonly struct ExceptionFingerprint : IEquatable<ExceptionFingerprint>
-            {
-                public readonly Type Type;
-                public readonly Type? InnerType;
-                public readonly string Message;
-
-                public ExceptionFingerprint(Exception e)
-                {
-                    Type = e.GetType();
-                    InnerType = e.InnerException?.GetType();
-                    Message = e.Message;
-                }
-
-                public bool Equals(ExceptionFingerprint other) =>
-                    Type.Equals(other.Type) && Equals(InnerType, other.InnerType) && Message == other.Message;
-
-                public override bool Equals(object? obj) =>
-                    obj is ExceptionFingerprint other && Equals(other);
-
-                public override int GetHashCode() =>
-                    HashCode.Combine(Type, InnerType, Message);
-            }
-
             public ServerStreamReportsDebouncer() : base(1)
             {
                 // Tasks can be distributed across 2 frames so the threshold distance is 1 frame
             }
 
-            protected override ExceptionFingerprint GetKey(in object message, ReportData reportData, LogType log) =>
-                throw new NotSupportedException();
-
-            protected override ExceptionFingerprint GetKey(in Exception exception, ReportData reportData, LogType log) =>
-                new (exception);
-
-            public override bool Equals(ExceptionFingerprint x, ExceptionFingerprint y) =>
-                x.Equals(y);
-
-            public override int GetHashCode(ExceptionFingerprint obj) =>
-                obj.GetHashCode();
+            public override ReportHandler AppliedTo => ReportHandler.Sentry;
         }
 
         /// <summary>

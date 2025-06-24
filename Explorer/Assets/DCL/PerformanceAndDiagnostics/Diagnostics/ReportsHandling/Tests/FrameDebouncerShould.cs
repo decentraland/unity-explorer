@@ -1,14 +1,12 @@
-﻿using DCL.Diagnostics;
-using DCL.Diagnostics.Tests;
-using NSubstitute;
+﻿using NSubstitute;
 using NUnit.Framework;
 using System;
 using UnityEngine;
 using Utility.Multithreading;
 
-namespace DCL.Friends.Tests
+namespace DCL.Diagnostics.Tests
 {
-    public class ServerStreamReportsDebouncerShould
+    public class FrameDebouncerShould
     {
         private MockedReportScope mockedReportScope;
         private ReportData reportData;
@@ -18,7 +16,7 @@ namespace DCL.Friends.Tests
         public void SetUp()
         {
             mockedReportScope = MockedReportScope.CreateFromBaseClass(out handler, out _, ReportHandler.Sentry);
-            reportData = new ReportData(ReportCategory.FRIENDS, debouncer: new RPCFriendsService.ServerStreamReportsDebouncer());
+            reportData = new ReportData(ReportCategory.FRIENDS, debouncer: new FrameDebouncer(1));
         }
 
         [TearDown]

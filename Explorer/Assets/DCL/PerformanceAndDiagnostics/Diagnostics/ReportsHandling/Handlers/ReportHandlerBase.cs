@@ -44,7 +44,7 @@ namespace DCL.Diagnostics
             if (IsLogMessageAllowed(ecsSystemException, in ecsSystemException.ReportData, LogType.Exception))
                 LogExceptionInternal(ecsSystemException);
             else
-                HandleSupressedException(ecsSystemException, ecsSystemException.ReportData);
+                HandleSuppressedException(ecsSystemException, ecsSystemException.ReportData);
         }
 
         [HideInCallstack]
@@ -53,7 +53,7 @@ namespace DCL.Diagnostics
             if (IsLogMessageAllowed(exception, reportData, LogType.Exception))
                 LogExceptionInternal(exception, reportData, context);
             else
-                HandleSupressedException(exception, reportData);
+                HandleSuppressedException(exception, reportData);
         }
 
         internal abstract void LogInternal(LogType logType, ReportData category, Object context, object message);
@@ -64,7 +64,7 @@ namespace DCL.Diagnostics
 
         internal abstract void LogExceptionInternal(Exception exception, ReportData reportData, Object? context);
 
-        internal virtual void HandleSupressedException(Exception exception, ReportData reportData) { }
+        internal virtual void HandleSuppressedException(Exception exception, ReportData reportData) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [HideInCallstack]

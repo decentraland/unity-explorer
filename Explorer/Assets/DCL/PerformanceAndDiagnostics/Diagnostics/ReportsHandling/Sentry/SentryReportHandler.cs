@@ -87,9 +87,9 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
-        internal override void HandleSupressedException(Exception exception, ReportData reportData)
+        internal override void HandleSuppressedException(Exception exception, ReportData reportData)
         {
-            //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningfull information
+            //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningful information
             if (reportData.Category.Equals(ReportCategory.ASSET_BUNDLES))
                 return;
 
