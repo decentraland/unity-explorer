@@ -77,15 +77,17 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             UpdateInterestedButtonState();
             liveBadgeContainer.SetActive(data.Event.live);
-            interestedContainer.SetActive(data.Event is { live: false, total_attendees: > 0 });
             UnHoverAnimation();
         }
 
         public void UpdateInterestedButtonState() =>
             interestedButton.SetSelected(eventData!.Value.Event.attending);
 
-        public void UpdateInterestedCounter() =>
+        public void UpdateInterestedCounter()
+        {
             eventInterestedUsersText.text = eventData!.Value.Event.total_attendees.ToString();
+            interestedContainer.SetActive(eventData!.Value.Event is { live: false, total_attendees: > 0 });
+        }
 
         public void SubscribeToInteractions(Action<PlaceAndEventDTO> mainAction,
                                             Action<PlaceAndEventDTO> jumpInAction,
