@@ -144,7 +144,8 @@ namespace DCL.PluginSystem.Global
 
             EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();
             var eventInfoViewFactory = EventInfoController.CreateLazily(eventInfoViewAsset, null);
-            eventInfoController = new EventInfoController(eventInfoViewFactory);
+            eventInfoController = new EventInfoController(eventInfoViewFactory,
+                webRequestController);
             mvcManager.RegisterController(eventInfoController);
         }
     }

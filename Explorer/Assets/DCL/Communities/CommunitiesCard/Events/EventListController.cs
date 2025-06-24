@@ -4,6 +4,7 @@ using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Communities.CommunityCreation;
+using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
@@ -169,7 +170,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnMainButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl(GetEventWebsiteLink(eventData));
+            mvcManager.ShowAndForget(EventInfoController.IssueCommand(new EventInfoParameter(eventData.Event)), cancellationToken);
 
         public override void Reset()
         {
