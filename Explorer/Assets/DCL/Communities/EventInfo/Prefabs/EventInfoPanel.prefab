@@ -499,6 +499,7 @@ MonoBehaviour:
   backgroundCloseButton: {fileID: 6113321632732672044}
   closeButton: {fileID: 3261299304199055675}
   contextMenuConfiguration: {fileID: 11400000, guid: 35a24412c56014f62b57d699a93e4b74, type: 2}
+  scrollRect: {fileID: 8801006303347823306}
   eventImage: {fileID: 4424442724457222350}
   eventDate: {fileID: 5247130368684097139}
   eventName: {fileID: 4296956960256023408}
@@ -1595,7 +1596,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Padding: {x: 0, y: 0, z: -20, w: -83}
+  m_Padding: {x: -1, y: 0, z: -1, w: -1}
   m_Softness: {x: 0, y: 0}
 --- !u!114 &6034015850617557725
 MonoBehaviour:

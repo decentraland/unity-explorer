@@ -4,9 +4,12 @@ using DCL.EventsApi;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Utilities;
 using DCL.WebRequests;
 using MVC;
 using System;
+using System.Globalization;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,9 +18,12 @@ namespace DCL.Communities.EventInfo
 {
     public class EventInfoView: ViewBase, IView
     {
+        private const string HOST_FORMAT = "Hosted by <b>{0}</b>";
+
         [SerializeField] private Button backgroundCloseButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private CommunityEventsContextMenuConfiguration contextMenuConfiguration;
+        [SerializeField] private ScrollRect scrollRect;
 
         [Header("Event Info")]
         [SerializeField] private ImageView eventImage;
@@ -35,6 +41,7 @@ namespace DCL.Communities.EventInfo
         public event Action<IEventDTO>? EventCopyLinkButtonClicked;
 
         private readonly UniTask[] closeTasks = new UniTask[2];
+        private readonly StringBuilder eventSchedulesStringBuilder = new ();
         private ImageController imageController;
         private IMVCManager mvcManager;
         private IEventDTO eventDTO;
@@ -42,6 +49,8 @@ namespace DCL.Communities.EventInfo
 
         private void Awake()
         {
+            scrollRect.SetScrollSensitivityBasedOnPlatform();
+
             interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO));
             interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO));
             shareButton.onClick.AddListener(() => OpenContextMenu(shareButton.transform.position));
@@ -73,6 +82,34 @@ namespace DCL.Communities.EventInfo
             eventDTO = eventData;
 
             imageController.RequestImage(eventData.Image);
+            eventDate.text = EventUtilities.GetEventTimeText(eventData);
+            eventName.text = eventData.Name;
+            hostName.text = string.Format(HOST_FORMAT, eventData.User_name);
+            interestedCounter.text = eventData.Total_attendees.ToString();
+            interestedButton.SetSelected(eventData.Attending);
+            eventDescription.text = eventData.Description;
+
+            eventSchedules.text = CalculateRecurrentSchedulesString(eventData);
+        }
+
+        private string CalculateRecurrentSchedulesString(IEventDTO eventData)
+        {
+            DateTime.TryParse(eventData.Next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
+
+            for (var i = 0; i < eventData.Recurrent_dates.Length; i++)
+            {
+                if (!DateTime.TryParse(eventData.Recurrent_dates[i], null, DateTimeStyles.RoundtripKind, out DateTime date)) continue;
+                if (date < nextStartAt) continue;
+
+                eventSchedulesStringBuilder.Append(date.ToString("R"));
+
+                if (i < eventData.Recurrent_dates.Length - 1)
+                    eventSchedulesStringBuilder.Append("\n");
+            }
+
+            var result = eventSchedulesStringBuilder.ToString();
+            eventSchedulesStringBuilder.Clear();
+            return result;
         }
     }
 }
