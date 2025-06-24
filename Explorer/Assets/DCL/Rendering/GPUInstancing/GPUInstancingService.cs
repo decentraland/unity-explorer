@@ -4,7 +4,6 @@ using DCL.Rendering.GPUInstancing.InstancingData;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility;
@@ -40,7 +39,7 @@ namespace DCL.Rendering.GPUInstancing
                 frustumOffset = 0.0f;
                 vBoundsExtents = candidate.LODGroup.Bounds.extents;
                 fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
-                fMaxDistance = math.min(maxDistance, cam.farClipPlane);
+                fMaxDistance = Mathf.Min(maxDistance, cam.farClipPlane);
                 minCullingDistance = cam.nearClipPlane;
                 nInstBufferSize = instancesCount;
                 nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
@@ -98,8 +97,6 @@ namespace DCL.Rendering.GPUInstancing
 
         private Camera renderCamera;
 
-        private readonly Vector3[] frustumCorners = new Vector3[4];
-
         public LandscapeData LandscapeData { private get; set; }
 
         public bool IsEnabled { get; set; } = true;
@@ -146,8 +143,6 @@ namespace DCL.Rendering.GPUInstancing
             if (renderCamera == null || !OnDemandRendering.willCurrentFrameRender)
                 return;
 
-            Bounds renderBounds = GetRenderBounds();
-
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
             {
                 groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
@@ -183,32 +178,8 @@ namespace DCL.Rendering.GPUInstancing
                     CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
                     int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
 
-                    combinedLodRenderer.RenderParamsArray.worldBounds = renderBounds;
                     Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i * lodCount);
                 }
-            }
-        }
-
-        private Bounds GetRenderBounds()
-        {
-            Vector3 boundsMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-            Vector3 boundsMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-
-            GetRenderBoundsMinMax(ref boundsMin, ref boundsMax, renderCamera, renderCamera.nearClipPlane);
-            GetRenderBoundsMinMax(ref boundsMin, ref boundsMax, renderCamera, renderCamera.farClipPlane);
-
-            return new Bounds((boundsMin + boundsMax) * 0.5f, boundsMax - boundsMin);
-        }
-
-        private void GetRenderBoundsMinMax(ref Vector3 min, ref Vector3 max, Camera camera, float d)
-        {
-            camera.CalculateFrustumCorners(new Rect(0, 0, 1, 1), d, Camera.MonoOrStereoscopicEye.Mono, frustumCorners);
-
-            foreach (var corner in frustumCorners)
-            {
-                var worldSpaceCorner = camera.transform.TransformPoint(corner);
-                min = Vector3.Min(min, worldSpaceCorner);
-                max = Vector3.Max(max, worldSpaceCorner);
             }
         }
 
@@ -278,6 +249,7 @@ namespace DCL.Rendering.GPUInstancing
                     combinedLodRenderer.InitializeRenderParams(instancingMaterials);
                     ref RenderParams rparams = ref combinedLodRenderer.RenderParamsArray;
                     rparams.camera = renderCamera;
+                    rparams.worldBounds = RENDER_PARAMS_WORLD_BOUNDS;
                     rparams.matProps = new MaterialPropertyBlock();
                     rparams.matProps.SetBuffer(MAT_PER_INSTANCE_BUFFER, buffers.PerInstanceMatrices);
                     rparams.matProps.SetBuffer(PER_INSTANCE_LOOK_UP_AND_DITHER_BUFFER, buffers.InstanceLookUpAndDither);
