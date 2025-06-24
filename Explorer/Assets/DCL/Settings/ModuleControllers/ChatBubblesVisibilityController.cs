@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 
@@ -9,7 +10,6 @@ namespace DCL.Settings.ModuleControllers
         private readonly SettingsDropdownModuleView view;
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ISettingsModuleEventListener settingsEventListener;
-        private const string CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY = "Settings_GraphicsQuality";
 
         public ChatBubblesVisibilityController(SettingsDropdownModuleView view, ChatSettingsAsset chatSettingsAsset, ISettingsModuleEventListener settingsEventListener)
         {
@@ -17,8 +17,8 @@ namespace DCL.Settings.ModuleControllers
             this.chatSettingsAsset = chatSettingsAsset;
             this.settingsEventListener = settingsEventListener;
 
-            if(settingsDataStore.HasKey(CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY))
-                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY);
+            if(settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY))
+                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetSettings);
         }
@@ -44,7 +44,7 @@ namespace DCL.Settings.ModuleControllers
                     return;
             }
 
-            settingsDataStore.SetDropdownValue(CHAT_BUBBLES_VISIBILITY_SETTINGS_STORE_KEY, index, save: true);
+            settingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, index, save: true);
         }
 
         public override void Dispose()

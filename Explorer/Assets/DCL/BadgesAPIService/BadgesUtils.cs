@@ -1,13 +1,11 @@
+using DCL.Prefs;
 using System;
 using System.Globalization;
-using UnityEngine;
 
 namespace DCL.BadgesAPIService
 {
     public static class BadgesUtils
     {
-        private const string NEW_BADGES_LOCAL_STORAGE_KEY = "NewBadges";
-
         public static string FormatTimestampDate(string timestampString)
         {
             DateTime date = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timestampString)).DateTime;
@@ -17,26 +15,26 @@ namespace DCL.BadgesAPIService
 
         public static bool IsBadgeNew(string badgeId)
         {
-            string allNewBadges = PlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
+            string allNewBadges = DCLPlayerPrefs.GetString(DCLPrefKeys.NEW_BADGES, string.Empty);
             return allNewBadges.Contains(badgeId);
         }
 
         public static void SetBadgeAsNew(string badgeId)
         {
-            string allNewBadges = PlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
+            string allNewBadges = DCLPlayerPrefs.GetString(DCLPrefKeys.NEW_BADGES, string.Empty);
 
             if (allNewBadges.Contains(badgeId))
                 return;
 
-            PlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, $"{allNewBadges}{badgeId},");
-            PlayerPrefs.Save();
+            DCLPlayerPrefs.SetString(DCLPrefKeys.NEW_BADGES, $"{allNewBadges}{badgeId},");
+            DCLPlayerPrefs.Save();
         }
 
         public static void SetBadgeAsRead(string badgeId)
         {
-            string allNewBadges = PlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
-            PlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, allNewBadges.Replace($"{badgeId},", string.Empty));
-            PlayerPrefs.Save();
+            string allNewBadges = DCLPlayerPrefs.GetString(DCLPrefKeys.NEW_BADGES, string.Empty);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.NEW_BADGES, allNewBadges.Replace($"{badgeId},", string.Empty));
+            DCLPlayerPrefs.Save();
         }
 
         public static string GetTierCompletedDate(this BadgeInfo badgeInfo, string tierId)

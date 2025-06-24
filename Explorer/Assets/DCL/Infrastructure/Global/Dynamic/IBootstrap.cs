@@ -29,7 +29,6 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument scenesUIRoot,
-            ObjectProxy<FeatureFlagsCache> featureFlagsCache,
             CancellationToken ct
         );
 
@@ -64,6 +63,7 @@ namespace Global.Dynamic
         UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct);
 
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
-        void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache);
+
+        void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
     }
 }
