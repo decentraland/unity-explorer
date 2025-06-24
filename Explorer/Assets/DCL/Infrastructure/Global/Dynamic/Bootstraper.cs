@@ -11,6 +11,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
