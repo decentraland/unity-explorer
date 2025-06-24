@@ -18,7 +18,7 @@ namespace DCL.UI.HyperlinkHandler
     /// <summary>
     /// Adding this component into an object that contains a TMP_Text, will allow it to handle hyperlinks, both for hover behaviour and also clicking on the links themselves.
     /// </summary>
-    public class TextHyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IViewWithGlobalDependencies
+    public class TextHyperlinkHandlerElement : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
     {
         private const string LINK_SELECTED_OPENING_STYLE = "<u>";
         private const string LINK_SELECTED_CLOSING_STYLE = "</u>";
@@ -29,7 +29,6 @@ namespace DCL.UI.HyperlinkHandler
         private readonly Dictionary<string, Action<string>> linkHandlers = new ();
         private readonly StringBuilder stringBuilder = new ();
 
-        private ViewDependencies viewDependencies;
         private bool initialized;
         private bool isHighlighting;
         private bool isHovering;
@@ -66,7 +65,7 @@ namespace DCL.UI.HyperlinkHandler
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            viewDependencies.Cursor.SetStyle(CursorStyle.Normal);
+            ViewDependencies.Cursor.SetStyle(CursorStyle.Normal);
             isHovering = false;
             ResetPreviousHighlight();
         }
@@ -90,9 +89,8 @@ namespace DCL.UI.HyperlinkHandler
                 ResetPreviousHighlight();
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void InjectDependencies()
         {
-            viewDependencies = dependencies;
             initialized = true;
         }
 
@@ -155,29 +153,29 @@ namespace DCL.UI.HyperlinkHandler
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), default(Vector2), cancellationTokenSource.Token, closeContextMenuTask.Task);
+            await ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromUserNameAsync(userName, GetLastCharacterPosition(lastLink), default(Vector2), cancellationTokenSource.Token, closeContextMenuTask.Task);
         }
 
         private async UniTaskVoid OpenUrlAsync(URLAddress url, CancellationToken ct) =>
-            await viewDependencies.GlobalUIViews.ShowExternalUrlPromptAsync(url, ct);
+            await ViewDependencies.GlobalUIViews.ShowExternalUrlPromptAsync(url, ct);
 
         private async UniTaskVoid TeleportAsync(Vector2Int coords, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-            await viewDependencies.GlobalUIViews.ShowTeleporterPromptAsync(coords, ct);
+            await ViewDependencies.GlobalUIViews.ShowTeleporterPromptAsync(coords, ct);
         }
 
         private async UniTaskVoid ChangeRealmAsync(string message, string realm, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
-            await viewDependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm, ct);
+            await ViewDependencies.GlobalUIViews.ShowChangeRealmPromptAsync(message, realm, ct);
         }
 
         private void HighlightCurrentLink(int linkIndex)
         {
             lastHighlightedIndex = linkIndex;
             isHighlighting = true;
-            viewDependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
+            ViewDependencies.Cursor.SetStyle(CursorStyle.Interaction, true);
 
             TMP_LinkInfo linkInfo = textComponent.textInfo.linkInfo[linkIndex];
 
