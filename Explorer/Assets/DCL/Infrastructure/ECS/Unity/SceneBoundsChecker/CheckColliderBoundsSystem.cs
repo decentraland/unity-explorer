@@ -29,7 +29,6 @@ namespace ECS.Unity.SceneBoundsChecker
 
         private readonly IPartitionComponent scenePartition;
         private readonly ParcelMathHelper.SceneGeometry sceneGeometry;
-        private readonly IPhysicsTickProvider physicsTickEntity;
         private Bounds auxiliaryBounds = new Bounds();
 
         /// <summary>
@@ -37,16 +36,15 @@ namespace ECS.Unity.SceneBoundsChecker
         /// </summary>
         private int lastFixedFrameChecked;
 
-        internal CheckColliderBoundsSystem(World world, IPartitionComponent scenePartition, ParcelMathHelper.SceneGeometry sceneGeometry, IPhysicsTickProvider physicsTickEntity) : base(world)
+        internal CheckColliderBoundsSystem(World world, IPartitionComponent scenePartition, ParcelMathHelper.SceneGeometry sceneGeometry) : base(world)
         {
             this.scenePartition = scenePartition;
             this.sceneGeometry = sceneGeometry;
-            this.physicsTickEntity = physicsTickEntity;
         }
 
         protected override void Update(float t)
         {
-            int tick = physicsTickEntity.Tick;
+            int tick = PhysicsTickProvider.Tick;
             if (tick == lastFixedFrameChecked) return;
             lastFixedFrameChecked = tick;
 

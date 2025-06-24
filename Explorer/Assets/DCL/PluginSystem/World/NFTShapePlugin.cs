@@ -39,7 +39,6 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly IFramePrefabs framePrefabs;
         private readonly IDiskCache<Texture2DData> diskCache;
-        private readonly FeatureFlagsCache featureFlags;
         private readonly ExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly ISizedStreamableCache<Texture2DData, GetNFTShapeIntention> cache = new NftShapeCache();
 
@@ -56,7 +55,6 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IDiskCache<Texture2DData> diskCache,
-            FeatureFlagsCache featureFlags,
             ExtendedObjectPool<Texture2D> videoTexturePool
         ) : this(
             decentralandUrlsSource,
@@ -67,7 +65,6 @@ namespace DCL.PluginSystem.World
             webRequestController,
             cacheCleaner,
             diskCache,
-            featureFlags,
             videoTexturePool
         ) { }
 
@@ -80,7 +77,6 @@ namespace DCL.PluginSystem.World
             IWebRequestController webRequestController,
             CacheCleaner cacheCleaner,
             IDiskCache<Texture2DData> diskCache,
-            FeatureFlagsCache featureFlags,
             ExtendedObjectPool<Texture2D> videoTexturePool
         ) : this(
             decentralandUrlsSource,
@@ -91,7 +87,6 @@ namespace DCL.PluginSystem.World
             cacheCleaner,
             framePrefabs,
             diskCache,
-            featureFlags,
             videoTexturePool
         ) { }
 
@@ -104,7 +99,6 @@ namespace DCL.PluginSystem.World
             CacheCleaner cacheCleaner,
             IFramePrefabs framePrefabs,
             IDiskCache<Texture2DData> diskCache,
-            FeatureFlagsCache featureFlags,
             ExtendedObjectPool<Texture2D> videoTexturePool
         )
         {
@@ -115,7 +109,6 @@ namespace DCL.PluginSystem.World
             this.webRequestController = webRequestController;
             this.framePrefabs = framePrefabs;
             this.diskCache = diskCache;
-            this.featureFlags = featureFlags;
             this.videoTexturePool = videoTexturePool;
             cacheCleaner.Register(cache);
         }
@@ -138,7 +131,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            bool isKtxEnabled = featureFlags.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
+            bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
 
             LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, videoTexturePool, decentralandUrlsSource);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
