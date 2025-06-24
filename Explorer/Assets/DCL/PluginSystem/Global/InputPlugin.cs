@@ -104,7 +104,6 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            DCLInput.Instance.Dispose();
             DCLInput.Reset();
         }
     }
