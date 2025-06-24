@@ -275,9 +275,6 @@ namespace DCL.CharacterPreview
         {
             if (previewController == null) return;
 
-            if (previewController!.Value.IsPlayingEmote())
-                await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);
-
             PlayEmote(emoteURN);
 
             await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);
