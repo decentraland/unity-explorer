@@ -168,13 +168,6 @@ namespace DCL.Chat
                 membersBuffer,
                 participantProfileBuffer,
                 this);
-
-            this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
-        }
-
-        private void OnVoiceChatStatusChanged(VoiceChatStatus newstatus)
-        {
-
         }
 
 #region Panel Visibility

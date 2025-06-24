@@ -103,6 +103,15 @@
             public const string UNBLOCK_USER = "unblock_user";
         }
 
+        public static class VoiceChat
+        {
+            public const string START_CALL = "start_call";
+            public const string ACCEPT_CALL = "accept_call";
+            public const string REJECT_CALL = "reject_call";
+            public const string CALL_DURATION = "end_call";
+            public const string VOICE_CHAT_FRIENDSHIP_STATUS = "voice_chat_started_with_friend";
+        }
+
         public static class MarketplaceCredits
         {
             public const string MARKETPLACE_CREDITS_OPENED = "marketplace_credits_opened";
