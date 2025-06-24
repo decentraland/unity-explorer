@@ -26,7 +26,6 @@ namespace DCL.MarketplaceCredits
     {
         public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
-        private const int TUTORIAL_STEP_DONE_MARK = 256;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -326,8 +325,8 @@ namespace DCL.MarketplaceCredits
 
                 if (!creditsProgramProgressResponse.HasUserStartedProgram())
                 {
-                    // Open the Marketplace Credits panel by default when the user didn't start the program. It will await for the new users to complete the tutorial stage.
-                    await UniTask.WaitUntil(() => ownProfile.TutorialStep == TUTORIAL_STEP_DONE_MARK, cancellationToken: ct);
+                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
+                    await UniTask.WaitUntil(() => realmData.IsGenesis(), cancellationToken: ct);
                     await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
                 }
             }
