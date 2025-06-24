@@ -39,7 +39,7 @@ namespace DCL.RuntimeDeepLink
         /// <summary>
         /// Runs for the lifetime of the app.
         /// </summary>
-        public static async UniTaskVoid StartListenForDeepLinksAsync(DeepLinkHandle handle, CancellationToken token)
+        public static async UniTaskVoid StartListenForDeepLinksAsync(this IDeepLinkHandle handle, CancellationToken token)
         {
             while (token.IsCancellationRequested == false)
             {
@@ -59,16 +59,20 @@ namespace DCL.RuntimeDeepLink
 
                 DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(contentResult.Value);
                 string? raw = dto.deeplink;
-                DeepLinkCreateResult deepLinkCreateResult = DeepLink.FromRaw(raw);
+                Result<DeepLink> deepLinkCreateResult = DeepLink.FromRaw(raw);
 
-                deepLinkCreateResult.Match((handle, raw),
-                    onDeepLink: static (tuple, link) =>
-                        tuple.handle.HandleDeepLink(link),
-                    onWrongFormat: static tuple =>
-                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content, wrong format: {tuple.raw}"),
-                    onEmptyInput: static _ =>
-                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content, empty content")
-                );
+                if (deepLinkCreateResult.Success)
+                {
+                    DeepLink deeplink = deepLinkCreateResult.Value;
+                    Result handleResult = handle.HandleDeepLink(deeplink);
+
+                    if (handleResult.Success)
+                        ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{handle.Name} successfully handled deeplink: {deeplink}");
+                    else
+                        ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"{handle.Name} raised error on handle deeplink: {deeplink}, error {handleResult.ErrorMessage}");
+                }
+                else
+                    ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"Cannot deserialize deeplink content: {deepLinkCreateResult.ErrorMessage}");
             }
         }
     }

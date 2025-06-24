@@ -4,23 +4,26 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {
-    public class DeepLinkHandleImplementation
+    public class DeepLinkHandle : IDeepLinkHandle
     {
         private readonly StartParcel startParcel;
         private readonly IRealmNavigator realmNavigator;
         private readonly CancellationToken token;
 
-        public DeepLinkHandleImplementation(StartParcel startParcel, IRealmNavigator realmNavigator, CancellationToken token)
+        public DeepLinkHandle(StartParcel startParcel, IRealmNavigator realmNavigator, CancellationToken token)
         {
             this.startParcel = startParcel;
             this.realmNavigator = realmNavigator;
             this.token = token;
         }
 
-        public HandleResult HandleDeepLink(DeepLink deeplink)
+        public string Name => "Real Implementation";
+
+        public Result HandleDeepLink(DeepLink deeplink)
         {
             Vector2Int? position = PositionFrom(deeplink);
 
@@ -33,10 +36,10 @@ namespace DCL.RuntimeDeepLink
                 else
                     startParcel.Assign(parcel);
 
-                return HandleResult.Ok();
+                return Result.SuccessResult();
             }
 
-            return HandleResult.FromHandleError(new HandleError("no matches"));
+            return Result.ErrorResult("no matches");
         }
 
         private static Vector2Int? PositionFrom(DeepLink deeplink)

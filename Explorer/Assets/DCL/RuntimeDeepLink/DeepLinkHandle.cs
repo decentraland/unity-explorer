@@ -1,47 +1,26 @@
-using DCL.Diagnostics;
-using REnum;
+using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {
-    [REnum]
-    [REnumField(typeof(DeepLinkHandleImplementation))]
-    [REnumFieldEmpty("Null")]
-    public partial struct DeepLinkHandle
+    public interface IDeepLinkHandle
     {
-        public string Name => Match(onDeepLinkHandleImplementation: static _ => "Real Implementation", onNull: static () => "Null Implementation");
+        public string Name { get; }
 
         /// <summary>
         /// Implementations of the method must be exception free.
         /// </summary>
-        public void HandleDeepLink(DeepLink deeplink)
+        public Result HandleDeepLink(DeepLink deeplink);
+
+        class Null : IDeepLinkHandle
         {
-            HandleResult result = Match(
-                deeplink,
-                onDeepLinkHandleImplementation: static (deeplink, handle) => handle.HandleDeepLink(deeplink),
-                onNull: static _ => HandleResult.Ok()
-            );
+            public static readonly Null INSTANCE = new ();
 
-            result.Match(
-                (Name, deeplink),
-                onOk: static tuple => ReportHub.Log(ReportCategory.RUNTIME_DEEPLINKS, $"{tuple.Name} successfully handled deeplink: {tuple.deeplink}"),
-                onHandleError: static (tuple, error) => ReportHub.LogError(ReportCategory.RUNTIME_DEEPLINKS, $"{tuple.Name} raised error on handle deeplink: {tuple.deeplink}, error {error.Message}")
-            );
-        }
-    }
+            private Null() { }
 
+            public string Name => "Null Implementation";
 
-    [REnum]
-    [REnumFieldEmpty("Ok")]
-    [REnumField(typeof(HandleError))]
-    public partial struct HandleResult { }
-
-    public readonly struct HandleError
-    {
-        public readonly string Message;
-
-        public HandleError(string message)
-        {
-            Message = message;
+            public Result HandleDeepLink(DeepLink deeplink) =>
+                Result.SuccessResult();
         }
     }
 }

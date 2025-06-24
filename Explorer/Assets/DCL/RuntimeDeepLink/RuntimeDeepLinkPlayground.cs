@@ -6,12 +6,9 @@ namespace DCL.RuntimeDeepLink
     {
         private void Start()
         {
-            DeepLinkSentinel
-               .StartListenForDeepLinksAsync(
-                    DeepLinkHandle.Null(),
-                    destroyCancellationToken
-                )
-               .Forget();
+            IDeepLinkHandle.Null.INSTANCE
+                           .StartListenForDeepLinksAsync(destroyCancellationToken)
+                           .Forget();
         }
     }
 }

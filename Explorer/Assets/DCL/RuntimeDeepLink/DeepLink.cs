@@ -2,6 +2,7 @@ using Global.AppArgs;
 using REnum;
 using System;
 using System.Collections.Generic;
+using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
 {
@@ -14,16 +15,16 @@ namespace DCL.RuntimeDeepLink
             this.map = map;
         }
 
-        internal static DeepLinkCreateResult FromRaw(string? raw)
+        internal static Result<DeepLink> FromRaw(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw!))
-                return DeepLinkCreateResult.EmptyInput();
+                return Result<DeepLink>.ErrorResult("Empty Input");
 
             if (raw.StartsWith("decentraland://", StringComparison.Ordinal) == false)
-                return DeepLinkCreateResult.WrongFormat();
+                return Result<DeepLink>.ErrorResult("Wrong Format");
 
             Dictionary<string, string> map = ApplicationParametersParser.ProcessDeepLinkParameters(raw);
-            return DeepLinkCreateResult.FromDeepLink(new DeepLink(map));
+            return Result<DeepLink>.SuccessResult(new DeepLink(map));
         }
 
         public string? ValueOf(string key)
@@ -32,10 +33,4 @@ namespace DCL.RuntimeDeepLink
             return value;
         }
     }
-
-    [REnum]
-    [REnumField(typeof(DeepLink))]
-    [REnumFieldEmpty("WrongFormat")]
-    [REnumFieldEmpty("EmptyInput")]
-    public partial struct DeepLinkCreateResult { }
 }
