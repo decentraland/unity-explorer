@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using DCL.Optimization.PerformanceBudgeting;
-using System;
 
 namespace ECS.LifeCycle
 {

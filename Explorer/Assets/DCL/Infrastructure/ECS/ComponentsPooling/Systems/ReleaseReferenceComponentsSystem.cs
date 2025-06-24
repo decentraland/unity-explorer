@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -33,7 +32,7 @@ namespace ECS.ComponentsPooling.Systems
             ReleaseComponentsToPool(in query);
         }
 
-        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        public void FinalizeComponents(in Query query)
         {
             ReleaseComponentsToPool(in query);
         }

@@ -17,7 +17,7 @@ namespace SceneRunner.Tests.TestUtils
 
             InitializationTestSystem1.InjectToWorld(ref builder);
             SimulationTestSystem1.InjectToWorld(ref builder);
-            return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), new List<IFinalizeWorldSystem>(), new List<ISceneIsCurrentListener>());
+            return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), new List<IFinalizeWorldSystem>(), new List<ISceneIsCurrentListener>(), NullPerformanceBudget.INSTANCE);
         }
     }
 }

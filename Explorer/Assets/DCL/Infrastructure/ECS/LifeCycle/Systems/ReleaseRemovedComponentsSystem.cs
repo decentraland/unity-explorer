@@ -10,27 +10,14 @@ namespace ECS.LifeCycle.Systems
     [UpdateInGroup(typeof(CleanUpGroup))]
     public partial class ReleaseRemovedComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly QueryDescription queryDescription = new QueryDescription().WithAll<RemovedComponents>();
-
-        // A hack to avoid lambda capture and allocations
-        private static (IPerformanceBudget budget, CleanUpMarker cleanUpMarker) context;
-
         public ReleaseRemovedComponentsSystem(World world) : base(world) { }
 
         protected override void Update(float t) { }
 
-        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        public void FinalizeComponents(in Query query)
         {
-            context = (budget, cleanUpMarker);
-
-            World.Query(
-                in queryDescription,
-                static (ref RemovedComponents removedComponents) =>
-                {
-                    if (context.cleanUpMarker.TryProceedWithBudget(context.budget))
-                        removedComponents.Dispose();
-                }
-            );
+            World.Query(in new QueryDescription().WithAll<RemovedComponents>(),
+                (ref RemovedComponents removedComponents) => removedComponents.Dispose());
         }
     }
 }

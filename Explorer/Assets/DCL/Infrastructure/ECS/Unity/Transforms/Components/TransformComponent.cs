@@ -46,6 +46,7 @@ namespace ECS.Unity.Transforms.Components
             Parent = Entity.Null;
 
             Cached = new CachedTransform(transform);
+            IsDisposed = false;
         }
 
         public void SetTransform(Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
@@ -90,8 +91,11 @@ namespace ECS.Unity.Transforms.Components
 
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);
 
+        public bool IsDisposed { get; private set; }
+
         public void Dispose()
         {
+            IsDisposed = true;
             HashSetPool<Entity>.Release(Children);
         }
 

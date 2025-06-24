@@ -32,15 +32,18 @@ namespace SceneRunner.ECSWorld
         private readonly IPartitionSettings partitionSettings;
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
+        private readonly IPerformanceBudget performanceBudget;
 
         public ECSWorldFactory(
             ECSWorldSingletonSharedDependencies sharedDependencies,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData cameraSamplingData,
-            IReadOnlyList<IDCLWorldPlugin> plugins
+            IReadOnlyList<IDCLWorldPlugin> plugins,
+            IPerformanceBudget performanceBudget
         )
         {
             this.plugins = plugins;
+            this.performanceBudget = performanceBudget;
             singletonDependencies = sharedDependencies;
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
@@ -99,7 +102,7 @@ namespace SceneRunner.ECSWorld
 
             singletonDependencies.SceneMapping.Register(args.SceneData.SceneShortInfo.Name, args.SceneData.Parcels, world);
 
-            return new ECSWorldFacade(systemsWorld, world, persistentEntities, finalizeWorldSystems, isCurrentListeners);
+            return new ECSWorldFacade(systemsWorld, world, persistentEntities, finalizeWorldSystems, isCurrentListeners, performanceBudget);
         }
 
         private static PersistentEntities CreateReservedEntities(World world, ECSWorldInstanceSharedDependencies sharedDependencies, in ECSWorldFactoryArgs worldFactoryArgs)

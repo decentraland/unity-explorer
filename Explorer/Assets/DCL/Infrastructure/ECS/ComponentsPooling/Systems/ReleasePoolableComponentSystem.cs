@@ -82,6 +82,9 @@ namespace ECS.ComponentsPooling.Systems
 
             public void Update(ref TProvider provider)
             {
+                if (provider.IsDisposed)
+                    return;
+
                 Profiler.BeginSample("Finalize/PoolsRegistry");
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
                 Profiler.EndSample();

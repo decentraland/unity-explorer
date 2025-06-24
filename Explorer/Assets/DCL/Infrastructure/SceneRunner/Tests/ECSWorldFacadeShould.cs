@@ -26,7 +26,8 @@ namespace SceneRunner.Tests
             ecsWorldFacade = new ECSWorldFacade(builder.Finish(), world,
                 new PersistentEntities(),
                 new[] { finalizeWorldSystem = Substitute.For<IFinalizeWorldSystem>() },
-                new[] { sceneIsCurrentListener = Substitute.For<ISceneIsCurrentListener>() });
+                new[] { sceneIsCurrentListener = Substitute.For<ISceneIsCurrentListener>() },
+                NullPerformanceBudget.INSTANCE);
         }
 
         private ECSWorldFacade ecsWorldFacade;

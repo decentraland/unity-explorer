@@ -1,12 +1,9 @@
-#nullable enable
-
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Conversion;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
@@ -124,7 +121,10 @@ namespace DCL.SDKComponents.LightSource.Systems
                     TextureComponent? shadowTexture = pbLightSource.Spot.ShadowMaskTexture.CreateTextureComponent(sceneData);
                     TryCreateGetTexturePromise(in shadowTexture, ref lightSourceComponent.TextureMaskPromise);
                 }
-                else { lightSourceInstance.cookie = null; }
+                else
+                {
+                    lightSourceInstance.cookie = null;
+                }
             }
             else { lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow); }
 
@@ -181,15 +181,14 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void FinalizeLightSourceComponents([Data] IPerformanceBudget budget, [Data] CleanUpMarker cleanUpMarker, in LightSourceComponent lightSourceComponent)
+        private void FinalizeLightSourceComponents(in LightSourceComponent lightSourceComponent)
         {
-            if (cleanUpMarker.TryProceedWithBudget(budget))
-                poolRegistry.Release(lightSourceComponent.lightSourceInstance);
+            poolRegistry.Release(lightSourceComponent.lightSourceInstance);
         }
 
-        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker marker)
+        public void FinalizeComponents(in Query query)
         {
-            FinalizeLightSourceComponentsQuery(World, budget, marker);
+            FinalizeLightSourceComponentsQuery(World);
         }
     }
 }
