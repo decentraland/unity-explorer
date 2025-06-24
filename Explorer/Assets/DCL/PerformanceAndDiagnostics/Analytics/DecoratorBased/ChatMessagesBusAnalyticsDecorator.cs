@@ -47,7 +47,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     { "origin", origin },
                     { "is_mention", CheckIfIsMention(message)},
                     { "is_private", channel.ChannelType == ChatChannel.ChatChannelType.USER},
-                    // TODO: Add community id
 
                     //TODO FRAN: Add here array of mentioned players.
                     // { "emoji_count", emoji_count },
@@ -55,6 +54,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
                 jsonObject.Add("receiver_id", channel.Id.Id);
+
+            if (channel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+                jsonObject.Add("community_id", ChatChannel.GetCommunityIdFromChannelId(channel.Id));
 
             analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, jsonObject);
         }
