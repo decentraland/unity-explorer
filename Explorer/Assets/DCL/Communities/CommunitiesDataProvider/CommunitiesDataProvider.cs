@@ -6,6 +6,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
 
@@ -15,6 +16,7 @@ namespace DCL.Communities
     {
         public event Action CommunityCreated;
         public event Action CommunityDeleted;
+        public event ICommunitiesDataProvider.CommunityOperation CommunityUpdated;
 
         private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
@@ -74,6 +76,22 @@ namespace DCL.Communities
                     new MultipartFormDataSection("description", description),
                 };
 
+                List<string> landsAndWorlds = new (lands);
+                landsAndWorlds.AddRange(worlds);
+                if (landsAndWorlds.Count > 0)
+                {
+                    StringBuilder placeIdsJsonString = new StringBuilder("[");
+                    for (var i = 0; i < landsAndWorlds.Count; i++)
+                    {
+                        placeIdsJsonString.Append($"\"{landsAndWorlds[i]}\"");
+                        if (i < landsAndWorlds.Count - 1)
+                            placeIdsJsonString.Append(", ");
+                    }
+                    placeIdsJsonString.Append("]");
+
+                    formData.Add(new MultipartFormDataSection("placeIds", placeIdsJsonString.ToString()));
+                }
+
                 if (thumbnail != null)
                     formData.Add(new MultipartFormFileSection("thumbnail", thumbnail, "thumbnail.png", "image/png"));
 
@@ -86,6 +104,7 @@ namespace DCL.Communities
             {
                 // Updating an existing community
                 throw new NotImplementedException("Updating communities is not implemented yet.");
+                CommunityUpdated?.Invoke(communityId);
             }
 
             return response;
@@ -147,9 +166,6 @@ namespace DCL.Communities
 
             return placesIds;
         }
-
-        public UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetCommunityEventsAsync(communityId, pageNumber, elementsPerPage, ct);
 
         public UniTask<bool> KickUserFromCommunityAsync(string userId, string communityId, CancellationToken ct) =>
             RemoveMemberFromCommunityAsync(userId, communityId, ct);
@@ -220,6 +236,17 @@ namespace DCL.Communities
             string url = $"{communitiesBaseUrl}/communities/{communityId}/members/{userId}";
 
             var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
+                                                   .WithNoOpAsync()
+                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            return result.Success;
+        }
+
+        public async UniTask<bool> RemovePlaceFromCommunityAsync(string communityId, string placeId, CancellationToken ct)
+        {
+            string url = $"{communitiesBaseUrl}/communities/{communityId}/places/{placeId}";
+
+            var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

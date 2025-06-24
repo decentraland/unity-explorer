@@ -1,16 +1,17 @@
 using Cysharp.Threading.Tasks;
-using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Communities
 {
     public interface ICommunitiesDataProvider
     {
-        public event Action CommunityCreated;
-        public event Action CommunityDeleted;
+        public delegate void CommunityOperation(string communityId);
+        event CommunityOperation CommunityUpdated;
+
+        event Action CommunityCreated;
+        event Action CommunityDeleted;
 
         UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct);
         UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct);
@@ -21,7 +22,6 @@ namespace DCL.Communities
         UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct);
         UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct);
-        UniTask<CommunityEventsResponse> GetCommunityEventsAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct);
         UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct);
         UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct);
 
@@ -32,5 +32,6 @@ namespace DCL.Communities
         UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct);
         UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct);
+        UniTask<bool> RemovePlaceFromCommunityAsync(string communityId, string placeId, CancellationToken ct);
     }
 }

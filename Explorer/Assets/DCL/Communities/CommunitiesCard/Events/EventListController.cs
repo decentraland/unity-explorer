@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
+using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
@@ -46,13 +47,14 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly IMVCManager mvcManager;
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
+        private string[] communityPlaceIds;
 
         protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;
 
@@ -65,8 +67,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             WarningNotificationView inWorldSuccessNotificationView,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IRealmNavigator realmNavigator,
-            ICommunitiesDataProvider communitiesDataProvider) : base(view, PAGE_SIZE)
+            IRealmNavigator realmNavigator) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.eventsApiService = eventsApiService;
@@ -76,7 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
-            this.communitiesDataProvider = communitiesDataProvider;
+            this.mvcManager = mvcManager;
 
             view.InitList(() => currentSectionFetchData, eventThumbnailSpriteCache, mvcManager, cancellationToken);
 
@@ -181,14 +182,16 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private void OnOpenWizardRequested()
         {
-            //TODO: open community wizard
-            throw new NotImplementedException();
+            mvcManager.ShowAsync(
+                CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
+                    canCreateCommunities: true,
+                    communityId: communityData!.Value.id)));
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            Result<CommunityEventsResponse> eventResponse = await communitiesDataProvider.GetCommunityEventsAsync(communityData!.Value.id, eventsFetchData.pageNumber, PAGE_SIZE, ct)
-                                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.pageNumber, PAGE_SIZE, ct)
+                                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!eventResponse.Success)
             {
@@ -198,10 +201,13 @@ namespace DCL.Communities.CommunitiesCard.Events
                 return eventsFetchData.totalToFetch;
             }
 
+            if (eventResponse.Value.data.total == 0)
+                return 0;
+
             eventPlaceIds.Clear();
 
-            foreach (var item in eventResponse.Value.data)
-                eventPlaceIds.Add(item.placeId);
+            foreach (var item in eventResponse.Value.data.events)
+                eventPlaceIds.Add(item.place_id);
 
             Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
@@ -219,20 +225,21 @@ namespace DCL.Communities.CommunitiesCard.Events
             foreach (var place in placesResponse.Value.data)
                 placeInfoCache.Add(place.id, place);
 
-            foreach (var item in eventResponse.Value.data)
+            foreach (var item in eventResponse.Value.data.events)
                 eventsFetchData.items.Add(new PlaceAndEventDTO
                 {
-                    Place = placeInfoCache[item.placeId],
+                    Place = placeInfoCache[item.place_id],
                     Event = item
                 });
 
-            return eventResponse.Value.total;
+            return eventResponse.Value.data.total;
         }
 
-        public void ShowEvents(CommunityData community, CancellationToken token)
+        public void ShowEvents(CommunityData community, string[] placeIds, CancellationToken token)
         {
             cancellationToken = token;
             communityData = community;
+            communityPlaceIds = placeIds;
             view.SetCanModify(community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             FetchNewDataAsync(token).Forget();
         }
