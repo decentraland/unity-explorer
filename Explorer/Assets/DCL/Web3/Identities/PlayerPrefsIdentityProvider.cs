@@ -6,7 +6,6 @@ namespace DCL.Web3.Identities
     public partial class PlayerPrefsIdentityProvider : IWeb3IdentityCache
     {
         private readonly IWeb3IdentityJsonSerializer identitySerializer;
-        private readonly IPlayerPrefsIdentityProviderKeyStrategy keyStrategy;
 
         public event Action? OnIdentityCleared;
         public event Action? OnIdentityChanged;
@@ -15,8 +14,8 @@ namespace DCL.Web3.Identities
         {
             get
             {
-                if (!DCLPlayerPrefs.HasKey(keyStrategy.PlayerPrefsKey)) return null;
-                string json = DCLPlayerPrefs.GetString(keyStrategy.PlayerPrefsKey, string.Empty)!;
+                if (!DCLPlayerPrefs.HasKey(DCLPrefKeys.WEB3_IDENTITY)) return null;
+                string json = DCLPlayerPrefs.GetString(DCLPrefKeys.WEB3_IDENTITY, string.Empty)!;
                 if (string.IsNullOrEmpty(json)) return null;
                 return identitySerializer.Deserialize(json);
             }
@@ -27,26 +26,25 @@ namespace DCL.Web3.Identities
                     Clear();
                 else
                 {
-                    DCLPlayerPrefs.SetString(keyStrategy.PlayerPrefsKey, identitySerializer.Serialize(value));
+                    DCLPlayerPrefs.SetString(DCLPrefKeys.WEB3_IDENTITY, identitySerializer.Serialize(value));
                     OnIdentityChanged?.Invoke();
                 }
             }
         }
 
-        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer, IPlayerPrefsIdentityProviderKeyStrategy keyStrategy)
+        public PlayerPrefsIdentityProvider(IWeb3IdentityJsonSerializer identitySerializer)
         {
             this.identitySerializer = identitySerializer;
-            this.keyStrategy = keyStrategy;
         }
 
         public void Dispose()
         {
-            keyStrategy.Dispose();
+
         }
 
         public void Clear()
         {
-            DCLPlayerPrefs.DeleteKey(keyStrategy.PlayerPrefsKey);
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.WEB3_IDENTITY);
             OnIdentityCleared?.Invoke();
         }
     }

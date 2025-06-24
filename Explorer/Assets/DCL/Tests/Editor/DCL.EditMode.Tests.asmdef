@@ -26,7 +26,6 @@
         "GUID:d414ef88f3b15f746a4b97636b50dfb4",
         "GUID:96825943f4e14954b5172da80fdee63d",
         "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
-        "GUID:a02836be93074ac9b645f6e99b536bc0",
         "GUID:9e314663ce958b746873cb22d57ede55",
         "GUID:5eabe9a3d4dd19d42a16208ea5411062",
         "GUID:e0eedfa2deb9406daf86fd8368728e39",
@@ -100,7 +99,8 @@
         "Newtonsoft.Json.dll",
         "Google.Protobuf.dll",
         "Microsoft.CodeAnalysis.CSharp.dll",
-        "Microsoft.CodeAnalysis.dll"
+        "Microsoft.CodeAnalysis.dll",
+        "CodeLess.Attributes.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

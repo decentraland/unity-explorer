@@ -16,7 +16,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly IClipboardManager clipboardManager;
+        private readonly ClipboardManager clipboardManager;
 
         private PastePopupToastController? pasteToastButtonController;
         private ChatEntryMenuPopupController? chatEntryMenuPopupController;
@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.Global
         public GenericPopupsPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IClipboardManager clipboardManager)
+            ClipboardManager clipboardManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
