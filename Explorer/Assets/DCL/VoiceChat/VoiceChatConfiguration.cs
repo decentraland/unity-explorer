@@ -8,6 +8,7 @@ namespace DCL.VoiceChat
         [Header("Local Audio Feedback")]
         [Tooltip("Enable to hear your own voice through the audio output (may cause echo)")]
         public bool EnableLocalTrackPlayback;
+        [Header("Audio Echo Cancellation")]
         [Tooltip("Enable audio echo cancellation to prevent echo from speakers")]
         public bool EnableAudioEchoCancellation = true;
 
