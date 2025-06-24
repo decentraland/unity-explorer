@@ -7,13 +7,8 @@ namespace DCL.ExplorePanel
 {
     public class ExplorePanelInputHandler : IDisposable, IExplorePanelEscapeAction
     {
-        private readonly DCLInput dclInput;
+        private readonly DCLInput dclInput = DCLInput.Instance;
         private readonly LinkedList<Action<InputAction.CallbackContext>> escapeActions = new ();
-
-        public ExplorePanelInputHandler(DCLInput dclInput)
-        {
-            this.dclInput = dclInput;
-        }
 
         public void RegisterEscapeAction(Action<InputAction.CallbackContext> action)
         {
