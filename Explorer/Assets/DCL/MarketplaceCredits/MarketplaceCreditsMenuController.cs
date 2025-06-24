@@ -324,9 +324,12 @@ namespace DCL.MarketplaceCredits
                 var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                 SetSidebarButtonState(creditsProgramProgressResponse);
 
-                // Open the Marketplace Credits panel by default when the user has completed the tutorial stage
-                await UniTask.WaitUntil(() => ownProfile.TutorialStep == TUTORIAL_STEP_DONE_MARK, cancellationToken: ct);
-                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
+                if (!creditsProgramProgressResponse.HasUserStartedProgram())
+                {
+                    // Open the Marketplace Credits panel by default when the user didn't start the program. It will await for the new users to complete the tutorial stage.
+                    await UniTask.WaitUntil(() => ownProfile.TutorialStep == TUTORIAL_STEP_DONE_MARK, cancellationToken: ct);
+                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
+                }
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
