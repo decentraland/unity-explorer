@@ -7,6 +7,7 @@ using DCL.PluginSystem.World;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine.Profiling;
 using SystemGroups.Visualiser;
 
@@ -14,6 +15,8 @@ namespace SceneRunner.ECSWorld
 {
     public readonly struct ECSWorldFacade : IBudgetedDisposable
     {
+        private static readonly Dictionary<Type, string> LABELS = new ();
+
         public readonly World EcsWorld;
         public readonly PersistentEntities PersistentEntities;
 
@@ -59,15 +62,23 @@ namespace SceneRunner.ECSWorld
         {
             Query finalizeSDKComponentsQuery = EcsWorld.Query(new QueryDescription().WithAll<CRDTEntity>());
 
-            Profiler.BeginSample("FinalizeSDKComponents");
-
             for (var i = 0; i < finalizeWorldSystems.Count; i++)
             {
-                var enumerator = FinalizeSystem(finalizeSDKComponentsQuery, finalizeWorldSystems[i]!, budget, cleanUpMarker);
-                while (enumerator.MoveNext()) yield return enumerator.Current;
-            }
+                var system = finalizeWorldSystems[i]!;
+                string label = LabelOfType(system.GetType());
 
-            Profiler.EndSample();
+                Profiler.BeginSample("FinalizeSDKComponents");
+                Profiler.BeginSample(label);
+
+                // We must be able to finalize world no matter what
+                try { system.FinalizeComponents(in finalizeSDKComponentsQuery); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ECS); }
+
+                Profiler.EndSample();
+                Profiler.EndSample();
+
+                yield return new Unit();
+            }
 
             SystemGroupSnapshot.Instance.Unregister(systemGroupWorld);
 
@@ -76,26 +87,36 @@ namespace SceneRunner.ECSWorld
             yield return new Unit();
         }
 
-        private static IEnumerator<Unit> FinalizeSystem(Query query, IFinalizeWorldSystem finalizeWorldSystem, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        private static string LabelOfType(Type type)
         {
-            do
+            if (LABELS.TryGetValue(type, out string? value) == false)
             {
-                cleanUpMarker.Purify();
+                var sb = new StringBuilder();
+                sb.Append("FinalizeSDKComponents/").Append(type.Name);
 
-                // We must be able to finalize world no matter what
-                // Marker being mutated inside
-                try { finalizeWorldSystem.FinalizeComponents(in query, budget, cleanUpMarker); }
-                catch (Exception e)
+                var generic = type.IsGenericType ? type.GetGenericArguments() : Array.Empty<Type>();
+
+                if (generic.Length > 0)
                 {
-                    ReportHub.LogException(e, ReportCategory.ECS);
-                    yield break;
+                    sb.Append("<");
+
+                    for (int i = 0; i < generic.Length; i++)
+                    {
+                        var genericType = generic[i];
+                        sb.Append(genericType.Name);
+                        bool isLast = i == generic.Length - 1;
+
+                        if (isLast == false)
+                            sb.Append(", ");
+                    }
+
+                    sb.Append(">");
                 }
 
-                yield return new Unit();
+                LABELS[type] = value = sb.ToString();
             }
 
-            // Clean until it's fully cleaned
-            while (cleanUpMarker.IsFullyCleaned == false);
+            return value!;
         }
     }
 }
