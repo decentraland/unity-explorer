@@ -275,9 +275,6 @@ namespace DCL.Nametags
             usernameText.color = currentUsernameColor;
             privateMessageText.color = currentRecipientNameColor;
 
-            communityNameText.color = new Color(communityNameText.color.r, communityNameText.color.g, communityNameText.color.b, NameTagAlpha);
-            communityNameTextBackgroundRenderer.color = new Color(communityNameTextBackgroundRenderer.color.r, communityNameTextBackgroundRenderer.color.g, communityNameTextBackgroundRenderer.color.b, NameTagAlpha);
-
             // Update the bubble tail sprite color as it changes depending on mention state
             currentBubbleTailSpriteColor = bubbleTailSprite.color;
             currentBubbleTailSpriteColor.a = NameTagAlpha;
