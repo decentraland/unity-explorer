@@ -77,6 +77,11 @@ namespace DCL.Settings.ModuleViews
                     break;
             }
 
+            RevaluateButtonLimits(value);
+        }
+
+        public void RevaluateButtonLimits(float value)
+        {
             SliderView.DecreaseButton.interactable = value > SliderView.Slider.minValue;
             SliderView.IncreaseButton.interactable = value < (sliderType == SliderType.Time ? Mathf.Clamp(SliderView.Slider.maxValue, 0, MAX_TIME_VALUE) : SliderView.Slider.maxValue);
         }

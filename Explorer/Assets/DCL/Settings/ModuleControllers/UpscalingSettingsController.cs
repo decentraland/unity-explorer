@@ -36,6 +36,7 @@ namespace DCL.Settings.ModuleControllers
             //Comes in decimal form
             viewInstance.SliderView.Slider.SetValueWithoutNotify(value * STEP_MULTIPLIER);
             viewInstance.SliderValueText.text = $"{value * STEP_MULTIPLIER_DISPLAY}%";
+            viewInstance.RevaluateButtonLimits(value * STEP_MULTIPLIER);
         }
 
         public override void Dispose()
