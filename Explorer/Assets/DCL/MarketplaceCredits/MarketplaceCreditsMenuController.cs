@@ -26,6 +26,7 @@ namespace DCL.MarketplaceCredits
     {
         public const string WEEKLY_REWARDS_INFO_LINK = "https://decentraland.org/blog/announcements/marketplace-credits-earn-weekly-rewards-to-power-up-your-look?utm_org=dcl&utm_source=explorer&utm_medium=organic&utm_campaign=marketplacecredits";
         private const int ERROR_NOTIFICATION_DURATION_MS = 3000;
+        private const int TUTORIAL_STEP_DONE_MARK = 256;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -184,6 +185,7 @@ namespace DCL.MarketplaceCredits
                 case MarketplaceCreditsSection.WELCOME:
                     viewInstance.SetInfoLinkButtonActive(false);
                     marketplaceCreditsWelcomeSubController?.OpenSection();
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(false);
                     break;
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
                     haveJustClaimedCredits = false;
@@ -321,6 +323,10 @@ namespace DCL.MarketplaceCredits
 
                 var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                 SetSidebarButtonState(creditsProgramProgressResponse);
+
+                // Open the Marketplace Credits panel by default when the user has completed the tutorial stage
+                await UniTask.WaitUntil(() => ownProfile.TutorialStep == TUTORIAL_STEP_DONE_MARK, cancellationToken: ct);
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
