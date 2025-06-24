@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -32,7 +33,7 @@ namespace ECS.ComponentsPooling.Systems
             ReleaseComponentsToPool(in query);
         }
 
-        public void FinalizeComponents(in Query query)
+        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
         {
             ReleaseComponentsToPool(in query);
         }
@@ -45,6 +46,7 @@ namespace ECS.ComponentsPooling.Systems
         public static void ReleaseComponentsToPool(in Query query, IComponentPoolsRegistry componentPoolsRegistry)
         {
             // Profiling required, O(N^4)
+            // TODO consume the budget, currently it's unclean how to safely implement partial release
             foreach (ref Chunk chunk in query.GetChunkIterator())
             {
                 // it does not allocate, it's not a copy
@@ -55,9 +57,9 @@ namespace ECS.ComponentsPooling.Systems
                     for (var i = 0; i < array2D.Length; i++)
                     {
                         // if it is called on a value type it will cause an allocation
-                        if (array2D[i].GetType().GetElementType().IsValueType) continue;
+                        if (array2D[i].GetType().GetElementType()!.IsValueType) continue;
 
-                        object component = array2D[i].GetValue(entityIndex);
+                        object component = array2D[i].GetValue(entityIndex)!;
                         Type type = component.GetType();
 
                         if (componentPoolsRegistry.TryGetPool(type, out IComponentPool pool))

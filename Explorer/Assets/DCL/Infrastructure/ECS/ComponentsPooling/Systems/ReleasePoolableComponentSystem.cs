@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -23,7 +24,7 @@ namespace ECS.ComponentsPooling.Systems
         private readonly QueryDescription finalizeQuery = new QueryDescription()
            .WithAll<TProvider>();
 
-        private Finalize finalize;
+        private readonly Finalize finalize;
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
         public ReleasePoolableComponentSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
@@ -37,9 +38,10 @@ namespace ECS.ComponentsPooling.Systems
             World.InlineQuery<ReleaseOnEntityDestroy, TProvider, DeleteEntityIntention>(in entityDestroyQuery, ref releaseOnEntityDestroy);
         }
 
-        public void FinalizeComponents(in Query query)
+        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
         {
-            World.InlineQuery<Finalize, TProvider>(in finalizeQuery, ref finalize);
+            var budgetedFinalize = new BudgetedFinalize<Finalize, TProvider>(finalize, budget, cleanUpMarker);
+            World.InlineQuery<BudgetedFinalize<Finalize, TProvider>, TProvider>(in finalizeQuery, ref budgetedFinalize);
         }
 
         private readonly struct ReleaseOnEntityDestroy : IForEach<TProvider, DeleteEntityIntention>

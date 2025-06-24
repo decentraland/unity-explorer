@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Utility;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -37,9 +38,14 @@ namespace ECS.Unity.GLTFContainer.Systems
             World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in ENTITY_DESTROY_QUERY, ref releaseOnEntityDestroy);
         }
 
-        public void FinalizeComponents(in Query query)
+        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in new QueryDescription().WithAll<GltfContainerComponent>(), ref releaseOnEntityDestroy);
+            var budgetedFinalize = new BudgetedFinalize<ReleaseOnEntityDestroy, GltfContainerComponent>(releaseOnEntityDestroy, budget, cleanUpMarker);
+
+            World.InlineQuery<BudgetedFinalize<ReleaseOnEntityDestroy, GltfContainerComponent>, GltfContainerComponent>(
+                in new QueryDescription().WithAll<GltfContainerComponent>(),
+                ref budgetedFinalize
+            );
         }
 
         private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent>

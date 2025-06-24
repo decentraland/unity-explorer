@@ -19,6 +19,8 @@ namespace SceneRunner.ECSWorld
 
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
         private readonly IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners;
+        private readonly IPerformanceBudget budget;
+        private readonly CleanUpMarker cleanUpMarker;
 
         private readonly SystemGroupWorld systemGroupWorld;
 
@@ -27,12 +29,15 @@ namespace SceneRunner.ECSWorld
             World ecsWorld,
             PersistentEntities persistentEntities,
             IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems,
-            IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners)
+            IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners,
+            IPerformanceBudget budget)
         {
+            cleanUpMarker = new CleanUpMarker();
             this.systemGroupWorld = systemGroupWorld;
             EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
             this.sceneIsCurrentListeners = sceneIsCurrentListeners;
+            this.budget = budget;
             PersistentEntities = persistentEntities;
         }
 
@@ -58,11 +63,8 @@ namespace SceneRunner.ECSWorld
 
             for (var i = 0; i < finalizeWorldSystems.Count; i++)
             {
-                // We must be able to finalize world no matter what
-                try { finalizeWorldSystems[i].FinalizeComponents(in finalizeSDKComponentsQuery); }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ECS); }
-
-                yield return new Unit();
+                var enumerator = FinalizeSystem(finalizeSDKComponentsQuery, finalizeWorldSystems[i]!, budget, cleanUpMarker);
+                while (enumerator.MoveNext()) yield return enumerator.Current;
             }
 
             Profiler.EndSample();
@@ -72,6 +74,28 @@ namespace SceneRunner.ECSWorld
             systemGroupWorld.Dispose();
             EcsWorld.Dispose();
             yield return new Unit();
+        }
+
+        private static IEnumerator<Unit> FinalizeSystem(Query query, IFinalizeWorldSystem finalizeWorldSystem, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        {
+            do
+            {
+                cleanUpMarker.Purify();
+
+                // We must be able to finalize world no matter what
+                // Marker being mutated inside
+                try { finalizeWorldSystem.FinalizeComponents(in query, budget, cleanUpMarker); }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.ECS);
+                    yield break;
+                }
+
+                yield return new Unit();
+            }
+
+            // Clean until it's fully cleaned
+            while (cleanUpMarker.IsFullyCleaned == false);
         }
     }
 }

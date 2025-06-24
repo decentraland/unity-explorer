@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.FeatureFlags;
 using DCL.MapPins.Bus;
 using DCL.MapPins.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.LifeCycle;
@@ -120,11 +121,13 @@ namespace DCL.SDKComponents.MapPins.Systems
         }
 
         [Query]
-        private void CleanupOnFinalize(in Entity entity, ref MapPinComponent mapPinComponent)
+        private void CleanupOnFinalize([Data] IPerformanceBudget budget, [Data] CleanUpMarker cleanUpMarker, in Entity entity, ref MapPinComponent mapPinComponent)
         {
-            DereferenceTexture(ref mapPinComponent.TexturePromise);
-
-            mapPinsEventBus.RemoveMapPin(entity);
+            if (cleanUpMarker.TryProceedWithBudget(budget))
+            {
+                DereferenceTexture(ref mapPinComponent.TexturePromise);
+                mapPinsEventBus.RemoveMapPin(entity);
+            }
         }
 
         private void DereferenceTexture(ref Promise? promise)
@@ -164,8 +167,9 @@ namespace DCL.SDKComponents.MapPins.Systems
             return true;
         }
 
-        public void FinalizeComponents(in Query query)
+        public void FinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
         {
+            //TODO pass deps
             CleanupOnFinalizeQuery(World);
         }
     }
