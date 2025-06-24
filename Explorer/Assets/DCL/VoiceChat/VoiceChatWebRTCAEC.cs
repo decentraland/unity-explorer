@@ -33,6 +33,13 @@ namespace DCL.VoiceChat
         private const float DELAY_SMOOTHING = 0.99f;
         private const int DELAY_ESTIMATION_WINDOW = 256;
         private const int MIN_DELAY_SAMPLES = 10;
+        
+        // XMOS-inspired adaptive filtering parameters
+        private const float ADAPTIVE_FILTER_LEARNING_RATE_XMOS = 0.15f;
+        private const float ADAPTIVE_FILTER_REGULARIZATION = 0.001f;
+        private const float FILTER_CONVERGENCE_THRESHOLD = 0.1f;
+        private const float FILTER_STABILITY_THRESHOLD = 0.05f;
+        private const int FILTER_CONVERGENCE_WINDOW = 64;
 
         private static readonly float[] speakerBuffer = new float[BUFFER_SIZE];
         private static readonly float[] microphoneBuffer = new float[BUFFER_SIZE];
@@ -58,6 +65,15 @@ namespace DCL.VoiceChat
         private static bool delayEstimationValid = false;
         private static int delayStabilityCounter = 0;
         private static readonly float[] delayCorrelationBuffer = new float[MAX_DELAY_SAMPLES];
+        
+        // XMOS-inspired adaptive filtering state
+        private static float filterConvergenceQuality = 0f;
+        private static float filterStability = 1.0f;
+        private static float lastFilterError = 0f;
+        private static int filterConvergenceCounter = 0;
+        private static readonly float[] filterErrorHistory = new float[FILTER_CONVERGENCE_WINDOW];
+        private static int filterErrorIndex = 0;
+        private static float adaptiveFilterGainXMOS = 1.0f;
         
         private static int logCounter = 0;
         private const int LOG_INTERVAL = 100;
@@ -91,12 +107,21 @@ namespace DCL.VoiceChat
             delayStabilityCounter = 0;
             Array.Clear(delayCorrelationBuffer, 0, delayCorrelationBuffer.Length);
 
+            // Reset adaptive filtering state
+            filterConvergenceQuality = 0f;
+            filterStability = 1.0f;
+            lastFilterError = 0f;
+            filterConvergenceCounter = 0;
+            filterErrorIndex = 0;
+            adaptiveFilterGainXMOS = 1.0f;
+
             Array.Clear(speakerBuffer, 0, speakerBuffer.Length);
             Array.Clear(microphoneBuffer, 0, microphoneBuffer.Length);
             Array.Clear(echoPathBuffer, 0, echoPathBuffer.Length);
             Array.Clear(adaptiveFilter, 0, adaptiveFilter.Length);
             Array.Clear(fftBuffer, 0, fftBuffer.Length);
             Array.Clear(fftOutput, 0, fftOutput.Length);
+            Array.Clear(filterErrorHistory, 0, filterErrorHistory.Length);
             
             Debug.LogWarning("WEBRTC-AEC: Reset all AEC buffers and state");
         }
@@ -146,6 +171,9 @@ namespace DCL.VoiceChat
 
             UpdateEchoPathModel(echoLevel, correlation);
             
+            // XMOS-inspired adaptive filtering enhancement
+            UpdateAdaptiveFilterXMOS(echoLevel, correlation);
+            
             // XMOS-inspired delay estimation and compensation
             UpdateDelayEstimation();
             ApplyDelayCompensation();
@@ -158,6 +186,7 @@ namespace DCL.VoiceChat
                 Debug.LogWarning($"WEBRTC-AEC: Echo level: {echoLevel:F3}, Correlation: {correlation:F3}, Threshold: {threshold:F3}");
                 Debug.LogWarning($"WEBRTC-AEC: Echo path gain: {echoPathGain:F3}, Adaptive gain: {adaptiveFilterGain:F3}");
                 Debug.LogWarning($"WEBRTC-AEC: Delay: {estimatedDelay}, Confidence: {delayConfidence:F3}, Valid: {delayEstimationValid}");
+                Debug.LogWarning($"WEBRTC-AEC: Filter convergence: {filterConvergenceQuality:F3}, Stability: {filterStability:F3}");
             }
             
             // Enhanced echo detection with double-talk consideration
@@ -536,6 +565,137 @@ namespace DCL.VoiceChat
             
             // Copy back to speaker buffer
             tempSpeakerBuffer.CopyTo(speakerBuffer, 0);
+        }
+
+        private static void UpdateAdaptiveFilterXMOS(float echoLevel, float correlation)
+        {
+            // XMOS-inspired adaptive filtering with convergence quality tracking
+            
+            // Calculate current filter error (difference between predicted and actual echo)
+            float currentFilterError = 0f;
+            float totalSpeakerEnergy = 0f;
+            float totalMicrophoneEnergy = 0f;
+            float totalPredictedEcho = 0f;
+            
+            for (int i = 0; i < BUFFER_SIZE; i++)
+            {
+                float speaker = speakerBuffer[i];
+                float microphone = microphoneBuffer[i];
+                float predictedEcho = speaker * echoPathGain * adaptiveFilterGainXMOS;
+                
+                totalSpeakerEnergy += speaker * speaker;
+                totalMicrophoneEnergy += microphone * microphone;
+                totalPredictedEcho += predictedEcho * predictedEcho;
+                
+                // Calculate instantaneous error
+                float error = microphone - predictedEcho;
+                currentFilterError += error * error;
+            }
+            
+            // Normalize filter error
+            if (totalMicrophoneEnergy > 0.001f)
+            {
+                currentFilterError = Mathf.Sqrt(currentFilterError / totalMicrophoneEnergy);
+            }
+            
+            // Store error in history for convergence tracking
+            filterErrorHistory[filterErrorIndex] = currentFilterError;
+            filterErrorIndex = (filterErrorIndex + 1) % FILTER_CONVERGENCE_WINDOW;
+            
+            // Calculate convergence quality based on error reduction
+            float errorReduction = 0f;
+            if (lastFilterError > 0.001f)
+            {
+                errorReduction = (lastFilterError - currentFilterError) / lastFilterError;
+                errorReduction = Mathf.Clamp(errorReduction, 0f, 1f);
+            }
+            
+            // Update convergence quality with smoothing
+            filterConvergenceQuality = Mathf.Lerp(filterConvergenceQuality, errorReduction, 0.1f);
+            
+            // Track filter stability
+            float errorVariance = 0f;
+            float meanError = 0f;
+            
+            // Calculate mean error
+            for (int i = 0; i < FILTER_CONVERGENCE_WINDOW; i++)
+            {
+                meanError += filterErrorHistory[i];
+            }
+            meanError /= FILTER_CONVERGENCE_WINDOW;
+            
+            // Calculate error variance
+            for (int i = 0; i < FILTER_CONVERGENCE_WINDOW; i++)
+            {
+                float diff = filterErrorHistory[i] - meanError;
+                errorVariance += diff * diff;
+            }
+            errorVariance /= FILTER_CONVERGENCE_WINDOW;
+            
+            // Update filter stability (lower variance = higher stability)
+            float stabilityMetric = 1f / (1f + errorVariance);
+            filterStability = Mathf.Lerp(filterStability, stabilityMetric, 0.05f);
+            
+            // Enhanced adaptive filter update with XMOS-inspired logic
+            if (echoLevel > 0.1f && correlation > 0.2f && filterStability > FILTER_STABILITY_THRESHOLD)
+            {
+                // Calculate adaptive learning rate based on convergence quality
+                float adaptiveLearningRate = ADAPTIVE_FILTER_LEARNING_RATE_XMOS;
+                
+                // Reduce learning rate when filter is well-converged
+                if (filterConvergenceQuality > 0.7f)
+                {
+                    adaptiveLearningRate *= 0.5f;
+                }
+                
+                // Increase learning rate when filter is not converged
+                if (filterConvergenceQuality < 0.3f)
+                {
+                    adaptiveLearningRate *= 2f;
+                }
+                
+                // Calculate target gain with regularization
+                float targetGain = echoLevel / (correlation + ADAPTIVE_FILTER_REGULARIZATION);
+                targetGain = Mathf.Clamp(targetGain, MIN_ECHO_PATH_GAIN, MAX_ECHO_PATH_GAIN);
+                
+                // Update adaptive filter gain with convergence-aware learning
+                adaptiveFilterGainXMOS = Mathf.Lerp(adaptiveFilterGainXMOS, targetGain, adaptiveLearningRate);
+                
+                // Update echo path gain inversely
+                echoPathGain = Mathf.Lerp(echoPathGain, 1.0f / adaptiveFilterGainXMOS, ECHO_PATH_LEARNING_RATE);
+                
+                // Track convergence progress
+                if (filterConvergenceQuality > FILTER_CONVERGENCE_THRESHOLD)
+                {
+                    filterConvergenceCounter++;
+                }
+                else
+                {
+                    filterConvergenceCounter = Mathf.Max(0, filterConvergenceCounter - 1);
+                }
+            }
+            else
+            {
+                // Reset filter when conditions are poor
+                if (correlation < 0.1f && echoLevel > 0.5f)
+                {
+                    adaptiveFilterGainXMOS = Mathf.Lerp(adaptiveFilterGainXMOS, 1.0f, ECHO_PATH_LEARNING_RATE * 2f);
+                    echoPathGain = Mathf.Lerp(echoPathGain, MIN_ECHO_PATH_GAIN, ECHO_PATH_LEARNING_RATE * 2f);
+                    filterConvergenceCounter = 0;
+                }
+            }
+            
+            // Safety bounds check
+            if (echoPathGain > MAX_ECHO_PATH_GAIN * 1.5f || echoPathGain < MIN_ECHO_PATH_GAIN * 0.5f)
+            {
+                echoPathGain = 1.0f;
+                adaptiveFilterGainXMOS = 1.0f;
+                filterConvergenceCounter = 0;
+                Debug.LogWarning($"WEBRTC-AEC: Echo path gain out of bounds, resetting to 1.0");
+            }
+            
+            // Store current error for next iteration
+            lastFilterError = currentFilterError;
         }
     }
 }

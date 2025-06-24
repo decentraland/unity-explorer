@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 1
   EnableAudioEchoCancellation: 1
-  UseWebRTCAEC: 1
+  UseWebRTCAEC: 0
   EchoCorrelationThreshold: 0.1
   EchoCancellationStrength: 0.9
   EchoCancellationAttackRate: 0.25
