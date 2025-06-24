@@ -15,6 +15,7 @@ using DCL.Browser.DecentralandUrls;
 using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Prefs;
 using Global.AppArgs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -82,7 +83,7 @@ namespace DCL.RealmNavigation
 
         private static void BuildDebugWidget(ITeleportController teleportController, IDebugContainerBuilder debugContainerBuilder, ILoadingScreen loadingScreen, LoadingScreenTimeout loadingScreenTimeout)
         {
-            var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
+            var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int(DCLPrefKeys.DEBUG_TELEPORT_COORDINATES));
 
             var timeout = new ElementBinding<float>((float)loadingScreenTimeout.Value.TotalSeconds,
                 evt => loadingScreenTimeout.Set(seconds: evt.newValue));

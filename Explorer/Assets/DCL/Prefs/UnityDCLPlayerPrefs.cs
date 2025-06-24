@@ -2,11 +2,11 @@ using UnityEngine;
 
 namespace DCL.Prefs
 {
-    internal class DefaultDCLPlayerPrefs : IDCLPrefs
+    internal class UnityDCLPlayerPrefs : IDCLPrefs
     {
         private readonly string prefix;
 
-        public DefaultDCLPlayerPrefs(string prefix = null)
+        public UnityDCLPlayerPrefs(string prefix = null)
         {
             this.prefix = prefix;
         }

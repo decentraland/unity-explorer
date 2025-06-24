@@ -175,12 +175,25 @@ namespace DCL.Chat
             set
             {
                 if (!viewInstanceCreated) return;
-
                 viewInstance!.IsUnfolded = value;
 
-                // When opened from outside, it should show the unread messages
+                // When opened from outside,
+                // it should show the unread messages
                 if (value)
+                { 
+                    // Set input state to connected if we are in the NEARBY_CHANNEL_ID
+                    // https://github.com/decentraland/unity-explorer/issues/4186
+                    if (chatUserStateUpdater.CurrentConversation.Equals(ChatChannel.NEARBY_CHANNEL_ID.Id))
+                    {
+                        viewInstance.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                        return;
+                    }
+                    
+                    chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
+                    UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
+                    
                     viewInstance.ShowNewMessages();
+                }
             }
         }
 
@@ -191,14 +204,13 @@ namespace DCL.Chat
                 if (!viewInstanceCreated)
                     return;
 
-                // If the view is disabled, we re-enable it
-                if(!GetViewVisibility())
+                if (!GetViewVisibility())
                     SetViewVisibility(true);
 
-                if(showParams.Unfold)
+                if (showParams.Unfold)
                     IsUnfolded = true;
 
-                if(showParams.Focus)
+                if (showParams.Focus)
                     viewInstance!.Focus();
 
                 ViewShowingComplete?.Invoke(this);
@@ -208,11 +220,11 @@ namespace DCL.Chat
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {
+        {   
             IsUnfolded = false;
             await UniTask.CompletedTask;
         }
-
+        
         /// <summary>
         /// Makes the chat panel (including the input box) invisible or visible (it does not hide the view, it disables the GameObject).
         /// </summary>
@@ -366,9 +378,7 @@ namespace DCL.Chat
         {
             Result<ChatUserStateUpdater.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
             if (result.Success == false) return;
-
             ChatUserStateUpdater.ChatUserState userState = result.Value;
-
             if (TryGetView(out var view))
             {
                 view.SetInputWithUserState(userState);
@@ -490,6 +500,8 @@ namespace DCL.Chat
 
 #region View state changes event handling
 
+        // This is called when the view is folded or unfolded
+        // it will mark the current channel as read if it is folded
         private void OnViewFoldingChanged(bool isUnfolded)
         {
             if (!isUnfolded)
@@ -517,17 +529,20 @@ namespace DCL.Chat
 
         private void OnViewFocusChanged(bool isFocused)
         {
-            if (isFocused)
-                DisableUnwantedInputs();
-            else
-                EnableUnwantedInputs();
+            if (isFocused) DisableUnwantedInputs();
+            else EnableUnwantedInputs();
         }
 
-        private void OnViewPointerExit() =>
+        private void OnViewPointerExit()
+        {
             world.TryRemove<CameraBlockerComponent>(cameraEntity);
+        }
 
-        private void OnViewPointerEnter() =>
+
+        private void OnViewPointerEnter()
+        {
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
+        }
 
         private void OnViewScrollBottomReached()
         {
@@ -551,6 +566,7 @@ namespace DCL.Chat
 
         private void OnOpenChatCommandLineShortcutPerformed(InputAction.CallbackContext obj)
         {
+            // NOTE: it's wired in the ChatPlugin
             //TODO FRAN: This should take us to the nearby channel and send the command there
             viewInstance!.Focus("/");
         }
@@ -600,8 +616,19 @@ namespace DCL.Chat
 
 #region User State Update Events
 
+        /// <summary>
+        /// NOTE: this event is raised when a user disconnects but belongs to the list
+        /// NOTE: of opened conversations
+        /// </summary>
+        /// <param name="userId"></param>
         private void OnUserDisconnected(string userId)
         {
+            // Update the state of the user
+            // in the current conversation
+            // NOTE: if it's in the unfolded state (prevent setting the state of the
+            // NOTE: chat input box if user is offline)
+            if(!viewInstance!.IsUnfolded) return;
+            
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
             viewInstance!.SetInputWithUserState(state);
         }
@@ -681,6 +708,28 @@ namespace DCL.Chat
             }
         }
 
+        /// <summary>
+        /// When we press close button on the chat panel
+        /// (close the chat - only the input box will remain visible)
+        /// NOTE: this is the same behaviour as when we click the sidebar chat icon
+        /// NOTE: toggle to close the chat panel
+        /// </summary>
+        private void OnCloseButtonClicked()
+        {
+            IsUnfolded = false;
+        }
+
+        /// <summary>
+        /// When we click the input chat
+        /// at the bottom of the chat panel (open the chat)
+        /// NOTE: this is the same behaviour as when we click the sidebar chat icon
+        /// NOTE: toggle to open the chat panel
+        /// </summary>
+        private void OnInputButtonClicked()
+        {
+            IsUnfolded = true;
+        }
+        
         private void SubscribeToEvents()
         {
             //We start processing messages once the view is ready
@@ -691,6 +740,9 @@ namespace DCL.Chat
 
             if (TryGetView(out var view))
             {
+                view.OnCloseButtonClicked += OnCloseButtonClicked;
+                view.OnInputButtonClicked += OnInputButtonClicked;
+                
                 view.PointerEnter += OnViewPointerEnter;
                 view.PointerExit += OnViewPointerExit;
 
@@ -743,6 +795,8 @@ namespace DCL.Chat
 
             if (viewInstance != null)
             {
+                viewInstance.OnCloseButtonClicked -= OnCloseButtonClicked;
+                viewInstance.OnInputButtonClicked -= OnInputButtonClicked;
                 viewInstance.PointerEnter -= OnViewPointerEnter;
                 viewInstance.PointerExit -= OnViewPointerExit;
                 viewInstance.FocusChanged -= OnViewFocusChanged;
