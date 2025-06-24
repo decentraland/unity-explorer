@@ -4,11 +4,11 @@ namespace DCL.Communities.EventInfo
 {
     public class EventInfoParameter
     {
-        public readonly IEventDTO eventData;
+        public readonly IEventDTO EventData;
 
         public EventInfoParameter(IEventDTO eventData)
         {
-            this.eventData = eventData;
+            this.EventData = eventData;
         }
     }
 }

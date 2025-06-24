@@ -498,6 +498,7 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 6579474225357820591}
   backgroundCloseButton: {fileID: 6113321632732672044}
   closeButton: {fileID: 3261299304199055675}
+  contextMenuConfiguration: {fileID: 11400000, guid: 35a24412c56014f62b57d699a93e4b74, type: 2}
   eventImage: {fileID: 4424442724457222350}
   eventDate: {fileID: 5247130368684097139}
   eventName: {fileID: 4296956960256023408}
