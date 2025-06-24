@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 1
   EnableAudioEchoCancellation: 1
-  EchoCorrelationThreshold: 0.3
-  EchoCancellationStrength: 0.8
+  UseWebRTCAEC: 1
+  EchoCorrelationThreshold: 0.1
+  EchoCancellationStrength: 0.9
   EchoCancellationAttackRate: 0.25
   EchoCancellationReleaseRate: 0.01
   HoldThresholdInSeconds: 0.5
@@ -33,7 +34,7 @@ MonoBehaviour:
   TargetPeakLevel: 0.7
   GainAdjustSpeed: 4
   MinGain: 1
-  MaxGain: 15
+  MaxGain: 40
   MinPeakThreshold: 0.0001
   PeakTrackingWindow: 0.5
   MicrophoneReinitDelayMs: 500

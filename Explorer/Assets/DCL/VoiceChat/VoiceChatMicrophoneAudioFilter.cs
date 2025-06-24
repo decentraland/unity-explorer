@@ -153,12 +153,29 @@ namespace DCL.VoiceChat
             if (combinedAudioSource.TryGetCurrentSpeakerOutput(echoBuffer, out int speakerSamples))
             {
                 // Process audio through echo suppressor (lightweight operation)
-                bool suppressionApplied = VoiceChatAudioEchoCancellation.ProcessAudio(data, channels, samplesPerChannel, echoBuffer, speakerSamples);
-
-                // Apply suppression if needed (simple gain reduction)
-                if (suppressionApplied)
+                bool suppressionApplied = false;
+                
+                if (voiceChatConfiguration.UseWebRTCAEC)
                 {
-                    VoiceChatAudioEchoCancellation.ApplySuppression(data, channels, samplesPerChannel);
+                    // Use WebRTC-inspired AEC - applies cancellation directly to the data
+                    suppressionApplied = VoiceChatWebRTCAEC.ProcessAudio(data, channels, samplesPerChannel, echoBuffer, speakerSamples);
+                    
+                    // Apply additional suppression if needed (simple gain reduction)
+                    if (suppressionApplied)
+                    {
+                        VoiceChatWebRTCAEC.ApplySuppression(data, channels, samplesPerChannel);
+                    }
+                }
+                else
+                {
+                    // Use original AEC
+                    suppressionApplied = VoiceChatAudioEchoCancellation.ProcessAudio(data, channels, samplesPerChannel, echoBuffer, speakerSamples);
+                    
+                    // Apply suppression if needed (simple gain reduction)
+                    if (suppressionApplied)
+                    {
+                        VoiceChatAudioEchoCancellation.ApplySuppression(data, channels, samplesPerChannel);
+                    }
                 }
             }
         }
@@ -335,7 +352,9 @@ namespace DCL.VoiceChat
             voiceChatConfiguration = configuration;
             audioProcessor = new OptimizedVoiceChatAudioProcessor(configuration);
 
+            // Initialize both AEC systems so we can switch between them
             VoiceChatAudioEchoCancellation.Initialize(configuration);
+            VoiceChatWebRTCAEC.Initialize(configuration);
 
             this.combinedAudioSource = combinedAudioSource;
         }
@@ -345,6 +364,7 @@ namespace DCL.VoiceChat
             isFilterActive = active;
             audioProcessor?.Reset();
             VoiceChatAudioEchoCancellation.Reset();
+            VoiceChatWebRTCAEC.Reset();
 
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);

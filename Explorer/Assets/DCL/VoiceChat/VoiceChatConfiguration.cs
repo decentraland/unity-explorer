@@ -12,6 +12,9 @@ namespace DCL.VoiceChat
         [Tooltip("Enable audio echo cancellation to prevent echo from speakers")]
         public bool EnableAudioEchoCancellation = true;
 
+        [Tooltip("Use WebRTC-inspired echo cancellation (more advanced but higher CPU)")]
+        public bool UseWebRTCAEC = false;
+
         [Tooltip("Correlation threshold for echo detection (lower = more sensitive)")]
         [Range(0.1f, 0.6f)]
         public float EchoCorrelationThreshold = 0.25f;
