@@ -24,10 +24,10 @@ namespace DCL.CharacterCamera.Systems
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.FreeCameraActions freeCameraActions;
 
-        internal UpdateCameraInputSystem(World world, DCLInput dclInput) : base(world)
+        internal UpdateCameraInputSystem(World world) : base(world)
         {
-            cameraActions = dclInput.Camera;
-            freeCameraActions = dclInput.FreeCamera;
+            cameraActions = DCLInput.Instance.Camera;
+            freeCameraActions = DCLInput.Instance.FreeCamera;
         }
 
         protected override void Update(float t)

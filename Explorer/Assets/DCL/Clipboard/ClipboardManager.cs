@@ -3,10 +3,13 @@ using System.Text.RegularExpressions;
 namespace DCL.Clipboard
 {
     /// <summary>
-    ///     Implementation of the IClipboardManager, it is a wrapper for the clipboard, providing events and methods to more easily react to changes in it.
+    ///     Implementation of the ClipboardManager, it is a wrapper for the clipboard, providing events and methods to more easily react to changes in it.
     /// </summary>
-    public class ClipboardManager : IClipboardManager
+    public class ClipboardManager
     {
+        public delegate void CopyEventHandler(object sender, string copiedText);
+        public delegate void PasteEventHandler(object sender, string pastedText);
+
         private readonly ISystemClipboard systemClipboard;
         private static readonly Regex TAG_REGEX = new(@"<[^>]*>", RegexOptions.Compiled);
 
@@ -15,8 +18,8 @@ namespace DCL.Clipboard
             this.systemClipboard = systemClipboard;
         }
 
-        public event IClipboardManager.CopyEventHandler? OnCopy;
-        public event IClipboardManager.PasteEventHandler? OnPaste;
+        public event CopyEventHandler? OnCopy;
+        public event PasteEventHandler? OnPaste;
 
         public bool HasValue() =>
             systemClipboard.HasValue();
