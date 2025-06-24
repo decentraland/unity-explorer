@@ -11,7 +11,6 @@ using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
-using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {

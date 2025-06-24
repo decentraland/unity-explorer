@@ -47,10 +47,13 @@ namespace Global
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
+            var ecsWorldFactory = new ECSWorldFactory(
+                sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
-                staticContainer.ECSWorldPlugins);
+                staticContainer.ECSWorldPlugins,
+                sharedDependencies.FrameTimeBudget
+            );
 
             return new SceneSharedContainer
             {

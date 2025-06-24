@@ -8,22 +8,28 @@ namespace DCL.Character.Components
     ///     Character Transform is not a regular <see cref="TransformComponent" />
     ///     as it's driven by physics and does not have a parent and children
     /// </summary>
-    public readonly struct CharacterTransform : IPoolableComponentProvider<Transform>
+    public struct CharacterTransform : IPoolableComponentProvider<Transform>
     {
         public readonly Transform Transform;
+
+        public bool IsDisposed { get; private set; }
 
         public CharacterTransform(Transform transform)
         {
             Transform = transform;
+            IsDisposed = false;
         }
 
-        public Vector3 Position => Transform.position;
+        public readonly Vector3 Position => Transform.position;
 
-        public Quaternion Rotation => Transform.rotation;
+        public readonly Quaternion Rotation => Transform.rotation;
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
 
-        Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
+        readonly Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);
     }
 }

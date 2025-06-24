@@ -4,12 +4,13 @@ using CRDT;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
+using DCL.Profiling;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine.Profiling;
 using SystemGroups.Visualiser;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace SceneRunner.ECSWorld
 {
@@ -22,6 +23,8 @@ namespace SceneRunner.ECSWorld
 
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
         private readonly IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners;
+        private readonly IPerformanceBudget budget;
+        private readonly CleanUpMarker cleanUpMarker;
 
         private readonly SystemGroupWorld systemGroupWorld;
 
@@ -30,12 +33,15 @@ namespace SceneRunner.ECSWorld
             World ecsWorld,
             PersistentEntities persistentEntities,
             IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems,
-            IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners)
+            IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners,
+            IPerformanceBudget budget)
         {
+            cleanUpMarker = new CleanUpMarker();
             this.systemGroupWorld = systemGroupWorld;
             EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
             this.sceneIsCurrentListeners = sceneIsCurrentListeners;
+            this.budget = budget;
             PersistentEntities = persistentEntities;
         }
 
@@ -62,17 +68,16 @@ namespace SceneRunner.ECSWorld
                 var system = finalizeWorldSystems[i]!;
                 string label = LabelOfType(system.GetType());
 
-                Profiler.BeginSample("FinalizeSDKComponents");
-                Profiler.BeginSample(label);
-
-                // We must be able to finalize world no matter what
-                try { system.FinalizeComponents(in finalizeSDKComponentsQuery); }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.ECS); }
-
-                Profiler.EndSample();
-                Profiler.EndSample();
-
-                yield return new Unit();
+                if (system.IsBudgetedFinalizeSupported)
+                {
+                    var enumerator = DisposeWithBudget(finalizeSDKComponentsQuery, system, label, budget, cleanUpMarker);
+                    while (enumerator.MoveNext()) yield return enumerator.Current;
+                }
+                else
+                {
+                    DisposeImmediately(finalizeSDKComponentsQuery, system, label);
+                    yield return new Unit();
+                }
             }
 
             SystemGroupSnapshot.Instance.Unregister(systemGroupWorld);
@@ -80,6 +85,45 @@ namespace SceneRunner.ECSWorld
             systemGroupWorld.Dispose();
             EcsWorld.Dispose();
             yield return new Unit();
+        }
+
+        private static IEnumerator<Unit> DisposeWithBudget(Query query, IFinalizeWorldSystem finalizeWorldSystem, string label, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        {
+            do
+            {
+                cleanUpMarker.Purify();
+
+                using (ProfilerSampleScope.New("FinalizeSDKComponents/ByBudget"))
+                using (ProfilerSampleScope.New(label))
+                {
+                    // We must be able to finalize world no matter what
+                    // Marker being mutated inside
+                    try { finalizeWorldSystem.BudgetedFinalizeComponents(in query, budget, cleanUpMarker); }
+                    catch (Exception e)
+                    {
+                        ReportHub.LogException(e, ReportCategory.ECS);
+                        yield break;
+                    }
+                }
+
+                yield return new Unit();
+            }
+
+            // Clean until it's fully cleaned
+            while (cleanUpMarker.IsFullyCleaned == false);
+        }
+
+        private static void DisposeImmediately(Query query, IFinalizeWorldSystem system, string label)
+        {
+            Profiler.BeginSample("FinalizeSDKComponents/Immediately");
+            Profiler.BeginSample(label);
+
+            // We must be able to finalize world no matter what
+            try { system.FinalizeComponents(query); }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.ECS); }
+
+            Profiler.EndSample();
+            Profiler.EndSample();
         }
 
         private static string LabelOfType(Type type)

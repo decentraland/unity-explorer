@@ -84,7 +84,7 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>());
+                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>(), NullPerformanceBudget.INSTANCE);
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>().EnsureNotNull();

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -27,6 +28,8 @@ namespace ECS.ComponentsPooling.Systems
         private Finalize finalize;
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
+        public bool IsBudgetedFinalizeSupported => true;
+
         public ReleasePoolableComponentSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             finalize = new Finalize(poolsRegistry);
@@ -41,6 +44,12 @@ namespace ECS.ComponentsPooling.Systems
         public void FinalizeComponents(in Query query)
         {
             World.InlineQuery<Finalize, TProvider>(in finalizeQuery, ref finalize);
+        }
+
+        public void BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        {
+            var budgetedFinalize = new BudgetedFinalize<Finalize, TProvider>(finalize, budget, cleanUpMarker);
+            World.InlineQuery<BudgetedFinalize<Finalize, TProvider>, TProvider>(in finalizeQuery, ref budgetedFinalize);
         }
 
         private readonly struct ReleaseOnEntityDestroy : IForEach<TProvider, DeleteEntityIntention>
@@ -73,6 +82,9 @@ namespace ECS.ComponentsPooling.Systems
 
             public void Update(ref TProvider provider)
             {
+                if (provider.IsDisposed)
+                    return;
+
                 Profiler.BeginSample("Finalize/PoolsRegistry");
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
                 Profiler.EndSample();

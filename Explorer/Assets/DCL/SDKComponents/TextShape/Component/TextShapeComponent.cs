@@ -9,6 +9,7 @@ namespace DCL.SDKComponents.TextShape.Component
     {
         public readonly TextMeshPro TextMeshPro;
 
+        public bool IsDisposed { get; private set; }
         public TextMeshPro PoolableComponent => TextMeshPro;
         public Type PoolableComponentType => typeof(TextMeshPro);
 
@@ -27,8 +28,12 @@ namespace DCL.SDKComponents.TextShape.Component
             TextMeshPro = textShape;
             LastValidBoundingBoxSize = textShape.renderer.bounds.size; // Note: Using Renderer because the bounds of the TMP does not return what we need
             IsContainedInScene = false;
+            IsDisposed = false;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
     }
 }
