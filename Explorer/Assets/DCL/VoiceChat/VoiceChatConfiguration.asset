@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: VoiceChatConfiguration
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 1
-  EnableAudioEchoCancellation: 1
+  EnableAudioEchoCancellation: 0
   UseWebRTCAEC: 0
   EchoCorrelationThreshold: 0.1
   EchoCancellationStrength: 0.9
   EchoCancellationAttackRate: 0.25
   EchoCancellationReleaseRate: 0.01
   HoldThresholdInSeconds: 0.5
-  EnableAudioProcessing: 1
+  EnableAudioProcessing: 0
   EnableNoiseGate: 1
   NoiseGateThreshold: 0.0001
   NoiseGateHoldTime: 2
@@ -31,7 +31,7 @@ MonoBehaviour:
   EnableGateFadeIn: 1
   FadeInBufferSize: 32
   PreGateAttenuation: 0.1
-  TargetPeakLevel: 0.7
+  TargetPeakLevel: 0.15
   GainAdjustSpeed: 4
   MinGain: 1
   MaxGain: 40
