@@ -169,17 +169,10 @@ namespace DCL.Diagnostics.Sentry
                 // Add local scope
 
                 AddCategoryTag(scope, reportData);
-                AddSceneInfo(scope, reportData);
             }
 
             private static void AddCategoryTag(Scope scope, ReportData data) =>
                 scope.SetTag("category", data.Category);
-
-            private static void AddSceneInfo(Scope scope, ReportData data)
-            {
-                scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
-                scope.SetTag("scene.name", data.SceneShortInfo.Name);
-            }
 
             internal class Pool : ThreadSafeObjectPool<PerReportScope>
             {
