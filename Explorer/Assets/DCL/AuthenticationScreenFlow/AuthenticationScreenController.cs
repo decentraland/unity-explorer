@@ -415,6 +415,8 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+                    characterPreviewController?.OnShow();
+
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
