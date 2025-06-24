@@ -1,12 +1,11 @@
 ﻿using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
-using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
-using DCL.AvatarRendering.Loading.Assets;
-using DCL.AvatarRendering.Loading.Components;
 using UnityEngine.Pool;
+
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public static class WearableComponentsUtils
@@ -45,10 +44,25 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get()!;
             List<IWearable> visibleWearables = WEARABLES_POOL.Get()!;
 
-            for (var i = 0; i < wearableCount; i++) { wearablesByCategory[wearables[i]!.GetCategory()] = wearables[i]; }
+            for (var i = 0; i < wearableCount; i++)
+                wearablesByCategory[wearables[i]!.GetCategory()] = wearables[i];
 
+            HashSet<string> firstWaveHidden = CATEGORIES_POOL.Get();
             HashSet<string> hidingList = CATEGORIES_POOL.Get()!;
             HashSet<string> combinedHidingList = CATEGORIES_POOL.Get()!;
+
+            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
+            {
+                hidingList.Clear();
+
+                if (!wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+                    continue;
+
+                wearable.GetHidingList(bodyShapeId, hidingList);
+
+                foreach (string categoryToHide in hidingList)
+                    firstWaveHidden.Add(categoryToHide);
+            }
 
             for (var index = 0; index < WearablesConstants.CATEGORIES_PRIORITY.Count; index++)
             {
@@ -57,7 +71,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 //If the category is already on the hidden list, then we dont care about what its trying to hide. This avoid possible cyclic hidden categories
                 //Also, if the category is not equipped, then we cant do anything
-                if (combinedHidingList.Contains(priorityCategory) || !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable)) continue;
+                if (firstWaveHidden.Contains(priorityCategory)
+                    || !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+                    continue;
 
                 wearable!.GetHidingList(bodyShapeId, hidingList);
 
@@ -77,14 +93,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             hideWearablesResolution.HiddenCategories = combinedHidingList;
 
             CATEGORIES_POOL.Release(hidingList);
+            CATEGORIES_POOL.Release(firstWaveHidden);
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
-        }
-
-
-        public static void SetAssetResult(this IWearable wearable, BodyShape bodyShape, int index, StreamableLoadingResult<AttachmentAssetBase> wearableResult)
-        {
-            ref var asset = ref wearable.WearableAssetResults[bodyShape];
-            asset.Results[index] = wearableResult;
         }
     }
 }

@@ -67,10 +67,11 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             return string.Empty;
         }
 
-        public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string> forceRender, List<IWearable> wearables, HashSet<string> combinedHidingList)
+        public static void ComposeHiddenCategoriesOrdered(string bodyShapeId, HashSet<string>? forceRender, List<IWearable> wearables, HashSet<string> combinedHidingList)
         {
             combinedHidingList.Clear();
             Dictionary<string, IWearable> wearablesByCategory = DictionaryPool<string, IWearable>.Get();
+            HashSet<string> firstWaveHidden = HashSetPool<string>.Get();
 
             for (var i = 0; i < wearables.Count; i++)
                 wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
@@ -81,9 +82,22 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             {
                 hidingList.Clear();
 
-                //If the category is already on the hidden list, then we dont care about what its trying to hide. This avoid possible cyclic hidden categories
-                //Also, if the category is not equipped, then we cant do anything
-                if (combinedHidingList.Contains(priorityCategory) || !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable)) continue;
+                if (!wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+                    continue;
+
+                wearable.GetHidingList(bodyShapeId, hidingList);
+
+                foreach (string categoryToHide in hidingList)
+                    firstWaveHidden.Add(categoryToHide);
+            }
+
+            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
+            {
+                hidingList.Clear();
+
+                if (firstWaveHidden.Contains(priorityCategory) ||
+                    !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
+                    continue;
 
                 wearable.GetHidingList(bodyShapeId, hidingList);
 
@@ -92,10 +106,12 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
             }
 
             if (forceRender != null)
-                foreach (string category in forceRender) { combinedHidingList.Remove(category); }
+                foreach (string category in forceRender)
+                    combinedHidingList.Remove(category);
 
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
             HashSetPool<string>.Release(hidingList);
+            HashSetPool<string>.Release(firstWaveHidden);
         }
 
         public static void HideBodyShape(GameObject bodyShape, HashSet<string> hidingList, HashSet<string> usedCategories)
