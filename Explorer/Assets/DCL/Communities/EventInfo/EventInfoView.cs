@@ -24,6 +24,8 @@ namespace DCL.Communities.EventInfo
         [SerializeField] private Button closeButton;
         [SerializeField] private CommunityEventsContextMenuConfiguration contextMenuConfiguration;
         [SerializeField] private ScrollRect scrollRect;
+        [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; }
+        [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; }
 
         [Header("Event Info")]
         [SerializeField] private ImageView eventImage;
@@ -85,8 +87,8 @@ namespace DCL.Communities.EventInfo
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);
-            interestedCounter.text = eventData.Total_attendees.ToString();
-            interestedButton.SetSelected(eventData.Attending);
+            UpdateInterestedCounter();
+            UpdateInterestedButtonState();
             eventDescription.text = eventData.Description;
 
             eventSchedules.text = CalculateRecurrentSchedulesString(eventData);
@@ -111,5 +113,11 @@ namespace DCL.Communities.EventInfo
             eventSchedulesStringBuilder.Clear();
             return result;
         }
+
+        public void UpdateInterestedButtonState() =>
+            interestedButton.SetSelected(eventDTO.Attending);
+
+        public void UpdateInterestedCounter() =>
+            interestedCounter.text = eventDTO.Total_attendees.ToString();
     }
 }

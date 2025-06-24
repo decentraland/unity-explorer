@@ -13,7 +13,6 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -27,12 +26,6 @@ namespace DCL.Communities.CommunitiesCard.Events
     {
         private const int PAGE_SIZE = 20;
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
-
-        private const string JUMP_IN_GC_LINK = " https://decentraland.org/jump/?position={0},{1}";
-        private const string JUMP_IN_WORLD_LINK = " https://decentraland.org/jump/?realm={0}";
-        private const string EVENT_WEBSITE_LINK = "https://decentraland.org/events/event/?id={0}";
-        private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
-        private const string TWITTER_HASHTAG = "DCLPlace";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
@@ -105,30 +98,13 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
-            clipboard.Set(GetEventCopyLink(eventData));
+            clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event));
 
             inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken).Forget();
         }
 
-        private static string GetEventCopyLink(PlaceAndEventDTO eventData) =>
-            eventData.Event.live
-                ? GetPlaceJumpInLink(eventData)
-                : GetEventWebsiteLink(eventData);
-
-        private static string GetPlaceJumpInLink(PlaceAndEventDTO eventData)
-        {
-            if (!string.IsNullOrEmpty(eventData.Place.world_name))
-                return string.Format(JUMP_IN_WORLD_LINK, eventData.Place.world_name);
-
-            VectorUtilities.TryParseVector2Int(eventData.Place.base_position, out var coordinates);
-            return string.Format(JUMP_IN_GC_LINK, coordinates.x, coordinates.y);
-        }
-
-        private static string GetEventWebsiteLink(PlaceAndEventDTO eventData) =>
-            string.Format(EVENT_WEBSITE_LINK, eventData.Event.id);
-
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
-            webBrowser.OpenUrl(string.Format(TWITTER_NEW_POST_LINK, eventData.Event.name, TWITTER_HASHTAG, GetEventCopyLink(eventData)));
+            webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData.Event));
 
         private void OnInterestedButtonClicked(PlaceAndEventDTO eventData, EventListItemView eventItemView)
         {

@@ -11,6 +11,11 @@ namespace DCL.Communities.EventInfo
         private const string DAY_STRING = "day";
         private const string HOUR_STRING = "hour";
         private const string MINUTES_STRING = "min";
+        private const string JUMP_IN_GC_LINK = " https://decentraland.org/jump/?position={0},{1}";
+        private const string JUMP_IN_WORLD_LINK = " https://decentraland.org/jump/?realm={0}";
+        private const string EVENT_WEBSITE_LINK = "https://decentraland.org/events/event/?id={0}";
+        private const string TWITTER_NEW_POST_LINK = "https://twitter.com/intent/tweet?text={0}&hashtags={1}&url={2}";
+        private const string TWITTER_HASHTAG = "DCLPlace";
 
         public static string GetEventTimeText(IEventDTO eventDTO)
         {
@@ -37,5 +42,19 @@ namespace DCL.Communities.EventInfo
 
             return schedule;
         }
+
+        public static string GetEventCopyLink(IEventDTO eventData) =>
+            eventData.Live
+                ? GetPlaceJumpInLink(eventData)
+                : GetEventWebsiteLink(eventData);
+
+        private static string GetPlaceJumpInLink(IEventDTO eventData) =>
+            eventData.World ? string.Format(JUMP_IN_WORLD_LINK, eventData.Server) : string.Format(JUMP_IN_GC_LINK, eventData.X, eventData.Y);
+
+        private static string GetEventWebsiteLink(IEventDTO eventData) =>
+            string.Format(EVENT_WEBSITE_LINK, eventData.Id);
+
+        public static string GetEventShareLink(IEventDTO eventData) =>
+            string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, GetEventCopyLink(eventData));
     }
 }
