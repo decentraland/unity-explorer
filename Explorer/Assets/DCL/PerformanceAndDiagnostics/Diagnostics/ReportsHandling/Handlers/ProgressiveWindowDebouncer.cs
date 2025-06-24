@@ -49,7 +49,7 @@ namespace DCL.Diagnostics
             {
                 Tracker tracker = dictionary.TryGetValue(key, out Tracker existingTracker)
                     ? existingTracker
-                    : new Tracker(now, now, initialWindow);
+                    : new Tracker(now, initialWindow);
 
                 bool debounced;
 
@@ -150,14 +150,12 @@ namespace DCL.Diagnostics
 
         public struct Tracker
         {
-            public DateTime FirstSeen;
             public DateTime LastSeen;
             public TimeSpan Window;
             public short Count;
 
-            public Tracker(DateTime firstSeen, DateTime lastSeen, TimeSpan window)
+            public Tracker(DateTime lastSeen, TimeSpan window)
             {
-                FirstSeen = firstSeen;
                 LastSeen = lastSeen;
                 Window = window;
                 Count = 0;

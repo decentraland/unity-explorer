@@ -1,7 +1,7 @@
 ﻿using Sentry;
 using System;
 
-namespace DCL.Diagnostics.ReportsHandling
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Simplified representation of the exception for the report purpose only.
@@ -22,24 +22,48 @@ namespace DCL.Diagnostics.ReportsHandling
     /// </summary>
     public readonly struct ExceptionFingerprint : IEquatable<ExceptionFingerprint>
     {
+        /// <summary>
+        ///     Fake call stack fingerprint.
+        /// </summary>
+        public readonly struct CallStackFingerprint : IEquatable<CallStackFingerprint>
+        {
+            public readonly string Fingerprint;
+
+            public CallStackFingerprint(string fingerprint)
+            {
+                Fingerprint = fingerprint;
+            }
+
+            public bool Equals(CallStackFingerprint other) =>
+                Fingerprint == other.Fingerprint;
+
+            public override bool Equals(object? obj) =>
+                obj is CallStackFingerprint other && Equals(other);
+
+            public override int GetHashCode() =>
+                Fingerprint.GetHashCode();
+        }
+
         public readonly Type Type;
         public readonly Type? InnerType;
         public readonly string Message;
+        public readonly CallStackFingerprint CallStack;
 
-        public ExceptionFingerprint(Exception e)
+        public ExceptionFingerprint(Exception e, CallStackFingerprint? callStack = null)
         {
+            CallStack = callStack ?? new CallStackFingerprint(string.Empty);
             Type = e.GetType();
             InnerType = e.InnerException?.GetType();
             Message = e.Message;
         }
 
         public bool Equals(ExceptionFingerprint other) =>
-            Type.Equals(other.Type) && Equals(InnerType, other.InnerType) && Message == other.Message;
+            Type.Equals(other.Type) && Equals(InnerType, other.InnerType) && Message == other.Message && CallStack.Equals(other.CallStack);
 
         public override bool Equals(object? obj) =>
             obj is ExceptionFingerprint other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Type, InnerType, Message);
+            HashCode.Combine(Type, InnerType, Message, CallStack);
     }
 }

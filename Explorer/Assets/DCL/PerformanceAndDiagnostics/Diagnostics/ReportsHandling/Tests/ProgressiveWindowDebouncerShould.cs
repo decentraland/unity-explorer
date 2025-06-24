@@ -1,5 +1,4 @@
-﻿using DCL.Diagnostics.ReportsHandling;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System;
 using UnityEngine;
 

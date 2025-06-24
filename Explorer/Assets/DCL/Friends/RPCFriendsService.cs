@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Diagnostics.ReportsHandling;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
