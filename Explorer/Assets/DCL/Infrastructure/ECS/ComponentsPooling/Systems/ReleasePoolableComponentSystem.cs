@@ -6,6 +6,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
+using UnityEngine.Profiling;
 
 namespace ECS.ComponentsPooling.Systems
 {
@@ -72,8 +73,13 @@ namespace ECS.ComponentsPooling.Systems
 
             public void Update(ref TProvider provider)
             {
+                Profiler.BeginSample("Finalize/PoolsRegistry");
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
+                Profiler.EndSample();
+
+                Profiler.BeginSample("Finalize/ProviderDispose");
                 provider.Dispose();
+                Profiler.EndSample();
             }
         }
     }
