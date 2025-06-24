@@ -48,26 +48,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 wearablesByCategory[wearables[i]!.GetCategory()] = wearables[i];
 
             HashSet<string> firstWaveHidden = CATEGORIES_POOL.Get();
-            HashSet<string> hidingList = CATEGORIES_POOL.Get()!;
             HashSet<string> combinedHidingList = CATEGORIES_POOL.Get()!;
 
-            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
-            {
-                hidingList.Clear();
-
-                if (!wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
-                    continue;
-
-                wearable.GetHidingList(bodyShapeId, hidingList);
-
-                foreach (string categoryToHide in hidingList)
-                    firstWaveHidden.Add(categoryToHide);
-            }
+            foreach (IWearable wearable in wearables)
+                wearable.GetHidingList(bodyShapeId, firstWaveHidden);
 
             for (var index = 0; index < WearablesConstants.CATEGORIES_PRIORITY.Count; index++)
             {
                 string priorityCategory = WearablesConstants.CATEGORIES_PRIORITY[index]!;
-                hidingList.Clear();
 
                 //If the category is already on the hidden list, then we dont care about what its trying to hide. This avoid possible cyclic hidden categories
                 //Also, if the category is not equipped, then we cant do anything
@@ -75,10 +63,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     || !wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
                     continue;
 
-                wearable!.GetHidingList(bodyShapeId, hidingList);
-
-                foreach (string categoryToHide in hidingList)
-                    combinedHidingList.Add(categoryToHide);
+                wearable!.GetHidingList(bodyShapeId, combinedHidingList);
             }
 
             if (hideWearablesResolution.ForceRender != null)
@@ -92,7 +77,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             hideWearablesResolution.VisibleWearables = visibleWearables;
             hideWearablesResolution.HiddenCategories = combinedHidingList;
 
-            CATEGORIES_POOL.Release(hidingList);
             CATEGORIES_POOL.Release(firstWaveHidden);
             DictionaryPool<string, IWearable>.Release(wearablesByCategory);
         }
