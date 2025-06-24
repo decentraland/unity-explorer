@@ -64,7 +64,7 @@ namespace DCL.CharacterPreview
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
 
-            isPlayingEmoteDelegate = () => previewController != null && previewController.Value.IsPlayingEmote();
+            isPlayingEmoteDelegate = () => previewController!.Value.IsPlayingEmote();
         }
 
         public virtual void Initialize(Avatar avatar)
@@ -273,6 +273,11 @@ namespace DCL.CharacterPreview
 
         protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
+            if (previewController == null) return;
+
+            if (previewController!.Value.IsPlayingEmote())
+                await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);
+
             PlayEmote(emoteURN);
 
             await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);

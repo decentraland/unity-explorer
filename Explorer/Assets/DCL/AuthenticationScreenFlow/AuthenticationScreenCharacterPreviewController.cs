@@ -123,8 +123,11 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        public async UniTask PlayJumpInEmoteAndAwaitItAsync() =>
+        public async UniTask PlayJumpInEmoteAndAwaitItAsync()
+        {
+            playEmotesCts = playEmotesCts.SafeRestart();
             await PlayEmoteAndAwaitItAsync(settings.JumpInEmoteURN, playEmotesCts!.Token);
+        }
 
         /// <summary>
         /// Fisher-Yates shuffle algorithm

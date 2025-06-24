@@ -11,7 +11,8 @@ namespace DCL.AvatarRendering.Emotes
         public int CurrentAnimationTag;
         public bool StopEmote;
 
-        public bool IsPlayingEmote => CurrentEmoteReference;
+        public bool IsPlayingEmote => CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
+
         public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
             ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
             : 0f;
@@ -21,14 +22,6 @@ namespace DCL.AvatarRendering.Emotes
             EmoteLoop = false;
             CurrentEmoteReference = null;
             StopEmote = false;
-        }
-
-        /// <summary>
-        ///     Whether the avatar is currently playing an emote.
-        /// </summary>
-        public readonly bool IsPlayingEmote()
-        {
-            return CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
         }
     }
 }

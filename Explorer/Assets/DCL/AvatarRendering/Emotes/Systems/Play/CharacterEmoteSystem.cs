@@ -251,7 +251,7 @@ namespace DCL.AvatarRendering.Emotes.Play
         [Query]
         private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
         {
-            characterController.enabled = !emoteComponent.IsPlayingEmote();
+            characterController.enabled = !emoteComponent.IsPlayingEmote;
         }
 
         private void LoadEmote(URN emoteId, BodyShape bodyShape)
