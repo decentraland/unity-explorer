@@ -107,50 +107,49 @@ namespace ECS.Unity.AvatarShape.Systems
         private void AddCharacterEmoteIntent(Entity globalWorldEntity, string emoteId, BodyShape bodyShape)
         {
             bool isSceneEmote = emoteId.ToLower().EndsWith(".glb");
-
-            if (isSceneEmote)
-            {
-                if (!sceneData.SceneContent.TryGetHash(emoteId, out string hash))
-                {
-                    ReportHub.LogError(ReportCategory.AVATAR,$"Scene emote '{emoteId}' not found in scene assets. Aborting scene emote playing on SDK AvatarShape");
-                    return;
-                }
-
-                if (globalWorld.TryGet(globalWorldEntity, out SDKAvatarShapeEmotePromiseCancellationToken? promiseComponent))
-                    promiseComponent!.Dispose();
-
-                var newPromiseCancellationTokenComponent = new SDKAvatarShapeEmotePromiseCancellationToken();
-                globalWorld.Add(globalWorldEntity, newPromiseCancellationTokenComponent);
-
-                if (localSceneDevelopment)
-                {
-                    LoadAndTriggerSceneEmote(globalWorldEntity,
-                        new GetSceneEmoteFromLocalSceneIntention(
-                            sceneData,
-                            emoteId,
-                            hash,
-                            bodyShape,
-                            loop: false), // looping scene emotes on SDK AvatarShapes is not supported yet
-                        newPromiseCancellationTokenComponent.Cts.Token
-                    ).Forget();
-                }
-                else
-                {
-                    LoadAndTriggerSceneEmote(globalWorldEntity,
-                        new GetSceneEmoteFromRealmIntention(
-                            sceneData.SceneEntityDefinition.id!,
-                            sceneData.AssetBundleManifest,
-                            hash,
-                            loop: false, // looping scene emotes on SDK AvatarShapes is not supported yet
-                            bodyShape),
-                        newPromiseCancellationTokenComponent.Cts.Token
-                    ).Forget();
-                }
-            }
-            else
+            if (!isSceneEmote) // normal "urn emote" or "base emote"
             {
                 globalWorld.AddOrSet(globalWorldEntity,
                     new CharacterEmoteIntent { EmoteId = emoteId });
+
+                return;
+            }
+
+            if (!sceneData.SceneContent.TryGetHash(emoteId, out string hash))
+            {
+                ReportHub.LogError(ReportCategory.AVATAR,$"Scene emote '{emoteId}' not found in scene assets. Aborting scene emote playing on SDK AvatarShape");
+                return;
+            }
+
+            if (globalWorld.TryGet(globalWorldEntity, out SDKAvatarShapeEmotePromiseCancellationToken? promiseComponent))
+                promiseComponent!.Dispose();
+
+            var newPromiseCancellationTokenComponent = new SDKAvatarShapeEmotePromiseCancellationToken();
+            globalWorld.Add(globalWorldEntity, newPromiseCancellationTokenComponent);
+
+            if (localSceneDevelopment)
+            {
+                LoadAndTriggerSceneEmote(globalWorldEntity,
+                    new GetSceneEmoteFromLocalSceneIntention(
+                        sceneData,
+                        emoteId,
+                        hash,
+                        bodyShape,
+                        loop: false), // looping scene emotes on SDK AvatarShapes is not supported yet
+                    newPromiseCancellationTokenComponent.Cts.Token
+                ).Forget();
+            }
+            else
+            {
+                LoadAndTriggerSceneEmote(globalWorldEntity,
+                    new GetSceneEmoteFromRealmIntention(
+                        sceneData.SceneEntityDefinition.id!,
+                        sceneData.AssetBundleManifest,
+                        hash,
+                        loop: false, // looping scene emotes on SDK AvatarShapes is not supported yet
+                        bodyShape),
+                    newPromiseCancellationTokenComponent.Cts.Token
+                ).Forget();
             }
         }
 
@@ -222,21 +221,17 @@ namespace ECS.Unity.AvatarShape.Systems
             World.Remove<SDKAvatarShapeComponent>(entity);
         }
 
-        public void FinalizeComponents(in Query query)
-        {
-            foreach (ref var chunk in query.GetChunkIterator())
-            {
-                ref SDKAvatarShapeComponent component = ref chunk.GetFirst<SDKAvatarShapeComponent>();
+        [Query]
+        public void FinalizeComponents(ref SDKAvatarShapeComponent sdkAvatarShapeComponent) =>
+            MarkGlobalWorldEntityForDeletion(sdkAvatarShapeComponent.globalWorldEntity);
 
-                for (var i = 0; i < chunk.Count; i++)
-                    MarkGlobalWorldEntityForDeletion(component.globalWorldEntity);
-            }
-        }
+        public void FinalizeComponents(in Query query) =>
+            FinalizeComponentsQuery(World);
 
         public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
-            if (globalWorld.TryGet(globalEntity, out SDKAvatarShapeEmotePromiseCancellationToken promiseComponent))
-                promiseComponent.Dispose();
+            if (globalWorld.TryGet(globalEntity, out SDKAvatarShapeEmotePromiseCancellationToken? promiseCancellationComponent))
+                promiseCancellationComponent!.Dispose();
 
             // Need to remove parenting, since it may unintenionally deleted when
             globalWorld.Get<CharacterTransform>(globalEntity).Transform.SetParent(null);
