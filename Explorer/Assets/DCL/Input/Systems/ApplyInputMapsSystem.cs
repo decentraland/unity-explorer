@@ -63,7 +63,7 @@ namespace DCL.Input.Systems
                             SetActionMapEnabled(isActive, DCLInput.Instance.InWorldCamera);
                             break;
                         case InputMapComponent.Kind.VOICE_CHAT:
-                            SetActionMapEnabled(isActive, dclInput.VoiceChat);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.VoiceChat);
                             break;
                     }
                 }

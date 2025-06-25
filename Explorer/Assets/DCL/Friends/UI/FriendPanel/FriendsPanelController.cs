@@ -91,10 +91,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     friendsConnectivityStatusTracker,
                     chatEventBus,
-                    sharedSpaceManager,
-                    viewDependencies,
-                    includeCall,
-                    voiceChatCallStatusService);
+                    sharedSpaceManager);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;

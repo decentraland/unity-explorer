@@ -858,11 +858,9 @@ namespace Global.Dynamic
                     new VoiceChatPlugin(
                         voiceChatSettingsAssetProxy,
                         assetsProvisioner,
-                        dclInput,
                         roomHub,
                         mainUIView,
                         voiceChatCallStatusService,
-                        viewDependencies,
                         profileRepositoryWrapper,
                         entityParticipantTable,
                         globalWorld,

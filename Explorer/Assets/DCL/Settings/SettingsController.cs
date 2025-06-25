@@ -160,7 +160,22 @@ namespace DCL.Settings
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
                     if (module != null)
-                        controllers.Add(module.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, voiceChatSettings, worldVolumeMacBus));
+                        controllers.Add(module.CreateModule
+                        (
+                            generalGroupView.ModulesContainer,
+                            realmPartitionSettingsAsset,
+                            videoPrioritizationSettings,
+                            landscapeData, generalAudioMixer,
+                            qualitySettingsAsset,
+                            controlsSettingsAsset,
+                            chatSettingsAsset,
+                            memoryCap,
+                            sceneLoadingLimit,
+                            userBlockingCacheProxy,
+                            this,
+                            voiceChatSettings,
+                            upscalingController,
+                            worldVolumeMacBus));
             }
         }
 

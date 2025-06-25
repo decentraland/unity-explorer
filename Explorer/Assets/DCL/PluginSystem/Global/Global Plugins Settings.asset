@@ -52,6 +52,7 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
+  - rid: 2592369719794466902
   references:
     version: 2
     RefIds:
@@ -253,6 +254,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <VoiceChatSettings>k__BackingField:
+          m_AssetGUID: 
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <VideoPrioritizationSettings>k__BackingField:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
@@ -387,6 +394,15 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
+    - rid: 2592369719794466902
+      type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <VoiceChatConfigurations>k__BackingField:
+          m_AssetGUID: dc4b9a0eb614c2c45a09fa14de92fcd8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2799748226177040387
       type: {class: ConnectionStatusPanelPlugin/ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data: 
