@@ -149,7 +149,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 clipboard,
                 webBrowser,
-                eventsApiService);
+                eventsApiService,
+                realmNavigator);
             mvcManager.RegisterController(eventInfoController);
         }
     }

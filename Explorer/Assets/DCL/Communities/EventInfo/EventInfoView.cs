@@ -35,10 +35,13 @@ namespace DCL.Communities.EventInfo
         [SerializeField] private TMP_Text interestedCounter;
         [SerializeField] private ButtonWithSelectableStateView interestedButton;
         [SerializeField] private Button shareButton;
+        [SerializeField] private Button jumpInButton;
         [SerializeField] private TMP_Text eventDescription;
         [SerializeField] private TMP_Text eventSchedules;
+        [SerializeField] private GameObject liveBadge;
 
         public event Action<IEventDTO>? InterestedButtonClicked;
+        public event Action<IEventDTO>? JumpInButtonClicked;
         public event Action<IEventDTO>? EventShareButtonClicked;
         public event Action<IEventDTO>? EventCopyLinkButtonClicked;
 
@@ -54,7 +57,8 @@ namespace DCL.Communities.EventInfo
             scrollRect.SetScrollSensitivityBasedOnPlatform();
 
             interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO));
-            interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO));
+            interestedButton.Button.onClick.AddListener(() => interestedButton.SetSelected(!interestedButton.Selected));
+            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO));
             shareButton.onClick.AddListener(() => OpenContextMenu(shareButton.transform.position));
 
             contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: contextMenuConfiguration.VerticalPadding, elementsSpacing: contextMenuConfiguration.ElementsSpacing)
@@ -90,6 +94,9 @@ namespace DCL.Communities.EventInfo
             UpdateInterestedCounter();
             UpdateInterestedButtonState();
             eventDescription.text = eventData.Description;
+            jumpInButton.gameObject.SetActive(eventData.Live);
+            interestedButton.gameObject.SetActive(!eventData.Live);
+            liveBadge.SetActive(eventData.Live);
 
             eventSchedules.text = CalculateRecurrentSchedulesString(eventData);
         }

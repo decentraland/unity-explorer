@@ -1,14 +1,16 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
-using DCL.Communities.CommunitiesCard.Events;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
-using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Communities.EventInfo
@@ -25,6 +27,7 @@ namespace DCL.Communities.EventInfo
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
+        private readonly IRealmNavigator realmNavigator;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -36,7 +39,8 @@ namespace DCL.Communities.EventInfo
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IEventsApiService eventsApiService)
+            IEventsApiService eventsApiService,
+            IRealmNavigator realmNavigator)
             : base(viewFactory)
         {
             this.webRequestController = webRequestController;
@@ -44,6 +48,7 @@ namespace DCL.Communities.EventInfo
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
+            this.realmNavigator = realmNavigator;
         }
 
         public override void Dispose()
@@ -54,6 +59,7 @@ namespace DCL.Communities.EventInfo
             if (viewInstance == null) return;
 
             viewInstance.InterestedButtonClicked -= OnInterestedButtonClicked;
+            viewInstance.JumpInButtonClicked -= OnJumpInButtonClicked;
             viewInstance.EventShareButtonClicked -= OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
         }
@@ -66,6 +72,7 @@ namespace DCL.Communities.EventInfo
             viewInstance!.Configure(mvcManager, webRequestController);
 
             viewInstance.InterestedButtonClicked += OnInterestedButtonClicked;
+            viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
             viewInstance.EventShareButtonClicked += OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
         }
@@ -90,6 +97,16 @@ namespace DCL.Communities.EventInfo
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
             webBrowser.OpenUrl(EventUtilities.GetEventShareLink(eventData));
+
+        private void OnJumpInButtonClicked(IEventDTO eventData)
+        {
+            eventCardOperationsCts = eventCardOperationsCts.SafeRestart();
+
+            if (eventData.World)
+                realmNavigator.TryChangeRealmAsync(URLDomain.FromString(new ENS(eventData.Server).ConvertEnsToWorldUrl()), eventCardOperationsCts.Token).Forget();
+            else
+                realmNavigator.TeleportToParcelAsync(new Vector2Int(eventData.X, eventData.Y), eventCardOperationsCts.Token, false).Forget();
+        }
 
         private void OnInterestedButtonClicked(IEventDTO eventData)
         {
