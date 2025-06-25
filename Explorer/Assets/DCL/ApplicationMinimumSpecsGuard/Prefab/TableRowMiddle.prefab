@@ -152,7 +152,7 @@ GameObject:
   - component: {fileID: 4027619849337911715}
   - component: {fileID: 638358337509649136}
   m_Layer: 5
-  m_Name: Text
+  m_Name: TextMinimum
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -224,7 +224,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 1, b: 1, a: 1}
     bottomRight: {r: 1, g: 1, b: 1, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
+  m_spriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
   m_TextStyleHashCode: -1183493901
@@ -543,7 +543,7 @@ GameObject:
   - component: {fileID: 8207605470525672976}
   - component: {fileID: 1577027022813000251}
   m_Layer: 5
-  m_Name: Text
+  m_Name: TextTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -700,7 +700,7 @@ GameObject:
   - component: {fileID: 580234204206245982}
   - component: {fileID: 6638222535973974376}
   m_Layer: 5
-  m_Name: Text
+  m_Name: TextCurrent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -772,7 +772,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 1, b: 1, a: 1}
     bottomRight: {r: 1, g: 1, b: 1, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 11400000, guid: 931ea13ea95081e42ae193f487685d43, type: 2}
+  m_spriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
   m_TextStyleHashCode: -1183493901
@@ -883,7 +883,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 180, y: -0}
-  m_SizeDelta: {x: 200, y: 35}
+  m_SizeDelta: {x: 210, y: 35}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &5211888002728849440
 CanvasRenderer:
@@ -1022,7 +1022,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 380, y: -0}
-  m_SizeDelta: {x: 200, y: 35}
+  m_SizeDelta: {x: 210, y: 35}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &1774676984636549031
 CanvasRenderer:

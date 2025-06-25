@@ -13,7 +13,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
                 {
                     PlatformLabel = "Windows", OsRequirement = "Windows 10 64-bit", OsCheck = os => os.Contains("Windows 10") || os.Contains("Windows 11"), CpuRequirement = "Intel i5 7th gen or AMD Ryzen 5+",
                     CpuCheck = SystemSpecUtils.IsWindowsCpuAcceptable, GpuRequirement = "Nvidia RTX 20 Series or AMD Radeon RX 5000 Series (DirectX 12 Compatible)", GpuCheck = SystemSpecUtils.IsWindowsGpuAcceptable, MinVramGB = 6,
-                    MinRamGB = 15, ShaderRequirement = "Compute Shaders (DX12)", ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8
+                    MinRamGB = 16, ShaderRequirement = "Compute Shaders (DX12)", ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8
                 },
 
                 PlatformOS.Mac when target == SpecTarget.Minimum => new SpecProfile

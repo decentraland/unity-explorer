@@ -151,7 +151,7 @@ GameObject:
   - component: {fileID: 6410171615772381032}
   - component: {fileID: 7961505013746429481}
   m_Layer: 5
-  m_Name: Text
+  m_Name: TextTitile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -334,7 +334,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 380, y: -0}
-  m_SizeDelta: {x: 200, y: 35}
+  m_SizeDelta: {x: 210, y: 35}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &506241494293125210
 CanvasRenderer:
@@ -447,7 +447,7 @@ GameObject:
   - component: {fileID: 1118437184307179297}
   - component: {fileID: 1039316073244699274}
   m_Layer: 5
-  m_Name: Text
+  m_Name: TextMinimum
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -519,7 +519,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 1, b: 1, a: 1}
     bottomRight: {r: 1, g: 1, b: 1, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
+  m_spriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
   m_TextStyleHashCode: -1183493901
@@ -700,7 +700,7 @@ GameObject:
   - component: {fileID: 2325129938910172787}
   - component: {fileID: 2482228524514693706}
   m_Layer: 5
-  m_Name: Text
+  m_Name: TextCurrent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -772,7 +772,7 @@ MonoBehaviour:
     bottomLeft: {r: 1, g: 1, b: 1, a: 1}
     bottomRight: {r: 1, g: 1, b: 1, a: 1}
   m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 11400000, guid: 931ea13ea95081e42ae193f487685d43, type: 2}
+  m_spriteAsset: {fileID: 11400000, guid: cd83adc04be4b4bc5b2872ea4da86bb1, type: 2}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
   m_TextStyleHashCode: -1183493901
@@ -883,7 +883,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 180, y: -0}
-  m_SizeDelta: {x: 200, y: 35}
+  m_SizeDelta: {x: 210, y: 35}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &3842695134411461541
 CanvasRenderer:

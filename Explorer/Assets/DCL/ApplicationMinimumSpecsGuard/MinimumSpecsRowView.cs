@@ -17,7 +17,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             titleText.text = result.Category.ToString();
             requiredText.text = result.Required;
 
-            string icon = result.IsMet ? "<sprite name=\"check\">" : "<sprite name=\"cross\">";
+            string icon = result.IsMet ? "<sprite name=\"2705\">" : "<sprite name=\"3498\">";
             actualText.text = $"{icon} {result.Actual}";
         }
 
