@@ -17,8 +17,8 @@ namespace DCL.Settings.ModuleControllers
             this.chatSettingsAsset = chatSettingsAsset;
             this.settingsEventListener = settingsEventListener;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY))
-                view.DropdownView.Dropdown.value = SettingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY))
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetSettings);
         }
@@ -44,7 +44,7 @@ namespace DCL.Settings.ModuleControllers
                     return;
             }
 
-            SettingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, index, save: true);
+            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, index, save: true);
         }
 
         public override void Dispose()

@@ -19,8 +19,8 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
             this.worldVolumeMacBus = worldVolumeMacBus;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
-                view.SliderView.Slider.value = SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_MASTER_VOLUME);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MASTER_VOLUME))
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_MASTER_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetMasterVolumeSettings);
             SetMasterVolumeSettings(view.SliderView.Slider.value);
@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetMasterVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            SettingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
 
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.SetMasterVolume(volumePercentage / 100);

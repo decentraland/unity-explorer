@@ -16,8 +16,8 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_VSYNC_ENABLED))
-                view.ToggleView.Toggle.isOn = SettingsDataStore.GetToggleValue(DCLPrefKeys.SETTINGS_VSYNC_ENABLED);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_VSYNC_ENABLED))
+                view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetToggleValue(DCLPrefKeys.SETTINGS_VSYNC_ENABLED);
 
             view.ToggleView.Toggle.onValueChanged.AddListener(SetVSyncEnabled);
         }
@@ -38,7 +38,7 @@ namespace DCL.Settings.ModuleControllers
             }
 
             fpsLimitController?.SetViewInteractable(!enabled);
-            SettingsDataStore.SetToggleValue(DCLPrefKeys.SETTINGS_VSYNC_ENABLED, enabled, save: true);
+            DCLPlayerPrefs.SetToggleValue(DCLPrefKeys.SETTINGS_VSYNC_ENABLED, enabled, save: true);
         }
 
         public override void Dispose() =>
@@ -53,7 +53,7 @@ namespace DCL.Settings.ModuleControllers
                     break;
                 }
 
-            fpsLimitController?.SetViewInteractable(!SettingsDataStore.GetToggleValue(DCLPrefKeys.SETTINGS_VSYNC_ENABLED));
+            fpsLimitController?.SetViewInteractable(!DCLPlayerPrefs.GetToggleValue(DCLPrefKeys.SETTINGS_VSYNC_ENABLED));
 
             SettingsDropdownModuleView fpsLimitView = (SettingsDropdownModuleView) fpsLimitController?.controllerView;
             previousTargetFrameRate = 0;

@@ -44,9 +44,9 @@ namespace DCL.Utilities
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += CharacterViewClosed;
             savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
-                SetUpscalingValue(SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER), true);
+                SetUpscalingValue(DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER), true);
                 ignoreFirstResolutionChange = true;
             }
             else
@@ -79,7 +79,7 @@ namespace DCL.Utilities
 
             if (updateStoredValue)
             {
-                SettingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
+                DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
                 OnUpscalingChanged?.Invoke(sliderValue);
             }
         }
@@ -105,6 +105,6 @@ namespace DCL.Utilities
         }
 
         public float GetCurrentUpscale() =>
-            SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER);
+            DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER);
     }
 }

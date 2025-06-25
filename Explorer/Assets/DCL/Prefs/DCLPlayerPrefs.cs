@@ -49,6 +49,39 @@ namespace DCL.Prefs
         public static void Save() =>
             dclPrefs.Save();
 
+        public static void SetToggleValue(string key, bool value, bool save = false)
+        {
+            SetInt(key, value ? 1 : 0);
+
+            if (save)
+                Save();
+        }
+
+        public static bool GetToggleValue(string key) =>
+            GetInt(key) == 1;
+
+        public static void SetSliderValue(string key, float value, bool save = false)
+        {
+            SetFloat(key, value);
+
+            if (save)
+                Save();
+        }
+
+        public static float GetSliderValue(string key) =>
+           GetFloat(key);
+
+        public static void SetDropdownValue(string key, int value, bool save = false)
+        {
+            SetInt(key, value);
+
+            if (save)
+                Save();
+        }
+
+        public static int GetDropdownValue(string key) =>
+            DCLPlayerPrefs.GetInt(key);
+
         private static void Initialize(bool inMemory)
         {
             if (dclPrefs != null)

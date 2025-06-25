@@ -14,8 +14,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_SCENE_DISTANCE))
-                view.SliderView.Slider.value = SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_SCENE_DISTANCE);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_SCENE_DISTANCE))
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_SCENE_DISTANCE);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetSceneDistanceSettings);
             SetSceneDistanceSettings(view.SliderView.Slider.value);
@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void OnMaxLoadingDistanceInParcelsChangedChanged(int newDistance)
         {
             view.SliderView.Slider.value = newDistance;
-            SettingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_SCENE_DISTANCE, newDistance, save: true);
+            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_SCENE_DISTANCE, newDistance, save: true);
         }
 
         public override void Dispose()

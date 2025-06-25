@@ -17,8 +17,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES))
-                view.ToggleView.Toggle.isOn = SettingsDataStore.GetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES))
+                view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES);
 
             view.ToggleView.Toggle.onValueChanged.AddListener(SetToggle);
             SetToggle(view.ToggleView.Toggle.isOn);
@@ -30,7 +30,7 @@ namespace DCL.Settings.ModuleControllers
 
             userBlockingCacheProxy.Object.HideChatMessages = enabled;
 
-            SettingsDataStore.SetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES, enabled, save: true);
+            DCLPlayerPrefs.SetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES, enabled, save: true);
         }
 
         public override void Dispose() =>

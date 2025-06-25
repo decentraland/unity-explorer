@@ -14,8 +14,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.controlsSettingsAsset = controlsSettingsAsset;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY))
-                view.SliderView.Slider.value = SettingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY))
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetHorizontalMouseSensitivity);
             SetHorizontalMouseSensitivity(view.SliderView.Slider.value);
@@ -24,7 +24,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetHorizontalMouseSensitivity(float sensitivity)
         {
             controlsSettingsAsset.HorizontalMouseSensitivity = sensitivity;
-            SettingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY, sensitivity, save: true);
+            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY, sensitivity, save: true);
         }
 
         public override void Dispose()

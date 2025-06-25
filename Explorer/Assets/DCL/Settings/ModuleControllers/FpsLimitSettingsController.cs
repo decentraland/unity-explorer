@@ -13,8 +13,8 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_FPS_LIMIT))
-                view.DropdownView.Dropdown.value = SettingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_FPS_LIMIT);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_FPS_LIMIT))
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_FPS_LIMIT);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetFpsLimitSettings);
             SetFpsLimitSettings(view.DropdownView.Dropdown.value);
@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
                 fpsLimitToApply = Convert.ToInt32(view.DropdownView.Dropdown.options[index].text);
 
             Application.targetFrameRate = fpsLimitToApply;
-            SettingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_FPS_LIMIT, index, save: true);
+            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_FPS_LIMIT, index, save: true);
         }
 
         public override void Dispose()

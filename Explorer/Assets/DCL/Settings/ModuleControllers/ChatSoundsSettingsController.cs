@@ -21,8 +21,8 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
             this.chatSettingsAsset = chatSettingsAsset;
 
-            if (SettingsDataStore.HasKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS))
-                view.DropdownView.Dropdown.value = SettingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_SOUNDS);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS))
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_SOUNDS);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetChatSoundsSettings);
         }
@@ -48,7 +48,7 @@ namespace DCL.Settings.ModuleControllers
                     return;
             }
 
-            SettingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, index, save: true);
+            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, index, save: true);
         }
 
         public override void Dispose()
