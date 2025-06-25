@@ -15,12 +15,10 @@ namespace DCL.Input.Systems
     [UpdateBefore(typeof(InputGroup))]
     public partial class ApplyInputMapsSystem : BaseUnityLoopSystem
     {
-        private readonly DCLInput dclInput;
         private SingleInstanceEntity inputMap;
 
-        internal ApplyInputMapsSystem(World world, DCLInput dclInput) : base(world)
+        internal ApplyInputMapsSystem(World world) : base(world)
         {
-            this.dclInput = dclInput;
         }
 
         public override void Initialize()
@@ -44,25 +42,25 @@ namespace DCL.Input.Systems
                     switch (value)
                     {
                         case InputMapComponent.Kind.CAMERA:
-                            SetActionMapEnabled(isActive, dclInput.Camera);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.Camera);
                             break;
                         case InputMapComponent.Kind.FREE_CAMERA:
-                            SetActionMapEnabled(isActive, dclInput.FreeCamera);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.FreeCamera);
                             break;
                         case InputMapComponent.Kind.PLAYER:
-                            SetActionMapEnabled(isActive, dclInput.Player);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.Player);
                             break;
                         case InputMapComponent.Kind.EMOTE_WHEEL:
-                            SetActionMapEnabled(isActive, dclInput.EmoteWheel);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.EmoteWheel);
                             break;
                         case InputMapComponent.Kind.EMOTES:
-                            SetActionMapEnabled(isActive, dclInput.Emotes);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.Emotes);
                             break;
                         case InputMapComponent.Kind.SHORTCUTS:
-                            SetActionMapEnabled(isActive, dclInput.Shortcuts);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.Shortcuts);
                             break;
                         case InputMapComponent.Kind.IN_WORLD_CAMERA:
-                            SetActionMapEnabled(isActive, dclInput.InWorldCamera);
+                            SetActionMapEnabled(isActive, DCLInput.Instance.InWorldCamera);
                             break;
                         case InputMapComponent.Kind.VOICE_CHAT:
                             SetActionMapEnabled(isActive, dclInput.VoiceChat);

@@ -18,11 +18,11 @@ namespace DCL.CharacterMotion.Systems
         private readonly InputAction sprintAction;
         private readonly InputAction walkAction;
 
-        public UpdateInputMovementSystem(World world, DCLInput dclInput) : base(world)
+        public UpdateInputMovementSystem(World world) : base(world)
         {
-            movementAxis = dclInput.Player.Movement;
-            sprintAction = dclInput.Player.Sprint;
-            walkAction = dclInput.Player.Walk;
+            movementAxis = DCLInput.Instance.Player.Movement;
+            sprintAction = DCLInput.Instance.Player.Sprint;
+            walkAction = DCLInput.Instance.Player.Walk;
         }
 
         protected override void Update(float t)

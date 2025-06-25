@@ -41,6 +41,7 @@ namespace DCL.Settings.Configuration
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
+            UpscalingController upscalingController,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
             var viewInstance = Object.Instantiate(View, parent);

@@ -25,7 +25,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IDebugContainerBuilder debugBuilder;
-        private readonly IChatCommandsBus chatCommandsBus;
 
         private ConnectionStatusPanelController connectionStatusPanelController;
 
@@ -38,9 +37,7 @@ namespace DCL.PluginSystem.Global
             ECSReloadScene ecsReloadScene,
             Arch.Core.World world,
             Entity playerEntity,
-            IDebugContainerBuilder debugBuilder,
-            IChatCommandsBus chatCommandsBus
-        )
+            IDebugContainerBuilder debugBuilder)
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.mvcManager = mvcManager;
@@ -51,7 +48,6 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.debugBuilder = debugBuilder;
-            this.chatCommandsBus = chatCommandsBus;
         }
 
         public void Dispose() { }
@@ -73,8 +69,7 @@ namespace DCL.PluginSystem.Global
                 roomsStatus,
                 world,
                 playerEntity,
-                debugBuilder,
-                chatCommandsBus
+                debugBuilder
             );
             mvcManager.RegisterController(connectionStatusPanelController);
         }

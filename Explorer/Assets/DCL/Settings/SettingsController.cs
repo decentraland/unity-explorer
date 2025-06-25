@@ -46,6 +46,7 @@ namespace DCL.Settings
         private readonly List<SettingsFeatureController> controllers = new ();
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
+        private readonly UpscalingController upscalingController;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -63,7 +64,8 @@ namespace DCL.Settings
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
             VoiceChatSettingsAsset voiceChatSettings,
-            WorldVolumeMacBus worldVolumeMacBus = null
+            WorldVolumeMacBus worldVolumeMacBus,
+            UpscalingController upscalingController
         )
         {
             this.view = view;
@@ -80,6 +82,7 @@ namespace DCL.Settings
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.voiceChatSettings = voiceChatSettings;
+            this.upscalingController = upscalingController;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 

@@ -140,7 +140,7 @@ namespace DCL.Prefs
         {
             if (unityPrefs == null || !unityPrefs.HasKey(key)) return;
 
-            userData.Strings.Add(key, unityPrefs!.GetString(key, null));
+            userData.Strings.TryAdd(key, unityPrefs!.GetString(key, null));
             unityPrefs.DeleteKey(key);
             unityPrefs.Save();
         }
@@ -149,7 +149,7 @@ namespace DCL.Prefs
         {
             if (unityPrefs == null || !unityPrefs.HasKey(key)) return;
 
-            userData.Ints.Add(key, unityPrefs!.GetInt(key, 0));
+            userData.Ints.TryAdd(key, unityPrefs!.GetInt(key, 0));
             unityPrefs.DeleteKey(key);
             unityPrefs.Save();
         }
@@ -158,7 +158,7 @@ namespace DCL.Prefs
         {
             if (unityPrefs == null || !unityPrefs.HasKey(key)) return;
 
-            userData.Floats.Add(key, unityPrefs!.GetFloat(key, 0f));
+            userData.Floats.TryAdd(key, unityPrefs!.GetFloat(key, 0f));
             unityPrefs.DeleteKey(key);
             unityPrefs.Save();
         }
