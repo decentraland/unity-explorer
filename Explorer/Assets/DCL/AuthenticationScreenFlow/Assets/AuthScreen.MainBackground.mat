@@ -112,7 +112,7 @@ Material:
     - _GlossyReflections: 0
     - _Glow_Offset_X: -0.82
     - _Glow_Offset_Y: 0.26
-    - _Glow_Opactiy: 3.1
+    - _Glow_Opactiy: 0
     - _Glow_Tile_X: 1.85
     - _Glow_Tile_Y: 0.85
     - _Gradient_Speed: 0.1
