@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Communities.CommunitiesCard.Events;
 using DCL.EventsApi;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
