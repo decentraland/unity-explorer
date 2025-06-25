@@ -39,7 +39,6 @@ namespace DCL.RealmNavigation
             ILoadingScreen loadingScreen,
             bool localSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
-            FeatureFlagsCache featureFlagsCache,
             IAppArgs appArgs,
             TeleportController teleportController)
         {
@@ -49,7 +48,7 @@ namespace DCL.RealmNavigation
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
             var assetBundleRegistry =
-                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && !localSceneDevelopment
+                FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && !localSceneDevelopment
                     ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
                     : URLDomain.EMPTY;
 

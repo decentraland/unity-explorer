@@ -1,3 +1,4 @@
+using CodeLess.Interfaces;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.CharacterPreview;
@@ -8,6 +9,7 @@ using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
+    [AutoInterface]
     public class BackpackEventBus : IBackpackEventBus
     {
         public event Action<IWearable>? SelectWearableEvent;
