@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
@@ -9,8 +9,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens;
 using DCL.UI.Buttons;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using JetBrains.Annotations;
@@ -34,6 +36,8 @@ namespace DCL.MarketplaceCredits
         private bool isFeatureActivated;
         private MarketplaceCreditsSection? currentSection;
         private bool isCreditsUnlockedPanelOpen;
+        private bool isAuthenticationScreenOpen;
+        private bool isLoadingScreenOpen;
 
         [CanBeNull] public event IPanelInSharedSpace.ViewShowingCompleteDelegate ViewShowingComplete;
         public event Action OnAnyPlaceClick;
@@ -52,6 +56,7 @@ namespace DCL.MarketplaceCredits
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -79,7 +84,8 @@ namespace DCL.MarketplaceCredits
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager,
+            IWeb3IdentityCache web3IdentityCache) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -92,8 +98,11 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.web3IdentityCache = web3IdentityCache;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
+            mvcManager.OnViewShowed += OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed += OnMvcManagerViewClosed;
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationClicked);
 
@@ -184,7 +193,6 @@ namespace DCL.MarketplaceCredits
                 case MarketplaceCreditsSection.WELCOME:
                     viewInstance.SetInfoLinkButtonActive(false);
                     marketplaceCreditsWelcomeSubController?.OpenSection();
-                    viewInstance.TotalCreditsWidget.gameObject.SetActive(false);
                     break;
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
                     haveJustClaimedCredits = false;
@@ -238,6 +246,9 @@ namespace DCL.MarketplaceCredits
             sidebarButtonStateCts.SafeCancelAndDispose();
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
+            mvcManager.OnViewShowed -= OnMvcManagerViewShowed;
+            mvcManager.OnViewClosed -= OnMvcManagerViewClosed;
+            web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
 
             if (viewInstance != null)
             {
@@ -326,9 +337,12 @@ namespace DCL.MarketplaceCredits
                 if (!creditsProgramProgressResponse.HasUserStartedProgram())
                 {
                     // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
-                    await UniTask.WaitUntil(() => realmData.IsGenesis(), cancellationToken: ct);
+                    await UniTask.WaitUntil(() => !isAuthenticationScreenOpen && !isLoadingScreenOpen && realmData.IsGenesis(), cancellationToken: ct);
                     await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
                 }
+
+                web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
+                web3IdentityCache.OnIdentityChanged += CheckForSidebarButtonState;
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -360,6 +374,24 @@ namespace DCL.MarketplaceCredits
             bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
             SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || (thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
             SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
+        }
+
+        private void OnMvcManagerViewShowed(IController showedController)
+        {
+            if (showedController is AuthenticationScreenController)
+                isAuthenticationScreenOpen = true;
+
+            if (showedController is SceneLoadingScreenController)
+                isLoadingScreenOpen = true;
+        }
+
+        private void OnMvcManagerViewClosed(IController closedController)
+        {
+            if (closedController is AuthenticationScreenController)
+                isAuthenticationScreenOpen = false;
+
+            if (closedController is SceneLoadingScreenController)
+                isLoadingScreenOpen = false;
         }
     }
 }
