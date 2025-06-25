@@ -56,7 +56,7 @@ namespace DCL.Character.CharacterMotion.Systems
 
                 var originalTargetPosition = targetWorldPosition;
                 if (!ValidateTeleportPosition(ref targetWorldPosition, parcel, sceneDef))
-                    Debug.LogError($"Invalid teleport position: {originalTargetPosition}. Adjusted to: {targetWorldPosition}");
+                    ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Invalid teleport position: {originalTargetPosition}. Adjusted to: {targetWorldPosition}");
 
                 teleportIntent.Position = targetWorldPosition;
 
