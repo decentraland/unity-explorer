@@ -1671,9 +1671,9 @@ MonoBehaviour:
     <UnselectedBackground>k__BackingField: {fileID: 6416773400672022123}
     <UnselectedText>k__BackingField: {fileID: 8060992581175765104}
   <loadingObject>k__BackingField: {fileID: 6535758042257036942}
-  <ContextMenuSettings>k__BackingField: {fileID: 11400000, guid: ce2d11f38b01f4bb49520e11f28a5ed9, type: 2}
-  <kickSprite>k__BackingField: {fileID: 21300000, guid: 1c3a82503c07d4bc1b72831189ecac2c, type: 3}
-  <banSprite>k__BackingField: {fileID: 21300000, guid: dfc1a44a069d347b0ba9bde7be300ec3, type: 3}
+  contextMenuSettings: {fileID: 11400000, guid: ce2d11f38b01f4bb49520e11f28a5ed9, type: 2}
+  <kickSprite>k__BackingField: {fileID: 21300000, guid: 313ca44b243e24135aa5d2c6674da600, type: 3}
+  <banSprite>k__BackingField: {fileID: 21300000, guid: 16f3bc32e2ad743e3b764015ec422c9e, type: 3}
 --- !u!1001 &3723107797840121950
 PrefabInstance:
   m_ObjectHideFlags: 0

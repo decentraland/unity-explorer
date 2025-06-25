@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: CommunityMemberListContextMenuSettings
   m_EditorClassIdentifier: 
   contextMenuWidth: 250
+  elementsSpacing: 5
+  verticalPadding:
+    m_Left: 15
+    m_Right: 15
+    m_Top: 20
+    m_Bottom: 25
   viewProfileSprite: {fileID: 21300000, guid: c42ef609dd1154fa9a0e37d744af5614, type: 3}
   viewProfileText: View Profile
   blockSprite: {fileID: 21300000, guid: 493ac3c2397b64caea2decabee6048e8, type: 3}

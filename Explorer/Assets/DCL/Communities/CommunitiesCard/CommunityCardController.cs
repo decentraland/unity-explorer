@@ -183,7 +183,8 @@ namespace DCL.Communities.CommunitiesCard
                 chatEventBus.OpenCommunityConversationUsingUserId(communityData.id);
                 CloseController();
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
             {
                 ReportHub.LogException(ex, ReportCategory.COMMUNITIES);
             }
@@ -198,6 +199,8 @@ namespace DCL.Communities.CommunitiesCard
             viewInstance.LeaveCommunityRequested += LeaveCommunityRequested;
             viewInstance.DeleteCommunityRequested += OnDeleteCommunityRequested;
             viewInstance.CameraReelGalleryConfigs.PhotosView.OpenWizardButtonClicked += OnOpenCommunityWizard;
+
+            viewInstance.SetConfirmationDialogDependencies(profileRepositoryWrapper);
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
