@@ -47,15 +47,16 @@ namespace DCL.Diagnostics
                 }
                 else
                 {
-                    // compute "pressure" based on how long since first seen
-                    TimeSpan targetWindow = CalculateDynamicWindow(now, ref tracker);
-
-                    tracker.Window = targetWindow;
-
+                    // Let it pass if already scheduled
                     if (now - tracker.LastSeen >= tracker.Window)
                     {
+                        // Compute the new window based on the number of repetitions
+                        TimeSpan targetWindow = CalculateDynamicWindow(now, ref tracker);
+
                         debounced = false;
                         tracker.LastSeen = now;
+
+                        tracker.Window = targetWindow;
                     }
                     else
                         debounced = true;
@@ -82,7 +83,7 @@ namespace DCL.Diagnostics
             lastCleanUpTime = this.dateTimeProvider();
         }
 
-        private TimeSpan CalculateDynamicWindow(DateTime now, ref Tracker tracker)
+        internal TimeSpan CalculateDynamicWindow(DateTime now, ref Tracker tracker)
         {
             // 1) How many “paid” retries have you done?
             int rawRetries = Math.Max(0, tracker.Count - allowedRepetitions);
@@ -111,10 +112,6 @@ namespace DCL.Diagnostics
             secs = Math.Min(secs, maxWindow.TotalSeconds);
 
             return TimeSpan.FromSeconds(secs);
-
-            /*int retries = tracker.Count - allowedRepetitions;
-            double seconds = initialWindow.TotalSeconds * Math.Pow(backoffFactor, retries);
-            return TimeSpan.FromSeconds(Math.Min(maxWindow.TotalSeconds, seconds));*/
         }
 
         internal bool TryCleanUp(DateTime now)

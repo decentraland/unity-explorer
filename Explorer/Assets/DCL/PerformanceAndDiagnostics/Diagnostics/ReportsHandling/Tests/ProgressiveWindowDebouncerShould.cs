@@ -159,29 +159,35 @@ namespace DCL.Diagnostics.Tests
             // At this point the window is 10s * 1.7^(5-3) ≈ 28.9s
             Assert.IsTrue(debouncer.Messages.TryGetValue(key, out ProgressiveWindowDebouncer.Tracker tracker));
 
-            // The stored value will correspond to the previous report: 17s
-            Assert.AreEqual(17, tracker.Window.TotalSeconds, 0.5);
+            TimeSpan targetWindow = debouncer.CalculateDynamicWindow(fakeNow, ref tracker);
+            Assert.AreEqual(28.9, targetWindow.TotalSeconds, 0.5);
 
-            // Decay more than the current window to trigger ramp down
+            // But the stored window won't be modified until the next pass
+            Assert.AreEqual(10, tracker.Window.TotalSeconds, 0.5);
+
+            // Decay more than the target window to trigger ramp down
             var cooldownWindow = TimeSpan.FromSeconds(30);
             fakeNow = fakeNow.Add(cooldownWindow);
 
             // Now it should decay to the previous window: 10s * 1.7^(4-3) = 17s
-            // But debouncing it again will bring it back to 28.9s window
             bool debounced = debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
             Assert.That(debounced, Is.False);
 
             // Add less than a window
-            fakeNow = fakeNow.AddSeconds(26);
+            fakeNow = fakeNow.AddSeconds(16);
 
             debounced = debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType)); // must be debounced
+            Assert.That(debounced, Is.True, "After ramp down, the next occurrence should be debounced");
 
             // The window will be brought to 10s * 1.7^(6-3) ≈ 49.13s
-            Assert.That(debounced, Is.True, "After ramp down, the next occurrence should be debounced");
+            debouncer.Messages.TryGetValue(key, out tracker);
+            targetWindow = debouncer.CalculateDynamicWindow(fakeNow, ref tracker);
+            Assert.AreEqual(49.13, targetWindow.TotalSeconds, 0.5);
 
             // Now wait for more than 3 windows to rump down to the initial window
             fakeNow = fakeNow.AddSeconds(50 * 3);
-            debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
+            debounced = debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
+            Assert.IsFalse(debounced);
 
             // Check the window
             Assert.IsTrue(debouncer.Messages.TryGetValue(key, out tracker));

@@ -8,13 +8,6 @@ using UnityEngine.Profiling;
 
 namespace ECS.Abstract
 {
-    public class ECSExceptionsDebouncer : ProgressiveWindowDebouncer
-    {
-        public static readonly ECSExceptionsDebouncer INSTANCE = new ();
-
-        private ECSExceptionsDebouncer() : base(TimeSpan.FromSeconds(30), TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(1)) { }
-    }
-
     /// <summary>
     ///     Provides additional functionality to `BaseSystem`
     /// </summary>
