@@ -31,6 +31,7 @@ namespace DCL.Settings.Configuration
             UI_SOUNDS_VOLUME_FEATURE,
             AVATAR_SOUNDS_VOLUME_FEATURE,
             VOICE_CHAT_VOLUME_FEATURE,
+            STP_FEATURE,
             // add other features...
         }
 
@@ -48,7 +49,8 @@ namespace DCL.Settings.Configuration
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
-            WorldVolumeMacBus worldVolumeMacBus = null)
+            UpscalingController upscalingController,
+            WorldVolumeMacBus worldVolumeMacBus)
         {
             var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -65,11 +67,11 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.STP_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+                                                       _ => throw new ArgumentOutOfRangeException(),
                                                    };
 
-            controller.SetView(viewInstance);
             return controller;
         }
     }

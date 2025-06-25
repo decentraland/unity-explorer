@@ -64,24 +64,28 @@ namespace SceneRuntime.Apis.Modules.CommsApi
                 var participants = roomHub.StreamingRoom().Participants;
                 (string identity, TrackPublication publication)? asCurrent = null;
 
-                foreach (string remoteParticipantIdentity in participants.RemoteParticipantIdentities())
+                // See: https://github.com/decentraland/unity-explorer/issues/3796
+                lock (participants)
                 {
-                    var participant = participants.RemoteParticipant(remoteParticipantIdentity);
+                    foreach (string remoteParticipantIdentity in participants.RemoteParticipantIdentities())
+                    {
+                        var participant = participants.RemoteParticipant(remoteParticipantIdentity);
 
-                    if (participant == null)
-                        continue;
+                        if (participant == null)
+                            continue;
 
-                    foreach (var track in participant.Tracks.Values)
-                        if (track.Kind == TrackKind.KindVideo)
-                        {
-                            GetActiveVideoStreamsResponse.WriteTo(writer, remoteParticipantIdentity, track);
-
-                            if (asCurrent == null)
+                        foreach (var track in participant.Tracks.Values)
+                            if (track.Kind == TrackKind.KindVideo)
                             {
-                                asCurrent = (remoteParticipantIdentity, track);
-                                GetActiveVideoStreamsResponse.WriteAsCurrentTo(writer, remoteParticipantIdentity, track);
+                                GetActiveVideoStreamsResponse.WriteTo(writer, remoteParticipantIdentity, track);
+
+                                if (asCurrent == null)
+                                {
+                                    asCurrent = (remoteParticipantIdentity, track);
+                                    GetActiveVideoStreamsResponse.WriteAsCurrentTo(writer, remoteParticipantIdentity, track);
+                                }
                             }
-                        }
+                    }
                 }
 
                 writer.WriteEndArray();

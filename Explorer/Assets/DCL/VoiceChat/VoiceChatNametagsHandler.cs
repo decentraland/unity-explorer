@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using Utility.Arch;
 using DCL.Diagnostics;
+using UnityEngine;
 
 namespace DCL.VoiceChat
 {
@@ -71,7 +72,7 @@ namespace DCL.VoiceChat
         {
             if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
                 world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(isSpeaking));
-            else
+            else if(voiceChatRoom.Participants.LocalParticipant().Identity == participantId)
                 world.AddOrSet(playerEntity, new VoiceChatNametagComponent(isSpeaking));
         }
 

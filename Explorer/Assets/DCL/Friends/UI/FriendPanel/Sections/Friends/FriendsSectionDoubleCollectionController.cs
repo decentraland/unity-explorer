@@ -4,9 +4,6 @@ using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI;
 using DCL.UI.SharedSpaceManager;
-using DCL.UI.GenericContextMenu;
-using DCL.UI.GenericContextMenu.Controls.Configs;
-using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -24,10 +21,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
-        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly string[] getUserPositionBuffer = new string[1];
-        private readonly ViewDependencies viewDependencies;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
@@ -49,12 +44,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager,
-            ViewDependencies viewDependencies,
-            bool includeCall,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            ISharedSpaceManager sharedSpaceManager)
             : base(view, friendsService, friendEventBus, mvcManager, doubleCollectionRequestManager)
         {
             this.passportBridge = passportBridge;
@@ -63,8 +55,6 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.viewDependencies = viewDependencies;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             doubleCollectionRequestManager.JumpInClicked += OnJumpInClicked;
             doubleCollectionRequestManager.ContextMenuClicked += OnContextMenuClicked;
@@ -140,7 +130,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             contextMenuTask = new UniTaskCompletionSource();
             UniTask menuTask = UniTask.WhenAny(panelLifecycleTask.Task, contextMenuTask.Task);
 
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address),
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(friendProfile.Address),
                 buttonPosition, default(Vector2), popupCts.Token, closeMenuTask: menuTask, onHide: () => elementView.CanUnHover = true
                 ,anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
