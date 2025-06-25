@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -12,24 +13,22 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.AvatarShape.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System;
+using System.Threading;
 using UnityEngine;
 using Utility.Arch;
-using Cysharp.Threading.Tasks;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
-using System;
-using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
-using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
-    DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
+using Utility.Types;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -112,7 +111,16 @@ namespace ECS.Unity.AvatarShape.Systems
             if (isSceneEmote)
             {
                 if (!sceneData.SceneContent.TryGetHash(emoteId, out string hash))
+                {
+                    ReportHub.LogError(ReportCategory.AVATAR,$"Scene emote '{emoteId}' not found in scene assets. Aborting scene emote playing on SDK AvatarShape");
                     return;
+                }
+
+                if (globalWorld.TryGet(globalWorldEntity, out SDKAvatarShapeEmotePromiseCancellationToken? promiseComponent))
+                    promiseComponent!.Dispose();
+
+                var newPromiseCancellationTokenComponent = new SDKAvatarShapeEmotePromiseCancellationToken();
+                globalWorld.Add(globalWorldEntity, newPromiseCancellationTokenComponent);
 
                 if (localSceneDevelopment)
                 {
@@ -122,7 +130,8 @@ namespace ECS.Unity.AvatarShape.Systems
                             emoteId,
                             hash,
                             bodyShape,
-                            loop: false) // looping scene emotes on SDK AvatarShapes is not supported yet
+                            loop: false), // looping scene emotes on SDK AvatarShapes is not supported yet
+                        newPromiseCancellationTokenComponent.Cts.Token
                     ).Forget();
                 }
                 else
@@ -133,42 +142,64 @@ namespace ECS.Unity.AvatarShape.Systems
                             sceneData.AssetBundleManifest,
                             hash,
                             loop: false, // looping scene emotes on SDK AvatarShapes is not supported yet
-                            bodyShape)
+                            bodyShape),
+                        newPromiseCancellationTokenComponent.Cts.Token
                     ).Forget();
                 }
             }
             else
             {
                 globalWorld.AddOrSet(globalWorldEntity,
-                    new CharacterEmoteIntent() { EmoteId = emoteId });
+                    new CharacterEmoteIntent { EmoteId = emoteId });
             }
         }
 
-        private async UniTaskVoid LoadAndTriggerSceneEmote<TIntention>(Entity globalWorldEntity, TIntention intention) where TIntention : struct, IAssetIntention, IEquatable<TIntention>
+        private async UniTaskVoid LoadAndTriggerSceneEmote<TIntention>(Entity globalWorldEntity, TIntention intention, CancellationToken ct)
+            where TIntention : struct, IAssetIntention, IEquatable<TIntention>
         {
-            // 1. Create the scene emote loading promise and wait for it
-            var promise = AssetPromise<EmotesResolution, TIntention>.Create(globalWorld, intention, PartitionComponent.TOP_PRIORITY);
-
-            promise = await promise.ToUniTaskAsync(globalWorld);
-
-            if (!globalWorld.IsAlive(globalWorldEntity) || globalWorldEntity == Entity.Null) return;
-
-            // 2. Finally, add the CharacterEmoteIntent to the avatar once the emote has been loaded
-            if (promise.Result is { Succeeded: true })
+            try
             {
-                using var consumed = promise.Result.Value.Asset.ConsumeEmotes();
+                // 1. Create the scene emote loading promise and wait for it
+                var promise = AssetPromise<EmotesResolution, TIntention>.Create(globalWorld, intention, PartitionComponent.TOP_PRIORITY);
 
-                if (consumed.Value.Count > 0)
+                Result<AssetPromise<EmotesResolution, TIntention>> promiseResult = await promise.ToUniTaskAsync(globalWorld, cancellationToken: ct).SuppressToResultAsync(ReportCategory.AVATAR);
+
+                if (ct.IsCancellationRequested) return;
+                if (!globalWorld.IsAlive(globalWorldEntity) || globalWorldEntity == Entity.Null) return;
+
+                // 2. Finally, add the CharacterEmoteIntent to the avatar once the emote has been loaded
+                if (promiseResult.Success)
                 {
-                    URN emoteUrn = consumed.Value[0]!.GetUrn();
+                    AssetPromise<EmotesResolution, TIntention> resolvedPromise = promiseResult.Value;
 
-                    globalWorld.AddOrSet(globalWorldEntity,
-                        new CharacterEmoteIntent
+                    if (resolvedPromise.Result is { Succeeded: true })
+                    {
+                        using var consumed = resolvedPromise.Result.Value.Asset.ConsumeEmotes();
+
+                        if (consumed.Value.Count > 0)
                         {
-                            EmoteId = emoteUrn,
-                            Spatial = true,
-                            TriggerSource = TriggerSource.SCENE,
-                        });
+                            URN emoteUrn = consumed.Value[0]!.GetUrn();
+
+                            globalWorld.AddOrSet(globalWorldEntity,
+                                new CharacterEmoteIntent
+                                {
+                                    EmoteId = emoteUrn,
+                                    Spatial = true,
+                                    TriggerSource = TriggerSource.SCENE,
+                                });
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                if (globalWorld.IsAlive(globalWorldEntity)
+                    && globalWorldEntity != Entity.Null
+                    && globalWorld.TryGet(globalWorldEntity, out SDKAvatarShapeEmotePromiseCancellationToken? promiseCancellationComponent))
+                {
+                    promiseCancellationComponent!.Dispose();
+                    globalWorld.Remove<SDKAvatarShapeEmotePromiseCancellationToken>(globalWorldEntity);
                 }
             }
         }
@@ -191,22 +222,29 @@ namespace ECS.Unity.AvatarShape.Systems
             World.Remove<SDKAvatarShapeComponent>(entity);
         }
 
-        [Query]
-        public void FinalizeComponents(ref SDKAvatarShapeComponent sdkAvatarShapeComponent) =>
-            MarkGlobalWorldEntityForDeletion(sdkAvatarShapeComponent.globalWorldEntity);
+        public void FinalizeComponents(in Query query)
+        {
+            foreach (ref var chunk in query.GetChunkIterator())
+            {
+                ref SDKAvatarShapeComponent component = ref chunk.GetFirst<SDKAvatarShapeComponent>();
 
-        public void FinalizeComponents(in Query query) =>
-            FinalizeComponentsQuery(World);
+                for (var i = 0; i < chunk.Count; i++)
+                    MarkGlobalWorldEntityForDeletion(component.globalWorldEntity);
+            }
+        }
 
         public void MarkGlobalWorldEntityForDeletion(Entity globalEntity)
         {
+            if (globalWorld.TryGet(globalEntity, out SDKAvatarShapeEmotePromiseCancellationToken promiseComponent))
+                promiseComponent.Dispose();
+
             // Need to remove parenting, since it may unintenionally deleted when
             globalWorld.Get<CharacterTransform>(globalEntity).Transform.SetParent(null);
 
             // Has to be deferred because many times it happens that the entity is marked for deletion AFTER the
             // AvatarCleanUpSystem.Update() and BEFORE the DestroyEntitiesSystem.Update(), probably has to do with
             // non-synchronicity between global and scene ECS worlds. AvatarCleanUpSystem resets the DeferDeletion.
-            globalWorld.Add(globalEntity, new DeleteEntityIntention() { DeferDeletion = true });
+            globalWorld.Add(globalEntity, new DeleteEntityIntention { DeferDeletion = true });
         }
     }
 }
