@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
-using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -12,6 +13,20 @@ namespace DCL.Communities.CommunitiesCard
     {
         public struct DialogData
         {
+            public struct UserData
+            {
+                public readonly string Address;
+                public readonly string ThumbnailUrl;
+                public readonly Color Color;
+
+                public UserData(string address, string thumbnailUrl, Color color)
+                {
+                    Address = address;
+                    ThumbnailUrl = thumbnailUrl;
+                    Color = color;
+                }
+            }
+
             public readonly string Text;
             public readonly string SubText;
             public readonly string CancelButtonText;
@@ -19,8 +34,11 @@ namespace DCL.Communities.CommunitiesCard
             public readonly Sprite Image;
             public readonly bool ShowImageRim;
             public readonly bool ShowQuitImage;
+            public readonly UserData UserInfo;
 
-            public DialogData(string text, string cancelButtonText, string confirmButtonText, Sprite image, bool showImageRim, bool showQuitImage, string subText = "")
+            public DialogData(string text, string cancelButtonText, string confirmButtonText,
+                Sprite image, bool showImageRim, bool showQuitImage,
+                string subText = "", UserData userInfo = default)
             {
                 Text = text;
                 CancelButtonText = cancelButtonText;
@@ -29,6 +47,7 @@ namespace DCL.Communities.CommunitiesCard
                 ShowImageRim = showImageRim;
                 ShowQuitImage = showQuitImage;
                 SubText = subText;
+                UserInfo = userInfo;
             }
         }
 
@@ -50,8 +69,16 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] private Image mainImage { get; set; }
         [field: SerializeField] private GameObject quitImage { get; set; }
         [field: SerializeField] private Image rimImage { get; set; }
+        [field: SerializeField] private ProfilePictureView profilePictureView { get; set; }
+        [field: SerializeField] private Image profileActionIcon { get; set; }
 
         private readonly UniTask[] closeTasks = new UniTask[3];
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
+
+        public void SetProfileRepository(ProfileRepositoryWrapper profileRepositoryWrapper)
+        {
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
+        }
 
         private UniTask[] GetCloseTasks(CancellationToken ct)
         {
@@ -76,6 +103,18 @@ namespace DCL.Communities.CommunitiesCard
             rimImage.enabled = dialogData.ShowImageRim;
             quitImage.SetActive(dialogData.ShowQuitImage);
             mainImage.sprite = dialogData.Image;
+
+            bool hasProfileImage = !string.IsNullOrEmpty(dialogData.UserInfo.Address);
+
+            rimImage.gameObject.SetActive(!hasProfileImage);
+            profilePictureView.gameObject.SetActive(hasProfileImage);
+            profileActionIcon.sprite = dialogData.Image;
+
+            if (hasProfileImage)
+            {
+                profilePictureView.SetDefaultThumbnail();
+                profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl, dialogData.UserInfo.Address);
+            }
 
             await viewCanvasGroup.DOFade(1f, fadeDuration).ToUniTask(cancellationToken: ct);
             viewCanvasGroup.interactable = true;
