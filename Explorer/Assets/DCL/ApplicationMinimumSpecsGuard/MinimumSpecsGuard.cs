@@ -5,47 +5,60 @@ using SystemInfo = UnityEngine.Device.SystemInfo;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
+    /// <summary>
+    ///     Performs hardware validation against platform-specific minimum requirements.
+    ///     This class checks the user's OS, CPU, GPU (and shader support), VRAM, RAM, available storage.
+    ///     The results are cached and can be retrieved for display or analytics.
+    ///     It is designed to be used early in the application's startup flow.
+    ///     For official requirement details, see:
+    ///     https://docs.decentraland.org/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland
+    ///     // 1. Create the provider for spec profiles.
+    ///     ISpecProfileProvider profileProvider = new DefaultSpecProfileProvider();
+    ///     // 2. Instantiate the guard with the provider.
+    ///     var specsGuard = new MinimumSpecsGuard(profileProvider);
+    ///     // 3. Run the check. This returns true if all specs are met.
+    ///     bool hasMinimumSpecs = specsGuard.HasMinimumSpecs();
+    ///     // 4. (Optional) Get the detailed results for display.
+    ///     IReadOnlyList
+    ///     <SpecResult>
+    ///         results = specsGuard.Results;
+    ///         if (!hasMinimumSpecs)
+    ///         {
+    ///         // Logic to show a warning screen, passing the 'results' to the UI controller.
+    ///         Debug.LogWarning("System does not meet minimum requirements.");
+    ///         }
+    /// </summary>
     public class MinimumSpecsGuard
     {
+        public IReadOnlyList<SpecResult> Results => cachedResults;
+        
         private readonly ISpecProfileProvider profileProvider;
         private List<SpecResult> cachedResults = new();
-
-        public IReadOnlyList<SpecResult> Results => cachedResults;
 
         public MinimumSpecsGuard(ISpecProfileProvider profileProvider)
         {
             this.profileProvider = profileProvider;
         }
 
-        /// <summary>
-        ///     MinimumSpecsGuard performs hardware requirement validation for Decentraland.
-        ///     It checks if the current system meets platform-specific minimum specs (RAM, VRAM, GPU, CPU, OS, Shader).
-        ///     Results are cached and exposed for use in UI or analytics.
-        ///     Reference: https://docs.decentraland.org/player/FAQs/decentraland-101/#what-hardware-do-i-need-to-run-decentraland
-        ///     ------------------------------
-        ///     Minimum Requirements
-        ///     ------------------------------
-        ///     Windows:
-        ///     - OS:      Windows 10 64-bit
-        ///     - CPU:     Intel i5 7th gen or AMD Ryzen 5
-        ///     - GPU:     NVIDIA RTX 20 Series or AMD RX 5000+ (DirectX 12 Compatible if compute shaders are available)
-        ///     - VRAM:    6 GB
-        ///     - RAM:     16 GB
-        ///     - Storage:  64 GB HDD
-        ///     macOS:
-        ///     - OS:      macOS 11 Big Sur
-        ///     - CPU:     Apple M1
-        ///     - GPU:     Apple M1 integrated (Metal support)
-        ///     - VRAM:    6 GB (shared)
-        ///     - RAM:     16 GB
-        ///     - Storage:  64 GB HDD
-        ///     ------------------------------
-        ///     Usage:
-        ///     ------------------------------
-        ///     var guard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
-        ///     bool isCompatible = guard.HasMinimumSpecs();
-        ///     results = guard.Results;
-        /// </summary>
+        public bool HasMinimumSpecs(SpecTarget target = SpecTarget.Minimum)
+        {
+            cachedResults = Evaluate(target);
+            bool allMet = true;
+
+            foreach (var result in cachedResults)
+            {
+                if (!result.IsMet)
+                {
+                    allMet = false;
+                    string logMessage = $"Minimum spec Not met: {result.Category} - Required: {result.Required}, Actual: {result.Actual}";
+                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, logMessage);
+                }
+            }
+
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"Minimum specs check complete. All requirements met: {allMet}");
+            return allMet;
+        }
+        
         private List<SpecResult> Evaluate(SpecTarget target)
         {
             var platform = PlatformUtils.DetectPlatform();
@@ -67,12 +80,14 @@ namespace DCL.ApplicationMinimumSpecsGuard
             results.Add(new SpecResult(SpecCategory.GPU, profile.GpuCheck(gpu), profile.GpuRequirement, gpu));
 
             // VRAM
-            int vram = SystemInfo.graphicsMemorySize;
-            results.Add(new SpecResult(SpecCategory.VRAM, vram >= profile.MinVramMB, profile.VramRequirement, $"{vram / 1024f:0.0} GB"));
+            int vramMB = SystemInfo.graphicsMemorySize;
+            float vramGB = vramMB / 1024f;
+            results.Add(new SpecResult(SpecCategory.VRAM, vramGB >= profile.MinVramGB, profile.VramRequirement, $"{vramGB:0.0} GB"));
 
             // RAM
-            int ram = SystemInfo.systemMemorySize;
-            results.Add(new SpecResult(SpecCategory.RAM, ram >= profile.MinRamMB, profile.RamRequirement, $"{ram / 1024f:0.0} GB"));
+            int ramMB = SystemInfo.systemMemorySize;
+            float ramGB = ramMB / 1024f;
+            results.Add(new SpecResult(SpecCategory.RAM, ramGB >= profile.MinRamGB, profile.RamRequirement, $"{ramGB:0.0} GB"));
 
             // Storage
             long availableStorageBytes = PlatformUtils.GetAvailableStorageBytes(Application.persistentDataPath);
@@ -85,28 +100,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
                 $"{availableStorageGB:0.0} GB"));
 
             return results;
-        }
-
-        public bool HasMinimumSpecs(SpecTarget target = SpecTarget.Minimum)
-        {
-            cachedResults = Evaluate(target);
-            bool allMet = true;
-
-            foreach (var result in cachedResults)
-            {
-                string logMessage = $"Minimum spec {(result.IsMet ? "Met" : "Not met")}: " +
-                                    $"{result.Category} - Required: {result.Required}, Actual: {result.Actual}";
-
-                if (result.IsMet)
-                    ReportHub.Log(ReportCategory.UNSPECIFIED, logMessage);
-                else
-                {
-                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, logMessage);
-                    allMet = false;
-                }
-            }
-
-            return allMet;
         }
     }
 }

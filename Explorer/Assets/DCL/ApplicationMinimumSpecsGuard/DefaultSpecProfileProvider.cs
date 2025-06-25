@@ -13,17 +13,15 @@ namespace DCL.ApplicationMinimumSpecsGuard
                 PlatformOS.Windows when target == SpecTarget.Minimum => new SpecProfile
                 {
                     PlatformLabel = "Windows", OsRequirement = "Windows 10 64-bit", OsCheck = os => os.Contains("Windows 10") || os.Contains("Windows 11"), CpuRequirement = "Intel i5 7th gen or AMD Ryzen 5+",
-                    CpuCheck = IsWindowsCpuAcceptable, GpuRequirement = "Nvidia RTX 20 Series or AMD Radeon RX 5000 Series (DirectX 12 Compatible)", GpuCheck = IsWindowsGpuAcceptable, MinVramMB = 6144,
-                    VramRequirement = "6 GB", MinRamMB = 16384, RamRequirement = "16 GB", ShaderRequirement = "Compute Shaders (DX12)",
-                    ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8, StorageRequirement = "8 GB"
+                    CpuCheck = IsWindowsCpuAcceptable, GpuRequirement = "Nvidia RTX 20 Series or AMD Radeon RX 5000 Series (DirectX 12 Compatible)", GpuCheck = IsWindowsGpuAcceptable, MinVramGB = 6,
+                    MinRamGB = 15, ShaderRequirement = "Compute Shaders (DX12)", ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8
                 },
 
                 PlatformOS.Mac when target == SpecTarget.Minimum => new SpecProfile
                 {
                     PlatformLabel = "macOS", OsRequirement = "macOS 11 Big Sur", OsCheck = os => os.Contains("Mac OS X") && TryGetMacVersionMajor(os) >= 11, CpuRequirement = "Apple M1",
-                    CpuCheck = cpu => cpu.ToLower().Contains("apple m1") || cpu.ToLower().Contains("apple m2"), GpuRequirement = "Apple M1 (Metal support)", GpuCheck = gpu => gpu.ToLower().Contains("apple m1") || gpu.ToLower().Contains("apple m2"), MinVramMB = 6144,
-                    VramRequirement = "6 GB", MinRamMB = 16384, RamRequirement = "16 GB", ShaderRequirement = "Metal-compatible (Compute Shaders)",
-                    ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8, StorageRequirement = "8 GB"
+                    CpuCheck = IsAppleSilicon, GpuRequirement = "Apple M1 (Metal support)", GpuCheck = IsAppleSilicon, MinVramGB = 6,
+                    MinRamGB = 16, ShaderRequirement = "Metal-compatible (Compute Shaders)", ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8
                 },
 
                 _ => throw new NotSupportedException("Unsupported platform")
@@ -42,6 +40,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
                     return model >= 5; // Ryzen 5, 7, 9
             }
 
+            // Matches Intel CPUs like "i5-7400" or "i7-11700K" and captures the model number (e.g., 7400, 11700)
             // Intel i5+ with 7th gen+
             var intelMatch = Regex.Match(cpu, @"i[3579]-?(\d{4})");
             if (intelMatch.Success && int.TryParse(intelMatch.Groups[1].Value, out int modelNumber))
@@ -71,6 +70,16 @@ namespace DCL.ApplicationMinimumSpecsGuard
             }
 
             return false;
+        }
+
+        /// <summary>
+        ///     Checks if the provided device name corresponds to an Apple M-series processor (M1, M2, etc.).
+        ///     This is used for both CPU and GPU on Apple Silicon systems.
+        /// </summary>
+        private static bool IsAppleSilicon(string deviceName)
+        {
+            // The regex is now hidden as an implementation detail, which is perfect.
+            return Regex.IsMatch(deviceName, @"apple\s+m\d", RegexOptions.IgnoreCase);
         }
 
         private static int TryGetMacVersionMajor(string os)

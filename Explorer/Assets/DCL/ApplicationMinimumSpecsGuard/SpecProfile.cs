@@ -55,17 +55,17 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public string GpuRequirement;
         public Func<string, bool> GpuCheck;
 
-        public int MinVramMB;
-        public string VramRequirement;
+        public int MinRamGB;
+        public string RamRequirement => $"{MinRamGB} GB";
 
-        public int MinRamMB;
-        public string RamRequirement;
+        public int MinVramGB;
+        public string VramRequirement => $"{MinVramGB} GB";
 
         public string ShaderRequirement;
         public Func<bool> ShaderCheck;
 
         public int MinStorageGB;
-        public string StorageRequirement = "8 GB";
+        public string StorageRequirement => $"{MinStorageGB} GB";
     }
 
     public interface ISpecProfileProvider
