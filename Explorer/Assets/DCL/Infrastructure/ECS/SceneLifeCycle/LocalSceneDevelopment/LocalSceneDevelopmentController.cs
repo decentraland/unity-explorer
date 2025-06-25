@@ -7,7 +7,6 @@ using Google.Protobuf;
 using System;
 using System.Net.WebSockets;
 using System.Threading;
-using Utility;
 
 namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
@@ -34,6 +33,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             try
             {
                 webSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
+                webSocket?.Abort();
                 webSocket?.Dispose();
             }
             catch (ObjectDisposedException) { }
@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                 if (receiveResult.MessageType == WebSocketMessageType.Binary)
                 {
-                    wsSceneMessage.MergeFrom(receiveBuffer.AsSpan(0, receiveResult.Count));
+                    wsSceneMessage.MergeFrom(receiveBuffer.AsSpan(0, receiveResult.Count).ToArray());
                     ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket scene message received: {wsSceneMessage.MessageCase}");
 
                     // TODO: Discriminate 'wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel' to only update GLTF models...

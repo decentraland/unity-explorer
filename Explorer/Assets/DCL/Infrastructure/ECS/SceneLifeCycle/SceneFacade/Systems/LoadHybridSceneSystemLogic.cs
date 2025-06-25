@@ -20,7 +20,7 @@ namespace ECS.SceneLifeCycle.Systems
         private HybridSceneHashedContent? hybridSceneHashedContent;
         private string? remoteSceneID;
 
-        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams) : base(webRequestController, assetBundleURL)
+        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams, bool isLocalSceneDevelopment) : base(webRequestController, assetBundleURL, isLocalSceneDevelopment)
         {
             world = hybridSceneParams.World;
             hybridSceneContentServer = hybridSceneParams.HybridSceneContentServer;
