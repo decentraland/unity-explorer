@@ -46,6 +46,8 @@ namespace DCL.Prefs
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
+        public const string SETTINGS_UPSCALER = "Settings_Upscaler";
+
 
         public const string WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED = "webRequestsArtificialDelayEnable";
         public const string WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS = "webRequestsArtificialDelaySeconds";

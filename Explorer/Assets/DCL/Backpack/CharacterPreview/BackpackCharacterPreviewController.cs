@@ -159,8 +159,8 @@ namespace DCL.Backpack.CharacterPreview
             previewAvatarModel.Emotes ??= new HashSet<URN>();
 
             URN urn = emote.GetUrn().Shorten();
-            if (previewAvatarModel.Emotes.Contains(urn)) return;
-            previewAvatarModel.Emotes.Add(urn);
+            if (!previewAvatarModel.Emotes.Add(urn))
+                return;
 
             OnModelUpdated();
 

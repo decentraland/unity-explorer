@@ -18,10 +18,10 @@ namespace DCL.UI.SuggestionPanel
         private CancellationTokenSource searchCts = new ();
         private string lastMatch;
 
-        public InputSuggestionPanelController(InputSuggestionPanelView suggestionPanel, ViewDependencies viewDependencies)
+        public InputSuggestionPanelController(InputSuggestionPanelView suggestionPanel)
         {
             this.suggestionPanel = suggestionPanel;
-            this.suggestionPanel.InjectDependencies(viewDependencies);
+            this.suggestionPanel.InjectDependencies();
             this.suggestionPanel.SuggestionSelected += OnSuggestionSelected;
         }
 
