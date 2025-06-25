@@ -11,37 +11,34 @@ namespace DCL.Diagnostics
         public static readonly ReportData UNSPECIFIED = new (ReportCategory.UNSPECIFIED);
 
         public readonly string Category;
-        public readonly ReportHint Hint;
-        public readonly IReportsDebouncer? Debouncer;
+        public readonly ReportDebounce Debounce;
 
         public SceneShortInfo SceneShortInfo;
         public uint? SceneTickNumber;
 
-        public ReportData(string category, ReportHint hint = ReportHint.None,
+        public ReportData(string category, ReportDebounce debounce = default,
             SceneShortInfo sceneShortInfo = default,
-            uint? sceneTickNumber = null,
-            IReportsDebouncer? debouncer = null)
+            uint? sceneTickNumber = null)
         {
             Category = category;
-            Hint = hint;
+            Debounce = debounce;
             SceneShortInfo = sceneShortInfo;
             SceneTickNumber = sceneTickNumber;
-            Debouncer = debouncer;
         }
 
         public static implicit operator ReportData(string category) =>
             new (category);
 
-        public ReportData WithSessionStatic() =>
-            new (Category, ReportHint.SessionStatic | Hint, SceneShortInfo, SceneTickNumber);
+        public ReportData WithStaticDebounce() =>
+            new (Category, ReportDebounce.ASSEMBLY_STATIC, SceneShortInfo, SceneTickNumber);
 
         public bool Equals(ReportData other) =>
-            Category == other.Category && Hint == other.Hint && Equals(Debouncer, other.Debouncer) && SceneShortInfo.Equals(other.SceneShortInfo) && SceneTickNumber == other.SceneTickNumber;
+            Category == other.Category && Debounce.Equals(other.Debounce) && SceneShortInfo.Equals(other.SceneShortInfo) && SceneTickNumber == other.SceneTickNumber;
 
         public override bool Equals(object? obj) =>
             obj is ReportData other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(Category, (int)Hint, Debouncer, SceneShortInfo, SceneTickNumber);
+            HashCode.Combine(Category, Debounce, SceneShortInfo, SceneTickNumber);
     }
 }

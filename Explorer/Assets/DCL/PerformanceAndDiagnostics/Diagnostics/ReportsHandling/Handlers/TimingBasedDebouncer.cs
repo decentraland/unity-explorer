@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Diagnostics
@@ -9,25 +8,16 @@ namespace DCL.Diagnostics
     /// </summary>
     public abstract class TimingBasedDebouncer<TTiming> : IReportsDebouncer, IEqualityComparer<ExceptionFingerprint> where TTiming: struct
     {
-        protected readonly Dictionary<ExceptionFingerprint, TTiming> exceptions = new (50);
-        protected readonly Dictionary<string, TTiming> messages = new (50);
+        protected readonly Dictionary<ReportMessageFingerprint, TTiming> messages = new (50);
 
         public abstract ReportHandler AppliedTo { get; }
 
-        public IReadOnlyDictionary<ExceptionFingerprint, TTiming> Exceptions => exceptions;
+        public bool Debounce(ReportMessageFingerprint fingerprint, ReportData reportData, LogType log) =>
+            Debounce(fingerprint);
 
-        public bool Debounce(object message, ReportData reportData, LogType log)
-        {
-            if (message is not string key)
-                return false; // No assumptions can be made about the generic object type
+        protected abstract bool Debounce(ReportMessageFingerprint fingerprint);
 
-            return Debounce(messages, key);
-        }
-
-        public bool Debounce(Exception exception, ReportData reportData, LogType log) =>
-            Debounce(exceptions, new ExceptionFingerprint(exception));
-
-        protected abstract bool Debounce<TKey>(Dictionary<TKey, TTiming> dictionary, TKey key);
+        public IReadOnlyDictionary<ReportMessageFingerprint, TTiming> Messages => messages;
 
         public bool Equals(ExceptionFingerprint x, ExceptionFingerprint y) =>
             x.Equals(y);

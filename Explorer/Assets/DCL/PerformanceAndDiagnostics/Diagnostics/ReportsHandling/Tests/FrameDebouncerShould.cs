@@ -16,7 +16,7 @@ namespace DCL.Diagnostics.Tests
         public void SetUp()
         {
             mockedReportScope = MockedReportScope.CreateFromBaseClass(out handler, out _, ReportHandler.Sentry);
-            reportData = new ReportData(ReportCategory.FRIENDS, debouncer: new FrameDebouncer(1));
+            reportData = new ReportData(ReportCategory.FRIENDS, new ReportDebounce(new FrameDebouncer(1)));
         }
 
         [TearDown]

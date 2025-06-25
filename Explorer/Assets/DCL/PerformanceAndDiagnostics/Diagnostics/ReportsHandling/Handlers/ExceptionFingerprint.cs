@@ -22,34 +22,12 @@ namespace DCL.Diagnostics
     /// </summary>
     public readonly struct ExceptionFingerprint : IEquatable<ExceptionFingerprint>
     {
-        /// <summary>
-        ///     Fake call stack fingerprint.
-        /// </summary>
-        public readonly struct CallStackFingerprint : IEquatable<CallStackFingerprint>
-        {
-            public readonly string Fingerprint;
-
-            public CallStackFingerprint(string fingerprint)
-            {
-                Fingerprint = fingerprint;
-            }
-
-            public bool Equals(CallStackFingerprint other) =>
-                Fingerprint == other.Fingerprint;
-
-            public override bool Equals(object? obj) =>
-                obj is CallStackFingerprint other && Equals(other);
-
-            public override int GetHashCode() =>
-                Fingerprint.GetHashCode();
-        }
-
         public readonly Type Type;
         public readonly Type? InnerType;
         public readonly string Message;
         public readonly CallStackFingerprint CallStack;
 
-        public ExceptionFingerprint(Exception e, CallStackFingerprint? callStack = null)
+        public ExceptionFingerprint(Exception e, CallStackFingerprint? callStack)
         {
             CallStack = callStack ?? new CallStackFingerprint(string.Empty);
             Type = e.GetType();

@@ -88,7 +88,7 @@ namespace DCL.Friends
                     await openStreamFunc().AttachExternalCancellation(ct);
                 }
                 catch (OperationCanceledException) { }
-                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS, debouncer: serverStreamReportsDebouncer)); }
+                catch (Exception e) { ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS, new ReportDebounce(serverStreamReportsDebouncer))); }
             }
         }
 

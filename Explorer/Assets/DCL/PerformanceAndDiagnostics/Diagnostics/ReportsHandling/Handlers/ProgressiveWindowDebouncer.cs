@@ -25,29 +25,15 @@ namespace DCL.Diagnostics
 
         public override ReportHandler AppliedTo => ReportHandler.All;
 
-        public ProgressiveWindowDebouncer(TimeSpan initialWindow, TimeSpan maxWindow, TimeSpan cleanUpInterval,
-            Func<DateTime>? dateTimeProvider = null,
-            double backoffFactor = 1.7,
-            byte allowedRepetitions = 3)
-        {
-            this.initialWindow = initialWindow;
-            this.maxWindow = maxWindow;
-            this.cleanUpInterval = cleanUpInterval;
-            this.dateTimeProvider = dateTimeProvider ?? (() => DateTime.UtcNow);
-            this.allowedRepetitions = allowedRepetitions;
-            this.backoffFactor = backoffFactor;
-            lastCleanUpTime = this.dateTimeProvider();
-        }
-
-        protected override bool Debounce<TKey>(Dictionary<TKey, Tracker> dictionary, TKey key)
+        protected override bool Debounce(ReportMessageFingerprint fingerprint)
         {
             DateTime now = dateTimeProvider();
 
             TryCleanUp(now);
 
-            lock (dictionary)
+            lock (messages)
             {
-                Tracker tracker = dictionary.TryGetValue(key, out Tracker existingTracker)
+                Tracker tracker = messages.TryGetValue(fingerprint, out Tracker existingTracker)
                     ? existingTracker
                     : new Tracker(now, initialWindow);
 
@@ -77,9 +63,23 @@ namespace DCL.Diagnostics
 
                 tracker.Count++;
 
-                dictionary[key] = tracker; // Reflect the change
+                messages[fingerprint] = tracker; // Reflect the change
                 return debounced;
             }
+        }
+
+        public ProgressiveWindowDebouncer(TimeSpan initialWindow, TimeSpan maxWindow, TimeSpan cleanUpInterval,
+            Func<DateTime>? dateTimeProvider = null,
+            double backoffFactor = 1.7,
+            byte allowedRepetitions = 3)
+        {
+            this.initialWindow = initialWindow;
+            this.maxWindow = maxWindow;
+            this.cleanUpInterval = cleanUpInterval;
+            this.dateTimeProvider = dateTimeProvider ?? (() => DateTime.UtcNow);
+            this.allowedRepetitions = allowedRepetitions;
+            this.backoffFactor = backoffFactor;
+            lastCleanUpTime = this.dateTimeProvider();
         }
 
         private TimeSpan CalculateDynamicWindow(DateTime now, ref Tracker tracker)
@@ -122,22 +122,20 @@ namespace DCL.Diagnostics
             if (now - lastCleanUpTime < cleanUpInterval)
                 return false;
 
-            lock (messages) { ExecuteCleanUp(now, messages); }
-
-            lock (exceptions) { ExecuteCleanUp(now, exceptions); }
+            lock (messages) { ExecuteCleanUp(now); }
 
             lastCleanUpTime = now; // Update the last clean-up time
             return true;
         }
 
-        private void ExecuteCleanUp<TKey>(DateTime now, Dictionary<TKey, Tracker> dict)
+        private void ExecuteCleanUp(DateTime now)
         {
-            using PooledObject<List<TKey>> pooled = ListPool<TKey>.Get(out List<TKey>? keysToRemove);
+            using PooledObject<List<ReportMessageFingerprint>> pooled = ListPool<ReportMessageFingerprint>.Get(out List<ReportMessageFingerprint>? keysToRemove);
 
-            foreach (KeyValuePair<TKey, Tracker> kvp in dict)
+            foreach (KeyValuePair<ReportMessageFingerprint, Tracker> kvp in messages)
             {
                 Tracker tracker = kvp.Value;
-                TKey? key = kvp.Key;
+                ReportMessageFingerprint key = kvp.Key;
                 TimeSpan dynamicWindow = CalculateDynamicWindow(now, ref tracker);
 
                 // If the window has decayed to the initial value or less and exceeded the allowed repetitions window, remove the key
@@ -145,7 +143,7 @@ namespace DCL.Diagnostics
                     keysToRemove.Add(key);
             }
 
-            foreach (TKey key in keysToRemove) dict.Remove(key);
+            foreach (ReportMessageFingerprint key in keysToRemove) messages.Remove(key);
         }
 
         public struct Tracker

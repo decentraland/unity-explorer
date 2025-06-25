@@ -23,23 +23,23 @@ namespace DCL.Diagnostics
             cleanUpTargetFrame = MultithreadingUtility.FrameCount + cleanUpThreshold;
         }
 
-        protected override bool Debounce<TKey>(Dictionary<TKey, long> dictionary, TKey key)
+        protected override bool Debounce(ReportMessageFingerprint fingerprint)
         {
             long currentTiming = MultithreadingUtility.FrameCount;
 
             CleanUp(currentTiming);
 
-            lock (dictionary)
+            lock (messages)
             {
-                if (!dictionary.TryGetValue(key, out long storedTiming))
+                if (!messages.TryGetValue(fingerprint, out long storedTiming))
                 {
-                    dictionary[key] = currentTiming;
+                    messages[fingerprint] = currentTiming;
                     return false; // First time we see this message
                 }
 
                 if (CanPass(storedTiming, currentTiming))
                 {
-                    dictionary[key] = currentTiming;
+                    messages[fingerprint] = currentTiming;
                     return false; // Enough frames passed, we can log it again
                 }
 
@@ -66,20 +66,18 @@ namespace DCL.Diagnostics
             if (!ShouldCleanUp(timing))
                 return;
 
-            lock (messages) { ExecuteCleanUp(timing, messages); }
-
-            lock (exceptions) { ExecuteCleanUp(timing, exceptions); }
+            lock (messages) { ExecuteCleanUp(timing); }
         }
 
-        private void ExecuteCleanUp<TKey>(long timing, Dictionary<TKey, long> dict)
+        private void ExecuteCleanUp(long timing)
         {
-            using PooledObject<List<TKey>> pooled = ListPool<TKey>.Get(out List<TKey>? keysToRemove);
+            using PooledObject<List<ReportMessageFingerprint>> pooled = ListPool<ReportMessageFingerprint>.Get(out List<ReportMessageFingerprint>? keysToRemove);
 
-            foreach (KeyValuePair<TKey, long> kvp in dict)
+            foreach (KeyValuePair<ReportMessageFingerprint, long> kvp in messages)
                 if (!CanPass(kvp.Value, timing))
                     keysToRemove.Add(kvp.Key);
 
-            foreach (TKey key in keysToRemove) dict.Remove(key);
+            foreach (ReportMessageFingerprint key in keysToRemove) messages.Remove(key);
         }
     }
 }

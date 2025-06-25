@@ -31,7 +31,7 @@ namespace DCL.SkyBox.Rendering
             private readonly TimeOfDayRenderingModel timeOfDayRenderingModel;
 
             // Debug
-            private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
+            private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportDebounce.ASSEMBLY_STATIC);
             private Material m_Material_Draw;
             private ProceduralSkyBoxSettings_Draw m_Settings_Draw;
             private RTHandle m_SkyBoxCubeMap_RTHandle;

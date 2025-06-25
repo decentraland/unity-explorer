@@ -120,7 +120,7 @@ namespace DCL.Diagnostics.Tests
             // After this point, the tracker should be cleaned up
             Assert.IsTrue(debouncer.TryCleanUp(fakeNow));
 
-            Assert.That(debouncer.Exceptions.Count, Is.EqualTo(0), "After cleanup, no exceptions should be tracked");
+            Assert.That(debouncer.Messages.Count, Is.EqualTo(0), "After cleanup, no exceptions should be tracked");
         }
 
         [Test]
@@ -141,14 +141,14 @@ namespace DCL.Diagnostics.Tests
             // After this point, the tracker should be cleaned up
             Assert.IsTrue(debouncer.TryCleanUp(fakeNow)); // enough time passed to trigger cleanup
 
-            Assert.That(debouncer.Exceptions.Count, Is.EqualTo(1), "After cleanup, one exception should still be tracked");
+            Assert.That(debouncer.Messages.Count, Is.EqualTo(1), "After cleanup, one exception should still be tracked");
         }
 
         [Test]
         public void GradualRampDown_LowersBackoffWindow()
         {
             Exception ex = CreateException("rampdown2");
-            var key = new ExceptionFingerprint(ex);
+            var key = new ReportMessageFingerprint(new ExceptionFingerprint(ex, null));
 
             // Burn through some retries to increase window
             const int EXTRA_RETRIES = 2;
@@ -157,7 +157,7 @@ namespace DCL.Diagnostics.Tests
                 debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
 
             // At this point the window is 10s * 1.7^(5-3) ≈ 28.9s
-            Assert.IsTrue(debouncer.Exceptions.TryGetValue(key, out ProgressiveWindowDebouncer.Tracker tracker));
+            Assert.IsTrue(debouncer.Messages.TryGetValue(key, out ProgressiveWindowDebouncer.Tracker tracker));
 
             // The stored value will correspond to the previous report: 17s
             Assert.AreEqual(17, tracker.Window.TotalSeconds, 0.5);
@@ -184,7 +184,7 @@ namespace DCL.Diagnostics.Tests
             debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
 
             // Check the window
-            Assert.IsTrue(debouncer.Exceptions.TryGetValue(key, out tracker));
+            Assert.IsTrue(debouncer.Messages.TryGetValue(key, out tracker));
 
             Assert.AreEqual(initialWindow.TotalSeconds, tracker.Window.TotalSeconds, 0.5);
         }

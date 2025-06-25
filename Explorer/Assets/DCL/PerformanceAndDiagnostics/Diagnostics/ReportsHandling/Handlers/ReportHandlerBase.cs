@@ -81,35 +81,25 @@ namespace DCL.Diagnostics
             // Don't call DebounceInternal as exceptions can't be compared
 
             return TryGetQualifiedDebouncer(in reportData, out IReportsDebouncer? debouncer)
-                   && debouncer!.Debounce(message, reportData, logType);
+                   && debouncer!.Debounce(new ReportMessageFingerprint(new ExceptionFingerprint(message, reportData.Debounce.CallStackHint)), reportData, logType);
         }
 
         private bool Debounce(in object message, in ReportData reportData, LogType logType)
         {
             if (!debounceEnabled) return false;
 
-            if (DebounceInternal(in message, in reportData, logType))
-                return true;
+            if (message is not string stringMessage) // Can't make assumptions about the message type
+                return false;
 
             return TryGetQualifiedDebouncer(in reportData, out IReportsDebouncer? debouncer)
-                   && debouncer!.Debounce(message, reportData, logType);
+                   && debouncer!.Debounce(new ReportMessageFingerprint(stringMessage), reportData, logType);
         }
 
         [HideInCallstack]
         private bool TryGetQualifiedDebouncer(in ReportData reportData, out IReportsDebouncer? debouncer)
         {
-            debouncer = reportData.Debouncer;
+            debouncer = reportData.Debounce.Debouncer;
             return debouncer != null && EnumUtils.HasFlag(debouncer.AppliedTo, type);
-        }
-
-        private bool DebounceInternal(in object message, in ReportData reportData, LogType logType)
-        {
-            return reportData.Hint switch
-                   {
-                       ReportHint.AssemblyStatic => !staticMessages.Add(message),
-                       ReportHint.SessionStatic => !staticMessages.Add(message),
-                       _ => false,
-                   };
         }
     }
 }
