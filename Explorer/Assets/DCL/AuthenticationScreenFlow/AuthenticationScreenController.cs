@@ -169,6 +169,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
+            viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -349,6 +350,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            viewInstance!.JumpIntoWorldButton.interactable = false;
             AnimateAndAwaitAsync().Forget();
             return;
 
