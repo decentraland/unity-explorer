@@ -109,8 +109,6 @@ namespace DCL.Communities.EventInfo
 
         private string CalculateRecurrentSchedulesString(IEventDTO eventData)
         {
-            string Capitalize(string s) => char.ToUpper(s[0]) + s.Substring(1);
-
             DateTime.TryParse(eventData.Next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
 
             for (var i = 0; i < eventData.Recurrent_dates.Length; i++)
@@ -118,25 +116,7 @@ namespace DCL.Communities.EventInfo
                 if (!DateTime.TryParse(eventData.Recurrent_dates[i], null, DateTimeStyles.RoundtripKind, out DateTime date)) continue;
                 if (date < nextStartAt) continue;
 
-                DateTime utcStart = date.ToUniversalTime();
-                TimeSpan duration = TimeSpan.FromMilliseconds(eventData.Duration);
-                DateTime utcEnd = utcStart.Add(duration);
-
-                TimeZoneInfo localZone = TimeZoneInfo.Local;
-                DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
-                DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
-
-                TimeSpan offset = localZone.GetUtcOffset(localStart);
-                string offsetStr = $"UTC{(offset.TotalHours >= 0 ? "+" : "")}{offset.TotalHours:0}";
-
-                string dayOfWeek = Capitalize(localStart.ToString("dddd"));
-                string month = Capitalize(localStart.ToString("MMM"));
-                string startTime = localStart.ToString("hh:mmtt").ToLower();
-                string endTime = localEnd.ToString("hh:mmtt").ToLower();
-
-                string formatted = $"{dayOfWeek}, {month} {localStart:dd} from {startTime} to {endTime} ({offsetStr})";
-
-                eventSchedulesStringBuilder.Append(formatted);
+                FormatEventString(date, eventData.Duration, eventSchedulesStringBuilder);
 
                 if (i < eventData.Recurrent_dates.Length - 1)
                     eventSchedulesStringBuilder.Append("\n");
@@ -145,6 +125,41 @@ namespace DCL.Communities.EventInfo
             var result = eventSchedulesStringBuilder.ToString();
             eventSchedulesStringBuilder.Clear();
             return result;
+        }
+
+        private static void FormatEventString(DateTime utcStart, double durationMs, StringBuilder sb)
+        {
+            TimeSpan duration = TimeSpan.FromMilliseconds(durationMs);
+            DateTime utcEnd = utcStart.Add(duration);
+
+            TimeZoneInfo localZone = TimeZoneInfo.Local;
+            DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
+            DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
+
+            TimeSpan offset = localZone.GetUtcOffset(localStart);
+
+            var day = localStart.ToString("dddd");
+            sb.Append(char.ToUpper(day[0]));
+            sb.Append(day, 1, day.Length - 1);
+            sb.Append(", ");
+
+            var month = localStart.ToString("MMM");
+            sb.Append(char.ToUpper(month[0]));
+            sb.Append(month, 1, month.Length - 1);
+            sb.Append(' ');
+            sb.Append(localStart.ToString("dd"));
+            sb.Append(" from ");
+
+            sb.Append(localStart.ToString("hh:mmtt").ToLowerInvariant());
+            sb.Append(" to ");
+            sb.Append(localEnd.ToString("hh:mmtt").ToLowerInvariant());
+
+            sb.Append(" (UTC");
+            double offsetHours = offset.TotalHours;
+            if (offsetHours >= 0)
+                sb.Append('+');
+            sb.Append(((int)offsetHours).ToString());
+            sb.Append(')');
         }
 
         public void UpdateInterestedButtonState() =>
