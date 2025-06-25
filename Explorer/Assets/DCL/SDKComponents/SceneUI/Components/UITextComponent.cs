@@ -8,14 +8,11 @@ namespace DCL.SDKComponents.SceneUI.Components
     {
         public Label Label;
 
-        public bool IsDisposed { get; private set; }
-
         Label IPoolableComponentProvider<Label>.PoolableComponent => Label;
         Type IPoolableComponentProvider<Label>.PoolableComponentType => typeof(Label);
 
         public void Dispose()
         {
-            IsDisposed = true;
         }
     }
 }

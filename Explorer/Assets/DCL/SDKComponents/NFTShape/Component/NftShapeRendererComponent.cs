@@ -11,7 +11,6 @@ namespace DCL.SDKComponents.NFTShape.Component
         public NftShapeRendererComponent(INftShapeRenderer nftShape)
         {
             this.nftShape = nftShape;
-            IsDisposed = false;
         }
 
         public void ApplyVisibility(bool visibility)
@@ -24,11 +23,8 @@ namespace DCL.SDKComponents.NFTShape.Component
 
         public void Dispose()
         {
-            IsDisposed = true;
             nftShape.Dispose();
         }
-
-        public bool IsDisposed { get; private set; }
 
         public INftShapeRenderer PoolableComponent => nftShape;
 

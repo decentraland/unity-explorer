@@ -116,10 +116,29 @@ namespace ECS.LifeCycle
 
     public static class BudgetedIteratorOperationExtensions
     {
-        public static void ExecuteInstantly<T>(this T operation, Query query) where T : IBudgetedIteratorOperation
+        public static void ExecuteInstantly<T>(this T operation, Query query) where T: IBudgetedIteratorOperation
         {
             new BudgetedIterator<T>(query, NullPerformanceBudget.INSTANCE, operation).Execute();
         }
+    }
 
+    public readonly struct ForeachBudgetedIteratorOperation<TForeach, TComponent> : IBudgetedIteratorOperation where TForeach: IForEach<TComponent>
+    {
+        private readonly TForeach forEach;
+
+        public ForeachBudgetedIteratorOperation(TForeach forEach)
+        {
+            this.forEach = forEach;
+        }
+
+        public void Execute(Array[] array2D, int entityIndex, int arrayIndex)
+        {
+            if (array2D[arrayIndex].GetType().GetElementType() == typeof(TComponent))
+            {
+                var componentArray = (TComponent[])array2D[arrayIndex];
+                ref var component = ref componentArray[entityIndex];
+                forEach.Update(ref component);
+            }
+        }
     }
 }

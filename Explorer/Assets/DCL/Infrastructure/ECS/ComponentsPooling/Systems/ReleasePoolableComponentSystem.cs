@@ -28,12 +28,24 @@ namespace ECS.ComponentsPooling.Systems
         private Finalize finalize;
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
+        private readonly ForeachBudgetedIteratorOperation<Finalize, TProvider> budgetedFinalizeOperation;
+
+        private BudgetedIterator<ForeachBudgetedIteratorOperation<Finalize, TProvider>>? finalizeIterator;
+
         public bool IsBudgetedFinalizeSupported => true;
 
         public ReleasePoolableComponentSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             finalize = new Finalize(poolsRegistry);
             releaseOnEntityDestroy = new ReleaseOnEntityDestroy(poolsRegistry);
+            budgetedFinalizeOperation = new ForeachBudgetedIteratorOperation<Finalize, TProvider>(finalize);
+        }
+
+        protected override void OnDispose()
+        {
+            finalizeIterator?.Dispose();
+            finalizeIterator = null;
+            base.OnDispose();
         }
 
         protected override void Update(float t)
@@ -46,10 +58,24 @@ namespace ECS.ComponentsPooling.Systems
             World.InlineQuery<Finalize, TProvider>(in finalizeQuery, ref finalize);
         }
 
-        public void BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        public BudgetedIteratorExecuteResult BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget)
         {
-            var budgetedFinalize = new BudgetedFinalize<Finalize, TProvider>(finalize, budget, cleanUpMarker);
-            World.InlineQuery<BudgetedFinalize<Finalize, TProvider>, TProvider>(in finalizeQuery, ref budgetedFinalize);
+            // TODO these logic seems repeated (take a look at ReleaseReferenceComponentsSystem), generalized?
+            finalizeIterator ??= new BudgetedIterator<ForeachBudgetedIteratorOperation<Finalize, TProvider>>(
+                query,
+                budget,
+                budgetedFinalizeOperation
+            );
+
+            var result = finalizeIterator.Value.Execute();
+
+            if (result == BudgetedIteratorExecuteResult.COMPLETE)
+            {
+                finalizeIterator.Value.Dispose();
+                finalizeIterator = null;
+            }
+
+            return result;
         }
 
         private readonly struct ReleaseOnEntityDestroy : IForEach<TProvider, DeleteEntityIntention>
@@ -82,9 +108,6 @@ namespace ECS.ComponentsPooling.Systems
 
             public void Update(ref TProvider provider)
             {
-                if (provider.IsDisposed)
-                    return;
-
                 Profiler.BeginSample("Finalize/PoolsRegistry");
                 poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
                 Profiler.EndSample();

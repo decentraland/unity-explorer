@@ -23,18 +23,13 @@ namespace DCL.Optimization.Pools.Tests
             public TestProvider(TestComponent1 poolableComponent)
             {
                 Component = poolableComponent;
-                IsDisposed = false;
             }
 
-            public bool IsDisposed { get; private set; }
             TestComponent1 IPoolableComponentProvider<TestComponent1>.PoolableComponent => Component;
 
             public Type PoolableComponentType => typeof(TestComponent1);
 
-            public void Dispose()
-            {
-                IsDisposed = true;
-            }
+            public void Dispose() { }
         }
 
         [Test]

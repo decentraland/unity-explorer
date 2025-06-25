@@ -22,11 +22,8 @@ namespace ECS.Unity.PrimitiveRenderer.Components
 
         MeshRenderer IPoolableComponentProvider<MeshRenderer>.PoolableComponent => MeshRenderer;
 
-        public bool IsDisposed { get; private set; }
-
         public void Dispose()
         {
-            IsDisposed = true;
         }
     }
 }

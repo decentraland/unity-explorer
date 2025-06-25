@@ -26,7 +26,6 @@ namespace ECS.Unity.PrimitiveColliders.Components
             SDKCollider = sdkCollider;
             ColliderType = colliderType;
             SDKType = sdkType;
-            IsDisposed = false;
         }
 
         public void AssignCollider(SDKCollider collider, Type colliderType, PBMeshCollider.MeshOneofCase sdkType)
@@ -45,11 +44,8 @@ namespace ECS.Unity.PrimitiveColliders.Components
 
         Type IPoolableComponentProvider<Collider>.PoolableComponentType => ColliderType;
 
-        public bool IsDisposed { get; private set; }
-
         public void Dispose()
         {
-            IsDisposed = true;
         }
     }
 }
