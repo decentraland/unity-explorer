@@ -43,6 +43,12 @@ namespace DCL.Prefs
         public static void DeleteKey(string key) =>
             dclPrefs.DeleteKey(key);
 
+        public static void SetBool(string key, bool value) =>
+            dclPrefs.SetBool(key, value);
+
+        public static bool GetBool(string key, bool defaultValue = false) =>
+            dclPrefs.GetBool(key, defaultValue);
+
         public static void DeleteAll() =>
             dclPrefs.DeleteAll();
 
@@ -51,14 +57,13 @@ namespace DCL.Prefs
 
         public static void SetToggleValue(string key, bool value, bool save = false)
         {
-            SetInt(key, value ? 1 : 0);
-
+            SetBool(key, value);
             if (save)
                 Save();
         }
 
         public static bool GetToggleValue(string key) =>
-            GetInt(key) == 1;
+            GetBool(key);
 
         public static void SetSliderValue(string key, float value, bool save = false)
         {
@@ -80,7 +85,7 @@ namespace DCL.Prefs
         }
 
         public static int GetDropdownValue(string key) =>
-            DCLPlayerPrefs.GetInt(key);
+            GetInt(key);
 
         private static void Initialize(bool inMemory)
         {
