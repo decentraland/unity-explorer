@@ -31,11 +31,11 @@ namespace Editor
             // Debug.Log(Parameters["TEST_VALUE"] as string);
             //
 
+            GenerateIgnoreWarningsFile();
+
             //Unity suggestion: 1793168
             //This should ensure that the roslyn compiler has been run and everything is generated as needed.
             EditorApplication.ExecuteMenuItem("File/Save Project");
-
-            GenerateIgnoreWarningsFile();
 
             // Set version for this build
             var buildVersion = Parameters["BUILD_VERSION"] as string;
@@ -111,6 +111,9 @@ namespace Editor
 
                 Debug.Log($"Successfully generated csc.rsp file at: {filePath}");
                 Debug.Log($"Added {warningsToIgnore.Length} warning suppressions to the file.");
+
+                // Force a refresh
+                AssetDatabase.Refresh();
             }
             catch (System.Exception ex)
             {
