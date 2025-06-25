@@ -8,7 +8,6 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
-using DCL.Passport;
 using DCL.Profiles;
 using DCL.Web3;
 using ECS.Abstract;
@@ -25,14 +24,13 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string HOVER_TOOLTIP = "View Profile";
+        private const string HOVER_TOOLTIP = "Options";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
         private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
         private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip;
         private Profile? currentProfileHovered;
-        private readonly IMVCManager mvcManager;
         private Vector2? currentPositionHovered;
         private UniTaskCompletionSource contextMenuTask = new ();
 
@@ -45,10 +43,9 @@ namespace DCL.Interaction.Systems
             this.eventSystem = eventSystem;
             dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
-            this.mvcManager = mvcManager;
-            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);
+            viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.RightPointer);
 
-            dclInput.Player.Pointer!.performed += OpenContextMenu;
+            dclInput.Player.RightPointer!.performed += OpenContextMenu;
         }
 
         protected override void Update(float t)
@@ -100,13 +97,10 @@ namespace DCL.Interaction.Systems
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            //Commented for now, we will restore it later
-            //contextMenuTask.TrySetResult();
-            //contextMenuTask = new UniTaskCompletionSource();
+            contextMenuTask.TrySetResult();
+            contextMenuTask = new UniTaskCompletionSource();
 
-            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
-
-            //menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
+            menusAccessFacade.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(userId), currentPositionHovered!.Value, new Vector2(10, 0), CancellationToken.None, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.CENTER_RIGHT);
         }
     }
 }

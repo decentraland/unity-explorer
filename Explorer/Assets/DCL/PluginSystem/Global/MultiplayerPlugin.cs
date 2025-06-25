@@ -65,6 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly ThroughputBufferBunch islandThroughputBufferBunch;
         private readonly ThroughputBufferBunch sceneThroughputBufferBunch;
         private readonly IActivatableConnectiveRoom chatRoom;
+        private readonly IActivatableConnectiveRoom voiceChatRoom;
 
         private IObjectPool<DebugRoomIndicatorView>? debugRoomIndicatorPool;
 
@@ -90,8 +91,7 @@ namespace DCL.PluginSystem.Global
             ICharacterDataPropagationUtility characterDataPropagationUtility,
             IComponentPoolsRegistry poolsRegistry,
             ThroughputBufferBunch islandThroughputBufferBunch,
-            ThroughputBufferBunch sceneThroughputBufferBunch
-        )
+            ThroughputBufferBunch sceneThroughputBufferBunch, IActivatableConnectiveRoom voiceChatRoom)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -115,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.poolsRegistry = poolsRegistry;
             this.islandThroughputBufferBunch = islandThroughputBufferBunch;
             this.sceneThroughputBufferBunch = sceneThroughputBufferBunch;
+            this.voiceChatRoom = voiceChatRoom;
         }
 
         public void Dispose()
@@ -136,7 +137,7 @@ namespace DCL.PluginSystem.Global
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
 
-            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
+            DebugRoomsSystem.InjectToWorld(ref builder, roomsStatus, archipelagoIslandRoom, gateKeeperSceneRoom, chatRoom, voiceChatRoom, entityParticipantTable, remoteMetadata, debugContainerBuilder,
                 debugRoomIndicatorPool);
             DebugThroughputRoomsSystem.InjectToWorld(ref builder, roomHub, debugContainerBuilder, islandThroughputBufferBunch, sceneThroughputBufferBunch);
 
