@@ -315,16 +315,22 @@ namespace Global.Dynamic
 
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
         {
-            MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
-            if (DCLPlayerPrefs.GetInt(MinimumSpecsScreenController.PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
+            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+
+            if (DCLPlayerPrefs.GetInt(MinimumSpecsScreenController.PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY) == 1 ||
+                (!hasMinimumSpecs && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
                 return;
 
-            var minimumRequirementsPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+            var minimumRequirementsPrefab = await bootstrapContainer!
+                .AssetsProvisioner!
+                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
-            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
-                MinimumSpecsScreenController.CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
+                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
-            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser);
+            var minimumSpecsResults = minimumSpecsGuard.Results;
+            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, minimumSpecsResults);
             dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
             dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
             await minimumSpecsScreenController.HoldingTask.Task;

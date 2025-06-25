@@ -3,9 +3,9 @@ using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using MVC;
-using System;
+using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
+using UnityEditor;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -14,12 +14,18 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public const string PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY = "dontShowMinSpecsScreen";
 
         private readonly IWebBrowser webBrowser;
+        private readonly IReadOnlyList<SpecResult> specResult;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         public readonly UniTaskCompletionSource HoldingTask;
 
-        public MinimumSpecsScreenController(ViewFactoryMethod viewFactory, IWebBrowser webBrowser) : base(viewFactory)
+        private MinimumSpecsTablePresenter specsTablePresenter;
+
+        public MinimumSpecsScreenController(ViewFactoryMethod viewFactory,
+            IWebBrowser webBrowser,
+            IReadOnlyList<SpecResult> specResult) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
+            this.specResult = specResult;
             HoldingTask = new UniTaskCompletionSource();
         }
 
@@ -29,6 +35,9 @@ namespace DCL.ApplicationMinimumSpecsGuard
             viewInstance.ContinueButton.onClick.AddListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.AddListener(OnReadMoreClicked);
             viewInstance.DontShowAgainToggle.onValueChanged.AddListener(OnToggleChanged);
+
+            specsTablePresenter = new MinimumSpecsTablePresenter(viewInstance.TableView);
+            specsTablePresenter.Populate(specResult);
         }
 
         private void OnToggleChanged(bool dontShowAgain)
@@ -57,7 +66,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private static void OnExitClicked()
         {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+            EditorApplication.isPlaying = false;
 #else
             UnityEngine.Application.Quit();
 #endif
