@@ -54,7 +54,6 @@ namespace Global.Dynamic
         private readonly RealmSamplingData realmSamplingData;
         private readonly IRealmData realmData;
         private readonly URLDomain assetBundlesURL;
-        private readonly PhysicsTickProvider physicsTickProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<IDCLGlobalPlugin> globalPlugins;
         private readonly IDebugContainerBuilder debugContainerBuilder;
@@ -124,7 +123,6 @@ namespace Global.Dynamic
             this.sceneLoadingLimit = sceneLoadingLimit;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
-            physicsTickProvider = staticContainer.PhysicsTickProvider;
         }
 
         public GlobalWorld Create(ISceneFactory sceneFactory, Entity playerEntity)
@@ -186,7 +184,7 @@ namespace Global.Dynamic
 
             DestroyEntitiesSystem.InjectToWorld(ref builder);
 
-            UpdatePhysicsTickSystem.InjectToWorld(ref builder, physicsTickProvider);
+            UpdatePhysicsTickSystem.InjectToWorld(ref builder);
             UpdateTimeSystem.InjectToWorld(ref builder);
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData, profileRepository);

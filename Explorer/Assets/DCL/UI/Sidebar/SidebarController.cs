@@ -46,7 +46,6 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -79,7 +78,6 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache,
             IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
@@ -99,7 +97,6 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.featureFlagsCache = featureFlagsCache;
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
@@ -281,7 +278,6 @@ namespace DCL.UI.Sidebar
             includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
                 includeMarketplaceCredits,
                 ownProfile.UserId,
-                featureFlagsCache,
                 ct);
 
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
