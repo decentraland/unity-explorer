@@ -500,7 +500,7 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 6579474225357820591}
   backgroundCloseButton: {fileID: 6113321632732672044}
   closeButton: {fileID: 3261299304199055675}
-  contextMenuConfiguration: {fileID: 11400000, guid: 35a24412c56014f62b57d699a93e4b74, type: 2}
+  contextMenuSettings: {fileID: 11400000, guid: 35a24412c56014f62b57d699a93e4b74, type: 2}
   scrollRect: {fileID: 8801006303347823306}
   <SuccessNotificationView>k__BackingField: {fileID: 8080183468449416664}
   <ErrorNotificationView>k__BackingField: {fileID: 1992152086201580299}

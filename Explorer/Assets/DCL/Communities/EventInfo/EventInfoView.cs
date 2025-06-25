@@ -21,7 +21,7 @@ namespace DCL.Communities.EventInfo
 
         [SerializeField] private Button backgroundCloseButton;
         [SerializeField] private Button closeButton;
-        [SerializeField] private EventInfoContextMenuConfiguration contextMenuConfiguration;
+        [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings;
         [SerializeField] private ScrollRect scrollRect;
         [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; }
         [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; }
@@ -60,11 +60,11 @@ namespace DCL.Communities.EventInfo
             jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO));
             shareButton.onClick.AddListener(() => OpenContextMenu(shareButton.transform.position));
 
-            contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: contextMenuConfiguration.VerticalPadding,
-                              elementsSpacing: contextMenuConfiguration.ElementsSpacing,
-                              offsetFromTarget: contextMenuConfiguration.OffsetFromTarget)
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.ShareText, contextMenuConfiguration.ShareSprite, () => EventShareButtonClicked?.Invoke(eventDTO)))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.CopyLinkText, contextMenuConfiguration.CopyLinkSprite, () => EventCopyLinkButtonClicked?.Invoke(eventDTO)));
+            contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding,
+                              elementsSpacing: contextMenuSettings.ElementsSpacing,
+                              offsetFromTarget: contextMenuSettings.OffsetFromTarget)
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ShareText, contextMenuSettings.ShareSprite, () => EventShareButtonClicked?.Invoke(eventDTO)))
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CopyLinkText, contextMenuSettings.CopyLinkSprite, () => EventCopyLinkButtonClicked?.Invoke(eventDTO)));
         }
 
         private void OpenContextMenu(Vector2 position) =>
