@@ -934,7 +934,8 @@ namespace Global.Dynamic
                     notificationsBusController,
                     staticContainer.RealmData,
                     sharedSpaceManager,
-                    identityCache));
+                    identityCache,
+                    staticContainer.LoadingStatus));
             }
 
             if (dynamicWorldParams.EnableAnalytics)
