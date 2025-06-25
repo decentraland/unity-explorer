@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 19373184c73f36042a55739551bb8298
+    m_Address: Avatar_CelShading
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b6579d7e91068e41872ba3a3eb66fdf
     m_Address: Avatar_Male_Mesh
     m_ReadOnly: 0
