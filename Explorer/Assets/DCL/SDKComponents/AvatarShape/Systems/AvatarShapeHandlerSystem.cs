@@ -2,7 +2,10 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Loading.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -19,6 +22,14 @@ using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Arch;
+using Cysharp.Threading.Tasks;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
+using System;
+using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
+using LocalSceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetSceneEmoteFromLocalSceneIntention>;
 
 namespace ECS.Unity.AvatarShape.Systems
 {
@@ -30,13 +41,15 @@ namespace ECS.Unity.AvatarShape.Systems
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> globalTransformPool;
         private readonly ISceneData sceneData;
+        private readonly bool localSceneDevelopment;
 
         public AvatarShapeHandlerSystem(World world, World globalWorld, IComponentPool<Transform> globalTransformPool,
-            ISceneData sceneData) : base(world)
+            ISceneData sceneData, bool localSceneDevelopment) : base(world)
         {
             this.globalWorld = globalWorld;
             this.globalTransformPool = globalTransformPool;
             this.sceneData = sceneData;
+            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         protected override void Update(float t)
@@ -77,7 +90,7 @@ namespace ECS.Unity.AvatarShape.Systems
             World.Add(entity, new SDKAvatarShapeComponent(globalWorldEntity));
 
             if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
-                globalWorld.Add(globalWorldEntity, new CharacterEmoteIntent() { EmoteId = pbAvatarShape.ExpressionTriggerId });
+                AddCharacterEmoteIntent(globalWorldEntity, pbAvatarShape.ExpressionTriggerId, BodyShape.FromStringSafe(pbAvatarShape.BodyShape));
         }
 
         [Query]
@@ -89,7 +102,75 @@ namespace ECS.Unity.AvatarShape.Systems
             globalWorld.Set(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape);
 
             if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
-                globalWorld.AddOrSet(sdkAvatarShapeComponent.globalWorldEntity, new CharacterEmoteIntent() { EmoteId = pbAvatarShape.ExpressionTriggerId });
+                AddCharacterEmoteIntent(sdkAvatarShapeComponent.globalWorldEntity, pbAvatarShape.ExpressionTriggerId, BodyShape.FromStringSafe(pbAvatarShape.BodyShape));
+        }
+
+        private void AddCharacterEmoteIntent(Entity globalWorldEntity, string emoteId, BodyShape bodyShape)
+        {
+            bool isSceneEmote = emoteId.ToLower().EndsWith(".glb");
+
+            if (isSceneEmote)
+            {
+                if (!sceneData.SceneContent.TryGetHash(emoteId, out string hash))
+                    return;
+
+                if (localSceneDevelopment)
+                {
+                    LoadAndTriggerSceneEmote(globalWorldEntity,
+                        new GetSceneEmoteFromLocalSceneIntention(
+                            sceneData,
+                            emoteId,
+                            hash,
+                            bodyShape,
+                            loop: false) // looping scene emotes on SDK AvatarShapes is not supported yet
+                    ).Forget();
+                }
+                else
+                {
+                    LoadAndTriggerSceneEmote(globalWorldEntity,
+                        new GetSceneEmoteFromRealmIntention(
+                            sceneData.SceneEntityDefinition.id!,
+                            sceneData.AssetBundleManifest,
+                            hash,
+                            loop: false, // looping scene emotes on SDK AvatarShapes is not supported yet
+                            bodyShape)
+                    ).Forget();
+                }
+            }
+            else
+            {
+                globalWorld.AddOrSet(globalWorldEntity,
+                    new CharacterEmoteIntent() { EmoteId = emoteId });
+            }
+        }
+
+        private async UniTaskVoid LoadAndTriggerSceneEmote<TIntention>(Entity globalWorldEntity, TIntention intention) where TIntention : struct, IAssetIntention, IEquatable<TIntention>
+        {
+            // 1. Create the scene emote loading promise and wait for it
+            var promise = AssetPromise<EmotesResolution, TIntention>.Create(globalWorld, intention, PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(globalWorld);
+
+            if (!globalWorld.IsAlive(globalWorldEntity) || globalWorldEntity == Entity.Null) return;
+
+            // 2. Finally, add the CharacterEmoteIntent to the avatar once the emote has been loaded
+            if (promise.Result is { Succeeded: true })
+            {
+                using var consumed = promise.Result.Value.Asset.ConsumeEmotes();
+
+                if (consumed.Value.Count > 0)
+                {
+                    URN emoteUrn = consumed.Value[0]!.GetUrn();
+
+                    globalWorld.AddOrSet(globalWorldEntity,
+                        new CharacterEmoteIntent
+                        {
+                            EmoteId = emoteUrn,
+                            Spatial = true,
+                            TriggerSource = TriggerSource.SCENE,
+                        });
+                }
+            }
         }
 
         [Query]

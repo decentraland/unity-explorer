@@ -25,7 +25,7 @@ namespace ECS.Unity.AvatarShape.Tests
             pool.Get().Returns(new GameObject().transform);
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.SceneLoadingConcluded.Returns(true);
-            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData);
+            system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, false);
 
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
