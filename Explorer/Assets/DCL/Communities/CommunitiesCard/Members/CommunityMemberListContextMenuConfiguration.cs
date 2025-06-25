@@ -6,6 +6,9 @@ namespace DCL.Communities.CommunitiesCard.Members
     public class CommunityMemberListContextMenuConfiguration : ScriptableObject
     {
         [SerializeField] private int contextMenuWidth = 250;
+        [SerializeField] private int elementsSpacing = 5;
+        [SerializeField] private int separatorHeight = 20;
+        [SerializeField] private RectOffset verticalPadding;
         [Space(10)]
         [SerializeField] private Sprite viewProfileSprite;
         [SerializeField] private string viewProfileText = "View Profile";
@@ -32,6 +35,9 @@ namespace DCL.Communities.CommunitiesCard.Members
         [SerializeField] private string banUserText = "Ban";
 
         public int ContextMenuWidth => contextMenuWidth;
+        public int ElementsSpacing => elementsSpacing;
+        public int SeparatorHeight => separatorHeight;
+        public RectOffset VerticalPadding => verticalPadding;
 
         public Sprite ViewProfileSprite => viewProfileSprite;
         public string ViewProfileText => viewProfileText;
