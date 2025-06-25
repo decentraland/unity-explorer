@@ -169,7 +169,6 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
-            viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -422,6 +421,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
                     characterPreviewController?.OnShow();
 
                     break;
@@ -430,7 +430,7 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void ResetAnimator(Animator animator)
+        private static void ResetAnimator(Animator animator)
         {
             animator.Rebind();
             animator.Update(0f);
