@@ -329,5 +329,7 @@ namespace DCL.Diagnostics
         public const string ADAPTIVE_PERFORMANCE = nameof(ADAPTIVE_PERFORMANCE);
 
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
+
+        public const string SKYBOX = nameof(SKYBOX);
     }
 }

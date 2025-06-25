@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -56,22 +57,34 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 
         public async UniTask InitializeAsync(StylizedSkyboxSettings settings, CancellationToken ct)
         {
-            skyboxSettings = settings.SettingsAsset;
-            skyboxSettings.Reset();
+            try
+            {
+                skyboxSettings = settings.SettingsAsset;
+                skyboxSettings.Reset();
 
-            skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
-            AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
+                skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
+                AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
 
-            skyboxController.Initialize(skyboxSettings.SkyboxMaterial,
-                directionalLight,
-                skyboxAnimation,
-                featureFlagsCache,
-                skyboxSettings,
-                scenesCache
-               , sceneRestrictionBusController
+                skyboxController.Initialize(skyboxSettings.SkyboxMaterial,
+                    directionalLight,
+                    skyboxAnimation,
+                    featureFlagsCache,
+                    skyboxSettings,
+                    scenesCache
+                  , sceneRestrictionBusController
                 );
 
-            SetupDebugPanel();
+                SetupDebugPanel();
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore cancellation
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.SKYBOX, $"Failed to initialize skybox: {ex}");
+                throw;
+            }
         }
 
         private void SetupDebugPanel()

@@ -111,6 +111,12 @@ namespace DCL.UI.Skybox
             base.Dispose();
             skyboxMenuCts.SafeCancelAndDispose();
             skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
+            skyboxSettings.DayCycleEnabledChanged -= OnDayCycleEnabledChanged;
+
+            if(!viewInstance) return;
+            viewInstance.CloseButton.onClick.RemoveAllListeners();
+            viewInstance.TimeSlider.onValueChanged.RemoveAllListeners();
+            viewInstance.TimeProgressionToggle.onValueChanged.RemoveAllListeners();
         }
     }
 }

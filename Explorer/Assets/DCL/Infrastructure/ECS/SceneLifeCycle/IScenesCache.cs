@@ -65,16 +65,16 @@ namespace ECS.SceneLifeCycle
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
-            foreach (var parcel in parcels)
-                scenesByParcels.Add(parcel, sceneFacade);
+            for (var i = 0; i < parcels.Count; i++)
+                scenesByParcels.Add(parcels[i], sceneFacade);
 
             scenes.Add(sceneFacade);
         }
 
         public void AddNonRealScene(IReadOnlyList<Vector2Int> parcels)
         {
-            foreach (Vector2Int parcel in parcels)
-                nonRealSceneByParcel.Add(parcel);
+            for (var i = 0; i < parcels.Count; i++)
+                nonRealSceneByParcel.Add(parcels[i]);
         }
 
         public void AddNonRealScene(Vector2Int parcel)
@@ -116,7 +116,7 @@ namespace ECS.SceneLifeCycle
             sceneFacade = null;
             foreach (ISceneFacade facade in scenes)
             {
-                if (facade.SceneData.SceneEntityDefinition.id!.Equals(sceneId))
+                if (facade is { SceneData: { SceneEntityDefinition: { id: { } id } } } && id.Equals(sceneId))
                 {
                     sceneFacade = facade;
                     return true;

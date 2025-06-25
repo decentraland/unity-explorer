@@ -24,7 +24,7 @@ namespace DCL.StylizedSkybox.Scripts
         [CanBeNull] private ISceneFacade scene;
         private bool hasActiveSceneOverride = false;
         private bool hasActiveFeatureFlagOverride = false;
-        private bool needsHierarchyUpdate = true; // Force check on the first run
+        private readonly bool hasSkyboxSettingFeatureFlag;
         private float speedMultiplier { get; set; } = DEFAULT_SPEED;
 
         public float GlobalTimeOfDay { get; private set; }
@@ -34,12 +34,16 @@ namespace DCL.StylizedSkybox.Scripts
             this.skyboxSettings = skyboxSettings;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.featureFlagsCache = featureFlagsCache;
+
             skyboxSettings.IsDayCycleEnabled = true;
             skyboxSettings.TimeOfDayNormalized = StylizedSkyboxSettingsAsset.DEFAULT_TIME;
             GlobalTimeOfDay = skyboxSettings.TimeOfDayNormalized;
 
             scenesCache.OnCurrentSceneChanged += OnSceneChanged;
             skyboxSettings.SkyboxTimeSourceChanged += SkyboxSettingsOnSkyboxTimeSourceChanged;
+
+            hasSkyboxSettingFeatureFlag = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
+            UpdateTimeSourceHierarchy();
         }
 
         private void SkyboxSettingsOnSkyboxTimeSourceChanged(SkyboxTimeSource newSource)
@@ -49,30 +53,22 @@ namespace DCL.StylizedSkybox.Scripts
                 case SkyboxTimeSource.GLOBAL:
                 case SkyboxTimeSource.PLAYER_FIXED:
                 case SkyboxTimeSource.FEATURE_FLAG:
-                    RestrictTimeControl(false);
+                    RestrictTimeControl(SceneRestrictionsAction.REMOVED);
                     break;
                 case SkyboxTimeSource.SCENE_FIXED:
-                    RestrictTimeControl(true);
+                    RestrictTimeControl(SceneRestrictionsAction.APPLIED);
                     break;
             }
         }
 
-        private void RestrictTimeControl(bool restrict)
+        private void RestrictTimeControl(SceneRestrictionsAction action)
         {
-            var restrictionsAction = restrict ? SceneRestrictionsAction.APPLIED : SceneRestrictionsAction.REMOVED;
-            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeLocked(restrictionsAction));
+            sceneRestrictionBusController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeLocked(action));
         }
 
         public void Update(float deltaTime)
         {
             UpdateGlobalTime(deltaTime);
-
-            if (needsHierarchyUpdate)
-            {
-                UpdateTimeSourceHierarchy();
-                needsHierarchyUpdate = false;
-            }
-
             ApplyTimeProgression();
         }
 
@@ -114,11 +110,9 @@ namespace DCL.StylizedSkybox.Scripts
 
         private bool TryApplySceneTimeOverride()
         {
-            if(scene == null) return false;
+            if (scene?.SceneData?.SceneEntityDefinition?.metadata == null) return false;
 
-            SceneMetadata sceneMetadata = scene.SceneData
-                                               .SceneEntityDefinition
-                                               .metadata;
+            SceneMetadata sceneMetadata = scene.SceneData.SceneEntityDefinition.metadata;
 
             if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTimeOfDay: var worldTime } } })
             {
@@ -144,24 +138,25 @@ namespace DCL.StylizedSkybox.Scripts
 
         private bool TryApplyFeatureFlagTimeOverride()
         {
-            bool hasOverride = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
+            if (!hasSkyboxSettingFeatureFlag)
+                return false;
 
-            if (hasOverride &&
-                featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out FeatureFlagSkyboxSettings ffSkyboxSettings))
-            {
-                skyboxSettings.IsDayCycleEnabled = ffSkyboxSettings.speed != 0;
-                skyboxSettings.TimeOfDayNormalized = ffSkyboxSettings.time;
-                speedMultiplier = Mathf.Abs(ffSkyboxSettings.speed);
-                skyboxSettings.SkyboxTimeSource = SkyboxTimeSource.FEATURE_FLAG;
-            }
+            if (!featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out FeatureFlagSkyboxSettings ffSkyboxSettings))
+                return false;
 
-            return hasOverride;
+            skyboxSettings.IsDayCycleEnabled = ffSkyboxSettings.speed != 0;
+            skyboxSettings.TimeOfDayNormalized = ffSkyboxSettings.time;
+            speedMultiplier = Mathf.Abs(ffSkyboxSettings.speed);
+            skyboxSettings.SkyboxTimeSource = SkyboxTimeSource.FEATURE_FLAG;
+
+            return true;
+
         }
 
         private void OnSceneChanged(ISceneFacade sceneFacade)
         {
             scene = sceneFacade;
-            needsHierarchyUpdate = true;
+            UpdateTimeSourceHierarchy();
         }
 
 #region DEBUG METHODS
