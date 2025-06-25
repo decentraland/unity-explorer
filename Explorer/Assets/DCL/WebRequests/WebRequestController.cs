@@ -85,7 +85,10 @@ namespace DCL.WebRequests
 
                     if (exception.IsIrrecoverableError(attemptsLeft) && !envelope.IgnoreIrrecoverableErrors)
                     {
-                        SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+                        // Ignore the file error as we always try to read from the file first
+                        if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+                            SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+
                         throw;
                     }
                 }

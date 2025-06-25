@@ -66,7 +66,10 @@ namespace DCL.WebRequests
             + $"\nSignInfo: {signInfo?.ToString() ?? NONE}";
 
         /// <summary>
-        ///     A simplified representation of the request envelope
+        ///     A simplified representation of the request envelope:
+        ///     URL
+        ///     Headers: {headers} if present
+        ///     SignInfo: {signInfo} if present
         /// </summary>
         /// <returns></returns>
         public string GetBreadcrumbString(StringBuilder sb)
