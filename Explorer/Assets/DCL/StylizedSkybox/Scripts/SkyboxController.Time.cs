@@ -1,5 +1,4 @@
-﻿using DCL.FeatureFlags;
-using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+﻿using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.StylizedSkybox.Scripts;
 using ECS.SceneLifeCycle;
 
@@ -8,9 +7,9 @@ public partial class SkyboxController
     private SkyboxTimeManager skyboxTimeManager;
     public float CurrentTimeOfDay { get; private set; }
 
-    private void InitializeSkyboxTimeHandling(IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController, FeatureFlagsCache featureFlagsCache)
+    private void InitializeSkyboxTimeHandling(IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController)
     {
-        skyboxTimeManager = new SkyboxTimeManager(skyboxSettings, scenesCache, sceneRestrictionBusController, featureFlagsCache);
+        skyboxTimeManager = new SkyboxTimeManager(skyboxSettings, scenesCache, sceneRestrictionBusController);
         skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
     }
 

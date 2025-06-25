@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
@@ -23,26 +22,22 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
         private StylizedSkyboxSettingsAsset? skyboxSettings;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly Light directionalLight;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ElementBinding<float> debugTimeOfDay = new(0);
         private readonly ElementBinding<string> debugTimeSource = new (nameof(SkyboxTimeSource.GLOBAL));
 
         public StylizedSkyboxPlugin(IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
             IDebugContainerBuilder debugContainerBuilder,
-            FeatureFlagsCache featureFlagsCache,
-            IScenesCache scenesCache
-           , ISceneRestrictionBusController sceneRestrictionBusController
-            )
+            IScenesCache scenesCache,
+            ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.debugContainerBuilder = debugContainerBuilder;
-            this.featureFlagsCache = featureFlagsCache;
             this.scenesCache = scenesCache;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
@@ -68,7 +63,6 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
                 skyboxController.Initialize(skyboxSettings.SkyboxMaterial,
                     directionalLight,
                     skyboxAnimation,
-                    featureFlagsCache,
                     skyboxSettings,
                     scenesCache
                   , sceneRestrictionBusController

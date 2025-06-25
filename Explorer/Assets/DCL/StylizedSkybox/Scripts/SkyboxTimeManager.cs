@@ -19,7 +19,6 @@ namespace DCL.StylizedSkybox.Scripts
 
         private readonly StylizedSkyboxSettingsAsset skyboxSettings;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private const float DEFAULT_SPEED = 1 * 60f; // 1 minute per second
         [CanBeNull] private ISceneFacade scene;
         private bool hasActiveSceneOverride = false;
@@ -29,11 +28,10 @@ namespace DCL.StylizedSkybox.Scripts
 
         public float GlobalTimeOfDay { get; private set; }
 
-        public SkyboxTimeManager(StylizedSkyboxSettingsAsset skyboxSettings, IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController, FeatureFlagsCache featureFlagsCache)
+        public SkyboxTimeManager(StylizedSkyboxSettingsAsset skyboxSettings, IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.skyboxSettings = skyboxSettings;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
-            this.featureFlagsCache = featureFlagsCache;
 
             skyboxSettings.IsDayCycleEnabled = true;
             skyboxSettings.TimeOfDayNormalized = StylizedSkyboxSettingsAsset.DEFAULT_TIME;
@@ -42,7 +40,7 @@ namespace DCL.StylizedSkybox.Scripts
             scenesCache.OnCurrentSceneChanged += OnSceneChanged;
             skyboxSettings.SkyboxTimeSourceChanged += SkyboxSettingsOnSkyboxTimeSourceChanged;
 
-            hasSkyboxSettingFeatureFlag = featureFlagsCache != null && featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
+            hasSkyboxSettingFeatureFlag = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS);
             UpdateTimeSourceHierarchy();
         }
 
@@ -141,7 +139,7 @@ namespace DCL.StylizedSkybox.Scripts
             if (!hasSkyboxSettingFeatureFlag)
                 return false;
 
-            if (!featureFlagsCache.Configuration.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out FeatureFlagSkyboxSettings ffSkyboxSettings))
+            if (!FeatureFlagsConfiguration.Instance.TryGetJsonPayload(FeatureFlagsStrings.SKYBOX_SETTINGS, FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT, out FeatureFlagSkyboxSettings ffSkyboxSettings))
                 return false;
 
             skyboxSettings.IsDayCycleEnabled = ffSkyboxSettings.speed != 0;

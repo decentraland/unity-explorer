@@ -45,7 +45,6 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private bool includeMarketplaceCredits;
 
@@ -77,7 +76,6 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache,
             ISceneRestrictionBusController sceneRestrictionBusController)
             : base(viewFactory)
         {
@@ -97,8 +95,6 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.featureFlagsCache = featureFlagsCache;
-            this.sceneRestrictionBusController = sceneRestrictionBusController;
 
             sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
@@ -277,7 +273,6 @@ namespace DCL.UI.Sidebar
             includeMarketplaceCredits = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(
                 includeMarketplaceCredits,
                 ownProfile.UserId,
-                featureFlagsCache,
                 ct);
 
             includeMarketplaceCredits = false;

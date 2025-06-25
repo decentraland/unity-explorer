@@ -1,5 +1,4 @@
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.StylizedSkybox.Scripts;
 using ECS.SceneLifeCycle;
@@ -89,8 +88,7 @@ public partial class SkyboxController : MonoBehaviour
         }
     }
 
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, FeatureFlagsCache featureFlagsCache, StylizedSkyboxSettingsAsset settingsAsset,
-        IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController)
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, StylizedSkyboxSettingsAsset settingsAsset, IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController)
     {
         this.skyboxSettings = settingsAsset;
 
@@ -145,7 +143,7 @@ public partial class SkyboxController : MonoBehaviour
         if (fog)
             RenderSettings.fog = true;
 
-        InitializeSkyboxTimeHandling(scenesCache, sceneRestrictionBusController, featureFlagsCache);
+        InitializeSkyboxTimeHandling(scenesCache, sceneRestrictionBusController);
 
         UpdateSkybox();
 
@@ -240,7 +238,7 @@ public partial class SkyboxController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null, null, null, null, null);
+            Initialize(null, null, null, null, null, null);
     }
 #endif
 }
