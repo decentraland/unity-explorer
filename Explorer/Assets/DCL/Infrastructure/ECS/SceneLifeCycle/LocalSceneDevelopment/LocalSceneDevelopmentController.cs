@@ -65,7 +65,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                 if (receiveResult.MessageType == WebSocketMessageType.Binary)
                 {
-                    wsSceneMessage.MergeFrom(receiveBuffer.AsSpan(0, receiveResult.Count).ToArray());
+                    wsSceneMessage.MergeFrom(receiveBuffer.AsSpan(0, receiveResult.Count));
                     ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket scene message received: {wsSceneMessage.MessageCase}");
 
                     // TODO: Discriminate 'wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel' to only update GLTF models...
