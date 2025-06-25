@@ -88,6 +88,8 @@ namespace DCL.Communities.EventInfo
         {
             eventDTO = eventData;
 
+            ResetScrollPosition();
+
             imageController.RequestImage(eventData.Image);
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
@@ -101,6 +103,9 @@ namespace DCL.Communities.EventInfo
 
             eventSchedules.text = CalculateRecurrentSchedulesString(eventData);
         }
+
+        private void ResetScrollPosition() =>
+            scrollRect.verticalNormalizedPosition = 1f;
 
         private string CalculateRecurrentSchedulesString(IEventDTO eventData)
         {
