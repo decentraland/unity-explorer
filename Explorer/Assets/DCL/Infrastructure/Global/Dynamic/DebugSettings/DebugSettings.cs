@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Global.Dynamic.DebugSettings
 {
     [Serializable]
-    public class DebugSettings : IDebugSettings
+    public class DebugSettings
     {
         private static readonly DebugSettings RELEASE_SETTINGS = Release();
 

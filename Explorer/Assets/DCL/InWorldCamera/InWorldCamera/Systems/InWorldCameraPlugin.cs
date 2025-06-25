@@ -50,7 +50,6 @@ namespace DCL.PluginSystem.Global
 {
     public class InWorldCameraPlugin : IDCLGlobalPlugin<InWorldCameraSettings>
     {
-        private readonly DCLInput input;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly SelfProfile selfProfile;
         private readonly RealmData realmData;
@@ -87,7 +86,7 @@ namespace DCL.PluginSystem.Global
         private InWorldCameraController inWorldCameraController;
         private CharacterController followTarget;
 
-        public InWorldCameraPlugin(DCLInput input, SelfProfile selfProfile,
+        public InWorldCameraPlugin(SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
             ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
@@ -105,7 +104,6 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache)
         {
-            this.input = input;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.playerEntity = playerEntity;
@@ -191,8 +189,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
-            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, DCLInput.Instance.InWorldCamera, nametagsData);
+            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, DCLInput.Instance.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
 

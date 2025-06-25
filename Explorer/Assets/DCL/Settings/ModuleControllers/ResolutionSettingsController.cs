@@ -1,5 +1,7 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.Prefs;
+using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
+using DCL.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,19 +12,19 @@ namespace DCL.Settings.ModuleControllers
 {
     public class ResolutionSettingsController : SettingsFeatureController
     {
-        private const string RESOLUTION_DATA_STORE_KEY = "Settings_Resolution";
-
         private readonly SettingsDropdownModuleView view;
         private readonly List<Resolution> possibleResolutions = new ();
+        private readonly UpscalingController upscalingController;
 
-        public ResolutionSettingsController(SettingsDropdownModuleView view)
+        public ResolutionSettingsController(SettingsDropdownModuleView view, UpscalingController upscalingController)
         {
             this.view = view;
+            this.upscalingController = upscalingController;
 
             LoadResolutionOptions();
 
-            if (settingsDataStore.HasKey(RESOLUTION_DATA_STORE_KEY))
-                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(RESOLUTION_DATA_STORE_KEY);
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION))
+                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_RESOLUTION);
             else
             {
                 for (var index = 0; index < possibleResolutions.Count; index++)
@@ -94,7 +96,8 @@ namespace DCL.Settings.ModuleControllers
         {
             Resolution selectedResolution = possibleResolutions[index];
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
-            settingsDataStore.SetDropdownValue(RESOLUTION_DATA_STORE_KEY, index, save: true);
+            settingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
+            upscalingController.ResolutionChanged(selectedResolution);
         }
 
         public override void Dispose()

@@ -1,5 +1,5 @@
+using DCL.Prefs;
 using System;
-using UnityEngine;
 
 namespace DCL.Settings
 {
@@ -23,16 +23,16 @@ namespace DCL.Settings
 
         public float GetWorldVolume()
         {
-            if (PlayerPrefs.HasKey(WORLD_VOLUME_DATA_STORE_KEY))
-                return PlayerPrefs.GetFloat(WORLD_VOLUME_DATA_STORE_KEY) / 100;
+            if (DCLPlayerPrefs.HasKey(WORLD_VOLUME_DATA_STORE_KEY))
+                return DCLPlayerPrefs.GetFloat(WORLD_VOLUME_DATA_STORE_KEY) / 100;
 
             return 1f;
         }
 
         public float GetMasterVolume()
         {
-            if (PlayerPrefs.HasKey(MASTER_VOLUME_DATA_STORE_KEY))
-                return PlayerPrefs.GetFloat(MASTER_VOLUME_DATA_STORE_KEY) / 100;
+            if (DCLPlayerPrefs.HasKey(MASTER_VOLUME_DATA_STORE_KEY))
+                return DCLPlayerPrefs.GetFloat(MASTER_VOLUME_DATA_STORE_KEY) / 100;
 
             return 1f;
         }

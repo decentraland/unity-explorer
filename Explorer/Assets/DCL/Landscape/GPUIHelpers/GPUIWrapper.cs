@@ -1,17 +1,46 @@
-﻿using Arch.Core;
+﻿// Stub class for when the GPUI package is not used
+using Arch.Core;
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Landscape.Settings;
+using DCL.Landscape.Utils;
+using System;
 
-namespace DCL.Landscape.GPUIHelpers
+namespace DCL.Landscape
 {
-// Stub class for when the GPUI package is not used
-#if !GPUIPRO_PRESENT
-    public class GPUIWrapper
+    public interface IGPUIWrapper
     {
-        public void Initialize(LandscapeData landscapeData) { }
+        void InjectDebugSystem(ref ArchSystemsWorldBuilder<World> worldBuilder, IDebugContainerBuilder debugBuilder);
 
-        public void Inject(TerrainGenerator terrainGenerator, ref ArchSystemsWorldBuilder<World> worldBuilder, IDebugContainerBuilder debugBuilder) { }
+        void SetupLandscapeData(LandscapeData landscapeData);
+
+        public void SetupLocalCache(TerrainGeneratorLocalCache localCache);
+
+        UniTask TerrainsInstantiatedAsync(ChunkModel[] terrainModelChunkModels);
+
+        ITerrainDetailSetter GetDetailSetter();
     }
-#endif
+
+    //Stub class for when GPUI is not present
+    public class MockGPUIWrapper : IGPUIWrapper
+    {
+        public void InjectDebugSystem(ref ArchSystemsWorldBuilder<World> worldBuilder, IDebugContainerBuilder debugBuilder)
+        {
+        }
+
+        public void SetupLandscapeData(LandscapeData landscapeData)
+        {
+        }
+
+        public void SetupLocalCache(TerrainGeneratorLocalCache localCache)
+        {
+        }
+
+        public UniTask TerrainsInstantiatedAsync(ChunkModel[] terrainModelChunkModels) =>
+            UniTask.CompletedTask;
+
+        public ITerrainDetailSetter GetDetailSetter() =>
+            new CPUTerrainDetailSetter();
+    }
 }

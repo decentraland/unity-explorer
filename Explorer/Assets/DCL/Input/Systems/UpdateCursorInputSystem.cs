@@ -31,7 +31,6 @@ namespace DCL.Input.Systems
         private readonly ICrosshairView crosshairCanvas;
         private readonly DCLInput.CameraActions cameraActions;
         private readonly DCLInput.UIActions uiActions;
-        private readonly IExposedCameraData cameraData;
         private bool hasHoverCollider;
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
@@ -42,15 +41,14 @@ namespace DCL.Input.Systems
         private readonly DCLInput.ShortcutsActions shortcuts;
         private readonly InteractionCache interactionCache;
 
-        internal UpdateCursorInputSystem(World world, DCLInput dclInput, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas, IExposedCameraData cameraData) : base(world)
+        internal UpdateCursorInputSystem(World world, IEventSystem eventSystem, ICursor cursor, ICrosshairView crosshairCanvas) : base(world)
         {
             this.eventSystem = eventSystem;
             this.cursor = cursor;
             this.crosshairCanvas = crosshairCanvas;
-            this.cameraData = cameraData;
-            cameraActions = dclInput.Camera;
-            uiActions = dclInput.UI;
-            shortcuts = dclInput.Shortcuts;
+            cameraActions = DCLInput.Instance.Camera;
+            uiActions = DCLInput.Instance.UI;
+            shortcuts = DCLInput.Instance.Shortcuts;
             mouseDevice = InputSystem.GetDevice<Mouse>().EnsureNotNull("Mouse not found");
             interactionCache = new InteractionCache();
         }
@@ -107,20 +105,20 @@ namespace DCL.Input.Systems
         }
 
         [Query]
-        private void UpdateCursor(ref CursorComponent cursorComponent)
+        private void UpdateCursor(ref CursorComponent cursorComponent, in ExposedCameraData exposedCameraData)
         {
             Vector2 mousePos = mouseDevice.position.value;
             Vector2 controllerDelta = uiActions.ControllerDelta.ReadValue<Vector2>();
             IReadOnlyList<RaycastResult> raycastResults = eventSystem.RaycastAll(mousePos);
             cursorComponent.IsOverUI = eventSystem.IsPointerOverGameObject();
 
-            UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults);
-            UpdateCursorVisualState(ref cursorComponent, raycastResults);
+            UpdateCursorLockState(ref cursorComponent, mousePos, raycastResults, exposedCameraData);
+            UpdateCursorVisualState(ref cursorComponent, raycastResults, exposedCameraData);
             UpdateCursorPosition(ref cursorComponent, controllerDelta, mousePos);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateCursorVisualState(ref CursorComponent cursorComponent, IReadOnlyList<RaycastResult> raycastResults)
+        private void UpdateCursorVisualState(ref CursorComponent cursorComponent, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {
             if (cursor.IsStyleForced) return;
 
@@ -157,14 +155,14 @@ namespace DCL.Input.Systems
             }
 
             cursor.SetStyle(cursorStyle);
-            crosshairCanvas.SetCursorStyle(cursorStyle, cameraData.CameraMode == CameraMode.SDKCamera || cameraData.CameraMode == CameraMode.InWorld);
+            crosshairCanvas.SetCursorStyle(cursorStyle, exposedCameraData.CameraMode == CameraMode.SDKCamera || exposedCameraData.CameraMode == CameraMode.InWorld);
         }
 
         // We check if the gameObject is interactable or not, at least once.
         // For UI Elements we do a PickAll and check its results by using the same logic
         // we have to check if we can avoid doing a PickAll every frame, it seems that its not slow at least
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults)
+        private void UpdateCursorLockState(ref CursorComponent cursorComponent, Vector2 mousePos, IReadOnlyList<RaycastResult> raycastResults, in ExposedCameraData exposedCameraData)
         {
             CursorState nextState = cursorComponent.CursorState;
 
@@ -193,7 +191,7 @@ namespace DCL.Input.Systems
             if (!cursor.IsLocked() && cursorComponent is { CursorState: CursorState.Locked })
                 nextState = CursorState.Free;
 
-            if (!isMouseOutOfBounds && isTemporalLock && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
+            if (!isMouseOutOfBounds && isTemporalLock && exposedCameraData.CameraMode != CameraMode.SDKCamera && cursorComponent is { CursorState: CursorState.Free, PositionIsDirty: true, IsOverUI: false })
                 nextState = CursorState.Panning;
 
             if (!isTemporalLock && cursorComponent is { CursorState: CursorState.Panning })
