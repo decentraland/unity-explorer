@@ -115,6 +115,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
+        public void ClearOwnedNftRegistry()
+        {
+            lock (lockObject)
+            {
+                ownedNftsRegistry.Clear();
+            }
+        }
+
         internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
             lock (lockObject)

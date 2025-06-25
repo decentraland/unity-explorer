@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using DCL.Prefs;
 using UnityEngine.UIElements;
 
 namespace DCL.DebugUtilities.Views
@@ -19,9 +19,9 @@ namespace DCL.DebugUtilities.Views
             foldout.text = title;
 
             prefsKey = ConstructPrefsKey(foldKey ?? title);
-            foldout.value = PlayerPrefs.GetInt(prefsKey, 0) == 1;
+            foldout.value = DCLPlayerPrefs.GetInt(prefsKey, 0) == 1;
 
-            foldout.RegisterValueChangedCallback(evt => PlayerPrefs.SetInt(prefsKey, evt.newValue ? 1 : 0));
+            foldout.RegisterValueChangedCallback(evt => DCLPlayerPrefs.SetInt(prefsKey, evt.newValue ? 1 : 0));
         }
 
         internal void AddElement(VisualElement element)
@@ -36,7 +36,7 @@ namespace DCL.DebugUtilities.Views
         }
 
         private static string ConstructPrefsKey(string title) =>
-            $"DebugWidget_Foldout_{title}";
+            string.Format(DCLPrefKeys.DEBUG_WIDGET_FOLDOUT, title);
 
         public new class UxmlFactory : UxmlFactory<DebugWidget> { }
     }

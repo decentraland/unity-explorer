@@ -40,18 +40,17 @@ namespace DCL.CharacterCamera.Tests
             keyboard = InputSystem.AddDevice<Keyboard>();
             mouse = InputSystem.AddDevice<Mouse>();
 
-            var dlcInput = new DCLInput();
-            dlcInput.Enable();
+            DCLInput.Instance.Enable();
 
             hoverEntity = world.Create(new HoverStateComponent());
-            entity = world.Create(new CursorComponent());
+            entity = world.Create(new CursorComponent(), new ExposedCameraData());
             eventSystem = Substitute.For<IEventSystem>();
             cursor = Substitute.For<ICursor>();
             crosshairView = Substitute.For<ICrosshairView>();
             positionControl = mouse.GetChildControl<Vector2Control>("Position");
             Move(positionControl, new Vector2(50, 50), new Vector2(0.5f, 0.5f));
 
-            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor, crosshairView, Substitute.For<IExposedCameraData>());
+            system = new UpdateCursorInputSystem(world, eventSystem, cursor, crosshairView);
             system.Initialize();
         }
 
@@ -193,6 +192,26 @@ namespace DCL.CharacterCamera.Tests
 
             Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
             cursor.Received(1).Unlock();
+        }
+
+        [Test]
+        public void DisallowPanningWhenInSDKCameraMode()
+        {
+            // Arrange
+            world.Set(entity, new CursorComponent { CursorState = CursorState.Free, PositionIsDirty = true });
+            ref var cameraData = ref world.Get<ExposedCameraData>(entity);
+            cameraData.CameraMode = CameraMode.SDKCamera;
+
+            Press(mouse.leftButton); // Temporal lock
+
+            cursor.IsLocked().Returns(false);
+            eventSystem.IsPointerOverGameObject().Returns(false);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(CursorState.Free, world.Get<CursorComponent>(entity).CursorState);
         }
     }
 }

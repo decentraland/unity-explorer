@@ -33,6 +33,7 @@ namespace DCL.SDKComponents.MediaStream
         private bool disposed;
 
         public bool MediaOpened => currentStream != null;
+        public float Volume { get; private set; }
 
         public PlayerState State => playerState;
 
@@ -93,16 +94,20 @@ namespace DCL.SDKComponents.MediaStream
 
         private (string identity, string sid)? FirstAvailableTrackSid(TrackKind kind)
         {
-            foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
+            // See: https://github.com/decentraland/unity-explorer/issues/3796
+            lock (room.Participants)
             {
-                var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
+                foreach (string remoteParticipantIdentity in room.Participants.RemoteParticipantIdentities())
+                {
+                    var participant = room.Participants.RemoteParticipant(remoteParticipantIdentity);
 
-                if (participant == null)
-                    continue;
+                    if (participant == null)
+                        continue;
 
-                foreach ((string sid, TrackPublication value) in participant.Tracks)
-                    if (value.Kind == kind)
-                        return (remoteParticipantIdentity, sid);
+                    foreach ((string sid, TrackPublication value) in participant.Tracks)
+                        if (value.Kind == kind)
+                            return (remoteParticipantIdentity, sid);
+                }
             }
 
             return null;
@@ -167,7 +172,21 @@ namespace DCL.SDKComponents.MediaStream
 
         public void SetVolume(float target)
         {
+            Volume = target;
             audioSource.SetVolume(target);
+        }
+
+        public void SetVolumeFaded(bool isCurrentScene, float targetVolume, float volumeDelta)
+        {
+            switch (isCurrentScene)
+            {
+                case true when Volume < targetVolume:
+                    SetVolume(Mathf.Min(targetVolume, Volume + volumeDelta));
+                    break;
+                case false when Volume > 0:
+                    SetVolume(Mathf.Max(0, targetVolume - volumeDelta));
+                    break;
+            }
         }
 
         public void PlaceAudioAt(Vector3 position)

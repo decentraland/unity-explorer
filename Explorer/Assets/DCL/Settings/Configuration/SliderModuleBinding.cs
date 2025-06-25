@@ -30,6 +30,7 @@ namespace DCL.Settings.Configuration
             MUSIC_VOLUME_FEATURE,
             UI_SOUNDS_VOLUME_FEATURE,
             AVATAR_SOUNDS_VOLUME_FEATURE,
+            STP_FEATURE,
             // add other features...
         }
 
@@ -46,7 +47,8 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            WorldVolumeMacBus worldVolumeMacBus = null)
+            UpscalingController upscalingController,
+            WorldVolumeMacBus worldVolumeMacBus)
         {
             var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -62,11 +64,11 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.STP_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+                                                       _ => throw new ArgumentOutOfRangeException(),
                                                    };
 
-            controller.SetView(viewInstance);
             return controller;
         }
     }

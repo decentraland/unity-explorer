@@ -1,12 +1,11 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.Prefs;
+using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class MouseHorizontalSensitivitySettingsController : SettingsFeatureController
     {
-        private const string HORIZONTAL_MOUSE_SENSITIVITY_DATA_STORE_KEY = "Settings_HorizontalMouseSensitivity";
-
         private readonly SettingsSliderModuleView view;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
 
@@ -15,8 +14,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.controlsSettingsAsset = controlsSettingsAsset;
 
-            if (settingsDataStore.HasKey(HORIZONTAL_MOUSE_SENSITIVITY_DATA_STORE_KEY))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(HORIZONTAL_MOUSE_SENSITIVITY_DATA_STORE_KEY);
+            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY))
+                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetHorizontalMouseSensitivity);
             SetHorizontalMouseSensitivity(view.SliderView.Slider.value);
@@ -25,7 +24,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetHorizontalMouseSensitivity(float sensitivity)
         {
             controlsSettingsAsset.HorizontalMouseSensitivity = sensitivity;
-            settingsDataStore.SetSliderValue(HORIZONTAL_MOUSE_SENSITIVITY_DATA_STORE_KEY, sensitivity, save: true);
+            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY, sensitivity, save: true);
         }
 
         public override void Dispose()

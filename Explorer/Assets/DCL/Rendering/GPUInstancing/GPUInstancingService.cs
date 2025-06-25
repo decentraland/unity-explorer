@@ -39,7 +39,7 @@ namespace DCL.Rendering.GPUInstancing
                 frustumOffset = 0.0f;
                 vBoundsExtents = candidate.LODGroup.Bounds.extents;
                 fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
-                fMaxDistance = maxDistance;
+                fMaxDistance = Mathf.Min(maxDistance, cam.farClipPlane);
                 minCullingDistance = cam.nearClipPlane;
                 nInstBufferSize = instancesCount;
                 nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;

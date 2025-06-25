@@ -2,12 +2,14 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
@@ -26,6 +28,8 @@ namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewController : IDisposable
     {
+        private const string CHARACTER_PREVIEW_NAME = "CharacterPreview";
+
         private readonly CharacterPreviewCameraController cameraController;
         private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool;
@@ -33,7 +37,7 @@ namespace DCL.CharacterPreview
         private readonly World globalWorld;
         private readonly bool builderEmotesPreview;
 
-        public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
+        public CharacterPreviewController(World world, RectTransform renderImage, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
             CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool, IAppArgs appArgs)
         {
@@ -46,13 +50,14 @@ namespace DCL.CharacterPreview
             Transform? parent = transformPool.Get();
             parent.SetParent(avatarContainer.avatarParent, false);
             parent.gameObject.layer = avatarContainer.avatarParent.gameObject.layer;
-            parent.name = "CharacterPreview";
+            parent.name = CHARACTER_PREVIEW_NAME;
             parent.ResetLocalTRS();
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
-                new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
-                new CharacterPreviewComponent(),
+                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME),
+                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings},
+                new HeadIKComponent(),
                 new CharacterEmoteComponent());
         }
 
@@ -67,6 +72,10 @@ namespace DCL.CharacterPreview
             }
 
             StopEmotes();
+
+            if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+                avatarBase.HeadIKRig.weight = 0;
+
             characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
             cameraController.Dispose();
         }
@@ -112,6 +121,11 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
+            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null  && !avatarBase.RigBuilder.enabled)
+            {
+                avatarBase.RigBuilder.enabled = true;
+                avatarBase.HeadIKRig.weight = 1f;
+            }
             return;
 
             bool IsAvatarLoaded()
@@ -134,6 +148,12 @@ namespace DCL.CharacterPreview
             else
                 globalWorld.Add(characterPreviewEntity, intent);
         }
+
+        public bool IsPlayingEmote() =>
+            globalWorld.TryGet(characterPreviewEntity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
+
+        public bool TryGetPlayingEmote(out CharacterEmoteComponent emoteComponent) =>
+            globalWorld.TryGet(characterPreviewEntity, out emoteComponent) && emoteComponent.IsPlayingEmote;
 
         public void StopEmotes()
         {

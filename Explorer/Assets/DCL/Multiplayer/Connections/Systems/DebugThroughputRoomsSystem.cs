@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.Systems.Throughput;
 using DCL.Nametags;
+using DCL.Profiling;
 using ECS.Abstract;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
@@ -73,6 +74,21 @@ namespace DCL.Multiplayer.Connections.Systems
         {
             if (buffersInitialized == false)
                 return;
+
+#if ENABLE_PROFILER
+            if (UnityEngine.Profiling.Profiler.enabled && UnityEngine.Profiling.Profiler.IsCategoryEnabled(NetworkProfilerCounters.CATEGORY))
+            {
+                (ulong incoming, ulong outgoing) = island.CollectFrame();
+
+                NetworkProfilerCounters.LIVEKIT_ISLAND_RECEIVED.Value = incoming;
+                NetworkProfilerCounters.LIVEKIT_ISLAND_SEND.Value = outgoing;
+
+                (incoming, outgoing) = scene.CollectFrame();
+
+                NetworkProfilerCounters.LIVEKIT_SCENE_RECEIVED.Value = incoming;
+                NetworkProfilerCounters.LIVEKIT_SCENE_SEND.Value = outgoing;
+            }
+#endif
 
             current += t;
 
@@ -143,6 +159,9 @@ namespace DCL.Multiplayer.Connections.Systems
                 CollectAndDraw(bufferBunch.Incoming, incoming);
                 CollectAndDraw(bufferBunch.Outgoing, outgoing);
             }
+
+            public (ulong incoming, ulong outgoing) CollectFrame() =>
+                (bufferBunch.Incoming.ConsumeFrameAmount(), bufferBunch.Outgoing.ConsumeFrameAmount());
 
             public void Reset()
             {

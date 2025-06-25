@@ -1,3 +1,4 @@
+using DCL.Prefs;
 using Segment.Serialization;
 using UnityEngine;
 
@@ -8,15 +9,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     /// </summary>
     public class CrashDetector : MonoBehaviour
     {
-        private const string PREFS_FLAG = "CrashDetector.flag";
-        private const string PREFS_SESSION_ID = "CrashDetector.sessionID";
-
         public static void Initialize(IAnalyticsController analyticsController)
         {
-            if (PlayerPrefs.HasKey(PREFS_FLAG))
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.CRASH_DETECTOR_FLAG))
             {
                 // Application crashed on previous run
-                string previousSessionID = PlayerPrefs.GetString(PREFS_SESSION_ID, string.Empty);
+                string previousSessionID = DCLPlayerPrefs.GetString(DCLPrefKeys.CRASH_DETECTOR_SESSION_ID, string.Empty);
 
                 analyticsController.Track(AnalyticsEvents.General.CRASH, new JsonObject
                 {
@@ -24,9 +22,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 });
             }
 
-            PlayerPrefs.SetString(PREFS_FLAG, string.Empty);
-            PlayerPrefs.SetString(PREFS_SESSION_ID, analyticsController.SessionID);
-            PlayerPrefs.Save();
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CRASH_DETECTOR_FLAG, string.Empty);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CRASH_DETECTOR_SESSION_ID, analyticsController.SessionID);
+            DCLPlayerPrefs.Save();
 
             var go = new GameObject("CrashDetector");
             go.AddComponent<CrashDetector>();
@@ -35,8 +33,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnApplicationQuit()
         {
-            PlayerPrefs.DeleteKey(PREFS_FLAG);
-            PlayerPrefs.Save();
+            // NOTE: If you remove this, make sure to call DCLPlayerPrefs.Save() in another OnApplicationQuit method
+            DCLPlayerPrefs.DeleteKey(DCLPrefKeys.CRASH_DETECTOR_FLAG);
+            DCLPlayerPrefs.Save();
         }
     }
 }

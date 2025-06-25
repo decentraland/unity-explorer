@@ -46,11 +46,8 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
-        private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
         private readonly IAppArgs appArgs;
-        private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly ViewDependencies viewDependencies;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
@@ -67,7 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly FriendsPanelController friendsPanelController;
         private readonly IFriendsService friendsService;
         private readonly FriendsCache friendsCache;
-        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
 
         public FriendsContainer(
             MainUIView mainUIView,
@@ -77,7 +74,6 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ILoadingStatus loadingStatus,
             IInputBlock inputBlock,
-            DCLInput dclInput,
             ISelfProfile selfProfile,
             IPassportBridge passportBridge,
             INotificationsBusController notificationsBusController,
@@ -85,17 +81,15 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             bool includeUserBlocking,
             IAppArgs appArgs,
-            FeatureFlagsCache featureFlagsCache,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
             IChatEventBus chatEventBus,
-            ViewDependencies viewDependencies,
             ISharedSpaceManager sharedSpaceManager,
             ISocialServiceEventBus socialServiceEventBus,
             IRPCSocialServices socialServicesRPC,
             IFriendsEventBus friendsEventBus,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<IFriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
+            ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ProfileRepositoryWrapper profileDataProvider)
         {
@@ -106,11 +100,8 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
-            this.dclInput = dclInput;
             this.includeUserBlocking = includeUserBlocking;
             this.appArgs = appArgs;
-            this.featureFlagsCache = featureFlagsCache;
-            this.viewDependencies = viewDependencies;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
@@ -139,13 +130,11 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 mvcManager,
                 profileRepository,
-                dclInput,
                 passportBridge,
                 onlineUsersProvider,
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 chatEventBus,
-                viewDependencies,
                 includeUserBlocking,
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,
@@ -227,8 +216,7 @@ namespace DCL.PluginSystem.Global
 
                 var blockUserPromptController = new BlockUserPromptController(
                     BlockUserPromptController.CreateLazily(blockUserPromptPrefab, null),
-                    friendsService,
-                    dclInput);
+                    friendsService);
 
                 mvcManager.RegisterController(blockUserPromptController);
             }
@@ -276,7 +264,7 @@ namespace DCL.PluginSystem.Global
 
         private bool IsConnectivityStatusEnabled() =>
             appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
-            || featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
+            || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
 
         private void OnRPCClientReconnected()
         {
