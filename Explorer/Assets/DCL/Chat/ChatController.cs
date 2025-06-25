@@ -52,6 +52,7 @@ namespace DCL.Chat
         private const string NEW_CHAT_MESSAGE = "The chat starts here! Time to say hi! \\U0001F44B";
         private const string GET_COMMUNITY_FAILED_MESSAGE = "Unable to load new Community chat. Please restart Decentraland to try again.";
         private const string GET_USER_COMMUNITIES_FAILED_MESSAGE = "Unable to load Community chats. Please restart Decentraland to try again.";
+        private const string LEAVE_COMMUNITY_FAILED_MESSAGE = "Unable to leave the Community. Please try again.";
 
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
@@ -92,6 +93,7 @@ namespace DCL.Chat
         private bool viewInstanceCreated;
         private CancellationTokenSource chatUsersUpdateCts = new();
         private CancellationTokenSource communitiesServiceCts = new();
+        private CancellationTokenSource leaveCommunitiesServiceCts = new();
         private CancellationTokenSource errorNotificationCts = new();
         private CancellationTokenSource memberListCts = new();
 
@@ -434,6 +436,7 @@ namespace DCL.Chat
             memberListHelper.Dispose();
             chatUsersUpdateCts.SafeCancelAndDispose();
             communitiesServiceCts.SafeCancelAndDispose();
+            leaveCommunitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
             memberListCts.SafeCancelAndDispose();
         }
@@ -904,6 +907,7 @@ namespace DCL.Chat
             viewInstance.ConversationSelected += OnSelectConversation;
             viewInstance.DeleteChatHistoryRequested += OnViewDeleteChatHistoryRequested;
             viewInstance.ViewCommunityRequested += OnViewViewCommunityRequested;
+            viewInstance.LeaveCommunityRequested += OnViewLeaveCommunityRequestedAsync;
 
             chatHistory.ChannelAdded += OnChatHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnChatHistoryChannelRemoved;
@@ -921,6 +925,20 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+        }
+
+        private async void OnViewLeaveCommunityRequestedAsync(string communityId)
+        {
+            leaveCommunitiesServiceCts = leaveCommunitiesServiceCts.SafeRestart();
+            Result<bool> result = await communitiesDataProvider.LeaveCommunityAsync(communityId, leaveCommunitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!result.Success)
+            {
+                ReportHub.LogError(ReportCategory.COMMUNITIES, LEAVE_COMMUNITY_FAILED_MESSAGE + result.ErrorMessage?? string.Empty);
+                ShowErrorNotificationAsync(LEAVE_COMMUNITY_FAILED_MESSAGE, errorNotificationCts.Token).Forget();
+            }
+
+            // Note: The chat will be closed when reacting to the leave community event afterward
         }
 
         private void OnViewViewCommunityRequested(string communityId)
@@ -959,6 +977,8 @@ namespace DCL.Chat
                 viewInstance.CurrentChannelChanged -= OnViewCurrentChannelChangedAsync;
                 viewInstance.ConversationSelected -= OnSelectConversation;
                 viewInstance.DeleteChatHistoryRequested -= OnViewDeleteChatHistoryRequested;
+                viewInstance.ViewCommunityRequested -= OnViewViewCommunityRequested;
+                viewInstance.LeaveCommunityRequested -= OnViewLeaveCommunityRequestedAsync;
                 viewInstance.RemoveAllConversations();
                 viewInstance.Dispose();
             }

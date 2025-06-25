@@ -20,10 +20,12 @@ namespace DCL.UI.Communities
         public delegate void ContextMenuOpenedDelegate();
         public delegate void ContextMenuClosedDelegate();
         public delegate void ViewCommunityRequestedDelegate();
+        public delegate void LeaveCommunityRequestedDelegate();
 
         public ContextMenuOpenedDelegate ContextMenuOpened;
         public ContextMenuClosedDelegate ContextMenuClosed;
         public ViewCommunityRequestedDelegate ViewCommunityRequested;
+        public LeaveCommunityRequestedDelegate LeaveCommunityRequested;
 
         [SerializeField]
         private CommunityThumbnailView thumbnailView;
@@ -43,10 +45,12 @@ namespace DCL.UI.Communities
         private UniTaskCompletionSource contextMenuTask = new ();
         private GenericContextMenu.Controls.Configs.GenericContextMenu contextMenuConfig;
 
-        public async UniTaskVoid SetupAsync(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
+        public async UniTaskVoid SetupAsync(IThumbnailCache thumbnailCache, string communityId, string communityName, bool isOwnerOfCommunity, string thumbnailUrl, OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
         {
             contextMenuConfig = new GenericContextMenu.Controls.Configs.GenericContextMenu(contextMenuSettings.Width, contextMenuSettings.Offset, contextMenuSettings.VerticalLayoutPadding, contextMenuSettings.ElementsSpacing, ContextMenuOpenDirection.TOP_LEFT)
                                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText, contextMenuSettings.ViewCommunitySprite, () => ViewCommunityRequested?.Invoke()));
+            if(!isOwnerOfCommunity)
+                contextMenuConfig.AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, () => LeaveCommunityRequested?.Invoke()));
 
             openContextMenu = openContextMenuAction;
             userNameElement.text = communityName;

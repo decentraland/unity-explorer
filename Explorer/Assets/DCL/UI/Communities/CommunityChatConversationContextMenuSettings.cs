@@ -28,8 +28,17 @@ namespace DCL.UI.Communities
         [SerializeField]
         private string viewCommunityText = "View Community";
 
+        [SerializeField]
+        private Sprite leaveCommunitySprite;
+
+        [SerializeField]
+        private string leaveCommunityText = "Leave Community";
+
         public Sprite ViewCommunitySprite => viewCommunitySprite;
         public string ViewCommunityText => viewCommunityText;
+
+        public Sprite LeaveCommunitySprite => leaveCommunitySprite;
+        public string LeaveCommunityText => leaveCommunityText;
 
         public int Width => width;
         public int ElementsSpacing => elementsSpacing;

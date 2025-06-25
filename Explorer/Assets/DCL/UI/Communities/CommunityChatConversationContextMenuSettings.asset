@@ -22,3 +22,5 @@ MonoBehaviour:
     m_Bottom: 14
   viewCommunitySprite: {fileID: 21300000, guid: c42ef609dd1154fa9a0e37d744af5614, type: 3}
   viewCommunityText: View Community
+  leaveCommunitySprite: {fileID: 21300000, guid: 5f39f01f09cd04a7c9a041960e0e0484, type: 3}
+  leaveCommunityText: Leave Community

@@ -20,6 +20,7 @@ namespace DCL.Chat
         public delegate void VisibilityChangedDelegate(bool isVisible);
         public delegate void DeleteChatHistoryRequestedDelegate();
         public delegate void ViewCommunityRequestedDelegate();
+        public delegate void LeaveCommunityRequestedDelegate();
 
         public event Action? CloseChatButtonClicked;
         public event Action? CloseMemberListButtonClicked;
@@ -29,6 +30,7 @@ namespace DCL.Chat
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
         public event ViewCommunityRequestedDelegate ViewCommunityRequested;
+        public event LeaveCommunityRequestedDelegate LeaveCommunityRequested;
 
         [SerializeField] private Button closeChatButton;
         [SerializeField] private Button showMemberListButton;
@@ -90,6 +92,7 @@ namespace DCL.Chat
             communityChannelContainer.ContextMenuOpened += OnProfileContextMenuOpened;
             communityChannelContainer.ContextMenuClosed += OnProfileContextMenuClosed;
             communityChannelContainer.ViewCommunityRequested += OnCommunityContextMenuViewCommunityRequested;
+            communityChannelContainer.LeaveCommunityRequested += OnCommunityContextMenuLeaveCommunityRequested;
             isInitialized = true;
         }
 
@@ -161,13 +164,13 @@ namespace DCL.Chat
             communityChannelContainer.gameObject.SetActive(false);
         }
 
-        public void SetupCommunityView(IThumbnailCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CommunityTitleView.OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
+        public void SetupCommunityView(IThumbnailCache thumbnailCache, string communityId, string communityName, bool isOwnerOfCommunity, string? thumbnailUrl, CommunityTitleView.OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
         {
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(true);
             profileView.gameObject.SetActive(false);
             communityChannelContainer.gameObject.SetActive(true);
-            communityChannelContainer.SetupAsync(thumbnailCache, communityId, communityName, thumbnailUrl, openContextMenuAction, ct).Forget();
+            communityChannelContainer.SetupAsync(thumbnailCache, communityId, communityName, isOwnerOfCommunity, thumbnailUrl, openContextMenuAction, ct).Forget();
         }
 
         private void OnOpenContextMenuButtonClicked()
@@ -223,6 +226,11 @@ namespace DCL.Chat
         private void OnCommunityContextMenuViewCommunityRequested()
         {
             ViewCommunityRequested?.Invoke();
+        }
+
+        private void OnCommunityContextMenuLeaveCommunityRequested()
+        {
+            LeaveCommunityRequested?.Invoke();
         }
     }
 }

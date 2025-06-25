@@ -43,6 +43,7 @@ namespace DCL.Chat
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void DeleteChatHistoryRequestedDelegate();
         public delegate void ViewCommunityRequestedDelegate(string communityId);
+        public delegate void LeaveCommunityRequestedDelegate(string communityId);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -189,6 +190,11 @@ namespace DCL.Chat
         /// </summary>
         public event ViewCommunityRequestedDelegate ViewCommunityRequested;
 
+        /// <summary>
+        /// Raised when the user wants to leave the community that corresponds to the current conversation.
+        /// </summary>
+        public event LeaveCommunityRequestedDelegate LeaveCommunityRequested;
+
         private ViewDependencies viewDependencies;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly List<ChatUserData> sortedMemberData = new ();
@@ -290,7 +296,7 @@ namespace DCL.Chat
                             SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
                             communityTitleCts = communityTitleCts.SafeRestart();
-                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : null, openContextMenuAction, communityTitleCts.Token);
+                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.role == CommunityMemberRole.owner, communityData.thumbnails?.raw, openContextMenuAction, communityTitleCts.Token);
                             break;
                     }
 
@@ -456,6 +462,7 @@ namespace DCL.Chat
             chatTitleBar.ContextMenuVisibilityChanged -= OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested -= OnDeleteChatHistoryRequested;
             chatTitleBar.ViewCommunityRequested -= OnTitleBarViewCommunityRequested;
+            chatTitleBar.LeaveCommunityRequested -= OnTitleBarLeaveCommunityRequested;
 
             chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClickedAsync;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged -= OnChatMessageViewerScrollPositionChanged;
@@ -514,6 +521,7 @@ namespace DCL.Chat
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
             chatTitleBar.ViewCommunityRequested += OnTitleBarViewCommunityRequested;
+            chatTitleBar.LeaveCommunityRequested += OnTitleBarLeaveCommunityRequested;
 
             this.loadingStatus = loadingStatus;
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
@@ -547,6 +555,11 @@ namespace DCL.Chat
                 else if(channelPair.Value.ChannelType == ChatChannel.ChatChannelType.USER)
                     AddPrivateConversation(channelPair.Value);
             }
+        }
+
+        private void OnTitleBarLeaveCommunityRequested()
+        {
+            LeaveCommunityRequested?.Invoke(communitiesData[CurrentChannelId].id);
         }
 
         private void OnTitleBarViewCommunityRequested()
