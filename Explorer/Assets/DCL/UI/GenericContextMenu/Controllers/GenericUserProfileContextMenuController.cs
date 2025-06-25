@@ -54,6 +54,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -93,6 +94,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
             blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
+            startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
 
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
@@ -103,6 +105,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(mentionUserButtonControlSettings)
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
+                         .AddControl(startCallButtonControlSettings)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
         }
@@ -135,6 +138,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
+            startCallButtonControlSettings.SetData(profile.UserId);
 
             contextMenu.ChangeAnchorPoint(anchorPoint);
 
@@ -263,6 +267,19 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             onChatShown?.Invoke();
+        }
+
+        private void OnStartCallButtonClicked(string userId)
+        {
+            closeContextMenuTask.TrySetResult();
+            StartCallAsync(userId).Forget();
+        }
+
+        private async UniTaskVoid StartCallAsync(string userId)
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            chatEventBus.OpenConversationUsingUserId(userId);
+            chatEventBus.StartCallInCurrentConversation();
         }
 
         private void OnBlockUserClicked(string userId)

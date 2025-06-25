@@ -25,9 +25,12 @@ using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
+using DCL.Web3;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
@@ -59,11 +62,13 @@ namespace DCL.Chat
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
+        private CallButtonController callButtonController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new ();
@@ -113,7 +118,8 @@ namespace DCL.Chat
             IFriendsEventBus friendsEventBus,
             ChatHistoryStorage chatStorage,
             ObjectProxy<IFriendsService> friendsService,
-            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -131,6 +137,7 @@ namespace DCL.Chat
             this.chatStorage = chatStorage;
             this.profileRepositoryWrapper = profileDataProvider;
             friendsServiceProxy = friendsService;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -180,18 +187,18 @@ namespace DCL.Chat
                 // When opened from outside,
                 // it should show the unread messages
                 if (value)
-                { 
+                {
                     // Set input state to connected if we are in the NEARBY_CHANNEL_ID
                     // https://github.com/decentraland/unity-explorer/issues/4186
                     if (chatUserStateUpdater.CurrentConversation.Equals(ChatChannel.NEARBY_CHANNEL_ID.Id))
                     {
-                        viewInstance.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                        viewInstance.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                         return;
                     }
-                    
+
                     chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
                     UpdateChatUserStateAsync(chatUserStateUpdater.CurrentConversation, true, chatUsersUpdateCts.Token).Forget();
-                    
+
                     viewInstance.ShowNewMessages();
                 }
             }
@@ -220,11 +227,11 @@ namespace DCL.Chat
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
-        {   
+        {
             IsUnfolded = false;
             await UniTask.CompletedTask;
         }
-        
+
         /// <summary>
         /// Makes the chat panel (including the input box) invisible or visible (it does not hide the view, it disables the GameObject).
         /// </summary>
@@ -251,6 +258,7 @@ namespace DCL.Chat
 
             viewInstance.SetProfileDataPovider(profileRepositoryWrapper);
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetProfilesFromParticipants, loadingStatus);
+            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService, chatEventBus);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -303,6 +311,7 @@ namespace DCL.Chat
             Blur();
             UnsubscribeFromEvents();
             Dispose();
+            callButtonController.Reset();
         }
 
 #endregion
@@ -331,6 +340,7 @@ namespace DCL.Chat
             viewInstance?.RemoveAllConversations();
             memberListHelper.StopUpdating();
             chatUsersUpdateCts.SafeCancelAndDispose();
+            callButtonController?.Dispose();
         }
 
 #endregion
@@ -355,16 +365,20 @@ namespace DCL.Chat
             viewInstance!.Focus();
         }
 
+        private void OnStartCall(string userId)
+        {
+            voiceChatCallStatusService.StartCall(new Web3Address(userId));
+        }
+
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
             chatUserStateUpdater.CurrentConversation = channelId.Id;
             if (TryGetView(out var view))
             {
                 view.CurrentChannelId = channelId;
-
                 if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
                 {
-                    view.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                    view.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                     return;
                 }
             }
@@ -381,7 +395,7 @@ namespace DCL.Chat
             ChatUserStateUpdater.ChatUserState userState = result.Value;
             if (TryGetView(out var view))
             {
-                view.SetInputWithUserState(userState);
+                view.SetupViewWithUserState(userState);
 
                 if (!updateToolbar) return;
 
@@ -390,6 +404,30 @@ namespace DCL.Chat
 
                 view.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
             }
+
+            UpdateCallButtonUserState(userState, userId);
+        }
+
+        private void UpdateCallButtonUserState(ChatUserStateUpdater.ChatUserState userState, string userId)
+        {
+            CallButtonController.OtherUserCallStatus callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
+
+            switch (userState)
+            {
+                case ChatUserStateUpdater.ChatUserState.CONNECTED:
+                    callStatus = CallButtonController.OtherUserCallStatus.USER_AVAILABLE;
+                    break;
+                case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
+                    callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
+                    break;
+                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
+                    callStatus = CallButtonController.OtherUserCallStatus.USER_REJECTS_CALLS;
+                    break;
+                case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
+                    callStatus = CallButtonController.OtherUserCallStatus.OWN_USER_REJECTS_CALLS;
+                    break;
+            }
+            callButtonController.SetCallStatusForUser(callStatus, userId);
         }
 
 #endregion
@@ -529,8 +567,11 @@ namespace DCL.Chat
 
         private void OnViewFocusChanged(bool isFocused)
         {
-            if (isFocused) DisableUnwantedInputs();
-            else EnableUnwantedInputs();
+            callButtonController.Reset();
+            if (isFocused)
+                DisableUnwantedInputs();
+            else
+                EnableUnwantedInputs();
         }
 
         private void OnViewPointerExit()
@@ -628,9 +669,10 @@ namespace DCL.Chat
             // NOTE: if it's in the unfolded state (prevent setting the state of the
             // NOTE: chat input box if user is offline)
             if(!viewInstance!.IsUnfolded) return;
-            
+
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, userId);
         }
 
         private void OnNonFriendConnected(string userId)
@@ -641,34 +683,37 @@ namespace DCL.Chat
         private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
         {
             //We might need a new state of type "LOADING" or similar to display until we resolve the real state
-            viewInstance!.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
+            viewInstance!.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, userId);
         }
 
         private void OnFriendConnected(string userId)
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-            viewInstance!.SetInputWithUserState(state);
-
+            viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, userId);
         }
 
         private void OnUserBlockedByOwnUser(string userId)
         {
             var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
         }
 
         private void OnCurrentConversationUserUnavailable()
         {
             var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
 
         private void OnCurrentConversationUserAvailable()
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-            viewInstance!.SetInputWithUserState(state);
+            viewInstance!.SetupViewWithUserState(state);
+            UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
 
         private void OnUserConnectionStateChanged(string userId, bool isConnected)
@@ -729,7 +774,7 @@ namespace DCL.Chat
         {
             IsUnfolded = true;
         }
-        
+
         private void SubscribeToEvents()
         {
             //We start processing messages once the view is ready
@@ -737,12 +782,13 @@ namespace DCL.Chat
 
             chatEventBus.InsertTextInChat += OnTextInserted;
             chatEventBus.OpenConversation += OnOpenConversation;
+            callButtonController.StartCall += OnStartCall;
 
             if (TryGetView(out var view))
             {
                 view.OnCloseButtonClicked += OnCloseButtonClicked;
                 view.OnInputButtonClicked += OnInputButtonClicked;
-                
+
                 view.PointerEnter += OnViewPointerEnter;
                 view.PointerExit += OnViewPointerExit;
 
@@ -792,6 +838,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatEventBus.InsertTextInChat -= OnTextInserted;
+            callButtonController.StartCall -= OnStartCall;
 
             if (viewInstance != null)
             {

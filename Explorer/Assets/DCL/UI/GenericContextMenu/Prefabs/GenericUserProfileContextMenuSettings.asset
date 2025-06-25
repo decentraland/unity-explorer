@@ -27,3 +27,6 @@ MonoBehaviour:
   <OpenConversationButtonConfig>k__BackingField:
     Sprite: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
     Text: Chat
+  <StartCallButtonConfig>k__BackingField:
+    Sprite: {fileID: 21300000, guid: d08e3df6bfd1d4544a54ebd786700fb4, type: 3}
+    Text: Call

@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 using System;
 using System.Collections.Generic;
@@ -18,6 +20,9 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IRoom ChatRoom() =>
             NullRoom.INSTANCE;
+
+        public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
+            VoiceChatActivatableConnectiveRoom.Null.INSTANCE;
 
         public UniTask StopLocalRoomsAsync() =>
             UniTask.CompletedTask;

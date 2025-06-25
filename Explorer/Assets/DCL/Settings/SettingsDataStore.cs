@@ -7,6 +7,18 @@ namespace DCL.Settings
         public bool HasKey(string key) =>
             DCLPlayerPrefs.HasKey(key);
 
+
+        public void SetStringValue(string key, string value, bool save = false)
+        {
+            DCLPlayerPrefs.SetString(key, value);
+
+            if (save)
+                DCLPlayerPrefs.Save();
+        }
+
+        public string GetStringValue(string key) =>
+            DCLPlayerPrefs.GetString(key);
+
         public void SetToggleValue(string key, bool value, bool save = false)
         {
             DCLPlayerPrefs.SetInt(key, value ? 1 : 0);

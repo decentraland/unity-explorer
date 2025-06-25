@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
-using DCL.PluginSystem.World;
 using DCL.SDKComponents.MediaStream.Settings;
+using DCL.Settings.Settings;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Profiling;
@@ -57,6 +57,12 @@ namespace DCL.PluginSystem.Global
         public class PartitionSettingsRef : AssetReferenceT<PartitionSettingsAsset>
         {
             public PartitionSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class VoiceChatSettingsRef : AssetReferenceT<VoiceChatSettingsAsset>
+        {
+            public VoiceChatSettingsRef(string guid) : base(guid) { }
         }
 
         [Serializable]
