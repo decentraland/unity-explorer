@@ -3,6 +3,9 @@ using System;
 
 namespace ECS.Abstract
 {
+    /// <summary>
+    ///     Refer to https://github.com/decentraland/unity-explorer/pull/4558 for more details.
+    /// </summary>
     public class ECSExceptionsDebouncer : ProgressiveWindowDebouncer
     {
         public static readonly ECSExceptionsDebouncer INSTANCE = new ();
