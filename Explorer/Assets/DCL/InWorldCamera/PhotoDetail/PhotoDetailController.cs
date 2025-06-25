@@ -33,6 +33,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public readonly PhotoDetailInfoController PhotoDetailInfoController;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
+        private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ISystemClipboard systemClipboard;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
@@ -42,6 +43,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
         private CancellationTokenSource showReelCts = new ();
         private CancellationTokenSource downloadScreenshotCts = new ();
+        private CancellationTokenSource setPublicCts = new ();
 
         private bool metadataPanelIsOpen = true;
         private bool isClosing;
@@ -52,6 +54,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         public PhotoDetailController(ViewFactoryMethod viewFactory,
             PhotoDetailInfoController photoDetailInfoController,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
+            ICameraReelStorageService cameraReelStorageService,
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebBrowser webBrowser,
@@ -60,6 +63,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             this.PhotoDetailInfoController = photoDetailInfoController;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.cameraReelStorageService = cameraReelStorageService;
             this.systemClipboard = systemClipboard;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
@@ -106,6 +110,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewShow()
         {
             viewInstance!.infoButton.onClick.AddListener(ToggleInfoSidePanel);
+            viewInstance!.publicToggle.onValueChanged.AddListener(SetPublicFlag);
             viewInstance!.previousScreenshotButton.onClick.AddListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.AddListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.AddListener(DownloadReelClicked);
@@ -138,6 +143,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewClose()
         {
             viewInstance!.infoButton.onClick.RemoveListener(ToggleInfoSidePanel);
+            viewInstance!.publicToggle.onValueChanged.RemoveListener(SetPublicFlag);
             viewInstance!.previousScreenshotButton.onClick.RemoveListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.RemoveListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.RemoveListener(DownloadReelClicked);
@@ -158,6 +164,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnBeforeViewShow()
         {
             currentReelIndex = inputData.CurrentReelIndex;
+            viewInstance!.publicToggle.isOn = inputData.AllReels[currentReelIndex].isPublic;
+            viewInstance!.publicToggleView.SetToggleGraphics(inputData.AllReels[currentReelIndex].isPublic);
             viewInstance!.deleteButton.gameObject.SetActive(inputData.UserOwnedReels);
             viewInstance!.previousScreenshotButton.gameObject.SetActive(false);
             viewInstance!.nextScreenshotButton.gameObject.SetActive(false);
@@ -203,6 +211,30 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             currentReelIndex = Math.Clamp(currentReelIndex - 1, 0, inputData.AllReels.Count - 1);
             ShowReel(currentReelIndex);
+        }
+
+        private void SetPublicFlag(bool isPublic)
+        {
+            setPublicCts = setPublicCts.SafeRestart();
+
+            async UniTaskVoid SetPublicFlagAsync(CancellationToken ct)
+            {
+                try
+                {
+                    await cameraReelStorageService.UpdateScreenshotVisibilityAsync(inputData.AllReels[currentReelIndex].id,
+                        isPublic, ct);
+                    inputData.AllReels[currentReelIndex].isPublic = isPublic;
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS,
+                        photoDetailStringMessages.PhotoSuccessfullyUpdatedMessage);
+                }
+                catch (UnityWebRequestException e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));
+                    viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.FAILURE);
+                }
+            }
+
+            SetPublicFlagAsync(setPublicCts.Token).Forget();
         }
 
         private void ShowNextReel()
@@ -254,12 +286,15 @@ namespace DCL.InWorldCamera.PhotoDetail
     {
         public readonly string ShareToXMessage;
         public readonly string PhotoSuccessfullyDownloadedMessage;
+        public readonly string PhotoSuccessfullyUpdatedMessage;
         public readonly string LinkCopiedMessage;
 
-        public PhotoDetailStringMessages(string shareToXMessage, string photoSuccessfullyDownloadedMessage, string linkCopiedMessage)
+        public PhotoDetailStringMessages(string shareToXMessage, string photoSuccessfullyDownloadedMessage,
+            string photoSuccessfullyUpdatedMessage, string linkCopiedMessage)
         {
             ShareToXMessage = shareToXMessage;
             PhotoSuccessfullyDownloadedMessage = photoSuccessfullyDownloadedMessage;
+            PhotoSuccessfullyUpdatedMessage = photoSuccessfullyUpdatedMessage;
             LinkCopiedMessage = linkCopiedMessage;
         }
     }
