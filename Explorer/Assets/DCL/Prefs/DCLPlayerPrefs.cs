@@ -16,33 +16,7 @@ namespace DCL.Prefs
         public static void Initialize()
         {
             string[] playmodeTags = CurrentPlayer.ReadOnlyTags();
-
-            if (playmodeTags.Contains("PrefsInMemory"))
-                Initialize(Mode.InMemory);
-            else if (playmodeTags.Contains("PrefsDiskPrefix1"))
-                Initialize(Mode.DiskPrefix1);
-            else if (playmodeTags.Contains("PrefsDiskPrefix2"))
-                Initialize(Mode.DiskPrefix2);
-            else if (playmodeTags.Contains("PrefsDiskPrefix3"))
-                Initialize(Mode.DiskPrefix3);
-            else
-                Initialize(Mode.Disk);
-        }
-
-        private static void Initialize(Mode mode)
-        {
-            if (dclPrefs != null)
-                throw new InvalidOperationException("DCLPrefs already initialized.");
-
-            dclPrefs = mode switch
-                       {
-                           Mode.Disk => new DefaultDCLPlayerPrefs(),
-                           Mode.InMemory => new InMemoryDCLPlayerPrefs(),
-                           Mode.DiskPrefix1 => new DefaultDCLPlayerPrefs("playmode1_"),
-                           Mode.DiskPrefix2 => new DefaultDCLPlayerPrefs("playmode2_"),
-                           Mode.DiskPrefix3 => new DefaultDCLPlayerPrefs("playmode3_"),
-                           _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-                       };
+            Initialize(playmodeTags.Contains("PrefsInMemory"));
         }
 
         public static void SetString(string key, string value) =>
@@ -75,13 +49,27 @@ namespace DCL.Prefs
         public static void Save() =>
             dclPrefs.Save();
 
-        public enum Mode
+        private static void Initialize(bool inMemory)
         {
-            Disk,
-            DiskPrefix1,
-            DiskPrefix2,
-            DiskPrefix3,
-            InMemory,
+            if (dclPrefs != null)
+                throw new InvalidOperationException("DCLPrefs already initialized.");
+
+            dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
         }
+
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
+        private static void ClearDCLPlayerPrefs()
+        {
+            string[] files = System.IO.Directory.GetFiles(Application.persistentDataPath, "userdata_*");
+
+            foreach (string file in files)
+                System.IO.File.Delete(file);
+        }
+
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
+        private static bool ValidateClearDCLPlayerPrefs() =>
+            !Application.isPlaying;
+#endif
     }
 }

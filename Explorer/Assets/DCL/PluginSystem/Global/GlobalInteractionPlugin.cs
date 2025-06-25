@@ -27,7 +27,6 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly UIDocument canvas;
 
-        private readonly DCLInput dclInput;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
         private readonly IEventSystem eventSystem;
@@ -39,7 +38,7 @@ namespace DCL.PluginSystem.Global
         private Material hoverMaterial;
         private Material hoverOorMaterial;
 
-        public GlobalInteractionPlugin(DCLInput dclInput,
+        public GlobalInteractionPlugin(
             UIDocument canvas,
             IAssetsProvisioner assetsProvisioner,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
@@ -48,7 +47,6 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             IMVCManagerMenusAccessFacade menusAccessFacade)
         {
-            this.dclInput = dclInput;
             this.canvas = canvas;
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
@@ -80,10 +78,10 @@ namespace DCL.PluginSystem.Global
                 builder.World.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
                 builder.World);
 
-            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, dclInput.Camera.Point, entityCollidersGlobalCache,
+            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,
                 playerInteractionEntity, 100f);
 
-            DCLInput.PlayerActions playerInput = dclInput.Player;
+            DCLInput.PlayerActions playerInput = DCLInput.Instance.Player;
 
             // TODO How to add FORWARD/BACKWARD/LEFT/RIGHT properly?
             var actionsMap = new Dictionary<InputAction, UnityEngine.InputSystem.InputAction>
@@ -104,7 +102,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, dclInput, menusAccessFacade);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

@@ -56,7 +56,7 @@ namespace DCL.VoiceChat
             switch (update.Status)
             {
                 case PrivateVoiceChatStatus.VoiceChatAccepted:
-                    RoomUrl = update.Credentials.Url;
+                    RoomUrl = update.Credentials.ConnectionUrl;
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     break;
                 case PrivateVoiceChatStatus.VoiceChatEnded:
@@ -71,6 +71,10 @@ namespace DCL.VoiceChat
                     CallId = update.CallId;
                     CurrentTargetWallet = new Web3Address(update.Caller.Address);
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
+                    break;
+                case PrivateVoiceChatStatus.VoiceChatExpired:
+                    ResetVoiceChatData();
+                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     break;
             }
         }
@@ -110,7 +114,7 @@ namespace DCL.VoiceChat
         public void StartCall(Web3Address walletId)
         {
             //We can start a call only if we are not connected or trying to start a call
-            if (Status != VoiceChatStatus.DISCONNECTED && Status != VoiceChatStatus.VOICE_CHAT_USER_BUSY) return;
+            if (Status is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_USER_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
 
             CurrentTargetWallet = walletId;
 
@@ -175,7 +179,7 @@ namespace DCL.VoiceChat
                 {
                     //When the call has been ended
                     case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
-                        RoomUrl = response.Ok.Credentials.Url;
+                        RoomUrl = response.Ok.Credentials.ConnectionUrl;
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
                     default:

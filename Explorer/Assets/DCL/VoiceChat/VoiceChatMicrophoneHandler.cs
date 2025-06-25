@@ -15,11 +15,9 @@ namespace DCL.VoiceChat
         private const bool MICROPHONE_LOOP = true;
         private const int MICROPHONE_LENGTH_SECONDS = 1;
 
-        private readonly DCLInput dclInput;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly VoiceChatConfiguration voiceChatConfiguration;
         private readonly VoiceChatMicrophoneAudioFilter audioFilter;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly AudioSource audioSource;
 
         private AudioClip microphoneAudioClip;
@@ -37,30 +35,26 @@ namespace DCL.VoiceChat
         public event Action DisabledMicrophone;
 
         public VoiceChatMicrophoneHandler(
-            DCLInput dclInput,
             VoiceChatSettingsAsset voiceChatSettings,
             VoiceChatConfiguration voiceChatConfiguration,
             AudioSource audioSource,
-            VoiceChatMicrophoneAudioFilter audioFilter,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            VoiceChatMicrophoneAudioFilter audioFilter)
         {
-            this.dclInput = dclInput;
             this.voiceChatSettings = voiceChatSettings;
             this.voiceChatConfiguration = voiceChatConfiguration;
             this.audioSource = audioSource;
             this.audioFilter = audioFilter;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
-            dclInput.VoiceChat.Talk.performed += OnPressed;
-            dclInput.VoiceChat.Talk.canceled += OnReleased;
+            DCLInput.Instance.VoiceChat.Talk.performed += OnPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled += OnReleased;
             voiceChatSettings.MicrophoneChanged += OnMicrophoneChanged;
             isInCall = false;
         }
 
         public void Dispose()
         {
-            dclInput.VoiceChat.Talk.performed -= OnPressed;
-            dclInput.VoiceChat.Talk.canceled -= OnReleased;
+            DCLInput.Instance.VoiceChat.Talk.performed -= OnPressed;
+            DCLInput.Instance.VoiceChat.Talk.canceled -= OnReleased;
             voiceChatSettings.MicrophoneChanged -= OnMicrophoneChanged;
 
             microphoneChangeCts?.SafeCancelAndDispose();
@@ -362,7 +356,7 @@ namespace DCL.VoiceChat
         {
             if (!isMicrophoneInitialized)
                 InitializeMicrophone();
-                
+
             isInCall = true;
             isTalking = true;
             EnableMicrophone();
