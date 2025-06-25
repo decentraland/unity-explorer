@@ -52,7 +52,6 @@ namespace DCL.MarketplaceCredits
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -80,8 +79,7 @@ namespace DCL.MarketplaceCredits
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager,
-            FeatureFlagsCache featureFlagsCache) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -94,7 +92,6 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.featureFlagsCache = featureFlagsCache;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
@@ -319,7 +316,7 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile == null)
                     return;
 
-                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, ownProfile.UserId, featureFlagsCache, ct);
+                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, ownProfile.UserId, ct);
                 if (!isFeatureActivated)
                     return;
 
