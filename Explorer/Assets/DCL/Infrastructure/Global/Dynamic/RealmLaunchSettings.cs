@@ -31,7 +31,7 @@ namespace Global.Dynamic
         [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
-        [SerializeField] internal bool useRemoteAssetsBundles = true;
+        [SerializeField] internal bool useRemoteAssetsBundles;
         [SerializeField] [Tooltip("In Worlds there is one LiveKit room for all scenes so it's possible to communicate changes outside of the scene. "
                                   + "In Genesis City there are individual LiveKit rooms and only one connection at a time is maintained. "
                                   + "Toggle this flag to equalize this behavior")] internal bool isolateSceneCommunication;
