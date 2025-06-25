@@ -23,6 +23,7 @@ on:
         type: choice
         options:
           - none
+          - development
           - profile
           - deep
       clean_build:
@@ -198,8 +199,11 @@ jobs:
           # input.profile
           profile="${{ github.event.inputs.profile || inputs.profile }}"
 
-          if [[ "$profile" == "profile" || "$profile" == "deep" ]]; then
+          if [[ "$profile" == "development" || "$profile" == "profile" || "$profile" == "deep" ]]; then
             options+=("Development")
+          fi
+
+          if [[ "$profile" == "profile" || "$profile" == "deep" ]]; then
             options+=("ConnectWithProfiler")
           fi
 
