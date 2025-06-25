@@ -6,6 +6,7 @@ using DCL.Communities.CommunitiesCard.Places;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
@@ -126,7 +127,13 @@ namespace DCL.Communities.CommunitiesCard
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog))
-                         .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested)));
+                         .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
+                              new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested, textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
+        }
+
+        public void SetConfirmationDialogDependencies(ProfileRepositoryWrapper profileRepositoryWrapper)
+        {
+            confirmationDialogView.SetProfileRepository(profileRepositoryWrapper);
         }
 
         private void OnDeleteCommunityRequested()
