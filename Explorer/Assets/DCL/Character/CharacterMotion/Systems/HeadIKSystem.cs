@@ -104,8 +104,20 @@ namespace DCL.CharacterMotion.Systems
 
             var screenVector = objectScreenPos - mouseScreenPos;
             screenVector.y = -screenVector.y;
+            screenVector.z = LerpAvatarDepth(previewComponent, screenVector);
 
             ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt * previewComponent.Settings.HeadMoveSpeed, settings, useFrontalReset: false);
+        }
+
+        private static float LerpAvatarDepth(CharacterPreviewComponent previewComponent, Vector3 screenVector)
+        {
+            float screenVector2DMagnitude = new Vector2(screenVector.x, screenVector.y).magnitude;
+            float screenHalfDiagonal = new Vector2(Screen.width, Screen.height).magnitude / 2;
+            float normalizedMagnitude = Mathf.Clamp01(screenVector2DMagnitude / screenHalfDiagonal);
+            float minZ = previewComponent.Settings.AvatarDepth;
+            float maxZ = previewComponent.Settings.AvatarDepth * 3f;
+
+            return Mathf.Lerp(minZ, maxZ, normalizedMagnitude);
         }
 
         private static (Vector3 bottomLeft, Vector3 topRight) GetImageScreenCorners(RectTransform imageRect)
