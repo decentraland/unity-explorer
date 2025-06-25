@@ -1,18 +1,13 @@
 using DCL.AvatarRendering.Loading.Assets;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
-using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace DCL.AvatarRendering.Emotes
 {
