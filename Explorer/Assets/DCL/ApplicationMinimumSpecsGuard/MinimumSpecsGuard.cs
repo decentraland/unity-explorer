@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DCL.Diagnostics;
+using UnityEngine;
 using Application = UnityEngine.Device.Application;
 using SystemInfo = UnityEngine.Device.SystemInfo;
 
