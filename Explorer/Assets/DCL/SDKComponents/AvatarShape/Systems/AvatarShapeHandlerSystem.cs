@@ -6,7 +6,6 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -125,7 +124,7 @@ namespace ECS.Unity.AvatarShape.Systems
                 promiseComponent!.Dispose();
 
             var newPromiseCancellationTokenComponent = new SDKAvatarShapeEmotePromiseCancellationToken();
-            globalWorld.Add(globalWorldEntity, newPromiseCancellationTokenComponent);
+            globalWorld.AddOrSet(globalWorldEntity, newPromiseCancellationTokenComponent);
 
             if (localSceneDevelopment)
             {
@@ -136,7 +135,7 @@ namespace ECS.Unity.AvatarShape.Systems
                         hash,
                         bodyShape,
                         loop: false), // looping scene emotes on SDK AvatarShapes is not supported yet
-                    newPromiseCancellationTokenComponent.Cts.Token
+                    newPromiseCancellationTokenComponent
                 ).Forget();
             }
             else
@@ -148,14 +147,15 @@ namespace ECS.Unity.AvatarShape.Systems
                         hash,
                         loop: false, // looping scene emotes on SDK AvatarShapes is not supported yet
                         bodyShape),
-                    newPromiseCancellationTokenComponent.Cts.Token
+                    newPromiseCancellationTokenComponent
                 ).Forget();
             }
         }
 
-        private async UniTaskVoid LoadAndTriggerSceneEmote<TIntention>(Entity globalWorldEntity, TIntention intention, CancellationToken ct)
+        private async UniTaskVoid LoadAndTriggerSceneEmote<TIntention>(Entity globalWorldEntity, TIntention intention, SDKAvatarShapeEmotePromiseCancellationToken promiseComponent)
             where TIntention : struct, IAssetIntention, IEquatable<TIntention>
         {
+            CancellationToken ct = promiseComponent.Cts.Token;
             try
             {
                 // 1. Create the scene emote loading promise and wait for it
@@ -195,9 +195,10 @@ namespace ECS.Unity.AvatarShape.Systems
             {
                 if (globalWorld.IsAlive(globalWorldEntity)
                     && globalWorldEntity != Entity.Null
-                    && globalWorld.TryGet(globalWorldEntity, out SDKAvatarShapeEmotePromiseCancellationToken? promiseCancellationComponent))
+                    && globalWorld.TryGet(globalWorldEntity, out SDKAvatarShapeEmotePromiseCancellationToken? currentPromiseComponent)
+                    && ReferenceEquals(currentPromiseComponent, promiseComponent))
                 {
-                    promiseCancellationComponent!.Dispose();
+                    currentPromiseComponent.Dispose();
                     globalWorld.Remove<SDKAvatarShapeEmotePromiseCancellationToken>(globalWorldEntity);
                 }
             }
