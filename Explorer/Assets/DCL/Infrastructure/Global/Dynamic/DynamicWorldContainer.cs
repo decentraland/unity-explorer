@@ -449,7 +449,8 @@ namespace Global.Dynamic
                 backgroundMusic,
                 roomHub,
                 chatHistory,
-                localSceneDevelopment);
+                localSceneDevelopment,
+                mainUIView.WarningNotification);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(initializationFlowContainer.InitializationFlow, playerEntity, globalWorld);
 
