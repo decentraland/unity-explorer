@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -19,54 +20,72 @@ namespace ECS.ComponentsPooling.Systems
     {
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<DeleteEntityIntention>();
 
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly ReleaseComponentsToPoolOperation finalizeOperation;
+        private BudgetedIterator<ReleaseComponentsToPoolOperation>? finalizeIterator;
+
+        public bool IsBudgetedFinalizeSupported => true;
 
         public ReleaseReferenceComponentsSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
         {
-            this.componentPoolsRegistry = componentPoolsRegistry;
+            finalizeOperation = new ReleaseComponentsToPoolOperation(componentPoolsRegistry);
+        }
+
+        protected override void OnDispose()
+        {
+            finalizeIterator?.Dispose();
+            finalizeIterator = null;
+            base.OnDispose();
         }
 
         protected override void Update(float _)
         {
             Query query = World.Query(in queryDescription);
-            ReleaseComponentsToPool(in query);
+            finalizeOperation.ExecuteInstantly(query);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            ReleaseComponentsToPool(in query);
+            finalizeOperation.ExecuteInstantly(query);
         }
 
-        private void ReleaseComponentsToPool(in Query query)
+        public BudgetedIteratorExecuteResult BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget)
         {
-            ReleaseComponentsToPool(query, componentPoolsRegistry);
-        }
+            finalizeIterator ??= new BudgetedIterator<ReleaseComponentsToPoolOperation>(
+                query,
+                budget,
+                finalizeOperation
+            );
 
-        public static void ReleaseComponentsToPool(in Query query, IComponentPoolsRegistry componentPoolsRegistry)
-        {
-            // Profiling required, O(N^4)
-            // TODO consume the budget, currently it's unclean how to safely implement partial release
-            foreach (ref Chunk chunk in query.GetChunkIterator())
+            var result = finalizeIterator.Value.Execute();
+
+            if (result == BudgetedIteratorExecuteResult.COMPLETE)
             {
-                // it does not allocate, it's not a copy
-                Array[] array2D = chunk.Components;
+                finalizeIterator.Value.Dispose();
+                finalizeIterator = null;
+            }
 
-                foreach (int entityIndex in chunk)
-                {
-                    for (var i = 0; i < array2D.Length; i++)
-                    {
-                        // if it is called on a value type it will cause an allocation
-                        if (array2D[i].GetType().GetElementType()!.IsValueType) continue;
+            return result;
+        }
 
-                        object component = array2D[i].GetValue(entityIndex)!;
-                        Type type = component.GetType();
+        public readonly struct ReleaseComponentsToPoolOperation : IBudgetedIteratorOperation
+        {
+            private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-                        if (componentPoolsRegistry.TryGetPool(type, out IComponentPool pool))
-                        {
-                            pool.Release(component);
-                        }
-                    }
-                }
+            public ReleaseComponentsToPoolOperation(IComponentPoolsRegistry componentPoolsRegistry)
+            {
+                this.componentPoolsRegistry = componentPoolsRegistry;
+            }
+
+            public void Execute(Array[] array2D, int entityIndex, int i)
+            {
+                // if it is called on a value type it will cause an allocation
+                if (array2D[i].GetType().GetElementType()!.IsValueType) return;
+
+                object component = array2D[i].GetValue(entityIndex)!;
+                Type type = component.GetType();
+
+                if (componentPoolsRegistry.TryGetPool(type, out IComponentPool pool))
+                    pool.Release(component);
             }
         }
     }

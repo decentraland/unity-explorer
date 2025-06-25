@@ -24,7 +24,6 @@ namespace SceneRunner.ECSWorld
         private readonly IReadOnlyList<IFinalizeWorldSystem> finalizeWorldSystems;
         private readonly IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners;
         private readonly IPerformanceBudget budget;
-        private readonly CleanUpMarker cleanUpMarker;
 
         private readonly SystemGroupWorld systemGroupWorld;
 
@@ -36,7 +35,6 @@ namespace SceneRunner.ECSWorld
             IReadOnlyList<ISceneIsCurrentListener> sceneIsCurrentListeners,
             IPerformanceBudget budget)
         {
-            cleanUpMarker = new CleanUpMarker();
             this.systemGroupWorld = systemGroupWorld;
             EcsWorld = ecsWorld;
             this.finalizeWorldSystems = finalizeWorldSystems;
@@ -70,7 +68,7 @@ namespace SceneRunner.ECSWorld
 
                 if (system.IsBudgetedFinalizeSupported)
                 {
-                    var enumerator = DisposeWithBudget(finalizeSDKComponentsQuery, system, label, budget, cleanUpMarker);
+                    var enumerator = DisposeWithBudget(finalizeSDKComponentsQuery, system, label, budget);
                     while (enumerator.MoveNext()) yield return enumerator.Current;
                 }
                 else
@@ -87,18 +85,17 @@ namespace SceneRunner.ECSWorld
             yield return new Unit();
         }
 
-        private static IEnumerator<Unit> DisposeWithBudget(Query query, IFinalizeWorldSystem finalizeWorldSystem, string label, IPerformanceBudget budget, CleanUpMarker cleanUpMarker)
+        private static IEnumerator<Unit> DisposeWithBudget(Query query, IFinalizeWorldSystem finalizeWorldSystem, string label, IPerformanceBudget budget)
         {
+            BudgetedIteratorExecuteResult result;
             do
             {
-                cleanUpMarker.Purify();
-
                 using (ProfilerSampleScope.New("FinalizeSDKComponents/ByBudget"))
                 using (ProfilerSampleScope.New(label))
                 {
                     // We must be able to finalize world no matter what
                     // Marker being mutated inside
-                    try { finalizeWorldSystem.BudgetedFinalizeComponents(in query, budget, cleanUpMarker); }
+                    try { result = finalizeWorldSystem.BudgetedFinalizeComponents(in query, budget); }
                     catch (Exception e)
                     {
                         ReportHub.LogException(e, ReportCategory.ECS);
@@ -110,7 +107,7 @@ namespace SceneRunner.ECSWorld
             }
 
             // Clean until it's fully cleaned
-            while (cleanUpMarker.IsFullyCleaned == false);
+            while (result is BudgetedIteratorExecuteResult.PARTIAL);
         }
 
         private static void DisposeImmediately(Query query, IFinalizeWorldSystem system, string label)
