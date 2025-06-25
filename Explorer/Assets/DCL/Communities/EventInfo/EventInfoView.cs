@@ -109,6 +109,8 @@ namespace DCL.Communities.EventInfo
 
         private string CalculateRecurrentSchedulesString(IEventDTO eventData)
         {
+            string Capitalize(string s) => char.ToUpper(s[0]) + s.Substring(1);
+
             DateTime.TryParse(eventData.Next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
 
             for (var i = 0; i < eventData.Recurrent_dates.Length; i++)
@@ -116,7 +118,25 @@ namespace DCL.Communities.EventInfo
                 if (!DateTime.TryParse(eventData.Recurrent_dates[i], null, DateTimeStyles.RoundtripKind, out DateTime date)) continue;
                 if (date < nextStartAt) continue;
 
-                eventSchedulesStringBuilder.Append(date.ToString("R"));
+                DateTime utcStart = date.ToUniversalTime();
+                TimeSpan duration = TimeSpan.FromMilliseconds(eventData.Duration);
+                DateTime utcEnd = utcStart.Add(duration);
+
+                TimeZoneInfo localZone = TimeZoneInfo.Local;
+                DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
+                DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
+
+                TimeSpan offset = localZone.GetUtcOffset(localStart);
+                string offsetStr = $"UTC{(offset.TotalHours >= 0 ? "+" : "")}{offset.TotalHours:0}";
+
+                string dayOfWeek = Capitalize(localStart.ToString("dddd"));
+                string month = Capitalize(localStart.ToString("MMM"));
+                string startTime = localStart.ToString("hh:mmtt").ToLower();
+                string endTime = localEnd.ToString("hh:mmtt").ToLower();
+
+                string formatted = $"{dayOfWeek}, {month} {localStart:dd} from {startTime} to {endTime} ({offsetStr})";
+
+                eventSchedulesStringBuilder.Append(formatted);
 
                 if (i < eventData.Recurrent_dates.Length - 1)
                     eventSchedulesStringBuilder.Append("\n");
