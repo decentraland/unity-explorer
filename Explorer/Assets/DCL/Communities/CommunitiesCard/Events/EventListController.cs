@@ -51,6 +51,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
+        private readonly ObjectProxy<ISpriteCache> spriteCache;
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
@@ -78,6 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
+            this.spriteCache = eventThumbnailSpriteCache;
 
             view.InitList(() => currentSectionFetchData, eventThumbnailSpriteCache, mvcManager, cancellationToken);
 
@@ -185,7 +187,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             mvcManager.ShowAsync(
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
-                    communityId: communityData!.Value.id)));
+                    communityId: communityData!.Value.id,
+                    spriteCache.StrictObject)));
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)

@@ -77,6 +77,20 @@ namespace DCL.UI
             return await spriteTaskCompletionSource.Task;
         }
 
+        public void AddOrReplaceCachedSprite(string imageUrl, Sprite imageContent)
+        {
+            if(currentSpriteTasks.ContainsKey(imageUrl))
+                currentSpriteTasks[imageUrl].TrySetCanceled();
+
+            if(failedSprites.ContainsKey(imageUrl))
+                failedSprites.Remove(imageUrl);
+
+            if(cachedSprites.ContainsKey(imageUrl))
+                cachedSprites[imageUrl] = imageContent;
+            else
+                cachedSprites.Add(imageUrl, imageContent);
+        }
+
         public void Clear()
         {
             cachedSprites.Clear();
@@ -111,8 +125,7 @@ namespace DCL.UI
                     new GetTextureArguments(TextureType.Albedo, useKtx),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
-                    ReportCategory.UI//,
-          //          suppressErrors: true
+                    ReportCategory.UI
                 );
 
                 Texture2D texture = ownedTexture.Texture;

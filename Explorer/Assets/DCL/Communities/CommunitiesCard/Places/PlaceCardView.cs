@@ -1,6 +1,5 @@
 using DCL.UI;
 using DCL.Utilities;
-using DCL.WebRequests;
 using DG.Tweening;
 using System;
 using TMPro;

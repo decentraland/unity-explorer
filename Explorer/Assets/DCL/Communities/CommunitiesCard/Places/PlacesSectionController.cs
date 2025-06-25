@@ -51,6 +51,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
+        private readonly ObjectProxy<ISpriteCache> spriteCache;
 
         private string[] communityPlaceIds;
 
@@ -81,6 +82,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.mvcManager = mvcManager;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
+            this.spriteCache = placeSpriteCache;
 
             view.InitGrid(() => currentSectionFetchData, placeSpriteCache, mvcManager, cancellationToken, web3IdentityCache);
 
@@ -119,7 +121,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             mvcManager.ShowAsync(
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
-                    communityId: communityData!.Value.id)));
+                    communityId: communityData!.Value.id,
+                    spriteCache.StrictObject)));
         }
 
         private void OnElementDeleteButtonClicked(PlaceInfo placeInfo)

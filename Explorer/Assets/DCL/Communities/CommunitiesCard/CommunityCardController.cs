@@ -332,7 +332,8 @@ namespace DCL.Communities.CommunitiesCard
             mvcManager.ShowAsync(
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
-                    communityId: communityData.id)));
+                    communityId: communityData.id,
+                    spriteCache.StrictObject)));
         }
 
         private void JoinCommunity()

@@ -136,8 +136,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 communitiesDataProvider,
                 placesAPIService,
-                selfProfile,
-                webRequestController);
+                selfProfile);
             mvcManager.RegisterController(communityCreationEditionController);
         }
     }

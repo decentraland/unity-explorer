@@ -386,7 +386,8 @@ namespace DCL.Communities.CommunitiesBrowser
             mvcManager.ShowAsync(
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: canCreate,
-                    communityId: string.Empty)), ct).Forget();
+                    communityId: string.Empty,
+                    spriteCache.StrictObject)), ct).Forget();
         }
     }
 }
