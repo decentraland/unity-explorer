@@ -128,7 +128,7 @@ namespace ECS.Unity.AvatarShape.Systems
 
             if (localSceneDevelopment)
             {
-                LoadAndTriggerSceneEmote(globalWorldEntity,
+                LoadAndTriggerSceneEmoteAsync(globalWorldEntity,
                     new GetSceneEmoteFromLocalSceneIntention(
                         sceneData,
                         emoteId,
@@ -140,7 +140,7 @@ namespace ECS.Unity.AvatarShape.Systems
             }
             else
             {
-                LoadAndTriggerSceneEmote(globalWorldEntity,
+                LoadAndTriggerSceneEmoteAsync(globalWorldEntity,
                     new GetSceneEmoteFromRealmIntention(
                         sceneData.SceneEntityDefinition.id!,
                         sceneData.AssetBundleManifest,
@@ -152,7 +152,7 @@ namespace ECS.Unity.AvatarShape.Systems
             }
         }
 
-        private async UniTaskVoid LoadAndTriggerSceneEmote<TIntention>(Entity globalWorldEntity, TIntention intention, SDKAvatarShapeEmotePromiseCancellationToken promiseComponent)
+        private async UniTaskVoid LoadAndTriggerSceneEmoteAsync<TIntention>(Entity globalWorldEntity, TIntention intention, SDKAvatarShapeEmotePromiseCancellationToken promiseComponent)
             where TIntention : struct, IAssetIntention, IEquatable<TIntention>
         {
             CancellationToken ct = promiseComponent.Cts.Token;
