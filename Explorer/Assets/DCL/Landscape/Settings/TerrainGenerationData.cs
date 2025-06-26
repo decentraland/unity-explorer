@@ -43,7 +43,7 @@ namespace DCL.Landscape.Settings
         public GameObject ocean;
 
         [Header("Wind")]
-        public GameObject wind;
+        //public GameObject wind;
 
         [Header("GrassRenderer")]
         public GameObject grassRenderer;
