@@ -1,8 +1,6 @@
 using System;
-using System.IO;
 using System.Linq;
 using Unity.Multiplayer.Playmode;
-using UnityEditor;
 using UnityEngine;
 
 namespace DCL.Prefs
@@ -81,16 +79,16 @@ namespace DCL.Prefs
         }
 
 #if UNITY_EDITOR
-        [MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
         private static void ClearDCLPlayerPrefs()
         {
-            string[] files = Directory.GetFiles(Application.persistentDataPath, "userdata_*");
+            string[] files = System.IO.Directory.GetFiles(Application.persistentDataPath, "userdata_*");
 
             foreach (string file in files)
-                File.Delete(file);
+                System.IO.File.Delete(file);
         }
 
-        [MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
         private static bool ValidateClearDCLPlayerPrefs() =>
             !Application.isPlaying;
 #endif

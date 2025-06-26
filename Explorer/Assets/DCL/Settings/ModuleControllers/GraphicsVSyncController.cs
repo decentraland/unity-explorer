@@ -52,7 +52,6 @@ namespace DCL.Settings.ModuleControllers
                     fpsLimitController = fpsController;
                     break;
                 }
-
             fpsLimitController?.SetViewInteractable(!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_VSYNC_ENABLED));
 
             SettingsDropdownModuleView fpsLimitView = (SettingsDropdownModuleView) fpsLimitController?.controllerView;
