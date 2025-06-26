@@ -18,23 +18,17 @@ namespace ECS.ComponentsPooling.Systems
     [ThrottlingEnabled]
     public partial class ReleaseReferenceComponentsSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly QueryDescription queryDescription = new QueryDescription().WithAll<DeleteEntityIntention>();
-
-        private readonly ReleaseComponentsToPoolOperation finalizeOperation;
-        private BudgetedIterator<ReleaseComponentsToPoolOperation>? finalizeIterator;
 
         public bool IsBudgetedFinalizeSupported => true;
 
+        private readonly BudgetedIteratorOperation operation;
+
         public ReleaseReferenceComponentsSystem(World world, IComponentPoolsRegistry componentPoolsRegistry) : base(world)
         {
-            finalizeOperation = new ReleaseComponentsToPoolOperation(componentPoolsRegistry);
-        }
-
-        protected override void OnDispose()
-        {
-            finalizeIterator?.Dispose();
-            finalizeIterator = null;
-            base.OnDispose();
+            this.componentPoolsRegistry = componentPoolsRegistry;
+            operation = Execute;
         }
 
         protected override void Update(float _)
@@ -48,45 +42,19 @@ namespace ECS.ComponentsPooling.Systems
             finalizeOperation.ExecuteInstantly(query);
         }
 
-        public BudgetedIteratorExecuteResult BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget)
+        public BudgetedIterator BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget) =>
+            new (query, budget, operation);
+
+        private void Execute(Array array, int entityIndex)
         {
-            finalizeIterator ??= new BudgetedIterator<ReleaseComponentsToPoolOperation>(
-                query,
-                budget,
-                finalizeOperation
-            );
+            // if it is called on a value type it will cause an allocation
+            if (array.GetType().GetElementType()!.IsValueType) return;
 
-            var result = finalizeIterator.Value.Execute();
+            object component = array.GetValue(entityIndex)!;
+            Type type = component.GetType();
 
-            if (result == BudgetedIteratorExecuteResult.COMPLETE)
-            {
-                finalizeIterator.Value.Dispose();
-                finalizeIterator = null;
-            }
-
-            return result;
-        }
-
-        public readonly struct ReleaseComponentsToPoolOperation : IBudgetedIteratorOperation
-        {
-            private readonly IComponentPoolsRegistry componentPoolsRegistry;
-
-            public ReleaseComponentsToPoolOperation(IComponentPoolsRegistry componentPoolsRegistry)
-            {
-                this.componentPoolsRegistry = componentPoolsRegistry;
-            }
-
-            public void Execute(Array[] array2D, int entityIndex, int i)
-            {
-                // if it is called on a value type it will cause an allocation
-                if (array2D[i].GetType().GetElementType()!.IsValueType) return;
-
-                object component = array2D[i].GetValue(entityIndex)!;
-                Type type = component.GetType();
-
-                if (componentPoolsRegistry.TryGetPool(type, out IComponentPool pool))
-                    pool.Release(component);
-            }
+            if (componentPoolsRegistry.TryGetPool(type, out IComponentPool pool))
+                pool.Release(component);
         }
     }
 }

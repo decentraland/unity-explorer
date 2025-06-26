@@ -12,6 +12,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using UnityEngine;
 using Utility;
 
 namespace ECS.Unity.GLTFContainer.Systems

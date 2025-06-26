@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using Utility.Ownership;
@@ -29,15 +30,15 @@ namespace ECS.LifeCycle
         /// <param name="query">All = typeof(CRDTEntity)</param>
         /// <param name="budget">Budget the implementing system must consider to avoid spikes</param>
         /// <param name="cleanUpMarker">System marks the marker if it didn't succeed to fully clean its resources due budget limitation</param>
-        BudgetedIteratorExecuteResult BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget)
+        BudgetedIterator BudgetedFinalizeComponents(in Query query, IPerformanceBudget budget)
         {
-            ReportHub.LogError(ReportCategory.ECS, $"IFinalizeWorldSystem.BudgetedFinalizeComponents called with default implementation. Performed sync in release. Behaviour should not be reachable: {this.GetType().FullName}");
+            ReportHub.LogError(ReportCategory.ECS, $"{nameof(IFinalizeWorldSystem)}.{nameof(BudgetedFinalizeComponents)} called with default implementation. Performed sync in release. Behaviour should not be reachable: {GetType().FullName}");
             this.FinalizeComponents(query);
             return BudgetedIteratorExecuteResult.COMPLETE;
         }
     }
 
-    public enum BudgetedIteratorExecuteResult
+    public enum BudgetedIteratorExecuteResult : byte
     {
         PARTIAL = 0,
         COMPLETE = 1,
@@ -46,73 +47,87 @@ namespace ECS.LifeCycle
     /// <summary>
     /// Copy Safe (Points to the same entity). Not thread-safe.
     /// </summary>
-    public readonly struct BudgetedIterator<TOperation> : IDisposable where TOperation: IBudgetedIteratorOperation
+    public ref struct BudgetedIterator
     {
-        private static readonly ObjectPool<Box<BudgetedIteratorExecuteResult>> POOL = new
-        (
-            createFunc: static () => new Box<BudgetedIteratorExecuteResult>(BudgetedIteratorExecuteResult.PARTIAL),
-            actionOnRelease: static box => box.Value = BudgetedIteratorExecuteResult.PARTIAL
-        );
-
         private readonly Query query;
-        private readonly HashSet<(int entityIndex, int arrayIndex)> handledEntities;
         private readonly IPerformanceBudget performanceBudget;
-        private readonly TOperation operation;
-        private readonly Box<BudgetedIteratorExecuteResult> executeResult;
+        private readonly BudgetedIteratorOperation operation;
 
-        public BudgetedIterator(Query query, IPerformanceBudget performanceBudget, TOperation operation) : this()
+        private QueryChunkEnumerator queryChunkIterator;
+        private EntityEnumerator entityEnumerator;
+        private bool isInitialized;
+
+        public BudgetedIterator(Query query, IPerformanceBudget performanceBudget, BudgetedIteratorOperation operation) : this()
         {
             this.query = query;
             this.performanceBudget = performanceBudget;
             this.operation = operation;
-            handledEntities = HashSetPool<(int entityIndex, int arrayIndex)>.Get()!;
-            executeResult = POOL.Get()!;
+
+            Reset();
         }
 
         public void Dispose()
         {
-            HashSetPool<(int entityIndex, int arrayIndex)>.Release(handledEntities);
-            POOL.Release(executeResult);
         }
 
-        public BudgetedIteratorExecuteResult Execute()
+        /// <summary>
+        ///     It will return false if the budget has exceeded or the query is complete.
+        /// </summary>
+        /// <returns></returns>
+        public bool MoveNext()
         {
-            if (executeResult.Value is BudgetedIteratorExecuteResult.COMPLETE)
-                return BudgetedIteratorExecuteResult.COMPLETE;
+            // 1. If it's the first move the queryChunkIterator should be moved first
+            // 2. If entityEnumerator can be moved, it should be moved
+            // 3. If entityEnumerator is not available, queryChunkIterator should be moved again
 
-            // Profiling required, O(N^4)
-            foreach (ref Chunk chunk in query.GetChunkIterator())
+            if (!isInitialized)
             {
-                // it does not allocate, it's not a copy
-                Array[] array2D = chunk.Components;
+                isInitialized = true;
 
-                foreach (int entityIndex in chunk)
-                    for (var i = 0; i < array2D.Length; i++)
-                    {
-                        if (performanceBudget.TrySpendBudget() == false)
-                            return executeResult.Value = BudgetedIteratorExecuteResult.PARTIAL;
-
-                        (int entityIndex, int arrayIndex) key = (entityIndex, i);
-
-                        if (handledEntities.Contains(key))
-                            continue;
-
-                        operation.Execute(array2D, entityIndex, i);
-                        handledEntities.Add(key);
-                    }
+                if (!queryChunkIterator.MoveNext())
+                {
+                    Current = BudgetedIteratorExecuteResult.COMPLETE;
+                    return false;
+                }
             }
 
-            return executeResult.Value = BudgetedIteratorExecuteResult.COMPLETE;
+            Current = BudgetedIteratorExecuteResult.PARTIAL;
+
+            while (performanceBudget.TrySpendBudget())
+            {
+                Array[] array2D = queryChunkIterator.Current.Components;
+
+                // Move to the next entity
+                if (entityEnumerator.MoveNext())
+                {
+                    int entityIndex = entityEnumerator.Current;
+
+                    // Don't budget the component within the same entity
+                    for (var arrayIndex = 0; arrayIndex < array2D.Length; arrayIndex++)
+                        operation(array2D[arrayIndex], entityIndex);
+                }
+
+                if (queryChunkIterator.MoveNext())
+                    entityEnumerator = queryChunkIterator.Current.GetEnumerator();
+                else
+                    break;
+            }
+
+            Current = BudgetedIteratorExecuteResult.COMPLETE;
+            return false;
         }
+
+        public void Reset()
+        {
+            // Un-initialized state => must move once to start
+            queryChunkIterator = query.GetChunkIterator().GetEnumerator();
+            entityEnumerator = default(EntityEnumerator);
+        }
+
+        public BudgetedIteratorExecuteResult Current { get; private set; }
     }
 
-    public interface IBudgetedIteratorOperation
-    {
-        /// <summary>
-        /// Method guarantees to be exception free.
-        /// </summary>
-        void Execute(Array[] array2D, int entityIndex, int arrayIndex);
-    }
+    public delegate void BudgetedIteratorOperation(Array componentsArray, int entityIndex);
 
     public static class BudgetedIteratorOperationExtensions
     {
@@ -122,7 +137,7 @@ namespace ECS.LifeCycle
         }
     }
 
-    public readonly struct ForeachBudgetedIteratorOperation<TForeach, TComponent> : IBudgetedIteratorOperation where TForeach: IForEach<TComponent>
+    public readonly struct ForeachBudgetedIteratorOperation<TForeach, TComponent> where TForeach: IForEach<TComponent>
     {
         private readonly TForeach forEach;
 
@@ -131,11 +146,11 @@ namespace ECS.LifeCycle
             this.forEach = forEach;
         }
 
-        public void Execute(Array[] array2D, int entityIndex, int arrayIndex)
+        public void Execute(Array array, int entityIndex)
         {
-            if (array2D[arrayIndex].GetType().GetElementType() == typeof(TComponent))
+            if (array.GetType().GetElementType() == typeof(TComponent))
             {
-                var componentArray = (TComponent[])array2D[arrayIndex];
+                var componentArray = (TComponent[])array;
                 ref var component = ref componentArray[entityIndex];
                 forEach.Update(ref component);
             }

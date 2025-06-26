@@ -14,7 +14,7 @@ using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace SceneRunner.ECSWorld
 {
-    public readonly struct ECSWorldFacade : IBudgetedDisposable
+    public struct ECSWorldFacade : IBudgetedDisposable
     {
         private static readonly Dictionary<Type, string> LABELS = new ();
 
@@ -87,7 +87,9 @@ namespace SceneRunner.ECSWorld
 
         private static IEnumerator<Unit> DisposeWithBudget(Query query, IFinalizeWorldSystem finalizeWorldSystem, string label, IPerformanceBudget budget)
         {
+            BudgetedIterator iterator = finalizeWorldSystem.BudgetedFinalizeComponents(query, budget);
             BudgetedIteratorExecuteResult result;
+
             do
             {
                 using (ProfilerSampleScope.New("FinalizeSDKComponents/ByBudget"))
@@ -95,7 +97,7 @@ namespace SceneRunner.ECSWorld
                 {
                     // We must be able to finalize world no matter what
                     // Marker being mutated inside
-                    try { result = finalizeWorldSystem.BudgetedFinalizeComponents(in query, budget); }
+                    try { result = iterator.Execute(); }
                     catch (Exception e)
                     {
                         ReportHub.LogException(e, ReportCategory.ECS);
@@ -107,7 +109,7 @@ namespace SceneRunner.ECSWorld
             }
 
             // Clean until it's fully cleaned
-            while (result is BudgetedIteratorExecuteResult.PARTIAL);
+            while (result == BudgetedIteratorExecuteResult.PARTIAL);
         }
 
         private static void DisposeImmediately(Query query, IFinalizeWorldSystem system, string label)
