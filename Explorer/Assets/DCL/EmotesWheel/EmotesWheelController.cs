@@ -38,7 +38,6 @@ namespace DCL.EmotesWheel
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
         private CancellationTokenSource? slotSetUpCts;
-        private readonly DCLInput dclInput;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -53,7 +52,6 @@ namespace DCL.EmotesWheel
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
             IInputBlock inputBlock,
-            DCLInput dclInput,
             ICursor cursor,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
@@ -65,14 +63,13 @@ namespace DCL.EmotesWheel
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
             this.inputBlock = inputBlock;
-            this.dclInput = dclInput;
-            emoteWheelInput = this.dclInput.EmoteWheel;
+            emoteWheelInput = DCLInput.Instance.EmoteWheel;
             this.cursor = cursor;
             this.sharedSpaceManager = sharedSpaceManager;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
-            dclInput.UI.Close.performed += Close;
+            DCLInput.Instance.UI.Close.performed += Close;
         }
 
         public override void Dispose()
@@ -81,7 +78,7 @@ namespace DCL.EmotesWheel
 
             emoteWheelInput.Customize.performed -= OpenBackpack;
             emoteWheelInput.Close.performed -= Close;
-            dclInput.UI.Close.performed -= Close;
+            DCLInput.Instance.UI.Close.performed -= Close;
             UnregisterSlotsInput(emoteWheelInput);
         }
 
@@ -132,7 +129,7 @@ namespace DCL.EmotesWheel
 
         protected override void OnViewShow()
         {
-            ListenToSlotsInput(this.dclInput.EmoteWheel);
+            ListenToSlotsInput(DCLInput.Instance.EmoteWheel);
         }
 
         protected override void OnViewClose()

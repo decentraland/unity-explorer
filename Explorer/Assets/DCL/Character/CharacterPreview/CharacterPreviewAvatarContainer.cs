@@ -20,6 +20,7 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Transform rotationTarget { get; private set; }
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
         [field: SerializeField] internal GameObject previewPlatform { get; private set; }
+        [field: SerializeField] internal AvatarPreviewHeadIKSettings headIKSettings { get; private set; }
 
         public void Dispose()
         {
@@ -32,14 +33,10 @@ namespace DCL.CharacterPreview
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
 
-#if UNITY_STANDALONE_OSX
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
-            if (cameraData)
-            {
-            //We disable post processing on OSX as the shader is not working correctly and it shows a black background
-                cameraData.renderPostProcessing = false;
-            }
-#endif
+
+            //We disable post processing on all platforms as the shader is not working correctly and it shows a black background
+            cameraData.renderPostProcessing = false;
         }
 
         public void SetCameraPosition(CharacterPreviewCameraPreset preset)
@@ -61,5 +58,12 @@ namespace DCL.CharacterPreview
 
         public void SetPreviewPlatformActive(bool isActive) =>
             previewPlatform.SetActive(isActive);
+    }
+
+    [Serializable]
+    public class AvatarPreviewHeadIKSettings
+    {
+        public float AvatarDepth = 500;
+        public float HeadMoveSpeed = 0.5f;
     }
 }

@@ -10,6 +10,7 @@ using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Optimization.Pools;
+using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
 using ECS.SceneLifeCycle.Reporting;
 using System.Threading;
@@ -28,7 +29,8 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedAsset<CharacterControllerSettings> settings;
 
-        public CharacterMotionPlugin(IAssetsProvisioner assetsProvisioner,
+        public CharacterMotionPlugin(
+            IAssetsProvisioner assetsProvisioner,
             ICharacterObject characterObject,
             IDebugContainerBuilder debugContainerBuilder,
             IComponentPoolsRegistry componentPoolsRegistry,
@@ -80,7 +82,7 @@ namespace DCL.PluginSystem.Global
             CalculateCameraFovSystem.InjectToWorld(ref builder);
             FeetIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
             HandsIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
-            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder);
+            HeadIKSystem.InjectToWorld(ref builder, debugContainerBuilder, settings.Value);
             ReleasePoolableComponentSystem<Transform, CharacterTransform>.InjectToWorld(ref builder, componentPoolsRegistry);
             SDKAvatarShapesMotionSystem.InjectToWorld(ref builder);
         }

@@ -25,7 +25,7 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private const string HOVER_TOOLTIP = "Open Passport";
+        private const string HOVER_TOOLTIP = "View Profile";
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
@@ -39,12 +39,11 @@ namespace DCL.Interaction.Systems
         private ProcessOtherAvatarsInteractionSystem(
             World world,
             IEventSystem eventSystem,
-            DCLInput dclInput,
             IMVCManagerMenusAccessFacade menusAccessFacade,
             IMVCManager mvcManager) : base(world)
         {
             this.eventSystem = eventSystem;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             this.menusAccessFacade = menusAccessFacade;
             this.mvcManager = mvcManager;
             viewProfileTooltip = new HoverFeedbackComponent.Tooltip(HOVER_TOOLTIP, dclInput.Player.Pointer);

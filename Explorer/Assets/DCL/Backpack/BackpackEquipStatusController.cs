@@ -71,6 +71,11 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent += ChangeColor;
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
+            // Avoid publishing an invalid profile
+            // For example: logout while the update operation is being processed
+            // See: https://github.com/decentraland/unity-explorer/issues/4413
+            web3IdentityCache.OnIdentityCleared += CancelUpdateOperation;
+            web3IdentityCache.OnIdentityChanged += CancelUpdateOperation;
 
             this.world = world;
             this.playerEntity = playerEntity;
@@ -88,6 +93,8 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent -= ChangeColor;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            web3IdentityCache.OnIdentityCleared -= CancelUpdateOperation;
+            web3IdentityCache.OnIdentityChanged -= CancelUpdateOperation;
             publishProfileCts?.SafeCancelAndDispose();
         }
 
@@ -220,5 +227,8 @@ namespace DCL.Backpack
 
             inWorldWarningNotificationView.Hide(ct: ct);
         }
+
+        private void CancelUpdateOperation() =>
+            publishProfileCts?.SafeCancelAndDispose();
     }
 }
