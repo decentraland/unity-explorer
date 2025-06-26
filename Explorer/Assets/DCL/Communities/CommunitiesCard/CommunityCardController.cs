@@ -304,9 +304,6 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Reset();
             placesSectionController?.Reset();
             eventListController?.Reset();
-
-            if(!isSpriteCacheExternal)
-                spriteCache.StrictObject.Clear();
         }
 
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>

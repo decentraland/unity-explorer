@@ -11,7 +11,6 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
@@ -409,7 +408,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (isProfileThumbnailDirty)
             {
-                spriteCache.StrictObject.AddOrReplaceCachedSprite(result.Value.communityData.thumbnails[0], lastSelectedProfileThumbnail);
+                spriteCache.StrictObject.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
                 isProfileThumbnailDirty = false;
                 lastSelectedProfileThumbnail = null;
             }

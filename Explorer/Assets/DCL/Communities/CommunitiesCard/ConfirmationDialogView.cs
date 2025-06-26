@@ -113,7 +113,7 @@ namespace DCL.Communities.CommunitiesCard
             if (hasProfileImage)
             {
                 profilePictureView.SetDefaultThumbnail();
-                profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl, dialogData.UserInfo.Address);
+                profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
             }
 
             await viewCanvasGroup.DOFade(1f, fadeDuration).ToUniTask(cancellationToken: ct);
