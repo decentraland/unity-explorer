@@ -15,6 +15,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 IndexInGlobalJobArray = -1,
                 bones = bones,
             };
+
+        public static AvatarTransformMatrixComponent NewDefault() =>
+            Create(BoneArray.NewDefault());
     }
 
     /// <summary>
@@ -38,7 +41,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 ? Result<BoneArray>.ErrorResult($"Cannot map bone array, mismatch count: real {bones.Length}, expected: {COUNT}")
                 : Result<BoneArray>.SuccessResult(new BoneArray(bones));
 
-        public static BoneArray NewDefault() =>
-            new (new Transform[COUNT]);
+        public static BoneArray NewDefault()
+        {
+            var inner = new Transform[COUNT];
+            for (int i = 0; i < COUNT; i++) inner[i] = new GameObject().transform;
+            return new BoneArray(inner);
+        }
     }
 }
