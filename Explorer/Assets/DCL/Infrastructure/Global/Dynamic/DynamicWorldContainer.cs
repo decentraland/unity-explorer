@@ -20,7 +20,6 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
-using DCL.Communities.CommunityCreation;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -436,7 +435,7 @@ namespace Global.Dynamic
             bool includeCommunities = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel, includeCommunities);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel, includeCommunities, staticContainer.RealmData, selfProfile, staticContainer.FeatureFlagsCache);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -526,7 +525,8 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), includeCommunities)
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), includeCommunities,
+                                                      staticContainer.RealmData, selfProfile, staticContainer.FeatureFlagsCache)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -716,7 +716,8 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     thumbnailCache,
                     mainUIView.WarningNotification,
-                    includeCommunities),
+                    includeCommunities,
+                    selfProfile),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -772,7 +773,8 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
                     communitiesDataProvider,
-                    realmNftNamesProvider
+                    realmNftNamesProvider,
+                    staticContainer.FeatureFlagsCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

@@ -1,4 +1,9 @@
+using Cysharp.Threading.Tasks;
+using DCL.FeatureFlags;
+using DCL.Profiles.Self;
+using ECS;
 using System;
+using System.Threading;
 
 namespace DCL.Communities
 {
@@ -58,6 +63,28 @@ namespace DCL.Communities
             }
 
             return new string(destination.Slice(0, charsWritten));
+        }
+
+        /// <summary>
+        /// Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
+        /// </summary>
+        /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
+        public static async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(IRealmData realmData, ISelfProfile selfProfile, FeatureFlagsCache featureFlagsCache, CancellationToken ct)
+        {
+            bool userAllowed = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
+
+            if (userAllowed)
+            {
+                await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+                var ownProfile = await selfProfile.ProfileAsync(ct);
+                if (ownProfile != null && !string.IsNullOrEmpty(ownProfile.UserId))
+                {
+                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string walletsAllowlist);
+                    userAllowed = string.IsNullOrEmpty(walletsAllowlist) || walletsAllowlist.Contains(ownProfile.UserId, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            return userAllowed;
         }
     }
 }

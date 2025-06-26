@@ -17,6 +17,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
@@ -70,6 +71,7 @@ namespace DCL.PluginSystem.Global
         private readonly IThumbnailCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly bool isCommunitiesIncluded;
+        private readonly ISelfProfile selfProfile;
 
         private ChatController chatController;
         private IRealmData realmData;
@@ -107,7 +109,8 @@ namespace DCL.PluginSystem.Global
             ICommunitiesDataProvider communityDataProvider,
             IThumbnailCache thumbnailCache,
             WarningNotificationView warningNotificationView,
-            bool isCommunitiesIncluded)
+            bool isCommunitiesIncluded,
+            ISelfProfile selfProfile)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -142,6 +145,7 @@ namespace DCL.PluginSystem.Global
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.isCommunitiesIncluded = isCommunitiesIncluded;
+            this.selfProfile = selfProfile;
         }
 
         public void Dispose()
@@ -193,7 +197,10 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 mvcManager,
                 warningNotificationView,
-                isCommunitiesIncluded
+                isCommunitiesIncluded,
+                realmData,
+                selfProfile,
+                featureFlagsCache
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

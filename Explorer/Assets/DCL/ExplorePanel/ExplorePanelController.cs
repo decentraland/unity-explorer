@@ -1,18 +1,22 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.ExplorePanel.Components;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Profiles.Self;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
+using ECS;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -33,8 +37,11 @@ namespace DCL.ExplorePanel
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
-        private readonly bool includeCommunities;
+        private bool includeCommunities;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IRealmData realmData;
+        private readonly ISelfProfile selfProfile;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -42,6 +49,7 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
+        private CancellationTokenSource setupExploreSectionsCts;
         private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
         private bool isControlClosing;
@@ -69,7 +77,10 @@ namespace DCL.ExplorePanel
             IInputBlock inputBlock,
             bool includeCameraReel,
             bool includeCommunities,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IRealmData realmData,
+            ISelfProfile selfProfile,
+            FeatureFlagsCache featureFlagsCache)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -85,6 +96,9 @@ namespace DCL.ExplorePanel
             this.includeCameraReel = includeCameraReel;
             this.includeCommunities = includeCommunities;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.realmData = realmData;
+            this.selfProfile = selfProfile;
+            this.featureFlagsCache = featureFlagsCache;
             CommunitiesBrowserController = communitiesBrowserController;
         }
 
@@ -102,6 +116,7 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
+            setupExploreSectionsCts.SafeCancelAndDispose();
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
@@ -113,6 +128,12 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewInstantiated()
         {
+            setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
+            SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
+        {
             exploreSections = new Dictionary<ExploreSections, ISection>
             {
                 { ExploreSections.Navmap, NavmapController },
@@ -123,6 +144,8 @@ namespace DCL.ExplorePanel
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
+
+            includeCommunities = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(realmData, selfProfile, featureFlagsCache, ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 

@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
@@ -22,7 +23,6 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -50,6 +50,7 @@ namespace DCL.UI.Sidebar
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
+        private CancellationTokenSource checkForCommunitiesFeatureCts;
         private const string IDLE_ICON_ANIMATOR = "Empty";
         private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
 
@@ -105,6 +106,7 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
+            checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -165,6 +167,9 @@ namespace DCL.UI.Sidebar
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
+
+            checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
+            CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
         }
 
         private void OnMvcManagerViewClosed(IController closedController)
@@ -261,6 +266,19 @@ namespace DCL.UI.Sidebar
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+        }
+
+        private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.communitiesButton.gameObject.SetActive(false);
+
+            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile == null)
+                return;
+
+            includeCommunities = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(realmData, selfProfile, featureFlagsCache, ct);
+            viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
         #region Sidebar button handlers
