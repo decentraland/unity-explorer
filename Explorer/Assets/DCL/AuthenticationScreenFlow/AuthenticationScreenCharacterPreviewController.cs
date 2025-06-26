@@ -126,7 +126,9 @@ namespace DCL.AuthenticationScreenFlow
         public async UniTask PlayJumpInEmoteAndAwaitItAsync()
         {
             playEmotesCts = playEmotesCts.SafeRestart();
-            await PlayEmoteAndAwaitItAsync(settings.JumpInEmoteURN, playEmotesCts!.Token);
+            StopEmotes();
+            await AwaitPlayingEmoteAsync(playEmotesCts!.Token);
+            // PlayEmoteAndAwaitItAsync(settings.JumpInEmoteURN, playEmotesCts!.Token);
         }
 
         /// <summary>
