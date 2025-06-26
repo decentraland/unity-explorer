@@ -1,10 +1,8 @@
 #if UNITY_EDITOR
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 namespace DCL.ApplicationMinimumSpecsGuard.UI.Tests
@@ -36,7 +34,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.UI.Tests
             tablePresenter = new MinimumSpecsTablePresenter(tableView);
         }
 
-        [ContextMenu("UI Stress Test (Runtime)/1. Populate with Random Data")]
+        [ContextMenu("Populate with Random Data")]
         private void PopulateWithRandomData()
         {
             if (!Application.isPlaying) return;
@@ -44,7 +42,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.UI.Tests
             Populate(CreateRandomResults());
         }
 
-        [ContextMenu("UI Stress Test (Runtime)/2. Reset with Real Data")]
+        [ContextMenu("Reset with Real Data")]
         private void ResetWithRealData()
         {
             if (!Application.isPlaying) return;

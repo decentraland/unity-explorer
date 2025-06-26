@@ -12,20 +12,19 @@ namespace DCL.ApplicationMinimumSpecsGuard
         [SerializeField] private TextMeshProUGUI requiredText;
         [SerializeField] private TextMeshProUGUI actualText;
 
-        public void Set(SpecResult result)
+        public void SetTitle(string text)
         {
-            titleText.text = result.Category.ToString();
-            requiredText.text = result.Required;
-
-            string icon = result.IsMet ? "<sprite name=\"2705\">" : "<sprite name=\"3498\">";
-            actualText.text = $"{icon} {result.Actual}";
+            titleText.text = text;
         }
 
-        public void Clear()
+        public void SetRequiredText(string text)
         {
-            titleText.text = "";
-            requiredText.text = "";
-            actualText.text = "";
+            requiredText.text = text;
+        }
+
+        public void SetActualText(string text)
+        {
+            actualText.text = text;
         }
     }
 }

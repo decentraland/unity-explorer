@@ -5,25 +5,56 @@ namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class DefaultSpecProfileProvider : ISpecProfileProvider
     {
+        private const int MIN_VRAM_MB = 6 * 1024;
+        private const int MIN_RAM_MB = 16 * 1024;
+        private const int MIN_STORAGE_MB = 8 * 1024;
+        private const string WIN_OS_REQ = "Windows 10 or newer";
+        private const string WIN_CPU_REQ = "Intel i5 (7th Gen) or AMD Ryzen 5+";
+        private const string WIN_GPU_REQ = "Nvidia RTX 20 series or AMD RX 5000 series+";
+        private const string WIN_SHADER_REQ = "Compute Shaders";
+        private const string MAC_OS_REQ = "macOS 11 (Big Sur) or newer";
+        private const string MAC_CPU_REQ = "Apple M1 or newer";
+        private const string MAC_GPU_REQ = "Apple M1 Integrated";
+        private const string MAC_SHADER_REQ = "Metal-compatible (Compute Shaders)";
+
         public SpecProfile GetProfile(PlatformOS platform, SpecTarget target)
         {
+            if (target != SpecTarget.Minimum)
+                throw new NotSupportedException($"SpecTarget '{target}' is not supported yet.");
+
             return platform switch
             {
-                PlatformOS.Windows when target == SpecTarget.Minimum => new SpecProfile
+                PlatformOS.Windows => new SpecProfile
                 {
-                    PlatformLabel = "Windows", OsRequirement = "Windows 10 64-bit", OsCheck = os => os.Contains("Windows 10") || os.Contains("Windows 11"), CpuRequirement = "Intel i5 7th gen or AMD Ryzen 5+",
-                    CpuCheck = SystemSpecUtils.IsWindowsCpuAcceptable, GpuRequirement = "Nvidia RTX 20 Series or AMD Radeon RX 5000 Series (DirectX 12 Compatible)", GpuCheck = SystemSpecUtils.IsWindowsGpuAcceptable, MinVramGB = 6,
-                    MinRamGB = 16, ShaderRequirement = "Compute Shaders (DX12)", ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8
+                    // Platform
+                    PlatformLabel = "Windows",
+
+                    // Checks
+                    OsCheck = SystemSpecUtils.IsWindows10OrNewer, CpuCheck = SystemSpecUtils.IsWindowsCpuAcceptable, GpuCheck = SystemSpecUtils.IsWindowsGpuAcceptable, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
+
+                    // Display Strings
+                    OsRequirement = WIN_OS_REQ, CpuRequirement = WIN_CPU_REQ, GpuRequirement = WIN_GPU_REQ, ShaderRequirement = WIN_SHADER_REQ,
+
+                    // Numeric Values
+                    MinVramMB = MIN_VRAM_MB, MinRamMB = MIN_RAM_MB, MinStorageMB = MIN_STORAGE_MB
                 },
 
-                PlatformOS.Mac when target == SpecTarget.Minimum => new SpecProfile
+                PlatformOS.Mac => new SpecProfile
                 {
-                    PlatformLabel = "macOS", OsRequirement = "macOS 11 Big Sur", OsCheck = os => os.Contains("Mac OS X") && SystemSpecUtils.TryGetMacVersionMajor(os) >= 11, CpuRequirement = "Apple M1",
-                    CpuCheck = SystemSpecUtils.IsAppleSilicon, GpuRequirement = "Apple M1 (Metal support)", GpuCheck = SystemSpecUtils.IsAppleSilicon, MinVramGB = 6,
-                    MinRamGB = 16, ShaderRequirement = "Metal-compatible (Compute Shaders)", ShaderCheck = () => SystemInfo.supportsComputeShaders, MinStorageGB = 8
+                    // Platform
+                    PlatformLabel = "macOS",
+
+                    // Checks
+                    OsCheck = SystemSpecUtils.IsMacOsBigSurOrNewer, CpuCheck = SystemSpecUtils.IsAppleSilicon, GpuCheck = SystemSpecUtils.IsAppleSilicon, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
+
+                    // Display Strings
+                    OsRequirement = MAC_OS_REQ, CpuRequirement = MAC_CPU_REQ, GpuRequirement = MAC_GPU_REQ, ShaderRequirement = MAC_SHADER_REQ,
+
+                    // Numeric Values
+                    MinVramMB = MIN_VRAM_MB, MinRamMB = MIN_RAM_MB, MinStorageMB = MIN_STORAGE_MB
                 },
 
-                _ => throw new NotSupportedException("Unsupported platform")
+                _ => throw new NotSupportedException($"Platform '{platform}' is not supported.")
             };
         }
     }

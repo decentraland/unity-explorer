@@ -16,7 +16,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
     public enum SpecTarget
     {
         Minimum,
-        Recommended
+        // Recommended
     }
 
     public enum PlatformOS
@@ -55,17 +55,17 @@ namespace DCL.ApplicationMinimumSpecsGuard
         public string GpuRequirement;
         public Func<string, bool> GpuCheck;
 
-        public int MinRamGB;
-        public string RamRequirement => $"{MinRamGB} GB";
+        public int MinRamMB;
+        public string RamRequirement => $"{MinRamMB / 1024f} GB";
 
-        public int MinVramGB;
-        public string VramRequirement => $"{MinVramGB} GB";
+        public int MinVramMB;
+        public string VramRequirement => $"{MinVramMB / 1024f} GB";
 
         public string ShaderRequirement;
         public Func<bool> ShaderCheck;
 
-        public int MinStorageGB;
-        public string StorageRequirement => $"{MinStorageGB} GB";
+        public int MinStorageMB;
+        public string StorageRequirement => $"{MinStorageMB / 1024f} GB";
     }
 
     public interface ISpecProfileProvider

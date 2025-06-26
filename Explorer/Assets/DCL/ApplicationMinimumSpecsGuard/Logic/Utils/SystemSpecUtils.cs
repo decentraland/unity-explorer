@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -83,6 +84,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
             return false;
         }
 
+        public static bool ComputeShaderCheck()
+        {
+            return SystemInfo.supportsComputeShaders;
+        }
+        
         public static bool IsAppleSilicon(string deviceName)
         {
             return Regex.IsMatch(deviceName, @"apple\s+m\d", RegexOptions.IgnoreCase);
@@ -92,6 +98,25 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             var match = Regex.Match(os, @"Mac OS X (\d+)");
             return match.Success ? int.Parse(match.Groups[1].Value) : 0;
+        }
+
+        public static bool IsWindows10OrNewer(string os)
+        {
+            return os.Contains("Windows 10") || os.Contains("Windows 11");
+        }
+
+        public static bool IsMacOsBigSurOrNewer(string os)
+        {
+            if (!os.Contains("Mac OS X")) return false;
+
+            var match = Regex.Match(os, @"(\d+)\.\d+"); // Matches "11.5", "12.0", etc.
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int majorVersion))
+            {
+                // macOS 11 (Big Sur) is the minimum.
+                return majorVersion >= 11;
+            }
+
+            return false;
         }
     }
 }

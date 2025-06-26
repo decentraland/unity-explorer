@@ -81,24 +81,25 @@ namespace DCL.ApplicationMinimumSpecsGuard
             results.Add(new SpecResult(SpecCategory.GPU, profile.GpuCheck(gpu), profile.GpuRequirement, gpu));
 
             // VRAM
-            int vramMB = SystemInfo.graphicsMemorySize;
-            float vramGB = vramMB / 1024f;
-            results.Add(new SpecResult(SpecCategory.VRAM, vramGB >= profile.MinVramGB, profile.VramRequirement, $"{vramGB:0.0} GB"));
+            int actualVramMB = SystemInfo.graphicsMemorySize;
+            int vramGB = Mathf.CeilToInt(actualVramMB / 1024f);
+            results.Add(new SpecResult(SpecCategory.VRAM, actualVramMB >= profile.MinVramMB, profile.VramRequirement, $"{vramGB} GB"));
 
             // RAM
-            int ramMB = SystemInfo.systemMemorySize;
-            float ramGB = ramMB / 1024f;
-            results.Add(new SpecResult(SpecCategory.RAM, ramGB >= profile.MinRamGB, profile.RamRequirement, $"{ramGB:0.0} GB"));
+            int actualRamMB = SystemInfo.systemMemorySize;
+            int ramGB = Mathf.CeilToInt(actualRamMB / 1024f);
+            results.Add(new SpecResult(SpecCategory.RAM, actualRamMB >= profile.MinRamMB, profile.RamRequirement, $"{ramGB} GB"));
 
             // Storage
             long availableStorageBytes = PlatformUtils.GetAvailableStorageBytes(Application.persistentDataPath);
-            float availableStorageGB = availableStorageBytes / (1024f * 1024f * 1024f);
+            float actualAvailableStorageMB = availableStorageBytes / (1024f * 1024f);
+            float availableStorageGB = Mathf.CeilToInt(availableStorageBytes / (1024f * 1024f * 1024f));
 
             results.Add(new SpecResult(
                 SpecCategory.Storage,
-                availableStorageGB >= profile.MinStorageGB,
+                actualAvailableStorageMB >= profile.MinStorageMB,
                 profile.StorageRequirement,
-                $"{availableStorageGB:0.0} GB"));
+                $"{availableStorageGB} GB"));
 
             return results;
         }

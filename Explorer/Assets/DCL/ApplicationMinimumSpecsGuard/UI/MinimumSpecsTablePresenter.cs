@@ -1,18 +1,17 @@
 using System.Collections.Generic;
 using DCL.Diagnostics;
-using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
     public class MinimumSpecsTablePresenter
     {
-        private readonly MinimumSpecsTableView view;
+        private const string PASS_ICON_SPRITE_TAG = "<sprite name=\"2705\">";
+        private const string FAIL_ICON_SPRITE_TAG = "<sprite name=\"274c\">";
+        
         private readonly Dictionary<SpecCategory, MinimumSpecsRowView> rowMap;
 
         public MinimumSpecsTablePresenter(MinimumSpecsTableView view)
         {
-            this.view = view;
-
             rowMap = new Dictionary<SpecCategory, MinimumSpecsRowView>();
 
             foreach (var row in view.Rows)
@@ -29,16 +28,17 @@ namespace DCL.ApplicationMinimumSpecsGuard
             foreach (var result in results)
             {
                 if (rowMap.TryGetValue(result.Category, out var row))
-                    row.Set(result);
+                {
+                    string icon = result.IsMet ? PASS_ICON_SPRITE_TAG : FAIL_ICON_SPRITE_TAG;
+                    string formattedActualText = $"{icon} {result.Actual}";
+
+                    row.SetTitle(result.Category.ToString());
+                    row.SetRequiredText(result.Required);
+                    row.SetActualText(formattedActualText);
+                }
                 else
                     ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"No UI row defined for category: {result.Category}");
             }
-        }
-
-        public void Clear()
-        {
-            foreach (var row in rowMap.Values)
-                row.Clear();
         }
     }
 }
