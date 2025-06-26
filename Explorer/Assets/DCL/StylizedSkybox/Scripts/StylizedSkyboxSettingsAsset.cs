@@ -9,6 +9,7 @@ namespace DCL.StylizedSkybox.Scripts
     // Note: More time sources will be added in the future
     public enum SkyboxTimeSource
     {
+        SDK_SKYBOX_COMPONENT_FIXED, // The SDK skybox time component manages the skybox time
         SCENE_FIXED, // The scene manages the skybox time
         PLAYER_FIXED, // The player manages the skybox time
         FEATURE_FLAG, // The feature flag manages the skybox time

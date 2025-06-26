@@ -53,6 +53,7 @@ namespace DCL.StylizedSkybox.Scripts
                 case SkyboxTimeSource.FEATURE_FLAG:
                     RestrictTimeControl(SceneRestrictionsAction.REMOVED);
                     break;
+                case SkyboxTimeSource.SDK_SKYBOX_COMPONENT_FIXED:
                 case SkyboxTimeSource.SCENE_FIXED:
                     RestrictTimeControl(SceneRestrictionsAction.APPLIED);
                     break;
