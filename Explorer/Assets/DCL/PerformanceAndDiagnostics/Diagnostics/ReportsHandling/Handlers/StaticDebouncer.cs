@@ -7,7 +7,7 @@ namespace DCL.Diagnostics
     /// <summary>
     ///     Allows only one message to be logged, regardless of the number of frames or time that passes.
     /// </summary>
-    [Singleton]
+    [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
     public partial class StaticDebouncer : IReportsDebouncer
     {
         private readonly HashSet<ReportMessageFingerprint> fingerprints = new ();

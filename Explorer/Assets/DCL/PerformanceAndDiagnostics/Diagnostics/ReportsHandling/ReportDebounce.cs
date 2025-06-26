@@ -15,7 +15,7 @@ namespace DCL.Diagnostics
         /// <summary>
         ///     Report is the same every time and will not change within the assembly
         /// </summary>
-        public static readonly ReportDebounce ASSEMBLY_STATIC = new (new StaticDebouncer());
+        public static ReportDebounce AssemblyStatic => new (StaticDebouncer.Instance);
 
         public readonly IReportsDebouncer? Debouncer;
         public readonly CallStackFingerprint? CallStackHint;

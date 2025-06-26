@@ -18,6 +18,12 @@ namespace Diagnostics.ReportsHandling.Tests
             reportHandlerBase = Substitute.For<ReportHandlerBase>(ReportHandler.DebugLog, categorySeverityMatrix, true);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            StaticDebouncer.Reset();
+        }
+
         [Test]
         public void Log([Values(LogType.Log, LogType.Warning, LogType.Error, LogType.Exception)] LogType logType)
         {
@@ -32,7 +38,7 @@ namespace Diagnostics.ReportsHandling.Tests
         {
             categorySeverityMatrix.IsEnabled(Arg.Any<string>(), logType).Returns(true);
 
-            ReportDebounce debounce = ReportDebounce.ASSEMBLY_STATIC;
+            ReportDebounce debounce = ReportDebounce.AssemblyStatic;
 
             reportHandlerBase.Log(logType, new ReportData("TEST", debounce), null, "message");
 
@@ -49,17 +55,17 @@ namespace Diagnostics.ReportsHandling.Tests
 
             categorySeverityMatrix.IsEnabled(Arg.Any<string>(), LogType.Exception).Returns(true);
 
-            reportHandlerBase.LogException(e, new ReportData("TEST", ReportDebounce.ASSEMBLY_STATIC), null);
-            reportHandlerBase.LogException(e, new ReportData("TEST", ReportDebounce.ASSEMBLY_STATIC), null);
+            reportHandlerBase.LogException(e, new ReportData("TEST", ReportDebounce.AssemblyStatic), null);
+            reportHandlerBase.LogException(e, new ReportData("TEST", ReportDebounce.AssemblyStatic), null);
 
-            reportHandlerBase.Received(1).LogExceptionInternal(e, new ReportData("TEST", ReportDebounce.ASSEMBLY_STATIC), null);
+            reportHandlerBase.Received(1).LogExceptionInternal(e, new ReportData("TEST", ReportDebounce.AssemblyStatic), null);
         }
 
         [Ignore("Can't be debounced because exceptions can't be compared")]
         [Test]
         public void DebounceEcsException()
         {
-            var e = new EcsSystemException(null, new ArgumentException("test"), new ReportData("TEST", ReportDebounce.ASSEMBLY_STATIC));
+            var e = new EcsSystemException(null, new ArgumentException("test"), new ReportData("TEST", ReportDebounce.AssemblyStatic));
 
             categorySeverityMatrix.IsEnabled(Arg.Any<string>(), LogType.Exception).Returns(true);
 

@@ -30,7 +30,7 @@ namespace DCL.Diagnostics
             new (category);
 
         public ReportData WithStaticDebounce() =>
-            new (Category, ReportDebounce.ASSEMBLY_STATIC, SceneShortInfo, SceneTickNumber);
+            new (Category, ReportDebounce.AssemblyStatic, SceneShortInfo, SceneTickNumber);
 
         public bool Equals(ReportData other) =>
             Category == other.Category && Debounce.Equals(other.Debounce) && SceneShortInfo.Equals(other.SceneShortInfo) && SceneTickNumber == other.SceneTickNumber;
