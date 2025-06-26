@@ -7,11 +7,11 @@ namespace DCL.Communities
 {
     public interface ICommunitiesDataProvider
     {
-        public delegate void CommunityOperation(string communityId);
-        event CommunityOperation CommunityUpdated;
-
-        event Action CommunityCreated;
-        event Action CommunityDeleted;
+        public event Action CommunityCreated;
+        public event Action<string> CommunityUpdated;
+        public event Action CommunityDeleted;
+        public event Action<string, bool> CommunityJoined;
+        public event Action<string, bool> CommunityLeft;
 
         UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct);
         UniTask<GetUserCommunitiesResponse> GetUserCommunitiesAsync(string name, bool onlyMemberOf, int pageNumber, int elementsPerPage, CancellationToken ct);

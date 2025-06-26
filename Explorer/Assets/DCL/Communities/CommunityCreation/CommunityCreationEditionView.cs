@@ -193,9 +193,10 @@ namespace DCL.Communities.CommunityCreation
             imageController.SetImage(sprite);
         }
 
-        public void SetCommunityName(string text)
+        public void SetCommunityName(string text, bool isInteractable)
         {
             creationPanelCommunityNameInputField.text = text;
+            creationPanelCommunityNameInputField.interactable = isInteractable;
             UpdateCreateButtonAvailability();
         }
 
@@ -217,10 +218,10 @@ namespace DCL.Communities.CommunityCreation
                 creationPanelPlacesDropdown.value = 0;
             }
         }
-        public void AddPlaceTag(string id, bool isWorld, string placeName)
+        public void AddPlaceTag(string id, bool isWorld, string placeName, bool isRemovalAllowed, bool updateScrollPosition = true)
         {
             CommunityPlaceTag placeTag = Instantiate(placeTagPrefab, placeTagsContainer);
-            placeTag.Setup(id, isWorld, placeName);
+            placeTag.Setup(id, isWorld, placeName, isRemovalAllowed);
 
             void OnPlaceTagRemovedClicked()
             {
@@ -236,8 +237,11 @@ namespace DCL.Communities.CommunityCreation
             currentPlaceTags.Add(placeTag);
             creationPanelPlacesDropdown.value = 0;
 
-            updateScrollPositionCts = updateScrollPositionCts.SafeRestart();
-            SetScrollPositionToBottomAsync(updateScrollPositionCts.Token).Forget();
+            if (updateScrollPosition)
+            {
+                updateScrollPositionCts = updateScrollPositionCts.SafeRestart();
+                SetScrollPositionToBottomAsync(updateScrollPositionCts.Token).Forget();
+            }
         }
 
         public void RemovePlaceTag(string id)
@@ -259,7 +263,7 @@ namespace DCL.Communities.CommunityCreation
         {
             SetCommunityCreationInProgress(false);
             SetProfileSelectedImage(sprite: null);
-            SetCommunityName(string.Empty);
+            SetCommunityName(string.Empty, true);
             SetCommunityDescription(string.Empty);
             SetPlacesSelector(new List<string>());
 

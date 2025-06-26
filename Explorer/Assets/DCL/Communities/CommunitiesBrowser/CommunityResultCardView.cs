@@ -5,7 +5,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.WebRequests;
 using DG.Tweening;
-using MVC;
 using System;
 using TMPro;
 using UnityEngine;
@@ -23,7 +22,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public event Action<string> MainButtonClicked;
         public event Action<string> ViewCommunityButtonClicked;
-        public event Action<int, CommunityResultCardView> JoinCommunityButtonClicked;
+        public event Action<string, CommunityResultCardView> JoinCommunityButtonClicked;
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
@@ -64,7 +63,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private ImageController imageController;
         private string currentCommunityId;
-        private int currentIndex;
         private Tweener headerTween;
         private Tweener footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -74,7 +72,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
             viewCommunityButton.onClick.AddListener(() => ViewCommunityButtonClicked?.Invoke(currentCommunityId));
-            joinCommunityButton.onClick.AddListener(() => JoinCommunityButtonClicked?.Invoke(currentIndex, this));
+            joinCommunityButton.onClick.AddListener(() => JoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
 
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
@@ -108,9 +106,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetCommunityId(string id) =>
             currentCommunityId = id;
-
-        public void SetIndex(int index) =>
-            currentIndex = index;
 
         public void SetTitle(string title) =>
             communityTitle.text = title;

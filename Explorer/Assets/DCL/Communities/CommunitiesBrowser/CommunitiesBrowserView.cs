@@ -25,7 +25,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public event Action SearchBarClearButtonClicked;
         public event Action<Vector2> ResultsLoopGridScrollChanged;
         public event Action<string> CommunityProfileOpened;
-        public event Action<int, string> CommunityJoined;
+        public event Action<string> CommunityJoined;
         public event Action CreateCommunityButtonClicked;
 
         public bool IsResultsScrollPositionAtBottom =>
@@ -203,21 +203,50 @@ namespace DCL.Communities.CommunitiesBrowser
                 resultLoopGrid.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
-        public void UpdateJoinedCommunity(int index, bool isSuccess)
+        public void UpdateJoinedCommunity(string communityId, bool isJoined, bool isSuccess)
         {
             if (isSuccess)
             {
-                // Change the role and increment the members amount
-                currentResults[index].role = CommunityMemberRole.member;
-                currentResults[index].membersCount++;
+                CommunityData resultCommunityData = GetResultCommunityById(communityId);
+                resultCommunityData?.SetAsJoined(isJoined);
 
-                // Add the joined community to My Communities
-                currentMyCommunities.Add(currentResults[index]);
+                CommunityData myCommunityData = GetMyCommunityById(communityId);
+                myCommunityData?.SetAsJoined(isJoined);
+
+                // Add/remove the joined/left community to/from My Communities
+                if (isJoined)
+                    currentMyCommunities.Add(resultCommunityData);
+                else if (myCommunityData != null)
+                    currentMyCommunities.RemoveAll(c => c.id == myCommunityData.id);
+
                 myCommunitiesLoopList.SetListItemCount(currentMyCommunities.Count, false);
                 SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
             }
 
-            resultLoopGrid.RefreshItemByItemIndex(index);
+            resultLoopGrid.RefreshAllShownItem();
+            myCommunitiesLoopList.RefreshAllShownItem();
+        }
+
+        private CommunityData GetResultCommunityById(string communityId)
+        {
+            foreach (CommunityData communityData in currentResults)
+            {
+                if (communityData.id == communityId)
+                    return communityData;
+            }
+
+            return null;
+        }
+
+        private CommunityData GetMyCommunityById(string communityId)
+        {
+            foreach (CommunityData communityData in currentMyCommunities)
+            {
+                if (communityData.id == communityId)
+                    return communityData;
+            }
+
+            return null;
         }
 
         private void SetSearchBarClearButtonActive(bool isActive) =>
@@ -252,7 +281,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
             // Setup card data
             cardView.SetCommunityId(communityData.id);
-            cardView.SetIndex(index);
             cardView.SetTitle(communityData.name);
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
@@ -289,10 +317,15 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.gameObject.SetActive(!isEmpty);
         }
 
-        private void OnCommunityJoined(int index, CommunityResultCardView cardView)
+        private void OnCommunityJoined(string communityId, CommunityResultCardView cardView)
         {
             cardView.SetJoiningLoadingActive(true);
-            CommunityJoined?.Invoke(index, currentResults[index].id);
+
+            CommunityData communityData = GetResultCommunityById(communityId);
+            if (communityData == null)
+                return;
+
+            CommunityJoined?.Invoke(communityData.id);
         }
     }
 }
