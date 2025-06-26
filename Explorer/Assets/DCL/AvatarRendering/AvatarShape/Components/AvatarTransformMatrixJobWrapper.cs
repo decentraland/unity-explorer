@@ -34,18 +34,11 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         private int nextResizeValue;
         internal int currentAvatarAmountSupported;
 
-        //Helper transform for bone matrix calculation
-        private readonly Matrix4x4 identityTransform;
-
         public AvatarTransformMatrixJobWrapper()
         {
             bonesCombined = new NativeArray<Matrix4x4>(BONES_PER_AVATAR_LENGTH, Allocator.Persistent);
-            identityTransform = new GameObject("Identity_Helper_Transform").transform.localToWorldMatrix;
 
             job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH, bonesCombined);
-
-            for (int i = 0; i < BONES_PER_AVATAR_LENGTH; i++)
-                bonesCombined[i] = identityTransform;
 
             matrixFromAllAvatars
                 = new NativeArray<Matrix4x4>(AVATAR_ARRAY_SIZE, Allocator.Persistent);
@@ -104,10 +97,14 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             var newBonesCombined
                 = new NativeArray<Matrix4x4>(BONES_PER_AVATAR_LENGTH * nextResizeValue, Allocator.Persistent);
 
-            for (var i = 0; i < BONES_PER_AVATAR_LENGTH * nextResizeValue; i++)
-                newBonesCombined[i] = i < BONES_PER_AVATAR_LENGTH * (nextResizeValue - 1)
-                    ? bonesCombined[i]
-                    : identityTransform;
+            int copyCount = BONES_PER_AVATAR_LENGTH * (nextResizeValue - 1);
+            long bytesToCopy = copyCount * UnsafeUtility.SizeOf<Matrix4x4>();
+
+            UnsafeUtility.MemCpy(
+                destination: newBonesCombined.GetUnsafePtr()!,
+                source: bonesCombined.GetUnsafeReadOnlyPtr()!,
+                size: bytesToCopy
+            );
 
             bonesCombined.Dispose();
             bonesCombined = newBonesCombined;
