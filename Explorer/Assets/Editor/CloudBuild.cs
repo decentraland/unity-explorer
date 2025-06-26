@@ -92,7 +92,8 @@ namespace Editor
                 "0649", // Field is never assigned to, and will always have its default value
                 "0414", // Field is assigned but its value is never used
                 "0168", // Variable is declared but never used
-                "0219"  // Variable is assigned but its value is never used
+                "0219", // Variable is assigned but its value is never used
+                "8632"  // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
             };
 
             // Path to the Assets folder
