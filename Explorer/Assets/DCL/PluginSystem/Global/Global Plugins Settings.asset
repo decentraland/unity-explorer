@@ -87,7 +87,7 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         <EmotesSettings>k__BackingField:
-          <TimeBetweenEmotes>k__BackingField: 3
+          <TimeBetweenEmotes>k__BackingField: 5
           <IntroEmoteURN>k__BackingField: raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump
           <FunnyEmotes>k__BackingField:
