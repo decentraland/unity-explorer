@@ -80,7 +80,7 @@ namespace DCL.Communities.EventInfo
         protected override void OnBeforeViewShow()
         {
             panelCts = panelCts.SafeRestart();
-            viewInstance!.ConfigureEventData(inputData.EventData);
+            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData);
         }
 
         protected override void OnViewClose()

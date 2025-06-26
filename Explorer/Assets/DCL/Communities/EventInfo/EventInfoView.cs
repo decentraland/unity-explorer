@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
+using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
@@ -86,7 +87,7 @@ namespace DCL.Communities.EventInfo
             imageController ??= new ImageController(eventImage, webRequestController);
         }
 
-        public void ConfigureEventData(IEventDTO eventData)
+        public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo placeData)
         {
             eventDTO = eventData;
 
@@ -102,13 +103,7 @@ namespace DCL.Communities.EventInfo
             interestedButton.gameObject.SetActive(!eventData.Live);
             liveBadge.SetActive(eventData.Live);
 
-            string placeName;
-            if (eventData.World)
-                placeName = string.IsNullOrEmpty(eventData.Scene_name) ? eventData.Server : $"{eventData.Scene_name} ({eventData.Server})";
-            else
-                placeName = $"{eventData.Scene_name} ({eventData.X},{eventData.Y})";
-
-            placeNameText.text = placeName;
+            placeNameText.text = eventData.World ? $"{placeData.title} ({placeData.world_name})" : $"{placeData.title} ({eventData.X},{eventData.Y})";
 
             eventSchedules.text = CalculateRecurrentSchedulesString(eventData);
         }
