@@ -20,7 +20,7 @@ namespace DCL.Settings.ModuleControllers
             this.worldVolumeMacBus = worldVolumeMacBus;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WORLD_VOLUME))
-                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_WORLD_VOLUME);
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_WORLD_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetWorldVolumeSettings);
             SetWorldVolumeSettings(view.SliderView.Slider.value);

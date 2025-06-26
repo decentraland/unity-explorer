@@ -22,7 +22,7 @@ namespace DCL.Settings.ModuleControllers
             this.chatSettingsAsset = chatSettingsAsset;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_SOUNDS);
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_SOUNDS);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetChatSoundsSettings);
         }

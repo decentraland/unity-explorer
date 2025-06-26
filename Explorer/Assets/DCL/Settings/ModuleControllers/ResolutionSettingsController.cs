@@ -24,7 +24,7 @@ namespace DCL.Settings.ModuleControllers
             LoadResolutionOptions();
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_RESOLUTION);
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
             else
             {
                 for (var index = 0; index < possibleResolutions.Count; index++)

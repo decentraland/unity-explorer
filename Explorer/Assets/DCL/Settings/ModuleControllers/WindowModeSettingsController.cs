@@ -14,7 +14,7 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_WINDOW_MODE);
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetWindowModeSettings);
             SetWindowModeSettings(view.DropdownView.Dropdown.value);

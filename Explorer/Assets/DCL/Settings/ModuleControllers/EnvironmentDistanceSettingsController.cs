@@ -15,7 +15,7 @@ namespace DCL.Settings.ModuleControllers
             this.landscapeData = landscapeData;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE))
-                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE);
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetEnvironmentDistanceSettings);
             SetEnvironmentDistanceSettings(view.SliderView.Slider.value);

@@ -18,7 +18,7 @@ namespace DCL.Settings.ModuleControllers
             this.settingsEventListener = settingsEventListener;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetSettings);
         }

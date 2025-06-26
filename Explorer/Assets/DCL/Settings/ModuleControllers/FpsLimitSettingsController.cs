@@ -14,7 +14,7 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_FPS_LIMIT))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_FPS_LIMIT);
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_FPS_LIMIT);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetFpsLimitSettings);
             SetFpsLimitSettings(view.DropdownView.Dropdown.value);

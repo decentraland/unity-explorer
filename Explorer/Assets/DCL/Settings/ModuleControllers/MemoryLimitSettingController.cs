@@ -21,7 +21,7 @@ namespace DCL.Settings.ModuleControllers
             this.sceneLoadingLimit = sceneLoadingLimit;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MEMORY_CAP))
-                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_MEMORY_CAP) < view.DropdownView.Dropdown.options.Count ? DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_MEMORY_CAP) : DefaultMemoryCap();
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_MEMORY_CAP) < view.DropdownView.Dropdown.options.Count ? DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_MEMORY_CAP) : DefaultMemoryCap();
             else
                 view.DropdownView.Dropdown.value = DefaultMemoryCap();
 

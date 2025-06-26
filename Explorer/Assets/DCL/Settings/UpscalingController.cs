@@ -46,7 +46,7 @@ namespace DCL.Utilities
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
-                SetUpscalingValue(DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER), true);
+                SetUpscalingValue(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER), true);
                 ignoreFirstResolutionChange = true;
             }
             else
@@ -105,6 +105,6 @@ namespace DCL.Utilities
         }
 
         public float GetCurrentUpscale() =>
-            DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER);
+            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
     }
 }

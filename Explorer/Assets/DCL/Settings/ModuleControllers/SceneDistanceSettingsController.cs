@@ -15,7 +15,7 @@ namespace DCL.Settings.ModuleControllers
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_SCENE_DISTANCE))
-                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_SCENE_DISTANCE);
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_SCENE_DISTANCE);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetSceneDistanceSettings);
             SetSceneDistanceSettings(view.SliderView.Slider.value);

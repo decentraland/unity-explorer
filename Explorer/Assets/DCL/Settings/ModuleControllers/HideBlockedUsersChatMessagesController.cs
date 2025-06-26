@@ -30,7 +30,7 @@ namespace DCL.Settings.ModuleControllers
 
             userBlockingCacheProxy.Object.HideChatMessages = enabled;
 
-            DCLPlayerPrefs.SetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES, enabled, save: true);
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES, enabled, save: true);
         }
 
         public override void Dispose() =>

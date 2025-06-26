@@ -18,7 +18,7 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UI_VOLUME))
-                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_UI_VOLUME);
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UI_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetUIVolumeSettings);
             SetUIVolumeSettings(view.SliderView.Slider.value);

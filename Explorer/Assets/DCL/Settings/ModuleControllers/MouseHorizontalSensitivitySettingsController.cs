@@ -15,7 +15,7 @@ namespace DCL.Settings.ModuleControllers
             this.controlsSettingsAsset = controlsSettingsAsset;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY))
-                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY);
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetHorizontalMouseSensitivity);
             SetHorizontalMouseSensitivity(view.SliderView.Slider.value);

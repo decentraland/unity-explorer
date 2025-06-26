@@ -18,7 +18,7 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_AVATAR_VOLUME))
-                view.SliderView.Slider.value = DCLPlayerPrefs.GetSliderValue(DCLPrefKeys.SETTINGS_AVATAR_VOLUME);
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_AVATAR_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetAvatarVolumeSettings);
             SetAvatarVolumeSettings(view.SliderView.Slider.value);

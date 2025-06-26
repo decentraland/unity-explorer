@@ -72,13 +72,6 @@ namespace DCL.Prefs
         public static void Save() =>
             dclPrefs.Save();
 
-
-        public static float GetSliderValue(string key) =>
-           GetFloat(key);
-
-        public static int GetDropdownValue(string key) =>
-            GetInt(key);
-
         private static void Initialize(bool inMemory)
         {
             if (dclPrefs != null)

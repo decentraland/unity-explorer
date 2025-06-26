@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
             LoadGraphicsQualityOptions();
 
             view.DropdownView.Dropdown.value = DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY)
-                ? DCLPlayerPrefs.GetDropdownValue(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY)
+                ? DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY)
                 :
                 DEFAULT_QUALITY_LEVEL_INDEX;
 
