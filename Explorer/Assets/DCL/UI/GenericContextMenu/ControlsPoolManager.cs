@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.UI.GenericContextMenu
@@ -34,25 +35,25 @@ namespace DCL.UI.GenericContextMenu
                 createFunc: () => Object.Instantiate(separatorPrefab, controlsParent),
                 actionOnGet: separatorView => separatorView.gameObject.SetActive(true),
                 actionOnRelease: separatorView => separatorView?.gameObject.SetActive(false),
-                actionOnDestroy: separatorView => Object.Destroy(separatorView.gameObject));
+                actionOnDestroy: separatorView => UnityObjectUtils.SafeDestroy(separatorView.gameObject));
 
             buttonPool = new ObjectPool<GenericContextMenuButtonWithTextView>(
                 createFunc: () => Object.Instantiate(buttonPrefab, controlsParent),
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
                 actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
-                actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
+                actionOnDestroy: buttonView => UnityObjectUtils.SafeDestroy(buttonView.gameObject));
 
             togglePool = new ObjectPool<GenericContextMenuToggleView>(
                 createFunc: () => Object.Instantiate(togglePrefab, controlsParent),
                 actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
                 actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
-                actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
+                actionOnDestroy: toggleView => UnityObjectUtils.SafeDestroy(toggleView.gameObject));
 
             toggleWithIconPool = new ObjectPool<GenericContextMenuToggleWithIconView>(
                 createFunc: () => Object.Instantiate(toggleWithIconPrefab, controlsParent),
                 actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
                 actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
-                actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
+                actionOnDestroy: toggleView => UnityObjectUtils.SafeDestroy(toggleView.gameObject));
 
             userProfilePool = new ObjectPool<GenericContextMenuUserProfileView>(
                 createFunc: () =>
@@ -63,13 +64,13 @@ namespace DCL.UI.GenericContextMenu
                 },
                 actionOnGet: userProfileView => userProfileView.gameObject.SetActive(true),
                 actionOnRelease: userProfileView => userProfileView?.gameObject.SetActive(false),
-                actionOnDestroy: userProfileView => Object.Destroy(userProfileView.gameObject));
+                actionOnDestroy: userProfileView => UnityObjectUtils.SafeDestroy(userProfileView.gameObject));
 
             buttonWithStringDelegatePool = new ObjectPool<GenericContextMenuButtonWithStringDelegateView>(
                 createFunc: () => Object.Instantiate(buttonWithDelegatePrefab, controlsParent),
                 actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
                 actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
-                actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
+                actionOnDestroy: buttonView => UnityObjectUtils.SafeDestroy(buttonView.gameObject));
 
         }
 

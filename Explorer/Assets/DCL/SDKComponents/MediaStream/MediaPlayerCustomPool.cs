@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.MediaStream
                     {
                         MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
                         expiredPlayerInfo.mediaPlayer.CloseMedia();
-                        GameObject.Destroy(expiredPlayerInfo.mediaPlayer.gameObject);
+                        UnityObjectUtils.SafeDestroy(expiredPlayerInfo.mediaPlayer.gameObject);
                     }
 
                     if (queue.Count == 0)
@@ -84,7 +84,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
             if (UnityObjectUtils.IsQuitting) return;
-            
+
             mediaPlayer.Stop();
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);

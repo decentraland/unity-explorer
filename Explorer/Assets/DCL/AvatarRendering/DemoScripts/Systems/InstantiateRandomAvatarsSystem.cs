@@ -153,11 +153,11 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void DestroyRandomAmountOfAvatars()
         {
-            
+
             World.Query(in AVATARS_QUERY,
-                (Entity entity, ref CharacterTransform transformComponent) =>  
+                (Entity entity, ref CharacterTransform transformComponent) =>
                 {
-                    Object.Destroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
+                    UnityObjectUtils.SafeDestroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
                     if (Random.Range(0, 3) == 0)
                     {
                         World.Add(entity, new DeleteEntityIntention());
@@ -171,10 +171,10 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             World.Query(in AVATARS_QUERY,
                 (Entity entity, ref CharacterTransform transformComponent) =>
                 {
-                    Object.Destroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
+                    UnityObjectUtils.SafeDestroy(transformComponent.Transform.gameObject.GetComponent<CharacterController>());
                     World.Add(entity, new DeleteEntityIntention());
                 });
-            
+
             totalAvatarsInstantiated.Value = 0;
         }
 
@@ -303,7 +303,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             else { transformComp.Transform.position = new Vector3(startXPosition + (avatarIndex * 2), 3, startZPosition); }
 
             transformComp.Transform.name = $"RANDOM_AVATAR_{avatarIndex}";
-            
+
             HashSet<URN> wearablesURN = new HashSet<URN>();
             foreach (string wearable in wearables)
                 wearablesURN.Add(new URN(wearable));

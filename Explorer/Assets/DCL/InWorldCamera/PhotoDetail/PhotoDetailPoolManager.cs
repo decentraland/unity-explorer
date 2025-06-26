@@ -10,6 +10,7 @@ using MVC;
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.InWorldCamera.PhotoDetail
 {
@@ -48,7 +49,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 createFunc: () => CreateVisiblePerson(visiblePersonPrefab, visiblePersonParent, profileRepository, mvcManager, wearableStorage, wearablesProvider, passportBridge, profileDataProvider),
                 actionOnGet: visiblePerson => visiblePerson.view.gameObject.SetActive(true),
                 actionOnRelease: visiblePerson => VisiblePersonRelease(visiblePerson),
-                actionOnDestroy: visiblePerson => GameObject.Destroy(visiblePerson.view.gameObject),
+                actionOnDestroy: visiblePerson => UnityObjectUtils.SafeDestroy(visiblePerson.view.gameObject),
                 collectionCheck: true,
                 visiblePersonDefaultCapacity,
                 visiblePersonMaxSize);
@@ -57,7 +58,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                 createFunc: () => CreateEquippedWearable(equippedWearablePrefab, webBrowser, decentralandUrlsSource, thumbnailProvider, rarityBackgrounds, rarityColors, categoryIcons, wearableMarketClicked),
                 actionOnGet: equippedWearable => equippedWearable.view.gameObject.SetActive(false),
                 actionOnRelease: equippedWearable => EquippedWearableRelease(equippedWearable, unusedEquippedWearablePoolObjectParent),
-                actionOnDestroy: equippedWearable => GameObject.Destroy(equippedWearable.view.gameObject),
+                actionOnDestroy: equippedWearable => UnityObjectUtils.SafeDestroy(equippedWearable.view.gameObject),
                 collectionCheck: true,
                 equippedWearableDefaultCapacity,
                 equippedWearableMaxSize);

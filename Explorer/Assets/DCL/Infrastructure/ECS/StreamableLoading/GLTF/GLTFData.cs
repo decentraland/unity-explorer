@@ -3,6 +3,7 @@ using DCL.Profiling;
 using GLTFast;
 using Unity.Profiling;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.GLTF
 {
@@ -27,7 +28,7 @@ namespace ECS.StreamableLoading.GLTF
 
             // Destroy the container GameObject
             if (containerGameObject != null)
-                Object.Destroy(containerGameObject);
+                UnityObjectUtils.SafeDestroy(containerGameObject);
         }
     }
 }

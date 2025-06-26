@@ -12,6 +12,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.Profiling;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
@@ -208,7 +209,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             meshRenderer.renderingLayerMask = 2;
 
             meshRenderer.localBounds = new Bounds(Vector3.zero, Vector3.one * 5);
-            Object.Destroy(skin);
+            UnityObjectUtils.SafeDestroy(skin);
             return (meshRenderer, filter);
         }
 
