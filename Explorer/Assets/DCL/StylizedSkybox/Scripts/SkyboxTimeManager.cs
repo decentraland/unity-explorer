@@ -113,13 +113,13 @@ namespace DCL.StylizedSkybox.Scripts
 
             SceneMetadata sceneMetadata = scene.SceneData.SceneEntityDefinition.metadata;
 
-            if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTimeOfDay: var worldTime } } })
+            if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTime: var worldTime } } })
             {
                 ApplySceneControlledFixedTime(worldTime);
                 return true;
             }
 
-            if (sceneMetadata is { skyboxConfig: { fixedTimeOfDay: var sceneTime } })
+            if (sceneMetadata is { skyboxConfig: { fixedTime: var sceneTime } })
             {
                 ApplySceneControlledFixedTime(sceneTime);
                 return true;

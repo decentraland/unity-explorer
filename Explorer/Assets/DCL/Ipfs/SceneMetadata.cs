@@ -48,7 +48,7 @@ namespace DCL.Ipfs
         [Serializable]
         public struct SkyboxConfigData
         {
-            public float fixedTimeOfDay;
+            public float fixedTime;
         }
 
         [JsonIgnore]
