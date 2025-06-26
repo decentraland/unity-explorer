@@ -108,12 +108,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             for (var i = 0; i < wearables.Count; i++)
                 wearablesByCategory[wearables[i].GetCategory()] = wearables[i];
 
-            foreach (string priorityCategory in WearablesConstants.CATEGORIES_PRIORITY)
+            foreach (IWearable wearable in wearables)
             {
                 hidingList.Clear();
-
-                if (!wearablesByCategory.TryGetValue(priorityCategory, out IWearable wearable))
-                    continue;
 
                 wearable.GetHidingList(bodyShapeId, hidingList);
 

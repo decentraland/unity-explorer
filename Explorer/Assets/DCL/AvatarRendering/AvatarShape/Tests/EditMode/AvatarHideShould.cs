@@ -78,15 +78,68 @@ namespace DCL.Tests
         [Test]
         public void HideHierarchyRespected()
         {
-            mockWearables = new List<IWearable>() { upperMockWearable, upperSkinWearable };
+            // Helmet hides head, eyewear and hair
+            // Top head hides helmet
+            // So head, eyewear and hair should not be hidden anymore
+            mockWearables = new List<IWearable>
+            {
+                new FakeWearable(new WearableDTO
+                {
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        data = new WearableDTO.WearableMetadataDto.DataDto
+                        {
+                            category = WearablesConstants.Categories.HELMET,
+                        },
+                    },
+                }, new HashSet<string>
+                {
+                    WearablesConstants.Categories.HEAD,
+                    WearablesConstants.Categories.EYEWEAR,
+                    WearablesConstants.Categories.HAIR,
+                }),
+                new FakeWearable(new WearableDTO
+                {
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        data = new WearableDTO.WearableMetadataDto.DataDto
+                        {
+                            category = WearablesConstants.Categories.TOP_HEAD,
+                        },
+                    },
+                }, new HashSet<string>
+                {
+                    WearablesConstants.Categories.HELMET,
+                }),
+                new FakeWearable(new WearableDTO
+                {
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        data = new WearableDTO.WearableMetadataDto.DataDto
+                        {
+                            category = WearablesConstants.Categories.EYEWEAR,
+                        },
+                    },
+                }),
+                new FakeWearable(new WearableDTO
+                {
+                    metadata = new WearableDTO.WearableMetadataDto
+                    {
+                        data = new WearableDTO.WearableMetadataDto.DataDto
+                        {
+                            category = WearablesConstants.Categories.HAIR,
+                        },
+                    },
+                }),
+            };
 
             var hidingList = new HashSet<string>();
             WearableComponentsUtils.ComposeHiddenCategoriesOrdered(TEST_BODY_SHAPE, null, mockWearables, hidingList);
 
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.UPPER_BODY));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HANDS));
-            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.LOWER_BODY));
-            Assert.IsFalse(hidingList.Contains(WearablesConstants.Categories.SKIN));
+            Assert.IsTrue(hidingList.Contains(WearablesConstants.Categories.HELMET));
+            Assert.False(hidingList.Contains(WearablesConstants.Categories.TOP_HEAD));
+            Assert.False(hidingList.Contains(WearablesConstants.Categories.EYEWEAR));
+            Assert.False(hidingList.Contains(WearablesConstants.Categories.HAIR));
         }
 
         [Test]
