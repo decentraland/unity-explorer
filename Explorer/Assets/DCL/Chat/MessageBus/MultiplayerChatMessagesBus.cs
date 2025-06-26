@@ -10,9 +10,8 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
-using DCL.Profiles.Self;
 using DCL.Utilities;
-using ECS;
+using DCL.Web3.Identities;
 using LiveKit.Proto;
 using System;
 using System.Threading;
@@ -29,8 +28,7 @@ namespace DCL.Chat.MessageBus
         private readonly ChatMessageFactory messageFactory;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
-        private readonly IRealmData realmData;
-        private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly FeatureFlagsCache featureFlagsCache;
         private CancellationTokenSource setupExploreSectionsCts;
 
@@ -42,8 +40,7 @@ namespace DCL.Chat.MessageBus
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IDecentralandUrlsSource decentralandUrlsSource,
             bool isCommunitiesIncluded,
-            IRealmData realmData,
-            ISelfProfile selfProfile,
+            IWeb3IdentityCache web3IdentityCache,
             FeatureFlagsCache featureFlagsCache)
         {
             this.messagePipesHub = messagePipesHub;
@@ -51,8 +48,7 @@ namespace DCL.Chat.MessageBus
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
             this.isCommunitiesIncluded = isCommunitiesIncluded;
-            this.realmData = realmData;
-            this.selfProfile = selfProfile;
+            this.web3IdentityCache = web3IdentityCache;
             this.featureFlagsCache = featureFlagsCache;
 
             // Depending on the selected environment, we send the community messages to one user or another
@@ -67,7 +63,7 @@ namespace DCL.Chat.MessageBus
 
         private async UniTaskVoid ConfigureMessagePipesHubAsync(CancellationToken ct)
         {
-            isCommunitiesIncluded = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(realmData, selfProfile, featureFlagsCache, ct);
+            isCommunitiesIncluded = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, ct);
             if (isCommunitiesIncluded)
             {
                 messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);

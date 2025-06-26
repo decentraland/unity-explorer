@@ -16,6 +16,7 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
+using DCL.Web3.Identities;
 using ECS;
 using MVC;
 using System;
@@ -39,8 +40,7 @@ namespace DCL.ExplorePanel
         private readonly bool includeCameraReel;
         private bool includeCommunities;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IRealmData realmData;
-        private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly FeatureFlagsCache featureFlagsCache;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
@@ -78,8 +78,7 @@ namespace DCL.ExplorePanel
             bool includeCameraReel,
             bool includeCommunities,
             ISharedSpaceManager sharedSpaceManager,
-            IRealmData realmData,
-            ISelfProfile selfProfile,
+            IWeb3IdentityCache web3IdentityCache,
             FeatureFlagsCache featureFlagsCache)
             : base(viewFactory)
         {
@@ -96,8 +95,7 @@ namespace DCL.ExplorePanel
             this.includeCameraReel = includeCameraReel;
             this.includeCommunities = includeCommunities;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.realmData = realmData;
-            this.selfProfile = selfProfile;
+            this.web3IdentityCache = web3IdentityCache;
             this.featureFlagsCache = featureFlagsCache;
             CommunitiesBrowserController = communitiesBrowserController;
         }
@@ -145,7 +143,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            includeCommunities = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(realmData, selfProfile, featureFlagsCache, ct);
+            includeCommunities = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 

@@ -152,6 +152,7 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
+                web3IdentityCache,
                 featureFlagsCache
             ));
         }

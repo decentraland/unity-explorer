@@ -10,6 +10,7 @@ using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
 using DCL.Profiles.Self;
+using DCL.Web3.Identities;
 using ECS;
 using MVC;
 using System;
@@ -30,8 +31,7 @@ namespace DCL.UI.SharedSpaceManager
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
         private readonly World ecsWorld;
-        private readonly IRealmData realmData;
-        private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly FeatureFlagsCache featureFlagsCache;
 
         private readonly bool isFriendsFeatureEnabled;
@@ -46,7 +46,7 @@ namespace DCL.UI.SharedSpaceManager
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
         public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled, bool isCommunitiesEnabled,
-            IRealmData realmData, ISelfProfile selfProfile, FeatureFlagsCache featureFlagsCache)
+            IWeb3IdentityCache web3IdentityCache, FeatureFlagsCache featureFlagsCache)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
@@ -54,8 +54,7 @@ namespace DCL.UI.SharedSpaceManager
             isCameraReelFeatureEnabled = isCameraReelEnabled;
             isCommunitiesFeatureEnabled = isCommunitiesEnabled;
             ecsWorld = world;
-            this.realmData = realmData;
-            this.selfProfile = selfProfile;
+            this.web3IdentityCache = web3IdentityCache;
             this.featureFlagsCache = featureFlagsCache;
 
             configureShortcutsCts = configureShortcutsCts.SafeRestart();
@@ -76,7 +75,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(realmData, selfProfile, featureFlagsCache, ct);
+            isCommunitiesFeatureEnabled = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, ct);
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
 

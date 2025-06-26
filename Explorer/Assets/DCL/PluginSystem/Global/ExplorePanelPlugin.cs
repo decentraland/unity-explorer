@@ -416,7 +416,7 @@ namespace DCL.PluginSystem.Global
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                     communitiesBrowserController, dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, includeCommunities, sharedSpaceManager,
-                    realmData, selfProfile, featureFlagsCache);
+                    web3IdentityCache, featureFlagsCache);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

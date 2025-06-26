@@ -20,7 +20,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
-using DCL.Profiles.Self;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
@@ -31,7 +30,6 @@ using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using ECS;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
@@ -81,8 +79,6 @@ namespace DCL.Chat
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
         private bool isCommunitiesIncluded;
-        private readonly IRealmData realmData;
-        private readonly ISelfProfile selfProfile;
         private readonly FeatureFlagsCache featureFlagsCache;
 
         private readonly List<ChatUserData> membersBuffer = new ();
@@ -141,8 +137,6 @@ namespace DCL.Chat
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             bool isCommunitiesIncluded,
-            IRealmData realmData,
-            ISelfProfile selfProfile,
             FeatureFlagsCache featureFlagsCache) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
@@ -167,8 +161,6 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.isCommunitiesIncluded = isCommunitiesIncluded;
-            this.realmData = realmData;
-            this.selfProfile = selfProfile;
             this.featureFlagsCache = featureFlagsCache;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
@@ -326,7 +318,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedCts = isUserAllowedCts.SafeRestart();
-            isCommunitiesIncluded = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(realmData, selfProfile, featureFlagsCache, isUserAllowedCts.Token);
+            isCommunitiesIncluded = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, isUserAllowedCts.Token);
             if (isCommunitiesIncluded)
                 await InitializeCommunityCoversationsAsync();
         }

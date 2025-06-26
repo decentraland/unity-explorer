@@ -19,6 +19,7 @@ using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Skybox;
+using DCL.Web3.Identities;
 using ECS;
 using MVC;
 using System;
@@ -44,6 +45,7 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly FeatureFlagsCache featureFlagsCache;
         private bool includeMarketplaceCredits;
         private bool includeCommunities;
@@ -77,6 +79,7 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
+            IWeb3IdentityCache web3IdentityCache,
             FeatureFlagsCache featureFlagsCache)
             : base(viewFactory)
         {
@@ -97,6 +100,7 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
+            this.web3IdentityCache = web3IdentityCache;
             this.featureFlagsCache = featureFlagsCache;
         }
 
@@ -271,13 +275,7 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
         {
             viewInstance?.communitiesButton.gameObject.SetActive(false);
-
-            await UniTask.WaitUntil(() => realmData.Configured, cancellationToken: ct);
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile == null)
-                return;
-
-            includeCommunities = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(realmData, selfProfile, featureFlagsCache, ct);
+            includeCommunities = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
