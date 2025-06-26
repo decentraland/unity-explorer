@@ -50,8 +50,8 @@ namespace DCL.Chat
 
         private const string WELCOME_MESSAGE = "Type /help for available commands.";
         private const string NEW_CHAT_MESSAGE = "The chat starts here! Time to say hi! \\U0001F44B";
-        private const string GET_COMMUNITY_FAILED_MESSAGE = "It was not possible to retrieve the data for the new community to create the conversation, the conversation will not appear in the chat toolbar.";
-        private const string GET_USER_COMMUNITIES_FAILED_MESSAGE = "It was not possible to retrieve the communities of the user, their corresponding conversations will not appear in the chat toolbar.";
+        private const string GET_COMMUNITY_FAILED_MESSAGE = "Unable to load new Community chat. Please restart Decentraland to try again.";
+        private const string GET_USER_COMMUNITIES_FAILED_MESSAGE = "Unable to load Community chats. Please restart Decentraland to try again.";
 
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly NametagsData nametagsData;
