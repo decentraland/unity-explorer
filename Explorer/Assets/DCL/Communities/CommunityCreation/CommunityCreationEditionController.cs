@@ -24,6 +24,7 @@ namespace DCL.Communities.CommunityCreation
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
+        private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
         private const string INCOMPATIBLE_IMAGE_ERROR = "Invalid image file selected. Please check file type and size.";
         private const string FILE_BROWSER_TITLE = "Select image";
         private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
@@ -43,6 +44,7 @@ namespace DCL.Communities.CommunityCreation
         private CancellationTokenSource loadLandsAndWorldsCts;
         private CancellationTokenSource loadCommunityDataCts;
         private CancellationTokenSource showErrorCts;
+        private CancellationTokenSource openImageSelectionCts;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -119,6 +121,7 @@ namespace DCL.Communities.CommunityCreation
             loadLandsAndWorldsCts?.SafeCancelAndDispose();
             loadCommunityDataCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
+            openImageSelectionCts?.SafeCancelAndDispose();
         }
 
         public override void Dispose()
@@ -138,6 +141,7 @@ namespace DCL.Communities.CommunityCreation
             loadLandsAndWorldsCts?.SafeCancelAndDispose();
             loadCommunityDataCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
+            openImageSelectionCts?.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -168,8 +172,21 @@ namespace DCL.Communities.CommunityCreation
 
         private void OpenImageSelection()
         {
+            openImageSelectionCts = openImageSelectionCts.SafeRestart();
+            OpenImageSelectionAsync(openImageSelectionCts.Token).Forget();
+        }
+
+        private async UniTaskVoid OpenImageSelectionAsync(CancellationToken ct)
+        {
+            viewInstance!.backgroundCloseButton.enabled = false;
+
             FileBrowser.Instance.OpenSingleFile(FILE_BROWSER_TITLE, "", "", allowedImageExtensions);
             byte[] data = FileBrowser.Instance.CurrentOpenSingleFileData;
+
+            // Due to a bug in the file browser (for Mac), we need to wait 2 frames after we close it to ensure we don't click accidentally in the background close button.
+            // TODO: Investigate how to fix this properly.
+            await UniTask.DelayFrame(2, cancellationToken: ct);
+            viewInstance!.backgroundCloseButton.enabled = true;
 
             if (data != null)
             {
@@ -240,8 +257,13 @@ namespace DCL.Communities.CommunityCreation
             if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
                 return;
 
-            viewInstance!.AddPlaceTag(selectedPlace.Id, selectedPlace.IsWorld, selectedPlace.Name);
-            addedCommunityPlaces.Add(selectedPlace);
+            AddPlaceTag(selectedPlace, isRemovalAllowed: true);
+        }
+
+        private void AddPlaceTag(CommunityPlace place, bool isRemovalAllowed, bool updateScrollPosition = true)
+        {
+            viewInstance!.AddPlaceTag(place.Id, place.IsWorld, place.Name, isRemovalAllowed, updateScrollPosition);
+            addedCommunityPlaces.Add(place);
         }
 
         private void RemoveCommunityPlace(int index)
@@ -257,20 +279,74 @@ namespace DCL.Communities.CommunityCreation
         {
             viewInstance!.SetCreationPanelAsLoading(true);
 
-            var result = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
-                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            // Load community data
+            var getCommunityResult = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
+                                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-            if (!result.Success)
+            if (!getCommunityResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
                 await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 return;
             }
 
-            viewInstance.SetProfileSelectedImage(imageUrl: result.Value.data.thumbnails?.raw);
-            viewInstance.SetCommunityName(result.Value.data.name);
-            viewInstance.SetCommunityDescription(result.Value.data.description);
+            viewInstance.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw);
+            viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
+            viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
             viewInstance.SetCreationPanelAsLoading(false);
+
+            // Load community places ids
+            var getCommunityPlacesResult = await dataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)
+                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!getCommunityPlacesResult.Success)
+            {
+                showErrorCts = showErrorCts.SafeRestart();
+                await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                return;
+            }
+
+            if (getCommunityPlacesResult.Value is { Count: > 0 })
+            {
+                // Load places details
+                var getPlacesDetailsResult = await  placesAPIService.GetPlacesByIdsAsync(getCommunityPlacesResult.Value, ct)
+                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (!getPlacesDetailsResult.Success)
+                {
+                    showErrorCts = showErrorCts.SafeRestart();
+                    await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                    return;
+                }
+
+                if (getPlacesDetailsResult.Value is { data: { Count: > 0 } })
+                {
+                    foreach (PlacesData.PlaceInfo placeInfo in getPlacesDetailsResult.Value.data)
+                    {
+                        bool isOwner = getCommunityResult.Value.data.role == CommunityMemberRole.owner;
+                        bool isRemovalAllowed = isOwner;
+
+                        if (!isOwner)
+                        {
+                            foreach (CommunityPlace existingPlace in currentCommunityPlaces)
+                            {
+                                if (existingPlace.Id != placeInfo.id)
+                                    continue;
+
+                                isRemovalAllowed = true;
+                                break;
+                            }
+                        }
+
+                        AddPlaceTag(new CommunityPlace
+                        {
+                            Id = placeInfo.id,
+                            IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
+                            Name = string.IsNullOrEmpty(placeInfo.world_name) ? $"{placeInfo.title} ({placeInfo.base_position})" : placeInfo.world_name,
+                        }, isRemovalAllowed, updateScrollPosition: false);
+                    }
+                }
+            }
         }
 
         private void CreateCommunity(string name, string description, List<string> lands, List<string> worlds)
