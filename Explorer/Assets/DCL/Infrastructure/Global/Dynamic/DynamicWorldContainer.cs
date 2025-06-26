@@ -288,6 +288,7 @@ namespace Global.Dynamic
             var wearableCatalog = new WearableStorage();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry, appArgs);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
+            ISystemClipboard clipboard = new UnityClipboard();
             ProfileNameColorHelper.SetNameColors(dynamicSettings.UserNameColors);
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
@@ -483,7 +484,9 @@ namespace Global.Dynamic
                 mapPathEventBus,
                 staticContainer.SceneRestrictionBusController,
                 dynamicWorldParams.StartParcel.Peek(),
-                sharedSpaceManager
+                sharedSpaceManager,
+                clipboard,
+                bootstrapContainer.DecentralandUrlsSource
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -564,7 +567,6 @@ namespace Global.Dynamic
             var cameraReelStorageService = new CameraReelRemoteStorageService(cameraReelImagesMetadataDatabase, cameraReelScreenshotsStorage, identityCache.Identity?.Address);
 
             IUserCalendar userCalendar = new GoogleUserCalendar(webBrowser);
-            ISystemClipboard clipboard = new UnityClipboard();
             var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
@@ -844,7 +846,8 @@ namespace Global.Dynamic
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
 
-            if (localSceneDevelopment) { globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls)); }
+            if (localSceneDevelopment)
+                globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
             else
             {
                 globalPlugins.Add(lodContainer.LODPlugin);
