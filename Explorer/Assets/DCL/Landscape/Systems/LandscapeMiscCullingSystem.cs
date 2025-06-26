@@ -169,12 +169,12 @@ namespace DCL.Landscape.Systems
         private void UpdateCameraFrustumPlanes(in Entity _, in CameraComponent cameraComponent)
         {
             Camera camera = cameraComponent.Camera;
-            cameraPosition = camera.transform.position;
+            //cameraPosition = camera.transform.position;
 
-            var wind = terrainGenerator.Wind;
+            //var wind = terrainGenerator.Wind;
 
-            if (wind.parent == null)
-                wind.parent = camera.transform;
+            //if (wind.parent == null)
+            //    wind.parent = camera.transform;
 
             GeometryUtility.CalculateFrustumPlanes(camera.cullingMatrix, frustumPlanes);
 
