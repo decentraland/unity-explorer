@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DCL.Diagnostics;
+using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {

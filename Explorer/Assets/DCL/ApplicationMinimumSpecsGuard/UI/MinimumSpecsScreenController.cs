@@ -72,10 +72,14 @@ namespace DCL.ApplicationMinimumSpecsGuard
 #endif
         }
 
-        private void OnReadMoreClicked() =>
+        private void OnReadMoreClicked()
+        {
             webBrowser.OpenUrl(DecentralandUrl.MinimumSpecs);
+        }
 
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            HoldingTask.Task;
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
+        {
+            return HoldingTask.Task;
+        }
     }
 }

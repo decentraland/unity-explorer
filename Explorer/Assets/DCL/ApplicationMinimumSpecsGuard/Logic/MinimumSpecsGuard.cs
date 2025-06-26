@@ -32,7 +32,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
     public class MinimumSpecsGuard
     {
         public IReadOnlyList<SpecResult> Results => cachedResults;
-        
+
         private readonly ISpecProfileProvider profileProvider;
         private List<SpecResult> cachedResults = new();
 
@@ -59,7 +59,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             ReportHub.Log(ReportCategory.UNSPECIFIED, $"Minimum specs check complete. All requirements met: {allMet}");
             return allMet;
         }
-        
+
         private List<SpecResult> Evaluate(SpecTarget target)
         {
             var platform = PlatformUtils.DetectPlatform();
