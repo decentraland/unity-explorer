@@ -283,11 +283,6 @@ namespace DCL.CharacterPreview
                 await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
         }
 
-        protected async UniTask AwaitPlayingEmoteAsync(CancellationToken ct)
-        {
-            await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);
-        }
-
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);
     }
