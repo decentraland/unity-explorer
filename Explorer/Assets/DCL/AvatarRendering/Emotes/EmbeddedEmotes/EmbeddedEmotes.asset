@@ -653,3 +653,19 @@ MonoBehaviour:
       removesDefaultHiding: []
       outlineCompatible: 1
       loop: 0
+  - id: mathMaster
+    name: mathMaster
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 7063723238990088574, guid: 13ebf9ed860a73b4499889a520a4bd3e, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0

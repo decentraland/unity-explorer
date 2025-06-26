@@ -85,19 +85,20 @@ namespace DCL.AuthenticationScreenFlow
         private URN[] PreviewEmotes()
         {
             previewEmotesSet.Clear();
-
-            foreach (var emote in shortenedEmotes)
-                previewEmotesSet.Add(emote);
-
-            foreach (string funnyEmote in settings.FunnyEmotes)
-                previewEmotesSet.Add(funnyEmote);
+            //
+            // foreach (var emote in shortenedEmotes)
+            //     previewEmotesSet.Add(emote);
+            //
+            // foreach (string funnyEmote in settings.FunnyEmotes)
+            //     previewEmotesSet.Add(funnyEmote);
+                previewEmotesSet.Add(settings.FunnyEmotes[0]);
 
             return previewEmotesSet.ToArray();
         }
 
         private async UniTask PlayPreviewEmotesSequentiallyAsync(CancellationToken ct)
         {
-            await PlayEmoteAndAwaitItAsync(settings.IntroEmoteURN, ct);
+            await PlayEmoteAndAwaitItAsync(settings.FunnyEmotes[0], ct);
 
             if (previewEmotes is { Length: <= 0 } || ct.IsCancellationRequested) return;
 

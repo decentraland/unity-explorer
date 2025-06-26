@@ -30,7 +30,12 @@ namespace DCL.CharacterPreview
         public void Initialize(RenderTexture targetTexture)
         {
             transform.position = new Vector3(0, 5000, 0);
+
+            camera.allowHDR = false;
+            camera.allowMSAA = false;
             camera.targetTexture = targetTexture;
+            camera.allowDynamicResolution = false;
+
             rotationTarget.rotation = Quaternion.identity;
 
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);

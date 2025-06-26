@@ -36,6 +36,7 @@ namespace DCL.CharacterPreview
         protected bool panEnabled = true;
         protected bool rotateEnabled = true;
         private readonly Func<bool> isPlayingEmoteDelegate;
+        private RenderTexture? renderTexture;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
@@ -86,18 +87,16 @@ namespace DCL.CharacterPreview
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
-            {
-                name = "Preview Texture",
-                antiAliasing = 4,
-                useDynamicScale = true,
-            };
+            renderTexture = RenderTexture.GetTemporary((int)sizeDelta.x, (int)sizeDelta.y, 16, RenderTextureFormat.Default, RenderTextureReadWrite.sRGB);
+            renderTexture.name = "Preview Texture";
+            renderTexture.antiAliasing = 4;
+            renderTexture.useDynamicScale = true;
 
-            newTexture.Create();
+            view.RawImage.texture = renderTexture;
+            view.RawImage.color = Color.white;
+            view.RawImage.material = null;
 
-            view.RawImage.texture = newTexture;
-
-            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
+            previewController = previewFactory.Create(world, view.RawImage.rectTransform, renderTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
             initialized = true;
 
             OnModelUpdated();
@@ -116,6 +115,7 @@ namespace DCL.CharacterPreview
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
+            RenderTexture.ReleaseTemporary(renderTexture);
         }
 
         private void OnPointerEnter(PointerEventData pointerEventData)
