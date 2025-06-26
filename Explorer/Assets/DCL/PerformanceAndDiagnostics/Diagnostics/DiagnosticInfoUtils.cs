@@ -62,7 +62,7 @@ namespace DCL.Diagnostics
             var environmentUrls = Enum.GetValues(typeof(DecentralandUrl)).Cast<DecentralandUrl>();
             foreach (var decentralandUrl in environmentUrls)
             {
-                stringBuilder.AppendFormat("{0}:{1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Url(decentralandUrl));
+                stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Url(decentralandUrl));
             }
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
