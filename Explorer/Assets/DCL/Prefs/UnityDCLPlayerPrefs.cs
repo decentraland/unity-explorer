@@ -21,10 +21,8 @@ namespace DCL.Prefs
         public void SetFloat(string key, float value) =>
             PlayerPrefs.SetFloat(prefix + key, value);
 
-        public void SetBool(string key, bool value)
-        {
+        public void SetBool(string key, bool value) =>
             PlayerPrefs.SetInt(key, value ? 1 : 0);
-        }
 
         public string GetString(string key, string defaultValue) =>
             PlayerPrefs.GetString(prefix + key, defaultValue);
