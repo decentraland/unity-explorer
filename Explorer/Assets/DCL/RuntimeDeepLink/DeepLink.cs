@@ -1,7 +1,7 @@
 using Global.AppArgs;
-using REnum;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Utility.Types;
 
 namespace DCL.RuntimeDeepLink
@@ -15,7 +15,7 @@ namespace DCL.RuntimeDeepLink
             this.map = map;
         }
 
-        internal static Result<DeepLink> FromRaw(string? raw)
+        public static Result<DeepLink> FromRaw(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw!))
                 return Result<DeepLink>.ErrorResult("Empty Input");
@@ -27,10 +27,23 @@ namespace DCL.RuntimeDeepLink
             return Result<DeepLink>.SuccessResult(new DeepLink(map));
         }
 
+        public static Result<DeepLink> FromJson(string json)
+        {
+            DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(json);
+            string? raw = dto.deeplink;
+            return FromRaw(raw);
+        }
+
         public string? ValueOf(string key)
         {
             map.TryGetValue(key, out string? value);
             return value;
+        }
+
+        [Serializable]
+        private struct DeepLinkDTO
+        {
+            public string? deeplink;
         }
     }
 }

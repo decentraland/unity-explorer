@@ -30,11 +30,6 @@ namespace DCL.RuntimeDeepLink
             );
 #endif
 
-        [Serializable]
-        private struct DeepLinkDTO
-        {
-            public string? deeplink;
-        }
 
         /// <summary>
         /// Runs for the lifetime of the app.
@@ -43,10 +38,8 @@ namespace DCL.RuntimeDeepLink
         {
             while (token.IsCancellationRequested == false)
             {
-                bool delayResult = await UniTask.Delay(CHECK_IN_PERIOD, cancellationToken: token).SuppressCancellationThrow();
-
-                // Delay was cancelled
-                if (delayResult == false) continue;
+                bool cancelled = await UniTask.Delay(CHECK_IN_PERIOD, cancellationToken: token).SuppressCancellationThrow();
+                if (cancelled) continue;
 
                 // File.Exists method is lightweight and can be used in this loop
                 if (!File.Exists(DEEP_LINK_BRIDGE_PATH)) continue;
@@ -57,9 +50,7 @@ namespace DCL.RuntimeDeepLink
                 // Notify emitter that file has been consumed
                 File.Delete(DEEP_LINK_BRIDGE_PATH);
 
-                DeepLinkDTO dto = JsonUtility.FromJson<DeepLinkDTO>(contentResult.Value);
-                string? raw = dto.deeplink;
-                Result<DeepLink> deepLinkCreateResult = DeepLink.FromRaw(raw);
+                Result<DeepLink> deepLinkCreateResult = DeepLink.FromJson(contentResult.Value);
 
                 if (deepLinkCreateResult.Success)
                 {
