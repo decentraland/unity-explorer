@@ -145,7 +145,7 @@ namespace Global.Dynamic
             );
 
             DCLVersion dclVersion = DCLVersion.FromAppArgs(applicationParametersParser);
-            SystemInfoUtils.Log(dclVersion.Version);
+            DiagnosticInfoUtils.LogSystem(dclVersion.Version);
 
             const bool KTX_ENABLED = true;
 
@@ -163,6 +163,7 @@ namespace Global.Dynamic
 
             var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash, splashScreenText);
             var decentralandUrlsSource = new DecentralandUrlsSource(decentralandEnvironment, launchSettings);
+            DiagnosticInfoUtils.LogEnvironment(decentralandUrlsSource);
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
