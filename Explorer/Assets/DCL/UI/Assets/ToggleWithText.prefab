@@ -146,6 +146,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1682976792197666609}
   - component: {fileID: 2965888496743192953}
+  - component: {fileID: 2655477926760237003}
   m_Layer: 5
   m_Name: ToggleWithText
   m_TagString: Untagged
@@ -200,6 +201,27 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &2655477926760237003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8057678888699711851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11cdf22c09c7e9848be751d287b3eb5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <autoToggleImagesOnToggle>k__BackingField: 1
+  <Toggle>k__BackingField: {fileID: 6739991326136731569}
+  <OnImage>k__BackingField: {fileID: 5650563201723336807}
+  <OffImage>k__BackingField: {fileID: 5285512002055545842}
+  <OnBackgroundImage>k__BackingField: {fileID: 4187387521697926856}
+  <OffBackgroundImage>k__BackingField: {fileID: 6094248929970383334}
+  <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
+  <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
+  <toggleText>k__BackingField: {fileID: 2938718002221827054}
 --- !u!1001 &3773273977910126689
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -316,7 +338,8 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 977034302134673057, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -324,6 +347,27 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4643746892624216629}
   m_SourcePrefab: {fileID: 100100000, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+--- !u!114 &4187387521697926856 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1027324785593132713, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 3773273977910126689}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &5285512002055545842 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9008524825783389075, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 3773273977910126689}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5650563201723336807 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8806659310530846726, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 3773273977910126689}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5772302268905979328 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7225474628005434785, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
@@ -349,6 +393,28 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &6094248929970383334 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6975587278961672583, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 3773273977910126689}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &6739991326136731569 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7625753975028379600, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 3773273977910126689}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5772302268905979328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9085046f02f69544eb97fd06b6048fe2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7989221792673684171 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}

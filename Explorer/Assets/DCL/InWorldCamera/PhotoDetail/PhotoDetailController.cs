@@ -44,6 +44,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private CancellationTokenSource showReelCts = new ();
         private CancellationTokenSource downloadScreenshotCts = new ();
         private CancellationTokenSource setPublicCts = new ();
+        private CancellationTokenSource closePanelCts = new ();
 
         private bool metadataPanelIsOpen = true;
         private bool isClosing;
@@ -110,7 +111,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewShow()
         {
             viewInstance!.infoButton.onClick.AddListener(ToggleInfoSidePanel);
-            viewInstance!.publicToggle.onValueChanged.AddListener(SetPublicFlag);
             viewInstance!.previousScreenshotButton.onClick.AddListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.AddListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.AddListener(DownloadReelClicked);
@@ -128,7 +128,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private void DeleteScreenshot()
         {
-            if (!inputData.UserOwnedReels) return;
+            if (!PhotoDetailInfoController.IsReelUserOwned) return;
 
             inputData.ExecuteDeleteAction(currentReelIndex);
             isClosing = true;
@@ -143,7 +143,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewClose()
         {
             viewInstance!.infoButton.onClick.RemoveListener(ToggleInfoSidePanel);
-            viewInstance!.publicToggle.onValueChanged.RemoveListener(SetPublicFlag);
+            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
             viewInstance!.previousScreenshotButton.onClick.RemoveListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.RemoveListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.RemoveListener(DownloadReelClicked);
@@ -164,9 +164,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnBeforeViewShow()
         {
             currentReelIndex = inputData.CurrentReelIndex;
-            viewInstance!.publicToggle.isOn = inputData.AllReels[currentReelIndex].isPublic;
-            viewInstance!.publicToggleView.SetToggleGraphics(inputData.AllReels[currentReelIndex].isPublic);
-            viewInstance!.deleteButton.gameObject.SetActive(inputData.UserOwnedReels);
             viewInstance!.previousScreenshotButton.gameObject.SetActive(false);
             viewInstance!.nextScreenshotButton.gameObject.SetActive(false);
             isClosing = false;
@@ -216,6 +213,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void SetPublicFlag(bool isPublic)
         {
             setPublicCts = setPublicCts.SafeRestart();
+            closePanelCts = closePanelCts.SafeRestart();
 
             async UniTaskVoid SetPublicFlagAsync(CancellationToken ct)
             {
@@ -226,6 +224,9 @@ namespace DCL.InWorldCamera.PhotoDetail
                     inputData.AllReels[currentReelIndex].isPublic = isPublic;
                     viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS,
                         photoDetailStringMessages.PhotoSuccessfullyUpdatedMessage);
+                    
+                    if(!isPublic)
+                        HandleReelSetPrivate();
                 }
                 catch (UnityWebRequestException e)
                 {
@@ -235,6 +236,20 @@ namespace DCL.InWorldCamera.PhotoDetail
             }
 
             SetPublicFlagAsync(setPublicCts.Token).Forget();
+        }
+
+        private void HandleReelSetPrivate()
+        {
+            if (!inputData.OpenedFromPublicBoard) return;
+            
+            inputData.ExecuteHideReelFromListAction(currentReelIndex);
+            if(inputData.AllReels.Count > 0)
+            {
+                currentReelIndex %= inputData.AllReels.Count;
+                ShowReel(currentReelIndex);
+            }
+            else
+                isClosing = true;
         }
 
         private void ShowNextReel()
@@ -254,6 +269,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             viewInstance!.mainImageCanvasGroup.alpha = 0;
             viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
+            viewInstance!.setAsPublicToggle.gameObject.SetActive(false);
+            viewInstance!.deleteButton.gameObject.SetActive(false);
 
             if (viewInstance.mainImage.texture != null)
                 GameObject.Destroy(viewInstance!.mainImage.texture);
@@ -270,6 +287,12 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
 
             await detailInfoTask;
+            
+            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
+            viewInstance!.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
+            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
+            viewInstance!.setAsPublicToggle.gameObject.SetActive(PhotoDetailInfoController.IsReelUserOwned);
+            viewInstance!.deleteButton.gameObject.SetActive(PhotoDetailInfoController.IsReelUserOwned);
         }
 
         private void CheckNavigationButtonVisibility(List<CameraReelResponseCompact> allReels, int index)

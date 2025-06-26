@@ -22,8 +22,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: SerializeField] internal Button nextScreenshotButton { get; private set; }
 
         [field: Header("Actions panel")]
-        [field: SerializeField] internal Toggle publicToggle { get; private set; }
-        [field: SerializeField] internal ToggleView publicToggleView { get; private set; }
+        [field: SerializeField] internal ToggleWithTextView setAsPublicToggle { get; private set; }
         [field: SerializeField] internal Button downloadButton { get; private set; }
         [field: SerializeField] internal Button deleteButton { get; private set; }
         [field: SerializeField] internal Button linkButton { get; private set; }

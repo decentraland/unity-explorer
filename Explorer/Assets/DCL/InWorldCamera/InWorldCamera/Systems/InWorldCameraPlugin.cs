@@ -171,6 +171,7 @@ namespace DCL.PluginSystem.Global
                     decentralandUrlsSource,
                     new ECSThumbnailProvider(realmData, globalWorld, assetBundleURL, webRequestController),
                     new PassportBridgeOpener(),
+                    web3IdentityCache,
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,

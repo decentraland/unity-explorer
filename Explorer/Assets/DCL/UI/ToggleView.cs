@@ -49,6 +49,12 @@ namespace DCL.UI
             Toggle.onValueChanged.RemoveListener(OnToggle);
         }
 
+        public void SetToggle(bool isOn)
+        {
+            Toggle.isOn = isOn;
+            OnToggle(isOn);
+        }
+
         public void SetToggleGraphics(bool toggle)
         {
             OnImage.SetActive(toggle);

@@ -44,7 +44,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
-        public event Action<List<CameraReelResponseCompact>, int, Action<CameraReelResponseCompact>>? ThumbnailClicked;
+        public delegate void ThumbnailClick(
+            List<CameraReelResponseCompact> reels, 
+            int index, 
+            Action<CameraReelResponseCompact> reelDeleteIntention, 
+            Action<CameraReelResponseCompact> reelListRefreshIntention);
+        public event ThumbnailClick? ThumbnailClicked;
         public event Action<CameraReelStorageStatus>? StorageUpdated;
         public event Action ScreenshotDeleted;
         public event Action ScreenshotShared;
@@ -188,7 +193,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 try
                 {
-                    await this.cameraReelStorageService.UpdateScreenshotVisibilityAsync(response.id, isPublic, ct);
+                    await cameraReelStorageService.UpdateScreenshotVisibilityAsync(response.id, isPublic, ct);
                     response.isPublic = isPublic;
                     view.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS, reelGalleryStringMessages?.PhotoSuccessfullyUpdatedMessage);
                 }
@@ -285,6 +290,34 @@ namespace DCL.InWorldCamera.CameraReelGallery
             }
         }
 
+        private void HideReelFromList(CameraReelResponseCompact reelToHide)
+        {
+            int hiddenIndex = -1;
+            for (int i = 0; i < currentSize; i++)
+                if (hiddenIndex >= 0)
+                    thumbnailImages[i - 1] = thumbnailImages[i];
+                else if (thumbnailImages[i].CameraReelResponse.id == reelToHide.id)
+                    hiddenIndex = i;
+
+            thumbnailImages[currentSize - 1] = null;
+            currentSize--;
+            ResetThumbnailsVisibility();
+            
+            MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetMonthDateTimeFromString(reelToHide.dateTime));
+            monthGridView.RemoveThumbnail(reelToHide.id);
+
+            if (monthGridView.GridIsEmpty())
+            {
+                monthViews.Remove(monthGridView.DateTimeBucket);
+                ReleaseGridView(monthGridView);
+            }
+
+            pagedCameraReelManager.RemoveReelId(reelToHide.id);
+            
+            if(currentSize <= 0)
+                view.emptyState.SetActive(true);
+        }
+
         private void PrepareShowGallery(CancellationToken ct)
         {
             view.loadingSpinner.SetActive(true);
@@ -367,11 +400,13 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 IReadOnlyList<ReelThumbnailController> thumbnailViews = monthGridView.Setup(bucket.Key, bucket.Value, optionButtonController,
                     (cameraReelResponse, sprite) => reelThumbnailCache.Add(cameraReelResponse, sprite),
                     cameraReelResponse =>
-                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse), compact =>
-                        {
-                            reelToDelete = compact;
-                            DeleteScreenshot();
-                        })
+                        ThumbnailClicked?.Invoke(pagedCameraReelManager.AllOrderedResponses, pagedCameraReelManager.AllOrderedResponses.IndexOf(cameraReelResponse), 
+                            reelToDelete =>
+                            {
+                                this.reelToDelete = reelToDelete;
+                                DeleteScreenshot();
+                            },
+                            HideReelFromList)
                     );
 
                 for (int i = 0; i < thumbnailViews.Count; i++)
