@@ -33,7 +33,7 @@ namespace DCL.Settings.ModuleControllers
                                         _ => throw new ArgumentOutOfRangeException(),
                                     };
 
-            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_WINDOW_MODE, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE, index, save: true);
         }
 
         public override void Dispose()

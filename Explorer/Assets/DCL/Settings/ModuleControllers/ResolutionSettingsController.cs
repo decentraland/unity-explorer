@@ -96,7 +96,7 @@ namespace DCL.Settings.ModuleControllers
         {
             Resolution selectedResolution = possibleResolutions[index];
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
-            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
             upscalingController.ResolutionChanged(selectedResolution);
         }
 

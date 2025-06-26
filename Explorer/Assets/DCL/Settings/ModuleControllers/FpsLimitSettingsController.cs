@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
                 fpsLimitToApply = Convert.ToInt32(view.DropdownView.Dropdown.options[index].text);
 
             Application.targetFrameRate = fpsLimitToApply;
-            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_FPS_LIMIT, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_FPS_LIMIT, index, save: true);
         }
 
         public override void Dispose()

@@ -48,7 +48,7 @@ namespace DCL.Settings.ModuleControllers
                     return;
             }
 
-            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, index, save: true);
         }
 
         public override void Dispose()

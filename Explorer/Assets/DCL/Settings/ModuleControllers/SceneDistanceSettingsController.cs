@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void OnMaxLoadingDistanceInParcelsChangedChanged(int newDistance)
         {
             view.SliderView.Slider.value = newDistance;
-            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_SCENE_DISTANCE, newDistance, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_SCENE_DISTANCE, newDistance, save: true);
         }
 
         public override void Dispose()

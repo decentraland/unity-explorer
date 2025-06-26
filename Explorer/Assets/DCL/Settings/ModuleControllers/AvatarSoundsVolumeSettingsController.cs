@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetAvatarVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_AVATAR_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_AVATAR_VOLUME, volumePercentage, save: true);
         }
 
         public override void Dispose()

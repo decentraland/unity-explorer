@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetWorldVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_WORLD_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_WORLD_VOLUME, volumePercentage, save: true);
 
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.SetWorldVolume(volumePercentage / 100);

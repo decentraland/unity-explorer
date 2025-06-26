@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetUIVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(UI_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_UI_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UI_VOLUME, volumePercentage, save: true);
         }
 
         public override void Dispose()

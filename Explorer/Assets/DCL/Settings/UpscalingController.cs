@@ -79,7 +79,7 @@ namespace DCL.Utilities
 
             if (updateStoredValue)
             {
-                DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
                 OnUpscalingChanged?.Invoke(sliderValue);
             }
         }

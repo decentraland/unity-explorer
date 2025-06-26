@@ -18,7 +18,7 @@ namespace DCL.Settings.ModuleControllers
             this.userBlockingCacheProxy = userBlockingCacheProxy;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES))
-                view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetToggleValue(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES);
+                view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_HIDE_BLOCKED_USERS_MESSAGES);
 
             view.ToggleView.Toggle.onValueChanged.AddListener(SetToggle);
             SetToggle(view.ToggleView.Toggle.isOn);

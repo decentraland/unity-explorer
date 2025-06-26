@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void OnEnvironmentDistanceSettingsChangedFromOutside(float newDistance)
         {
             view.SliderView.Slider.value = newDistance;
-            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE, newDistance, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_ENVIRONMENT_DISTANCE, newDistance, save: true);
         }
 
         public override void Dispose()

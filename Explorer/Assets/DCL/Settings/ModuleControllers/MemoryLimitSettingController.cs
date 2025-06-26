@@ -51,7 +51,7 @@ namespace DCL.Settings.ModuleControllers
 
             sceneLoadingLimit.UpdateMemoryCap();
 
-            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_MEMORY_CAP, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_MEMORY_CAP, index, save: true);
         }
     }
 }

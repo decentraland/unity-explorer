@@ -29,7 +29,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetMasterVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(MASTER_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_MASTER_VOLUME, volumePercentage, save: true);
 
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
             worldVolumeMacBus.SetMasterVolume(volumePercentage / 100);

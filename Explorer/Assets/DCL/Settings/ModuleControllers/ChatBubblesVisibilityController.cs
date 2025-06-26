@@ -44,7 +44,7 @@ namespace DCL.Settings.ModuleControllers
                     return;
             }
 
-            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_BUBBLES_VISIBILITY, index, save: true);
         }
 
         public override void Dispose()

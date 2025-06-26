@@ -53,7 +53,7 @@ namespace DCL.Settings.ModuleControllers
             if (index < view.DropdownView.Dropdown.options.Count - 1)
                 ForceSetQualityLevel(index);
 
-            DCLPlayerPrefs.SetDropdownValue(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_GRAPHICS_QUALITY, index, save: true);
         }
 
         private void ForceSetQualityLevel(int index)

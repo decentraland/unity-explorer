@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
 using Unity.Multiplayer.Playmode;
+using UnityEditor;
 using UnityEngine;
 
 namespace DCL.Prefs
@@ -22,11 +24,21 @@ namespace DCL.Prefs
         public static void SetString(string key, string value) =>
             dclPrefs.SetString(key, value);
 
-        public static void SetInt(string key, int value) =>
+        public static void SetInt(string key, int value, bool save = false)
+        {
             dclPrefs.SetInt(key, value);
 
-        public static void SetFloat(string key, float value) =>
+            if (save)
+                Save();
+        }
+
+        public static void SetFloat(string key, float value, bool save = false)
+        {
             dclPrefs.SetFloat(key, value);
+
+            if (save)
+                Save();
+        }
 
         public static string GetString(string key, string defaultValue = "") =>
             dclPrefs.GetString(key, defaultValue);
@@ -43,8 +55,13 @@ namespace DCL.Prefs
         public static void DeleteKey(string key) =>
             dclPrefs.DeleteKey(key);
 
-        public static void SetBool(string key, bool value) =>
+        public static void SetBool(string key, bool value, bool save = false)
+        {
             dclPrefs.SetBool(key, value);
+
+            if (save)
+                Save();
+        }
 
         public static bool GetBool(string key, bool defaultValue = false) =>
             dclPrefs.GetBool(key, defaultValue);
@@ -55,34 +72,9 @@ namespace DCL.Prefs
         public static void Save() =>
             dclPrefs.Save();
 
-        public static void SetToggleValue(string key, bool value, bool save = false)
-        {
-            SetBool(key, value);
-            if (save)
-                Save();
-        }
-
-        public static bool GetToggleValue(string key) =>
-            GetBool(key);
-
-        public static void SetSliderValue(string key, float value, bool save = false)
-        {
-            SetFloat(key, value);
-
-            if (save)
-                Save();
-        }
 
         public static float GetSliderValue(string key) =>
            GetFloat(key);
-
-        public static void SetDropdownValue(string key, int value, bool save = false)
-        {
-            SetInt(key, value);
-
-            if (save)
-                Save();
-        }
 
         public static int GetDropdownValue(string key) =>
             GetInt(key);
@@ -96,16 +88,16 @@ namespace DCL.Prefs
         }
 
 #if UNITY_EDITOR
-        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
+        [MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
         private static void ClearDCLPlayerPrefs()
         {
-            string[] files = System.IO.Directory.GetFiles(Application.persistentDataPath, "userdata_*");
+            string[] files = Directory.GetFiles(Application.persistentDataPath, "userdata_*");
 
             foreach (string file in files)
-                System.IO.File.Delete(file);
+                File.Delete(file);
         }
 
-        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
+        [MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
         private static bool ValidateClearDCLPlayerPrefs() =>
             !Application.isPlaying;
 #endif

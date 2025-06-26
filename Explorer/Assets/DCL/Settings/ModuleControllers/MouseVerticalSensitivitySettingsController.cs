@@ -24,7 +24,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetVerticalMouseSensitivity(float sensitivity)
         {
             controlsSettingsAsset.VerticalMouseSensitivity = sensitivity;
-            DCLPlayerPrefs.SetSliderValue(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY, sensitivity, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY, sensitivity, save: true);
         }
 
         public override void Dispose()
