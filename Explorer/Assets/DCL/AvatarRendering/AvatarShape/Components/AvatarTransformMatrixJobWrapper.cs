@@ -6,12 +6,15 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using UnityEngine;
+using UnityEngine.Jobs;
+using UnityEngine.Profiling;
 
 namespace DCL.AvatarRendering.AvatarShape.Components
 {
     public unsafe class AvatarTransformMatrixJobWrapper : IDisposable
     {
         private const int INNER_LOOP_BATCH_COUNT = 128; // Each iteration is lightweight. Reduces overhead from frequent job switching.
+        private const int WORLD_MATRIX_CALCULATION_STRATEGY_LIMIT = 128; // There is no gain in performance to multithreading for less amount of avatars
 
         internal const int AVATAR_ARRAY_SIZE = 100;
         private static readonly int BONES_ARRAY_LENGTH = ComputeShaderConstants.BONE_COUNT;
@@ -22,6 +25,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         internal NativeArray<bool> updateAvatar;
         private bool* updateAvatarPtr;
+        private TransformAccessArray copyBufferPerAvatar;
 
         private NativeArray<Matrix4x4> bonesCombined;
         public BoneMatrixCalculationJob job;
@@ -37,6 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public AvatarTransformMatrixJobWrapper()
         {
             bonesCombined = new NativeArray<Matrix4x4>(BONES_PER_AVATAR_LENGTH, Allocator.Persistent);
+            copyBufferPerAvatar = new TransformAccessArray(BONES_ARRAY_LENGTH);
 
             job = new BoneMatrixCalculationJob(BONES_ARRAY_LENGTH, BONES_PER_AVATAR_LENGTH, bonesCombined);
 
@@ -79,10 +84,31 @@ namespace DCL.AvatarRendering.AvatarShape.Components
                 }
             }
 
-            //Add all bones to the bonesCombined array with the current available index
-            for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
-                bonesCombined[transformMatrixComponent.IndexInGlobalJobArray * BONES_ARRAY_LENGTH + i] =
-                    transformMatrixComponent.bones[i].localToWorldMatrix;
+            Profiler.BeginSample("Calculate localToWorldMatrix");
+
+            if (avatarIndex < WORLD_MATRIX_CALCULATION_STRATEGY_LIMIT)
+            {
+                Profiler.BeginSample("Calculate localToWorldMatrix on MainThread");
+
+                //Add all bones to the bonesCombined array with the current available index
+                for (int i = 0; i < BONES_ARRAY_LENGTH; i++)
+                    bonesCombined[(transformMatrixComponent.IndexInGlobalJobArray * BONES_ARRAY_LENGTH) + i]
+                        = transformMatrixComponent.bones[i].localToWorldMatrix;
+
+                Profiler.EndSample();
+            }
+            else
+            {
+                Profiler.BeginSample("Calculate localToWorldMatrix on Job");
+
+                copyBufferPerAvatar.SetTransforms(transformMatrixComponent.bones.Inner);
+                var worldMatrixJob = new WorldMatrixCalculationJob(bonesCombined, transformMatrixComponent.IndexInGlobalJobArray * BONES_ARRAY_LENGTH);
+                worldMatrixJob.Schedule(copyBufferPerAvatar).Complete();
+
+                Profiler.EndSample();
+            }
+
+            Profiler.EndSample();
 
             //Setup of data
             matrixPtr[transformMatrixComponent.IndexInGlobalJobArray] = avatarBase.transform.worldToLocalMatrix;

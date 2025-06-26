@@ -51,7 +51,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private readonly AvatarTransformMatrixJobWrapper avatarTransformMatrixBatchJob;
 
-
         public AvatarInstantiatorSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget,
             IComponentPool<AvatarBase> avatarPoolRegistry, IAvatarMaterialPoolHandler avatarMaterialPoolHandler, IObjectPool<UnityEngine.ComputeShader> computeShaderPool,
             IAttachmentsAssetsCache wearableAssetsCache, CustomSkinning skinningStrategy, FixedComputeBufferHandler vertOutBuffer,
@@ -114,8 +113,15 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             avatarTransform.ResetLocalTRS();
 
-            var avatarTransformMatrixComponent =
-                AvatarTransformMatrixComponent.Create(avatarBase.AvatarSkinnedMeshRenderer.bones);
+            var boneArrayResult = BoneArray.From(avatarBase.AvatarSkinnedMeshRenderer.bones!);
+
+            if (boneArrayResult.Success == false)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Cannot instantiate avatar: {boneArrayResult.ErrorMessage}");
+                return null;
+            }
+
+            var avatarTransformMatrixComponent = AvatarTransformMatrixComponent.Create(boneArrayResult.Value);
 
             AvatarCustomSkinningComponent skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, avatarBase);
 
@@ -206,8 +212,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             if (!avatarShapeComponent.IsVisible)
                 foreach (CachedAttachment cachedAttachment in avatarShapeComponent.InstantiatedWearables)
-                    foreach (var renderer in cachedAttachment.Renderers)
-                        renderer.enabled = false;
+                foreach (var renderer in cachedAttachment.Renderers)
+                    renderer.enabled = false;
 
             skinningStrategy.SetVertOutRegion(vertOutBuffer.Rent(skinningComponent.vertCount), ref skinningComponent);
             avatarBase.gameObject.SetActive(true);

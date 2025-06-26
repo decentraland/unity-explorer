@@ -22,14 +22,14 @@ public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
         jobWrapper.Dispose();
     }
 
-
     [Test]
     public void AddNewAvatarIncrementsAvatarIndex()
     {
         var avatarBase = new GameObject().AddComponent<AvatarBase>();
+
         var transformMatrixComponent = new AvatarTransformMatrixComponent
         {
-            IndexInGlobalJobArray = -1, bones = new Transform[ComputeShaderConstants.BONE_COUNT]
+            IndexInGlobalJobArray = -1, bones = BoneArray.NewDefault(),
         };
 
         int initialIndex = transformMatrixComponent.IndexInGlobalJobArray;
@@ -46,9 +46,10 @@ public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
         for (int i = 0; i < AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE + 1; i++)
         {
             var avatarBase = new GameObject().AddComponent<AvatarBase>();
+
             var transformMatrixComponent = new AvatarTransformMatrixComponent
             {
-                IndexInGlobalJobArray = -1, bones = new Transform[ComputeShaderConstants.BONE_COUNT]
+                IndexInGlobalJobArray = -1, bones = BoneArray.NewDefault(),
             };
 
             jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent);
@@ -62,14 +63,15 @@ public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
     public void ReleasedIndexesAreReused()
     {
         var avatarBase = new GameObject().AddComponent<AvatarBase>();
+
         var transformMatrixComponent1 = new AvatarTransformMatrixComponent
         {
-            IndexInGlobalJobArray = -1, bones = new Transform[ComputeShaderConstants.BONE_COUNT]
+            IndexInGlobalJobArray = -1, bones = BoneArray.NewDefault(),
         };
 
         var transformMatrixComponent2 = new AvatarTransformMatrixComponent
         {
-            IndexInGlobalJobArray = -1, bones = new Transform[ComputeShaderConstants.BONE_COUNT]
+            IndexInGlobalJobArray = -1, bones = BoneArray.NewDefault(),
         };
 
         // Add the first avatar
@@ -93,9 +95,10 @@ public class AvatarTransformMatrixJobWrapperShould : MonoBehaviour
         for (int i = 0; i < AvatarTransformMatrixJobWrapper.AVATAR_ARRAY_SIZE + 1; i++)
         {
             var avatarBase = new GameObject().AddComponent<AvatarBase>();
+
             var transformMatrixComponent = new AvatarTransformMatrixComponent
             {
-                IndexInGlobalJobArray = -1, bones = new Transform[ComputeShaderConstants.BONE_COUNT]
+                IndexInGlobalJobArray = -1, bones = BoneArray.NewDefault(),
             };
 
             jobWrapper.UpdateAvatar(avatarBase, ref transformMatrixComponent);
