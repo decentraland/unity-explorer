@@ -132,8 +132,7 @@ namespace DCL.Communities.EventInfo
                 eventData.Attending = !eventData.Attending;
                 eventData.Total_attendees += eventData.Attending ? 1 : -1;
 
-                viewInstance!.UpdateInterestedCounter();
-                viewInstance.UpdateInterestedButtonState();
+                viewInstance!.UpdateInterestedButtonState();
             }
         }
     }

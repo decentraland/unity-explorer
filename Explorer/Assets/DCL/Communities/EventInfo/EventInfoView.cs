@@ -31,12 +31,12 @@ namespace DCL.Communities.EventInfo
         [SerializeField] private TMP_Text eventDate;
         [SerializeField] private TMP_Text eventName;
         [SerializeField] private TMP_Text hostName;
-        [SerializeField] private TMP_Text interestedCounter;
         [SerializeField] private ButtonWithSelectableStateView interestedButton;
         [SerializeField] private Button shareButton;
         [SerializeField] private Button jumpInButton;
         [SerializeField] private TMP_Text eventDescription;
         [SerializeField] private TMP_Text eventSchedules;
+        [SerializeField] private TMP_Text placeNameText;
         [SerializeField] private GameObject liveBadge;
 
         public event Action<IEventDTO>? InterestedButtonClicked;
@@ -94,12 +94,19 @@ namespace DCL.Communities.EventInfo
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);
-            UpdateInterestedCounter();
             UpdateInterestedButtonState();
             eventDescription.text = eventData.Description;
             jumpInButton.gameObject.SetActive(eventData.Live);
             interestedButton.gameObject.SetActive(!eventData.Live);
             liveBadge.SetActive(eventData.Live);
+
+            string placeName;
+            if (eventData.World)
+                placeName = string.IsNullOrEmpty(eventData.Scene_name) ? eventData.Server : $"{eventData.Scene_name} ({eventData.Server})";
+            else
+                placeName = $"{eventData.Scene_name} ({eventData.X},{eventData.Y})";
+
+            placeNameText.text = placeName;
 
             eventSchedules.text = CalculateRecurrentSchedulesString(eventData);
         }
@@ -164,8 +171,5 @@ namespace DCL.Communities.EventInfo
 
         public void UpdateInterestedButtonState() =>
             interestedButton.SetSelected(eventDTO.Attending);
-
-        public void UpdateInterestedCounter() =>
-            interestedCounter.text = eventDTO.Total_attendees.ToString();
     }
 }
