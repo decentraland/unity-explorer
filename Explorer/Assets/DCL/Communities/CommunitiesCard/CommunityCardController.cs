@@ -263,15 +263,18 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance!.SetLoadingState(true);
 
-                isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
+                if (!spriteCache.Configured || spriteCache.Object == null)
+                {
+                    isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
 
-                if (isSpriteCacheExternal)
-                {
-                    spriteCache.SetObject(inputData.ThumbnailSpriteCache);
-                }
-                else
-                {
-                    spriteCache.SetObject(new SpriteCache(webRequestController));
+                    if (isSpriteCacheExternal)
+                    {
+                        spriteCache.SetObject(inputData.ThumbnailSpriteCache);
+                    }
+                    else
+                    {
+                        spriteCache.SetObject(new SpriteCache(webRequestController));
+                    }
                 }
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
