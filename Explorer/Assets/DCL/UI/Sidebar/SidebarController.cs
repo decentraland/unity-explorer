@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
@@ -22,7 +23,6 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -45,11 +45,12 @@ namespace DCL.UI.Sidebar
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
         private bool includeMarketplaceCredits;
-        private bool includeCommunities;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
+        private CancellationTokenSource checkForCommunitiesFeatureCts;
         private const string IDLE_ICON_ANIMATOR = "Empty";
         private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
 
@@ -70,13 +71,13 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            bool includeCommunities,
             ChatView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            CommunitiesFeatureAccess communitiesFeatureAccess)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -88,7 +89,6 @@ namespace DCL.UI.Sidebar
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
             this.includeCameraReel = includeCameraReel;
-            this.includeCommunities = includeCommunities;
             this.chatView = chatView;
             this.chatHistory = chatHistory;
             this.includeFriends = includeFriends;
@@ -97,6 +97,7 @@ namespace DCL.UI.Sidebar
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.featureFlagsCache = featureFlagsCache;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public override void Dispose()
@@ -105,6 +106,7 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
+            checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -147,7 +149,6 @@ namespace DCL.UI.Sidebar
                 viewInstance.friendsButton.onClick.AddListener(OnFriendsButtonClickedAsync);
 
             viewInstance.PersistentFriendsPanelOpener.gameObject.SetActive(includeFriends);
-            viewInstance.communitiesButton.gameObject.SetActive(includeCommunities);
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
@@ -165,6 +166,9 @@ namespace DCL.UI.Sidebar
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
+
+            checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
+            CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
         }
 
         private void OnMvcManagerViewClosed(IController closedController)
@@ -261,6 +265,13 @@ namespace DCL.UI.Sidebar
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+        }
+
+        private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.communitiesButton.gameObject.SetActive(false);
+            bool includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
+            viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
         #region Sidebar button handlers
