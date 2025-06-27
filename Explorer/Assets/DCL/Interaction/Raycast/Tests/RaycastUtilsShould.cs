@@ -113,11 +113,7 @@ namespace DCL.Interaction.Raycast.Tests
             Physics.Raycast(ray, out RaycastHit hit, 100, ~0, QueryTriggerInteraction.Collide);
 
             var sdkHit = new ECSComponents.RaycastHit { Direction = new Decentraland.Common.Vector3(), GlobalOrigin = new Decentraland.Common.Vector3(), Position = new Decentraland.Common.Vector3(), NormalHit = new Decentraland.Common.Vector3() };
-
-            var sceneRoot = new GameObject("SceneRoot");
-            sceneRoot.transform.position = new Vector3(1, 0, 1);
-
-            sdkHit.FillSDKRaycastHit(sceneRoot.transform, hit, collider.name, 100, Vector3.zero, Vector3.forward);
+            sdkHit.FillSDKRaycastHit(new Vector3(1, 0, 1), hit, collider.name, 100, Vector3.zero, Vector3.forward);
 
             Assert.That(sdkHit.EntityId, Is.EqualTo(100u));
             Assert.That(sdkHit.MeshName, Is.EqualTo("custom"));
@@ -126,8 +122,6 @@ namespace DCL.Interaction.Raycast.Tests
             Assert.That((Vector3)sdkHit.Position, Is.EqualTo(hit.point - new Vector3(1, 0, 1)));
             Assert.That((Vector3)sdkHit.GlobalOrigin, Is.EqualTo(Vector3.zero));
             Assert.That((Vector3)sdkHit.Direction, Is.EqualTo(Vector3.forward));
-
-            UnityObjectUtils.SafeDestroyGameObject(sceneRoot.transform);
         }
 
         [Test]

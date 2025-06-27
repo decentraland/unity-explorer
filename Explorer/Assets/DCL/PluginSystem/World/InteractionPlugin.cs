@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.World
             sceneIsCurrentListeners.Add(
                 ExecuteRaycastSystem.InjectToWorld(
                     ref builder,
-                    persistentEntities.SceneRoot,
+                    sceneDeps.SceneData,
                     raycastBudget,
                     settings.RaycastBucketThreshold,
                     sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
@@ -79,7 +79,7 @@ namespace DCL.PluginSystem.World
 
             WritePointerEventResultsSystem.InjectToWorld(
                 ref builder,
-                persistentEntities.SceneRoot,
+                sceneDeps.SceneData,
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider,
                 globalInputEvents,

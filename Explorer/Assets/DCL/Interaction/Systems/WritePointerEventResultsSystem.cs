@@ -11,7 +11,6 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
@@ -29,24 +28,26 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
     {
+        private readonly ISceneData sceneData;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalInputEvents globalInputEvents;
+
         private readonly IComponentPool<RaycastHit> raycastHitPool;
-        private readonly Entity sceneRoot;
 
         internal WritePointerEventResultsSystem(
             World world,
-            Entity sceneRoot,
+            ISceneData sceneData,
             IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider,
             IGlobalInputEvents globalInputEvents,
             IComponentPool<RaycastHit> raycastHitPool
         ) : base(world)
         {
-            this.sceneRoot = sceneRoot;
+            this.sceneData = sceneData;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+
             this.sceneStateProvider = sceneStateProvider;
             this.globalInputEvents = globalInputEvents;
             this.raycastHitPool = raycastHitPool;
@@ -55,11 +56,9 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         protected override void Update(float t)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            if (!World.IsAlive(sceneRoot) || !World.Has<TransformComponent>(sceneRoot)) return;
 
             var messageSent = false;
-            Transform sceneRootTransform = World.Get<TransformComponent>(sceneRoot).Transform;
-            WriteResultsQuery(World!, sceneRootTransform, ref messageSent);
+            WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition, ref messageSent);
 
             if (!messageSent)
                 WriteGlobalEvents();
@@ -77,7 +76,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void WriteResults([Data] Transform sceneRootTransform, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        private void WriteResults([Data] in Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
             int validIndicesCount = intent.ValidIndicesCount();
@@ -89,7 +88,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 PBPointerEvents.Types.Info info = entry.EventInfo!;
 
                 RaycastHit raycastHit = raycastHitPool.Get()!;
-                raycastHit.FillSDKRaycastHit(sceneRootTransform, intent, sdkEntity);
+                raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
 
                 //Note: If the event is a Hover, the scenes are expecting an input action of type IaPointer.
                 //This logic is extracted from previous renderer in ECSPointerInputSystem.
@@ -104,7 +103,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 {
                     (InputAction inputAction, PointerEventType pointerEventType) inputAction = intent.ValidInputActions[i];
                     RaycastHit raycastHit = raycastHitPool.Get()!;
-                    raycastHit.FillSDKRaycastHit(sceneRootTransform, intent, sdkEntity);
+                    raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
                     AppendMessage(sdkEntity, raycastHit, inputAction.inputAction, inputAction.pointerEventType);
 
                     //We don't consider hover events to disable global input messages

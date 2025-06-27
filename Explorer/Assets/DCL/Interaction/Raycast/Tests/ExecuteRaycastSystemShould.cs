@@ -21,7 +21,6 @@ using Utility;
 using Component = UnityEngine.Component;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 using Vector3 = Decentraland.Common.Vector3;
-using ECS.Unity.Transforms.Components;
 
 namespace DCL.Interaction.Raycast.Tests
 {
@@ -31,7 +30,7 @@ namespace DCL.Interaction.Raycast.Tests
         private IEntityCollidersSceneCache entityCollidersSceneCache;
         private IReleasablePerformanceBudget budget;
         private ISceneStateProvider sceneStateProvider;
-        private GameObject sceneRootGO;
+        private Entity sceneRoot;
         private Dictionary<CRDTEntity, Entity> entitiesMap;
         private IECSToCRDTWriter ecsToCRDTWriter;
         private PBRaycast pbRaycast;
@@ -43,7 +42,9 @@ namespace DCL.Interaction.Raycast.Tests
         [SetUp]
         public void SetUp()
         {
+            ISceneData sceneData = Substitute.For<ISceneData>();
             testScenePos = new UnityEngine.Vector3(10f, 0f, 15f);
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(testScenePos, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
 
             budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
@@ -54,14 +55,9 @@ namespace DCL.Interaction.Raycast.Tests
             IComponentPool<RaycastHit> raycastHitPool = Substitute.For<IComponentPool<RaycastHit>>();
             raycastHitPool.Get().Returns(_ => new RaycastHit().Reset());
 
-            sceneRootGO = new GameObject("SceneRoot");
-            sceneRootGO.transform.position = testScenePos;
-            Entity sceneRoot = world.Create(new TransformComponent(sceneRootGO.transform));
-            instantiatedTemp.Add(sceneRootGO.transform);
-
             system = new ExecuteRaycastSystem(
                 world,
-                sceneRoot,
+                sceneData,
                 budget,
                 4,
                 raycastHitPool,
@@ -101,8 +97,6 @@ namespace DCL.Interaction.Raycast.Tests
                 UnityObjectUtils.SafeDestroyGameObject(component);
 
             instantiatedTemp.Clear();
-
-            Object.DestroyImmediate(sceneRootGO);
         }
 
         [Test]

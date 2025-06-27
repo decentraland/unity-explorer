@@ -70,12 +70,12 @@ namespace DCL.Interaction.Utility
             return true;
         }
 
-        public static void FillSDKRaycastHit(this RaycastHit target, Transform sceneRoot, AppendPointerEventResultsIntent intent, CRDTEntity crdtEntity)
+        public static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, AppendPointerEventResultsIntent intent, CRDTEntity crdtEntity)
         {
-            target.FillSDKRaycastHit(sceneRoot, intent.RaycastHit, string.Empty, crdtEntity, intent.Ray.origin, intent.Ray.direction);
+            target.FillSDKRaycastHit(sceneRootPosition, intent.RaycastHit, string.Empty, crdtEntity, intent.Ray.origin, intent.Ray.direction);
         }
 
-        public static void FillSDKRaycastHit(this RaycastHit target, Transform sceneRoot, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity crdtEntity,
+        public static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity crdtEntity,
             Vector3 globalOrigin,
             Vector3 direction)
         {
@@ -84,8 +84,8 @@ namespace DCL.Interaction.Utility
             // There is no real value in passing MeshName
             target.MeshName = colliderName;
             target.Length = unityHit.distance;
-            target.GlobalOrigin.Set(globalOrigin); // already scene relative position
-            target.Position.Set(unityHit.point.FromGlobalToSceneRelativePosition(sceneRoot));
+            target.GlobalOrigin.Set(globalOrigin);
+            target.Position.Set(unityHit.point.FromGlobalToSceneRelativePosition(sceneRootPosition));
             target.NormalHit.Set(unityHit.normal);
             target.Direction.Set(direction);
         }

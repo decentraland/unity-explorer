@@ -42,14 +42,14 @@ namespace DCL.Interaction.Raycast.Systems
         private readonly IComponentPool<PBRaycastResult> raycastComponentPool;
         private readonly IComponentPool<ECSComponents.RaycastHit> raycastHitPool;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly Entity sceneRoot;
 
+        private readonly ISceneData sceneData;
         private List<RaycastData>? orderedRaycastData;
 
         private readonly PBRaycastResult emptyRaycastResult;
 
         internal ExecuteRaycastSystem(World world,
-            Entity sceneRoot,
+            ISceneData sceneData,
             IReleasablePerformanceBudget budget,
             byte raycastBucketThreshold,
             IComponentPool<ECSComponents.RaycastHit> raycastHitPool,
@@ -59,7 +59,7 @@ namespace DCL.Interaction.Raycast.Systems
             IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider) : base(world)
         {
-            this.sceneRoot = sceneRoot;
+            this.sceneData = sceneData;
             this.budget = budget;
             this.raycastBucketThreshold = raycastBucketThreshold;
             this.raycastHitPool = raycastHitPool;
@@ -87,15 +87,14 @@ namespace DCL.Interaction.Raycast.Systems
         protected override void Update(float t)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            if (!World.IsAlive(sceneRoot) || !World.Has<TransformComponent>(sceneRoot)) return;
 
-            BudgetAndExecute(World.Get<TransformComponent>(sceneRoot).Transform);
+            BudgetAndExecute(sceneData.Geometry.BaseParcelPosition);
         }
 
         /// <summary>
         ///     Executes raycast if there is enough budget available.
         /// </summary>
-        private void BudgetAndExecute(Transform sceneRootTransform)
+        private void BudgetAndExecute(Vector3 scenePosition)
         {
             // Process only not executed raycasts which bucket is not farther than the max allowed distance
             orderedRaycastData.Clear();
@@ -121,7 +120,7 @@ namespace DCL.Interaction.Raycast.Systems
                 RaycastData data = orderedRaycastData[i];
 
                 if (budget.TrySpendBudget())
-                    Raycast(sceneRootTransform, data.CRDTEntity, ref data.Component.Value, data.SDKComponent, in data.TransformComponent);
+                    Raycast(scenePosition, data.CRDTEntity, ref data.Component.Value, data.SDKComponent, in data.TransformComponent);
                 else break;
             }
         }
@@ -163,9 +162,9 @@ namespace DCL.Interaction.Raycast.Systems
             });
         }
 
-        private void Raycast(Transform sceneRootTransform, CRDTEntity crdtEntity, ref RaycastComponent raycastComponent, PBRaycast sdkComponent, in TransformComponent transformComponent)
+        private void Raycast(Vector3 scenePos, CRDTEntity crdtEntity, ref RaycastComponent raycastComponent, PBRaycast sdkComponent, in TransformComponent transformComponent)
         {
-            if (!sdkComponent.TryCreateRay(World, entitiesMap, sceneRootTransform.position, in transformComponent, out Ray ray))
+            if (!sdkComponent.TryCreateRay(World, entitiesMap, scenePos, in transformComponent, out Ray ray))
             {
                 ReportHub.LogWarning(GetReportData(), "Raycast error: Raycast data is malformed.");
                 return;
@@ -181,15 +180,15 @@ namespace DCL.Interaction.Raycast.Systems
             // The range of Unity Layers is narrower than the range of SDK Layers
             // so we need to raycast against all (even if the query type is hit first) and then filter our each individual raycast hit
             int hitsCount = Physics.RaycastNonAlloc(ray, SHARED_RAYCAST_HIT_ARRAY, sdkComponent.MaxDistance, collisionMask);
-            Vector3 rayOriginPosition = ray.origin.FromGlobalToSceneRelativePosition(sceneRootTransform);
+            Vector3 rayOriginPosition = ray.origin.FromGlobalToSceneRelativePosition(scenePos);
 
             switch (sdkComponent.QueryType)
             {
                 case RaycastQueryType.RqtHitFirst:
-                    SetClosestQualifiedHit(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, sceneRootTransform, rayOriginPosition, ray.direction);
+                    SetClosestQualifiedHit(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, rayOriginPosition, ray.direction);
                     break;
                 case RaycastQueryType.RqtQueryAll:
-                    SetAllQualifiedHits(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, sceneRootTransform, rayOriginPosition, ray.direction);
+                    SetAllQualifiedHits(raycastResult, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, rayOriginPosition, ray.direction);
                     break;
             }
 
@@ -203,7 +202,7 @@ namespace DCL.Interaction.Raycast.Systems
             ecsToCRDTWriter.PutMessage(raycastResult, crdtEntity);
         }
 
-        private void SetClosestQualifiedHit(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Transform sceneRootTransform, Vector3 globalOrigin,
+        private void SetClosestQualifiedHit(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
             Vector3 rayDirection)
         {
             RaycastHit? closestQualifiedHit = null;
@@ -229,12 +228,12 @@ namespace DCL.Interaction.Raycast.Systems
             {
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
                 RaycastHit qualifiedHit = closestQualifiedHit.Value;
-                sdkHit.FillSDKRaycastHit(sceneRootTransform, qualifiedHit, qualifiedHit.collider.name, foundEntity, globalOrigin, rayDirection);
+                sdkHit.FillSDKRaycastHit(scenePos, qualifiedHit, qualifiedHit.collider.name, foundEntity, globalOrigin, rayDirection);
                 raycastResult.Hits.Add(sdkHit);
             }
         }
 
-        private void SetAllQualifiedHits(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Transform sceneRootTransform, Vector3 globalOrigin,
+        private void SetAllQualifiedHits(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
             Vector3 rayDirection)
         {
             for (var i = 0; i < hits.Length; i++)
@@ -246,7 +245,7 @@ namespace DCL.Interaction.Raycast.Systems
                 if (!TryGetQualifiedEntity(collider, collisionMask, out CRDTEntity foundEntity)) continue;
 
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
-                sdkHit.FillSDKRaycastHit(sceneRootTransform, hit, hit.collider.name, foundEntity, globalOrigin, rayDirection);
+                sdkHit.FillSDKRaycastHit(scenePos, hit, hit.collider.name, foundEntity, globalOrigin, rayDirection);
                 raycastResult.Hits.Add(sdkHit);
             }
         }

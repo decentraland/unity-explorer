@@ -11,10 +11,8 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Arch.Core;
-using ECS.Unity.Transforms.Components;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using Utility;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace DCL.Interaction.PlayerOriginated.Tests
@@ -25,11 +23,13 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private IECSToCRDTWriter writer;
         private IGlobalInputEvents globalInputEvents;
         private ISceneStateProvider sceneStateProvider;
-        private GameObject sceneRootGO;
 
         [SetUp]
         public void SetUp()
         {
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
+
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
             sceneStateProvider.IsCurrent.Returns(true);
@@ -37,11 +37,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             IComponentPool<RaycastHit> pool = Substitute.For<IComponentPool<RaycastHit>>();
             pool.Get().Returns(new RaycastHit().Reset());
 
-            sceneRootGO = new GameObject();
-            Entity sceneRoot = world.Create(new TransformComponent(sceneRootGO.transform));
-
-            system = new WritePointerEventResultsSystem(world,
-                sceneRoot,
+            system = new WritePointerEventResultsSystem(world, sceneData,
                 writer = Substitute.For<IECSToCRDTWriter>(),
                 sceneStateProvider,
                 globalInputEvents = Substitute.For<IGlobalInputEvents>(),
@@ -52,7 +48,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         public void ClearResults()
         {
             results.Clear();
-            Object.DestroyImmediate(sceneRootGO);
         }
 
         [Test]
