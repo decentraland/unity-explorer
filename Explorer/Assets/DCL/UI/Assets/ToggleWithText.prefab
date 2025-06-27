@@ -221,9 +221,22 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 6094248929970383334}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
-  <toggleText>k__BackingField: {fileID: 2938718002221827054}
-  <interactableTextColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
-  <nonInteractableTextColor>k__BackingField: {r: 0.55, g: 0.55, b: 0.55, a: 1}
+  <colorableElements>k__BackingField:
+  - <element>k__BackingField: {fileID: 6094248929970383334}
+    <interactableColor>k__BackingField: {r: 0.8117647, g: 0.8039216, b: 0.83137256, a: 1}
+    <nonInteractableColor>k__BackingField: {r: 0.5863488, g: 0.5756052, b: 0.6132076, a: 1}
+  - <element>k__BackingField: {fileID: 484783688797729264}
+    <interactableColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    <nonInteractableColor>k__BackingField: {r: 0.735849, g: 0.73237807, b: 0.73237807, a: 1}
+  - <element>k__BackingField: {fileID: 4187387521697926856}
+    <interactableColor>k__BackingField: {r: 1, g: 0.1764706, b: 0.33333334, a: 1}
+    <nonInteractableColor>k__BackingField: {r: 0.5411765, g: 0.5411765, b: 0.5411765, a: 0.5019608}
+  - <element>k__BackingField: {fileID: 2407768349477282349}
+    <interactableColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    <nonInteractableColor>k__BackingField: {r: 0.6117647, g: 0.6117647, b: 0.6117647, a: 1}
+  - <element>k__BackingField: {fileID: 2938718002221827054}
+    <interactableColor>k__BackingField: {r: 0.9882353, g: 0.9882353, b: 0.9882353, a: 1}
+    <nonInteractableColor>k__BackingField: {r: 0.7372549, g: 0.73333335, b: 0.73333335, a: 1}
 --- !u!1001 &3773273977910126689
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -349,6 +362,28 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4643746892624216629}
   m_SourcePrefab: {fileID: 100100000, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+--- !u!114 &484783688797729264 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3667918575240206737, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 3773273977910126689}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2407768349477282349 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1528761235184241228, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+  m_PrefabInstance: {fileID: 3773273977910126689}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &4187387521697926856 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1027324785593132713, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}

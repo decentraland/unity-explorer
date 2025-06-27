@@ -29,6 +29,10 @@ namespace DCL.UI
         public AudioClipConfig ToggleOnAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig ToggleOffAudio { get; private set; }
+        
+        [field: Header("Colors")]
+        [field: Header("Interactable Colors")]
+        [field: SerializeField] private ColorableElement[] colorableElements { get; set; }
 
         /// <summary>
         /// Gets or sets whether sound FXs will be played or not when interacting with the toggle.
@@ -63,6 +67,16 @@ namespace DCL.UI
             OffBackgroundImage.gameObject.SetActive(!toggle);
         }
 
+        public void SetInteractable(bool isInteractable)
+        {
+            foreach (var element in colorableElements)
+            {
+                element.Set(isInteractable);
+            }
+            
+            Toggle.interactable = isInteractable;
+        }
+
         private void OnToggle(bool toggle)
         {
             if(IsSoundEnabled)
@@ -70,6 +84,21 @@ namespace DCL.UI
 
             if (autoToggleImagesOnToggle)
                 SetToggleGraphics(toggle);
+        }
+        
+        [Serializable]
+        private struct ColorableElement
+        {
+            [field: SerializeField] private Graphic element { get; set; }
+            [field: SerializeField] private Color interactableColor { get; set; }
+            [field: SerializeField] private Color nonInteractableColor { get; set; }
+
+            public void Set(bool isInteractable)
+            {
+                if (element == null) return;
+                
+                element.color = isInteractable ? interactableColor : nonInteractableColor;
+            }
         }
     }
 }

@@ -268,6 +268,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             viewInstance!.mainImageCanvasGroup.alpha = 0;
             viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
+            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
+            viewInstance!.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
             viewInstance!.setAsPublicToggle.SetInteractable(false);
             viewInstance!.deleteButton.SetInteractable(false);
 
@@ -288,8 +290,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             await detailInfoTask;
 
             bool isUserOwned = PhotoDetailInfoController.IsReelUserOwned;
-            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
-            viewInstance!.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
             viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
             viewInstance!.setAsPublicToggle.SetInteractable(isUserOwned);
             viewInstance!.deleteButton.SetInteractable(isUserOwned);
