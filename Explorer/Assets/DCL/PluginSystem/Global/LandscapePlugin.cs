@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Landscape.Settings;
@@ -10,6 +11,7 @@ using DCL.Landscape.Utils;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.RealmNavigation;
 using DCL.WebRequests;
+using Decentraland.Terrain;
 using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
@@ -17,7 +19,6 @@ using System;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
-using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.PluginSystem.Global
 {
@@ -116,6 +117,8 @@ namespace DCL.PluginSystem.Global
 
             terrainGenerator.Initialize(landscapeData.Value.genesisCityData,
                 landscapeData.Value.terrainData, roads, occupied, empty);
+
+            TerrainRenderer.LogHandler = ReportHub.Instance;
 
             if (disposed)
                 throw new ObjectDisposedException(nameof(LandscapePlugin));

@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using DCL.Diagnostics;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using TerrainData = Decentraland.Terrain.TerrainData;
@@ -31,9 +32,9 @@ namespace DCL.Landscape
 
             int2 size = SizeInParcels;
             int totalPadding = padding + (int)math.round((size.x + size.y) * extraPadding);
-            minParcel -= totalPadding;
-            maxParcel += totalPadding;
-            size = SizeInParcels;
+            /*minParcel -= totalPadding;
+            maxParcel += totalPadding;*/
+            size = SizeInParcels + 2;
 
             occupancyMap = new Texture2D(size.x, size.y, TextureFormat.R8, false, true);
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
@@ -44,7 +45,7 @@ namespace DCL.Landscape
             for (int i = 0; i < empty.Length; i++)
             {
                 int2 parcel = empty[i];
-                data[(parcel.y - minParcel.y) * size.x + parcel.x - minParcel.x] = 0;
+                data[(parcel.y - minParcel.y + 1) * size.x + parcel.x - minParcel.x + 1] = 0;
             }
 
             occupancyMap.Apply(false, false);
@@ -75,10 +76,15 @@ namespace DCL.Landscape
         private static Vector2Int ToVector2Int(int2 value) =>
             new Vector2Int(value.x, value.y);
 
-        public void WriteTo(TerrainData terrainData)
+        public void UpdateTerrainData(TerrainData terrainData)
         {
-            terrainData.bounds = new RectInt(ToVector2Int(MinParcel), ToVector2Int(SizeInParcels));
-            terrainData.occupancyMap = occupancyMap;
+            terrainData.Bounds = new RectInt(ToVector2Int(MinParcel), ToVector2Int(SizeInParcels));
+            terrainData.OccupancyMap = occupancyMap;
+
+            // TODO: Remove before merging to dev.
+            /*terrainData.GroundMaterial.mainTexture = occupancyMap;
+            terrainData.GroundMaterial.mainTextureOffset = (float2)(-(minParcel - 1) / (SizeInParcels + 2));
+            terrainData.GroundMaterial.mainTextureScale = (float2)1f / ((SizeInParcels + 2) * parcelSize);*/
         }
     }
 }

@@ -15,6 +15,7 @@ using Vector3 = UnityEngine.Vector3;
 using DCL.Audio.Jobs;
 using DCL.Landscape;
 using Random = UnityEngine.Random;
+using TerrainData = UnityEngine.TerrainData;
 
 namespace DCL.Audio.Systems
 {

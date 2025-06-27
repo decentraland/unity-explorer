@@ -471,13 +471,13 @@
     "m_RefNameGeneratedByDisplayName": "Occupancy Map",
     "m_DefaultReferenceName": "_Occupancy_Map",
     "m_OverrideReferenceName": "_OccupancyMap",
-    "m_GeneratePropertyBlock": true,
+    "m_GeneratePropertyBlock": false,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
-    "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
+    "overrideHLSLDeclaration": true,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": {
         "m_SerializedTexture": "",
@@ -559,7 +559,7 @@
         "m_SerializedTexture": "",
         "m_Guid": ""
     },
-    "isMainTexture": false,
+    "isMainTexture": true,
     "useTilingAndOffset": true,
     "m_Modifiable": true,
     "m_DefaultType": 0
@@ -605,15 +605,15 @@
     "m_RefNameGeneratedByDisplayName": "Parcel Size",
     "m_DefaultReferenceName": "_Parcel_Size",
     "m_OverrideReferenceName": "_ParcelSize",
-    "m_GeneratePropertyBlock": true,
+    "m_GeneratePropertyBlock": false,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
-    "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
+    "overrideHLSLDeclaration": true,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
-    "m_Value": 16.0,
+    "m_Value": 0.0,
     "m_FloatType": 0,
     "m_RangeValues": {
         "x": 0.0,
@@ -1816,19 +1816,19 @@
     "m_RefNameGeneratedByDisplayName": "Terrain Bounds",
     "m_DefaultReferenceName": "_Terrain_Bounds",
     "m_OverrideReferenceName": "_TerrainBounds",
-    "m_GeneratePropertyBlock": true,
+    "m_GeneratePropertyBlock": false,
     "m_UseCustomSlotLabel": false,
     "m_CustomSlotLabel": "",
     "m_DismissedVersion": 0,
     "m_Precision": 0,
-    "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
+    "overrideHLSLDeclaration": true,
+    "hlslDeclarationOverride": 2,
     "m_Hidden": false,
     "m_Value": {
-        "x": -150.0,
-        "y": -150.0,
-        "z": 300.0,
-        "w": 300.0
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 0.0
     }
 }
 

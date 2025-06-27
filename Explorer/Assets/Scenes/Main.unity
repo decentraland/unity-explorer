@@ -781,7 +781,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88f6f4f663e38a84d8daccd1c147597e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terrainData: {fileID: 11400000, guid: 11ce4e9f83b596341a5883081f7d710d, type: 2}
+  <TerrainData>k__BackingField: {fileID: 11400000, guid: 11ce4e9f83b596341a5883081f7d710d, type: 2}
 --- !u!1 &1800558272
 GameObject:
   m_ObjectHideFlags: 0

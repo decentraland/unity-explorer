@@ -74,7 +74,7 @@ namespace DCL.Landscape
             boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
             boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
 
-            terrainModel.WriteTo(terrainData);
+            terrainModel.UpdateTerrainData(terrainData);
 
             processReport?.SetProgress(1f);
         }

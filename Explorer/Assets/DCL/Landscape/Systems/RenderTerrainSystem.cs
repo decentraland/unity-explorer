@@ -27,7 +27,15 @@ namespace DCL.Landscape.Systems
             RenderTerrainQuery(World);
 
         [Query]
-        private void RenderTerrain(ICinemachinePreset cinemachinePreset) =>
-            TerrainRenderer.Render(terrainData, cinemachinePreset.Brain.OutputCamera, false);
+        private void RenderTerrain(ICinemachinePreset cinemachinePreset)
+        {
+            TerrainRenderer.Render(terrainData, cinemachinePreset.Brain.OutputCamera,
+#if UNITY_EDITOR
+                true
+#else
+                false
+#endif
+            );
+        }
     }
 }

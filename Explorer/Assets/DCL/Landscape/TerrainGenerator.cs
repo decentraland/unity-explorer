@@ -98,7 +98,7 @@ namespace DCL.Landscape
             if (rootGo != null)
                 rootGo.gameObject.SetActive(true);
 
-            terrainModel.WriteTo(terrainData);
+            terrainModel.UpdateTerrainData(terrainData);
             IsTerrainShown = true;
 
             postRealmLoadReport.SetProgress(1f);
@@ -143,7 +143,7 @@ namespace DCL.Landscape
                     processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
                     processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
 
-                    terrainModel.WriteTo(terrainData);
+                    terrainModel.UpdateTerrainData(terrainData);
 
                     if (processReport != null) processReport.SetProgress(1f);
                 }
