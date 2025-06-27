@@ -207,6 +207,7 @@ namespace DCL.MarketplaceCredits.Sections
             {
                 subView.IsEmailLoginActive = true;
                 inputBlock.Disable(InputMapComponent.BLOCK_USER_INPUT);
+                totalCreditsWidgetView.gameObject.SetActive(false);
                 return;
             }
 
