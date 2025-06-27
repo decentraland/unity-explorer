@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace DCL.Minimap
 {
@@ -23,6 +24,7 @@ namespace DCL.Minimap
             { SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED, "• Avatar movements are blocked" },
             { SceneRestrictions.PASSPORT_CANNOT_BE_OPENED, "• Passports can not be opened" },
             { SceneRestrictions.EXPERIENCES_BLOCKED, "• Experiences are blocked" },
+            { SceneRestrictions.SKYBOX_TIME_BLOCKED, "• Skybox time controls are blocked"},
         };
 
         public SceneRestrictionsController(ISceneRestrictionsView restrictionsView, ISceneRestrictionBusController sceneRestrictionBusController)
@@ -38,7 +40,7 @@ namespace DCL.Minimap
             {
                 restrictionsRegistry[restriction] = 0;
 
-                GameObject restrictionsObject = GameObject.Instantiate(restrictionsView.RestrictionTextPrefab, restrictionsView.ToastTextParent.transform);
+                GameObject restrictionsObject = Object.Instantiate(restrictionsView.RestrictionTextPrefab, restrictionsView.ToastTextParent.transform);
                 restrictionsObject.GetComponent<TMP_Text>().SetText(restrictionsTexts[restriction]);
                 restrictionsObject.SetActive(false);
                 restrictionsObject.name = restriction.ToString();
