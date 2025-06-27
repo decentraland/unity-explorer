@@ -1,8 +1,7 @@
-﻿using DCL.Diagnostics;
+﻿using System;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.Landscape
 {
@@ -19,7 +18,6 @@ namespace DCL.Landscape
         public int2 SizeInUnits => SizeInParcels * parcelSize;
         public int2 MinInUnits => MinParcel * parcelSize;
         public int2 MaxInUnits => MinInUnits + SizeInUnits;
-        public Texture2D OccupancyMap => occupancyMap;
 
         public TerrainModel(int2[] roads, int2[] occupied, int2[] empty, int parcelSize, int padding,
             float extraPadding = 0f)
@@ -30,22 +28,95 @@ namespace DCL.Landscape
             CalculateMinMaxParcels(occupied, ref minParcel, ref maxParcel);
             CalculateMinMaxParcels(empty, ref minParcel, ref maxParcel);
 
-            int2 size = SizeInParcels;
-            int totalPadding = padding + (int)math.round((size.x + size.y) * extraPadding);
-            /*minParcel -= totalPadding;
-            maxParcel += totalPadding;*/
-            size = SizeInParcels + 2;
+            int2 citySize = maxParcel - minParcel + 1;
+            int totalPadding = padding + (int)math.round((citySize.x + citySize.y) * extraPadding);
+            minParcel -= totalPadding;
+            maxParcel += totalPadding;
+            int2 terrainSize = citySize + totalPadding * 2;
+            int2 textureSize = terrainSize + 2;
 
-            occupancyMap = new Texture2D(size.x, size.y, TextureFormat.R8, false, true);
+            occupancyMap = new Texture2D(textureSize.x, textureSize.y, TextureFormat.R8, false, true);
             NativeArray<byte> data = occupancyMap.GetRawTextureData<byte>();
 
-            for (int i = 0; i < data.Length; i++)
-                data[i] = 255;
+            // A square of red pixels surrounded by a border of black pixels totalPadding pixels wide
+            // surrounded by a border of red pixels one pixel wide. The outer border is there so that
+            // terrain height blends to zero at its edges.
+            try
+            {
+                int i = 0;
+
+                // First section: a single row or red pixels.
+                int endY = textureSize.x;
+
+                while (i < endY)
+                    data[i++] = 255;
+
+                // Second section: totalPadding rows of: one red pixel, terrainSize.x black pixels, one
+                // red pixel.
+                endY = i + totalPadding * textureSize.x;
+
+                while (i < endY)
+                {
+                    data[i++] = 255;
+                    int endX = i + terrainSize.x;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    data[i++] = 255;
+                }
+
+                // Third, innermost section: citySize.y rows of: one red pixel, totalPadding black
+                // pixels, citySize.x red pixels, totalPadding black pixels, one red pixel.
+                endY = i + citySize.y * textureSize.x;
+
+                while (i < endY)
+                {
+                    data[i++] = 255;
+                    int endX = i + totalPadding;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    endX = i + citySize.x;
+
+                    while (i < endX)
+                        data[i++] = 255;
+
+                    endX = i + totalPadding;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    data[i++] = 255;
+                }
+
+                // Fourth section, same as second section.
+                endY = i + totalPadding * textureSize.x;
+
+                while (i < endY)
+                {
+                    data[i++] = 255;
+                    int endX = i + terrainSize.x;
+
+                    while (i < endX)
+                        data[i++] = 0;
+
+                    data[i++] = 255;
+                }
+
+                // Fifth section, same as first section.
+                endY = i + textureSize.x;
+
+                while (i < endY)
+                    data[i++] = 255;
+            }
+            catch (IndexOutOfRangeException) { }
 
             for (int i = 0; i < empty.Length; i++)
             {
                 int2 parcel = empty[i];
-                data[(parcel.y - minParcel.y + 1) * size.x + parcel.x - minParcel.x + 1] = 0;
+                data[(parcel.y - minParcel.y + 1) * textureSize.x + parcel.x - minParcel.x + 1] = 0;
             }
 
             occupancyMap.Apply(false, false);
