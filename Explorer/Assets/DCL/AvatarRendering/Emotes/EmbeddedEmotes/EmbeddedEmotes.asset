@@ -653,3 +653,19 @@ MonoBehaviour:
       removesDefaultHiding: []
       outlineCompatible: 1
       loop: 0
+  - id: fistpump_short
+    name: fistpump_short
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 6b75cf59917c8064da482571784ac3cc, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
