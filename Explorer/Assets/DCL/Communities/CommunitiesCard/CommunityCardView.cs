@@ -102,6 +102,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly UniTask[] closingTasks = new UniTask[3];
         private CancellationTokenSource confirmationDialogCts = new ();
         private GenericContextMenu contextMenu;
+        private GenericContextMenuElement leaveCommunityContextMenuElement;
         private GenericContextMenuElement deleteCommunityContextMenuElement;
         private IMVCManager mvcManager;
         private CancellationToken cancellationToken;
@@ -126,9 +127,11 @@ namespace DCL.Communities.CommunitiesCard
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog))
+                         .AddControl(leaveCommunityContextMenuElement = new GenericContextMenuElement(
+                              new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog)))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
-                              new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested, textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
+                              new ButtonContextMenuControlSettings(contextMenuSettings.DeleteCommunityText, contextMenuSettings.DeleteCommunitySprite, OnDeleteCommunityRequested,
+                                  textColor: contextMenuSettings.DeleteCommunityTextColor, iconColor: contextMenuSettings.DeleteCommunityTextColor)));
         }
 
         public void SetConfirmationDialogDependencies(ProfileRepositoryWrapper profileRepositoryWrapper)
@@ -277,6 +280,7 @@ namespace DCL.Communities.CommunitiesCard
                 imageController.RequestImage(communityData.thumbnails.Value.raw);
 
             deleteCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.owner;
+            leaveCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.moderator;
 
             ConfigureInteractionButtons(communityData.role);
 
