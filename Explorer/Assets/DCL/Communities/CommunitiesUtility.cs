@@ -1,10 +1,4 @@
-using Cysharp.Threading.Tasks;
-using DCL.FeatureFlags;
-using DCL.Profiles.Self;
-using DCL.Web3.Identities;
-using ECS;
 using System;
-using System.Threading;
 
 namespace DCL.Communities
 {
@@ -64,28 +58,6 @@ namespace DCL.Communities
             }
 
             return new string(destination.Slice(0, charsWritten));
-        }
-
-        /// <summary>
-        /// Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
-        /// </summary>
-        /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public static async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(IWeb3IdentityCache web3IdentityCache, FeatureFlagsCache featureFlagsCache, CancellationToken ct)
-        {
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES))
-                return false;
-
-            if (web3IdentityCache == null)
-                return true;
-
-            await UniTask.WaitUntil(() => web3IdentityCache.Identity != null, cancellationToken: ct);
-            var ownWalletId = web3IdentityCache.Identity!.Address;
-
-            if (string.IsNullOrEmpty(ownWalletId))
-                return false;
-
-            featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string walletsAllowlist);
-            return string.IsNullOrEmpty(walletsAllowlist) || walletsAllowlist.Contains(ownWalletId, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

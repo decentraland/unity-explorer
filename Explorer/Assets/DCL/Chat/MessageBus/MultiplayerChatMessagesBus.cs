@@ -4,14 +4,12 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
 using DCL.Communities;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Utilities;
-using DCL.Web3.Identities;
 using LiveKit.Proto;
 using System;
 using System.Threading;
@@ -28,8 +26,7 @@ namespace DCL.Chat.MessageBus
         private readonly ChatMessageFactory messageFactory;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
         private CancellationTokenSource setupExploreSectionsCts;
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
@@ -39,17 +36,13 @@ namespace DCL.Chat.MessageBus
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IDecentralandUrlsSource decentralandUrlsSource,
-            bool isCommunitiesIncluded,
-            IWeb3IdentityCache web3IdentityCache,
-            FeatureFlagsCache featureFlagsCache)
+            CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
-            this.isCommunitiesIncluded = isCommunitiesIncluded;
-            this.web3IdentityCache = web3IdentityCache;
-            this.featureFlagsCache = featureFlagsCache;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandUrlsSource.Environment == DecentralandEnvironment.Org ? "prd" :
@@ -63,7 +56,7 @@ namespace DCL.Chat.MessageBus
 
         private async UniTaskVoid ConfigureMessagePipesHubAsync(CancellationToken ct)
         {
-            isCommunitiesIncluded = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, ct);
+            isCommunitiesIncluded = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
             if (isCommunitiesIncluded)
             {
                 messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);

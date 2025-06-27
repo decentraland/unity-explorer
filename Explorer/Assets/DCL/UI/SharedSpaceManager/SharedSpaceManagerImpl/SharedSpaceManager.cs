@@ -6,12 +6,8 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
-using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
-using DCL.Profiles.Self;
-using DCL.Web3.Identities;
-using ECS;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -31,8 +27,7 @@ namespace DCL.UI.SharedSpaceManager
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
         private readonly World ecsWorld;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isCameraReelFeatureEnabled;
@@ -45,17 +40,14 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled, bool isCommunitiesEnabled,
-            IWeb3IdentityCache web3IdentityCache, FeatureFlagsCache featureFlagsCache)
+        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled, CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
-            isCommunitiesFeatureEnabled = isCommunitiesEnabled;
             ecsWorld = world;
-            this.web3IdentityCache = web3IdentityCache;
-            this.featureFlagsCache = featureFlagsCache;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             configureShortcutsCts = configureShortcutsCts.SafeRestart();
             ConfigureShortcutsAsync(configureShortcutsCts.Token).Forget();
@@ -75,7 +67,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, ct);
+            isCommunitiesFeatureEnabled = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
 

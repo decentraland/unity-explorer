@@ -122,10 +122,9 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileChangesBus profileChangesBus;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private readonly bool includeCameraReel;
-        private readonly bool includeCommunities;
 
         private ExplorePanelInputHandler? inputHandler;
         private NavmapController? navmapController;
@@ -186,7 +185,6 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
-            bool includeCommunities,
             IAppArgs appArgs, ViewDependencies viewDependencies,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
@@ -196,7 +194,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ICommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
-            FeatureFlagsCache featureFlagsCache)
+            CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -242,7 +240,6 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
-            this.includeCommunities = includeCommunities;
             this.appArgs = appArgs;
             this.viewDependencies = viewDependencies;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
@@ -253,7 +250,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
-            this.featureFlagsCache = featureFlagsCache;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public void Dispose()
@@ -415,8 +412,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                    communitiesBrowserController, dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, includeCommunities, sharedSpaceManager,
-                    web3IdentityCache, featureFlagsCache);
+                    communitiesBrowserController, dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager, communitiesFeatureAccess);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

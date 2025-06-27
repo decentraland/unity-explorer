@@ -9,7 +9,6 @@ using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
-using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -78,8 +77,7 @@ namespace DCL.Chat
         private readonly IThumbnailCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
-        private bool isCommunitiesIncluded;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -136,8 +134,7 @@ namespace DCL.Chat
             IThumbnailCache thumbnailCache,
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
-            bool isCommunitiesIncluded,
-            FeatureFlagsCache featureFlagsCache) : base(viewFactory)
+            CommunitiesFeatureAccess communitiesFeatureAccess) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -160,8 +157,7 @@ namespace DCL.Chat
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
-            this.isCommunitiesIncluded = isCommunitiesIncluded;
-            this.featureFlagsCache = featureFlagsCache;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -318,8 +314,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedCts = isUserAllowedCts.SafeRestart();
-            isCommunitiesIncluded = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, isUserAllowedCts.Token);
-            if (isCommunitiesIncluded)
+            if (await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts.Token))
                 await InitializeCommunityCoversationsAsync();
         }
 

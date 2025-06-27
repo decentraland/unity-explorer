@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.FeatureFlags;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -52,7 +53,6 @@ namespace DCL.PluginSystem.Global
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
         private readonly bool includeMarketplaceCredits;
-        private readonly bool includeCommunities;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -60,6 +60,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -80,14 +81,14 @@ namespace DCL.PluginSystem.Global
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            bool includeCommunities,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
             IProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -107,7 +108,6 @@ namespace DCL.PluginSystem.Global
             this.includeCameraReel = includeCameraReel;
             this.includeFriends = includeFriends;
             this.includeMarketplaceCredits = includeMarketplaceCredits;
-            this.includeCommunities = includeCommunities;
             this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -115,6 +115,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.featureFlagsCache = featureFlagsCache;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public void Dispose() { }
@@ -146,14 +147,13 @@ namespace DCL.PluginSystem.Global
                 includeCameraReel,
                 includeFriends,
                 includeMarketplaceCredits,
-                includeCommunities,
                 mainUIView.ChatView,
                 chatHistory,
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                web3IdentityCache,
-                featureFlagsCache
+                featureFlagsCache,
+                communitiesFeatureAccess
             ));
         }
 

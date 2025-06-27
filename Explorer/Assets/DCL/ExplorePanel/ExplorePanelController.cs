@@ -3,21 +3,17 @@ using DCL.Backpack;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.ExplorePanel.Components;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.Navmap;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles.Self;
 using DCL.Settings;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Profiles;
-using DCL.Web3.Identities;
-using ECS;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -40,8 +36,7 @@ namespace DCL.ExplorePanel
         private readonly bool includeCameraReel;
         private bool includeCommunities;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -76,10 +71,8 @@ namespace DCL.ExplorePanel
             INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            bool includeCommunities,
             ISharedSpaceManager sharedSpaceManager,
-            IWeb3IdentityCache web3IdentityCache,
-            FeatureFlagsCache featureFlagsCache)
+            CommunitiesFeatureAccess communitiesFeatureAccess)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -93,10 +86,8 @@ namespace DCL.ExplorePanel
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
-            this.includeCommunities = includeCommunities;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.web3IdentityCache = web3IdentityCache;
-            this.featureFlagsCache = featureFlagsCache;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
             CommunitiesBrowserController = communitiesBrowserController;
         }
 
@@ -143,7 +134,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            includeCommunities = await CommunitiesUtility.IsUserAllowedToUseTheFeatureAsync(web3IdentityCache, featureFlagsCache, ct);
+            includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
