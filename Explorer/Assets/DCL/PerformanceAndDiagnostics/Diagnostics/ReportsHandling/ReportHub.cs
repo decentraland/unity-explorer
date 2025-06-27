@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using System.Diagnostics;
 using UnityEngine;
@@ -18,11 +19,12 @@ namespace DCL.Diagnostics
         }
 
         public static ReportHubLogger Instance { get; private set; } =
-            new (new (ReportHandler, IReportHandler)[]
+            new (new IReportHandler[]
             {
-                (ReportHandler.DebugLog, new DefaultReportLogger()),
+                new DefaultReportLogger(),
             });
 
+        [UsedImplicitly]
         private static bool enforceUnconditionalVerboseLogs;
 
         public static void Initialize(ReportHubLogger logger, bool logVerbose = false)

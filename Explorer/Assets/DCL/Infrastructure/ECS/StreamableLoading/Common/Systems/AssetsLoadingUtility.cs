@@ -74,7 +74,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     // General exception
                     // conclude now, we can't do anything
-                    return new StreamableLoadingResult<TAsset>(reportData.WithSessionStatic(), e);
+                    return new StreamableLoadingResult<TAsset>(reportData.WithStaticDebounce(), e);
                 }
             }
         }

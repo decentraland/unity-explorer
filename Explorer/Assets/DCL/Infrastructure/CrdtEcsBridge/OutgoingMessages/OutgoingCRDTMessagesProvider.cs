@@ -113,7 +113,7 @@ namespace CrdtEcsBridge.OutgoingMessages
         {
             if (!componentsRegistry.TryGet<T>(out componentBridge))
             {
-                ReportHub.LogWarning(new ReportData(ReportCategory.CRDT_ECS_BRIDGE, ReportHint.AssemblyStatic), $"SDK Component {typeof(T)} is not registered");
+                ReportHub.LogWarning(new ReportData(ReportCategory.CRDT_ECS_BRIDGE, ReportDebounce.AssemblyStatic), $"SDK Component {typeof(T)} is not registered");
                 return false;
             }
 

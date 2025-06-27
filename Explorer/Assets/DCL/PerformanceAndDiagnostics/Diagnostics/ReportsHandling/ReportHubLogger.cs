@@ -12,9 +12,9 @@ namespace DCL.Diagnostics
     public class ReportHubLogger : ILogHandler
     {
         private readonly Action<Exception> emergencyLog = Debug.LogWarning;
-        private readonly IReadOnlyList<(ReportHandler type, IReportHandler handler)> reportHandlers;
+        private readonly IReadOnlyList<IReportHandler> reportHandlers;
 
-        public ReportHubLogger(IReadOnlyList<(ReportHandler, IReportHandler)> reportHandlers)
+        public ReportHubLogger(IReadOnlyList<IReportHandler> reportHandlers)
         {
             this.reportHandlers = reportHandlers;
         }
@@ -26,22 +26,16 @@ namespace DCL.Diagnostics
         {
             // Report to all reports
             for (var i = 0; i < reportHandlers.Count; i++)
-            {
-                (ReportHandler _, IReportHandler handler) = reportHandlers[i];
-                handler.LogFormat(logType, ReportData.UNSPECIFIED, context, format, args);
-            }
+                reportHandlers[i].LogFormat(logType, ReportData.UNSPECIFIED, context, format, args);
         }
 
         /// <summary>
         ///     Provides a way to override default Unity DebugLogHandler
         /// </summary>
-        void ILogHandler.LogException(Exception exception, Object context)
+        void ILogHandler.LogException(Exception exception, Object? context)
         {
             for (var i = 0; i < reportHandlers.Count; i++)
-            {
-                (ReportHandler _, IReportHandler handler) = reportHandlers[i];
-                handler.LogException(exception, ReportData.UNSPECIFIED, context);
-            }
+                reportHandlers[i].LogException(exception, ReportData.UNSPECIFIED, context);
         }
 
         /// <summary>
@@ -56,9 +50,9 @@ namespace DCL.Diagnostics
         {
             for (var i = 0; i < reportHandlers.Count; i++)
             {
-                (ReportHandler type, IReportHandler? handler) = reportHandlers[i];
+                IReportHandler handler = reportHandlers[i];
 
-                if (EnumUtils.HasFlag(reportToHandlers, type))
+                if (EnumUtils.HasFlag(reportToHandlers, handler.Type))
                     handler.Log(logType, reportData, null, message);
             }
         }
@@ -78,9 +72,9 @@ namespace DCL.Diagnostics
             {
                 for (var i = 0; i < reportHandlers.Count; i++)
                 {
-                    (ReportHandler type, IReportHandler? handler) = reportHandlers[i];
+                    IReportHandler? handler = reportHandlers[i];
 
-                    if (EnumUtils.HasFlag(reportToHandlers, type))
+                    if (EnumUtils.HasFlag(reportToHandlers, handler.Type))
                         handler.Log(logType, reportData, context, message);
                 }
             }
@@ -100,9 +94,9 @@ namespace DCL.Diagnostics
         {
             for (var i = 0; i < reportHandlers.Count; i++)
             {
-                (ReportHandler type, IReportHandler? handler) = reportHandlers[i];
+                IReportHandler? handler = reportHandlers[i];
 
-                if (EnumUtils.HasFlag(reportHandler, type))
+                if (EnumUtils.HasFlag(reportHandler, handler.Type))
                     handler.LogFormat(logType, reportData, null, message, args);
             }
         }
@@ -117,9 +111,9 @@ namespace DCL.Diagnostics
         {
             for (var i = 0; i < reportHandlers.Count; i++)
             {
-                (ReportHandler type, IReportHandler handler) = reportHandlers[i];
+                IReportHandler? handler = reportHandlers[i];
 
-                if (EnumUtils.HasFlag(reportHandler, type))
+                if (EnumUtils.HasFlag(reportHandler, handler.Type))
                     handler.LogException(ecsSystemException);
             }
         }
@@ -135,9 +129,9 @@ namespace DCL.Diagnostics
         {
             for (var i = 0; i < reportHandlers.Count; i++)
             {
-                (ReportHandler type, IReportHandler handler) = reportHandlers[i];
+                IReportHandler? handler = reportHandlers[i];
 
-                if (EnumUtils.HasFlag(reportHandler, type))
+                if (EnumUtils.HasFlag(reportHandler, handler.Type))
                     handler.LogException(exception, reportData, null);
             }
         }

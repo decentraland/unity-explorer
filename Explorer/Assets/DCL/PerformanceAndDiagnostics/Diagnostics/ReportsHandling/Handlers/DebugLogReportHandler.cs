@@ -63,7 +63,7 @@ namespace DCL.Diagnostics
         // Redirect Logs to the default Unity logger
         private readonly ILogHandler unityLogHandler;
 
-        public DebugLogReportHandler(ILogHandler unityLogHandler, ICategorySeverityMatrix matrix, bool debounceEnabled) : base(matrix, debounceEnabled)
+        public DebugLogReportHandler(ILogHandler unityLogHandler, ICategorySeverityMatrix matrix, bool debounceEnabled) : base(ReportHandler.DebugLog, matrix, debounceEnabled)
         {
             this.unityLogHandler = unityLogHandler;
         }

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.Diagnostics
@@ -11,15 +13,14 @@ namespace DCL.Diagnostics
         private readonly bool debounceEnabled;
         private readonly ICategorySeverityMatrix matrix;
 
-        private readonly HashSet<object> staticMessages;
-
-        protected ReportHandlerBase(ICategorySeverityMatrix matrix, bool debounceEnabled)
+        protected ReportHandlerBase(ReportHandler type, ICategorySeverityMatrix matrix, bool debounceEnabled)
         {
+            Type = type;
             this.matrix = matrix;
             this.debounceEnabled = debounceEnabled;
-
-            staticMessages = new HashSet<object>(1000);
         }
+
+        public ReportHandler Type { get; }
 
         [HideInCallstack]
         public void Log(LogType logType, ReportData reportData, Object context, object messageObj)
@@ -41,16 +42,16 @@ namespace DCL.Diagnostics
             if (IsLogMessageAllowed(ecsSystemException, in ecsSystemException.ReportData, LogType.Exception))
                 LogExceptionInternal(ecsSystemException);
             else
-                HandleSupressedException(ecsSystemException, ecsSystemException.ReportData);
+                HandleSuppressedException(ecsSystemException, ecsSystemException.ReportData);
         }
 
         [HideInCallstack]
-        public void LogException(Exception exception, ReportData reportData, Object context)
+        public void LogException(Exception exception, ReportData reportData, Object? context)
         {
             if (IsLogMessageAllowed(exception, reportData, LogType.Exception))
                 LogExceptionInternal(exception, reportData, context);
             else
-                HandleSupressedException(exception, reportData);
+                HandleSuppressedException(exception, reportData);
         }
 
         internal abstract void LogInternal(LogType logType, ReportData category, Object context, object message);
@@ -59,29 +60,44 @@ namespace DCL.Diagnostics
 
         internal abstract void LogExceptionInternal<T>(T ecsSystemException) where T: Exception, IDecentralandException;
 
-        internal abstract void LogExceptionInternal(Exception exception, ReportData reportData, Object context);
+        internal abstract void LogExceptionInternal(Exception exception, ReportData reportData, Object? context);
 
-        internal virtual void HandleSupressedException(Exception exception, ReportData reportData) { }
+        internal virtual void HandleSuppressedException(Exception exception, ReportData reportData) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [HideInCallstack]
         private bool IsLogMessageAllowed(in object message, in ReportData reportData, LogType logType) =>
             matrix.IsEnabled(reportData.Category, logType) && !Debounce(in message, in reportData, logType);
+
+        private bool IsLogMessageAllowed(in Exception message, in ReportData reportData, LogType logType) =>
+            matrix.IsEnabled(reportData.Category, logType) && !Debounce(in message, in reportData, logType);
+
+        private bool Debounce(in Exception message, in ReportData reportData, LogType logType)
+        {
+            if (!debounceEnabled) return false;
+
+            // Don't call DebounceInternal as exceptions can't be compared
+
+            return TryGetQualifiedDebouncer(in reportData, out IReportsDebouncer? debouncer)
+                   && debouncer!.Debounce(new ReportMessageFingerprint(new ExceptionFingerprint(message, reportData.Debounce.CallStackHint)));
+        }
 
         private bool Debounce(in object message, in ReportData reportData, LogType logType)
         {
             if (!debounceEnabled) return false;
 
-            return DebounceInternal(in message, in reportData, logType);
+            if (message is not string stringMessage) // Can't make assumptions about the message type
+                return false;
+
+            return TryGetQualifiedDebouncer(in reportData, out IReportsDebouncer? debouncer)
+                   && debouncer!.Debounce(new ReportMessageFingerprint(stringMessage));
         }
 
-        protected virtual bool DebounceInternal(in object message, in ReportData reportData, LogType logType)
+        [HideInCallstack]
+        private bool TryGetQualifiedDebouncer(in ReportData reportData, [MaybeNullWhen(false)] out IReportsDebouncer debouncer)
         {
-            return reportData.Hint switch
-                   {
-                       ReportHint.AssemblyStatic => !staticMessages.Add(message),
-                       ReportHint.SessionStatic => !staticMessages.Add(message),
-                       _ => false,
-                   };
+            debouncer = reportData.Debounce.Debouncer;
+            return debouncer != null && EnumUtils.HasFlag(debouncer.AppliedTo, Type);
         }
     }
 }

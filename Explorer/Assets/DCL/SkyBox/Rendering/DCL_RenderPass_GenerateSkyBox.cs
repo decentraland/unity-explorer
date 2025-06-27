@@ -71,7 +71,7 @@ namespace DCL.SkyBox.Rendering
             //private static readonly int s_SkyBoxCubemapTextureID = Shader.PropertyToID(k_SkyBoxCubemapTextureName);
 
             // Debug
-            private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportHint.SessionStatic);
+            private readonly ReportData m_ReportData = new ("DCL_RenderPass_GenerateSkyBox", ReportDebounce.AssemblyStatic);
 
             private readonly int nDimensions = 4096;
             private readonly StarParam[] starList_ComputeBuffer;

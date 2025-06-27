@@ -1,6 +1,7 @@
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using Sentry;
+using Sentry.Extensibility;
 using Sentry.Unity;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace DCL.Diagnostics.Sentry
         private readonly PerReportScope.Pool scopesPool;
 
         public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
-            : base(matrix, debounceEnabled)
+            : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
 
@@ -86,9 +87,9 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
-        internal override void HandleSupressedException(Exception exception, ReportData reportData)
+        internal override void HandleSuppressedException(Exception exception, ReportData reportData)
         {
-            //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningfull information
+            //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningful information
             if (reportData.Category.Equals(ReportCategory.ASSET_BUNDLES))
                 return;
 

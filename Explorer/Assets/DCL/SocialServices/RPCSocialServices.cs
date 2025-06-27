@@ -32,6 +32,7 @@ namespace DCL.SocialService
     {
         private const string RPC_PORT_NAME = "social_service";
         private const string RPC_SERVICE_NAME = "SocialService";
+        private const string BREADCRUMB_CATEGORY = "RPC Service";
 
         private const int CONNECTION_TIMEOUT_SECS = 10;
 
@@ -114,8 +115,6 @@ namespace DCL.SocialService
 
         public async UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct)
         {
-            const string BREADCRUMB_CATEGORY = "RPC Service";
-
             // Ensuring runs in the infinite loop,
             // but it's bound to the cancellation token originated from the source of the procedure invocation.
             // if the source of invocation goes out of scope the next request will take over the ensuring/reconnection process
@@ -135,8 +134,6 @@ namespace DCL.SocialService
                     {
                         connectionRetries--;
                         await StartHandshakeAsync(ct);
-
-                        SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
 
                         // Reset the retry delay after a successful connection
                         retryCurrentDelay = RETRY_BACKOFF_DELAY_MIN;
@@ -183,7 +180,10 @@ namespace DCL.SocialService
                 acquired = true;
 
                 if (!isConnectionReady)
+                {
                     await InitializeConnectionAsync(ct);
+                    SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
+                }
             }
             catch (Exception)
             {

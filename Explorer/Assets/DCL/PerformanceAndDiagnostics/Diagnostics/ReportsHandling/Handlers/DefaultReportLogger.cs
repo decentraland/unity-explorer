@@ -9,6 +9,8 @@ namespace DCL.Diagnostics
     /// </summary>
     public class DefaultReportLogger : IReportHandler
     {
+        public ReportHandler Type => ReportHandler.DebugLog;
+
         public void Log(LogType logType, ReportData reportData, Object context, object messageObj)
         {
             Debug.unityLogger.Log(logType, messageObj, context);
@@ -24,7 +26,7 @@ namespace DCL.Diagnostics
             Debug.unityLogger.LogException(ecsSystemException);
         }
 
-        public void LogException(Exception exception, ReportData reportData, Object context)
+        public void LogException(Exception exception, ReportData reportData, Object? context)
         {
             Debug.unityLogger.LogException(exception, context);
         }
