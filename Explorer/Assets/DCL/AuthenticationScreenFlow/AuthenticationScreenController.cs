@@ -375,7 +375,6 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -389,7 +388,6 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.LoginInProgress:
                     ResetAnimator(viewInstance!.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.Slides.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
                     viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -402,7 +400,6 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Loading:
                     viewInstance!.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.Slides.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(true);
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
@@ -412,7 +409,6 @@ namespace DCL.AuthenticationScreenFlow
                     break;
                 case ViewState.Finalize:
                     ResetAnimator(viewInstance!.FinalizeAnimator);
-                    viewInstance.Slides.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -422,6 +418,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
                     characterPreviewController?.OnShow();
 
                     break;
@@ -430,7 +427,7 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void ResetAnimator(Animator animator)
+        private static void ResetAnimator(Animator animator)
         {
             animator.Rebind();
             animator.Update(0f);
