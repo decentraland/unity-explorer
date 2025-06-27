@@ -60,20 +60,18 @@ namespace DCL.Friends.UI.FriendPanel
             IFriendsEventBus friendEventBus,
             IMVCManager mvcManager,
             IProfileRepository profileRepository,
-            DCLInput dclInput,
             IPassportBridge passportBridge,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
-            ViewDependencies viewDependencies,
             bool includeUserBlocking,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             this.chatEventBus = chatEventBus;
             this.includeUserBlocking = includeUserBlocking;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -90,8 +88,7 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     friendsConnectivityStatusTracker,
                     chatEventBus,
-                    sharedSpaceManager,
-                    viewDependencies);
+                    sharedSpaceManager);
 
                 friendSectionControllerConnectivity.OnlineFriendClicked += OnlineFriendClick;
                 friendSectionControllerConnectivity.JumpInClicked += JumpToFriendClick;
@@ -103,7 +100,6 @@ namespace DCL.Friends.UI.FriendPanel
                     passportBridge,
                     onlineUsersProvider,
                     realmNavigator,
-                    viewDependencies,
                     chatEventBus,
                     sharedSpaceManager);
 

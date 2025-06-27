@@ -3,14 +3,13 @@ using DCL.StylizedSkybox.Scripts;
 using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Skybox
 {
     public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
     {
-        private const int SECONDS_IN_DAY = 86400;
-
         private readonly StylizedSkyboxSettingsAsset skyboxSettings;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -42,15 +41,20 @@ namespace DCL.UI.Skybox
 
             viewInstance!.CloseButton.onClick.AddListener(OnClose);
 
-            viewInstance.TimeSlider.value = skyboxSettings.NormalizedTime;
-            skyboxSettings.NormalizedTimeChanged += OnNormalizedTimeChanged;
-            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
+            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeOfDaySliderValueChanged);
+            viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleValueChanged);
 
-            viewInstance.DynamicToggle.isOn = skyboxSettings.UseDynamicTime;
-            skyboxSettings.UseDynamicTimeChanged += OnUseDynamicTimeChanged;
-            viewInstance.DynamicToggle.onValueChanged.AddListener(OnDynamicToggleValueChanged);
+            skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
+            skyboxSettings.DayCycleEnabledChanged += OnDayCycleEnabledChanged;
 
-            SetTimeEnabled(!skyboxSettings.UseDynamicTime);
+            viewInstance.TimeProgressionToggle.SetIsOnWithoutNotify(skyboxSettings.IsDayCycleEnabled);
+            viewInstance!.TimeSlider.SetValueWithoutNotify(skyboxSettings.TimeOfDayNormalized);
+            viewInstance.TimeText.text = GetFormatedTime(skyboxSettings.TimeOfDayNormalized);
+        }
+
+        private void OnDayCycleEnabledChanged(bool cycleEnabled)
+        {
+            viewInstance!.TimeProgressionToggle.isOn = cycleEnabled;
         }
 
         protected override void OnBeforeViewShow()
@@ -59,30 +63,29 @@ namespace DCL.UI.Skybox
             skyboxMenuCts = skyboxMenuCts.SafeRestart();
         }
 
-        private void OnUseDynamicTimeChanged(bool dynamic)
+        private void OnTimeProgressionToggleValueChanged(bool dayCycleEnabled)
         {
-            SetTimeEnabled(!dynamic);
-            viewInstance!.DynamicToggle.isOn = dynamic;
+            skyboxSettings.DayCycleEnabledChanged -= OnDayCycleEnabledChanged;
+
+            skyboxSettings.IsDayCycleEnabled = dayCycleEnabled;
+            skyboxSettings.SkyboxTimeSource = dayCycleEnabled ? SkyboxTimeSource.GLOBAL : SkyboxTimeSource.PLAYER_FIXED;
+            SetTimeSliderEnabled(!skyboxSettings.IsDayCycleEnabled);
+
+            skyboxSettings.DayCycleEnabledChanged += OnDayCycleEnabledChanged;
         }
 
-        private void OnDynamicToggleValueChanged(bool dynamic)
-        {
-            skyboxSettings.UseDynamicTime = dynamic;
-        }
-
-        private void OnNormalizedTimeChanged(float time)
+        private void OnTimeOfDayChanged(float time)
         {
             viewInstance!.TimeSlider.SetValueWithoutNotify(time);
-            viewInstance.TimeText.text = GetFormatedTime(time);
+            viewInstance!.TimeText.text = GetFormatedTime(time);
         }
 
-        private void OnTimeSliderValueChanged(float time)
+        private void OnTimeOfDaySliderValueChanged(float time)
         {
-            skyboxSettings.UseDynamicTime = false;
-            skyboxSettings.NormalizedTime = time;
+            skyboxSettings.TimeOfDayNormalized = time;
         }
 
-        private void SetTimeEnabled(bool enabled)
+        private void SetTimeSliderEnabled(bool enabled)//rename to controls
         {
             viewInstance!.TopSliderGroup.enabled = !enabled;
             viewInstance!.TextSliderGroup.enabled = !enabled;
@@ -90,11 +93,11 @@ namespace DCL.UI.Skybox
 
         private string GetFormatedTime(float time)
         {
-            // We need to subtract 1 second to SECONDS_IN_DAY to make the slider range is between 00:00 and 23:59, instead of 00:00 and 24:00
-            var totalSec = (int)(time * (SECONDS_IN_DAY - 1));
+            int totalMinutes = (int)Mathf.Round(time * StylizedSkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
 
-            int hours = totalSec / 3600;
-            int minutes = totalSec % 3600 / 60;
+            int hours = totalMinutes / 60;
+            int minutes = totalMinutes % 60;
+
             return $"{hours:00}:{minutes:00}";
         }
 
@@ -107,8 +110,13 @@ namespace DCL.UI.Skybox
         {
             base.Dispose();
             skyboxMenuCts.SafeCancelAndDispose();
-            skyboxSettings.UseDynamicTimeChanged -= OnUseDynamicTimeChanged;
-            skyboxSettings.NormalizedTimeChanged -= OnNormalizedTimeChanged;
+            skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
+            skyboxSettings.DayCycleEnabledChanged -= OnDayCycleEnabledChanged;
+
+            if(!viewInstance) return;
+            viewInstance.CloseButton.onClick.RemoveAllListeners();
+            viewInstance.TimeSlider.onValueChanged.RemoveAllListeners();
+            viewInstance.TimeProgressionToggle.onValueChanged.RemoveAllListeners();
         }
     }
 }
