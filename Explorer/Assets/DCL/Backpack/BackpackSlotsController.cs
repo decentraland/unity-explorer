@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Collections.Generic;
@@ -130,16 +131,16 @@ namespace DCL.Backpack
 
         private void CalculateHideStatus()
         {
-            AvatarWearableHide.ComposeHiddenCategoriesOrdered(avatarSlots["body_shape"].Item1.SlotWearableUrn, null, equippedWearables, hidingList);
+            WearableComponentsUtils.ComposeHiddenCategoriesOrdered(avatarSlots["body_shape"].Item1.SlotWearableUrn, null, equippedWearables, hidingList);
 
             foreach (var avatarSlotView in avatarSlots.Values)
             {
                 avatarSlotView.Item1.OverrideHideContainer.SetActive(false);
 
-                string hiderTextText = AvatarWearableHide.GetCategoryHider(avatarSlots["body_shape"].Item1.SlotWearableUrn, avatarSlotView.Item1.Category, equippedWearables);
+                string hiderTextText = WearableComponentsUtils.GetCategoryHider(avatarSlots["body_shape"].Item1.SlotWearableUrn, avatarSlotView.Item1.Category, equippedWearables);
                 avatarSlotView.Item1.HiderText.gameObject.SetActive(!string.IsNullOrEmpty(hiderTextText));
 
-                if(hiderTextText != null && AvatarWearableHide.CATEGORIES_TO_READABLE.TryGetValue(hiderTextText, out string readableCategoryHider))
+                if (!string.IsNullOrEmpty(hiderTextText) && WearableComponentsUtils.CATEGORIES_TO_READABLE.TryGetValue(hiderTextText, out string readableCategoryHider))
                     avatarSlotView.Item1.HiderText.text = $"Hidden by <b>{readableCategoryHider}</b>";
             }
 
@@ -200,6 +201,7 @@ namespace DCL.Backpack
             backpackEventBus.EquipWearableEvent -= EquipInSlot;
             backpackEventBus.UnEquipWearableEvent -= UnEquipInSlot;
             this.backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+
             foreach (var avatarSlotView in avatarSlots.Values)
                 avatarSlotView.Item1.OnSlotButtonPressed -= OnSlotButtonPressed;
         }

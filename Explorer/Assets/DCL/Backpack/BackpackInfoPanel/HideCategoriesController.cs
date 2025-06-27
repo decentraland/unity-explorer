@@ -1,11 +1,10 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using System;
 using System.Collections.Generic;
@@ -119,7 +118,7 @@ namespace DCL.Backpack
                     hideCategoryView.transform.parent = hideCategoryRowView.transform;
                     hideCategoryView.transform.SetAsLastSibling();
                     string[] hidingArray = hidingList.ToArray();
-                    hideCategoryView.categoryText.text = AvatarWearableHide.CATEGORIES_TO_READABLE[hidingArray[itemIndex]];
+                    hideCategoryView.categoryText.text = WearableComponentsUtils.CATEGORIES_TO_READABLE[hidingArray[itemIndex]];
                     hideCategoryView.categoryImage.sprite = categoryIcons.GetTypeImage(hidingArray[itemIndex]);
                 }
             }

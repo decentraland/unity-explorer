@@ -198,7 +198,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                     bodyShape = instance;
             }
 
-            AvatarWearableHide.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
+            WearableComponentsUtils.HideBodyShape(bodyShape, wearablesToHide, usedCategories);
             HashSetPool<string>.Release(usedCategories);
 
             AvatarCustomSkinningComponent skinningComponent = skinningStrategy.Initialize(avatarShapeComponent.InstantiatedWearables,
