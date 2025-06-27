@@ -25,7 +25,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         [field: SerializeField] internal ToggleWithTextView setAsPublicToggle { get; private set; }
         [field: SerializeField] internal RectTransform leftSeparator { get; private set; }
         [field: SerializeField] internal Button downloadButton { get; private set; }
-        [field: SerializeField] internal Button deleteButton { get; private set; }
+        [field: SerializeField] internal ButtonView deleteButton { get; private set; }
         [field: SerializeField] internal Button linkButton { get; private set; }
         [field: SerializeField] internal Button twitterButton { get; private set; }
         [field: SerializeField] internal Button infoButton { get; private set; }

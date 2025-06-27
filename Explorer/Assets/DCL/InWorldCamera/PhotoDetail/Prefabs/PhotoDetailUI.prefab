@@ -3169,7 +3169,7 @@ MonoBehaviour:
   <setAsPublicToggle>k__BackingField: {fileID: 3130503048021005829}
   <leftSeparator>k__BackingField: {fileID: 146340637411226168}
   <downloadButton>k__BackingField: {fileID: 3557052328246332746}
-  <deleteButton>k__BackingField: {fileID: 3843227689883949517}
+  <deleteButton>k__BackingField: {fileID: 9184889065914871004}
   <linkButton>k__BackingField: {fileID: 8059763448884128982}
   <twitterButton>k__BackingField: {fileID: 3889774488789865815}
   <infoButton>k__BackingField: {fileID: 2707145250932440870}
@@ -3869,6 +3869,10 @@ PrefabInstance:
     - target: {fileID: 2965888496743192953, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_Padding.m_Left
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6739991326136731569, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
+      propertyPath: m_Interactable
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7989221792673684171, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_AnchorMax.y
@@ -5089,6 +5093,22 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 793200768551293932, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+      propertyPath: m_Colors.m_DisabledColor.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 793200768551293932, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+      propertyPath: m_Colors.m_DisabledColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 793200768551293932, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+      propertyPath: m_Colors.m_DisabledColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 793200768551293932, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+      propertyPath: m_Colors.m_DisabledColor.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 793200768551293932, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_Colors.m_SelectedColor.a
       value: 0
       objectReference: {fileID: 0}
@@ -5156,6 +5176,14 @@ PrefabInstance:
       propertyPath: m_PixelsPerUnitMultiplier
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4692934622769768189, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+      propertyPath: <images>k__BackingField.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4692934622769768189, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+      propertyPath: '<images>k__BackingField.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2135113504768082826}
     - target: {fileID: 4754443713931925278, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -5249,15 +5277,26 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
---- !u!114 &3843227689883949517 stripped
+--- !u!114 &2135113504768082826 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 793200768551293932, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2591419947418388907, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
   m_PrefabInstance: {fileID: 4492306396396341793}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &9184889065914871004 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4692934622769768189, guid: 7842eaf6eb5af984291ecacc1280f742, type: 3}
+  m_PrefabInstance: {fileID: 4492306396396341793}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &9199954105142549823 stripped

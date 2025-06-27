@@ -116,7 +116,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.downloadButton.onClick.AddListener(DownloadReelClicked);
             viewInstance!.linkButton.onClick.AddListener(CopyReelLinkClicked);
             viewInstance!.twitterButton.onClick.AddListener(ShareReelClicked);
-            viewInstance!.deleteButton.onClick.AddListener(ShowDeleteModal);
+            viewInstance!.deleteButton.Button.onClick.AddListener(ShowDeleteModal);
             viewInstance!.cancelDeleteIntentButton?.onClick.AddListener(() => DeletionModalCancelClick());
             viewInstance!.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => DeletionModalCancelClick(false));
             viewInstance!.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
@@ -143,13 +143,12 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewClose()
         {
             viewInstance!.infoButton.onClick.RemoveListener(ToggleInfoSidePanel);
-            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
             viewInstance!.previousScreenshotButton.onClick.RemoveListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.RemoveListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.RemoveListener(DownloadReelClicked);
             viewInstance!.linkButton.onClick.RemoveListener(CopyReelLinkClicked);
             viewInstance!.twitterButton.onClick.RemoveListener(ShareReelClicked);
-            viewInstance!.deleteButton.onClick.RemoveListener(ShowDeleteModal);
+            viewInstance!.deleteButton.Button.onClick.RemoveListener(ShowDeleteModal);
             HideDeleteModal();
 
             viewInstance.mainImageCanvasGroup.alpha = 0;
@@ -269,9 +268,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             viewInstance!.mainImageCanvasGroup.alpha = 0;
             viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
-            viewInstance!.setAsPublicToggle.gameObject.SetActive(false);
-            viewInstance!.leftSeparator.gameObject.SetActive(false);
-            viewInstance!.deleteButton.gameObject.SetActive(false);
+            viewInstance!.setAsPublicToggle.SetInteractable(false);
+            viewInstance!.deleteButton.SetInteractable(false);
 
             if (viewInstance.mainImage.texture != null)
                 GameObject.Destroy(viewInstance!.mainImage.texture);
@@ -293,9 +291,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
             viewInstance!.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
             viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
-            viewInstance!.setAsPublicToggle.gameObject.SetActive(isUserOwned);
-            viewInstance!.leftSeparator.gameObject.SetActive(isUserOwned);
-            viewInstance!.deleteButton.gameObject.SetActive(isUserOwned);
+            viewInstance!.setAsPublicToggle.SetInteractable(isUserOwned);
+            viewInstance!.deleteButton.SetInteractable(isUserOwned);
         }
 
         private void CheckNavigationButtonVisibility(List<CameraReelResponseCompact> allReels, int index)
