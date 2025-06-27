@@ -937,7 +937,9 @@ namespace Global.Dynamic
                     mvcManager,
                     notificationsBusController,
                     staticContainer.RealmData,
-                    sharedSpaceManager));
+                    sharedSpaceManager,
+                    identityCache,
+                    staticContainer.LoadingStatus));
             }
 
             if (dynamicWorldParams.EnableAnalytics)
