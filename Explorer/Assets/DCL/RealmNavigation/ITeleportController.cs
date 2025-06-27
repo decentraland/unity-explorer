@@ -22,4 +22,40 @@ namespace DCL.RealmNavigation
             return await waitForSceneReadiness.ToUniTask();
         }
     }
+
+    public class StartParcel
+    {
+        private Vector2Int value;
+        private bool consumed;
+
+        public StartParcel(Vector2Int value)
+        {
+            this.value = value;
+        }
+
+        public bool IsConsumed() =>
+            consumed;
+
+        public AssignResult Assign(Vector2Int newParcel)
+        {
+            if (consumed) return AssignResult.ParcelAlreadyConsumed;
+            value = newParcel;
+            return AssignResult.Ok;
+        }
+
+        public Vector2Int ConsumeByTeleportOperation()
+        {
+            consumed = true;
+            return value;
+        }
+
+        public Vector2Int Peek() =>
+            value;
+    }
+
+    public enum AssignResult
+    {
+        Ok,
+        ParcelAlreadyConsumed,
+    }
 }

@@ -43,12 +43,8 @@ MonoBehaviour:
     m_Key: IMAGE-6
     m_Metadata:
       m_Items: []
-  - m_Id: 175390780715859968
-    m_Key: IMAGE-7
-    m_Metadata:
-      m_Items: []
   - m_Id: 185833164146466816
-    m_Key: IMAGE-8
+    m_Key: IMAGE-7
     m_Metadata:
       m_Items: []
   m_Metadata:
@@ -102,9 +98,6 @@ MonoBehaviour:
           - it
           - es
         - m_KeyId: 160866580923670528
-          m_TableCodes:
-          - en
-        - m_KeyId: 175390780715859968
           m_TableCodes:
           - en
         - m_KeyId: 185833164146466816

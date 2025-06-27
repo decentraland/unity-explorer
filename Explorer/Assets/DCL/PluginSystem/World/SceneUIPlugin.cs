@@ -30,8 +30,6 @@ namespace DCL.PluginSystem.World
 {
     public class SceneUIPlugin : IDCLWorldPlugin<SceneUIPlugin.Settings>
     {
-        public readonly ObjectProxy<DCLInput> inputProxy;
-
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly FrameTimeCapBudget frameTimeBudgetProvider;
@@ -40,7 +38,7 @@ namespace DCL.PluginSystem.World
         private readonly IInputBlock inputBlock;
         private UIDocument? canvas;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, ObjectProxy<DCLInput> inputProxy, UIDocument sceneUIRoot)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock, UIDocument sceneUIRoot)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.canvas = sceneUIRoot;
@@ -54,7 +52,6 @@ namespace DCL.PluginSystem.World
 
             frameTimeBudgetProvider = singletonSharedDependencies.FrameTimeBudget;
             memoryBudgetProvider = singletonSharedDependencies.MemoryBudget;
-            this.inputProxy = inputProxy;
         }
 
         public void Dispose()

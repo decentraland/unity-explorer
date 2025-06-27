@@ -33,7 +33,6 @@ namespace DCL.PluginSystem.Global
         private readonly INotificationsBusController notificationBusController;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         private MarketplaceCreditsMenuController? marketplaceCreditsMenuController;
         private CreditsUnlockedController? creditsUnlockedController;
@@ -49,8 +48,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             INotificationsBusController notificationBusController,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager,
-            FeatureFlagsCache featureFlagsCache)
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -62,7 +60,6 @@ namespace DCL.PluginSystem.Global
             this.notificationBusController = notificationBusController;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.featureFlagsCache = featureFlagsCache;
 
             marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
         }
@@ -94,8 +91,7 @@ namespace DCL.PluginSystem.Global
                 mainUIView.SidebarView.marketplaceCreditsButtonAnimator,
                 mainUIView.SidebarView.marketplaceCreditsButtonAlertMark,
                 realmData,
-                sharedSpaceManager,
-                featureFlagsCache);
+                sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);
