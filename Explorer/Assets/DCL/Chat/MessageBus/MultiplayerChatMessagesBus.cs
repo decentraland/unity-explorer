@@ -1,8 +1,8 @@
 #nullable enable
 using Cysharp.Threading.Tasks;
-using DCL.Browser.DecentralandUrls;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
+using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -13,6 +13,7 @@ using DCL.Utilities;
 using LiveKit.Proto;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.Chat.MessageBus
 {
@@ -24,7 +25,9 @@ namespace DCL.Chat.MessageBus
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ChatMessageFactory messageFactory;
         private readonly string routingUser;
-        private readonly bool isCommunitiesIncluded;
+        private bool isCommunitiesIncluded;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
+        private CancellationTokenSource setupExploreSectionsCts;
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
@@ -33,13 +36,13 @@ namespace DCL.Chat.MessageBus
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             IDecentralandUrlsSource decentralandUrlsSource,
-            bool isCommunitiesIncluded)
+            CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
-            this.isCommunitiesIncluded = isCommunitiesIncluded;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandUrlsSource.Environment == DecentralandEnvironment.Org ? "prd" :
@@ -47,15 +50,26 @@ namespace DCL.Chat.MessageBus
                                "local";
             routingUser = $"message-router-{serverEnv}-0";
 
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
+            setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
+            ConfigureMessagePipesHubAsync(setupExploreSectionsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ConfigureMessagePipesHubAsync(CancellationToken ct)
+        {
+            isCommunitiesIncluded = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
+            if (isCommunitiesIncluded)
+            {
+                messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
+                messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
+                messagePipesHub.ChatPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnChatPipeMessageReceived);
+            }
         }
 
         public void Dispose()
         {
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
+            setupExploreSectionsCts.SafeCancelAndDispose();
         }
 
         private void OnChatPipeMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)

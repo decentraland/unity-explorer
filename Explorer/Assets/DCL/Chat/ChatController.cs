@@ -77,7 +77,7 @@ namespace DCL.Chat
         private readonly ISpriteCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
-        private readonly bool isCommunitiesIncluded;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -94,6 +94,7 @@ namespace DCL.Chat
         private CancellationTokenSource communitiesServiceCts = new();
         private CancellationTokenSource errorNotificationCts = new();
         private CancellationTokenSource memberListCts = new();
+        private CancellationTokenSource isUserAllowedCts;
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
@@ -133,7 +134,7 @@ namespace DCL.Chat
             ISpriteCache thumbnailCache,
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
-            bool isCommunitiesIncluded) : base(viewFactory)
+            CommunitiesFeatureAccess communitiesFeatureAccess) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -156,7 +157,7 @@ namespace DCL.Chat
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
-            this.isCommunitiesIncluded = isCommunitiesIncluded;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -312,10 +313,9 @@ namespace DCL.Chat
                 viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
             }
 
-            if (isCommunitiesIncluded)
-            {
+            isUserAllowedCts = isUserAllowedCts.SafeRestart();
+            if (await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts.Token))
                 await InitializeCommunityCoversationsAsync();
-            }
         }
 
         protected override void OnViewClose()
@@ -436,6 +436,7 @@ namespace DCL.Chat
             communitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
             memberListCts.SafeCancelAndDispose();
+            isUserAllowedCts.SafeCancelAndDispose();
         }
 
 #endregion

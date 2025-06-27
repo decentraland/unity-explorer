@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
 using DCL.ExplorePanel.Components;
 using DCL.Input;
@@ -33,8 +34,9 @@ namespace DCL.ExplorePanel
         private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
-        private readonly bool includeCommunities;
+        private bool includeCommunities;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -42,6 +44,7 @@ namespace DCL.ExplorePanel
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileWidgetCts;
         private CancellationTokenSource? profileMenuCts;
+        private CancellationTokenSource setupExploreSectionsCts;
         private TabSelectorView? previousSelector;
         private ExploreSections lastShownSection;
         private bool isControlClosing;
@@ -68,8 +71,8 @@ namespace DCL.ExplorePanel
             INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            bool includeCommunities,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            CommunitiesFeatureAccess communitiesFeatureAccess)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -83,8 +86,8 @@ namespace DCL.ExplorePanel
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
-            this.includeCommunities = includeCommunities;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
             CommunitiesBrowserController = communitiesBrowserController;
         }
 
@@ -102,6 +105,7 @@ namespace DCL.ExplorePanel
 
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
+            setupExploreSectionsCts.SafeCancelAndDispose();
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
@@ -113,6 +117,12 @@ namespace DCL.ExplorePanel
 
         protected override void OnViewInstantiated()
         {
+            setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
+            SetupExploreSectionsAsync(setupExploreSectionsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid SetupExploreSectionsAsync(CancellationToken ct)
+        {
             exploreSections = new Dictionary<ExploreSections, ISection>
             {
                 { ExploreSections.Navmap, NavmapController },
@@ -123,6 +133,8 @@ namespace DCL.ExplorePanel
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
+
+            includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 

@@ -20,7 +20,6 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
-using DCL.Communities.CommunityCreation;
 using DCL.DebugUtilities;
 using DCL.EventsApi;
 using DCL.FeatureFlags;
@@ -125,6 +124,7 @@ namespace Global.Dynamic
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         public IMVCManager MvcManager { get; }
 
@@ -157,7 +157,8 @@ namespace Global.Dynamic
             IProfileBroadcast profileBroadcast,
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -172,6 +173,7 @@ namespace Global.Dynamic
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public override void Dispose()
@@ -181,6 +183,7 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
+            communitiesFeatureAccess.Dispose();
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -434,10 +437,12 @@ namespace Global.Dynamic
             bool includeUserBlocking = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
             bool isNameEditorEnabled = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
-            bool includeCommunities = staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
+
+            CommunitiesFeatureAccess communitiesFeatureAccess = new CommunitiesFeatureAccess(identityCache, staticContainer.FeatureFlagsCache);
+            bool includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel, includeCommunities);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, dclInput, globalWorld, includeFriends, includeCameraReel, communitiesFeatureAccess);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -527,7 +532,7 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), includeCommunities)
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), communitiesFeatureAccess)
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -679,9 +684,9 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache, dclInput,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits, includeCommunities,
+                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
-                    selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache),
+                    selfProfile, staticContainer.RealmData, staticContainer.FeatureFlagsCache, communitiesFeatureAccess),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -712,12 +717,11 @@ namespace Global.Dynamic
                     staticContainer.FeatureFlagsCache,
                     profileRepositoryWrapper,
                     friendServiceProxy,
-                    staticContainer.RealmData,
                     realmNavigator,
                     communitiesDataProvider,
                     thumbnailCache,
                     mainUIView.WarningNotification,
-                    includeCommunities),
+                    communitiesFeatureAccess),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -763,7 +767,6 @@ namespace Global.Dynamic
                     clipboard,
                     explorePanelNavmapBus,
                     includeCameraReel,
-                    includeCommunities,
                     appArgs,
                     viewDependencies,
                     userBlockingCacheProxy,
@@ -773,7 +776,8 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
                     communitiesDataProvider,
-                    realmNftNamesProvider
+                    realmNftNamesProvider,
+                    communitiesFeatureAccess
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -1041,7 +1045,8 @@ namespace Global.Dynamic
                 profileBroadcast,
                 roomHub,
                 socialServiceContainer,
-                selfProfile
+                selfProfile,
+                communitiesFeatureAccess
             );
 
             // Init itself

@@ -29,7 +29,6 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
-using ECS;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -69,10 +68,9 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
-        private readonly bool isCommunitiesIncluded;
+        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private ChatController chatController;
-        private IRealmData realmData;
         private IRealmNavigator realmNavigator;
 
         public ChatPlugin(
@@ -102,12 +100,11 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            IRealmData realmData,
             IRealmNavigator realmNavigator,
             ICommunitiesDataProvider communityDataProvider,
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
-            bool isCommunitiesIncluded)
+            CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -136,12 +133,11 @@ namespace DCL.PluginSystem.Global
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.realmData = realmData;
             this.realmNavigator = realmNavigator;
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
-            this.isCommunitiesIncluded = isCommunitiesIncluded;
+            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public void Dispose()
@@ -193,7 +189,7 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 mvcManager,
                 warningNotificationView,
-                isCommunitiesIncluded
+                communitiesFeatureAccess
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
