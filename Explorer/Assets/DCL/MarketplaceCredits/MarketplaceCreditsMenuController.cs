@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
@@ -9,8 +8,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.UI.Buttons;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using JetBrains.Annotations;
@@ -52,6 +53,8 @@ namespace DCL.MarketplaceCredits
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ILoadingStatus loadingStatus;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -79,7 +82,9 @@ namespace DCL.MarketplaceCredits
             Animator sidebarCreditsButtonAnimator,
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager,
+            IWeb3IdentityCache web3IdentityCache,
+            ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -92,6 +97,8 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.web3IdentityCache = web3IdentityCache;
+            this.loadingStatus = loadingStatus;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
@@ -237,6 +244,7 @@ namespace DCL.MarketplaceCredits
             sidebarButtonStateCts.SafeCancelAndDispose();
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
+            web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
 
             if (viewInstance != null)
             {
@@ -321,6 +329,16 @@ namespace DCL.MarketplaceCredits
 
                 var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                 SetSidebarButtonState(creditsProgramProgressResponse);
+
+                if (!creditsProgramProgressResponse.HasUserStartedProgram())
+                {
+                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
+                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
+                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
+                }
+
+                web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
+                web3IdentityCache.OnIdentityChanged += CheckForSidebarButtonState;
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
