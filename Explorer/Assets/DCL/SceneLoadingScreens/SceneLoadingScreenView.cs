@@ -8,6 +8,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.UI;
+using Utility;
 using Random = UnityEngine.Random;
 
 namespace DCL.SceneLoadingScreens
@@ -68,10 +69,10 @@ namespace DCL.SceneLoadingScreens
         public void ClearTips()
         {
             foreach (TipView tip in tips)
-                Destroy(tip.gameObject);
+                UnityObjectUtils.SafeDestroy(tip.gameObject);
 
             foreach (TipBreadcrumb? breadcrumb in tipsBreadcrumbs)
-                Destroy(breadcrumb.gameObject);
+                UnityObjectUtils.SafeDestroy(breadcrumb.gameObject);
 
             tips.Clear();
             tipsBreadcrumbs.Clear();

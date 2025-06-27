@@ -16,6 +16,7 @@ using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -304,7 +305,7 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void DestroyAllDebuggingSigns(in VideoStateByPriorityComponent videoStateByPriorityComponent)
         {
-            GameObject.Destroy(videoStateByPriorityComponent.DebugPrioritySign?.gameObject);
+            UnityObjectUtils.SafeDestroy(videoStateByPriorityComponent.DebugPrioritySign?.gameObject);
         }
 
 #if DEBUG_VIDEO_PRIORITIES
@@ -318,7 +319,7 @@ namespace DCL.SDKComponents.MediaStream
             cubeMaterial.color = Color.white;
             plane.GetComponent<MeshRenderer>().material = cubeMaterial;
 
-            GameObject.Destroy(plane.GetComponent<Collider>());
+            UnityObjectUtils.SafeDestroy(plane.GetComponent<Collider>());
 
             return plane;
         }

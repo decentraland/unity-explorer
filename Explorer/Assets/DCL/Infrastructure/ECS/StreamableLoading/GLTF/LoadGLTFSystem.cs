@@ -14,6 +14,7 @@ using GLTFast.Materials;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace ECS.StreamableLoading.GLTF
 {
@@ -122,7 +123,7 @@ namespace ECS.StreamableLoading.GLTF
                 }
 
                 // Clean up original texture
-                UnityEngine.Object.Destroy(originalTexture);
+                UnityObjectUtils.SafeDestroy(originalTexture);
             }
         }
 

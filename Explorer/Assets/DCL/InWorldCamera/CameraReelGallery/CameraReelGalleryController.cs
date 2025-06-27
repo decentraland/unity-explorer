@@ -521,7 +521,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             monthViews.Clear();
 
             foreach (KeyValuePair<CameraReelResponseCompact, Texture> row in reelThumbnailCache)
-                GameObject.Destroy(row.Value);
+                UnityObjectUtils.SafeDestroy(row.Value);
 
             reelThumbnailCache.Clear();
             beginVisible = 0;

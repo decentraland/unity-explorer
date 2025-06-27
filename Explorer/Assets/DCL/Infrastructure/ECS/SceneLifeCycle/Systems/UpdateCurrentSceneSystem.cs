@@ -102,7 +102,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void OnDispose()
         {
-            GameObject.Destroy(sceneBoundsCube);
+            UnityObjectUtils.SafeDestroy(sceneBoundsCube);
         }
 
         private void RefreshSceneDebugInfo()
@@ -155,7 +155,7 @@ namespace ECS.SceneLifeCycle.Systems
             cubeMaterial.renderQueue = (int)RenderQueue.Transparent;
             cube.GetComponent<MeshRenderer>().material = cubeMaterial;
 
-            GameObject.Destroy(cube.GetComponent<Collider>());
+            UnityObjectUtils.SafeDestroy(cube.GetComponent<Collider>());
 
             cube.SetActive(false);
             return cube;
