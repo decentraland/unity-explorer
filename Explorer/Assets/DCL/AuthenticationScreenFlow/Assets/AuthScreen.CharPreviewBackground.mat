@@ -110,18 +110,18 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _Glow_Offset_X: -0.82
-    - _Glow_Offset_Y: 0.26
-    - _Glow_Opactiy: 5.83
-    - _Glow_Tile_X: 1.85
-    - _Glow_Tile_Y: 0.85
+    - _Glow_Offset_X: -0.86
+    - _Glow_Offset_Y: 0.23
+    - _Glow_Opactiy: 2.8
+    - _Glow_Tile_X: 1.91
+    - _Glow_Tile_Y: 0.96
     - _Gradient_Speed: 0.1
     - _Metallic: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.005
     - _PatternSpeed: 0.1
     - _Pattern_Opactiy: 0.118
-    - _Pattern_Tiling: 2.63
+    - _Pattern_Tiling: 2.5
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -145,8 +145,8 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color1: {r: 0.2784314, g: 0, b: 0.44313726, a: 0}
-    - _Color2: {r: 0.5254902, g: 0.09803922, b: 0.65882355, a: 0}
+    - _Color1: {r: 0.34411773, g: 0.09019608, b: 0.5019608, a: 0}
+    - _Color2: {r: 0.5019608, g: 0.15294118, b: 0.72156864, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
     - _Pattern_Color: {r: 1, g: 1, b: 1, a: 0}
