@@ -48,8 +48,10 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private ImageView creationPanelProfileSelectedImage;
         [SerializeField] private Sprite creationPanelProfileDefaultSelectedImage;
         [SerializeField] private TMP_InputField creationPanelCommunityNameInputField;
+        [SerializeField] private GameObject creationPanelCommunityNameInputFieldOutline;
         [SerializeField] private TMP_Text creationPanelCommunityNameCharCounter;
         [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField;
+        [SerializeField] private GameObject creationPanelCommunityDescriptionInputFieldOutline;
         [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter;
         [SerializeField] private TMP_Dropdown creationPanelPlacesDropdown;
         [SerializeField] private Button creationPanelAddPlaceButton;
@@ -79,7 +81,11 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCancelButton.onClick.AddListener(() => CancelButtonClicked?.Invoke());
             creationPanelEditProfilePictureButton.onClick.AddListener(() => SelectProfilePictureButtonClicked?.Invoke());
             creationPanelCommunityNameInputField.onValueChanged.AddListener(CreationPanelCommunityNameInputChanged);
+            creationPanelCommunityNameInputField.onSelect.AddListener(CreationPanelCommunityNameInputSelected);
+            creationPanelCommunityNameInputField.onDeselect.AddListener(CreationPanelCommunityNameInputDeselected);
             creationPanelCommunityDescriptionInputField.onValueChanged.AddListener(CreationPanelCommunityDescriptionInputChanged);
+            creationPanelCommunityDescriptionInputField.onSelect.AddListener(CreationPanelCommunityDescriptionInputSelected);
+            creationPanelCommunityDescriptionInputField.onDeselect.AddListener(CreationPanelCommunityDescriptionInputDeselected);
             creationPanelCreateButton.onClick.AddListener(() =>
             {
                 var lands = new List<string>();
@@ -116,7 +122,11 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCancelButton.onClick.RemoveAllListeners();
             creationPanelEditProfilePictureButton.onClick.RemoveAllListeners();
             creationPanelCommunityNameInputField.onValueChanged.RemoveAllListeners();
+            creationPanelCommunityNameInputField.onSelect.RemoveAllListeners();
+            creationPanelCommunityNameInputField.onDeselect.RemoveAllListeners();
             creationPanelCommunityDescriptionInputField.onValueChanged.RemoveAllListeners();
+            creationPanelCommunityDescriptionInputField.onSelect.RemoveAllListeners();
+            creationPanelCommunityDescriptionInputField.onDeselect.RemoveAllListeners();
             creationPanelPlacesDropdown.onValueChanged.RemoveAllListeners();
 
             updateScrollPositionCts.SafeCancelAndDispose();
@@ -266,6 +276,8 @@ namespace DCL.Communities.CommunityCreation
             SetCommunityName(string.Empty, true);
             SetCommunityDescription(string.Empty);
             SetPlacesSelector(new List<string>());
+            CreationPanelCommunityNameInputDeselected(null);
+            CreationPanelCommunityDescriptionInputDeselected(null);
 
             foreach (CommunityPlaceTag placeTag in currentPlaceTags)
                 Destroy(placeTag.gameObject);
@@ -284,10 +296,34 @@ namespace DCL.Communities.CommunityCreation
             UpdateCreateButtonAvailability();
         }
 
+        private void CreationPanelCommunityNameInputSelected(string _)
+        {
+            creationPanelCommunityNameCharCounter.gameObject.SetActive(true);
+            creationPanelCommunityNameInputFieldOutline.SetActive(true);
+        }
+
+        private void CreationPanelCommunityNameInputDeselected(string _)
+        {
+            creationPanelCommunityNameCharCounter.gameObject.SetActive(false);
+            creationPanelCommunityNameInputFieldOutline.SetActive(false);
+        }
+
         private void CreationPanelCommunityDescriptionInputChanged(string text)
         {
             creationPanelCommunityDescriptionCharCounter.text = $"{text.Length}/{creationPanelCommunityDescriptionInputField.characterLimit}";
             UpdateCreateButtonAvailability();
+        }
+
+        private void CreationPanelCommunityDescriptionInputSelected(string _)
+        {
+            creationPanelCommunityDescriptionInputFieldOutline.SetActive(true);
+            creationPanelCommunityDescriptionCharCounter.gameObject.SetActive(true);
+        }
+
+        private void CreationPanelCommunityDescriptionInputDeselected(string _)
+        {
+            creationPanelCommunityDescriptionInputFieldOutline.SetActive(false);
+            creationPanelCommunityDescriptionCharCounter.gameObject.SetActive(false);
         }
 
         private void UpdateCreateButtonAvailability()
