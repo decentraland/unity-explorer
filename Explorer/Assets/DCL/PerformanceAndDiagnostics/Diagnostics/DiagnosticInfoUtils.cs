@@ -1,11 +1,14 @@
-﻿using System.Text;
+﻿using DCL.Multiplayer.Connections.DecentralandUrls;
+using System;
+using System.Linq;
+using System.Text;
 using UnityEngine.Device;
 
 namespace DCL.Diagnostics
 {
-    public static class SystemInfoUtils
+    public static class DiagnosticInfoUtils
     {
-        public static void Log(string version)
+        public static void LogSystem(string version)
         {
             var stringBuilder = new StringBuilder();
 
@@ -48,6 +51,19 @@ namespace DCL.Diagnostics
             Screen.currentResolution.height,
             Screen.currentResolution.refreshRateRatio);
 
+
+            ReportHub.LogProductionInfo(stringBuilder.ToString());
+        }
+
+        public static void LogEnvironment(IDecentralandUrlsSource decentralandUrlsSource)
+        {
+            var stringBuilder = new StringBuilder();
+            AppendHeader(stringBuilder, "ENVIRONMENT");
+            var environmentUrls = Enum.GetValues(typeof(DecentralandUrl)).Cast<DecentralandUrl>();
+            foreach (var decentralandUrl in environmentUrls)
+            {
+                stringBuilder.AppendFormat("{0}: {1}\n", decentralandUrl.ToString(), decentralandUrlsSource.Url(decentralandUrl));
+            }
 
             ReportHub.LogProductionInfo(stringBuilder.ToString());
         }
