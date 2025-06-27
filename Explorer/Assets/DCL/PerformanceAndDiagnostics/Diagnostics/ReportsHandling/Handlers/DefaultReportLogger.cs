@@ -9,6 +9,8 @@ namespace DCL.Diagnostics
     /// </summary>
     public class DefaultReportLogger : IReportHandler
     {
+        public ReportHandler Type => ReportHandler.DebugLog;
+
         public void Log(LogType logType, ReportData reportData, Object context, object messageObj)
         {
             Debug.unityLogger.Log(logType, messageObj, context);

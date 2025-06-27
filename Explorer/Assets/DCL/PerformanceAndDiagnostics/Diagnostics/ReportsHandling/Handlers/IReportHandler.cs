@@ -6,6 +6,8 @@ namespace DCL.Diagnostics
 {
     public interface IReportHandler
     {
+        ReportHandler Type { get; }
+
         void Log(LogType logType, ReportData reportData, Object context, object messageObj);
 
         void LogFormat(LogType logType, ReportData reportData, Object context, object message, params object[] args);

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Diagnostics
 {
@@ -12,10 +11,7 @@ namespace DCL.Diagnostics
 
         public abstract ReportHandler AppliedTo { get; }
 
-        public bool Debounce(ReportMessageFingerprint fingerprint, ReportData reportData, LogType log) =>
-            Debounce(fingerprint);
-
-        protected abstract bool Debounce(ReportMessageFingerprint fingerprint);
+        public abstract bool Debounce(ReportMessageFingerprint fingerprint);
 
         public IReadOnlyDictionary<ReportMessageFingerprint, TTiming> Messages => messages;
 

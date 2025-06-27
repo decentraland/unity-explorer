@@ -1,6 +1,5 @@
 ﻿using CodeLess.Attributes;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace DCL.Diagnostics
 {
@@ -14,7 +13,7 @@ namespace DCL.Diagnostics
 
         public ReportHandler AppliedTo => ReportHandler.All;
 
-        public bool Debounce(ReportMessageFingerprint fingerprint, ReportData reportData, LogType log) =>
+        public bool Debounce(ReportMessageFingerprint fingerprint) =>
             !fingerprints.Add(fingerprint);
     }
 }

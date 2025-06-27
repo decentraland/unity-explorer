@@ -1,6 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using UnityEngine;
 
 namespace DCL.Diagnostics.Tests
 {
@@ -35,13 +34,13 @@ namespace DCL.Diagnostics.Tests
             new (message);
 
         [Test]
-        public void FirstNRepetitions_NotDebounced([NUnit.Framework.Range(1, 3)] int occurrence)
+        public void FirstNRepetitions_NotDebounced([Range(1, 3)] int occurrence)
         {
             Exception ex = CreateException("test");
             var result = false;
 
             for (var i = 0; i < occurrence; i++)
-                result = debouncer.Debounce(ex, null, default(LogType));
+                result = debouncer.Debounce(ex);
 
             Assert.IsFalse(result, $"Occurrence {occurrence} of exception should not be debounced");
         }
@@ -52,10 +51,10 @@ namespace DCL.Diagnostics.Tests
             Exception ex = CreateException("inner");
 
             for (var i = 0; i < allowedReps; i++)
-                debouncer.Debounce(ex, null, default(LogType));
+                debouncer.Debounce(ex);
 
             // No time advance => next should be debounced under initial window
-            bool result = debouncer.Debounce(ex, null, default(LogType));
+            bool result = debouncer.Debounce(ex);
             Assert.IsTrue(result, "Exception after allowed within initial window should be debounced");
         }
 
@@ -67,10 +66,10 @@ namespace DCL.Diagnostics.Tests
             Exception ex = CreateException("later");
 
             for (var i = 0; i < allowedReps; i++)
-                debouncer.Debounce(ex, null, default(LogType));
+                debouncer.Debounce(ex);
 
             fakeNow = fakeNow.AddSeconds(offsetSeconds);
-            bool result = debouncer.Debounce(ex, null, default(LogType));
+            bool result = debouncer.Debounce(ex);
             Assert.IsFalse(result, "Exception after initial window should not be debounced");
         }
 
@@ -84,20 +83,20 @@ namespace DCL.Diagnostics.Tests
 
             // Burn initial allowed repetitions
             for (var i = 0; i < allowedReps; i++)
-                debouncer.Debounce(ex, null, default(LogType));
+                debouncer.Debounce(ex);
 
             // Fast retry for attemptNumber within window: should be debounced
             fakeNow = fakeNow.AddSeconds(0); // no advance
             var debounced = false;
 
             for (int i = allowedReps + 1; i <= attemptNumber; i++)
-                debounced = debouncer.Debounce(ex, null, default(LogType));
+                debounced = debouncer.Debounce(ex);
 
             Assert.IsTrue(debounced, $"Attempt {attemptNumber} within expected window {expectedWindow}s should be debounced");
 
             // Move beyond window
             fakeNow = fakeNow.AddSeconds(expectedWindow + 1);
-            bool allowed = debouncer.Debounce(ex, null, default(LogType));
+            bool allowed = debouncer.Debounce(ex);
             Assert.IsFalse(allowed, $"Attempt after expected window {expectedWindow}s should not be debounced");
         }
 
@@ -113,7 +112,7 @@ namespace DCL.Diagnostics.Tests
             Exception ex = CreateException("cleanup");
 
             for (var i = 0; i < allowedReps + retriesCount; i++)
-                debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
+                debouncer.Debounce(ex);
 
             fakeNow = fakeNow.AddSeconds(idleTime);
 
@@ -134,7 +133,7 @@ namespace DCL.Diagnostics.Tests
             Exception ex = CreateException("cleanup");
 
             for (var i = 0; i < allowedReps + retriesCount; i++)
-                debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
+                debouncer.Debounce(ex);
 
             fakeNow = fakeNow.AddSeconds(idleTime);
 
@@ -154,7 +153,7 @@ namespace DCL.Diagnostics.Tests
             const int EXTRA_RETRIES = 2;
 
             for (var i = 0; i < allowedReps + EXTRA_RETRIES; i++)
-                debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
+                debouncer.Debounce(ex);
 
             // At this point the window is 10s * 1.7^(5-3) ≈ 28.9s
             Assert.IsTrue(debouncer.Messages.TryGetValue(key, out ProgressiveWindowDebouncer.Tracker tracker));
@@ -170,13 +169,13 @@ namespace DCL.Diagnostics.Tests
             fakeNow = fakeNow.Add(cooldownWindow);
 
             // Now it should decay to the previous window: 10s * 1.7^(4-3) = 17s
-            bool debounced = debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
+            bool debounced = debouncer.Debounce(ex);
             Assert.That(debounced, Is.False);
 
             // Add less than a window
             fakeNow = fakeNow.AddSeconds(16);
 
-            debounced = debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType)); // must be debounced
+            debounced = debouncer.Debounce(ex); // must be debounced
             Assert.That(debounced, Is.True, "After ramp down, the next occurrence should be debounced");
 
             // The window will be brought to 10s * 1.7^(6-3) ≈ 49.13s
@@ -186,7 +185,7 @@ namespace DCL.Diagnostics.Tests
 
             // Now wait for more than 3 windows to rump down to the initial window
             fakeNow = fakeNow.AddSeconds(50 * 3);
-            debounced = debouncer.Debounce(ex, ReportData.UNSPECIFIED, default(LogType));
+            debounced = debouncer.Debounce(ex);
             Assert.IsFalse(debounced);
 
             // Check the window

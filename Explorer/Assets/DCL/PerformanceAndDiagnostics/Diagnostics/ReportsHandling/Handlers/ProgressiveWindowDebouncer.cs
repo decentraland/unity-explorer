@@ -25,7 +25,7 @@ namespace DCL.Diagnostics
 
         public override ReportHandler AppliedTo => ReportHandler.All;
 
-        protected override bool Debounce(ReportMessageFingerprint fingerprint)
+        public override bool Debounce(ReportMessageFingerprint fingerprint)
         {
             DateTime now = dateTimeProvider();
 

@@ -11,12 +11,13 @@ namespace DCL.Diagnostics.Tests
         private MockedReportScope mockedReportScope;
         private ReportData reportData;
         private ReportHandlerBase handler;
+        private FrameDebouncer frameDebouncer;
 
         [SetUp]
         public void SetUp()
         {
             mockedReportScope = MockedReportScope.CreateFromBaseClass(out handler, out _, ReportHandler.Sentry);
-            reportData = new ReportData(ReportCategory.FRIENDS, new ReportDebounce(new FrameDebouncer(1)));
+            reportData = new ReportData(ReportCategory.FRIENDS, new ReportDebounce(frameDebouncer = new FrameDebouncer(1)));
         }
 
         [TearDown]
@@ -24,6 +25,50 @@ namespace DCL.Diagnostics.Tests
         {
             MultithreadingUtility.ResetFrameCount();
             mockedReportScope.Dispose();
+        }
+
+        [Test]
+        public void CleanUpAfterFramesExhausted()
+        {
+            var oldException = new InvalidOperationException("Old exception", new Exception("Inner exception"));
+            var oldExceptionKey = new ReportMessageFingerprint(new ExceptionFingerprint(oldException, null));
+
+            MultithreadingUtility.SetFrameCount(10);
+
+            ReportHub.LogException(oldException, reportData);
+
+            MultithreadingUtility.SetFrameCount(10 + frameDebouncer.cleanUpThreshold + 1);
+
+            var newException = new InvalidOperationException("New exception", new Exception("Inner exception"));
+
+            ReportHub.LogException(newException, reportData);
+
+            // After logging a new exception the old one should be evicted
+            Assert.That(frameDebouncer.Messages.ContainsKey(oldExceptionKey), Is.False);
+        }
+
+        [Test]
+        public void NotCleanUpWithinValidTime()
+        {
+            var oldException = new InvalidOperationException("Old exception", new Exception("Inner exception"));
+            var oldExceptionKey = new ReportMessageFingerprint(new ExceptionFingerprint(oldException, null));
+
+            // Will be cleaned up after 100 frames (the initial t=0)
+
+            MultithreadingUtility.SetFrameCount(99);
+
+            ReportHub.LogException(oldException, reportData);
+
+            MultithreadingUtility.SetFrameCount(100);
+
+            // Only one frame has passed, so the old exception should still be there
+
+            var newException = new InvalidOperationException("New exception", new Exception("Inner exception"));
+
+            ReportHub.LogException(newException, reportData);
+
+            // After logging a new exception the old one should be evicted
+            Assert.That(frameDebouncer.Messages.ContainsKey(oldExceptionKey), Is.True);
         }
 
         [Test]

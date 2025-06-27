@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace DCL.Diagnostics
+﻿namespace DCL.Diagnostics
 {
     public interface IReportsDebouncer
     {
@@ -12,6 +10,6 @@ namespace DCL.Diagnostics
         /// <summary>
         ///     Determine if the message should be skipped
         /// </summary>
-        bool Debounce(ReportMessageFingerprint fingerprint, ReportData reportData, LogType log);
+        bool Debounce(ReportMessageFingerprint fingerprint);
     }
 }

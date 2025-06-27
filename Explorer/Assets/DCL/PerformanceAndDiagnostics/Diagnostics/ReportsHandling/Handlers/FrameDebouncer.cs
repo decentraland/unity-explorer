@@ -10,7 +10,7 @@ namespace DCL.Diagnostics
     public class FrameDebouncer : TimingBasedDebouncer<long>
     {
         private readonly int frameDebounceThreshold;
-        private readonly int cleanUpThreshold;
+        internal readonly int cleanUpThreshold;
 
         private long cleanUpTargetFrame;
 
@@ -23,7 +23,7 @@ namespace DCL.Diagnostics
             cleanUpTargetFrame = MultithreadingUtility.FrameCount + cleanUpThreshold;
         }
 
-        protected override bool Debounce(ReportMessageFingerprint fingerprint)
+        public override bool Debounce(ReportMessageFingerprint fingerprint)
         {
             long currentTiming = MultithreadingUtility.FrameCount;
 
@@ -74,7 +74,9 @@ namespace DCL.Diagnostics
             using PooledObject<List<ReportMessageFingerprint>> pooled = ListPool<ReportMessageFingerprint>.Get(out List<ReportMessageFingerprint>? keysToRemove);
 
             foreach (KeyValuePair<ReportMessageFingerprint, long> kvp in messages)
-                if (!CanPass(kvp.Value, timing))
+
+                // Entries that can already pass the debounce threshold can be safely evicted
+                if (CanPass(kvp.Value, timing))
                     keysToRemove.Add(kvp.Key);
 
             foreach (ReportMessageFingerprint key in keysToRemove) messages.Remove(key);

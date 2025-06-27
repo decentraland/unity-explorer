@@ -9,7 +9,7 @@ namespace DCL.Diagnostics
     {
         private readonly SceneDebugConsole sceneDebugConsole;
 
-        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(ReportHandler.None, matrix, debounceEnabled)
+        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled) : base(ReportHandler.DebugLog, matrix, debounceEnabled)
         {
             sceneDebugConsole = GameObject.Instantiate(Resources.Load<GameObject>("SceneDebugConsole")).GetComponent<SceneDebugConsole>();
         }

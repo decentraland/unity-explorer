@@ -17,8 +17,14 @@ namespace DCL.Diagnostics.Tests
         public MockedReportScope([CanBeNull] IReportHandler mock = null)
         {
             savedInstance = ReportHub.Instance;
-            ReportHub.Initialize(new ReportHubLogger(
-                new List<(ReportHandler, IReportHandler)> { (ReportHandler.DebugLog, Mock = mock ?? Substitute.For<IReportHandler>()) }));
+
+            if (mock == null)
+            {
+                mock = Substitute.For<IReportHandler>();
+                mock.Type.Returns(ReportHandler.DebugLog);
+            }
+
+            ReportHub.Initialize(new ReportHubLogger(new List<IReportHandler> { mock }));
         }
 
         public static ReportHandlerBase CreateHandlerFromBaseClass(out ICategorySeverityMatrix severityMatrix, ReportHandler type = ReportHandler.None, bool debounceEnabled = true)
