@@ -86,6 +86,10 @@ namespace DCL.Utilities
 
         public void ResolutionChanged(Resolution resolution)
         {
+            //TODO (Juani): Resolution setting is not correct. You can chose a higher resolution, even if your monitor is not on that resolution.
+            //Therefore, automatically setting it is not currently reliable
+            return;
+            
             //Helper bool for the first stp value set. ResolutionChanged is invoked on application start, and if the value does exist in PlayerPrefs,
             //the first invoke should be ignored
             if (ignoreFirstResolutionChange)

@@ -2,15 +2,16 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits;
 using DCL.MarketplaceCreditsAPIService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using MVC;
@@ -33,6 +34,8 @@ namespace DCL.PluginSystem.Global
         private readonly INotificationsBusController notificationBusController;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ILoadingStatus loadingStatus;
 
         private MarketplaceCreditsMenuController? marketplaceCreditsMenuController;
         private CreditsUnlockedController? creditsUnlockedController;
@@ -48,7 +51,9 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             INotificationsBusController notificationBusController,
             IRealmData realmData,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IWeb3IdentityCache web3IdentityCache,
+            ILoadingStatus loadingStatus)
         {
             this.mainUIView = mainUIView;
             this.assetsProvisioner = assetsProvisioner;
@@ -60,6 +65,8 @@ namespace DCL.PluginSystem.Global
             this.notificationBusController = notificationBusController;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.web3IdentityCache = web3IdentityCache;
+            this.loadingStatus = loadingStatus;
 
             marketplaceCreditsAPIClient = new MarketplaceCreditsAPIClient(webRequestController, decentralandUrlsSource);
         }
@@ -91,7 +98,9 @@ namespace DCL.PluginSystem.Global
                 mainUIView.SidebarView.marketplaceCreditsButtonAnimator,
                 mainUIView.SidebarView.marketplaceCreditsButtonAlertMark,
                 realmData,
-                sharedSpaceManager);
+                sharedSpaceManager,
+                web3IdentityCache,
+                loadingStatus);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.MarketplaceCredits, marketplaceCreditsMenuController);
             mvcManager.RegisterController(marketplaceCreditsMenuController);
