@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
@@ -59,9 +60,9 @@ namespace DCL.Communities.CommunitiesCard
 
         [field: SerializeField] private CanvasGroup viewCanvasGroup { get; set; }
         [field: SerializeField] private Button backgroundButton { get; set; }
-        [field: SerializeField] private Button cancelButton { get; set; }
+        [field: SerializeField] private ButtonWithAnimationView cancelButton { get; set; }
         [field: SerializeField] private TMP_Text cancelButtonText { get; set; }
-        [field: SerializeField] private Button confirmButton { get; set; }
+        [field: SerializeField] private ButtonWithAnimationView confirmButton { get; set; }
         [field: SerializeField] private TMP_Text confirmButtonText { get; set; }
         [field: SerializeField] private float fadeDuration { get; set; } = 0.3f;
         [field: SerializeField] private TMP_Text mainText { get; set; }
@@ -82,9 +83,9 @@ namespace DCL.Communities.CommunitiesCard
 
         private UniTask[] GetCloseTasks(CancellationToken ct)
         {
-            closeTasks[0] = cancelButton.OnClickAsync(ct);
+            closeTasks[0] = cancelButton.Button.OnClickAsync(ct);
             closeTasks[1] = backgroundButton.OnClickAsync(ct);
-            closeTasks[2] = confirmButton.OnClickAsync(ct);
+            closeTasks[2] = confirmButton.Button.OnClickAsync(ct);
             return closeTasks;
         }
 
@@ -125,6 +126,10 @@ namespace DCL.Communities.CommunitiesCard
             await viewCanvasGroup.DOFade(0f, fadeDuration).ToUniTask(cancellationToken: ct);
             viewCanvasGroup.interactable = false;
             viewCanvasGroup.blocksRaycasts = false;
+
+            //Reset scale to revert pressed state
+            cancelButton.ResetButtonAnimationScale();
+            confirmButton.ResetButtonAnimationScale();
 
             cancelButton.gameObject.SetActive(false);
             confirmButton.gameObject.SetActive(false);

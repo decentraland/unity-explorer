@@ -284,9 +284,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <viewCanvasGroup>k__BackingField: {fileID: 7148772016283282334}
   <backgroundButton>k__BackingField: {fileID: 2573271936253177660}
-  <cancelButton>k__BackingField: {fileID: 4703601987723925820}
+  <cancelButton>k__BackingField: {fileID: 6367030419033160450}
   <cancelButtonText>k__BackingField: {fileID: 5172961755820453843}
-  <confirmButton>k__BackingField: {fileID: 177293625116832667}
+  <confirmButton>k__BackingField: {fileID: 613252997014932791}
   <confirmButtonText>k__BackingField: {fileID: 219328096485043431}
   <fadeDuration>k__BackingField: 0.3
   <mainText>k__BackingField: {fileID: 5497906910841171124}

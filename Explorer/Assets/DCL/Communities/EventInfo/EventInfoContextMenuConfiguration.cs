@@ -1,13 +1,14 @@
 using UnityEngine;
 
-namespace DCL.Communities.CommunitiesCard.Events
+namespace DCL.Communities.EventInfo
 {
-    [CreateAssetMenu(fileName = "CommunityEventsContextMenuSettings", menuName = "DCL/Communities/Events/ContextMenuSettings")]
-    public class CommunityEventsContextMenuConfiguration : ScriptableObject
+    [CreateAssetMenu(fileName = "EventInfoContextMenuSettings", menuName = "DCL/Communities/EventInfo/ContextMenuSettings")]
+    public class EventInfoContextMenuConfiguration : ScriptableObject
     {
         [SerializeField] private int contextMenuWidth = 250;
         [SerializeField] private int elementsSpacing = 5;
         [SerializeField] private RectOffset verticalPadding;
+        [SerializeField] private Vector2 offsetFromTarget = Vector2.zero;
         [Space(10)]
         [SerializeField] private Sprite shareSprite;
         [SerializeField] private string shareText = "Share on X";
@@ -18,6 +19,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public int ContextMenuWidth => contextMenuWidth;
         public int ElementsSpacing => elementsSpacing;
         public RectOffset VerticalPadding => verticalPadding;
+        public Vector2 OffsetFromTarget => offsetFromTarget;
 
         public Sprite ShareSprite => shareSprite;
         public string ShareText => shareText;
