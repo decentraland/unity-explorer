@@ -379,10 +379,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7569586830028973923}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 71.71, y: -14}
-  m_SizeDelta: {x: 18.03, y: 28}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2904543192077027800
 CanvasRenderer:
@@ -501,7 +501,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2472875774409467262
 RectTransform:
   m_ObjectHideFlags: 0
@@ -599,13 +599,14 @@ GameObject:
   - component: {fileID: 8076338120487563135}
   - component: {fileID: 8647648691737780214}
   - component: {fileID: 3094179489052019052}
+  - component: {fileID: 7288971388349013847}
   m_Layer: 5
   m_Name: LiveBadgeAndCounter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7569586830028973923
 RectTransform:
   m_ObjectHideFlags: 0
@@ -626,7 +627,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 10, y: -10}
-  m_SizeDelta: {x: 89, y: 28}
+  m_SizeDelta: {x: 0, y: 28}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &8076338120487563135
 CanvasRenderer:
@@ -679,8 +680,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
-    m_Right: 0
+    m_Left: 8
+    m_Right: 8
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
@@ -692,6 +693,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &7288971388349013847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3369050341449445702}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 2
+  m_VerticalFit: 0
 --- !u!1 &3875722050887602800
 GameObject:
   m_ObjectHideFlags: 0
@@ -790,10 +805,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2472875774409467262}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 28}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 32, y: -14}
+  m_SizeDelta: {x: 13.47, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5523847231545164669
 CanvasRenderer:
@@ -958,6 +973,7 @@ MonoBehaviour:
   interestedButton: {fileID: 3667130979709381892}
   offlineShareButton: {fileID: 7796272018042831747}
   liveBadgeContainer: {fileID: 3369050341449445702}
+  liveBadgePlayerIcon: {fileID: 7681932325408554922}
   interestedContainer: {fileID: 2206185839776700055}
   eventThumbnailImage: {fileID: 4875162771560992584}
   eventTimeText: {fileID: 6316897665412424019}
@@ -1379,10 +1395,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7569586830028973923}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 23.485, y: -14}
-  m_SizeDelta: {x: 30.42, y: 28}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 28}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4224731088434346332
 CanvasRenderer:
@@ -1841,10 +1857,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2472875774409467262}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 14}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 13.264999, y: -14}
+  m_SizeDelta: {x: 14, y: 14}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7015130602262724715
 CanvasRenderer:
@@ -1937,10 +1953,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 7569586830028973923}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 50.695, y: -14}
-  m_SizeDelta: {x: 14, y: 14}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 14}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7990343442369771807
 CanvasRenderer:

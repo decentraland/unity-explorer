@@ -22,6 +22,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         [Space(10)]
         [SerializeField] private GameObject liveBadgeContainer;
+        [SerializeField] private GameObject liveBadgePlayerIcon;
         [SerializeField] private GameObject interestedContainer;
 
         [Header("Event info")]
@@ -77,6 +78,11 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             UpdateInterestedButtonState();
             liveBadgeContainer.SetActive(data.Event.live);
+
+            bool showLiveOnlineUsers = data.Event.live && data.Place.user_count > 0;
+            liveBadgePlayerIcon.SetActive(showLiveOnlineUsers);
+            eventOnlineUsersText.gameObject.SetActive(showLiveOnlineUsers);
+
             UnHoverAnimation();
         }
 
