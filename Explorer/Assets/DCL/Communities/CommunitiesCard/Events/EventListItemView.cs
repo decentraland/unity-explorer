@@ -1,5 +1,6 @@
 using DCL.Communities.EventInfo;
 using DCL.UI;
+using DCL.Utilities;
 using DCL.WebRequests;
 using System;
 using TMPro;
@@ -65,10 +66,10 @@ namespace DCL.Communities.CommunitiesCard.Events
             offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, offlineShareButton.transform.position));
         }
 
-        public void Configure(PlaceAndEventDTO data, IWebRequestController webRequestController)
+        public void Configure(PlaceAndEventDTO data, ObjectProxy<ISpriteCache> spriteCache)
         {
             eventData = data;
-            imageController ??= new ImageController(eventThumbnailImage, webRequestController);
+            imageController ??= new ImageController(eventThumbnailImage, spriteCache);
 
             imageController.RequestImage(data.Event.image);
             eventTimeText.text = EventUtilities.GetEventTimeText(data.Event);

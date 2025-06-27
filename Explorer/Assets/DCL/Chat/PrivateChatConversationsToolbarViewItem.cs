@@ -12,12 +12,11 @@ namespace DCL.Chat
         /// <param name="profileDataProvider">A way to access profile data.</param>
         /// <param name="userColor">The color of the user's profile picture. It affects the tooltip too.</param>
         /// <param name="faceSnapshotUrl">The URL to the profile picture.</param>
-        /// <param name="userId">The Id of the user (wallet Id).</param>
-        public void SetProfileData(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
+        public void SetProfileData(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl)
         {
             customIcon.gameObject.SetActive(false);
             thumbnailView.SetActive(true);
-            thumbnailView.GetComponent<ProfilePictureView>().Setup(profileDataProvider, userColor, faceSnapshotUrl, userId);
+            thumbnailView.GetComponent<ProfilePictureView>().Setup(profileDataProvider, userColor, faceSnapshotUrl);
             tooltipText.color = userColor;
         }
 

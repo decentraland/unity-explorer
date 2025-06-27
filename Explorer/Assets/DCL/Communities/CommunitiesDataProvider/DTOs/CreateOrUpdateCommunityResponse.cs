@@ -9,16 +9,17 @@ namespace DCL.Communities
         [Serializable]
         public struct CommunityData
         {
-            public string[] thumbnails;
+            public string id;
             public string name;
             public string description;
-            public string ownerId;
-            public int memberCount;
+            public string ownerAddress;
             public CommunityPrivacy privacy;
+            public bool active;
+            public CommunityThumbnails? thumbnails;
         }
 
-        public bool ok;
-        public CommunityData communityData;
+        public string message;
+        public CommunityData data;
     }
 }
 

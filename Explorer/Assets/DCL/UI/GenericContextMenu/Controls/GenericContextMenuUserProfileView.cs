@@ -91,7 +91,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             ConfigureUserNameAndTag(settings.userData.userName, settings.userData.userAddress, settings.userData.hasClaimedName, settings.userData.userColor);
 
-            ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData.userColor, settings.userData.userThumbnailAddress, settings.userData.userAddress);
+            ProfilePictureView.Setup(profileRepositoryWrapper, settings.userData.userColor, settings.userData.userThumbnailAddress);
             ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());

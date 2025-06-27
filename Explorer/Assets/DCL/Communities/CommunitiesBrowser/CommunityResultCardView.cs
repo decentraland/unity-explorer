@@ -2,6 +2,7 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.WebRequests;
 using DG.Tweening;
 using System;
@@ -87,12 +88,12 @@ namespace DCL.Communities.CommunitiesBrowser
             joinCommunityButton.onClick.RemoveAllListeners();
         }
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(communityThumbnail, webRequestController);
+            imageController = new ImageController(communityThumbnail, spriteCache);
         }
 
         public void SetCommunityThumbnail(string imageUrl)
@@ -146,7 +147,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl, mutualFriend.address);
+                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
             }
         }
 

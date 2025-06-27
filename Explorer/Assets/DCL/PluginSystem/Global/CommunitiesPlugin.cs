@@ -138,8 +138,7 @@ namespace DCL.PluginSystem.Global
                 inputBlock,
                 communitiesDataProvider,
                 placesAPIService,
-                selfProfile,
-                webRequestController);
+                selfProfile);
             mvcManager.RegisterController(communityCreationEditionController);
 
             EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();
