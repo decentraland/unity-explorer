@@ -38,7 +38,7 @@ namespace DCL.Communities
 
             bool result = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
-            if (!ignoreAllowedList)
+            if (result && !ignoreAllowedList)
             {
                 await UniTask.WaitUntil(() => web3IdentityCache.Identity != null, cancellationToken: ct);
                 var ownWalletId = web3IdentityCache.Identity!.Address;
