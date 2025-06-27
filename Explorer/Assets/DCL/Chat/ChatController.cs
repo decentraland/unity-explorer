@@ -736,6 +736,7 @@ namespace DCL.Chat
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
 
             chatEventBus.InsertTextInChat += OnTextInserted;
+            chatEventBus.InsertSystemMessageInChat += OnSystemMessage;
             chatEventBus.OpenConversation += OnOpenConversation;
 
             if (TryGetView(out var view))
@@ -778,6 +779,17 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
         }
 
+        private void OnSystemMessage(string message)
+        {
+            OnOpenConversation(ChatChannel.NEARBY_CHANNEL_ID.Id);
+            ChatMessage systemMessage = ChatMessage.NewFromSystem(message);
+            chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, systemMessage);
+
+            // If the current channel is the one being viewed, refreshes the messages
+            if (viewInstance.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+                viewInstance.RefreshMessages();
+        }
+
         private void OnViewDeleteChatHistoryRequested()
         {
             // Clears the history of the current conversation and updates the UI
@@ -792,6 +804,7 @@ namespace DCL.Chat
             chatHistory.MessageAdded -= OnChatHistoryMessageAdded;
             chatHistory.ReadMessagesChanged -= OnChatHistoryReadMessagesChanged;
             chatEventBus.InsertTextInChat -= OnTextInserted;
+            chatEventBus.InsertSystemMessageInChat -= OnSystemMessage;
 
             if (viewInstance != null)
             {
