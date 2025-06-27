@@ -73,19 +73,23 @@ namespace Global.AppArgs
 
                     // Application parameters may come embedded in a deep link:
                     // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&local-scene=true&otherparam=blahblah"
-                    ProcessDeepLinkParameters(arg);
+                    Dictionary<string,string> deepLinkParameters = ProcessDeepLinkParameters(arg);
+                    foreach ((string key, string value) in deepLinkParameters)
+                        appParameters[key] = value;
                 }
                 else if (!string.IsNullOrEmpty(lastKeyStored))
                     appParameters[lastKeyStored] = arg;
             }
         }
 
-        private void ProcessDeepLinkParameters(string deepLinkString)
+        public static Dictionary<string, string> ProcessDeepLinkParameters(string deepLinkString)
         {
+            var output = new Dictionary<string, string>();
+
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.org/?");
 
-            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? _)) return;
+            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? _)) return output;
 
             var uri = new Uri(deepLinkString);
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
@@ -94,10 +98,10 @@ namespace Global.AppArgs
             {
                 // if the deep link is not constructed correctly (AKA 'decentraland://?&blabla=blabla') a 'null' parameter can be detected...
                 if (uriQueryKey == null) continue;
-                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
+                output[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
 
-            if (appParameters.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
+            if (output.TryGetValue(AppArgsFlags.REALM, out string? realmParamValue))
             {
                 // Patch for WinOS sometimes affecting the 'realm' parameter in deep links putting a '/' at the end
                 if (realmParamValue.EndsWith('/'))
@@ -106,8 +110,10 @@ namespace Global.AppArgs
                 // Patch for MacOS removing the ':' from the realm parameter protocol
                 realmParamValue = Regex.Replace(realmParamValue, @"(https?)//(.*?)$", @"$1://$2");
 
-                appParameters[AppArgsFlags.REALM] = realmParamValue;
+                output[AppArgsFlags.REALM] = realmParamValue;
             }
+
+            return output;
         }
 
         private void LogArguments()
