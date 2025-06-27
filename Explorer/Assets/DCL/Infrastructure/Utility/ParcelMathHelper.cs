@@ -30,6 +30,10 @@ namespace Utility
             globalPosition - sceneGlobalPosition;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 FromGlobalToSceneRelativePosition(this Vector3 globalPosition, Transform sceneRoot) =>
+            globalPosition - sceneRoot.position;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 FromGlobalToSceneRelativePosition(this Vector3 globalPosition, Vector2Int sceneBaseParcelCoords) =>
             globalPosition - sceneBaseParcelCoords.ParcelToPositionFlat();
 
