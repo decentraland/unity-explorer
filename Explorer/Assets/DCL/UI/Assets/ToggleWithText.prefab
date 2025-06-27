@@ -222,6 +222,8 @@ MonoBehaviour:
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
   <toggleText>k__BackingField: {fileID: 2938718002221827054}
+  <interactableTextColor>k__BackingField: {r: 1, g: 1, b: 1, a: 1}
+  <nonInteractableTextColor>k__BackingField: {r: 0.55, g: 0.55, b: 0.55, a: 1}
 --- !u!1001 &3773273977910126689
 PrefabInstance:
   m_ObjectHideFlags: 0
