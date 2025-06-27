@@ -25,7 +25,9 @@ namespace DCL.Communities.CommunityCreation
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
         private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
-        private const string INCOMPATIBLE_IMAGE_ERROR = "Invalid image file selected. Please check file type and size.";
+        private const string INCOMPATIBLE_IMAGE_GENERAL_ERROR = "Invalid image file selected. Please check file type and size.";
+        private const string INCOMPATIBLE_IMAGE_WEIGHT_ERROR = "Invalid image file selected. Please upload an image under 500KB.";
+        private const string INCOMPATIBLE_IMAGE_RESOLUTION_ERROR = "Invalid image file selected. Size must be 512x512 px or smaller.";
         private const string FILE_BROWSER_TITLE = "Select image";
         private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
         private const int MAX_IMAGE_DIMENSION_PIXELS = 512;
@@ -192,10 +194,17 @@ namespace DCL.Communities.CommunityCreation
             {
                 Texture2D texture = data.CTToTexture();
 
-                if (texture.width > MAX_IMAGE_DIMENSION_PIXELS || texture.height > MAX_IMAGE_DIMENSION_PIXELS || data.Length > MAX_IMAGE_SIZE_BYTES)
+                bool isInvalidImageByWeight = data.Length > MAX_IMAGE_SIZE_BYTES;
+                bool isInvalidImageByResolution = texture.width > MAX_IMAGE_DIMENSION_PIXELS || texture.height > MAX_IMAGE_DIMENSION_PIXELS;
+                if (isInvalidImageByWeight || isInvalidImageByResolution)
                 {
                     showErrorCts = showErrorCts.SafeRestart();
-                    viewInstance!.WarningNotificationView.AnimatedShowAsync(INCOMPATIBLE_IMAGE_ERROR, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token).Forget();
+                    viewInstance!.WarningNotificationView.AnimatedShowAsync(
+                        isInvalidImageByWeight && isInvalidImageByResolution ?
+                            INCOMPATIBLE_IMAGE_GENERAL_ERROR :
+                            isInvalidImageByWeight ? INCOMPATIBLE_IMAGE_WEIGHT_ERROR : INCOMPATIBLE_IMAGE_RESOLUTION_ERROR,
+                        WARNING_MESSAGE_DELAY_MS,
+                        showErrorCts.Token).Forget();
                     return;
                 }
 
