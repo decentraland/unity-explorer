@@ -39,17 +39,24 @@ namespace DCL.Character.CharacterMotion.Systems
         {
             if (teleportIntent.IsPositionSet) return;
 
-            if (teleportIntent.SceneDef == null)
+            SceneEntityDefinition? sceneDef = teleportIntent.SceneDef;
+            Vector2Int parcel = teleportIntent.Parcel;
+
+            if (sceneDef == null)
             {
-                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(teleportIntent.Parcel).WithErrorCompensation().WithTerrainOffset();
+                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation().WithTerrainOffset();
             }
-            else if (TeleportUtils.IsTramLine(teleportIntent.SceneDef.metadata.OriginalJson.AsSpan()))
+            else if (TeleportUtils.IsTramLine(sceneDef.metadata.OriginalJson.AsSpan()))
             {
-                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(teleportIntent.Parcel).WithErrorCompensation();
+                teleportIntent.Position = ParcelMathHelper.GetPositionByParcelPosition(parcel).WithErrorCompensation();
             }
             else
             {
-                (Vector3 targetWorldPosition, Vector3? cameraTarget) = PickTargetWithOffset(teleportIntent.SceneDef, teleportIntent.Parcel);
+                (Vector3 targetWorldPosition, Vector3? cameraTarget) = PickTargetWithOffset(sceneDef, parcel);
+
+                var originalTargetPosition = targetWorldPosition;
+                if (!ValidateTeleportPosition(ref targetWorldPosition, parcel, sceneDef))
+                    ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Invalid teleport position: {originalTargetPosition}. Adjusted to: {targetWorldPosition}");
 
                 teleportIntent.Position = targetWorldPosition;
 
@@ -61,6 +68,19 @@ namespace DCL.Character.CharacterMotion.Systems
             }
 
             teleportIntent.IsPositionSet = true;
+        }
+
+        private bool ValidateTeleportPosition(ref Vector3 targetPosition, Vector2Int targetParcel, SceneEntityDefinition sceneDefinition)
+        {
+            IReadOnlyList<Vector2Int> sceneParcels = sceneDefinition.metadata.scene.DecodedParcels;
+
+            foreach (var sceneParcel in sceneParcels)
+                if (ParcelMathHelper.CalculateCorners(sceneParcel).Contains(targetPosition))
+                    return true;
+
+            // Invalid position, use the target parcel to compute a valid one
+            targetPosition = ParcelMathHelper.GetPositionByParcelPosition(targetParcel).WithErrorCompensation();
+            return false;
         }
 
         private static (Vector3 targetWorldPosition, Vector3? cameraTarget) PickTargetWithOffset(SceneEntityDefinition? sceneDef, Vector2Int parcel)
