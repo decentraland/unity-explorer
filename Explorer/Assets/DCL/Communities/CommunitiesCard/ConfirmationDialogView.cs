@@ -128,8 +128,8 @@ namespace DCL.Communities.CommunitiesCard
             viewCanvasGroup.blocksRaycasts = false;
 
             //Reset scale to revert pressed state
-            cancelButton.transform.localScale = Vector3.one;
-            confirmButton.transform.localScale = Vector3.one;
+            cancelButton.ResetButtonAnimationScale();
+            confirmButton.ResetButtonAnimationScale();
 
             cancelButton.gameObject.SetActive(false);
             confirmButton.gameObject.SetActive(false);

@@ -1,6 +1,7 @@
 using DCL.EventsApi;
 using System;
 using System.Globalization;
+using System.Text;
 
 namespace DCL.Communities.EventInfo
 {
@@ -41,6 +42,41 @@ namespace DCL.Communities.EventInfo
             }
 
             return schedule;
+        }
+
+        public static void FormatEventString(DateTime utcStart, double durationMs, StringBuilder sb)
+        {
+            TimeSpan duration = TimeSpan.FromMilliseconds(durationMs);
+            DateTime utcEnd = utcStart.Add(duration);
+
+            TimeZoneInfo localZone = TimeZoneInfo.Local;
+            DateTime localStart = TimeZoneInfo.ConvertTimeFromUtc(utcStart, localZone);
+            DateTime localEnd = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, localZone);
+
+            TimeSpan offset = localZone.GetUtcOffset(localStart);
+
+            var day = localStart.ToString("dddd");
+            sb.Append(char.ToUpper(day[0]));
+            sb.Append(day, 1, day.Length - 1);
+            sb.Append(", ");
+
+            var month = localStart.ToString("MMM");
+            sb.Append(char.ToUpper(month[0]));
+            sb.Append(month, 1, month.Length - 1);
+            sb.Append(' ');
+            sb.Append(localStart.ToString("dd"));
+            sb.Append(" from ");
+
+            sb.Append(localStart.ToString("hh:mmtt").ToLowerInvariant());
+            sb.Append(" to ");
+            sb.Append(localEnd.ToString("hh:mmtt").ToLowerInvariant());
+
+            sb.Append(" (UTC");
+            double offsetHours = offset.TotalHours;
+            if (offsetHours >= 0)
+                sb.Append('+');
+            sb.Append(((int)offsetHours).ToString());
+            sb.Append(')');
         }
 
         public static string GetEventCopyLink(IEventDTO eventData) =>
