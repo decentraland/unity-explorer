@@ -3167,6 +3167,7 @@ MonoBehaviour:
   <previousScreenshotButton>k__BackingField: {fileID: 4174928257314461076}
   <nextScreenshotButton>k__BackingField: {fileID: 7911290084806989879}
   <setAsPublicToggle>k__BackingField: {fileID: 3130503048021005829}
+  <leftSeparator>k__BackingField: {fileID: 146340637411226168}
   <downloadButton>k__BackingField: {fileID: 3557052328246332746}
   <deleteButton>k__BackingField: {fileID: 3843227689883949517}
   <linkButton>k__BackingField: {fileID: 8059763448884128982}

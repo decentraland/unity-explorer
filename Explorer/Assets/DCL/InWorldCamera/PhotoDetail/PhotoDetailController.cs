@@ -270,6 +270,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance!.mainImageCanvasGroup.alpha = 0;
             viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
             viewInstance!.setAsPublicToggle.gameObject.SetActive(false);
+            viewInstance!.leftSeparator.gameObject.SetActive(false);
             viewInstance!.deleteButton.gameObject.SetActive(false);
 
             if (viewInstance.mainImage.texture != null)
@@ -287,12 +288,14 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
 
             await detailInfoTask;
-            
+
+            bool isUserOwned = PhotoDetailInfoController.IsReelUserOwned;
             viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
             viewInstance!.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
             viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
-            viewInstance!.setAsPublicToggle.gameObject.SetActive(PhotoDetailInfoController.IsReelUserOwned);
-            viewInstance!.deleteButton.gameObject.SetActive(PhotoDetailInfoController.IsReelUserOwned);
+            viewInstance!.setAsPublicToggle.gameObject.SetActive(isUserOwned);
+            viewInstance!.leftSeparator.gameObject.SetActive(isUserOwned);
+            viewInstance!.deleteButton.gameObject.SetActive(isUserOwned);
         }
 
         private void CheckNavigationButtonVisibility(List<CameraReelResponseCompact> allReels, int index)
