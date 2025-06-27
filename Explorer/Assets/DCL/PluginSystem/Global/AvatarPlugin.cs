@@ -234,13 +234,6 @@ namespace DCL.PluginSystem.Global
             toonMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
             faceFeatureMaterial.SetFloat(ComputeShaderConstants.SHADER_FADING_DISTANCE_PARAM_ID, startFadeDistanceDithering);
 
-            //Enable Texture Arrays and Compute Skinning
-            toonMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-            toonMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
-
-            faceFeatureMaterial.EnableKeyword("_DCL_TEXTURE_ARRAYS");
-            faceFeatureMaterial.EnableKeyword("_DCL_COMPUTE_SKINNING");
-
             avatarMaterialPoolHandler = new AvatarMaterialPoolHandler(new List<Material>
             {
                 toonMaterial, faceFeatureMaterial,
