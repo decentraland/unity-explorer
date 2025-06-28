@@ -30,7 +30,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
                     PlatformLabel = "Windows",
 
                     // Checks
-                    OsCheck = SystemSpecUtils.IsWindows10OrNewer, CpuCheck = SystemSpecUtils.IsWindowsCpuAcceptable, GpuCheck = SystemSpecUtils.IsWindowsGpuAcceptable, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
+                    OsCheck = SystemSpecUtils.IsWindowsVersionAcceptable, CpuCheck = SystemSpecUtils.IsWindowsCpuAcceptable, GpuCheck = SystemSpecUtils.IsWindowsGpuAcceptable, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
 
                     // Display Strings
                     OsRequirement = WIN_OS_REQ, CpuRequirement = WIN_CPU_REQ, GpuRequirement = WIN_GPU_REQ, ShaderRequirement = WIN_SHADER_REQ,
@@ -45,7 +45,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
                     PlatformLabel = "macOS",
 
                     // Checks
-                    OsCheck = SystemSpecUtils.IsMacOsBigSurOrNewer, CpuCheck = SystemSpecUtils.IsAppleSilicon, GpuCheck = SystemSpecUtils.IsAppleSilicon, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
+                    OsCheck = SystemSpecUtils.IsMacOSVersionAcceptable, CpuCheck = SystemSpecUtils.IsAppleSilicon, GpuCheck = SystemSpecUtils.IsAppleSilicon, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
 
                     // Display Strings
                     OsRequirement = MAC_OS_REQ, CpuRequirement = MAC_CPU_REQ, GpuRequirement = MAC_GPU_REQ, ShaderRequirement = MAC_SHADER_REQ,

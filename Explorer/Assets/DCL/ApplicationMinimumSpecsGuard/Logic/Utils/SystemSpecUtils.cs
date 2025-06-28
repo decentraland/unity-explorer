@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -5,50 +6,76 @@ namespace DCL.ApplicationMinimumSpecsGuard
 {
     /// <summary>
     ///     Contains pure, static logic functions for checking hardware specifications.
-    ///     This class is separated from the profile provider to make the logic easily testable.
+    ///     All requirements are defined as constants and arrays at the top for easy editing.
     /// </summary>
     public static class SystemSpecUtils
     {
+        // Platform Requirements
+        private static readonly string[] ACCEPTABLE_WINDOWS_VERSIONS =
+        {
+            "Windows 10", "Windows 11"
+        };
+
+        private static readonly string[] MACOS_IDENTIFIER_KEYWORDS =
+        {
+            "Mac OS X", "macOS"
+        }; // More future-proof
+
+        private const int MIN_MACOS_MAJOR_VERSION = 11; // Big Sur
+        private const string MACOS_VERSION_PATTERN = @"(\d+)\.\d+";
+
+        // CPU Requirement Constants
+        // Keywords and Patterns
+        private const string RYZEN_CPU_PATTERN = @"ryzen\s*(\d)";
+        private const string INTEL_CPU_PATTERN = @"i([3579])-?(\d{4,5})";
+
+        private static readonly string[] ALWAYS_ACCEPTED_CPU_KEYWORDS =
+        {
+            "threadripper"
+        };
+
+        // Numeric Thresholds
+        private const int MIN_RYZEN_SERIES = 5;
+        private const int MIN_INTEL_SERIES = 5;
+        private const int MIN_INTEL_GENERATION = 7;
+
+        // GPU Requirement Constants
+        // Keywords and Patterns
+        private const string RTX_GPU_PATTERN = @"rtx\s*(\d{4})";
+        private const string RX_GPU_PATTERN = @"rx\s*(\d{4})";
+        private const string ARC_GPU_PATTERN = @"a(\d{3})";
+
+        // Numeric Thresholds
+        private const int MIN_RTX_SERIES = 2000;
+        private const int MIN_RX_SERIES = 5000;
+        private const int MIN_ARC_SERIES = 500;
+
+        // Mac Silicon Requirement Constants
+        private const string APPLE_SILICON_PATTERN = @"apple\s+m\d";
+        
+
         public static bool IsWindowsCpuAcceptable(string cpu)
         {
             cpu = cpu.ToLowerInvariant();
 
-            // AMD check
-            if (cpu.Contains("ryzen"))
-            {
-                var match = Regex.Match(cpu, @"ryzen\s*(\d)");
-                if (match.Success && int.TryParse(match.Groups[1].Value, out int model))
-                    return model >= 5; // Ryzen 5, 7, 9
-            }
-
-            if (cpu.Contains("threadripper"))
+            if (ALWAYS_ACCEPTED_CPU_KEYWORDS.Any(keyword => cpu.Contains(keyword)))
                 return true;
 
-            // --- \INTEL CHECK ---
-            // Matches i3, i5, i7, i9 followed by a model number of 4 or 5 digits.
-            // Group 1: The series (3, 5, 7, 9)
-            // Group 2: The model number (e.g., 7600 or 13900)
-            var intelMatch = Regex.Match(cpu, @"i([3579])-?(\d{4,5})");
+            var ryzenMatch = Regex.Match(cpu, RYZEN_CPU_PATTERN);
+            if (ryzenMatch.Success && int.TryParse(ryzenMatch.Groups[1].Value, out int model))
+                return model >= MIN_RYZEN_SERIES;
 
+            var intelMatch = Regex.Match(cpu, INTEL_CPU_PATTERN);
             if (intelMatch.Success)
             {
-                bool seriesParsed = int.TryParse(intelMatch.Groups[1].Value, out int series); // e.g., 5 from i5
-                bool modelParsed = int.TryParse(intelMatch.Groups[2].Value, out int modelNumber); // e.g., 13900
-
-                if (seriesParsed && modelParsed)
+                if (int.TryParse(intelMatch.Groups[1].Value, out int series) &&
+                    int.TryParse(intelMatch.Groups[2].Value, out int modelNumber))
                 {
-                    // Condition 1: Must be i5 or higher
-                    if (series < 5) return false;
-
-                    // Condition 2: Must be 7th gen or higher.
-                    // For 4-digit models (e.g., 7600), the generation is the first digit.
-                    // For 5-digit models (e.g., 13900), the generation is the first two digits.
-                    int generation = modelNumber / 1000; // 7600 -> 7, 13900 -> 13
-
-                    return generation >= 7;
+                    if (series < MIN_INTEL_SERIES) return false;
+                    int generation = modelNumber / 1000;
+                    return generation >= MIN_INTEL_GENERATION;
                 }
             }
-
             return false;
         }
 
@@ -56,67 +83,63 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             gpu = gpu.ToLowerInvariant();
 
-            // NVIDIA RTX 20+ series
-            if (gpu.Contains("rtx"))
+            var rtxMatch = Regex.Match(gpu, RTX_GPU_PATTERN);
+            if (rtxMatch.Success && int.TryParse(rtxMatch.Groups[1].Value, out int rtxModel))
+                return rtxModel >= MIN_RTX_SERIES;
+
+            var rxMatch = Regex.Match(gpu, RX_GPU_PATTERN);
+            if (rxMatch.Success && int.TryParse(rxMatch.Groups[1].Value, out int rxModel))
+                return rxModel >= MIN_RX_SERIES;
+
+            var arcMatch = Regex.Match(gpu, ARC_GPU_PATTERN);
+            if (arcMatch.Success && int.TryParse(arcMatch.Groups[1].Value, out int arcModel))
+                return arcModel >= MIN_ARC_SERIES;
+
+            return false;
+        }
+
+        public static bool IsWindowsVersionAcceptable(string os)
+        {
+            foreach (string version in ACCEPTABLE_WINDOWS_VERSIONS)
             {
-                var match = Regex.Match(gpu, @"rtx\s*(\d{4})");
-                if (match.Success && int.TryParse(match.Groups[1].Value, out int rtxModel))
-                    return rtxModel >= 2000;
+                if (os.IndexOf(version, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool IsMacOSVersionAcceptable(string os)
+        {
+            bool isMac = false;
+            foreach (string keyword in MACOS_IDENTIFIER_KEYWORDS)
+            {
+                if (os.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    isMac = true;
+                    break; // Exit the loop as soon as we find a match
+                }
             }
 
-            // AMD RX 5000+ series
-            if (gpu.Contains("rx"))
-            {
-                var match = Regex.Match(gpu, @"rx\s*(\d{4})");
-                if (match.Success && int.TryParse(match.Groups[1].Value, out int rxModel))
-                    return rxModel >= 5000;
-            }
+            if (!isMac)
+                return false;
 
-            // Intel Arc A500+ only (A3xx is too weak)
-            if (gpu.Contains("arc"))
+            var match = Regex.Match(os, MACOS_VERSION_PATTERN);
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int majorVersion))
             {
-                // Accept A5xx and A7xx series (skip weak A3xx models unless you want them)
-                var match = Regex.Match(gpu, @"a(\d{3})");
-                if (match.Success && int.TryParse(match.Groups[1].Value, out int arcModel))
-                    return arcModel >= 500;
+                return majorVersion >= MIN_MACOS_MAJOR_VERSION;
             }
 
             return false;
         }
 
+        public static bool IsAppleSilicon(string deviceName)
+        {
+            return Regex.IsMatch(deviceName, APPLE_SILICON_PATTERN, RegexOptions.IgnoreCase);
+        }
+        
         public static bool ComputeShaderCheck()
         {
             return SystemInfo.supportsComputeShaders;
-        }
-        
-        public static bool IsAppleSilicon(string deviceName)
-        {
-            return Regex.IsMatch(deviceName, @"apple\s+m\d", RegexOptions.IgnoreCase);
-        }
-
-        public static int TryGetMacVersionMajor(string os)
-        {
-            var match = Regex.Match(os, @"Mac OS X (\d+)");
-            return match.Success ? int.Parse(match.Groups[1].Value) : 0;
-        }
-
-        public static bool IsWindows10OrNewer(string os)
-        {
-            return os.Contains("Windows 10") || os.Contains("Windows 11");
-        }
-
-        public static bool IsMacOsBigSurOrNewer(string os)
-        {
-            if (!os.Contains("Mac OS X")) return false;
-
-            var match = Regex.Match(os, @"(\d+)\.\d+"); // Matches "11.5", "12.0", etc.
-            if (match.Success && int.TryParse(match.Groups[1].Value, out int majorVersion))
-            {
-                // macOS 11 (Big Sur) is the minimum.
-                return majorVersion >= 11;
-            }
-
-            return false;
         }
     }
 }

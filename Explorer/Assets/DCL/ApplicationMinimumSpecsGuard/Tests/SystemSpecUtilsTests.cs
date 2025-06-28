@@ -62,7 +62,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             Assert.AreEqual(expectedResult, isAcceptable);
         }
 
-        // --- Mac Device Tests ---
+        // Mac Device Tests
 
         [Test]
         [TestCase("Apple M1", true, TestName = "Apple M1 is accepted")]
