@@ -67,7 +67,7 @@ namespace DCL.Landscape
         private int activeChunk = -1;
 
         public Transform Ocean { get; private set; }
-        public Transform Wind { get; private set; }
+        //public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
 
         public IReadOnlyList<Terrain> Terrains => terrains;
@@ -223,7 +223,7 @@ namespace DCL.Landscape
                         rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
                         Ocean = factory.CreateOcean(rootGo);
-                        Wind = factory.CreateWind();
+                        //Wind = factory.CreateWind();
 
                         Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
                         boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);

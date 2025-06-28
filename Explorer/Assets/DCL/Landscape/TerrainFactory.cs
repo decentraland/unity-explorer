@@ -36,8 +36,8 @@ namespace DCL.Landscape
         public Transform CreateOcean(Transform parent, bool worldPositionStays = true) =>
             Object.Instantiate(terrainGenData.ocean, parent, worldPositionStays).transform;
 
-        public Transform CreateWind() =>
-            Object.Instantiate(terrainGenData.wind).transform;
+        //public Transform CreateWind() =>
+        //    Object.Instantiate(terrainGenData.wind).transform;
 
         public Transform CreateCliffsRoot(Transform parent)
         {

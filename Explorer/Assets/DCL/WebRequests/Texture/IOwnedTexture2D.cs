@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.WebRequests
@@ -19,7 +20,7 @@ namespace DCL.WebRequests
 
             public void Dispose()
             {
-                Object.Destroy(Texture);
+                UnityObjectUtils.SafeDestroy(Texture);
             }
         }
     }

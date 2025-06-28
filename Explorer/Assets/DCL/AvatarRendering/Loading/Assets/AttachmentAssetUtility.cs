@@ -45,8 +45,8 @@ namespace DCL.AvatarRendering.Loading.Assets
                 child.gameObject.layer = parent.gameObject.layer;
 
                 //Wearables shouldnt have animators or animations since it will break the skinning
-                Object.Destroy(child.GetComponent<Animator>());
-                Object.Destroy(child.GetComponent<Animation>());
+                UnityObjectUtils.SafeDestroy(child.GetComponent<Animator>());
+                UnityObjectUtils.SafeDestroy(child.GetComponent<Animation>());
             }
 
             cachedWearable.Instance.gameObject.SetActive(true);
