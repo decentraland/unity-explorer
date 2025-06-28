@@ -8,6 +8,7 @@ using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.UI;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities.Extensions;
 using Global;
@@ -38,11 +39,12 @@ namespace DCL.UserInAppInitializationFlow
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
             IChatHistory chatHistory,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, liveKitHealthCheck);
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, liveKitHealthCheck, inWorldWarningNotificationView);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
