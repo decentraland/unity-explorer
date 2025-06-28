@@ -10,7 +10,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private const int MIN_STORAGE_MB = 8 * 1024;
         private const string WIN_OS_REQ = "Windows 10 or newer";
         private const string WIN_CPU_REQ = "Intel i5 (7th Gen) or AMD Ryzen 5+";
-        private const string WIN_GPU_REQ = "Nvidia RTX 20 series or AMD RX 5000 series+";
+        private const string WIN_GPU_REQ = "Nvidia RTX 20 series or AMD RX 5000 series+ (DirectX 12 compatible)";
         private const string WIN_SHADER_REQ = "Compute Shaders";
         private const string MAC_OS_REQ = "macOS 11 (Big Sur) or newer";
         private const string MAC_CPU_REQ = "Apple M1 or newer";
