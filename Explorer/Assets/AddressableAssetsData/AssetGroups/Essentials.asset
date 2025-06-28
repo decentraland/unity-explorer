@@ -145,6 +145,12 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ad9b13f190b323498848e87367bb0a7
+    m_Address: Assets/DCL/ApplicationMinimumSpecsGuard/UI/Prefab/MinimumSpecsScreen
+      1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4b896bc1397444f00a2b45725af2b263
     m_Address: NotificationIconTypesSO
     m_ReadOnly: 0
@@ -412,11 +418,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d65049d6f7a244863b39c4dda5ba538e
     m_Address: NametagsData
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: db7da980fc6384f848eeeb3077442864
-    m_Address: MinimumSpecsScreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -317,9 +317,10 @@ namespace Global.Dynamic
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            
             bool dontShowMinimumSpecs = DCLPlayerPrefs.GetInt(MinimumSpecsScreenController.PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY) == 1;
 
-            if (dontShowMinimumSpecs || (!hasMinimumSpecs && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
+            if (dontShowMinimumSpecs || (hasMinimumSpecs && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
