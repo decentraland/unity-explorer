@@ -58,8 +58,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             cpu = cpu.ToLowerInvariant();
 
-            if (ALWAYS_ACCEPTED_CPU_KEYWORDS.Any(keyword => cpu.Contains(keyword)))
-                return true;
+            foreach (string keyword in ALWAYS_ACCEPTED_CPU_KEYWORDS)
+            {
+                if (cpu.Contains(keyword))
+                    return true;
+            }
 
             var ryzenMatch = Regex.Match(cpu, RYZEN_CPU_PATTERN);
             if (ryzenMatch.Success && int.TryParse(ryzenMatch.Groups[1].Value, out int model))
