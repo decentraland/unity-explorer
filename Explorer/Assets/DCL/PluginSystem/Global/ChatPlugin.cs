@@ -63,6 +63,8 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ChatController chatController;
+        private readonly ChatUserStateUpdater chatUserStateUpdater;
+        private ChatPresenter chatPresenter;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
 
@@ -81,6 +83,7 @@ namespace DCL.PluginSystem.Global
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
+            ChatUserStateUpdater chatUserStateUpdater,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
@@ -105,6 +108,7 @@ namespace DCL.PluginSystem.Global
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
+            this.chatUserStateUpdater = chatUserStateUpdater;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.mainUIView = mainUIView;
@@ -139,6 +143,36 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
+            var presenterFactory = new ChatPresenterFactory(
+                chatHistory,
+                chatMessagesBus,
+                chatEventBus,
+                profileCache,
+                web3IdentityCache,
+                entityParticipantTable,
+                roomHub,
+                world,
+                chatSettingsAsset.Value,
+                nametagsData,
+                friendsServiceProxy,
+                userBlockingCacheProxy,
+                profileRepositoryWrapper,
+                chatUserStateUpdater
+            );
+
+            chatPresenter = new ChatPresenter(
+                () =>
+                {
+                    var view = mainUIView.ChatMainView;
+                    view.gameObject.SetActive(true);
+                    return view;
+                },
+                presenterFactory,
+                chatHistory,
+                chatMessagesBus,
+                inputBlock
+            );
+            
             chatController = new ChatController(
                 () =>
                 {

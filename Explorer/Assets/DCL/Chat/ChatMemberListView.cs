@@ -13,7 +13,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatMemberListView : MonoBehaviour
+    public class ChatMemberListView : MonoBehaviour, IChatMemberListView
     {
         /// <summary>
         /// A subset of a Profile, stores only the necessary data to be presented by the view.

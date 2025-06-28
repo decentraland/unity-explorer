@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatTitleBarView : MonoBehaviour
+    public class ChatTitleBarView : MonoBehaviour, IChatTitlebarView
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
         public delegate void DeleteChatHistoryRequestedDelegate();
@@ -21,6 +21,8 @@ namespace DCL.Chat
         public event Action? CloseMemberListButtonClicked;
         public event Action? HideMemberListButtonClicked;
         public event Action? ShowMemberListButtonClicked;
+        public event Action? OnCloseClicked;
+        public event Action<bool>? OnMemberListToggled;
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
@@ -168,5 +170,7 @@ namespace DCL.Chat
         {
             contextMenuTask.TrySetResult();
         }
+
+
     }
 }

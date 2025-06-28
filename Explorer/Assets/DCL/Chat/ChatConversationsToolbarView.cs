@@ -14,7 +14,9 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatConversationsToolbarView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ChatConversationsToolbarView : MonoBehaviour,
+        IPointerEnterHandler,
+        IPointerExitHandler
     {
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
