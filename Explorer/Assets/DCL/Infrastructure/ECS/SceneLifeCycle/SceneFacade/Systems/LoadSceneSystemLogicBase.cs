@@ -7,6 +7,7 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using Global.Dynamic.LaunchModes;
 using SceneRunner;
 using SceneRunner.Scene;
 using Utility;
@@ -16,11 +17,13 @@ namespace ECS.SceneLifeCycle.Systems
     public abstract class LoadSceneSystemLogicBase
     {
         protected readonly URLDomain assetBundleURL;
+        private readonly bool isLocalSceneDevelopment;
         protected readonly IWebRequestController webRequestController;
 
-        protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, URLDomain assetBundleURL)
+        protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, URLDomain assetBundleURL, bool isLocalSceneDevelopment)
         {
             this.assetBundleURL = assetBundleURL;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.webRequestController = webRequestController;
         }
 
@@ -82,6 +85,8 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, ReportData reportCategory, CancellationToken ct)
         {
+            if (isLocalSceneDevelopment) return SceneAssetBundleManifest.NULL;
+
             var url = assetBundleURL.Append(URLPath.FromString($"manifest/{sceneId}{PlatformUtils.GetCurrentPlatform()}.json"));
 
             try

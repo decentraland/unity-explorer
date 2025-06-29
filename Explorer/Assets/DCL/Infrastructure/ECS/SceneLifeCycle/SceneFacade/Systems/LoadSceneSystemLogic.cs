@@ -9,8 +9,8 @@ namespace ECS.SceneLifeCycle.Systems
 {
     public class LoadSceneSystemLogic : LoadSceneSystemLogicBase
     {
-        public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL)
-            : base(webRequestController, assetBundleURL) { }
+        public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, bool isLocalSceneDevelopment)
+            : base(webRequestController, assetBundleURL, isLocalSceneDevelopment) { }
 
         protected override string GetAssetBundleSceneId(string ipfsPathEntityId) =>
             ipfsPathEntityId;
