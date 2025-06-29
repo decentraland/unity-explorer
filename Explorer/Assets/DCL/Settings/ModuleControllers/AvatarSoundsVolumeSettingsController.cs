@@ -17,8 +17,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
 
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_AVATAR_VOLUME))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_AVATAR_VOLUME);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_AVATAR_VOLUME))
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_AVATAR_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetAvatarVolumeSettings);
             SetAvatarVolumeSettings(view.SliderView.Slider.value);
@@ -27,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetAvatarVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_AVATAR_VOLUME, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_AVATAR_VOLUME, volumePercentage, save: true);
         }
 
         public override void Dispose()

@@ -18,7 +18,6 @@ namespace DCL.Utilities
         private const float STP_MID_RESOLUTION_WINDOWS = 1f;
         private const float INITIAL_UPSCALE_VALUE = 1f;
 
-        private readonly SettingsDataStore settingsDataStore;
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
 
@@ -45,11 +44,9 @@ namespace DCL.Utilities
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += CharacterViewClosed;
             savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
 
-            settingsDataStore = new SettingsDataStore();
-
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
-                SetUpscalingValue(settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER), true);
+                SetUpscalingValue(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER), true);
                 ignoreFirstResolutionChange = true;
             }
             else
@@ -82,7 +79,7 @@ namespace DCL.Utilities
 
             if (updateStoredValue)
             {
-                settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
                 OnUpscalingChanged?.Invoke(sliderValue);
             }
         }
@@ -112,6 +109,6 @@ namespace DCL.Utilities
         }
 
         public float GetCurrentUpscale() =>
-            settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER);
+            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
     }
 }

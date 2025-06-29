@@ -23,8 +23,8 @@ namespace DCL.Settings.ModuleControllers
 
             LoadResolutionOptions();
 
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION))
-                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_RESOLUTION);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_RESOLUTION))
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_RESOLUTION);
             else
             {
                 for (var index = 0; index < possibleResolutions.Count; index++)
@@ -96,7 +96,7 @@ namespace DCL.Settings.ModuleControllers
         {
             Resolution selectedResolution = possibleResolutions[index];
             Screen.SetResolution(selectedResolution.width, selectedResolution.height, Screen.fullScreenMode, selectedResolution.refreshRateRatio);
-            settingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_RESOLUTION, index, save: true);
             upscalingController.ResolutionChanged(selectedResolution);
         }
 

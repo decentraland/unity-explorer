@@ -13,8 +13,8 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE))
-                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(DCLPrefKeys.SETTINGS_WINDOW_MODE);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_WINDOW_MODE))
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetWindowModeSettings);
             SetWindowModeSettings(view.DropdownView.Dropdown.value);
@@ -33,7 +33,7 @@ namespace DCL.Settings.ModuleControllers
                                         _ => throw new ArgumentOutOfRangeException(),
                                     };
 
-            settingsDataStore.SetDropdownValue(DCLPrefKeys.SETTINGS_WINDOW_MODE, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_WINDOW_MODE, index, save: true);
         }
 
         public override void Dispose()
