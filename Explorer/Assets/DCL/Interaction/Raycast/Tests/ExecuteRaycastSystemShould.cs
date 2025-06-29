@@ -38,11 +38,13 @@ namespace DCL.Interaction.Raycast.Tests
         private Entity raycastEntity;
         private PBRaycastResult raycastResult;
         private UnityEngine.Vector3 testScenePos;
+        private ISceneData sceneData;
 
         [SetUp]
         public void SetUp()
         {
-            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
             testScenePos = new UnityEngine.Vector3(10f, 0f, 15f);
             sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(testScenePos, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
 
@@ -219,6 +221,21 @@ namespace DCL.Interaction.Raycast.Tests
 
             // 1 = second element
 
+            ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<PBRaycastResult>(), Arg.Any<CRDTEntity>());
+        }
+
+        [Test]
+        public void DoNothingIfSceneIsNotFinishedLoading()
+        {
+            sceneData.SceneLoadingConcluded.Returns(false);
+
+            CreateColliders(ColliderLayer.ClPhysics);
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            system.Update(0);
+
+            Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.False);
             ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<PBRaycastResult>(), Arg.Any<CRDTEntity>());
         }
 
