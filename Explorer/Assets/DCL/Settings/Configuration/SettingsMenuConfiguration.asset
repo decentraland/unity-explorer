@@ -225,7 +225,7 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: World SFX
+          <ModuleName>k__BackingField: In-World Music & SFX
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 1
@@ -267,7 +267,7 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: Music
+          <ModuleName>k__BackingField: Sign In Music
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 1
