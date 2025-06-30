@@ -3374,7 +3374,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7153544815187403164}
   m_HandleRect: {fileID: 1973156823025283239}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -3778,6 +3778,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5967177127723827522}
     m_Modifications:
+    - target: {fileID: 135554549070489492, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
+      propertyPath: m_Name
+      value: BackgroundOn
+      objectReference: {fileID: 0}
     - target: {fileID: 1682976792197666609, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3858,6 +3862,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2372338352956275497, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
+      propertyPath: m_Name
+      value: HandleOn
+      objectReference: {fileID: 0}
     - target: {fileID: 2938718002221827054, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_text
       value: Set as Public
@@ -3869,6 +3877,10 @@ PrefabInstance:
     - target: {fileID: 2965888496743192953, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_Padding.m_Left
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5718394713700761152, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
+      propertyPath: m_Name
+      value: BackgroundOff
       objectReference: {fileID: 0}
     - target: {fileID: 6739991326136731569, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_Interactable
@@ -3897,6 +3909,10 @@ PrefabInstance:
     - target: {fileID: 8057678888699711851, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_Name
       value: ToggleWithText
+      objectReference: {fileID: 0}
+    - target: {fileID: 8287436307648595053, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
+      propertyPath: m_Name
+      value: HandleOff
       objectReference: {fileID: 0}
     - target: {fileID: 8683627804299419299, guid: 42f993a26991889449d58dcf6a15c6f8, type: 3}
       propertyPath: m_AnchorMax.y

@@ -212,7 +212,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         private void SetPublicFlag(bool isPublic)
         {
             setPublicCts = setPublicCts.SafeRestart();
-            closePanelCts = closePanelCts.SafeRestart();
 
             async UniTaskVoid SetPublicFlagAsync(CancellationToken ct)
             {
@@ -227,6 +226,7 @@ namespace DCL.InWorldCamera.PhotoDetail
                     if(!isPublic)
                         HandleReelSetPrivate();
                 }
+                catch (OperationCanceledException) { }
                 catch (UnityWebRequestException e)
                 {
                     ReportHub.LogException(e, new ReportData(ReportCategory.CAMERA_REEL));

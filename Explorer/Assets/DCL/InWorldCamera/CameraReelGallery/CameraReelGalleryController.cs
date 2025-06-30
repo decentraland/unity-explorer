@@ -255,27 +255,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             {
                 CameraReelStorageStatus response = await cameraReelStorageService.DeleteScreenshotAsync(reelToDeleteInfo.Id, ct);
 
-                int deletedIndex = -1;
-                for (int i = 0; i < currentSize; i++)
-                    if (deletedIndex >= 0)
-                        thumbnailImages[i - 1] = thumbnailImages[i];
-                    else if (thumbnailImages[i].CameraReelResponse.id == reelToDeleteInfo.Id)
-                        deletedIndex = i;
-
-                thumbnailImages[currentSize - 1] = null;
-                currentSize--;
-                ResetThumbnailsVisibility();
-
-                MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetMonthDateTimeFromString(reelToDeleteInfo.Datetime));
-                monthGridView.RemoveThumbnail(reelToDeleteInfo.Id);
-
-                if (monthGridView.GridIsEmpty())
-                {
-                    monthViews.Remove(monthGridView.DateTimeBucket);
-                    ReleaseGridView(monthGridView);
-                }
-
-                pagedCameraReelManager.RemoveReelId(reelToDeleteInfo.Id);
+                RemoveThumbnailFromList(reelToDeleteInfo.Id, reelToDeleteInfo.Datetime);
 
                 ScreenshotDeleted?.Invoke();
                 StorageUpdated?.Invoke(response);
@@ -292,19 +272,31 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void HideReelFromList(CameraReelResponseCompact reelToHide)
         {
-            int hiddenIndex = -1;
+            if (reelToHide != null)
+                RemoveThumbnailFromList(reelToHide.id, reelToHide.dateTime);
+        }
+        
+        private void RemoveThumbnailFromList(string reelId, string dateTime)
+        {
+            int indexToRemove = -1;
             for (int i = 0; i < currentSize; i++)
-                if (hiddenIndex >= 0)
+            {
+                if (indexToRemove >= 0)
+                {
                     thumbnailImages[i - 1] = thumbnailImages[i];
-                else if (thumbnailImages[i].CameraReelResponse.id == reelToHide.id)
-                    hiddenIndex = i;
+                }
+                else if (thumbnailImages[i].CameraReelResponse.id == reelId)
+                {
+                    indexToRemove = i;
+                }
+            }
 
             thumbnailImages[currentSize - 1] = null;
             currentSize--;
             ResetThumbnailsVisibility();
-            
-            MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetMonthDateTimeFromString(reelToHide.dateTime));
-            monthGridView.RemoveThumbnail(reelToHide.id);
+
+            MonthGridController monthGridView = GetMonthGrid(ReelUtility.GetMonthDateTimeFromString(dateTime));
+            monthGridView.RemoveThumbnail(reelId);
 
             if (monthGridView.GridIsEmpty())
             {
@@ -312,7 +304,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
                 ReleaseGridView(monthGridView);
             }
 
-            pagedCameraReelManager.RemoveReelId(reelToHide.id);
+            pagedCameraReelManager.RemoveReelId(reelId);
             
             if(currentSize <= 0)
                 view.emptyState.SetActive(true);
