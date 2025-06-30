@@ -13,9 +13,8 @@ using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PlacesAPIService;
-using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
+using DCL.SocialService;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
@@ -54,6 +53,7 @@ namespace DCL.PluginSystem.Global
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
         private EventInfoController? eventInfoController;
+        private IRPCCommunitiesService rpcCommunitiesService;
 
         public CommunitiesPlugin(
             IMVCManager mvcManager,
@@ -73,7 +73,9 @@ namespace DCL.PluginSystem.Global
             IEventsApiService eventsApiService,
             IWeb3IdentityCache web3IdentityCache,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            CommunitiesEventBus communitiesEventBus,
+            IRPCSocialServices rpcSocialServices)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -93,6 +95,7 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
         }
 
         public void Dispose()
@@ -151,6 +154,8 @@ namespace DCL.PluginSystem.Global
                 eventsApiService,
                 realmNavigator);
             mvcManager.RegisterController(eventInfoController);
+
+            rpcCommunitiesService.SubscribeToConnectivityStatusAsync(ct).Forget();
         }
     }
 

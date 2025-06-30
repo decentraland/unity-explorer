@@ -29,6 +29,7 @@ using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using Decentraland.SocialService.V2;
 using ECS.Abstract;
 using LiveKit.Rooms;
 using MVC;
@@ -78,6 +79,7 @@ namespace DCL.Chat
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
+        private readonly CommunitiesEventBus communitiesEventBus;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -95,6 +97,7 @@ namespace DCL.Chat
         private CancellationTokenSource errorNotificationCts = new();
         private CancellationTokenSource memberListCts = new();
         private CancellationTokenSource isUserAllowedCts;
+        private CancellationTokenSource isUserAllowedCts2; // We can't reuse the same
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
@@ -134,7 +137,8 @@ namespace DCL.Chat
             ISpriteCache thumbnailCache,
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
-            CommunitiesFeatureAccess communitiesFeatureAccess) : base(viewFactory)
+            CommunitiesFeatureAccess communitiesFeatureAccess,
+            CommunitiesEventBus communitiesEventBus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -158,6 +162,7 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.communitiesFeatureAccess = communitiesFeatureAccess;
+            this.communitiesEventBus = communitiesEventBus;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -363,10 +368,8 @@ namespace DCL.Chat
             }
         }
 
-        // TODO: Ready to be called by a notification
         private async UniTask AddCommunityCoversationAsync(string communityId)
         {
-            // TODO Add the feature flag somewhere in the place where the incoming notifications are processed
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
             Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -397,10 +400,8 @@ namespace DCL.Chat
             }
         }
 
-        // TODO: Ready to be called by a notification
         private void RemoveCommunityConversation(string communityId)
         {
-            // TODO Add the feature flag somewhere in the place where the incoming notifications are processed
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(communityId);
             userCommunities.Remove(communityChannelId);
             chatHistory.RemoveChannel(communityChannelId);
@@ -922,6 +923,31 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
+
+            SubscribeToCommunitiesBusEventsAsync().Forget();
+        }
+
+        private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
+        {
+            isUserAllowedCts2 = isUserAllowedCts2.SafeRestart();
+
+            if (await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts2.Token))
+            {
+                communitiesEventBus.UserConnectedToCommunity += OnCommunitiesEventBusUserConnectedToCommunity;
+                communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;
+            }
+        }
+
+        private void OnCommunitiesEventBusUserDisconnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
+        {
+            if(userConnectivity.Member.Address == web3IdentityCache.Identity!.Address)
+                RemoveCommunityConversation(userConnectivity.CommunityId);
+        }
+
+        private void OnCommunitiesEventBusUserConnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
+        {
+            if(userConnectivity.Member.Address == web3IdentityCache.Identity!.Address)
+                AddCommunityCoversationAsync(userConnectivity.CommunityId).Forget();
         }
 
         private void OnViewViewCommunityRequested(string communityId)
@@ -978,6 +1004,9 @@ namespace DCL.Chat
 
             viewDependencies.DclInput.Shortcuts.ToggleNametags.performed -= OnToggleNametagsShortcutPerformed;
             viewDependencies.DclInput.Shortcuts.OpenChatCommandLine.performed -= OnOpenChatCommandLineShortcutPerformed;
+
+            communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
+            communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
         }
 
         private async UniTaskVoid ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)

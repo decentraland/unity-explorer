@@ -69,9 +69,9 @@ namespace DCL.PluginSystem.Global
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
+        private readonly CommunitiesEventBus communitiesEventBus;
 
         private ChatController chatController;
-        private IRealmNavigator realmNavigator;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -100,11 +100,11 @@ namespace DCL.PluginSystem.Global
             FeatureFlagsCache featureFlagsCache,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            IRealmNavigator realmNavigator,
             ICommunitiesDataProvider communityDataProvider,
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
-            CommunitiesFeatureAccess communitiesFeatureAccess)
+            CommunitiesFeatureAccess communitiesFeatureAccess,
+            CommunitiesEventBus communitiesEventBus)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -133,11 +133,11 @@ namespace DCL.PluginSystem.Global
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.realmNavigator = realmNavigator;
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.communitiesFeatureAccess = communitiesFeatureAccess;
+            this.communitiesEventBus = communitiesEventBus;
         }
 
         public void Dispose()
@@ -189,7 +189,8 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 mvcManager,
                 warningNotificationView,
-                communitiesFeatureAccess
+                communitiesFeatureAccess,
+                communitiesEventBus
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
