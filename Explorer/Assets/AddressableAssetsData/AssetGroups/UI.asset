@@ -25,11 +25,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
-    m_Address: LogoDCL154x154SpriteAtlas.spriteatlas
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
     m_Address: MapRendererSettings
     m_ReadOnly: 0
