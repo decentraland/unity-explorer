@@ -20,9 +20,12 @@ namespace DCL.SceneLoadingScreens
         [SerializeField]
         private Color unselectedColor;
 
+        [SerializeField]
+        private float selectedScale = 1.4f;
+
         public void Select()
         {
-            scalingTransform.localScale = Vector3.one * 1.4f;
+            scalingTransform.localScale = Vector3.one * selectedScale;
             image.color = selectedColor;
         }
 
