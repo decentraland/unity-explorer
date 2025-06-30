@@ -5,9 +5,9 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.PluginSystem.World;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
-using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.AudioSources
     [UpdateInGroup(typeof(SDKAudioSourceGroup))]
     [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
     [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
-    public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
+    public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
@@ -30,16 +30,19 @@ namespace DCL.SDKComponents.AudioSources
         private readonly ISceneData sceneData;
         private readonly AudioMixerGroup[]? worldGroup;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly AudioSourcesPlugin.AudioSourcesPluginSettings settings;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
-            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer, ISceneStateProvider sceneStateProvider) : base(world)
+            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer, ISceneStateProvider sceneStateProvider,
+            AudioSourcesPlugin.AudioSourcesPluginSettings settings) : base(world)
         {
             this.world = world;
             this.sceneData = sceneData;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.sceneStateProvider = sceneStateProvider;
+            this.settings = settings;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
 
@@ -50,9 +53,7 @@ namespace DCL.SDKComponents.AudioSources
         protected override void Update(float t)
         {
             CreateAudioSourceQuery(World);
-            UpdateAudioSourceQuery(World);
-
-            MuteAudioSourceQuery(World, !sceneStateProvider.IsCurrent);
+            UpdateAudioSourceQuery(World, t);
         }
 
         [Query]
@@ -96,22 +97,27 @@ namespace DCL.SDKComponents.AudioSources
 
         [Query]
         [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
-        private void UpdateAudioSource(ref PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent)
+        private void UpdateAudioSource(PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent, [Data] float dt)
         {
             HandleSDKChanges(sdkComponent, ref component, partitionComponent);
-        }
 
-
-        public void OnSceneIsCurrentChanged(bool value)
-        {
-            UpdateCurrentSceneVolumeQuery(World, value);
-        }
-
-        [Query]
-        private void UpdateCurrentSceneVolume([Data] bool isCurrentScene, ref PBAudioSource sdkComponent, ref AudioSourceComponent component)
-        {
             if (component.AudioSourceAssigned)
-                component.AudioSource!.volume = isCurrentScene ? sdkComponent.GetVolume() : 0;
+                FadeVolumeOnSceneChange(sdkComponent, component.AudioSource!, dt);
+        }
+
+        private void FadeVolumeOnSceneChange(PBAudioSource sdkComponent, AudioSource audio, float dt)
+        {
+            float sdkVolume = sdkComponent.GetVolume();
+
+            switch (sceneStateProvider.IsCurrent)
+            {
+                case true when audio.volume < sdkVolume:
+                    audio.volume = Mathf.Min(sdkVolume, audio.volume + (dt * settings.FadeSpeed * sdkVolume));
+                    return;
+                case false when audio.volume > 0:
+                    audio.volume = Mathf.Max(0, audio.volume - (dt * settings.FadeSpeed * sdkVolume));
+                    break;
+            }
         }
 
         private void HandleSDKChanges(PBAudioSource sdkComponent, ref AudioSourceComponent component, PartitionComponent partitionComponent)
@@ -147,17 +153,6 @@ namespace DCL.SDKComponents.AudioSources
             }
 
             sdkComponent.IsDirty = false;
-        }
-
-        /// <summary>
-        /// Mutes an AudioSource.
-        /// </summary>
-        /// <param name="component">The AudioSource component.</param>
-        /// <param name="mute">Whether the AudioSource has to be muted or not.</param>
-        [Query]
-        private void MuteAudioSource(ref AudioSourceComponent component, [Data] bool mute)
-        {
-            component.Mute(mute);
         }
     }
 }

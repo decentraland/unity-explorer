@@ -59,13 +59,12 @@ namespace DCL.PluginSystem.Global
         private readonly Entity playerEntity;
         private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
-        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCache;
+        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ViewDependencies viewDependencies;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
@@ -99,13 +98,12 @@ namespace DCL.PluginSystem.Global
             Entity playerEntity,
             bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
-            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
-            ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
-            IProfileChangesBus profileChangesBus,
+            ProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
             bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager, ProfileRepositoryWrapper profileDataProvider)
@@ -137,7 +135,6 @@ namespace DCL.PluginSystem.Global
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
-            this.viewDependencies = viewDependencies;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
             this.enableFriends = enableFriends;
@@ -215,7 +212,7 @@ namespace DCL.PluginSystem.Global
 
             mvcManager.RegisterController(new ProfileNameEditorController(
                 ProfileNameEditorController.CreateLazily(profileNameEditorView, null),
-                webBrowser, new InWorldSelfProfileDecorator(selfProfile, world, playerEntity), nftNamesProvider, decentralandUrlsSource, profileChangesBus));
+                webBrowser, selfProfile, nftNamesProvider, decentralandUrlsSource, profileChangesBus));
         }
 
         public class PassportSettings : IDCLPluginSettings

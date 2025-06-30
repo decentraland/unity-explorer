@@ -21,7 +21,6 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         private readonly ILoadingStatus loadingStatus;
         private readonly ISelfProfile selfProfile;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IAppArgs appParameters;
@@ -33,14 +32,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         public CheckOnboardingStartupOperation(
             ILoadingStatus loadingStatus,
             ISelfProfile selfProfile,
-            FeatureFlagsCache featureFlagsCache,
             IDecentralandUrlsSource decentralandUrlsSource,
             IAppArgs appParameters,
             IRealmNavigator realmNavigator)
         {
             this.loadingStatus = loadingStatus;
             this.selfProfile = selfProfile;
-            this.featureFlagsCache = featureFlagsCache;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.appParameters = appParameters;
             this.realmNavigator = realmNavigator;
@@ -55,7 +52,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             {
                 // Update profile data
                 ownProfile.TutorialStep = TUTORIAL_STEP_DONE_MARK;
-                Profile? profile = await selfProfile.ForcePublishWithoutModificationsAsync(ct);
+
+                Profile? profile = await selfProfile.UpdateProfileAsync(ownProfile, ct,
+                    // No need to update avatar, since we only modify the tutorial step, not wearables nor emotes
+                    updateAvatarInWorld: false);
 
                 if (profile != null)
                 {
@@ -132,20 +132,22 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         {
             realm = null;
 
-            if (!featureFlagsCache.Configuration.IsEnabled(featureFlag))
+            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
+
+            if (!featureFlags.IsEnabled(featureFlag))
                 return false;
 
-            if (featureFlagsCache.Configuration.IsEnabled(featureFlag, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT))
+            if (featureFlags.IsEnabled(featureFlag, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT))
             {
-                if (!featureFlagsCache.Configuration.TryGetTextPayload(featureFlag, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT, out realm))
+                if (!featureFlags.TryGetTextPayload(featureFlag, FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT, out realm))
                     return false;
 
                 return !string.IsNullOrEmpty(realm);
             }
 
-            if (featureFlagsCache.Configuration.IsEnabled(featureFlag, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT))
+            if (featureFlags.IsEnabled(featureFlag, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT))
             {
-                if (!featureFlagsCache.Configuration.TryGetTextPayload(featureFlag, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT, out realm))
+                if (!featureFlags.TryGetTextPayload(featureFlag, FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT, out realm))
                     return false;
 
                 return !string.IsNullOrEmpty(realm);

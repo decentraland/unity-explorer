@@ -34,7 +34,6 @@ namespace DCL.PluginSystem.Global
 
     public class InputPlugin : IDCLGlobalPlugin<InputSettings>
     {
-        private readonly DCLInput dclInput;
         private readonly MultiplayerEmotesMessageBus messageBus;
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
@@ -45,11 +44,9 @@ namespace DCL.PluginSystem.Global
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument sceneUIDocument;
         private readonly UIDocument cursorUIDocument;
-        private readonly IExposedCameraData cameraData;
         private CrosshairCanvas crosshairCanvas = null!;
 
         public InputPlugin(
-            DCLInput dclInput,
             ICursor cursor,
             IEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
@@ -59,10 +56,8 @@ namespace DCL.PluginSystem.Global
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument sceneUIDocument,
-            UIDocument cursorUIDocument,
-            IExposedCameraData cameraData)
+            UIDocument cursorUIDocument)
         {
-            this.dclInput = dclInput;
             this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.assetsProvisioner = assetsProvisioner;
@@ -73,9 +68,8 @@ namespace DCL.PluginSystem.Global
             this.rootUIDocument = rootUIDocument;
             this.sceneUIDocument = sceneUIDocument;
             this.cursorUIDocument = cursorUIDocument;
-            this.cameraData = cameraData;
 
-            dclInput.Enable();
+            DCLInput.Instance.Enable();
         }
 
         public async UniTask InitializeAsync(InputSettings settings, CancellationToken ct)
@@ -98,19 +92,19 @@ namespace DCL.PluginSystem.Global
         {
             builder.World.Create(new InputMapComponent(InputMapComponent.Kind.NONE));
 
-            ApplyInputMapsSystem.InjectToWorld(ref builder, dclInput);
-            UpdateInputJumpSystem.InjectToWorld(ref builder, dclInput.Player.Jump);
-            UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
-            UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
-            DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput, messageBus, mvcManager);
-            UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas, cameraData);
-            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, sceneUIDocument, cursorUIDocument);
+            ApplyInputMapsSystem.InjectToWorld(ref builder);
+            UpdateInputJumpSystem.InjectToWorld(ref builder, DCLInput.Instance.Player.Jump);
+            UpdateInputMovementSystem.InjectToWorld(ref builder);
+            UpdateCameraInputSystem.InjectToWorld(ref builder);
+            DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, DCLInput.Instance.FreeCamera.DropPlayer);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, messageBus, mvcManager);
+            UpdateCursorInputSystem.InjectToWorld(ref builder, eventSystem, cursor, crosshairCanvas);
+            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, mvcManager, debugContainerBuilder, rootUIDocument, sceneUIDocument, cursorUIDocument);
         }
 
         public void Dispose()
         {
-            dclInput.Dispose();
+            DCLInput.Reset();
         }
     }
 }

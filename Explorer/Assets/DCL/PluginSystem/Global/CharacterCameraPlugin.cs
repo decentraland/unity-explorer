@@ -32,7 +32,6 @@ namespace DCL.PluginSystem.Global
         private readonly ExposedCameraData exposedCameraData;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly IAppArgs commandLineArgs;
-        private readonly DCLInput input;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
         private ProvidedInstance<CinemachineCameraAudioSettings> cinemachineCameraAudioSettings;
@@ -43,15 +42,13 @@ namespace DCL.PluginSystem.Global
             RealmSamplingData realmSamplingData,
             ExposedCameraData exposedCameraData,
             IDebugContainerBuilder debugBuilder,
-            IAppArgs commandLineArgs,
-            DCLInput input)
+            IAppArgs commandLineArgs)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.realmSamplingData = realmSamplingData;
             this.exposedCameraData = exposedCameraData;
             this.debugBuilder = debugBuilder;
             this.commandLineArgs = commandLineArgs;
-            this.input = input;
         }
 
         public void Dispose()
@@ -102,12 +99,15 @@ namespace DCL.PluginSystem.Global
 
             exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
+            bool isDebug = commandLineArgs.HasDebugFlag();
+
             // Register systems
             ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, cinemachineCameraAudioSettings.Value);
-            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input, isFreeCameraAllowed: commandLineArgs.HasDebugFlag());
+            ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, isDebug);
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder, cinemachinePreset.Brain);
-            ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);
-            ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder, controlsSettingsAsset.Value);
+            CinemachineFieldOfViewSystem.InjectToWorld(ref builder);
+            CinemachineFarClipPlaneSystem.InjectToWorld(ref builder);
+            ApplyCinemachineSettingsSystem.InjectToWorld(ref builder, debugBuilder, controlsSettingsAsset.Value, isDebug);
             UpdateCinemachineBrainSystem.InjectToWorld(ref builder);
         }
     }

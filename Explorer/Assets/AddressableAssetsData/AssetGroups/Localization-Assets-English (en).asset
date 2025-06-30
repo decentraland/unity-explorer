@@ -15,8 +15,8 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-English (en)
   m_GUID: bbf196456d6041d4e9cb25f216e21f0c
   m_SerializeEntries:
-  - m_GUID: 88fa6c198b6da4e3680d88682eaad9d0
-    m_Address: DCL Game Night
+  - m_GUID: d5a5afcb41e894aef83f169d6b2bc67c
+    m_Address: Smaller_Career_Quest_White
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
