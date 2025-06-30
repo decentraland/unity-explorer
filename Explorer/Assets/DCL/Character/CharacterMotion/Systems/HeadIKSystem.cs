@@ -40,10 +40,10 @@ namespace DCL.CharacterMotion.Systems
         private readonly DCLInput dclInput;
         private readonly Vector3[] previewImageCorners = new Vector3[4];
 
-        private HeadIKSystem(World world, IDebugContainerBuilder builder, ICharacterControllerSettings settings, DCLInput dclInput) : base(world)
+        private HeadIKSystem(World world, IDebugContainerBuilder builder, ICharacterControllerSettings settings) : base(world)
         {
             this.settings = settings;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
 
             verticalLimit = new ElementBinding<float>(0);
             horizontalLimit = new ElementBinding<float>(0);

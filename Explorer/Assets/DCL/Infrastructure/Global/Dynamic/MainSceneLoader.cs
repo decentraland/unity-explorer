@@ -174,8 +174,6 @@ namespace Global.Dynamic
             var diskCache = NewInstanceDiskCache(applicationParametersParser, launchSettings);
             var partialsDiskCache = NewInstancePartialDiskCache(applicationParametersParser, launchSettings);
 
-            var featureFlagsProxy = new ObjectProxy<FeatureFlagsCache>();
-
             bootstrapContainer = await BootstrapContainer.CreateAsync(
                 debugSettings,
                 sceneLoaderSettings: settings,
@@ -192,7 +190,6 @@ namespace Global.Dynamic
                 world,
                 decentralandEnvironment,
                 dclVersion,
-                featureFlagsProxy,
                 destroyCancellationToken
             );
 
@@ -204,7 +201,7 @@ namespace Global.Dynamic
 
                 bool isLoaded;
                 Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, featureFlagsProxy, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugContainerBuilder, playerEntity, memoryCap, scenesUIRoot, ct);
 
                 if (!isLoaded)
                 {
@@ -217,9 +214,8 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
-                //TODO: This is a hack. Feature flags should be the first thing to be initialized
-                bootstrap.ApplyFeatureFlagConfigs(staticContainer!.FeatureFlagsCache);
-                staticContainer.SceneLoadingLimit.SetEnabled(staticContainer.FeatureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
+                bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
+                staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
@@ -316,7 +312,7 @@ namespace Global.Dynamic
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
         {
             MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
-            if (DCLPlayerPrefs.GetInt(MinimumSpecsScreenController.PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
+            if (DCLPlayerPrefs.GetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
@@ -336,7 +332,7 @@ namespace Global.Dynamic
             bool runVersionControl = debugSettings.EnableVersionUpdateGuard;
 
             if (!Application.isEditor)
-                runVersionControl = !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK);
+                runVersionControl = !applicationParametersParser.HasDebugFlag() && !applicationParametersParser.HasFlag(AppArgsFlags.SKIP_VERSION_CHECK);
 
             if (!runVersionControl)
                 return false;
@@ -365,7 +361,7 @@ namespace Global.Dynamic
         {
             // We disable Inputs directly because otherwise before login (so before the Input component was created and the system that handles it is working)
             // all inputs will be valid, and it allows for weird behaviour, including opening menus that are not ready to be open yet.
-            DCLInput dclInput = staticContainer!.InputProxy.StrictObject;
+            DCLInput dclInput = DCLInput.Instance;
 
             dclInput.Shortcuts.Disable();
             dclInput.Player.Disable();
@@ -383,7 +379,7 @@ namespace Global.Dynamic
             staticContainer!.InputBlock.EnableAll(InputMapComponent.Kind.FREE_CAMERA,
                 InputMapComponent.Kind.EMOTE_WHEEL);
 
-            staticContainer.InputProxy.StrictObject.UI.Enable();
+            DCLInput.Instance.UI.Enable();
         }
 
         private static IDiskCache<PartialLoadingState> NewInstancePartialDiskCache(IAppArgs appArgs, RealmLaunchSettings launchSettings)

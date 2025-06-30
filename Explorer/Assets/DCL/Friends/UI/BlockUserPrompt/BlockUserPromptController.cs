@@ -20,12 +20,11 @@ namespace DCL.Friends.UI.BlockUserPrompt
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public BlockUserPromptController(ViewFactoryMethod viewFactory,
-            IFriendsService friendsService,
-            DCLInput dclInput)
+            IFriendsService friendsService)
             : base(viewFactory)
         {
             this.friendsService = friendsService;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
         }
 
         public override void Dispose()

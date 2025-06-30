@@ -86,6 +86,13 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
+        <EmotesSettings>k__BackingField:
+          <TimeBetweenEmotes>k__BackingField: 3
+          <IntroEmoteURN>k__BackingField: raiseHand
+          <JumpInEmoteURN>k__BackingField: fistpump
+          <FunnyEmotes>k__BackingField:
+          - robot
+          - disco
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -648,6 +655,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuToggleWithIconPrefab:
           m_AssetGUID: bc2f6e2e838c8114e89c2f3157c0ab47
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuTextPrefab:
+          m_AssetGUID: 9c27490a499144f85bed4593943fe86a
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
