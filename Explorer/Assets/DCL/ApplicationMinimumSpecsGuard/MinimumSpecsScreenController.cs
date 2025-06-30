@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using MVC;
+using Sentry;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -49,11 +50,13 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnContinueClicked()
         {
+            SentrySdk.AddBreadcrumb("Skipping minimum requirements warning screen");
             HoldingTask?.TrySetResult();
         }
 
         private static void OnExitClicked()
         {
+            SentrySdk.AddBreadcrumb("Exiting application on minimum requirements warning screen");
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
