@@ -130,8 +130,10 @@ namespace DCL.Navmap
             view.EventsTabContainer.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
 
-        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
+            Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
+                true, reelDeleteIntention, reelListRefreshIntention)));
 
         private void UpdatePhotosTabText(int count) =>
             view.SetPhotoTabText(count);
