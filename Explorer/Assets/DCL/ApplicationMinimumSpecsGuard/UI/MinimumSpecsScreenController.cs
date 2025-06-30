@@ -6,8 +6,6 @@ using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using Sentry;
-using UnityEditor;
-using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -68,7 +66,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             SentrySdk.AddBreadcrumb("Exiting application on minimum requirements warning screen");
 #if UNITY_EDITOR
-            EditorApplication.isPlaying = false;
+            UnityEditor.EditorApplication.isPlaying = false;
 #else
             UnityEngine.Application.Quit();
 #endif
