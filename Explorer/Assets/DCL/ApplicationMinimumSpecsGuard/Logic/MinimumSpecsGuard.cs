@@ -25,8 +25,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
     ///         results = specsGuard.Results;
     ///         if (!hasMinimumSpecs)
     ///         {
-    ///         // Logic to show a warning screen, passing the 'results' to the UI controller.
-    ///         Debug.LogWarning("System does not meet minimum requirements.");
+    ///          
     ///         }
     /// </summary>
     public class MinimumSpecsGuard

@@ -46,8 +46,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             DCLPlayerPrefs.SetInt(PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY, dontShowAgain ? 1 : 0);
             DCLPlayerPrefs.Save();
-
-            Debug.Log(DCLPlayerPrefs.GetInt(PLAYER_PREF_DONT_SHOW_MINIMUM_SPECS_KEY));
         }
 
         public override void Dispose()
