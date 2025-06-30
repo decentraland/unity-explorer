@@ -146,8 +146,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4ad9b13f190b323498848e87367bb0a7
-    m_Address: Assets/DCL/ApplicationMinimumSpecsGuard/UI/Prefab/MinimumSpecsScreen
-      1.prefab
+    m_Address: Assets/DCL/ApplicationMinimumSpecsGuard/UI/Prefab/MinimumSpecsScreen.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
