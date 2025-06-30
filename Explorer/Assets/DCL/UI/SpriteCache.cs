@@ -125,7 +125,8 @@ namespace DCL.UI
                     new GetTextureArguments(TextureType.Albedo, useKtx),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
-                    ReportCategory.UI
+                    ReportCategory.UI,
+                    suppressErrors: true
                 );
 
                 Texture2D texture = ownedTexture.Texture;

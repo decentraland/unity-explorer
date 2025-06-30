@@ -246,10 +246,12 @@ namespace DCL.Communities.CommunitiesCard.Members
             return listItem;
         }
 
-        public void RefreshGrid()
+        public void RefreshGrid(bool redraw)
         {
             loopGrid.SetListItemCount(getCurrentSectionFetchData().items.Count, false);
-            loopGrid.RefreshAllShownItem();
+
+            if (redraw)
+                loopGrid.RefreshAllShownItem();
         }
 
         public void SetEmptyStateActive(bool active) { }

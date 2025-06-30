@@ -138,7 +138,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (sectionData.pageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
                 else
-                    view.RefreshGrid();
+                    view.RefreshGrid(true);
             }
         }
 
@@ -183,7 +183,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                view.RefreshGrid();
+                view.RefreshGrid(false);
             }
         }
 
@@ -205,7 +205,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 allMembersFetchData.items.Remove(profile);
-                view.RefreshGrid();
+                view.RefreshGrid(false);
             }
         }
 
@@ -237,7 +237,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                view.RefreshGrid();
+                view.RefreshGrid(true);
             }
         }
 
@@ -269,7 +269,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                view.RefreshGrid();
+                view.RefreshGrid(true);
             }
         }
 
@@ -366,7 +366,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             currentSectionFetchData.items.Find(item => item.memberAddress.Equals(userId))
                                    .friendshipStatus = status.Convert();
 
-            view.RefreshGrid();
+            view.RefreshGrid(true);
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
@@ -437,8 +437,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 bannedMembersFetchData.items.Remove(profile);
-                view.RefreshGrid();
-
+                view.RefreshGrid(false);
             }
         }
     }
