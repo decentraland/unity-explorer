@@ -5,6 +5,7 @@ using DCL.Prefs;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using Sentry;
 using UnityEditor;
 using UnityEngine;
 
@@ -63,11 +64,13 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnContinueClicked()
         {
+            SentrySdk.AddBreadcrumb("Skipping minimum requirements warning screen");
             HoldingTask?.TrySetResult();
         }
 
         private static void OnExitClicked()
         {
+            SentrySdk.AddBreadcrumb("Exiting application on minimum requirements warning screen");
 #if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #else
