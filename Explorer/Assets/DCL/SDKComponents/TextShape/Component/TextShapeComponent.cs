@@ -29,6 +29,8 @@ namespace DCL.SDKComponents.TextShape.Component
             IsContainedInScene = false;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
     }
 }

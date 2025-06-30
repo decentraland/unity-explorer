@@ -1,11 +1,13 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +19,7 @@ namespace SceneRunner
     public class SceneFacade : ISceneFacade
     {
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
+        private readonly IPerformanceBudget performanceBudget;
 
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
@@ -37,33 +40,17 @@ namespace SceneRunner
 
         public SceneFacade(
             ISceneData sceneData,
-            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps)
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps,
+            IPerformanceBudget performanceBudget)
         {
             this.deps = deps;
+            this.performanceBudget = performanceBudget;
             SceneData = sceneData;
         }
 
         public void Initialize()
         {
             deps.SyncDeps.ECSWorldFacade.Initialize();
-        }
-
-        /// <remarks>
-        /// <see cref="SceneFacade"/> is a component in the global scene as an
-        /// <see cref="ISceneFacade"/>. It owns its <see cref="SceneRuntimeImpl"/> through its
-        /// <see cref="deps"/> field, which in turns owns its <see cref="V8ScriptEngine"/>. So that also
-        /// shall be the chain of Dispose calls.
-        /// </remarks>
-        public void Dispose()
-        {
-            MultithreadingUtility.AssertMainThread(nameof(Dispose), true);
-
-            SceneStateProvider.State.Set(SceneState.Disposing);
-            runtimeInstance.SetIsDisposing();
-
-            DisposeInternal();
-
-            SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
         public void SetTargetFPS(int fps)
@@ -109,6 +96,7 @@ namespace SceneRunner
             SetTargetFPS(targetFPS);
 
             sceneCodeIsRunning.Set();
+
             try
             {
                 // Start the scene
@@ -140,6 +128,7 @@ namespace SceneRunner
                     stopWatch.Restart();
 
                     sceneCodeIsRunning.Set();
+
                     try
                     {
                         // We can't guarantee that the thread is preserved between updates
@@ -226,14 +215,24 @@ namespace SceneRunner
             while (sceneCodeIsRunning)
                 await UniTask.Yield(PlayerLoopTiming.Initialization);
 
-            DisposeInternal();
+            await deps.AsAsyncDisposable(performanceBudget).DisposeAsync();
 
             SceneStateProvider.State.Set(SceneState.Disposed);
         }
 
-        private void DisposeInternal()
+        /// <summary>
+        /// Safe only on MainThread.
+        /// </summary>
+        public IEnumerator<Unit> BudgetedDispose()
         {
-            deps.Dispose();
+            SceneStateProvider.State.Set(SceneState.Disposing);
+
+            runtimeInstance.SetIsDisposing();
+
+            var enumerator = deps.BudgetedDispose();
+            while (enumerator.MoveNext()) yield return enumerator.Current;
+
+            SceneStateProvider.State.Set(SceneState.Disposed);
         }
     }
 }

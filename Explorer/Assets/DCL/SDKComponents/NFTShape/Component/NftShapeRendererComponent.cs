@@ -4,7 +4,7 @@ using System;
 
 namespace DCL.SDKComponents.NFTShape.Component
 {
-    public readonly struct NftShapeRendererComponent : IPoolableComponentProvider<INftShapeRenderer>
+    public struct NftShapeRendererComponent : IPoolableComponentProvider<INftShapeRenderer>
     {
         private readonly INftShapeRenderer nftShape;
 

@@ -1,7 +1,5 @@
 ﻿using DCL.Profiling;
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 using static DCL.Optimization.PerformanceBudgeting.MemoryUsageStatus;
 
 namespace DCL.Optimization.PerformanceBudgeting
@@ -19,6 +17,12 @@ namespace DCL.Optimization.PerformanceBudgeting
         private const long BYTES_IN_MEGABYTE = 1024 * 1024;
         private const long NO_MEMORY = 0;
 
+        private static readonly IReadOnlyDictionary<MemoryUsageStatus, float> DEFAULT_MEMORY_THRESHOLD = new Dictionary<MemoryUsageStatus, float>
+        {
+            { WARNING, 0.65f },
+            { FULL, 0.75f }
+        };
+
         private readonly ISystemMemoryCap systemMemoryCap;
         private readonly IBudgetProfiler profiler;
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
@@ -34,6 +38,13 @@ namespace DCL.Optimization.PerformanceBudgeting
             this.profiler = profiler;
             this.memoryThreshold = memoryThreshold;
         }
+
+        public static MemoryBudget NewDefault() =>
+            new (
+                new SystemMemoryCapMock(),
+                new Profiler(),
+                DEFAULT_MEMORY_THRESHOLD
+            );
 
         private MemoryUsageStatus GetMemoryUsageStatus()
         {
@@ -52,7 +63,7 @@ namespace DCL.Optimization.PerformanceBudgeting
         public (int warning, int full) GetMemoryRanges()
         {
             long totalSizeInMB = GetTotalSystemMemoryInMB();
-            return ((int) (totalSizeInMB * memoryThreshold[WARNING]), (int)(totalSizeInMB * memoryThreshold[FULL]));
+            return ((int)(totalSizeInMB * memoryThreshold[WARNING]), (int)(totalSizeInMB * memoryThreshold[FULL]));
         }
 
         public bool TrySpendBudget() =>
@@ -72,7 +83,7 @@ namespace DCL.Optimization.PerformanceBudgeting
                 (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[WARNING] * GetHalfwayBetweenLimits(FULL, WARNING)));
 
             float GetHalfwayBetweenLimits(MemoryUsageStatus upperLimit, MemoryUsageStatus bottomLimit) =>
-                1 + ((memoryThreshold[upperLimit] - memoryThreshold[bottomLimit])/2f);
+                1 + ((memoryThreshold[upperLimit] - memoryThreshold[bottomLimit]) / 2f);
         }
 
         public bool IsInAbundance()
@@ -92,27 +103,13 @@ namespace DCL.Optimization.PerformanceBudgeting
         public bool IsMemoryFull() =>
             GetMemoryUsageStatus() == FULL;
 
-        public class Default : IPerformanceBudget
+        private class SystemMemoryCapMock : ISystemMemoryCap
         {
-            private static readonly IReadOnlyDictionary<MemoryUsageStatus, float> MEMORY_THRESHOLD = new Dictionary<MemoryUsageStatus, float>
+            public long MemoryCapInMB { get; private set; } = 16 * 1024L;
+
+            public int MemoryCap
             {
-                { WARNING, 0.65f },
-                { FULL, 0.75f }
-            };
-
-            private readonly IPerformanceBudget performanceBudget = new MemoryBudget(
-                new SystemMemoryCapMock(),
-                new Profiler(),
-                MEMORY_THRESHOLD
-            );
-
-            public bool TrySpendBudget() =>
-                performanceBudget.TrySpendBudget();
-
-            private class SystemMemoryCapMock : ISystemMemoryCap
-            {
-                public long MemoryCapInMB { get; private set; } = 16 * 1024L;
-                public int MemoryCap { set => MemoryCapInMB = value * 1024L; }
+                set => MemoryCapInMB = value * 1024L;
             }
         }
     }

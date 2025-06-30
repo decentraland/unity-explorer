@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
+using DCL.Profiling;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -33,13 +34,20 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            UnloadLoadedSceneQuery(World);
-            UnloadLoadedPortableExperienceSceneQuery(World);
+            using (ProfilerSampleScope.New(nameof(UnloadLoadedSceneQuery)))
+                UnloadLoadedSceneQuery(World);
 
-            CleanSceneFacadeWhenLODQuery(World);
-            CleanScenePromiseWhenLODQuery(World);
+            using (ProfilerSampleScope.New(nameof(UnloadLoadedPortableExperienceSceneQuery)))
+                UnloadLoadedPortableExperienceSceneQuery(World);
 
-            AbortLoadingScenesQuery(World);
+            using (ProfilerSampleScope.New(nameof(CleanSceneFacadeWhenLODQuery)))
+                CleanSceneFacadeWhenLODQuery(World);
+
+            using (ProfilerSampleScope.New(nameof(CleanScenePromiseWhenLODQuery)))
+                CleanScenePromiseWhenLODQuery(World);
+
+            using (ProfilerSampleScope.New(nameof(AbortLoadingScenesQuery)))
+                AbortLoadingScenesQuery(World);
         }
 
         public void FinalizeComponents(in Query query)
@@ -52,6 +60,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void CleanSceneFacadeWhenLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent,
             ref ISceneFacade sceneFacade, ref SceneLoadingState sceneLoadingState)
         {
+            using var _ = ProfilerSampleScope.New(sceneDefinitionComponent.Definition.GetLogSceneName());
             if (sceneLoadingState.VisualSceneState == VisualSceneState.SHOWING_LOD)
             {
                 //TODO: Wait until LOD is Ready
@@ -84,11 +93,11 @@ namespace ECS.SceneLifeCycle.Systems
         {
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
             ReportHub.LogProductionInfo($"Scene '{definitionComponent.Definition?.GetLogSceneName()}' disposed");
+
             // Keep definition so it won't be downloaded again = Cache in ECS itself
             if (!localSceneDevelopment)
                 World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, DeleteEntityIntention>(entity);
         }
-
 
         [Query]
         [All(typeof(DeleteEntityIntention), (typeof(PortableExperienceComponent)))]

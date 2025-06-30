@@ -1,6 +1,5 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using System;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Realm

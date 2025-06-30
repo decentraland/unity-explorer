@@ -60,7 +60,7 @@ namespace DCL.ResourcesUnloading
         {
             this.fpsCapBudget = fpsCapBudget;
             this.widgetBuilder = widgetBuilder;
-            unlimitedFPSBudget = new NullPerformanceBudget();
+            unlimitedFPSBudget = NullPerformanceBudget.INSTANCE;
             extendedObjectPools = new List<IThrottledClearable> { AvatarCustomSkinningComponent.USED_SLOTS_POOL };
 
             widgetBuilder?.AddSingleButton("Update", () =>

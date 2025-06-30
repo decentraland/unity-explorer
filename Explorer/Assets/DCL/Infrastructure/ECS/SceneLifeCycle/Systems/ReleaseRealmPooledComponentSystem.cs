@@ -10,16 +10,16 @@ namespace ECS.SceneLifeCycle.Systems
     /// </summary>
     public class ReleaseRealmPooledComponentSystem : IFinalizeWorldSystem
     {
-        private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly ReleaseReferenceComponentsSystem.ReleaseComponentsToPoolOperation finalizeOperation;
 
         public ReleaseRealmPooledComponentSystem(IComponentPoolsRegistry componentPoolsRegistry)
         {
-            this.componentPoolsRegistry = componentPoolsRegistry;
+            finalizeOperation = new ReleaseReferenceComponentsSystem.ReleaseComponentsToPoolOperation(componentPoolsRegistry);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            ReleaseReferenceComponentsSystem.ReleaseComponentsToPool(in query, componentPoolsRegistry);
+            finalizeOperation.ExecuteInstantly(query);
         }
     }
 }

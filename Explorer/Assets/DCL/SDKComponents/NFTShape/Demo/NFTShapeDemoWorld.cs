@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                         w.Create(nftShape, visibility, billboard, NewTransform(), partitionComponent);
                     }
                 },
-                w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
+                w => new AssetsDeferredLoadingSystem(w, NullPerformanceBudget.INSTANCE, NullPerformanceBudget.INSTANCE),
                 w => new LoadNFTShapeSystem(
                     w,
                     new NftShapeCache(),
@@ -66,7 +66,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY))),
-                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
+                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), FrameTimeCapBudget.NewDefault(), framePrefabs, buffer),
                 w => new VisibilityNftShapeSystem(w, buffer)
             );
         }

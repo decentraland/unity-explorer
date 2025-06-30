@@ -44,6 +44,8 @@ namespace ECS.Unity.PrimitiveColliders.Components
 
         Type IPoolableComponentProvider<Collider>.PoolableComponentType => ColliderType;
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
     }
 }

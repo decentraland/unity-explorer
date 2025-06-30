@@ -18,10 +18,7 @@ namespace DCL.Utilities.Extensions
                 await coreOp;
                 return EnumResult<TaskError>.SuccessResult();
             }
-            catch (OperationCanceledException)
-            {
-                return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled);
-            }
+            catch (OperationCanceledException) { return EnumResult<TaskError>.CancelledResult(TaskError.Cancelled); }
             catch (Exception e)
             {
                 ReportException(e);
@@ -84,4 +81,9 @@ namespace DCL.Utilities.Extensions
             }
         }
     }
+
+    /// <summary>
+    /// Thread safe guarantee DisposeAsync method is safe to call from any thread without manual thread switching (Example: await UniTask.SwitchToMainThread();)
+    /// </summary>
+    public interface IThreadSafeUniTaskAsyncDisposable : IUniTaskAsyncDisposable { }
 }

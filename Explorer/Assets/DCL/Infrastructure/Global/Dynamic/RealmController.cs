@@ -21,9 +21,9 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
- using DCL.RealmNavigation;
- using Global.AppArgs;
- using Unity.Mathematics;
+using DCL.RealmNavigation;
+using Global.AppArgs;
+using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
@@ -54,8 +54,6 @@ namespace Global.Dynamic
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
-
-
 
         public IRealmData RealmData => realmData;
 
@@ -211,10 +209,16 @@ namespace Global.Dynamic
             }
 
             foreach (ISceneFacade scene in loadedScenes)
-
+            {
                 // Scene Info is contained in the ReportData, don't include it into the exception
-                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
+                var enumerator = scene.SafeBudgetedDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
                     static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
+
+                while (enumerator.MoveNext())
+                {
+                    // consume all
+                }
+            }
         }
 
         private async UniTask UnloadCurrentRealmAsync()

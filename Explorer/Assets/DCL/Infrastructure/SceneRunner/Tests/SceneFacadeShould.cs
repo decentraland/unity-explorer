@@ -19,6 +19,7 @@ using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Poses;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
@@ -83,7 +84,7 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>());
+                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>(), NullPerformanceBudget.INSTANCE);
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>().EnsureNotNull();
@@ -108,7 +109,8 @@ namespace SceneRunner.Tests
                 Substitute.For<IRealmData>(),
                 Substitute.For<IPortableExperiencesController>(),
                 Substitute.For<ISceneCommunicationPipe>(),
-                Substitute.For<IRemoteMetadata>());
+                Substitute.For<IRemoteMetadata>(),
+                NullPerformanceBudget.INSTANCE);
         }
 
         [OneTimeTearDown]
@@ -252,7 +254,8 @@ namespace SceneRunner.Tests
 
             var sceneFacade = new SceneFacade(
                 Substitute.For<ISceneData>(),
-                new TestDeps(ecsWorldFactory)
+                new TestDeps(ecsWorldFactory),
+                NullPerformanceBudget.INSTANCE
             );
 
             var apis = new List<JsApiWrapper>();
@@ -317,7 +320,8 @@ namespace SceneRunner.Tests
 
             var sceneFacade = new SceneFacade(
                 Substitute.For<ISceneData>(),
-                new TestDeps(ecsWorldFactory)
+                new TestDeps(ecsWorldFactory),
+                NullPerformanceBudget.INSTANCE
             );
 
             await UniTask.SwitchToThreadPool();

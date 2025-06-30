@@ -1,12 +1,18 @@
-#nullable enable
-
 using DCL.Profiling;
 using System;
+using UnityEngine;
 
 namespace DCL.Optimization.PerformanceBudgeting
 {
     public class FrameTimeCapBudget : IPerformanceBudget
     {
+        private static bool isQuitting;
+
+        static FrameTimeCapBudget()
+        {
+            Application.quitting += () => isQuitting = true;
+        }
+
         private readonly ulong totalBudgetAvailable;
         private readonly IBudgetProfiler profiler;
 
@@ -28,23 +34,17 @@ namespace DCL.Optimization.PerformanceBudgeting
             this.totalBudgetAvailable = totalBudgetAvailable;
         }
 
-        public bool TrySpendBudget() =>
-             profiler.CurrentFrameTimeValueNs < totalBudgetAvailable;
+        //33 in [ms]. Table: 33ms ~ 30fps | 16ms ~ 60fps | 11ms ~ 90 fps | 8ms ~ 120fps
+        public static FrameTimeCapBudget NewDefault() =>
+            new (33f, new Profiler());
 
-        public class Default : IPerformanceBudget
+        public bool TrySpendBudget()
         {
-            private readonly IPerformanceBudget performanceBudget;
+            // It doesn't matter to keep the budget if application is quitting
+            if (isQuitting)
+                return true;
 
-            public Default() : this(new Profiler()) { }
-
-            //33 in [ms]. Table: 33ms ~ 30fps | 16ms ~ 60fps | 11ms ~ 90 fps | 8ms ~ 120fps
-            public Default(IBudgetProfiler profiler)
-            {
-                performanceBudget = new FrameTimeCapBudget(33f, profiler);
-            }
-
-            public bool TrySpendBudget() =>
-                performanceBudget.TrySpendBudget();
+            return profiler.CurrentFrameTimeValueNs < totalBudgetAvailable;
         }
     }
 }

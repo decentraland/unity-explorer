@@ -19,6 +19,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void Dispose()
         {
+            //TODO do we need to adopt it to general budgeted finalize system?
             IsDisposed = true;
             Image = null;
         }

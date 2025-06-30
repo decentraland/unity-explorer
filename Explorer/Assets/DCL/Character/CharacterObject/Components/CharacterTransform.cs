@@ -21,7 +21,9 @@ namespace DCL.Character.Components
 
         public Quaternion Rotation => Transform.rotation;
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
 
         Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);

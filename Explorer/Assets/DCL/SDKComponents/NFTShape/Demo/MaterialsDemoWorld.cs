@@ -29,8 +29,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
         public MaterialsDemoWorld(World world, ProvidedAsset<Material> providedAssetMaterials) : this(
             world,
             new MaterialsPool(providedAssetMaterials),
-            new FrameTimeCapBudget.Default(),
-            new MemoryBudget.Default(),
+            FrameTimeCapBudget.NewDefault(),
+            MemoryBudget.NewDefault(),
             (in MaterialData _, Material material) => { UnityObjectUtils.SafeDestroy(material); },
             new ISceneData.Fake()
         ) { }

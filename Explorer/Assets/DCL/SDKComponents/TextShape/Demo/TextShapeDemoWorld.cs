@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.TextShape.Demo
                     foreach ((PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
                         w.Create(textShape, visibility, billboard, NewTransform());
                 },
-                w => new InstantiateTextShapeSystem(w, pool, fontsStorage, new MaterialPropertyBlock(), new NullPerformanceBudget(), buffer),
+                w => new InstantiateTextShapeSystem(w, pool, fontsStorage, new MaterialPropertyBlock(), NullPerformanceBudget.INSTANCE, buffer),
                 w => new UpdateTextShapeSystem(w, fontsStorage, new MaterialPropertyBlock(), buffer, sceneData),
                 w => new VisibilityTextShapeSystem(w, buffer));
         }

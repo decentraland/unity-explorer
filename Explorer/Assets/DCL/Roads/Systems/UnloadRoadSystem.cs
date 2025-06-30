@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.Groups;
@@ -21,13 +20,11 @@ namespace DCL.Roads.Systems
     {
         private readonly IRoadAssetPool roadAssetPool;
         private readonly IScenesCache scenesCache;
-        private readonly IPerformanceBudget unlimitedFPSBudget;
 
         public UnloadRoadSystem(World world, IRoadAssetPool roadAssetPool, IScenesCache scenesCache) : base(world)
         {
             this.roadAssetPool = roadAssetPool;
             this.scenesCache = scenesCache;
-            unlimitedFPSBudget = new NullPerformanceBudget();
         }
 
         protected override void Update(float t)
