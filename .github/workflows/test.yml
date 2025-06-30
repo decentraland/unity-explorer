@@ -67,17 +67,18 @@ jobs:
           if (-not (Test-Path $sshPath)) {
               New-Item -ItemType Directory -Path $sshPath -Force
           }
-          
           $knownHostsPath = Join-Path $sshPath "known_hosts"
-          $githubKeys = (Invoke-RestMethod -Uri 'https://api.github.com/meta').ssh_keys
+          $headers = @{ Authorization = "Bearer $env:GITHUB_TOKEN" }
+          $githubKeys = (Invoke-RestMethod -Uri 'https://api.github.com/meta' -Headers $headers).ssh_keys
           $githubKeys | ForEach-Object { "github.com $_" } | Out-File -FilePath $knownHostsPath -Append
-          
           # Set permissions (600 in Windows terms)
           $acl = Get-Acl $knownHostsPath
           $acl.SetAccessRuleProtection($true, $false)
           $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read, Write", "Allow")
           $acl.AddAccessRule($rule)
           Set-Acl $knownHostsPath $acl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clone Packages To Use Locally
         run: |
@@ -96,8 +97,6 @@ jobs:
             
             Get-ChildItem
             Get-Content $jsonFilePath
-
-
 
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1
