@@ -24,6 +24,8 @@ namespace DCL.Diagnostics.Tests
                 mock.Type.Returns(ReportHandler.DebugLog);
             }
 
+            Mock = mock;
+
             ReportHub.Initialize(new ReportHubLogger(new List<IReportHandler> { mock }));
         }
 
