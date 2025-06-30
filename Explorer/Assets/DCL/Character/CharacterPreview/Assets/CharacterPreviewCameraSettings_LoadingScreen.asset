@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <cameraSettings>k__BackingField:
     <cameraPositions>k__BackingField:
-    - <verticalPosition>k__BackingField: {x: 0, y: -0.2, z: 0}
+    - <verticalPosition>k__BackingField: {x: 1, y: 0, z: 1}
       <cameraFieldOfView>k__BackingField: 24
       <wearableCategoryEnum>k__BackingField: 4
     <dragEnabled>k__BackingField: 1
