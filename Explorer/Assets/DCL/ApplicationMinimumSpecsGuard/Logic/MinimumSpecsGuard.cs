@@ -80,23 +80,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             bool hasRequiredFeatures = profile.ShaderCheck();
             bool isGpuSpecMet = isGpuModelAcceptable && hasRequiredFeatures;
 
-            string featureTag;
-            switch (platform)
-            {
-                case PlatformOS.Windows:
-                    featureTag = isGpuSpecMet ? "(DirectX 12 Compatible)" : "(Not DirectX 12 Compatible)";
-                    break;
-
-                case PlatformOS.Mac:
-                    featureTag = "(Metal Compatible)";
-                    break;
-
-                default:
-                    featureTag = hasRequiredFeatures ? "(Compute Shaders Supported)" : "";
-                    break;
-            }
-
-            string actualGpuDisplayString = $"{gpuName} {featureTag}".Trim();
+            string actualGpuDisplayString = $"{gpuName}".Trim();
 
             results.Add(new SpecResult(
                 SpecCategory.GPU,

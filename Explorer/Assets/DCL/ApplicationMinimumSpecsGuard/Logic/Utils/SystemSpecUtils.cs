@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
-using DCL.Diagnostics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -101,24 +101,21 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             return false;
         }
-
-        /// <summary>
-        ///     Checks if the GPU is DirectX 12 compatible by verifying its Shader Model level.
-        ///     Relevant only on Windows.
-        /// </summary>
+        
         public static bool IsDirectX12Compatible()
         {
-            if (Application.platform != RuntimePlatform.WindowsPlayer &&
-                Application.platform != RuntimePlatform.WindowsEditor)
-                return false;
+            // Check current graphics API
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12)
+                return true;
 
-            // DirectX 12 (Feature Level 12_0) requires Shader Model 5.1.
-            // SystemInfo.graphicsShaderLevel gives the SM as a two-digit number (e.g., 51 for 5.1).
-            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsShaderLevel}");
-            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsDeviceID}");
-            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsDeviceName}");
-            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsDeviceVersion}");
-            return SystemInfo.graphicsShaderLevel >= 51;
+            // Check if DX12 is available but not currently active
+            // This requires checking supported graphics APIs
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+            return SystemInfo.graphicsDeviceVersion.Contains("Direct3D 12") ||
+                   SystemInfo.graphicsDeviceVersion.Contains("D3D12");
+#else
+                return false;
+#endif
         }
 
         public static bool IsWindowsVersionAcceptable(string os)
