@@ -31,6 +31,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
                     // Checks
                     OsCheck = SystemSpecUtils.IsWindowsVersionAcceptable, CpuCheck = SystemSpecUtils.IsWindowsCpuAcceptable, GpuCheck = SystemSpecUtils.IsWindowsGpuAcceptable, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
+                    DirectX12Check = SystemSpecUtils.IsDirectX12Compatible,
 
                     // Display Strings
                     OsRequirement = WIN_OS_REQ, CpuRequirement = WIN_CPU_REQ, GpuRequirement = WIN_GPU_REQ, ShaderRequirement = WIN_SHADER_REQ,

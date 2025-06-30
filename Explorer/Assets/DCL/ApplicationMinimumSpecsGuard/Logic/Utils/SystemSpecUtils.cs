@@ -1,5 +1,6 @@
 using System;
 using System.Text.RegularExpressions;
+using DCL.Diagnostics;
 using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
@@ -19,9 +20,9 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private static readonly string[] MACOS_IDENTIFIER_KEYWORDS =
         {
             "Mac OS X", "macOS"
-        }; // More future-proof
+        };
 
-        private const int MIN_MACOS_MAJOR_VERSION = 11; // Big Sur
+        private const int MIN_MACOS_MAJOR_VERSION = 11;
         private const string MACOS_VERSION_PATTERN = @"(\d+)\.\d+";
 
         // CPU Requirement Constants
@@ -99,6 +100,25 @@ namespace DCL.ApplicationMinimumSpecsGuard
                 return arcModel >= MIN_ARC_SERIES;
 
             return false;
+        }
+
+        /// <summary>
+        ///     Checks if the GPU is DirectX 12 compatible by verifying its Shader Model level.
+        ///     Relevant only on Windows.
+        /// </summary>
+        public static bool IsDirectX12Compatible()
+        {
+            if (Application.platform != RuntimePlatform.WindowsPlayer &&
+                Application.platform != RuntimePlatform.WindowsEditor)
+                return false;
+
+            // DirectX 12 (Feature Level 12_0) requires Shader Model 5.1.
+            // SystemInfo.graphicsShaderLevel gives the SM as a two-digit number (e.g., 51 for 5.1).
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsShaderLevel}");
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsDeviceID}");
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsDeviceName}");
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"SystemInfo.graphicsShaderLevel {SystemInfo.graphicsDeviceVersion}");
+            return SystemInfo.graphicsShaderLevel >= 51;
         }
 
         public static bool IsWindowsVersionAcceptable(string os)

@@ -63,6 +63,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public string ShaderRequirement;
         public Func<bool> ShaderCheck;
+        public Func<bool> DirectX12Check;
 
         public int MinStorageMB;
         public string StorageRequirement => $"{MinStorageMB / 1024f} GB";

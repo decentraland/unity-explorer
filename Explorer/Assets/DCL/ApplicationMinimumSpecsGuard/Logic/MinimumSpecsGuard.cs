@@ -74,11 +74,37 @@ namespace DCL.ApplicationMinimumSpecsGuard
             // CPU
             string cpu = SystemInfo.processorType;
             results.Add(new SpecResult(SpecCategory.CPU, profile.CpuCheck(cpu), profile.CpuRequirement, cpu));
-
+            
             // GPU
-            string dx12Tag = profile.ShaderCheck() ? "(DirectX 12 Compatible)" : "(Not DirectX 12 Compatible)";
-            string gpu = $"{SystemInfo.graphicsDeviceName} {dx12Tag}";
-            results.Add(new SpecResult(SpecCategory.GPU, profile.GpuCheck(gpu), profile.GpuRequirement, gpu));
+            string gpuName = SystemInfo.graphicsDeviceName;
+            bool isGpuModelAcceptable = profile.GpuCheck(gpuName);
+            bool hasRequiredFeatures = profile.ShaderCheck();
+            bool isGpuSpecMet = isGpuModelAcceptable && hasRequiredFeatures;
+
+            string featureTag;
+            switch (platform)
+            {
+                case PlatformOS.Windows:
+                    featureTag = isGpuSpecMet ? "(DirectX 12 Compatible)" : "(Not DirectX 12 Compatible)";
+                    break;
+
+                case PlatformOS.Mac:
+                    featureTag = "(Metal Compatible)";
+                    break;
+
+                default:
+                    featureTag = hasRequiredFeatures ? "(Compute Shaders Supported)" : "";
+                    break;
+            }
+
+            string actualGpuDisplayString = $"{gpuName} {featureTag}".Trim();
+
+            results.Add(new SpecResult(
+                SpecCategory.GPU,
+                isGpuSpecMet,
+                profile.GpuRequirement,
+                actualGpuDisplayString
+            ));
 
             // VRAM
             int actualVramMB = SystemInfo.graphicsMemorySize;
