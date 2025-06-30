@@ -105,7 +105,7 @@ namespace ECS.Unity.AvatarShape.Systems
 
         private void AddCharacterEmoteIntent(Entity globalWorldEntity, string emoteId, BodyShape bodyShape)
         {
-            bool isSceneEmote = emoteId.ToLower().EndsWith(".glb");
+            bool isSceneEmote = emoteId.EndsWith(".glb", StringComparison.OrdinalIgnoreCase);
             if (!isSceneEmote) // normal "urn emote" or "base emote"
             {
                 globalWorld.AddOrSet(globalWorldEntity,
