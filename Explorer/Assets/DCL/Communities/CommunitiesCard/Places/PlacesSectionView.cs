@@ -166,7 +166,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             }
         }
 
-        public void RefreshGrid()
+        public void RefreshGrid(bool redraw)
         {
             int count = getPlacesFetchData().items.Count;
 
@@ -175,7 +175,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 count++;
 
             loopGrid.SetListItemCount(count, false);
-            loopGrid.RefreshAllShownItem();
+
+            if (redraw)
+                loopGrid.RefreshAllShownItem();
         }
     }
 }

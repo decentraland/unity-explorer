@@ -97,10 +97,12 @@ namespace DCL.Communities.CommunitiesCard.Events
                 actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true)), cancellationToken);
         }
 
-        public void RefreshGrid()
+        public void RefreshGrid(bool redraw)
         {
             loopList.SetListItemCount(getEventsFetchData().items.Count, false);
-            loopList.RefreshAllShownItem();
+
+            if (redraw)
+                loopList.RefreshAllShownItem();
         }
 
         public void SetEmptyStateActive(bool active)
