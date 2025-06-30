@@ -1,8 +1,0 @@
-{
-    "name": "AVProVideo.Extensions.Timeline",
-    "references": [
-        "AVProVideo.Runtime"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": []
-}
