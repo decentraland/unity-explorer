@@ -28,7 +28,6 @@ using DCL.ResourcesUnloading;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.VideoPlayer;
 using DCL.Settings;
-using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -283,7 +282,7 @@ namespace Global
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
-                new SkyboxTimePlugin(),
+                new SkyboxTimePlugin(container.SceneRestrictionBusController),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif

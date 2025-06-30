@@ -5,7 +5,6 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
-using DCL.FeatureFlags;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
@@ -13,7 +12,7 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.StylizedSkybox.Scripts;
+using DCL.SkyBox;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
@@ -135,7 +134,7 @@ namespace DCL.PluginSystem.Global
                 new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
+                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SettingsAsset),
                 new ControlsPanelController(() => controlsPanelView, mvcManager),
                 webBrowser,
                 includeCameraReel,
@@ -159,7 +158,7 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
 
             [field: SerializeField]
-            public StylizedSkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
+            public SkyboxSettingsAsset SettingsAsset { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceGameObject ControlsPanelPrefab;

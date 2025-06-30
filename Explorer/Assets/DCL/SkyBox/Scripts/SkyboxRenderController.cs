@@ -1,11 +1,8 @@
-using DCL.Diagnostics;
-using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.StylizedSkybox.Scripts;
-using ECS.SceneLifeCycle;
+﻿using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public partial class SkyboxController : MonoBehaviour
+public class SkyboxRenderController : MonoBehaviour
 {
     private static readonly int ZENIT_COLOR = Shader.PropertyToID("_ZenitColor");
     private static readonly int HORIZON_COLOR = Shader.PropertyToID("_HorizonColor");
@@ -22,12 +19,10 @@ public partial class SkyboxController : MonoBehaviour
 
     [SerializeField] private Material skyboxMaterial;
 
-    [Header("Refresh Time")]
-    [SerializeField] private float skyboxRefreshTime = 5;
-
     [Header("Directional Light")]
     [SerializeField] private Light directionalLight;
     [SerializeField] private AnimationClip lightAnimation;
+    private Animation lightAnimator;
 
     [GradientUsage(true)]
     [SerializeField] private Gradient directionalColorRamp;
@@ -61,37 +56,8 @@ public partial class SkyboxController : MonoBehaviour
     [InspectorName("Enabled")] [SerializeField] private bool fog = true;
     [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
 
-    private StylizedSkyboxSettingsAsset skyboxSettings;
-    private bool isInitialized;
-    private Animation lightAnimator;
-    private float sinceLastSkyboxRefresh = 5;
-
-    private void Update()
+    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay)
     {
-        if (!isInitialized)
-            return;
-
-        float deltaTime = Time.deltaTime;
-        skyboxTimeManager.Update(deltaTime);
-
-        // Auto refresh the skybox when using Day Night Cycle
-        if (skyboxSettings.IsDayCycleEnabled)
-        {
-            sinceLastSkyboxRefresh += deltaTime;
-
-            if (sinceLastSkyboxRefresh >= skyboxRefreshTime)
-            {
-                sinceLastSkyboxRefresh = 0;
-                CurrentTimeOfDay = skyboxTimeManager.GlobalTimeOfDay;
-                UpdateSkybox();
-            }
-        }
-    }
-
-    public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, StylizedSkyboxSettingsAsset settingsAsset, IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionBusController)
-    {
-        this.skyboxSettings = settingsAsset;
-
         if (skyboxMat)
         {
 #if UNITY_EDITOR
@@ -143,67 +109,48 @@ public partial class SkyboxController : MonoBehaviour
         if (fog)
             RenderSettings.fog = true;
 
-        InitializeSkyboxTimeHandling(scenesCache, sceneRestrictionBusController);
-
-        UpdateSkybox();
-
-        isInitialized = true;
+        UpdateSkybox(initialTimeOfDay);
     }
 
     /// <summary>
     ///     Calls all the necessary methods to update the skybox and environment
     /// </summary>
-    private void UpdateSkybox()
+    public void UpdateSkybox(float timeOfDay)
     {
-        UpdateIndirectLight();
-        UpdateDirectionalLight();
-        UpdateSkyboxColor();
-        UpdateFog();
-    }
-
-    /// <summary>
-    ///     Updates the exposed parameters of the material to update gradient colors
-    ///     and sun size
-    /// </summary>
-    private void UpdateSkyboxColor()
-    {
-        RenderSettings.skybox.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(CurrentTimeOfDay));
-        RenderSettings.skybox.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(CurrentTimeOfDay));
-        RenderSettings.skybox.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(CurrentTimeOfDay));
-        RenderSettings.skybox.SetColor(SUN_COLOR, sunColorRamp.Evaluate(CurrentTimeOfDay));
-        RenderSettings.skybox.SetColor(RIM_COLOR, rimColorRamp.Evaluate(CurrentTimeOfDay));
-        RenderSettings.skybox.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(CurrentTimeOfDay));
-        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(CurrentTimeOfDay));
+        UpdateIndirectLight(timeOfDay);
+        UpdateDirectionalLight(timeOfDay);
+        UpdateSkyboxColor(timeOfDay);
+        UpdateFog(timeOfDay);
     }
 
     /// <summary>
     ///     Updates the indirect light of the render settings sampling the colors
     ///     from the defined gradients based on the normalized time
     /// </summary>
-    private void UpdateIndirectLight()
+    private void UpdateIndirectLight(float timeOfDay)
     {
         if (!indirectLight) return;
 
-        RenderSettings.ambientSkyColor = indirectSkyRamp.Evaluate(CurrentTimeOfDay);
-        RenderSettings.ambientEquatorColor = indirectEquatorRamp.Evaluate(CurrentTimeOfDay);
-        RenderSettings.ambientGroundColor = groundEquatorRamp.Evaluate(CurrentTimeOfDay);
+        RenderSettings.ambientSkyColor = indirectSkyRamp.Evaluate(timeOfDay);
+        RenderSettings.ambientEquatorColor = indirectEquatorRamp.Evaluate(timeOfDay);
+        RenderSettings.ambientGroundColor = groundEquatorRamp.Evaluate(timeOfDay);
     }
 
     /// <summary>
     ///     Updates the directional light color by sampling the colors
     ///     from the defined gradient and plays the corresponding animation frame
     /// </summary>
-    private void UpdateDirectionalLight()
+    private void UpdateDirectionalLight(float timeOfDay)
     {
         if (!directionalLight) return;
 
         //change the color of the light based on the color ramp
-        directionalLight.color = directionalColorRamp.Evaluate(CurrentTimeOfDay);
+        directionalLight.color = directionalColorRamp.Evaluate(timeOfDay);
 
         //sample the right frame of the animation
         if (lightAnimation)
         {
-            lightAnimator[lightAnimation.name].time = CurrentTimeOfDay * lightAnimator[lightAnimation.name].length;
+            lightAnimator[lightAnimation.name].time = timeOfDay * lightAnimator[lightAnimation.name].length;
             lightAnimator.Play(lightAnimation.name);
             lightAnimator.Sample();
             lightAnimator.Stop();
@@ -214,20 +161,35 @@ public partial class SkyboxController : MonoBehaviour
         RenderSettings.skybox.SetFloat(SUN_OPACITY, directionalLightLocalScale.y);
 
         //sampling sun radiance and intensity curves
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(CurrentTimeOfDay));
-        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE, sunRadiance.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetFloat(SUN_RADIANCE_INTENSITY, sunRadianceIntensity.Evaluate(timeOfDay));
 
         //change size of moon mask
-        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(CurrentTimeOfDay));
+        RenderSettings.skybox.SetFloat(MOON_MASK_SIZE, moonMaskSize.Evaluate(timeOfDay));
+    }
+
+    /// <summary>
+    ///     Updates the exposed parameters of the material to update gradient colors
+    ///     and sun size
+    /// </summary>
+    private void UpdateSkyboxColor(float timeOfDay)
+    {
+        RenderSettings.skybox.SetColor(ZENIT_COLOR, skyZenitColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(HORIZON_COLOR, skyHorizonColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(NADIR_COLOR, skyNadirColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(SUN_COLOR, sunColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(RIM_COLOR, rimColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetColor(CLOUDS_COLOR, cloudsColorRamp.Evaluate(timeOfDay));
+        RenderSettings.skybox.SetFloat(CLOUD_HIGHLIGHTS, cloudsHighlightsIntensity.Evaluate(timeOfDay));
     }
 
     /// <summary>
     ///     Updates the fog color of the RenderSettings if enabled
     /// </summary>
-    private void UpdateFog()
+    private void UpdateFog(float timeOfDay)
     {
         if (fog)
-            RenderSettings.fogColor = fogColorRamp.Evaluate(CurrentTimeOfDay);
+            RenderSettings.fogColor = fogColorRamp.Evaluate(timeOfDay);
     }
 
 #if UNITY_EDITOR
@@ -238,7 +200,7 @@ public partial class SkyboxController : MonoBehaviour
         //Added the flag to allow editing of the prefab in a separate scene
         //that doesn't have the regular plugin init flow
         if (editMode)
-            Initialize(null, null, null, null, null, null);
+            Initialize(null, null, null, 0.5f);
     }
 #endif
 }
