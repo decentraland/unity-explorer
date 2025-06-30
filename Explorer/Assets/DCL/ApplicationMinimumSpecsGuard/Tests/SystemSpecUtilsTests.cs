@@ -9,6 +9,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
 
         [Test]
         [TestCase("Intel(R) Core(TM) i7-8700K CPU @ 3.70GHz", true, TestName = "Intel i7 (8th Gen) is accepted")]
+        [TestCase("12th Gen Intel(R) Core(TM) i7-12650H", true, TestName = "12th Gen Intel(R) Core(TM) i7-12650H is accepted")]
         [TestCase("Intel Core i5-7600", true, TestName = "Intel i5 (7th Gen) is accepted")]
         [TestCase("Intel Core i9-13900F", true, TestName = "Intel i9 (13th Gen) is accepted")]
         [TestCase("Intel(R) Core(TM) i5-6600 CPU @ 3.30GHz", false, TestName = "Intel i5 (6th Gen) is rejected")]
@@ -39,6 +40,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
 
         [Test]
         [TestCase("NVIDIA GeForce RTX 2060", true, TestName = "NVIDIA RTX 2060 is accepted")]
+        [TestCase("NVIDIA GeForce RTX 4070 Laptop GPU", true, TestName = "NVIDIA GeForce RTX 4070 Laptop GPU is accepted")]
         [TestCase("NVIDIA GeForce RTX 3080 Ti", true, TestName = "NVIDIA RTX 3080 is accepted")]
         [TestCase("NVIDIA GeForce RTX 4090", true, TestName = "NVIDIA RTX 4090 is accepted")]
         [TestCase("NVIDIA GeForce GTX 1080", false, TestName = "NVIDIA GTX series is rejected")]
