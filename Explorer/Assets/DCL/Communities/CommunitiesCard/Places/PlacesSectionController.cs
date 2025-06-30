@@ -143,7 +143,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 }
 
                 placesFetchData.items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
-                view.RefreshGrid();
+                view.RefreshGrid(false);
             }
         }
 
