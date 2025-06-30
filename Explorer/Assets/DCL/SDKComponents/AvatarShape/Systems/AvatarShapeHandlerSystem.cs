@@ -86,10 +86,11 @@ namespace ECS.Unity.AvatarShape.Systems
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent());
             var sdkAvatarShapeComponent = new SDKAvatarShapeComponent(globalWorldEntity);
-            World.Add(entity, sdkAvatarShapeComponent);
 
             if (!string.IsNullOrEmpty(pbAvatarShape.ExpressionTriggerId))
                 AddCharacterEmoteIntent(globalWorldEntity, ref sdkAvatarShapeComponent, pbAvatarShape.ExpressionTriggerId, BodyShape.FromStringSafe(pbAvatarShape.BodyShape));
+
+            World.Add(entity, sdkAvatarShapeComponent);
         }
 
         [Query]
