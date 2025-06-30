@@ -14,18 +14,15 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     public class LoadGlobalPortableExperiencesStartupOperation : StartUpOperationBase
     {
         private readonly ILoadingStatus loadingStatus;
-        private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly IDebugSettings debugSettings;
+        private readonly DebugSettings debugSettings;
         private readonly IPortableExperiencesController portableExperiencesController;
 
         public LoadGlobalPortableExperiencesStartupOperation(
             ILoadingStatus loadingStatus,
-            FeatureFlagsCache featureFlagsCache,
-            IDebugSettings debugSettings,
+            DebugSettings debugSettings,
             IPortableExperiencesController portableExperiencesController)
         {
             this.loadingStatus = loadingStatus;
-            this.featureFlagsCache = featureFlagsCache;
             this.debugSettings = debugSettings;
             this.portableExperiencesController = portableExperiencesController;
         }
@@ -44,9 +41,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             //This allows us to disable loading the global px on debug builds or when using the editor in case we wanted to load a cleaner experience.
             if (!debugSettings.EnableRemotePortableExperiences) return;
 
-            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT))
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT))
             {
-                if (!featureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT, out List<List<string>>? csv)) return;
+                if (!FeatureFlagsConfiguration.Instance.TryGetCsvPayload(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE, FeatureFlagsStrings.CSV_VARIANT, out List<List<string>>? csv)) return;
 
                 if (csv?[0] == null) return;
 

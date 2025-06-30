@@ -33,14 +33,10 @@ namespace DCL.CharacterPreview
             camera.targetTexture = targetTexture;
             rotationTarget.rotation = Quaternion.identity;
 
-#if UNITY_STANDALONE_OSX
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
-            if (cameraData)
-            {
-            //We disable post processing on OSX as the shader is not working correctly and it shows a black background
-                cameraData.renderPostProcessing = false;
-            }
-#endif
+
+            //We disable post processing on all platforms as the shader is not working correctly and it shows a black background
+            cameraData.renderPostProcessing = false;
         }
 
         public void SetCameraPosition(CharacterPreviewCameraPreset preset)
@@ -67,7 +63,9 @@ namespace DCL.CharacterPreview
     [Serializable]
     public class AvatarPreviewHeadIKSettings
     {
-        public float AvatarDepth = 500;
+        public float MinAvatarDepth = 500;
+        public float MaxAvatarDepth = 1500;
+
         public float HeadMoveSpeed = 0.5f;
     }
 }

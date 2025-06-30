@@ -40,10 +40,10 @@ namespace DCL.CharacterMotion.Systems
         private readonly DCLInput dclInput;
         private readonly Vector3[] previewImageCorners = new Vector3[4];
 
-        private HeadIKSystem(World world, IDebugContainerBuilder builder, ICharacterControllerSettings settings, DCLInput dclInput) : base(world)
+        private HeadIKSystem(World world, IDebugContainerBuilder builder, ICharacterControllerSettings settings) : base(world)
         {
             this.settings = settings;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
 
             verticalLimit = new ElementBinding<float>(0);
             horizontalLimit = new ElementBinding<float>(0);
@@ -94,7 +94,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 objectScreenPos = new Vector3(
                 Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
                 Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
-                previewComponent.Settings.AvatarDepth);
+                previewComponent.Settings.MinAvatarDepth);
 
             if(!dclInput.UI.Point.enabled)
                 dclInput.UI.Point.Enable();
@@ -104,8 +104,20 @@ namespace DCL.CharacterMotion.Systems
 
             var screenVector = objectScreenPos - mouseScreenPos;
             screenVector.y = -screenVector.y;
+            screenVector.z = LerpAvatarDepth(previewComponent, screenVector);
 
             ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt * previewComponent.Settings.HeadMoveSpeed, settings, useFrontalReset: false);
+        }
+
+        private static float LerpAvatarDepth(CharacterPreviewComponent previewComponent, Vector3 screenVector)
+        {
+            float screenVector2DMagnitude = new Vector2(screenVector.x, screenVector.y).magnitude;
+            float screenHalfDiagonal = new Vector2(Screen.width, Screen.height).magnitude / 2;
+            float normalizedMagnitude = Mathf.Clamp01(screenVector2DMagnitude / screenHalfDiagonal);
+            float minZ = previewComponent.Settings.MinAvatarDepth;
+            float maxZ = previewComponent.Settings.MaxAvatarDepth;
+
+            return Mathf.Lerp(minZ, maxZ, normalizedMagnitude);
         }
 
         private static (Vector3 bottomLeft, Vector3 topRight) GetImageScreenCorners(RectTransform imageRect)
