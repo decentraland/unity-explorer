@@ -66,7 +66,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ICommunitiesDataProvider communityDataProvider;
-        private readonly IThumbnailCache thumbnailCache;
+        private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
@@ -102,7 +102,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendsServiceProxy,
             IRealmNavigator realmNavigator,
             ICommunitiesDataProvider communityDataProvider,
-            IThumbnailCache thumbnailCache,
+            ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
             CommunitiesFeatureAccess communitiesFeatureAccess)
         {

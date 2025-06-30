@@ -102,7 +102,7 @@ namespace DCL.Chat
             ChatMemberListViewItem memberItem = newItem.GetComponent<ChatMemberListViewItem>();
             memberItem.Id = members[index].WalletAddress;
             memberItem.Name = members[index].Name;
-            memberItem.SetupProfilePicture(profileRepositoryWrapper, members[index].ProfileColor, members[index].FaceSnapshotUrl, members[index].WalletAddress);
+            memberItem.SetupProfilePicture(profileRepositoryWrapper, members[index].ProfileColor, members[index].FaceSnapshotUrl);
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
             memberItem.NameTextColor = members[index].ProfileColor;

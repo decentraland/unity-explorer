@@ -8,8 +8,9 @@ using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
+using DCL.UI;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
@@ -38,7 +39,6 @@ namespace DCL.Communities.CommunityCreation
         private readonly ICommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
-        private readonly IWebRequestController webRequestController;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -47,6 +47,9 @@ namespace DCL.Communities.CommunityCreation
         private CancellationTokenSource loadCommunityDataCts;
         private CancellationTokenSource showErrorCts;
         private CancellationTokenSource openImageSelectionCts;
+
+        private Sprite lastSelectedProfileThumbnail;
+        private bool isProfileThumbnailDirty;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -60,6 +63,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
         private byte[] lastSelectedImageData;
+        private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
@@ -67,22 +71,20 @@ namespace DCL.Communities.CommunityCreation
             IInputBlock inputBlock,
             ICommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile,
-            IWebRequestController webRequestController) : base(viewFactory)
+            ISelfProfile selfProfile) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.dataProvider = dataProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
-            this.webRequestController = webRequestController;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.ConfigureImageController(webRequestController);
+            viewInstance!.ConfigureImageController(spriteCache);
             viewInstance.ConvertGetNameDescriptionUrlsToClickableLinks(GoToAnyLinkFromGetNameDescription);
             viewInstance.GetNameButtonClicked += GoToGetNameLink;
             viewInstance.CancelButtonClicked += OnCancelAction;
@@ -97,6 +99,7 @@ namespace DCL.Communities.CommunityCreation
         {
             lastSelectedImageData = null;
             closeTaskCompletionSource = new UniTaskCompletionSource();
+            spriteCache.SetObject(inputData.ThumbnailSpriteCache);
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
@@ -208,7 +211,11 @@ namespace DCL.Communities.CommunityCreation
                     return;
                 }
 
-                viewInstance!.SetProfileSelectedImage(data.CTToSprite(texture));
+                lastSelectedProfileThumbnail = data.CTToSprite(texture);
+                isProfileThumbnailDirty = true;
+
+                viewInstance!.SetProfileSelectedImage(lastSelectedProfileThumbnail);
+
                 lastSelectedImageData = data;
             }
         }
@@ -218,9 +225,10 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetCreationPanelAsLoading(true);
             currentCommunityPlaces.Clear();
             addedCommunityPlaces.Clear();
-            List<string> placesToAdd = new();
+            List<string> placesToAdd = new ();
 
             var ownProfile = await selfProfile.ProfileAsync(ct);
+
             if (ownProfile != null)
             {
                 // Lands owned or managed by the user
@@ -230,6 +238,7 @@ namespace DCL.Communities.CommunityCreation
                 {
                     var placeText = $"{placeInfo.title} ({placeInfo.base_position})";
                     placesToAdd.Add(placeText);
+
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
                         Id = placeInfo.id,
@@ -244,6 +253,7 @@ namespace DCL.Communities.CommunityCreation
                 foreach (PlacesData.PlaceInfo worldInfo in worlds.Data)
                 {
                     placesToAdd.Add(worldInfo.world_name);
+
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
                         Id = worldInfo.id,
@@ -263,6 +273,7 @@ namespace DCL.Communities.CommunityCreation
                 return;
 
             CommunityPlace selectedPlace = currentCommunityPlaces[index];
+
             if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
                 return;
 
@@ -367,6 +378,7 @@ namespace DCL.Communities.CommunityCreation
         private async UniTaskVoid CreateCommunityAsync(string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
+
             var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -387,9 +399,11 @@ namespace DCL.Communities.CommunityCreation
             UpdateCommunityAsync(inputData.CommunityId, name, description, lands, worlds, createCommunityCts.Token).Forget();
         }
 
-        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds, CancellationToken ct)
+        private async UniTaskVoid UpdateCommunityAsync(string id, string name, string description, List<string> lands, List<string> worlds,
+            CancellationToken ct)
         {
             viewInstance!.SetCommunityCreationInProgress(true);
+
             var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -399,6 +413,13 @@ namespace DCL.Communities.CommunityCreation
                 await viewInstance.WarningNotificationView.AnimatedShowAsync(UPDATE_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
                 viewInstance.SetCommunityCreationInProgress(false);
                 return;
+            }
+
+            if (isProfileThumbnailDirty)
+            {
+                spriteCache.StrictObject.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                isProfileThumbnailDirty = false;
+                lastSelectedProfileThumbnail = null;
             }
 
             closeTaskCompletionSource.TrySetResult();

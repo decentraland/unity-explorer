@@ -1,7 +1,8 @@
+using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.Utilities;
-using DCL.WebRequests;
+using DCL.Utilities;
 using MVC;
 using SuperScrollView;
 using System;
@@ -34,7 +35,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData;
         private bool canModify;
-        private IWebRequestController webRequestController;
+        private ObjectProxy<ISpriteCache> spriteCache;
         private IMVCManager mvcManager;
         private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
@@ -56,13 +57,13 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         public void InitList(Func<SectionFetchData<PlaceAndEventDTO>> currentSectionDataFunc,
-            IWebRequestController webRequestController,
+            ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
             IMVCManager mvcManager,
             CancellationToken panelCancellationToken)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
             getEventsFetchData = currentSectionDataFunc;
-            this.webRequestController = webRequestController;
+            this.spriteCache = eventThumbnailSpriteCache;
             this.mvcManager = mvcManager;
             cancellationToken = panelCancellationToken;
         }
@@ -74,7 +75,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
 
-            itemView.Configure(eventData.items[index], webRequestController);
+            itemView.Configure(eventData.items[index], spriteCache);
 
             itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
                                              data => JumpInButtonClicked?.Invoke(data),

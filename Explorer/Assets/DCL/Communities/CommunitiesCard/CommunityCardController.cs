@@ -69,6 +69,8 @@ namespace DCL.Communities.CommunitiesCard
         private CancellationTokenSource panelCancellationTokenSource = new ();
         private CancellationTokenSource communityOperationsCancellationTokenSource = new ();
         private UniTaskCompletionSource closeIntentCompletionSource = new ();
+        private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
+        private bool isSpriteCacheExternal;
 
         private GetCommunityResponse.CommunityData communityData;
         private string[] communityPlaceIds;
@@ -218,7 +220,7 @@ namespace DCL.Communities.CommunitiesCard
                 chatEventBus);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
-                webRequestController,
+                spriteCache,
                 communitiesDataProvider,
                 placesAPIService,
                 viewInstance.warningNotificationView,
@@ -232,7 +234,7 @@ namespace DCL.Communities.CommunitiesCard
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
                 placesAPIService,
-                webRequestController,
+                spriteCache,
                 mvcManager,
                 viewInstance.warningNotificationView,
                 viewInstance.successNotificationView,
@@ -240,7 +242,7 @@ namespace DCL.Communities.CommunitiesCard
                 webBrowser,
                 realmNavigator);
 
-            imageController = new ImageController(viewInstance.CommunityThumbnail, webRequestController);
+            imageController = new ImageController(viewInstance.CommunityThumbnail, spriteCache);
 
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
@@ -260,6 +262,20 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
                 viewInstance!.SetLoadingState(true);
+
+                if (!spriteCache.Configured || spriteCache.Object == null)
+                {
+                    isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
+
+                    if (isSpriteCacheExternal)
+                    {
+                        spriteCache.SetObject(inputData.ThumbnailSpriteCache);
+                    }
+                    else
+                    {
+                        spriteCache.SetObject(new SpriteCache(webRequestController));
+                    }
+                }
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
                 communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
@@ -319,7 +335,8 @@ namespace DCL.Communities.CommunitiesCard
             mvcManager.ShowAsync(
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
-                    communityId: communityData.id)));
+                    communityId: communityData.id,
+                    spriteCache.StrictObject)));
         }
 
         private void JoinCommunity()

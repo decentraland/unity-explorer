@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
 using DCL.UI.Utilities;
+using DCL.Utilities;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -173,12 +174,12 @@ namespace DCL.Communities.CommunityCreation
                 UpdateCreateButtonAvailability();
         }
 
-        public void ConfigureImageController(IWebRequestController webRequestController)
+        public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(creationPanelProfileSelectedImage, webRequestController);
+            imageController = new ImageController(creationPanelProfileSelectedImage, spriteCache);
         }
 
         public void SetProfileSelectedImage(string imageUrl)
