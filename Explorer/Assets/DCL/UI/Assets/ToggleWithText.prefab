@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 16}
+  m_SizeDelta: {x: 0, y: 26}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3779327471833531041
 CanvasRenderer:
@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Your Cool Txt
+  m_text: Set as Public
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 1682976792197666609}
   - component: {fileID: 2965888496743192953}
   - component: {fileID: 2655477926760237003}
+  - component: {fileID: 1330807945633772903}
   m_Layer: 5
   m_Name: ToggleWithText
   m_TagString: Untagged
@@ -188,12 +189,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 7
+    m_Left: 0
     m_Right: 7
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 5
-  m_Spacing: 8
+  m_Spacing: 10
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 1
@@ -221,9 +222,21 @@ MonoBehaviour:
   <OffBackgroundImage>k__BackingField: {fileID: 6094248929970383334}
   <ToggleOnAudio>k__BackingField: {fileID: 11400000, guid: bbf6fdc100a3def44853fe48acbf4fd5, type: 2}
   <ToggleOffAudio>k__BackingField: {fileID: 11400000, guid: e95bf9b95c2484148a081ec1b18e3aa6, type: 2}
-  <canvasGroup>k__BackingField: {fileID: 907964657763278752}
+  <canvasGroup>k__BackingField: {fileID: 1330807945633772903}
   <interactableAlpha>k__BackingField: 1
   <nonInteractableAlpha>k__BackingField: 0.5
+--- !u!225 &1330807945633772903
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8057678888699711851}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &3773273977910126689
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -346,6 +359,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 977034302134673057, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
+    - {fileID: 4090642556362700737, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -353,11 +367,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 4643746892624216629}
   m_SourcePrefab: {fileID: 100100000, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
---- !u!225 &907964657763278752 stripped
-CanvasGroup:
-  m_CorrespondingSourceObject: {fileID: 4090642556362700737, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
-  m_PrefabInstance: {fileID: 3773273977910126689}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &4187387521697926856 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1027324785593132713, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
