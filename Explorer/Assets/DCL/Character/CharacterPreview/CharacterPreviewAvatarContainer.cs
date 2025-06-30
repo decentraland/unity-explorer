@@ -63,7 +63,9 @@ namespace DCL.CharacterPreview
     [Serializable]
     public class AvatarPreviewHeadIKSettings
     {
-        public float AvatarDepth = 500;
+        public float MinAvatarDepth = 500;
+        public float MaxAvatarDepth = 1500;
+
         public float HeadMoveSpeed = 0.5f;
     }
 }
