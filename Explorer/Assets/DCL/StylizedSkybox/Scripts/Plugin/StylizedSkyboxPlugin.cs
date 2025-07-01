@@ -4,9 +4,11 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
-using DCL.FeatureFlags;
+using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
+using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -16,48 +18,91 @@ namespace DCL.StylizedSkybox.Scripts.Plugin
 {
     public class StylizedSkyboxPlugin : IDCLGlobalPlugin<StylizedSkyboxPlugin.StylizedSkyboxSettings>
     {
+        private SkyboxController? skyboxController;
+        private StylizedSkyboxSettingsAsset? skyboxSettings;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly Light directionalLight;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private SkyboxController? skyboxController;
-        private readonly ElementBinding<float> timeOfDay;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly IScenesCache scenesCache;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
 
-        private StylizedSkyboxSettingsAsset? settingsAsset;
+        private readonly ElementBinding<float> debugTimeOfDay = new(0);
+        private readonly ElementBinding<string> debugTimeSource = new (nameof(SkyboxTimeSource.GLOBAL));
 
-        public StylizedSkyboxPlugin(
-            IAssetsProvisioner assetsProvisioner,
+        public StylizedSkyboxPlugin(IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
             IDebugContainerBuilder debugContainerBuilder,
-            FeatureFlagsCache featureFlagsCache
-        )
+            IScenesCache scenesCache,
+            ISceneRestrictionBusController sceneRestrictionBusController)
         {
-            timeOfDay = new ElementBinding<float>(0);
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.debugContainerBuilder = debugContainerBuilder;
-            this.featureFlagsCache = featureFlagsCache;
+            this.scenesCache = scenesCache;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            if (skyboxSettings)
+                skyboxSettings.SkyboxTimeSourceChanged -= OnSkyboxTimeSourceChanged;
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(StylizedSkyboxSettings settings, CancellationToken ct)
         {
-            settingsAsset = settings.SettingsAsset;
+            try
+            {
+                skyboxSettings = settings.SettingsAsset;
+                skyboxSettings.Reset();
 
-            skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
-            AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settingsAsset.SkyboxAnimationCycle, ct: ct)).Value;
+                skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
+                AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;
 
-            skyboxController.Initialize(settingsAsset.SkyboxMaterial, directionalLight, skyboxAnimation, featureFlagsCache, settingsAsset);
+                skyboxController.Initialize(skyboxSettings.SkyboxMaterial,
+                    directionalLight,
+                    skyboxAnimation,
+                    skyboxSettings,
+                    scenesCache
+                  , sceneRestrictionBusController
+                );
+
+                SetupDebugPanel();
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore cancellation
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(ReportCategory.SKYBOX, $"Failed to initialize skybox: {ex}");
+                throw;
+            }
+        }
+
+        private void SetupDebugPanel()
+        {
+            if(!skyboxController || !skyboxSettings) return;
+
+            skyboxSettings.SkyboxTimeSourceChanged += OnSkyboxTimeSourceChanged;
 
             debugContainerBuilder.TryAddWidget("Skybox")
-                                ?.AddSingleButton("Play", () => skyboxController.UseDynamicTime = true)
-                                 .AddSingleButton("Pause", () => skyboxController.UseDynamicTime = false)
-                                 .AddFloatSliderField("Time", timeOfDay, 0, 1)
-                                 .AddSingleButton("SetTime", () => skyboxController.SetTimeOverride(timeOfDay.Value)); //TODO: replace this by a system to update the value
+                                ?.AddSingleButton("Play", ()=> skyboxController.ForceSetDayCycleEnabled(true, SkyboxTimeSource.GLOBAL))
+                                 .AddSingleButton("Pause", () =>
+                                  {
+                                      skyboxController.ForceSetDayCycleEnabled(false, SkyboxTimeSource.PLAYER_FIXED);
+                                  })
+                                 .AddFloatSliderField("Time", debugTimeOfDay, 0, 1)
+                                 .AddSingleButton("SetTime", () =>
+                                  {
+                                      skyboxController.ForceSetTimeOfDay(debugTimeOfDay.Value, SkyboxTimeSource.PLAYER_FIXED);
+                                  }) //TODO: replace this by a system to update the value
+                                 .AddCustomMarker("TimeSource", debugTimeSource);
         }
+
+        private void OnSkyboxTimeSourceChanged(SkyboxTimeSource source) =>
+            debugTimeSource.Value = source.ToString();
 
         [Serializable]
         public class StylizedSkyboxSettings : IDCLPluginSettings

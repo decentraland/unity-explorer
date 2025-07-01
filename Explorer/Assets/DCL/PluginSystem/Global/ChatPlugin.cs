@@ -46,8 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly MainUIView mainUIView;
-        private readonly ViewDependencies viewDependencies;
-        private readonly IChatCommandsBus chatCommandsBus;
         private readonly IRoomHub roomHub;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ITextFormatter hyperlinkTextFormatter;
@@ -57,7 +55,6 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ChatMessageFactory chatMessageFactory;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private ChatHistoryStorage? chatStorage;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ObjectProxy<FriendsCache> friendsCacheProxy;
@@ -83,8 +80,6 @@ namespace DCL.PluginSystem.Global
             IInputBlock inputBlock,
             Arch.Core.World world,
             Entity playerEntity,
-            ViewDependencies viewDependencies,
-            IChatCommandsBus chatCommandsBus,
             IRoomHub roomHub,
             IAssetsProvisioner assetsProvisioner,
             ITextFormatter hyperlinkTextFormatter,
@@ -97,7 +92,6 @@ namespace DCL.PluginSystem.Global
             IRPCSocialServices socialServiceProxy,
             IFriendsEventBus friendsEventBus,
             ChatMessageFactory chatMessageFactory,
-            FeatureFlagsCache featureFlagsCache,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             IRealmNavigator realmNavigator,
@@ -114,8 +108,6 @@ namespace DCL.PluginSystem.Global
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.viewDependencies = viewDependencies;
-            this.chatCommandsBus = chatCommandsBus;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
@@ -127,7 +119,6 @@ namespace DCL.PluginSystem.Global
             this.roomHub = roomHub;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
-            this.featureFlagsCache = featureFlagsCache;
             this.friendsServiceProxy = friendsServiceProxy;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
@@ -151,7 +142,8 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
-            if (featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+
+            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
@@ -171,7 +163,6 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity,
                 inputBlock,
-                viewDependencies,
                 roomHub,
                 chatSettingsAsset.Value,
                 hyperlinkTextFormatter,

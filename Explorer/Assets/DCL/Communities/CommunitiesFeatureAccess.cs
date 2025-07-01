@@ -9,14 +9,14 @@ namespace DCL.Communities
     public class CommunitiesFeatureAccess : IDisposable
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly FeatureFlagsConfiguration featureFlagsConfig;
 
         private bool? storedResult;
 
-        public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache, FeatureFlagsCache featureFlagsCache)
+        public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache, FeatureFlagsConfiguration featureFlagsCache)
         {
             this.web3IdentityCache = web3IdentityCache;
-            this.featureFlagsCache = featureFlagsCache;
+            this.featureFlagsConfig = featureFlagsCache;
 
             web3IdentityCache.OnIdentityChanged += OnIdentityCacheChanged;
         }
@@ -36,7 +36,7 @@ namespace DCL.Communities
             if (storedResult != null)
                 return storedResult.Value;
 
-            bool result = featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
+            bool result = featureFlagsConfig.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
             if (result && !ignoreAllowedList)
             {
@@ -47,7 +47,7 @@ namespace DCL.Communities
                     result = false;
                 else
                 {
-                    featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string walletsAllowlist);
+                    featureFlagsConfig.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string walletsAllowlist);
                     result = string.IsNullOrEmpty(walletsAllowlist) || walletsAllowlist.Contains(ownWalletId, StringComparison.OrdinalIgnoreCase);
                 }
             }

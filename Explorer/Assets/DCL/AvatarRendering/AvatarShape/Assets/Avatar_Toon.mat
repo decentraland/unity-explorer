@@ -12,6 +12,8 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _DCL_COMPUTE_SKINNING
+  - _DCL_TEXTURE_ARRAYS
   - _IS_OUTLINE_CLIPPING_YES
   - _OUTLINE_NML
   m_InvalidKeywords:
@@ -475,6 +477,7 @@ Material:
     - _IridescenceMask: 1
     - _IridescenceThickness: 1
     - _IsBaseMapAlphaAsClippingMask: 1
+    - _IsEmissive: 0
     - _Is_BLD: 0
     - _Is_BakedNormal: 0
     - _Is_BlendAddToHiColor: 1

@@ -60,11 +60,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ccf99be97dbda744981e8b0ec1ef8faf
-    m_Address: Avatar_CelShading
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e18034962a56eac40ab5df62e159c314
     m_Address: Avatar Randomizer.asset
     m_ReadOnly: 0

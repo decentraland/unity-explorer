@@ -13,7 +13,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatMemberListView : MonoBehaviour, IViewWithGlobalDependencies
+    public class ChatMemberListView : MonoBehaviour
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
 
@@ -27,7 +27,6 @@ namespace DCL.Chat
 
         private List<ChatUserData> members = new ();
 
-        private ViewDependencies viewDependencies;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private bool isInitialized;
         private bool isVisible;
@@ -63,11 +62,6 @@ namespace DCL.Chat
         private void Awake()
         {
             loopListView.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
@@ -118,7 +112,7 @@ namespace DCL.Chat
             contextMenuTask = new UniTaskCompletionSource();
             contextMenuCts = contextMenuCts.SafeRestart();
             IsContextMenuOpen = true;
-            await viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, contextMenuTask.Task, onMenuHide);
+            await ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, contextMenuTask.Task, onMenuHide);
             IsContextMenuOpen = false;
         }
 
