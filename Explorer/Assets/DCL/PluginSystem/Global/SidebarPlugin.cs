@@ -60,7 +60,6 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -86,8 +85,7 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            ISceneRestrictionBusController sceneRestrictionBusController,
-            CommunitiesFeatureAccess communitiesFeatureAccess)
+            ISceneRestrictionBusController sceneRestrictionBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -113,7 +111,6 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public void Dispose() { }
@@ -150,8 +147,7 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                sceneRestrictionBusController,
-                communitiesFeatureAccess
+                sceneRestrictionBusController
             ));
         }
 

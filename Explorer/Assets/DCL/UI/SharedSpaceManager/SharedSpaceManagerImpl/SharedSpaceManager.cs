@@ -27,7 +27,6 @@ namespace DCL.UI.SharedSpaceManager
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
         private readonly World ecsWorld;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isCameraReelFeatureEnabled;
@@ -40,14 +39,13 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled, CommunitiesFeatureAccess communitiesFeatureAccess)
+        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
         {
             this.mvcManager = mvcManager;
             dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
             ecsWorld = world;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             configureShortcutsCts = configureShortcutsCts.SafeRestart();
             ConfigureShortcutsAsync(configureShortcutsCts.Token).Forget();
@@ -67,7 +65,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
+            isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
 
