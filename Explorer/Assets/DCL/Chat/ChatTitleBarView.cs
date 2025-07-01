@@ -16,7 +16,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatTitleBarView : MonoBehaviour, IViewWithGlobalDependencies
+    public class ChatTitleBarView : MonoBehaviour
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
         public delegate void DeleteChatHistoryRequestedDelegate();
@@ -69,12 +69,6 @@ namespace DCL.Chat
             {
                 return closeChatButton;
             }
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-            profileView.InjectDependencies(dependencies);
         }
 
         public void Initialize()
@@ -178,7 +172,7 @@ namespace DCL.Chat
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
 
-            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
+            ViewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
         }
 
         private void OnDeleteChatHistoryButtonClicked()

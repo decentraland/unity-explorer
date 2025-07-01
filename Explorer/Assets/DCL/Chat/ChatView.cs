@@ -28,7 +28,7 @@ namespace DCL.Chat
     public delegate UniTask GetChannelMembersDelegate(List<ChatUserData> outProfiles, CancellationToken ct);
 
     // Note: The view never changes any data (chatMessages), that's done by the controller
-    public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
@@ -189,7 +189,6 @@ namespace DCL.Chat
         /// </summary>
         public event ViewCommunityRequestedDelegate ViewCommunityRequested;
 
-        private ViewDependencies viewDependencies;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly List<ChatUserData> sortedMemberData = new ();
 
@@ -220,6 +219,9 @@ namespace DCL.Chat
         private ISpriteCache thumbnailCache;
         private CommunityTitleView.OpenContextMenuDelegate openContextMenuAction;
         private Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communitiesData = new ();
+
+        public event Action OnCloseButtonClicked = () => { };
+        public event Action OnInputButtonClicked = () => { };
 
         /// <summary>
         /// Get or sets the current content of the input box.
@@ -471,24 +473,15 @@ namespace DCL.Chat
             chatInputBox.InputChanged -= OnInputChanged;
             chatInputBox.InputSubmitted -= OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
-            viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
+            DCLInput.Instance.UI.Click.performed -= OnClickUIInputPerformed;
+            DCLInput.Instance.UI.Close.performed -= OnCloseUIInputPerformed;
             return base.HideAsync(ct, isInstant);
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-            chatInputBox.InjectDependencies(dependencies);
-            chatMessageViewer.InjectDependencies(dependencies);
-            memberListView.InjectDependencies(dependencies);
-            chatTitleBar.InjectDependencies(dependencies);
-        }
-
         /// <summary>
-        ///
+        /// Provides the view a reference to the data it needs to draw the information in the UI, before the community conversations are added.
         /// </summary>
-        /// <param name="communities"></param>
+        /// <param name="communities">The data of the communities.</param>
         public void SetCommunitiesData(Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities)
         {
             communitiesData = communities;
@@ -530,8 +523,8 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
+            DCLInput.Instance.UI.Close.performed += OnCloseUIInputPerformed;
+            DCLInput.Instance.UI.Click.performed += OnClickUIInputPerformed;
             SubscribeToSubmitEvent();
 
             closePopupTask = new UniTaskCompletionSource();
@@ -881,7 +874,7 @@ namespace DCL.Chat
             if(!IsUnfolded)
                 return;
 
-            IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
+            IReadOnlyList<RaycastResult> raycastResults = ViewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
             bool hasClickedOnPanel = false;
             bool hasClickedOnCloseButton = false;
             bool hasClickedOnEmojiPanel = false;
@@ -938,8 +931,9 @@ namespace DCL.Chat
             {
                 if (!IsUnfolded)
                 {
-                    IsUnfolded = true;
-                    Focus();
+                    // NOTE: notify controller to handle opening the chat
+                    // NOTE: instead of handling it here in the view
+                    OnInputButtonClicked();
                     chatMessageViewer.ShowLastMessage();
                 }
             }
@@ -959,7 +953,7 @@ namespace DCL.Chat
                 closePopupTask.Task);
 
             popupCts = popupCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token);
+            await ViewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token);
 
             isChatViewerMessageContextMenuOpen = false;
         }
@@ -967,7 +961,10 @@ namespace DCL.Chat
         private void OnCloseChatButtonClicked()
         {
             popupCts.SafeCancelAndDispose();
-            IsUnfolded = false;
+
+            // NOTE: notify controller to handle closing the chat
+            // NOTE: instead of handling it here in the view
+            OnCloseButtonClicked();
         }
 
         private void OnInputChanged(string inputText)
@@ -1077,10 +1074,7 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)
         {
             if (currentChannel == null || !CurrentChannelId.Equals(channelId))
-                if (!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                    ConversationSelected?.Invoke(channelId);
-                else
-                    CurrentChannelId = channelId;
+                ConversationSelected?.Invoke(channelId);
         }
 
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
@@ -1097,7 +1091,7 @@ namespace DCL.Chat
                 return;
             }
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
+            DCLInput.Instance.UI.Submit.performed += OnSubmitUIInputPerformed;
             isSubmitHooked = true;
         }
 
@@ -1109,7 +1103,7 @@ namespace DCL.Chat
                 return;
             }
 
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            DCLInput.Instance.UI.Submit.performed -= OnSubmitUIInputPerformed;
             isSubmitHooked = false;
         }
 

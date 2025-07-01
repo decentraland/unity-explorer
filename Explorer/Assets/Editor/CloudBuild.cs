@@ -4,7 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using DCL.Rendering.Menus;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,6 +17,7 @@ namespace Editor
 
         private static string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
+        // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
         [UsedImplicitly]
         public static void PreExport()
         {
@@ -29,6 +30,8 @@ namespace Editor
             // E.g. access like:
             // Debug.Log(Parameters["TEST_VALUE"] as string);
             //
+
+            GenerateIgnoreWarningsFile();
 
             //Unity suggestion: 1793168
             //This should ensure that the roslyn compiler has been run and everything is generated as needed.
@@ -62,10 +65,61 @@ namespace Editor
 
         }
 
+        // Defined in the @T_MacOS/@T_Windows64 configurations in Unity Cloud
         [UsedImplicitly]
         public static void PostExport()
         {
             Debug.Log($"~~ {nameof(CloudBuild)} PostExport ~~");
+        }
+
+        /// <summary>
+        /// Remove warnings from the build that are just clutter
+        /// We still want to maintain them outside of the build process
+        /// </summary>
+        private static void GenerateIgnoreWarningsFile()
+        {
+            // List of warning codes to ignore
+            string[] warningsToIgnore = {
+                "8618", // Nullable reference types
+                "8625", // Cannot convert null literal to non-nullable reference type
+                "8602", // Dereference of a possibly null reference
+                "8604", // Possible null reference argument
+                "8619", // Nullable value types
+                "8620", // Argument cannot be used for parameter due to differences in the nullability of reference types
+                "8603", // Possible null reference return
+                "8600", // Converting null literal or possible null value to non-nullable type
+                "8601", // Possible null reference assignment
+                "0649", // Field is never assigned to, and will always have its default value
+                "0414", // Field is assigned but its value is never used
+                "0168", // Variable is declared but never used
+                "0219", // Variable is assigned but its value is never used
+                "8632"  // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+            };
+
+            // Path to the Assets folder
+            string assetsPath = Application.dataPath;
+            string filePath = Path.Combine(assetsPath, "csc.rsp");
+
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(filePath))
+                {
+                    foreach (string warning in warningsToIgnore)
+                    {
+                        writer.WriteLine($"-nowarn:{warning}");
+                    }
+                }
+
+                Debug.Log($"Successfully generated csc.rsp file at: {filePath}");
+                Debug.Log($"Added {warningsToIgnore.Length} warning suppressions to the file.");
+
+                // Force a refresh
+                AssetDatabase.Refresh();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to generate csc.rsp file: {ex.Message}");
+            }
         }
 
         private static void WriteReleaseStoreToBuildData(string installSource)

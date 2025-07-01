@@ -90,7 +90,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IWebBrowser webBrowser;
         private readonly IEmoteStorage emoteStorage;
-        private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
@@ -119,7 +118,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
-        private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
@@ -137,8 +136,8 @@ namespace DCL.PluginSystem.Global
         private PlaceInfoPanelController? placeInfoPanelController;
         private NavmapSearchBarController? searchBarController;
         private EventInfoPanelController? eventInfoPanelController;
-        private ViewDependencies viewDependencies;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -162,7 +161,6 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IEmoteStorage emoteStorage,
             List<string> forceRender,
-            DCLInput dclInput,
             IRealmData realmData,
             IProfileCache profileCache,
             URLDomain assetBundleURL,
@@ -185,13 +183,14 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
             bool includeCameraReel,
-            IAppArgs appArgs, ViewDependencies viewDependencies,
+            IAppArgs appArgs,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
-            IProfileChangesBus profileChangesBus,
+            ProfileChangesBus profileChangesBus,
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
+            UpscalingController upscalingController,
             ICommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider,
             CommunitiesFeatureAccess communitiesFeatureAccess)
@@ -221,7 +220,6 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.notificationsBusController = notificationsBusController;
             this.emoteStorage = emoteStorage;
-            this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
             this.backpackEventBus = backpackEventBus;
@@ -241,13 +239,13 @@ namespace DCL.PluginSystem.Global
             this.explorePanelNavmapBus = explorePanelNavmapBus;
             this.includeCameraReel = includeCameraReel;
             this.appArgs = appArgs;
-            this.viewDependencies = viewDependencies;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileChangesBus = profileChangesBus;
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
             this.communitiesFeatureAccess = communitiesFeatureAccess;
@@ -319,7 +317,7 @@ namespace DCL.PluginSystem.Global
             navmapView = explorePanelView.GetComponentInChildren<NavmapView>();
             categoryFilterController = new CategoryFilterController(navmapView.categoryToggles, mapRendererContainer.MapRenderer, navmapBus);
 
-            NavmapZoomController zoomController = new (navmapView.zoomView, dclInput, navmapBus);
+            NavmapZoomController zoomController = new (navmapView.zoomView, navmapBus);
 
             ObjectPool<PlaceElementView> placeElementsPool = await InitializePlaceElementsPoolAsync(navmapView.SearchBarResultPanel, ct);
             ObjectPool<EventElementView> eventElementsPool = await InitializeEventElementsForPlacePoolAsync(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView, ct);
@@ -359,7 +357,21 @@ namespace DCL.PluginSystem.Global
                     eventElementsPool, shareContextMenu, webBrowser, mvcManager),
                 placesAPIService, eventsApiService, navmapBus);
 
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, videoPrioritizationSettings.Value, landscapeData.Value, qualitySettingsAsset.Value, controlsSettingsAsset.Value, systemMemoryCap, chatSettingsAsset.Value, userBlockingCacheProxy, sceneLoadingLimit, worldVolumeMacBus);
+            settingsController = new SettingsController(
+                explorePanelView.GetComponentInChildren<SettingsView>(),
+                settingsMenuConfiguration.Value,
+                generalAudioMixer.Value,
+                realmPartitionSettings.Value,
+                videoPrioritizationSettings.Value,
+                landscapeData.Value,
+                qualitySettingsAsset.Value,
+                controlsSettingsAsset.Value,
+                systemMemoryCap,
+                chatSettingsAsset.Value,
+                userBlockingCacheProxy,
+                sceneLoadingLimit,
+                worldVolumeMacBus,
+                upscalingController);
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,
@@ -378,7 +390,7 @@ namespace DCL.PluginSystem.Global
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            inputHandler = new ExplorePanelInputHandler(dclInput);
+            inputHandler = new ExplorePanelInputHandler();
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
@@ -412,7 +424,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                    communitiesBrowserController, dclInput, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager, communitiesFeatureAccess);
+                    communitiesBrowserController, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager, communitiesFeatureAccess);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);
