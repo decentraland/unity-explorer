@@ -74,13 +74,17 @@ namespace DCL.Communities
                 new MultipartFormDataSection("description", description),
             };
 
-            List<string> landsAndWorlds = new (lands);
-            landsAndWorlds.AddRange(worlds);
             StringBuilder placeIdsJsonString = new StringBuilder("[");
-            for (var i = 0; i < landsAndWorlds.Count; i++)
+            for (var i = 0; i < lands.Count; i++)
             {
-                placeIdsJsonString.Append($"\"{landsAndWorlds[i]}\"");
-                if (i < landsAndWorlds.Count - 1)
+                placeIdsJsonString.Append($"\"{lands[i]}\"");
+                if (i < lands.Count - 1)
+                    placeIdsJsonString.Append(", ");
+            }
+            for (var i = 0; i < worlds.Count; i++)
+            {
+                placeIdsJsonString.Append($"\"{worlds[i]}\"");
+                if (i < worlds.Count - 1)
                     placeIdsJsonString.Append(", ");
             }
             placeIdsJsonString.Append("]");
