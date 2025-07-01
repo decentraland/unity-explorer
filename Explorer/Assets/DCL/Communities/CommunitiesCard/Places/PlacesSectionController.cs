@@ -138,7 +138,8 @@ namespace DCL.Communities.CommunitiesCard.Places
 
                 if (!result.Success)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 
@@ -174,7 +175,9 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             clipboard.Set(GetPlaceCopyLink(place));
 
-            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken).Forget();
+            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
+                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES)
+                                          .Forget();
         }
 
         private static string GetPlaceCopyLink(PlaceInfo place)
@@ -200,7 +203,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(FAVORITE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(FAVORITE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 }
 
                 placeInfo.user_favorite = favoriteValue;
@@ -221,7 +225,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetDislikeToggle(!dislikeValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(DISLIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(DISLIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                     return;
                 }
@@ -249,7 +254,8 @@ namespace DCL.Communities.CommunitiesCard.Places
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetLikeToggle(!likeValue);
-                    await inWorldWarningNotificationView.AnimatedShowAsync(LIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(LIKE_PLACE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                     return;
                 }
@@ -287,7 +293,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             if (!response.Success || !response.Value.ok)
             {
                 placesFetchData.pageNumber--;
-                await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 return placesFetchData.totalToFetch;
             }
 
