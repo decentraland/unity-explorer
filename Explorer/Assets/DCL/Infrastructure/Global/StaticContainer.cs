@@ -282,7 +282,7 @@ namespace Global
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
-                new SkyboxTimePlugin(container.SceneRestrictionBusController),
+                new SkyboxTimePlugin(container.SceneRestrictionBusController, assetsProvisioner),
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
