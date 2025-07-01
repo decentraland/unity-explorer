@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.WebRequests;
+using DG.Tweening;
 using System;
 using Utility;
 using System.Threading;
@@ -12,6 +13,8 @@ namespace DCL.UI
 {
     public class ImageController
     {
+        private static readonly Color LOADING_COLOR = new (0, 0, 0, 0);
+
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
         private readonly ObjectProxy<ISpriteCache>? spriteCache;
@@ -64,6 +67,8 @@ namespace DCL.UI
         {
             try
             {
+                view.Image.color = LOADING_COLOR;
+
                 view.LoadingObject.SetActive(true);
 
                 Sprite? sprite = null;
@@ -97,6 +102,7 @@ namespace DCL.UI
                     SetImage(sprite);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
+                    view.Image.DOColor(Color.white, view.imageLoadingFadeDuration);
                 }
             }
             finally
