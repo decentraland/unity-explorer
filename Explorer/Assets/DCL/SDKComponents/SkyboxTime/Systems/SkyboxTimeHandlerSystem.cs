@@ -70,7 +70,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         private void SetSDKsettings(PBSkyboxTime sdkSkyboxTime)
         {
             skyboxSettings.IsDayCycleEnabled = false;
-            skyboxSettings.TargetTransitionTimeOfDay = sdkSkyboxTime.FixedTimeOfDay;
+            skyboxSettings.TargetTransitionTimeOfDay = sdkSkyboxTime.FixedTime;
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward ? SkyBox.TransitionMode.FORWARD : SkyBox.TransitionMode.BACKWARD;
             skyboxSettings.IsTransitioning = true;
 

@@ -28,7 +28,6 @@ MonoBehaviour:
   - rid: 4340256219339423747
   - rid: 7162477498503790594
   - rid: 2174542042650378245
-  - rid: 4340256782807990272
   - rid: 6156380652633325570
   - rid: 7162477752737071106
   - rid: 7162477796324278274
@@ -88,12 +87,8 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         <EmotesSettings>k__BackingField:
-          <TimeBetweenEmotes>k__BackingField: 15
           <IntroEmoteURN>k__BackingField: raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump_short
-          <FunnyEmotes>k__BackingField:
-          - robot
-          - disco
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -544,7 +539,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <SkyboxSettingsAsset>k__BackingField: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
         <SettingsAsset>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
         ControlsPanelPrefab:
           m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
@@ -612,10 +606,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 4340256782807990272
-      type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.StylizedSkybox.Scripts.Plugin, asm: DCL.Plugins}
-      data:
-        SettingsAsset: {fileID: 11400000, guid: 50aa9483411844942bd409d4b4612221, type: 2}
     - rid: 4782308287844188162
       type: {class: GenericContextMenuPlugin/GenericContextMenuSettings, ns: DCL.PluginSystem, asm: DCL.Plugins}
       data:

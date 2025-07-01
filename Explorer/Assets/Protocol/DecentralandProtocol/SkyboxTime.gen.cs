@@ -25,16 +25,16 @@ namespace DCL.ECSComponents {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "Ci1kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvc2t5Ym94X3RpbWUucHJv",
-            "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyKIAQoMUEJTa3lib3hU",
-            "aW1lEhkKEWZpeGVkX3RpbWVfb2ZfZGF5GAEgASgCEkkKD3RyYW5zaXRpb25f",
-            "bW9kZRgCIAEoDjIrLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5UcmFu",
-            "c2l0aW9uTW9kZUgAiAEBQhIKEF90cmFuc2l0aW9uX21vZGUqMQoOVHJhbnNp",
-            "dGlvbk1vZGUSDgoKVE1fRk9SV0FSRBAAEg8KC1RNX0JBQ0tXQVJEEAFCFKoC",
-            "EURDTC5FQ1NDb21wb25lbnRzYgZwcm90bzM="));
+            "dG8SG2RlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cyKBAQoMUEJTa3lib3hU",
+            "aW1lEhIKCmZpeGVkX3RpbWUYASABKA0SSQoPdHJhbnNpdGlvbl9tb2RlGAIg",
+            "ASgOMisuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlRyYW5zaXRpb25N",
+            "b2RlSACIAQFCEgoQX3RyYW5zaXRpb25fbW9kZSoxCg5UcmFuc2l0aW9uTW9k",
+            "ZRIOCgpUTV9GT1JXQVJEEAASDwoLVE1fQkFDS1dBUkQQAUIUqgIRRENMLkVD",
+            "U0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::DCL.ECSComponents.TransitionMode), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkyboxTime), global::DCL.ECSComponents.PBSkyboxTime.Parser, new[]{ "FixedTimeOfDay", "TransitionMode" }, new[]{ "TransitionMode" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBSkyboxTime), global::DCL.ECSComponents.PBSkyboxTime.Parser, new[]{ "FixedTime", "TransitionMode" }, new[]{ "TransitionMode" }, null, null, null)
           }));
     }
     #endregion
@@ -98,7 +98,7 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PBSkyboxTime(PBSkyboxTime other) : this() {
       _hasBits0 = other._hasBits0;
-      fixedTimeOfDay_ = other.fixedTimeOfDay_;
+      fixedTime_ = other.fixedTime_;
       transitionMode_ = other.transitionMode_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -109,18 +109,18 @@ namespace DCL.ECSComponents {
       return new PBSkyboxTime(this);
     }
 
-    /// <summary>Field number for the "fixed_time_of_day" field.</summary>
-    public const int FixedTimeOfDayFieldNumber = 1;
-    private float fixedTimeOfDay_;
+    /// <summary>Field number for the "fixed_time" field.</summary>
+    public const int FixedTimeFieldNumber = 1;
+    private uint fixedTime_;
     /// <summary>
-    /// fixed time of day value from 0.0 (midnight) to 1.0 (midnight next day), where 0.5 is noon
+    /// fixed time of day, represented as a number of seconds since the start of the day, where 0 is 00:00hs, 43200 is 12:00hs and 86400 is 24:00hs
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float FixedTimeOfDay {
-      get { return fixedTimeOfDay_; }
+    public uint FixedTime {
+      get { return fixedTime_; }
       set {
-        fixedTimeOfDay_ = value;
+        fixedTime_ = value;
       }
     }
 
@@ -167,7 +167,7 @@ namespace DCL.ECSComponents {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(FixedTimeOfDay, other.FixedTimeOfDay)) return false;
+      if (FixedTime != other.FixedTime) return false;
       if (TransitionMode != other.TransitionMode) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -176,7 +176,7 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (FixedTimeOfDay != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(FixedTimeOfDay);
+      if (FixedTime != 0) hash ^= FixedTime.GetHashCode();
       if (HasTransitionMode) hash ^= TransitionMode.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -196,9 +196,9 @@ namespace DCL.ECSComponents {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (FixedTimeOfDay != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(FixedTimeOfDay);
+      if (FixedTime != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(FixedTime);
       }
       if (HasTransitionMode) {
         output.WriteRawTag(16);
@@ -214,9 +214,9 @@ namespace DCL.ECSComponents {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (FixedTimeOfDay != 0F) {
-        output.WriteRawTag(13);
-        output.WriteFloat(FixedTimeOfDay);
+      if (FixedTime != 0) {
+        output.WriteRawTag(8);
+        output.WriteUInt32(FixedTime);
       }
       if (HasTransitionMode) {
         output.WriteRawTag(16);
@@ -232,8 +232,8 @@ namespace DCL.ECSComponents {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (FixedTimeOfDay != 0F) {
-        size += 1 + 4;
+      if (FixedTime != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(FixedTime);
       }
       if (HasTransitionMode) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) TransitionMode);
@@ -250,8 +250,8 @@ namespace DCL.ECSComponents {
       if (other == null) {
         return;
       }
-      if (other.FixedTimeOfDay != 0F) {
-        FixedTimeOfDay = other.FixedTimeOfDay;
+      if (other.FixedTime != 0) {
+        FixedTime = other.FixedTime;
       }
       if (other.HasTransitionMode) {
         TransitionMode = other.TransitionMode;
@@ -271,8 +271,8 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 13: {
-            FixedTimeOfDay = input.ReadFloat();
+          case 8: {
+            FixedTime = input.ReadUInt32();
             break;
           }
           case 16: {
@@ -294,8 +294,8 @@ namespace DCL.ECSComponents {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 13: {
-            FixedTimeOfDay = input.ReadFloat();
+          case 8: {
+            FixedTime = input.ReadUInt32();
             break;
           }
           case 16: {
