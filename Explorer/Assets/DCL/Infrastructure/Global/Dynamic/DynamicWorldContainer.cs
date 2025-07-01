@@ -440,7 +440,7 @@ namespace Global.Dynamic
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
-            CommunitiesFeatureAccess communitiesFeatureAccess = new CommunitiesFeatureAccess(identityCache, featureFlags);
+            CommunitiesFeatureAccess communitiesFeatureAccess = new CommunitiesFeatureAccess(identityCache);
             bool includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
