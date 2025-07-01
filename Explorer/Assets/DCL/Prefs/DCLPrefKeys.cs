@@ -48,6 +48,7 @@ namespace DCL.Prefs
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_UPSCALER = "Settings_Upscaler";
 
+        public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
 
         public const string WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED = "webRequestsArtificialDelayEnable";
         public const string WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS = "webRequestsArtificialDelaySeconds";
