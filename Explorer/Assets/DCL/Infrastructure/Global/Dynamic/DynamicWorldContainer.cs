@@ -368,8 +368,6 @@ namespace Global.Dynamic
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
 
-            var voiceChatSettingsAssetProxy = new ObjectProxy<VoiceChatSettingsAsset>();
-
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
             IRoomHub roomHub = new RoomHub(
@@ -856,7 +854,6 @@ namespace Global.Dynamic
             if (includeCall)
                 globalPlugins.Add(
                     new VoiceChatPlugin(
-                        voiceChatSettingsAssetProxy,
                         assetsProvisioner,
                         roomHub,
                         mainUIView,
