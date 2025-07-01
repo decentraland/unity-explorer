@@ -73,6 +73,14 @@ namespace DCL.Prefs
             dataChanged = true;
         }
 
+        public void SetBool(string key, bool value)
+        {
+            if (userData.Bools.TryGetValue(key, out bool existing) && existing == value) return;
+
+            userData.Bools[key] = value;
+            dataChanged = true;
+        }
+
         public string GetString(string key, string defaultValue)
         {
             MigrateString(key);
@@ -89,6 +97,21 @@ namespace DCL.Prefs
         {
             MigrateFloat(key);
             return userData.Floats.GetValueOrDefault(key, defaultValue);
+        }
+
+        public bool GetBool(string key, bool defaultValue)
+        {
+            MigrateBool(key);
+            return userData.Bools.GetValueOrDefault(key, defaultValue);
+        }
+
+        private void MigrateBool(string key)
+        {
+            if (unityPrefs == null || !unityPrefs.HasKey(key)) return;
+
+            userData.Bools.TryAdd(key, unityPrefs!.GetBool(key, false));
+            unityPrefs.DeleteKey(key);
+            unityPrefs.Save();
         }
 
         public bool HasKey(string key) =>
@@ -169,6 +192,8 @@ namespace DCL.Prefs
             public Dictionary<string, string> Strings { get; private set; } = new ();
             public Dictionary<string, int> Ints { get; private set; } = new ();
             public Dictionary<string, float> Floats { get; private set; } = new ();
+
+            public Dictionary<string, bool> Bools { get; private set; } = new ();
         }
     }
 }
