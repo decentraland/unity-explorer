@@ -21,9 +21,9 @@ namespace DCL.SkyBox
 
         [SerializeField] private float speedMultiplier = DEFAULT_SPEED;
         [SerializeField] private float transitionSpeed = 1f;
-        [SerializeField] private float targetTransitionTimeOfDay;
-        [SerializeField] private bool canUIControl;
 
+        private float targetTransitionTimeOfDay;
+        private bool canUIControl;
         private float timeOfDayNormalized;
 
         // For UI display synchronization

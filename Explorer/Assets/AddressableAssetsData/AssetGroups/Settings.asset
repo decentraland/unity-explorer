@@ -35,11 +35,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 50aa9483411844942bd409d4b4612221
-    m_Address: StylizedSkyboxSettings
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6c1c35a66af59874a8373ebcd51572a4
     m_Address: Reports Settings (Production)
     m_ReadOnly: 0

@@ -51,7 +51,7 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
-  - rid: 7805614034105401432
+  - rid: 6144113896507572312
   references:
     version: 2
     RefIds:
@@ -720,6 +720,10 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 6144113896507572312
+      type: {class: SkyboxPlugin/SkyboxSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
+      data:
+        SettingsAsset: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
     - rid: 6156380652633325570
       type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -899,10 +903,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 7805614034105401432
-      type: {class: SkyboxPlugin/SkyboxSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
-      data:
-        SettingsAsset: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
     - rid: 8449516130764587014
       type: {class: AdaptivePerformanceSettings, ns: DCL.Optimization.AdaptivePerformance.Systems, asm: DCL.Plugins}
       data:
