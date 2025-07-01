@@ -196,7 +196,8 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                await warningNotificationView.AnimatedShowAsync(MY_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 return;
             }
 
@@ -273,7 +274,8 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                await warningNotificationView.AnimatedShowAsync(ALL_COMMUNITIES_LOADING_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 return;
             }
 
@@ -363,7 +365,8 @@ namespace DCL.Communities.CommunitiesBrowser
             if (!result.Success || !result.Value)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token);
+                await warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
             }
         }
 

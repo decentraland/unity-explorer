@@ -9,35 +9,42 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
             new()
             {
                 Type = SceneRestrictions.CAMERA_LOCKED,
-                Action = action
+                Action = action,
             };
 
         public static SceneRestriction CreateAvatarHidden(SceneRestrictionsAction action) =>
             new()
             {
                 Type = SceneRestrictions.AVATAR_HIDDEN,
-                Action = action
+                Action = action,
             };
 
         public static SceneRestriction CreateAvatarMovementsBlocked(SceneRestrictionsAction action) =>
             new()
             {
                 Type = SceneRestrictions.AVATAR_MOVEMENTS_BLOCKED,
-                Action = action
+                Action = action,
             };
 
         public static SceneRestriction CreatePassportCannotBeOpened(SceneRestrictionsAction action) =>
             new()
             {
                 Type = SceneRestrictions.PASSPORT_CANNOT_BE_OPENED,
-                Action = action
+                Action = action,
             };
 
         public static SceneRestriction CreateExperiencesBlocked(SceneRestrictionsAction action) =>
             new()
             {
                 Type = SceneRestrictions.EXPERIENCES_BLOCKED,
-                Action = action
+                Action = action,
+            };
+
+        public static SceneRestriction CreateSkyboxTimeLocked(SceneRestrictionsAction action) =>
+            new ()
+            {
+                Type = SceneRestrictions.SKYBOX_TIME_BLOCKED,
+                Action = action,
             };
     }
 
@@ -48,6 +55,7 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
         AVATAR_MOVEMENTS_BLOCKED,
         PASSPORT_CANNOT_BE_OPENED,
         EXPERIENCES_BLOCKED,
+        SKYBOX_TIME_BLOCKED,
     }
 
     public enum SceneRestrictionsAction

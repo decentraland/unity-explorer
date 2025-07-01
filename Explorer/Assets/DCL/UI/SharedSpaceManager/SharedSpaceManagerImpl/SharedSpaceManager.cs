@@ -40,10 +40,10 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled, CommunitiesFeatureAccess communitiesFeatureAccess)
+        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled, CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.mvcManager = mvcManager;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
             ecsWorld = world;

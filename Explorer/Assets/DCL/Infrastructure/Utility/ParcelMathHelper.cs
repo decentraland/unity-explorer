@@ -104,6 +104,11 @@ namespace Utility
             return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
         }
 
+        public static bool Contains(this ParcelCorners corners, Vector3 position)
+        {
+            return position.x >= corners.minXZ.x && position.x < corners.maxXZ.x &&
+                   position.z >= corners.minXZ.z && position.z < corners.maxXZ.z;
+        }
 
         public static void ParcelsInRange(Vector3 position, int loadRadius, HashSet<int2> results)
         {

@@ -1,18 +1,11 @@
+using CodeLess.Attributes;
 using System;
 
 namespace DCL.Audio
 {
-    public class UIAudioEventsBus : IDisposable, IUIAudioEventsBus
+    [Singleton(SingletonGenerationBehavior.ALLOW_IMPLICIT_CONSTRUCTION)]
+    public partial class UIAudioEventsBus : IDisposable
     {
-        private static UIAudioEventsBus? instance;
-
-        public static UIAudioEventsBus Instance => instance ??= new UIAudioEventsBus();
-
-        private UIAudioEventsBus()
-        {
-            instance = this;
-        }
-
         public event Action<AudioClipConfig>? PlayUIAudioEvent;
         public event Action<AudioClipConfig>? PlayContinuousUIAudioEvent;
         public event Action<AudioClipConfig>? StopContinuousUIAudioEvent;

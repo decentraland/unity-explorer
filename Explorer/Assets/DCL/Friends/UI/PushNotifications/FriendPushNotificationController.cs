@@ -12,7 +12,7 @@ namespace DCL.Friends.UI.PushNotifications
     {
         private const int SUBSCRIPTION_DELAY_MS = 5000;
 
-        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly ILoadingStatus loadingStatus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
@@ -20,7 +20,7 @@ namespace DCL.Friends.UI.PushNotifications
         private CancellationTokenSource? subscribeCancellationTokenSource;
 
         public FriendPushNotificationController(ViewFactoryMethod viewFactory,
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             ProfileRepositoryWrapper profileDataProvider,
             ILoadingStatus loadingStatus) : base(viewFactory)
         {

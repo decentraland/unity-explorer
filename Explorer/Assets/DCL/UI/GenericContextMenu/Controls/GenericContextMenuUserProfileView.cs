@@ -13,7 +13,7 @@ using Utility;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase, IViewWithGlobalDependencies
+    public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase
     {
         private const int USER_NAME_MIN_HEIGHT = 20;
         private const int FACE_FRAME_MIN_HEIGHT = 60;
@@ -53,7 +53,6 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] private Sprite defaultEmptyThumbnail;
 
         private CancellationTokenSource copyAnimationCts = new ();
-        private ViewDependencies viewDependencies;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public override void UnregisterListeners()
@@ -73,11 +72,6 @@ namespace DCL.UI.GenericContextMenu.Controls
             AcceptFriendButton.onClick.AddListener(new UnityAction(listener));
             RemoveFriendButton.onClick.AddListener(new UnityAction(listener));
             CancelFriendButton.onClick.AddListener(new UnityAction(listener));
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
@@ -107,7 +101,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            viewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.userName : settings.userData.userAddress);
+            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userData.userName : settings.userData.userAddress);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)

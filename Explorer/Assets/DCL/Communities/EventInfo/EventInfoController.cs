@@ -92,7 +92,9 @@ namespace DCL.Communities.EventInfo
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
 
-            viewInstance!.SuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, panelCts.Token).Forget();
+            viewInstance!.SuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, panelCts.Token)
+                         .SuppressToResultAsync(ReportCategory.COMMUNITIES)
+                         .Forget();
         }
 
         private void OnEventShareButtonClicked(IEventDTO eventData) =>
@@ -125,7 +127,8 @@ namespace DCL.Communities.EventInfo
                 if (!result.Success)
                 {
                     viewInstance!.UpdateInterestedButtonState();
-                    await viewInstance.ErrorNotificationView.AnimatedShowAsync(INTERESTED_CHANGED_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await viewInstance.ErrorNotificationView.AnimatedShowAsync(INTERESTED_CHANGED_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 

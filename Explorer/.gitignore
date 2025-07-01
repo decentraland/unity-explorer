@@ -73,8 +73,17 @@ crashlytics-build.properties
 Assets/AddressableAssetsData/Windows/**
 Assets/AddressableAssetsData/Windows/*.meta
 Assets/AddressableAssetsData/Windows.meta
+Assets/AddressableAssetsData/OSX/**
+Assets/AddressableAssetsData/OSX/*.meta
+Assets/AddressableAssetsData/OSX.meta
 Assets/AddressableAssetsData/ProfileDataSourceSettings.asset
 Assets/AddressableAssetsData/ProfileDataSourceSettings.asset.meta
+Assets/AddressableAssetsData/link.xml
+Assets/AddressableAssetsData/link.xml.meta
+
+# Temp build files
+Assets/Resources/PerformanceTestRunInfo.*
+Assets/Resources/PerformanceTestRunSettings.*
 
 # Disk caching
 DiskCache/

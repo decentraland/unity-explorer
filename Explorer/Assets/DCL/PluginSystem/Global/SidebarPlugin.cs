@@ -13,6 +13,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.StylizedSkybox.Scripts;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
@@ -47,7 +48,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
-        private readonly DCLInput input;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly bool includeCameraReel;
@@ -56,10 +56,10 @@ namespace DCL.PluginSystem.Global
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         public SidebarPlugin(
@@ -75,7 +75,6 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            DCLInput input,
             Arch.Core.World world,
             Entity playerEntity,
             bool includeCameraReel,
@@ -84,10 +83,10 @@ namespace DCL.PluginSystem.Global
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
-            IProfileChangesBus profileChangesBus,
+            ProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            FeatureFlagsCache featureFlagsCache,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             CommunitiesFeatureAccess communitiesFeatureAccess)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -102,7 +101,6 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
-            this.input = input;
             this.world = world;
             this.playerEntity = playerEntity;
             this.includeCameraReel = includeCameraReel;
@@ -114,7 +112,7 @@ namespace DCL.PluginSystem.Global
             this.profileChangesBus = profileChangesBus;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            this.featureFlagsCache = featureFlagsCache;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
@@ -142,7 +140,7 @@ namespace DCL.PluginSystem.Global
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
-                new ControlsPanelController(() => controlsPanelView, mvcManager, input),
+                new ControlsPanelController(() => controlsPanelView, mvcManager),
                 webBrowser,
                 includeCameraReel,
                 includeFriends,
@@ -152,7 +150,7 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                featureFlagsCache,
+                sceneRestrictionBusController,
                 communitiesFeatureAccess
             ));
         }
