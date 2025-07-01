@@ -38,9 +38,8 @@ namespace DCL.PluginSystem.Global
             var mainUIController = new MainUIController(
                 () =>
                 {
-                    MainUIView view = mainUIView;
-                    view.gameObject.SetActive(true);
-                    return view;
+                    mainUIView.gameObject.SetActive(true);
+                    return mainUIView;
                 },
                 mvcManager,
                 isFriendsEnabled,

@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
@@ -10,7 +9,6 @@ using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using MVC;
-using System;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
