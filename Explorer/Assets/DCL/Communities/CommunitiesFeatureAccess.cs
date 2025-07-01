@@ -1,3 +1,4 @@
+using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using DCL.Web3.Identities;
@@ -6,7 +7,8 @@ using System.Threading;
 
 namespace DCL.Communities
 {
-    public class CommunitiesFeatureAccess : IDisposable
+    [Singleton]
+    public partial class CommunitiesFeatureAccess
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
 
@@ -18,9 +20,6 @@ namespace DCL.Communities
 
             web3IdentityCache.OnIdentityChanged += OnIdentityCacheChanged;
         }
-
-        public void Dispose() =>
-            web3IdentityCache.OnIdentityChanged -= OnIdentityCacheChanged;
 
         /// <summary>
         /// Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.

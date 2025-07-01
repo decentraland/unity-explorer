@@ -47,7 +47,6 @@ namespace DCL.UI.Sidebar
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
         private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
@@ -79,8 +78,7 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            ISceneRestrictionBusController sceneRestrictionBusController,
-            CommunitiesFeatureAccess communitiesFeatureAccess)
+            ISceneRestrictionBusController sceneRestrictionBusController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -101,7 +99,6 @@ namespace DCL.UI.Sidebar
             this.realmData = realmData;
 
             sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public override void Dispose()
@@ -294,7 +291,7 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
         {
             viewInstance?.communitiesButton.gameObject.SetActive(false);
-            bool includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
+            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
