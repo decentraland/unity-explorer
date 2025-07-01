@@ -9,9 +9,9 @@ using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SDKComponents.SkyboxTime.Systems;
 using DCL.SkyBox;
 using ECS.LifeCycle;
-using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace DCL.SDKComponents.SkyboxTime
@@ -50,9 +50,9 @@ namespace DCL.SDKComponents.SkyboxTime
             this.skyboxSettings = skyboxSettingsAsset.Value;
         }
 
-        [Serializable]
         public class SkyboxTimeSettings : IDCLPluginSettings
         {
+            [field: SerializeField]
             public AssetReferenceT<SkyboxSettingsAsset> Settings { get; private set; }
         }
     }

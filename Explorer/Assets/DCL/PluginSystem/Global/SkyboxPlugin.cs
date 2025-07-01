@@ -11,11 +11,12 @@ using ECS.SceneLifeCycle;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace DCL.SkyBox
 {
-    public class SkyboxPlugin : IDCLGlobalPlugin<SkyboxPlugin.SkyboxSettings>
+    public class SkyboxPlugin : IDCLGlobalPlugin<SkyboxPlugin.SkyboxTimeSettings>
     {
         private SkyboxSettingsAsset skyboxSettings;
         private SkyboxRenderController skyboxRenderController;
@@ -47,11 +48,11 @@ namespace DCL.SkyBox
             SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController);
         }
 
-        public async UniTask InitializeAsync(SkyboxSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
         {
             try
             {
-                skyboxSettings = settings.SettingsAsset;
+                skyboxSettings = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.Settings, ct)).Value;
                 skyboxSettings.Reset();
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
@@ -75,10 +76,10 @@ namespace DCL.SkyBox
             }
         }
 
-        [Serializable]
-        public class SkyboxSettings : IDCLPluginSettings
+        public class SkyboxTimeSettings : IDCLPluginSettings
         {
-            public SkyboxSettingsAsset SettingsAsset;
+            [field: SerializeField]
+            public AssetReferenceT<SkyboxSettingsAsset> Settings { get; private set; }
         }
     }
 }
