@@ -107,7 +107,6 @@ namespace DCL.Communities.CommunitiesCard
         private GenericContextMenu contextMenu;
         private GenericContextMenuElement leaveCommunityContextMenuElement;
         private GenericContextMenuElement deleteCommunityContextMenuElement;
-        private IMVCManager mvcManager;
         private CancellationToken cancellationToken;
 
         private void Awake()
@@ -165,9 +164,8 @@ namespace DCL.Communities.CommunitiesCard
             }
         }
 
-        public void ConfigureContextMenu(IMVCManager mvcManager, CancellationToken cancellationToken)
+        public void SetPanelCancellationToken(CancellationToken cancellationToken)
         {
-            this.mvcManager = mvcManager;
             this.cancellationToken = cancellationToken;
         }
 
@@ -175,7 +173,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             openContextMenuButton.interactable = false;
 
-            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
+            ViewDependencies.MvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
                 actionOnHide: () => openContextMenuButton.interactable = true)), cancellationToken);
         }
 

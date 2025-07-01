@@ -56,7 +56,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
 
@@ -88,7 +87,6 @@ namespace DCL.Communities.CommunitiesCard
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
-            IWeb3IdentityCache web3IdentityCache,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus)
             : base(viewFactory)
@@ -105,7 +103,6 @@ namespace DCL.Communities.CommunitiesCard
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.web3IdentityCache = web3IdentityCache;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
 
@@ -216,7 +213,6 @@ namespace DCL.Communities.CommunitiesCard
                 friendServiceProxy,
                 communitiesDataProvider,
                 viewInstance.warningNotificationView,
-                web3IdentityCache,
                 sharedSpaceManager,
                 chatEventBus);
 
@@ -229,8 +225,7 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 mvcManager,
                 clipboard,
-                webBrowser,
-                web3IdentityCache);
+                webBrowser);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
@@ -285,7 +280,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.SetLoadingState(false);
 
                 viewInstance.ConfigureCommunity(communityData, imageController);
-                viewInstance.ConfigureContextMenu(mvcManager, ct);
+                viewInstance.SetPanelCancellationToken(ct);
 
                 viewInstance.ResetToggle(true);
 

@@ -623,7 +623,9 @@ namespace Global.Dynamic
                 unityEventSystem,
                 menusAccessFacade,
                 clipboardManager,
-                dclCursor));
+                dclCursor,
+                mvcManager,
+                identityCache));
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
@@ -980,7 +982,6 @@ namespace Global.Dynamic
                     clipboard,
                     webBrowser,
                     eventsApiService,
-                    identityCache,
                     sharedSpaceManager,
                     chatEventBus));
 

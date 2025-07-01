@@ -67,8 +67,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private CancellationTokenSource confirmationDialogCts = new ();
         private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private IWeb3IdentityCache web3IdentityCache;
-        private IMVCManager mvcManager;
         private MemberData lastClickedProfileCtx;
         private GenericContextMenu contextMenu;
         private UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
@@ -127,7 +125,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             communityOptionsSeparatorContextMenuElement.Enabled = removeModeratorContextMenuElement.Enabled || addModeratorContextMenuElement.Enabled || kickUserContextMenuElement.Enabled || banUserContextMenuElement.Enabled;
 
-            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
+            ViewDependencies.MvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
                            closeTask: panelTask)), cancellationToken)
                       .Forget();
@@ -203,14 +201,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
         }
 
-        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc,
-            IWeb3IdentityCache web3IdentityCache,
-            IMVCManager mvcManager)
+        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getCurrentSectionFetchData = currentSectionDataFunc;
-            this.web3IdentityCache = web3IdentityCache;
-            this.mvcManager = mvcManager;
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
@@ -233,7 +227,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
             MemberData memberData = membersData.items[index];
-            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(web3IdentityCache.Identity?.Address), profileRepositoryWrapper);
+            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(ViewDependencies.Web3IdentityCache.Identity?.Address), profileRepositoryWrapper);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 OnContextMenuButtonClicked,

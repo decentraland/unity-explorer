@@ -1,6 +1,7 @@
 ﻿using CodeLess.Attributes;
 using DCL.Clipboard;
 using DCL.Input;
+using DCL.Web3.Identities;
 
 namespace MVC
 {
@@ -15,13 +16,18 @@ namespace MVC
         internal IMVCManagerMenusAccessFacade globalUIViews { get; }
         internal ClipboardManager clipboardManager { get; }
         internal ICursor cursor { get; }
+        internal IMVCManager mvcManager { get; }
+        internal IWeb3IdentityCache web3IdentityCache { get; }
 
-        public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, ClipboardManager clipboardManager, ICursor cursor)
+        public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, ClipboardManager clipboardManager, ICursor cursor,
+            IMVCManager mvcManager, IWeb3IdentityCache web3IdentityCache)
         {
             this.eventSystem = eventSystem;
             this.globalUIViews = globalUIViews;
             this.clipboardManager = clipboardManager;
             this.cursor = cursor;
+            this.mvcManager = mvcManager;
+            this.web3IdentityCache = web3IdentityCache;
         }
     }
 }
