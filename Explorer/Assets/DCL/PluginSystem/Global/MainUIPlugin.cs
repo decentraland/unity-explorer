@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MainUIPlugin : IDCLGlobalPlugin<MainUIPlugin.Settings>
+    public class MainUIPlugin : IDCLGlobalPlugin<NoExposedPluginSettings>
     {
         private readonly IMVCManager mvcManager;
         private readonly MainUIView mainUIView;
@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public UniTask InitializeAsync(NoExposedPluginSettings _, CancellationToken ct)
         {
             var mainUIController = new MainUIController(
                 () =>
@@ -50,7 +50,5 @@ namespace DCL.PluginSystem.Global
             mvcManager.RegisterController(mainUIController);
             return UniTask.CompletedTask;
         }
-
-        public class Settings : IDCLPluginSettings { }
     }
 }

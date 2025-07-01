@@ -10,11 +10,12 @@ using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.CurrentScene;
 using MVC;
+using System;
 using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
-    public class ConnectionStatusPanelPlugin : IDCLGlobalPlugin<ConnectionStatusPanelPlugin.ConnectionStatusPanelSettings>
+    public class ConnectionStatusPanelPlugin : IDCLGlobalPlugin<NoExposedPluginSettings>
     {
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IMVCManager mvcManager;
@@ -54,7 +55,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public async UniTask InitializeAsync(ConnectionStatusPanelSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(NoExposedPluginSettings _, CancellationToken ct)
         {
             connectionStatusPanelController = new ConnectionStatusPanelController(() =>
                 {
@@ -73,7 +74,5 @@ namespace DCL.PluginSystem.Global
             );
             mvcManager.RegisterController(connectionStatusPanelController);
         }
-
-        public class ConnectionStatusPanelSettings : IDCLPluginSettings { }
     }
 }

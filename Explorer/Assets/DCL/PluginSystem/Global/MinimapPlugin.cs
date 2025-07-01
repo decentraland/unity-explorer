@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MinimapPlugin : IDCLGlobalPlugin<MinimapPlugin.MinimapSettings>
+    public class MinimapPlugin : IDCLGlobalPlugin<NoExposedPluginSettings>
     {
         private readonly IMVCManager mvcManager;
         private readonly MinimapController minimapController;
@@ -28,12 +28,10 @@ namespace DCL.PluginSystem.Global
             minimapController.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
         }
 
-        public UniTask InitializeAsync(MinimapSettings settings, CancellationToken ct)
+        public UniTask InitializeAsync(NoExposedPluginSettings _, CancellationToken ct)
         {
             mvcManager.RegisterController(minimapController);
             return UniTask.CompletedTask;
         }
-
-        public class MinimapSettings : IDCLPluginSettings { }
     }
 }
