@@ -79,20 +79,19 @@ namespace DCL.UI
 
         public void AddOrReplaceCachedSprite(string imageUrl, Sprite imageContent)
         {
-            if(currentSpriteTasks.ContainsKey(imageUrl))
-                currentSpriteTasks[imageUrl].TrySetCanceled();
+            if(currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?>? task))
+                task.TrySetCanceled();
 
-            if(failedSprites.ContainsKey(imageUrl))
-                failedSprites.Remove(imageUrl);
+            failedSprites.Remove(imageUrl);
 
-            if(cachedSprites.ContainsKey(imageUrl))
-                cachedSprites[imageUrl] = imageContent;
-            else
-                cachedSprites.Add(imageUrl, imageContent);
+            cachedSprites[imageUrl] = imageContent;
         }
 
         public void Clear()
         {
+            foreach (KeyValuePair<string, Sprite> row in cachedSprites)
+                GameObject.Destroy(row.Value);
+
             cachedSprites.Clear();
             failedSprites.Clear();
 
@@ -125,7 +124,8 @@ namespace DCL.UI
                     new GetTextureArguments(TextureType.Albedo, useKtx),
                     GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
                     ct,
-                    ReportCategory.UI
+                    ReportCategory.UI,
+                    suppressErrors: true
                 );
 
                 Texture2D texture = ownedTexture.Texture;
