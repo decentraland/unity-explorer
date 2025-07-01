@@ -5,6 +5,7 @@ using DCL.Prefs;
 using MVC;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using Sentry;
 using UnityEditor;
 
@@ -13,6 +14,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
     public class MinimumSpecsScreenController : ControllerBase<MinimumSpecsScreenView>
     {
         private readonly IWebBrowser webBrowser;
+        private readonly IAnalyticsController analytics;
         private readonly IReadOnlyList<SpecResult> specResult;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
         public readonly UniTaskCompletionSource HoldingTask;
@@ -21,9 +23,11 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public MinimumSpecsScreenController(ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
+            IAnalyticsController analytics,
             IReadOnlyList<SpecResult> specResult) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
+            this.analytics = analytics;
             this.specResult = specResult;
             HoldingTask = new UniTaskCompletionSource();
         }
@@ -58,13 +62,14 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnContinueClicked()
         {
+            analytics.Track(AnalyticsEvents.UI.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
             SentrySdk.AddBreadcrumb("Skipping minimum requirements warning screen");
             HoldingTask?.TrySetResult();
         }
 
-        private static void OnExitClicked()
+        private void OnExitClicked()
         {
-            SentrySdk.AddBreadcrumb("Exiting application on minimum requirements warning screen");
+            analytics.Track(AnalyticsEvents.UI.EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN);
 #if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #else
