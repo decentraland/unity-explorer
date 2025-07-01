@@ -208,8 +208,8 @@ namespace DCL.Communities.CommunityCreation
                             isInvalidImageByWeight ? INCOMPATIBLE_IMAGE_WEIGHT_ERROR : INCOMPATIBLE_IMAGE_RESOLUTION_ERROR,
                         WARNING_MESSAGE_DELAY_MS,
                         showErrorCts.Token)
-                        .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                        .Forget();
+                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES)
+                                 .Forget();
                     return;
                 }
 
