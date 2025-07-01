@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests.RequestsHub;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -41,16 +42,16 @@ namespace DCL.WebRequests
         )
         {
             this.initializeRequest = initializeRequest;
-            this.CommonArguments = commonArguments;
+            CommonArguments = commonArguments;
             this.args = args;
-            this.Ct = ct;
+            Ct = ct;
             ReportData = reportData;
             this.headersInfo = headersInfo;
             this.signInfo = signInfo;
             SuppressErrors = suppressErrors;
             this.customDownloadHandler = customDownloadHandler;
             this.responseCodeIgnores = responseCodeIgnores;
-            this.IgnoreIrrecoverableErrors = ignoreIrrecoverableErrors;
+            IgnoreIrrecoverableErrors = ignoreIrrecoverableErrors;
         }
 
         public override string ToString() =>
@@ -64,9 +65,37 @@ namespace DCL.WebRequests
             + $"\nHeaders: {headersInfo.ToString()}"
             + $"\nSignInfo: {signInfo?.ToString() ?? NONE}";
 
+        /// <summary>
+        ///     A simplified representation of the request envelope:
+        ///     URL
+        ///     Headers: {headers} if present
+        ///     SignInfo: {signInfo} if present
+        /// </summary>
+        /// <returns></returns>
+        public string GetBreadcrumbString(StringBuilder sb)
+        {
+            sb.Clear();
+
+            sb.AppendLine(CommonArguments.ToString());
+
+            if (headersInfo.Value.Count != 0)
+            {
+                sb.Append("Headers: ");
+                sb.AppendLine(headersInfo.ToString());
+            }
+
+            if (signInfo.HasValue)
+            {
+                sb.Append("SignInfo: ");
+                sb.AppendLine(signInfo.Value.ToString());
+            }
+
+            return sb.ToString();
+        }
+
         public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
         {
-            var request = initializeRequest(CommonArguments, args);
+            TWebRequest request = initializeRequest(CommonArguments, args);
             UnityWebRequest unityWebRequest = request.UnityWebRequest;
 
             AssignTimeout(unityWebRequest);
@@ -110,7 +139,7 @@ namespace DCL.WebRequests
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetHeaders(UnityWebRequest unityWebRequest)
         {
-            var info = headersInfo.Value;
+            IReadOnlyList<WebRequestHeader> info = headersInfo.Value;
             int count = info.Count;
 
             // ReSharper disable once ForCanBeConvertedToForeach
@@ -151,8 +180,10 @@ namespace DCL.WebRequests
         }
     }
 
-    /// <remarks>Because <see cref="RequestEnvelope{TWebRequest,TWebRequestArgs}"/> is generic, we have
-    /// to put this out here, else we get a copy for every specific type of it we create.</remarks>
+    /// <remarks>
+    ///     Because <see cref="RequestEnvelope{TWebRequest,TWebRequestArgs}" /> is generic, we have
+    ///     to put this out here, else we get a copy for every specific type of it we create.
+    /// </remarks>
     internal static class AuthChainHeaderNames
     {
         private static readonly string[] AUTH_CHAIN_HEADER_NAMES;
@@ -162,7 +193,7 @@ namespace DCL.WebRequests
             int maxAuthChainHeaders = Enum.GetNames(typeof(AuthLinkType)).Length;
             AUTH_CHAIN_HEADER_NAMES = new string[maxAuthChainHeaders];
 
-            for (int i = 0; i < maxAuthChainHeaders; i++)
+            for (var i = 0; i < maxAuthChainHeaders; i++)
                 AUTH_CHAIN_HEADER_NAMES[i] = $"x-identity-auth-chain-{i}";
         }
 
