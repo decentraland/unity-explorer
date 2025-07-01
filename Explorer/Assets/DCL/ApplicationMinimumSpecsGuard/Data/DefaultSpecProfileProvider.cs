@@ -22,9 +22,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
             {
                 PlatformOS.Windows => new SpecProfile
                 {
-                    // Platform
-                    PlatformLabel = "Windows",
-
                     // Checks
                     OsCheck = SystemSpecUtils.IsWindowsVersionAcceptable, CpuCheck = SystemSpecUtils.IsWindowsCpuAcceptable, GpuCheck = SystemSpecUtils.IsWindowsGpuAcceptable, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
                     DirectX12Check = SystemSpecUtils.IsDirectX12Compatible,
@@ -38,9 +35,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
                 PlatformOS.Mac => new SpecProfile
                 {
-                    // Platform
-                    PlatformLabel = "macOS",
-
                     // Checks
                     OsCheck = SystemSpecUtils.IsMacOSVersionAcceptable, CpuCheck = SystemSpecUtils.IsAppleSilicon, GpuCheck = SystemSpecUtils.IsAppleSilicon, ShaderCheck = SystemSpecUtils.ComputeShaderCheck,
 

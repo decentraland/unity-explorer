@@ -38,8 +38,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
     public class SpecProfile
     {
-        public string PlatformLabel;
-
         public string OsRequirement;
         public Func<string, bool> OsCheck;
 
