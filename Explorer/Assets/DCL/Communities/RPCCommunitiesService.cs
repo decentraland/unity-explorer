@@ -57,8 +57,6 @@ namespace DCL.Communities
                 // We could try stream.WithCancellation(ct) but the cancellation doesn't work.
                 await foreach (CommunityMemberConnectivityUpdate? response in stream)
                 {
-                    //Debug.Log($"RPC: {response.Member.Address}, {response.CommunityId}, {response.Status}");
-
                     try
                     {
                         switch (response.Status)
