@@ -47,9 +47,13 @@ namespace DCL.UI
             Toggle.onValueChanged.RemoveListener(OnToggle);
         }
 
-        public void SetToggle(bool isOn)
+        public void SetToggle(bool isOn, bool withoutNotify = false)
         {
-            Toggle.isOn = isOn;
+            if(withoutNotify)
+                Toggle.SetIsOnWithoutNotify(isOn);
+            else
+                Toggle.isOn = isOn;
+            
             OnToggle(isOn);
         }
 

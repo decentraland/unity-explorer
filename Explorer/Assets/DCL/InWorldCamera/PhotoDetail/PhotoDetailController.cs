@@ -111,6 +111,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewShow()
         {
             viewInstance!.infoButton.onClick.AddListener(ToggleInfoSidePanel);
+            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
             viewInstance.setAsPublicToggle.gameObject.SetActive(!inputData.OpenedFromPublicBoard);
             viewInstance.previousScreenshotButton.onClick.AddListener(ShowPreviousReel);
             viewInstance.nextScreenshotButton.onClick.AddListener(ShowNextReel);
@@ -146,6 +147,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewClose()
         {
             viewInstance!.infoButton.onClick.RemoveListener(ToggleInfoSidePanel);
+            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
             viewInstance!.previousScreenshotButton.onClick.RemoveListener(ShowPreviousReel);
             viewInstance!.nextScreenshotButton.onClick.RemoveListener(ShowNextReel);
             viewInstance!.downloadButton.onClick.RemoveListener(DownloadReelClicked);
@@ -272,9 +274,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             viewInstance!.mainImageCanvasGroup.alpha = 0;
             viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
-            viewInstance.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
-            viewInstance.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
-            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
+            viewInstance.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic, true);
 
             if (viewInstance.mainImage.texture != null)
                 GameObject.Destroy(viewInstance!.mainImage.texture);
