@@ -13,12 +13,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
         ComputeShaders
     }
 
-    public enum SpecTarget
-    {
-        Minimum,
-        // Recommended
-    }
-
     public enum PlatformOS
     {
         Windows,
@@ -71,6 +65,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
     public interface ISpecProfileProvider
     {
-        SpecProfile GetProfile(PlatformOS platform, SpecTarget target);
+        SpecProfile GetProfile(PlatformOS platform);
     }
 }

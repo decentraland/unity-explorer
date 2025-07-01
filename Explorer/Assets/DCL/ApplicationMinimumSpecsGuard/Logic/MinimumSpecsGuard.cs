@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DCL.Diagnostics;
 using UnityEngine;
@@ -40,9 +41,9 @@ namespace DCL.ApplicationMinimumSpecsGuard
             this.profileProvider = profileProvider;
         }
 
-        public bool HasMinimumSpecs(SpecTarget target = SpecTarget.Minimum)
+        public bool HasMinimumSpecs()
         {
-            cachedResults = Evaluate(target);
+            cachedResults = Evaluate();
             bool allMet = true;
 
             foreach (var result in cachedResults)
@@ -59,10 +60,10 @@ namespace DCL.ApplicationMinimumSpecsGuard
             return allMet;
         }
 
-        private List<SpecResult> Evaluate(SpecTarget target)
+        private List<SpecResult> Evaluate()
         {
             var platform = PlatformUtils.DetectPlatform();
-            var profile = profileProvider.GetProfile(platform, target);
+            var profile = profileProvider.GetProfile(platform);
 
             var results = new List<SpecResult>();
 
@@ -99,17 +100,25 @@ namespace DCL.ApplicationMinimumSpecsGuard
             int ramGB = Mathf.CeilToInt(actualRamMB / 1024f);
             results.Add(new SpecResult(SpecCategory.RAM, actualRamMB >= profile.MinRamMB, profile.RamRequirement, $"{ramGB} GB"));
 
-            // Storage
-            long availableStorageBytes = PlatformUtils.GetAvailableStorageBytes(Application.persistentDataPath);
-            float actualAvailableStorageMB = availableStorageBytes / (1024f * 1024f);
-            float availableStorageGB = Mathf.CeilToInt(availableStorageBytes / (1024f * 1024f * 1024f));
+            try
+            {
+                // Storage
+                long availableStorageBytes = PlatformUtils.GetAvailableStorageBytes(Application.persistentDataPath);
+                float actualAvailableStorageMB = availableStorageBytes / (1024f * 1024f);
+                float availableStorageGB = Mathf.CeilToInt(availableStorageBytes / (1024f * 1024f * 1024f));
 
-            results.Add(new SpecResult(
-                SpecCategory.Storage,
-                actualAvailableStorageMB >= profile.MinStorageMB,
-                profile.StorageRequirement,
-                $"{availableStorageGB} GB"));
-
+                results.Add(new SpecResult(
+                    SpecCategory.Storage,
+                    actualAvailableStorageMB >= profile.MinStorageMB,
+                    profile.StorageRequirement,
+                    $"{availableStorageGB} GB"));
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+                results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "Error determining space"));
+            }
+            
             return results;
         }
     }

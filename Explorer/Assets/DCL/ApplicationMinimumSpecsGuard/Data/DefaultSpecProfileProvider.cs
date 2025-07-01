@@ -16,11 +16,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private const string MAC_GPU_REQ = "Apple M1 Integrated";
         private const string MAC_SHADER_REQ = "Metal-compatible (Compute Shaders)";
 
-        public SpecProfile GetProfile(PlatformOS platform, SpecTarget target)
+        public SpecProfile GetProfile(PlatformOS platform)
         {
-            if (target != SpecTarget.Minimum)
-                throw new NotSupportedException($"SpecTarget '{target}' is not supported yet.");
-
             return platform switch
             {
                 PlatformOS.Windows => new SpecProfile
