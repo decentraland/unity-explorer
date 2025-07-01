@@ -122,6 +122,9 @@ namespace ECS.Unity.AvatarShape.Systems
             // Scene emote files have to be loaded before the CharacterEmoteIntent can be used...
             if (localSceneDevelopment)
             {
+                if (sdkAvatarShapeComponent.LocalSceneEmotePromise.HasValue)
+                    sdkAvatarShapeComponent.LocalSceneEmotePromise.Value.ForgetLoading(globalWorld);
+
                 sdkAvatarShapeComponent.LocalSceneEmotePromise = LocalSceneEmotePromise.Create(globalWorld,
                     new GetSceneEmoteFromLocalSceneIntention(
                         sceneData,
@@ -132,6 +135,9 @@ namespace ECS.Unity.AvatarShape.Systems
             }
             else
             {
+                if (sdkAvatarShapeComponent.RealmSceneEmotePromise.HasValue)
+                    sdkAvatarShapeComponent.RealmSceneEmotePromise.Value.ForgetLoading(globalWorld);
+
                 sdkAvatarShapeComponent.RealmSceneEmotePromise = RealmSceneEmotePromise.Create(globalWorld,
                     new GetSceneEmoteFromRealmIntention(
                         sceneData.SceneEntityDefinition.id!,
