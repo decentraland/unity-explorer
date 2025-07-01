@@ -248,7 +248,7 @@ GameObject:
   m_Component:
   - component: {fileID: 158563622}
   m_Layer: 0
-  m_Name: '---------------- Base Environment ---------------'
+  m_Name: ---------------- Base Environment ---------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -747,7 +747,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1800558273}
   m_Layer: 0
-  m_Name: '---------------------- UI -----------------------'
+  m_Name: ---------------------- UI -----------------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -876,7 +876,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2104274357}
   m_Layer: 0
-  m_Name: '---------------- Runtime Objects ----------------'
+  m_Name: ---------------- Runtime Objects ----------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

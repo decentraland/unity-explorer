@@ -313,11 +313,14 @@ namespace Global.Dynamic
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
         {
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
-            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
-            
-            bool dontShowMinimumSpecs = DCLPlayerPrefs.GetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN) == 1;
 
-            if (dontShowMinimumSpecs || (hasMinimumSpecs && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            bool userWantsToSkip = DCLPlayerPrefs.GetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN) == 1;
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+
+            bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
+
+            if (!shouldShowScreen)
                 return;
 
             var minimumRequirementsPrefab = await bootstrapContainer!
