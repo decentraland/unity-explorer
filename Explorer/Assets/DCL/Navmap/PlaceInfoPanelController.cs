@@ -133,7 +133,8 @@ namespace DCL.Navmap
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
             Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
-                true, reelDeleteIntention, reelListRefreshIntention)));
+                true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention, 
+                reelListRefreshIntention)));
 
         private void UpdatePhotosTabText(int count) =>
             view.SetPhotoTabText(count);

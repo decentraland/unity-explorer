@@ -60,7 +60,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
             Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
-                false, reelDeleteIntention, reelListRefreshIntention)));
+                false, PhotoDetailParameter.CallerContext.CameraReel, reelDeleteIntention, 
+                reelListRefreshIntention)));
 
         private void StorageFullIconEnter() =>
             view.storageFullToast.DOFade(1f, view.storageFullToastFadeTime);

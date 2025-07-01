@@ -227,7 +227,8 @@ namespace DCL.Passport
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
             Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
-                true, reelDeleteIntention, reelListRefreshIntention)));
+                !isOwnProfile, PhotoDetailParameter.CallerContext.Passport, reelDeleteIntention, 
+                reelListRefreshIntention)));
 
         protected override void OnViewInstantiated()
         {

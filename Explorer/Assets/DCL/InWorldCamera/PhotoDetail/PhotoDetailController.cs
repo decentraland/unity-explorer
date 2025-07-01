@@ -111,15 +111,18 @@ namespace DCL.InWorldCamera.PhotoDetail
         protected override void OnViewShow()
         {
             viewInstance!.infoButton.onClick.AddListener(ToggleInfoSidePanel);
-            viewInstance!.previousScreenshotButton.onClick.AddListener(ShowPreviousReel);
-            viewInstance!.nextScreenshotButton.onClick.AddListener(ShowNextReel);
-            viewInstance!.downloadButton.onClick.AddListener(DownloadReelClicked);
-            viewInstance!.linkButton.onClick.AddListener(CopyReelLinkClicked);
-            viewInstance!.twitterButton.onClick.AddListener(ShareReelClicked);
-            viewInstance!.deleteButton.Button.onClick.AddListener(ShowDeleteModal);
-            viewInstance!.cancelDeleteIntentButton?.onClick.AddListener(() => DeletionModalCancelClick());
-            viewInstance!.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => DeletionModalCancelClick(false));
-            viewInstance!.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
+            viewInstance.setAsPublicToggle.gameObject.SetActive(!inputData.OpenedFromPublicBoard);
+            viewInstance.previousScreenshotButton.onClick.AddListener(ShowPreviousReel);
+            viewInstance.nextScreenshotButton.onClick.AddListener(ShowNextReel);
+            viewInstance.downloadButton.onClick.AddListener(DownloadReelClicked);
+            viewInstance.linkButton.onClick.AddListener(CopyReelLinkClicked);
+            viewInstance.twitterButton.onClick.AddListener(ShareReelClicked);
+            viewInstance.deleteButton.gameObject.SetActive(!inputData.OpenedFromPublicBoard);
+            viewInstance.deleteButton.Button.onClick.AddListener(ShowDeleteModal);
+            viewInstance.cancelDeleteIntentButton?.onClick.AddListener(() => DeletionModalCancelClick());
+            viewInstance.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => DeletionModalCancelClick(false));
+            viewInstance.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
+
 
             Activated?.Invoke();
 
@@ -239,7 +242,8 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         private void HandleReelSetPrivate()
         {
-            if (!inputData.OpenedFromPublicBoard) return;
+            if (inputData.OpenedFrom != PhotoDetailParameter.CallerContext.Passport || inputData.OpenedFromPublicBoard) 
+                return;
             
             inputData.ExecuteHideReelFromListAction(currentReelIndex);
             if(inputData.AllReels.Count > 0)
@@ -268,10 +272,9 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             viewInstance!.mainImageCanvasGroup.alpha = 0;
             viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
-            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
-            viewInstance!.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
-            viewInstance!.setAsPublicToggle.SetInteractable(false);
-            viewInstance!.deleteButton.SetInteractable(false);
+            viewInstance.setAsPublicToggle.Toggle.onValueChanged.RemoveListener(SetPublicFlag);
+            viewInstance.setAsPublicToggle.SetToggle(inputData.AllReels[currentReelIndex].isPublic);
+            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
 
             if (viewInstance.mainImage.texture != null)
                 GameObject.Destroy(viewInstance!.mainImage.texture);
@@ -288,11 +291,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance.mainImageCanvasGroup.DOFade(1, viewInstance.imageFadeInDuration);
 
             await detailInfoTask;
-
-            bool isUserOwned = PhotoDetailInfoController.IsReelUserOwned;
-            viewInstance!.setAsPublicToggle.Toggle.onValueChanged.AddListener(SetPublicFlag);
-            viewInstance!.setAsPublicToggle.SetInteractable(isUserOwned);
-            viewInstance!.deleteButton.SetInteractable(isUserOwned);
         }
 
         private void CheckNavigationButtonVisibility(List<CameraReelResponseCompact> allReels, int index)
