@@ -3,7 +3,7 @@ using NUnit.Framework;
 namespace DCL.ApplicationMinimumSpecsGuard.Tests
 {
     // The name of the class clearly states what is being tested.
-    public class SystemSpecUtilsTests
+    public class SystemSpecUtilsShould
     {
         // --- Windows CPU Tests ---
 
@@ -27,7 +27,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         [TestCase("Intel Celeron J4125", false, TestName = "Intel Celeron is rejected")]
         [TestCase("AMD FX(tm)-8350 Eight-Core Processor", false, TestName = "Legacy AMD FX is rejected")]
         [TestCase("An Unknown Old CPU", false, TestName = "An unknown CPU is rejected")]
-        public void WindowsCpuCheck(string cpuName, bool expectedResult)
+        public void ValidateWindowsCpu(string cpuName, bool expectedResult)
         {
             // Act: Call the method being tested.
             bool isAcceptable = SystemSpecUtils.IsWindowsCpuAcceptable(cpuName);
@@ -55,7 +55,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         [TestCase("NVIDIA Tesla V100", false, TestName = "NVIDIA Tesla series is rejected (non-gaming)")]
         [TestCase("Microsoft Basic Display Adapter", false, TestName = "Fallback display adapter is rejected")]
         [TestCase("Intel(R) UHD Graphics 630", false, TestName = "Intel integrated graphics is rejected")]
-        public void WindowsGpuCheck(string gpuName, bool expectedResult)
+        public void ValidateWindowsGpu(string gpuName, bool expectedResult)
         {
             // Act
             bool isAcceptable = SystemSpecUtils.IsWindowsGpuAcceptable(gpuName);
@@ -80,7 +80,7 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
         [TestCase("Rosetta 2 Intel", false, TestName = "Intel under Rosetta is rejected")]
         [TestCase("Intel(R) Core(TM) i5-8279U", false, TestName = "Intel MacBook Pro (2019) is rejected")]
         [TestCase("AMD Radeon Pro 5500M", false, TestName = "AMD GPU on Intel-based Mac is rejected")]
-        public void AppleSiliconCheck(string deviceName, bool expectedResult)
+        public void ValidateAppleSilicon(string deviceName, bool expectedResult)
         {
             // Act
             bool isAcceptable = SystemSpecUtils.IsAppleSilicon(deviceName);
