@@ -315,7 +315,7 @@ namespace Global.Dynamic
             var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
 
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
-            bool userWantsToSkip = DCLPlayerPrefs.GetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN) == 1;
+            bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
 
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);

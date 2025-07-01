@@ -6,6 +6,7 @@ using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using Sentry;
+using UnityEditor;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -40,8 +41,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnToggleChanged(bool dontShowAgain)
         {
-            DCLPlayerPrefs.SetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, dontShowAgain ? 1 : 0);
-            DCLPlayerPrefs.Save();
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN, dontShowAgain, true);
         }
 
         public override void Dispose()
@@ -66,7 +66,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             SentrySdk.AddBreadcrumb("Exiting application on minimum requirements warning screen");
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+            EditorApplication.isPlaying = false;
 #else
             UnityEngine.Application.Quit();
 #endif
