@@ -19,35 +19,25 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         public static long GetAvailableStorageBytes(string path)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, "GetAvailableStorageBytes was called with a null or empty path.");
+                return 0;
+            }
+
             try
             {
-#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
-                string root = Path.GetPathRoot(path);
-                foreach (var drive in DriveInfo.GetDrives())
-                {
-                    if (drive.IsReady &&
-                        string.Equals(
-                            drive.Name.Replace('\\', '/').TrimEnd('/'),
-                            root.Replace('\\', '/').TrimEnd('/'),
-                            StringComparison.OrdinalIgnoreCase))
-                    {
-                        return drive.AvailableFreeSpace;
-                    }
-                }
-
+                var drive = new DriveInfo(path);
+                return drive.IsReady ? drive.AvailableFreeSpace : 0;
+            }
+            catch (ArgumentException ex)
+            {
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Could not determine available storage. The path '{path}' is invalid. Error: {ex.Message}");
                 return 0;
-
-#elif UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX || UNITY_STANDALONE_LINUX || UNITY_EDITOR_LINUX
-            var drive = new DriveInfo(path);
-            return drive.IsReady ? drive.AvailableFreeSpace : 0;
-#else
-            // Fallback for unsupported platforms
-            return 0;
-#endif
             }
             catch (Exception e)
             {
-                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Could not determine available storage space for path '{path}'. Error: {e.Message}");
+                ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"An unexpected error occurred while checking storage for path '{path}'. Error: {e.Message}");
                 return 0;
             }
         }
