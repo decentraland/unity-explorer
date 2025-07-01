@@ -265,8 +265,11 @@ namespace DCL.Communities.CommunityCreation
 
             CommunityPlace selectedPlace = currentCommunityPlaces[index];
 
-            if (addedCommunityPlaces.Exists(place => place.Id == selectedPlace.Id))
-                return;
+            foreach (var place in addedCommunityPlaces)
+            {
+                if (place.Id == selectedPlace.Id)
+                    return;
+            }
 
             AddPlaceTag(selectedPlace, isRemovalAllowed: true);
         }
