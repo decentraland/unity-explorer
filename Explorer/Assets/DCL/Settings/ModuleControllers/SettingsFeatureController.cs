@@ -6,8 +6,6 @@ namespace DCL.Settings.ModuleControllers
 {
     public abstract class SettingsFeatureController : IDisposable
     {
-        protected readonly SettingsDataStore settingsDataStore = new ();
-
         internal ISettingsModuleView controllerView { get; private set; }
 
         public void SetView(ISettingsModuleView view) =>
