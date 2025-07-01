@@ -11,20 +11,17 @@ public class ChatMessageFeedPresenter : IDisposable
     private readonly IChatHistory chatHistory;
     private readonly IProfileCache profileCache;
     private readonly IWeb3IdentityCache web3IdentityCache;
-    private readonly ITextFormatter hyperlinkTextFormatter;
 
     public ChatMessageFeedPresenter(
         IChatMessageFeedView view,
         IChatHistory chatHistory,
         IProfileCache profileCache,
-        IWeb3IdentityCache web3IdentityCache,
-        ITextFormatter hyperlinkTextFormatter)
+        IWeb3IdentityCache web3IdentityCache)
     {
         this.view = view;
         this.chatHistory = chatHistory;
         this.profileCache = profileCache;
         this.web3IdentityCache = web3IdentityCache;
-        this.hyperlinkTextFormatter = hyperlinkTextFormatter;
     }
 
     public void Enable()

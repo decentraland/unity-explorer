@@ -25,16 +25,10 @@ public class ChatInputPresenter : IDisposable
 
     public ChatInputPresenter(
         IChatInputView view,
-        ChatSettingsAsset chatSettings,
-        DCLInput dclInput,
-        ChatUserStateUpdater userStateUpdater,
-        IChatEventBus chatEventBus)
+        ChatSettingsAsset chatSettings)
     {
         this.view = view;
         this.chatSettings = chatSettings;
-        this.dclInput = dclInput;
-        this.userStateUpdater = userStateUpdater;
-        this.chatEventBus = chatEventBus;
     }
 
     public void Enable()
@@ -76,7 +70,7 @@ public class ChatInputPresenter : IDisposable
         // The logic is simple for non-user channels
         if (channel.ChannelType != ChatChannel.ChatChannelType.USER)
         {
-            view.SetState(InputState.Enabled);
+            // view.SetState(InputState.Enabled);
             return;
         }
 
@@ -134,10 +128,10 @@ public class ChatInputPresenter : IDisposable
     private void HandleExternalTextInsert(string text)
     {
         // The presenter is responsible for checking its own view's state
-        if (view.CurrentState == InputState.Enabled)
-        {
-            view.InsertText(text);
-            view.Focus();
-        }
+        // if (view.CurrentState == InputState.Enabled)
+        // {
+        //     view.InsertText(text);
+        //     view.Focus();
+        // }
     }
 }

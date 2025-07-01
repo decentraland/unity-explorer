@@ -82,6 +82,7 @@ namespace DCL.Chat
             // does whatever it should do through sub presenters
         }
 
+        private string currentChannelId;
         private void HandleConversationSelected(string channelId)
         {
             // put into ChatUpdateState? or where the stage is stored
@@ -147,11 +148,18 @@ namespace DCL.Chat
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
+            // Wait for the close intent to be triggered
+            var tcs = new UniTaskCompletionSource();
+            titleBarPresenter!.OnClosed += () => tcs.TrySetResult();
+            return tcs.Task;
         }
 
 
         public UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
+            // Handle when the chat is hidden in shared space
+            // This could be used to pause updates or save state
+            return UniTask.CompletedTask;
         }
     }
 }

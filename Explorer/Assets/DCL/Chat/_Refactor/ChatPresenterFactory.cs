@@ -89,7 +89,7 @@ public class ChatPresenterFactory : IChatPresenterFactory
 
     public ChatInputPresenter CreateChatInput(IChatInputView view)
     {
-        return new ChatInputPresenter(view, chatSettings, viewDependencies.DclInput, viewDependencies.ClipboardManager);
+        return new ChatInputPresenter(view, chatSettings);
     }
 
     public ChatTitlebarPresenter CreateTitlebar(IChatTitlebarView view)

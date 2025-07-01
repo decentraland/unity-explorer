@@ -32,6 +32,7 @@ namespace DCL.Chat
 
         public string GetText()
         {
+            return inputField.text;
         }
 
         public void Focus()

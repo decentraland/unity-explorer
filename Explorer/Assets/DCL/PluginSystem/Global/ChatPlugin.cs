@@ -83,7 +83,6 @@ namespace DCL.PluginSystem.Global
             ITextFormatter hyperlinkTextFormatter,
             IProfileCache profileCache,
             IChatEventBus chatEventBus,
-            ChatUserStateUpdater chatUserStateUpdater,
             IWeb3IdentityCache web3IdentityCache,
             ILoadingStatus loadingStatus,
             ISharedSpaceManager sharedSpaceManager,
@@ -108,7 +107,6 @@ namespace DCL.PluginSystem.Global
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
-            this.chatUserStateUpdater = chatUserStateUpdater;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
             this.mainUIView = mainUIView;
