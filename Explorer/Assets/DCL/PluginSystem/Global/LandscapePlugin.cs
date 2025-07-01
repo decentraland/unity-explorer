@@ -19,6 +19,7 @@ using System;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
+using TerrainData = DCL.Landscape.TerrainData;
 
 namespace DCL.PluginSystem.Global
 {
@@ -118,7 +119,7 @@ namespace DCL.PluginSystem.Global
             terrainGenerator.Initialize(landscapeData.Value.genesisCityData,
                 landscapeData.Value.terrainData, roads, occupied, empty);
 
-            TerrainRenderer.LogHandler = ReportHub.Instance;
+            TerrainLog.LogHandler = ReportHub.Instance;
 
             if (disposed)
                 throw new ObjectDisposedException(nameof(LandscapePlugin));
@@ -136,6 +137,16 @@ namespace DCL.PluginSystem.Global
 
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             RenderTerrainSystem.InjectToWorld(ref builder, landscapeData.Value.terrainData);
+
+            Transform terrainParent;
+#if UNITY_EDITOR
+            terrainParent = terrainGenerator.RootObject;
+#else
+            terrainParent = null;
+#endif
+
+            CollideTerrainSystem.InjectToWorld(ref builder, landscapeData.Value.terrainData,
+                terrainParent);
         }
     }
 }

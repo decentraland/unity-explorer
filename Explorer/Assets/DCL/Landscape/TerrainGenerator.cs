@@ -33,10 +33,10 @@ namespace DCL.Landscape
         private int2[] occupied;
         private int2[] empty;
 
-        private Transform rootGo;
         private bool isInitialized;
 
         public Transform Ocean { get; private set; }
+        public Transform RootObject { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
 
@@ -67,6 +67,9 @@ namespace DCL.Landscape
             parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
 
+            RootObject = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+            RootObject.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
+
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
 
             isInitialized = true;
@@ -84,8 +87,8 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null)
-                UnityObjectUtils.SafeDestroy(rootGo);
+            if (RootObject != null)
+                UnityObjectUtils.SafeDestroy(RootObject);
         }
 
         public int GetChunkSize() =>
@@ -95,8 +98,8 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null)
-                rootGo.gameObject.SetActive(true);
+            if (RootObject != null)
+                RootObject.gameObject.SetActive(true);
 
             terrainModel.UpdateTerrainData(terrainData);
             IsTerrainShown = true;
@@ -108,9 +111,9 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null && rootGo.gameObject.activeSelf)
+            if (RootObject != null && RootObject.gameObject.activeSelf)
             {
-                rootGo.gameObject.SetActive(false);
+                RootObject.gameObject.SetActive(false);
                 IsTerrainShown = false;
             }
         }
@@ -130,10 +133,7 @@ namespace DCL.Landscape
                 {
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Misc & Cliffs, Border Colliders")))
                     {
-                        rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
-                        rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
-
-                        Ocean = factory.CreateOcean(rootGo);
+                        Ocean = factory.CreateOcean(RootObject);
                         Wind = factory.CreateWind();
 
                         Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
@@ -150,8 +150,8 @@ namespace DCL.Landscape
             }
             catch (OperationCanceledException)
             {
-                if (rootGo != null)
-                    UnityObjectUtils.SafeDestroy(rootGo);
+                if (RootObject != null)
+                    UnityObjectUtils.SafeDestroy(RootObject);
             }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, reportData); }
             finally
