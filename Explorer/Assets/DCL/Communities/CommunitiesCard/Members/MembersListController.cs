@@ -171,7 +171,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 
@@ -200,7 +201,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(KICK_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(KICK_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 
@@ -222,7 +224,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(ADD_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(ADD_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 
@@ -255,7 +258,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(REMOVE_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(REMOVE_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 
@@ -432,7 +436,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (!result.Success || !result.Value)
                 {
-                    await inWorldWarningNotificationView.AnimatedShowAsync(UNBAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(UNBAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 

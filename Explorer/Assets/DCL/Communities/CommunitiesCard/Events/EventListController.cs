@@ -103,7 +103,9 @@ namespace DCL.Communities.CommunitiesCard.Events
         {
             clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event));
 
-            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken).Forget();
+            inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
+                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES)
+                                          .Forget();
         }
 
         private void OnEventShareButtonClicked(PlaceAndEventDTO eventData) =>
@@ -126,7 +128,8 @@ namespace DCL.Communities.CommunitiesCard.Events
                 if (!result.Success)
                 {
                     eventItemView.UpdateInterestedButtonState();
-                    await inWorldWarningNotificationView.AnimatedShowAsync(INTERESTED_CHANGED_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                    await inWorldWarningNotificationView.AnimatedShowAsync(INTERESTED_CHANGED_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
 
@@ -177,7 +180,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.pageNumber--;
-                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 return eventsFetchData.totalToFetch;
             }
 
@@ -196,7 +200,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
                 eventsFetchData.pageNumber--;
-                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct);
+                await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
+                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 return eventsFetchData.totalToFetch;
             }
 
