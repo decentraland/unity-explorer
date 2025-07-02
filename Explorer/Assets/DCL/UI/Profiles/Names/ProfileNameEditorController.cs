@@ -173,7 +173,7 @@ namespace DCL.UI.ProfileNames
                 config.claimedNameDropdown.options = dropdownOptions;
 
                 int selectedIndex = config.claimedNameDropdown.options.FindIndex(option => option.text == profile.Name);
-                config.claimedNameDropdown.value = selectedIndex;
+                config.claimedNameDropdown.SetValueWithoutNotify(selectedIndex);
                 // Always start as disabled as it makes no sense save your own current name again..
                 config.saveButtonInteractable = false;
                 config.saveLoading.SetActive(false);
