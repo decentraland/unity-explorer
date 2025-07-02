@@ -116,7 +116,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             attemptToConnectState.Set(AttemptToConnectState.None);
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token, debugName).Forget();
-
+            UnityEngine.Debug.Log("JUANI STARTING AWAIT");
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
             stopwatch.Stop();
             UnityEngine.Debug.Log($"JUANI {debugName} START ASYNC END {stopwatch.ElapsedMilliseconds}");
@@ -158,11 +158,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 //stopwatch.Restart();
                 //if(!debugName.Contains("Archipelago"))
-                await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
+                //await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
                 //stopwatch.Stop();
                 //UnityEngine.Debug.Log($"JUANI {debugName} CYCLE STEP {stopwatch.ElapsedMilliseconds}");
-                await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
-                UnityEngine.Debug.Log($"JUANI DID A HEARTBEAT WAIT {1000}");
+                //await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
+                //UnityEngine.Debug.Log($"JUANI DID A HEARTBEAT WAIT {1000}");
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
@@ -219,6 +219,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error;
             attemptToConnectState.Set(connectionState);
 
+            UnityEngine.Debug.Log($"JUANI SETTING CONNECTIONS STATE {connectionState}");
             if (connectResult == false)
             {
                 ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Cannot connect to room with url: {credentials.Url} with token: {credentials.AuthToken}");

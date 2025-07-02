@@ -64,10 +64,15 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             await ConnectToArchipelagoAsync(token);
             connectionStringStopwatch.Start();
             signFlow.StartListeningForConnectionStringAsync(OnNewConnectionString, token).Forget();
+
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            var result = await signFlow.SendHeartbeatAsync(Vector3.zero, token);
+            stopwatch.Stop();
         }
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
+            return;
             if (newConnectionString != null)
             {
                 string connectionString = newConnectionString;
@@ -77,6 +82,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 await TryConnectToRoomAsync(connectionString, token);
                 stopwatchRoom.Stop();
                 Debug.Log($"JUANI ARCHIPELAGO CONNECTED TO ROOM END: {stopwatchRoom.ElapsedMilliseconds}");
+                return;
             }
             else
                 Debug.Log($"JUANI ARCHIPELAGO MISSING CONNECTION STRING: {newConnectionString}");
@@ -86,22 +92,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
 
-
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            var result = await signFlow.SendHeartbeatAsync(position, token);
-            stopwatch.Stop();
-            Debug.Log($"JUANI ARCHIPELAGO HEARTBEAT END: {stopwatch.ElapsedMilliseconds}");
-
-
-            if (result.Success == false)
-                ReportHub.LogWarning(ReportCategory.COMMS_SCENE_HANDLER, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
         }
 
-        private void OnNewConnectionString(string connectionString)
+        private async void OnNewConnectionString(string connectionString)
         {
             connectionStringStopwatch.Stop();
             Debug.Log($"JUANI RECEIVED NEW CONNECTION STRING {connectionStringStopwatch.ElapsedMilliseconds}");
             newConnectionString = connectionString;
+            Stopwatch stopwatchRoom = Stopwatch.StartNew();
+            await TryConnectToRoomAsync(connectionString, CancellationToken.None);
+            stopwatchRoom.Stop();
+            Debug.Log($"JUANI ARCHIPELAGO CONNECTED TO ROOM END: {stopwatchRoom.ElapsedMilliseconds}");
+            newConnectionString = null;
         }
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
