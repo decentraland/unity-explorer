@@ -65,9 +65,9 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
+        private readonly CommunitiesEventBus communitiesEventBus;
 
         private ChatController chatController;
-        private IRealmNavigator realmNavigator;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -93,10 +93,10 @@ namespace DCL.PluginSystem.Global
             ChatMessageFactory chatMessageFactory,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            IRealmNavigator realmNavigator,
             ICommunitiesDataProvider communityDataProvider,
             ISpriteCache thumbnailCache,
-            WarningNotificationView warningNotificationView)
+            WarningNotificationView warningNotificationView,
+            CommunitiesEventBus communitiesEventBus)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -122,10 +122,10 @@ namespace DCL.PluginSystem.Global
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.realmNavigator = realmNavigator;
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
+            this.communitiesEventBus = communitiesEventBus;
         }
 
         public void Dispose()
@@ -176,7 +176,8 @@ namespace DCL.PluginSystem.Global
                 communityDataProvider,
                 thumbnailCache,
                 mvcManager,
-                warningNotificationView
+                warningNotificationView,
+                communitiesEventBus
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
