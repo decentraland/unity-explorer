@@ -34,6 +34,7 @@ namespace DCL.AuthenticationScreenFlow
             previewAvatarModel.Emotes = ShortenEmotes(avatar);
 
             base.Initialize(avatar);
+            previewController!.Value.AddHeadIK();
 
             playEmotesCts = playEmotesCts.SafeRestart();
             PlayEmoteAndAwaitItAsync(settings.IntroEmoteURN, playEmotesCts.Token).Forget();
