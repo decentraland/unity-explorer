@@ -77,7 +77,6 @@ namespace DCL.Chat
         private readonly ISpriteCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
         private readonly CommunitiesEventBus communitiesEventBus;
 
         private readonly List<ChatUserData> membersBuffer = new ();
@@ -135,7 +134,6 @@ namespace DCL.Chat
             ISpriteCache thumbnailCache,
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
-            CommunitiesFeatureAccess communitiesFeatureAccess,
             CommunitiesEventBus communitiesEventBus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
@@ -158,7 +156,6 @@ namespace DCL.Chat
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
             this.communitiesEventBus = communitiesEventBus;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
@@ -327,7 +324,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedCts = isUserAllowedCts.SafeRestart();
-            if (await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts.Token))
+            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts.Token))
                 await InitializeCommunityCoversationsAsync();
         }
 

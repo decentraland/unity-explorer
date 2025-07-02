@@ -65,7 +65,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
         private readonly CommunitiesEventBus communitiesEventBus;
 
         private ChatController chatController;
@@ -97,7 +96,6 @@ namespace DCL.PluginSystem.Global
             ICommunitiesDataProvider communityDataProvider,
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
-            CommunitiesFeatureAccess communitiesFeatureAccess,
             CommunitiesEventBus communitiesEventBus)
         {
             this.mvcManager = mvcManager;
@@ -127,7 +125,6 @@ namespace DCL.PluginSystem.Global
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
             this.communitiesEventBus = communitiesEventBus;
         }
 
@@ -180,7 +177,6 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 mvcManager,
                 warningNotificationView,
-                communitiesFeatureAccess,
                 communitiesEventBus
             );
 

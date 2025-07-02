@@ -125,7 +125,6 @@ namespace Global.Dynamic
         private readonly IProfileBroadcast profileBroadcast;
         private readonly SocialServicesContainer socialServicesContainer;
         private readonly ISelfProfile selfProfile;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         public IMVCManager MvcManager { get; }
 
@@ -158,8 +157,7 @@ namespace Global.Dynamic
             IProfileBroadcast profileBroadcast,
             IRoomHub roomHub,
             SocialServicesContainer socialServicesContainer,
-            ISelfProfile selfProfile,
-            CommunitiesFeatureAccess communitiesFeatureAccess)
+            ISelfProfile selfProfile)
         {
             MvcManager = mvcManager;
             RealmController = realmController;
@@ -174,7 +172,6 @@ namespace Global.Dynamic
             this.profileBroadcast = profileBroadcast;
             this.socialServicesContainer = socialServicesContainer;
             this.selfProfile = selfProfile;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public override void Dispose()
@@ -184,7 +181,6 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
             socialServicesContainer.Dispose();
             selfProfile.Dispose();
-            communitiesFeatureAccess.Dispose();
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -440,11 +436,11 @@ namespace Global.Dynamic
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
-            CommunitiesFeatureAccess communitiesFeatureAccess = new CommunitiesFeatureAccess(identityCache, featureFlags);
-            bool includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
+            CommunitiesFeatureAccess.Initialize(new CommunitiesFeatureAccess(identityCache));
+            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct, ignoreAllowedList: true, cacheResult: false);
 
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel, communitiesFeatureAccess);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -535,7 +531,7 @@ namespace Global.Dynamic
             var chatMessageFactory = new ChatMessageFactory(profileCache, identityCache);
             var userBlockingCacheProxy = new ObjectProxy<IUserBlockingCache>();
 
-            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY), communitiesFeatureAccess)
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(messagePipesHub, chatMessageFactory, new MessageDeduplication<double>(), userBlockingCacheProxy, new DecentralandUrlsSource(bootstrapContainer.Environment, ILaunchMode.PLAY))
                                                  .WithSelfResend(identityCache, chatMessageFactory)
                                                  .WithIgnoreSymbols()
                                                  .WithCommands(chatCommands, staticContainer.LoadingStatus)
@@ -691,7 +687,7 @@ namespace Global.Dynamic
                     profileCache,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
-                    selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController, communitiesFeatureAccess),
+                    selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -722,7 +718,6 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     thumbnailCache,
                     mainUIView.WarningNotification,
-                    communitiesFeatureAccess,
                     communitiesEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
@@ -777,8 +772,7 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     upscaleController,
                     communitiesDataProvider,
-                    realmNftNamesProvider,
-                    communitiesFeatureAccess
+                    realmNftNamesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -1041,8 +1035,7 @@ namespace Global.Dynamic
                 profileBroadcast,
                 roomHub,
                 socialServiceContainer,
-                selfProfile,
-                communitiesFeatureAccess
+                selfProfile
             );
 
             // Init itself

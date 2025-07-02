@@ -26,7 +26,6 @@ namespace DCL.Chat.MessageBus
         private readonly ChatMessageFactory messageFactory;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
         private CancellationTokenSource setupExploreSectionsCts;
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
@@ -35,14 +34,12 @@ namespace DCL.Chat.MessageBus
             ChatMessageFactory messageFactory,
             IMessageDeduplication<double> messageDeduplication,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            CommunitiesFeatureAccess communitiesFeatureAccess)
+            IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.messagePipesHub = messagePipesHub;
             this.messageDeduplication = messageDeduplication;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.messageFactory = messageFactory;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             // Depending on the selected environment, we send the community messages to one user or another
             string serverEnv = decentralandUrlsSource.Environment == DecentralandEnvironment.Org ? "prd" :
@@ -56,7 +53,7 @@ namespace DCL.Chat.MessageBus
 
         private async UniTaskVoid ConfigureMessagePipesHubAsync(CancellationToken ct)
         {
-            isCommunitiesIncluded = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
+            isCommunitiesIncluded = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             if (isCommunitiesIncluded)
             {
                 messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
