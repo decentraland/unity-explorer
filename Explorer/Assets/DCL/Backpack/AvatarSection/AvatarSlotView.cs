@@ -112,7 +112,7 @@ namespace DCL.Backpack
 
         public void Start()
         {
-            AvatarWearableHide.CATEGORIES_TO_READABLE.TryGetValue(Category.ToLower(), out string readableCategoryHider);
+            WearableComponentsUtils.CATEGORIES_TO_READABLE.TryGetValue(Category.ToLower(), out string readableCategoryHider);
             CategoryText.text = readableCategoryHider;
             SlotButton.onClick.AddListener(InvokeSlotButtonPressed);
         }
