@@ -365,11 +365,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bd64e7058e4a44a1eafef49d75c5f0d0
-    m_Address: LoadingRainbowGradient
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bda7566751d4243fb842e1a272cb9f83
     m_Address: MapCategoryIconMapping
     m_ReadOnly: 0

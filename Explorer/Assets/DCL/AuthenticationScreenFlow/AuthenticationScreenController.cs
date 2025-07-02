@@ -122,7 +122,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
-            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["profileName"];
+            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
@@ -328,8 +328,14 @@ namespace DCL.AuthenticationScreenFlow
             profile.IsDirty = true;
             // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
             profile.HasConnectedWeb3 = true;
-            profileNameLabel!.Value = profile.Name;
+
+            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
+
+            return;
+
+            bool IsNewUser() =>
+                profile.Version == 1;
         }
 
         private void ChangeAccount()

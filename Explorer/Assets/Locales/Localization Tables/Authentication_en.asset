@@ -62,7 +62,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 385401318531072
-    m_Localized: Welcome back {profileName}
+    m_Localized: Welcome {back_profileName}
     m_Metadata:
       m_Items:
       - rid: 1095376860581462025
