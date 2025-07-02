@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using DCL.Diagnostics;
 using UnityEngine;
 using Application = UnityEngine.Device.Application;
@@ -74,7 +75,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             // CPU
             string cpu = SystemInfo.processorType;
             results.Add(new SpecResult(SpecCategory.CPU, profile.CpuCheck(cpu), profile.CpuRequirement, cpu));
-            
+
             // GPU
             string gpuName = SystemInfo.graphicsDeviceName;
             bool isGpuModelAcceptable = profile.GpuCheck(gpuName);
@@ -100,25 +101,76 @@ namespace DCL.ApplicationMinimumSpecsGuard
             int ramGB = Mathf.CeilToInt(actualRamMB / 1024f);
             results.Add(new SpecResult(SpecCategory.RAM, actualRamMB >= profile.MinRamMB, profile.RamRequirement, $"{ramGB} GB"));
 
-            try
+            if (platform == PlatformOS.Windows)
             {
-                // Storage
-                long availableStorageBytes = PlatformUtils.GetAvailableStorageBytes(Application.persistentDataPath);
-                float actualAvailableStorageMB = availableStorageBytes / (1024f * 1024f);
-                float availableStorageGB = Mathf.CeilToInt(availableStorageBytes / (1024f * 1024f * 1024f));
+                try
+                {
+                    var allDrives = Utility.PlatformUtils.GetAllDrivesInfo();
+
+                    if (allDrives.Count > 0)
+                    {
+                        var persistentPath = Application.persistentDataPath;
+                        persistentPath = persistentPath.Replace('/', Path.DirectorySeparatorChar);
+                        Utility.PlatformUtils.DriveData targetDrive = null;
+                        int longestMatchLength = -1;
+
+                        // This loop finds the best match. On macOS, paths can be nested (e.g., "/" and "/System/Volumes/Data").
+                        // We need to find the longest mount point that is a prefix of our path. This works for both macOS and Windows.
+                        foreach (var drive in allDrives)
+                        {
+                            if (persistentPath.StartsWith(drive.Name, StringComparison.OrdinalIgnoreCase) && drive.Name.Length > longestMatchLength)
+                            {
+                                targetDrive = drive;
+                                longestMatchLength = drive.Name.Length;
+                            }
+                        }
+
+                        if (targetDrive != null)
+                        {
+                            float actualAvailableStorageMB = targetDrive.AvailableFreeSpace / (1024f * 1024f);
+                            float availableStorageGB = targetDrive.AvailableFreeSpace / (1024f * 1024f * 1024f);
+
+                            results.Add(new SpecResult(
+                                SpecCategory.Storage,
+                                actualAvailableStorageMB >= profile.MinStorageMB,
+                                profile.StorageRequirement,
+                                $"{availableStorageGB:F2} GB"
+                            ));
+                        }
+                        else
+                        {
+                            throw new Exception($"Could not find a mounted drive corresponding to the path: {persistentPath}");
+                        }
+
+                        ReportHub.Log(ReportCategory.UNSPECIFIED, "--- All Detected Drives ---");
+                        foreach (var drive in allDrives)
+                        {
+                            ReportHub.Log(ReportCategory.UNSPECIFIED, drive.ToString());
+                        }
+                    }
+                    else
+                    {
+                        results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "No drives found"));
+                    }
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
+                    results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "Error determining space"));
+                }
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Storage check skipped on non-Windows platform. Assuming requirement is met.");
 
                 results.Add(new SpecResult(
                     SpecCategory.Storage,
-                    actualAvailableStorageMB >= profile.MinStorageMB,
+                    true,
                     profile.StorageRequirement,
-                    $"{availableStorageGB} GB"));
+                    "Undetermined (macOS)"
+                ));
             }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.UNSPECIFIED);
-                results.Add(new SpecResult(SpecCategory.Storage, false, profile.StorageRequirement, "Error determining space"));
-            }
-            
+
             return results;
         }
     }
