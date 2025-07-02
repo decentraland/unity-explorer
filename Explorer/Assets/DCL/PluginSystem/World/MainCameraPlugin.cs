@@ -76,7 +76,8 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(VirtualCameraSystem.InjectToWorld(
                 ref builder,
                 virtualCameraPoolRegistry,
-                sharedDependencies.SceneStateProvider));
+                sharedDependencies.SceneStateProvider,
+                sharedDependencies.SceneData.Geometry.CircumscribedPlanes));
 
             var mainCameraSystem = MainCameraSystem.InjectToWorld(
                 ref builder,

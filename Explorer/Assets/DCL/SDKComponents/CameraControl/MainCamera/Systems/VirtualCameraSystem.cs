@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using Cinemachine;
 using CRDT;
+using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.CameraControl.MainCamera.Components;
@@ -14,6 +15,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 {
@@ -24,14 +26,17 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
     {
         private readonly IComponentPool<CinemachineFreeLook> poolRegistry;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes;
 
         public VirtualCameraSystem(
             World world,
             IComponentPool<CinemachineFreeLook> poolRegistry,
-            ISceneStateProvider sceneStateProvider) : base(world)
+            ISceneStateProvider sceneStateProvider,
+            ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes) : base(world)
         {
             this.poolRegistry = poolRegistry;
             this.sceneStateProvider = sceneStateProvider;
+            this.sceneCircumscribedPlanes = sceneCircumscribedPlanes;
         }
 
         protected override void Update(float t)
@@ -40,6 +45,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
 
             HandleVirtualCameraRemovalQuery(World);
             HandleVirtualCameraEntityDestructionQuery(World);
+            ClampVirtualCameraToSceneBoundsQuery(World);
         }
 
         [Query]
@@ -70,6 +76,22 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         {
             component.virtualCameraInstance.enabled = false;
             poolRegistry.Release(component.virtualCameraInstance);
+        }
+
+        [Query]
+        private void ClampVirtualCameraToSceneBounds(in VirtualCameraComponent virtualCameraComponent, in SDKTransform sdkTransform, in TransformComponent transformComponent)
+        {
+            if (!sdkTransform.IsDirty) return;
+
+            if (sceneCircumscribedPlanes.Contains(transformComponent.Transform.position))
+            {
+                virtualCameraComponent.virtualCameraInstance.transform.localPosition = Vector3.zero;
+                return;
+            }
+
+            // Position is outside bounds, clamp to border
+            Vector3 clampedPosition = sceneCircumscribedPlanes.GetNearestSceneBoundsPosition(transformComponent.Transform.position);
+            virtualCameraComponent.virtualCameraInstance.transform.position = clampedPosition;
         }
 
         [Query]

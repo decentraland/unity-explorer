@@ -191,6 +191,27 @@ namespace Utility
             boundingPlanes.MinX < point.x && boundingPlanes.MaxX > point.x
                                           && boundingPlanes.MinZ < point.z && boundingPlanes.MaxZ > point.z;
 
+        /// <summary>
+        /// Gets the nearest position on the scene bounds border. If the point is already inside the bounds,
+        /// returns the original point. Otherwise, clamps the X and Z coordinates to the bounds while preserving Y.
+        /// </summary>
+        /// <param name="boundingPlanes">The bounding planes of the scene.</param>
+        /// <param name="point">The point to find the nearest bounds position for.</param>
+        /// <returns>The nearest position on the scene bounds border with the same Y coordinate as the input.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 GetNearestSceneBoundsPosition(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point)
+        {
+            // If the point is already inside the bounds, return it as is
+            if (boundingPlanes.Contains(point))
+                return point;
+            
+            // Clamp the X and Z coordinates to the bounds, keep Y unchanged
+            float clampedX = Mathf.Clamp(point.x, boundingPlanes.MinX, boundingPlanes.MaxX);
+            float clampedZ = Mathf.Clamp(point.z, boundingPlanes.MinZ, boundingPlanes.MaxZ);
+            
+            return new Vector3(clampedX, point.y, clampedZ);
+        }
+
         public readonly struct ParcelCorners
         {
             public readonly Vector3 minXZ;
