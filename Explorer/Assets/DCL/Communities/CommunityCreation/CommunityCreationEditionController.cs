@@ -24,6 +24,8 @@ namespace DCL.Communities.CommunityCreation
         private const string WORLD_LINK_ID = "WORLD_LINK_ID";
         private const string CREATE_COMMUNITY_ERROR_MESSAGE = "There was an error creating community. Please try again.";
         private const string UPDATE_COMMUNITY_ERROR_MESSAGE = "There was an error updating community. Please try again.";
+        private const string GET_PLACES_ERROR_MESSAGE = "There was an error getting places. Please try again.";
+        private const string GET_WORLDS_ERROR_MESSAGE = "There was an error getting worlds. Please try again.";
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
         private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
         private const string INCOMPATIBLE_IMAGE_GENERAL_ERROR = "Invalid image file selected. Please check file type and size.";
@@ -43,8 +45,7 @@ namespace DCL.Communities.CommunityCreation
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
         private CancellationTokenSource createCommunityCts;
-        private CancellationTokenSource loadLandsAndWorldsCts;
-        private CancellationTokenSource loadCommunityDataCts;
+        private CancellationTokenSource loadPanelCts;
         private CancellationTokenSource showErrorCts;
         private CancellationTokenSource openImageSelectionCts;
 
@@ -103,15 +104,8 @@ namespace DCL.Communities.CommunityCreation
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
-            loadLandsAndWorldsCts = loadLandsAndWorldsCts.SafeRestart();
-            LoadLandsAndWorldsAsync(loadLandsAndWorldsCts.Token).Forget();
-
-            if (!string.IsNullOrEmpty(inputData.CommunityId))
-            {
-                // EDITION MODE
-                loadCommunityDataCts = loadCommunityDataCts.SafeRestart();
-                LoadCommunityDataAsync(loadCommunityDataCts.Token).Forget();
-            }
+            loadPanelCts = loadPanelCts.SafeRestart();
+            LoadPanelAsync(loadPanelCts.Token).Forget();
         }
 
         protected override void OnViewShow() =>
@@ -123,8 +117,7 @@ namespace DCL.Communities.CommunityCreation
             RestoreInput();
 
             createCommunityCts?.SafeCancelAndDispose();
-            loadLandsAndWorldsCts?.SafeCancelAndDispose();
-            loadCommunityDataCts?.SafeCancelAndDispose();
+            loadPanelCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openImageSelectionCts?.SafeCancelAndDispose();
         }
@@ -143,8 +136,7 @@ namespace DCL.Communities.CommunityCreation
             viewInstance.RemovePlaceButtonClicked -= RemoveCommunityPlace;
 
             createCommunityCts?.SafeCancelAndDispose();
-            loadLandsAndWorldsCts?.SafeCancelAndDispose();
-            loadCommunityDataCts?.SafeCancelAndDispose();
+            loadPanelCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openImageSelectionCts?.SafeCancelAndDispose();
         }
@@ -153,6 +145,20 @@ namespace DCL.Communities.CommunityCreation
             UniTask.WhenAny(
                 viewInstance!.backgroundCloseButton.OnClickAsync(ct),
                 closeTaskCompletionSource.Task);
+
+        private async UniTask LoadPanelAsync(CancellationToken ct)
+        {
+            viewInstance!.SetCreationPanelAsLoading(true);
+            await LoadLandsAndWorldsAsync(ct) .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (!string.IsNullOrEmpty(inputData.CommunityId))
+            {
+                // EDITION MODE
+                await LoadCommunityDataAsync(ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            }
+
+            viewInstance!.SetCreationPanelAsLoading(false);
+        }
 
         private void GoToAnyLinkFromGetNameDescription(string id)
         {
@@ -222,9 +228,8 @@ namespace DCL.Communities.CommunityCreation
             }
         }
 
-        private async UniTaskVoid LoadLandsAndWorldsAsync(CancellationToken ct)
+        private async UniTask LoadLandsAndWorldsAsync(CancellationToken ct)
         {
-            viewInstance!.SetCreationPanelAsLoading(true);
             currentCommunityPlaces.Clear();
             addedCommunityPlaces.Clear();
             List<string> placesToAdd = new ();
@@ -234,9 +239,18 @@ namespace DCL.Communities.CommunityCreation
             if (ownProfile != null)
             {
                 // Lands owned or managed by the user
-                PlacesData.IPlacesAPIResponse placesResponse = await placesAPIService.GetPlacesByOwnerAsync(ownProfile.UserId, ct);
+                var placesResult = await placesAPIService.GetPlacesByOwnerAsync(ownProfile.UserId, ct)
+                                                         .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                foreach (PlacesData.PlaceInfo placeInfo in placesResponse.Data)
+                if (!placesResult.Success)
+                {
+                    showErrorCts = showErrorCts.SafeRestart();
+                    await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_PLACES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    return;
+                }
+
+                foreach (PlacesData.PlaceInfo placeInfo in placesResult.Value.data)
                 {
                     var placeText = $"{placeInfo.title} ({placeInfo.base_position})";
                     placesToAdd.Add(placeText);
@@ -250,9 +264,18 @@ namespace DCL.Communities.CommunityCreation
                 }
 
                 // Worlds
-                PlacesData.IPlacesAPIResponse worlds = await placesAPIService.GetWorldsByOwnerAsync(ownProfile.UserId, ct);
+                var worldsResult = await placesAPIService.GetWorldsByOwnerAsync(ownProfile.UserId, ct)
+                                                         .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                foreach (PlacesData.PlaceInfo worldInfo in worlds.Data)
+                if (!worldsResult.Success)
+                {
+                    showErrorCts = showErrorCts.SafeRestart();
+                    await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_WORLDS_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                    return;
+                }
+
+                foreach (PlacesData.PlaceInfo worldInfo in worldsResult.Value.data)
                 {
                     placesToAdd.Add(worldInfo.world_name);
 
@@ -265,8 +288,7 @@ namespace DCL.Communities.CommunityCreation
                 }
             }
 
-            viewInstance.SetPlacesSelector(placesToAdd);
-            viewInstance!.SetCreationPanelAsLoading(false);
+            viewInstance!.SetPlacesSelector(placesToAdd);
         }
 
         private void AddCommunityPlace(int index)
@@ -296,14 +318,12 @@ namespace DCL.Communities.CommunityCreation
             if (index >= addedCommunityPlaces.Count)
                 return;
 
-            viewInstance!.RemovePlaceTag(addedCommunityPlaces[index].Id);
+            viewInstance!.RemovePlaceTag(addedCommunityPlaces[index].Id, addedCommunityPlaces[index].Name);
             addedCommunityPlaces.RemoveAt(index);
         }
 
-        private async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
+        private async UniTask LoadCommunityDataAsync(CancellationToken ct)
         {
-            viewInstance!.SetCreationPanelAsLoading(true);
-
             // Load community data
             var getCommunityResult = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
@@ -311,15 +331,14 @@ namespace DCL.Communities.CommunityCreation
             if (!getCommunityResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
-                await viewInstance.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
-                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_COMMUNITY_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
+                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                 return;
             }
 
-            viewInstance.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw);
+            viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
-            viewInstance.SetCreationPanelAsLoading(false);
 
             // Load community places ids
             var getCommunityPlacesResult = await dataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)
