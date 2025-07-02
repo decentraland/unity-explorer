@@ -90,7 +90,6 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             try
             {
                 currentOwnedTexture = await textureTask!;
-                await UniTask.SwitchToMainThread();
                 texture = currentOwnedTexture.Texture;
             }
             catch (Exception e)

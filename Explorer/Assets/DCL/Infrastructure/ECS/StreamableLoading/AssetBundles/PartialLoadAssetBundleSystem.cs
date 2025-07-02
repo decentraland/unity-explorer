@@ -113,9 +113,9 @@ namespace ECS.StreamableLoading.AssetBundles
                 await UniTask.SwitchToMainThread();
 
                 if (assetBundle)
-                    assetBundle.Unload(true);
+                    await assetBundle.UnloadAsync(true);
 
-                stream.Dispose();
+                await stream.DisposeAsync();
                 throw;
             }
         }

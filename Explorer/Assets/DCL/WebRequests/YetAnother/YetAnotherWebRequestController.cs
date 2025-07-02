@@ -1,4 +1,4 @@
-﻿using Best.HTTP.Caching;
+﻿using Utility.Multithreading;
 using Cysharp.Net.Http;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
@@ -43,10 +43,7 @@ namespace DCL.WebRequests
 
         public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
-            bool fromMainThread = PlayerLoopHelper.IsMainThread;
-
-            if (fromMainThread)
-                await UniTask.SwitchToThreadPool();
+            await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeAsync();
 
             RequestEnvelope envelope = requestWrap.Envelope;
 
@@ -61,7 +58,7 @@ namespace DCL.WebRequests
                 try
                 {
                     if (delayBeforeRepeat != TimeSpan.Zero)
-                        await UniTask.Delay(delayBeforeRepeat, cancellationToken: ct);
+                        await Task.Delay(delayBeforeRepeat, ct);
 
                     (HttpRequestMessage nativeRequest, ulong uploadSize) = requestWrap.CreateYetAnotherHttpRequest();
 
@@ -140,7 +137,9 @@ namespace DCL.WebRequests
 
                     throw new YetAnotherHttpWebRequestException(adapter, new TimeoutException("The request timed out.", e));
                 }
-                catch (HttpRequestException exception)
+
+                // YetAnother throws different exceptions depending on the error, so we catch all exceptions here, see ResponseContext.cs
+                catch (Exception exception) when (exception is HttpRequestException or IOException or { InnerException: IOException })
                 {
                     attemptsLeft--;
 
@@ -174,12 +173,6 @@ namespace DCL.WebRequests
                     // Dispose adapter on exception as it won't be returned to the caller
                     adapter?.Dispose();
                     throw;
-                }
-                finally
-                {
-
-                    if (fromMainThread)
-                        await UniTask.SwitchToMainThread();
                 }
             }
 

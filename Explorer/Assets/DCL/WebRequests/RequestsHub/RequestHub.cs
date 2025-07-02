@@ -35,7 +35,8 @@ namespace DCL.WebRequests.RequestsHub
         private readonly IReadOnlyDictionary<Key, object> map;
         private bool ktxEnabled;
 
-        public RequestHub(IDecentralandUrlsSource urlsSource, HTTPCache cache, bool partialDownloadingEnabled, long chunkSize, bool ktxEnabled,
+        public RequestHub(IDecentralandUrlsSource urlsSource, HTTPCache cache, bool partialDownloadingEnabled, long chunkSize, byte maxChunksCount,
+            bool ktxEnabled,
             WebRequestsMode mode)
         {
             this.ktxEnabled = ktxEnabled;
@@ -52,7 +53,7 @@ namespace DCL.WebRequests.RequestsHub
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GenericUploadArguments args) => new GenericPatchRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAudioClipArguments args) => new GetAudioClipWebRequest(envelope, args, controller));
             Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in GetAssetBundleArguments args) => new GetAssetBundleWebRequest(envelope, args, controller));
-            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(cache, envelope, args, controller, chunkSize, partialDownloadingEnabled, mode));
+            Add(mutableMap, (IWebRequestController controller, in RequestEnvelope envelope, in PartialDownloadArguments args) => new PartialDownloadRequest(cache, envelope, args, controller, chunkSize, maxChunksCount, partialDownloadingEnabled, mode));
         }
 
         private static void Add<TArgs, TWebRequest>(IDictionary<Key, object> map, InitializeRequest<TArgs, TWebRequest> requestDelegate)

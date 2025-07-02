@@ -39,11 +39,11 @@ namespace ECS.TestSuite
         /// <summary>
         ///     <see cref="RestoreCache" /> must be called on TearDown
         /// </summary>
-        public static IWebRequestController Create(WebRequestsMode mode, HTTPCache? cache = null, long chunkSize = long.MaxValue)
+        public static IWebRequestController Create(WebRequestsMode mode, HTTPCache? cache = null, long chunkSize = long.MaxValue, byte maxChunksCount = 10)
         {
             cache ??= InitializeCache();
 
-            var hub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, mode != WebRequestsMode.UNITY, chunkSize, false, mode);
+            var hub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, mode != WebRequestsMode.UNITY, chunkSize, maxChunksCount, false, mode);
             IWebRequestsAnalyticsContainer? analyticsContainer = Substitute.For<IWebRequestsAnalyticsContainer>();
             IWeb3IdentityCache? identityCache = Substitute.For<IWeb3IdentityCache>();
 

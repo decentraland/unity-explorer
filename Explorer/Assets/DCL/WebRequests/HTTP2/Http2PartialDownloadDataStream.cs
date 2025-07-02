@@ -6,6 +6,7 @@ using Best.HTTP.Shared.Extensions;
 using Best.HTTP.Shared.Logger;
 using Best.HTTP.Shared.PlatformSupport.FileSystem;
 using Best.HTTP.Shared.PlatformSupport.Memory;
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Optimization.ThreadSafePool;
@@ -13,6 +14,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
@@ -77,9 +80,19 @@ namespace DCL.WebRequests.HTTP2
             "date",
         };
 
+        private static readonly ProfilerMarker DISPOSE_MARKER = new ($"{nameof(Http2PartialDownloadDataStream)}/{nameof(Dispose)}");
+        private static readonly ProfilerMarker TRY_INITIALIZE_FROM_HEADERS_MARKER = new ($"{nameof(Http2PartialDownloadDataStream)}/{nameof(TryInitializeFromHeaders)}");
+        private static readonly ProfilerMarker TRY_APPEND_MARKER = new ($"{nameof(Http2PartialDownloadDataStream)}/{nameof(TryAppend)}");
+
         private static readonly ThreadSafeListPool<string> REDUNDANT_HEADERS_POOL =
             new (15, 50);
+
         internal readonly long fullFileSize;
+
+        /// <summary>
+        ///     Breaking the big file into many small chunks lead to the worse downloading time due to creation of many requests and throttling between them
+        /// </summary>
+        internal readonly long effectiveChunkSize;
 
         private readonly Uri fromUrl;
 
@@ -100,10 +113,11 @@ namespace DCL.WebRequests.HTTP2
                                                   _ => 0,
                                               };
 
-        private Http2PartialDownloadDataStream(Uri fromUrl, long fullFileSize)
+        private Http2PartialDownloadDataStream(Uri fromUrl, long fullFileSize, long effectiveChunkSize)
         {
             this.fromUrl = fromUrl;
             this.fullFileSize = fullFileSize;
+            this.effectiveChunkSize = effectiveChunkSize;
         }
 
         internal ref readonly CachedPartialData GetCachedPartialData() =>
@@ -125,14 +139,15 @@ namespace DCL.WebRequests.HTTP2
 
             ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} initialized from the embedded file");
 
-            return new Http2PartialDownloadDataStream(uri, (int)fileStream.Length)
+            return new Http2PartialDownloadDataStream(uri, (int)fileStream.Length, 0)
             {
                 fileStreamData = new FileStreamData(fileStream),
                 opMode = Mode.EMBEDDED_FILE_STREAM,
             };
         }
 
-        internal static bool TryInitializeFromCache(HTTPCache cache, Uri uri, Hash128 requestHash, long chunkSize, out Http2PartialDownloadDataStream? partialStream)
+        internal static bool TryInitializeFromCache(HTTPCache cache, Uri uri, Hash128 requestHash, long chunkSizeAlignment, byte maxChunksCount,
+            out Http2PartialDownloadDataStream? partialStream)
         {
             partialStream = null;
 
@@ -164,14 +179,14 @@ namespace DCL.WebRequests.HTTP2
 
             // The cached size must be aligned with the Chunk Size (and the chunk size must be aligned with 1MB/2MB - this is how CloudFront works
             // It will not serve arbitrary/random ranges (will result in 416 http error)
-            if ((cachedSize < fullFileSize && cachedSize % chunkSize != 0) || cachedSize > fullFileSize)
+            if ((cachedSize < fullFileSize && cachedSize % chunkSizeAlignment != 0) || cachedSize > fullFileSize)
             {
-                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Cached data of {uri} ({requestHash}) {((ulong)cachedSize).ByteToMB()}MB is not aligned with the chunk size {((ulong)chunkSize).ByteToMB()}MB and will be invalidated");
+                ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Cached data of {uri} ({requestHash}) {((ulong)cachedSize).ByteToMB()}MB is not aligned with the chunk size {((ulong)chunkSizeAlignment).ByteToMB()}MB and will be invalidated");
 
                 EmergencyEndCacheRead();
 
                 // Remove the cached chunk to reset the progress
-                cache.Delete(requestHash, null);
+                cache.Delete(requestHash, false, null);
                 return false;
             }
 
@@ -181,7 +196,7 @@ namespace DCL.WebRequests.HTTP2
                 cache.EndReadContent(requestHash, null);
             }
 
-            partialStream = new Http2PartialDownloadDataStream(uri, fullFileSize);
+            partialStream = new Http2PartialDownloadDataStream(uri, fullFileSize, CalculateEffectiveChunkSize(chunkSizeAlignment, fullFileSize, maxChunksCount));
 
             partialStream.cachedPartialData = new CachedPartialData(headers, cache, requestHash)
             {
@@ -227,13 +242,28 @@ namespace DCL.WebRequests.HTTP2
             }
         }
 
+        internal static long CalculateEffectiveChunkSize(long desiredChunkSize, long fullFileSize, byte maxChunksCount)
+        {
+            double maxChunkSize = fullFileSize / (double)maxChunksCount;
+
+            if (maxChunkSize <= desiredChunkSize)
+                return desiredChunkSize;
+
+            // Align maxChunkSize so it's divisible by the desiredChunkSize without remainder
+            long alignedChunkSize = (long)Math.Ceiling(maxChunkSize / desiredChunkSize) * desiredChunkSize;
+
+            return alignedChunkSize;
+        }
+
         /// <summary>
         ///     Called when the downloading of the next chunk has started
         /// </summary>
         /// <returns>False if content length could not be resolved</returns>
         public static bool TryInitializeFromHeaders(HTTPCache cache, Uri uri, HTTPMethods method, int statusCode, LoggingContext? loggingContext,
-            WebRequestHeaders headers, ref Http2PartialDownloadDataStream? partialStream, out long expectedChunkLength)
+            WebRequestHeaders headers, ref Http2PartialDownloadDataStream? partialStream, long chunkAlignment, byte maxChunksCount, out long expectedChunkLength)
         {
+            using ProfilerMarker.AutoScope _ = TRY_INITIALIZE_FROM_HEADERS_MARKER.Auto();
+
             if (!TryPrepareHeaders(headers, out long fullFileSize, out expectedChunkLength))
             {
                 // if headers are invalid we can't proceed
@@ -246,7 +276,7 @@ namespace DCL.WebRequests.HTTP2
             if (statusCode == HTTPStatusCodes.PartialContent)
                 statusCode = HTTPStatusCodes.OK;
 
-            partialStream ??= new Http2PartialDownloadDataStream(uri, fullFileSize);
+            partialStream ??= new Http2PartialDownloadDataStream(uri, fullFileSize, CalculateEffectiveChunkSize(chunkAlignment, fullFileSize, maxChunksCount));
             partialStream.InitializeFromHeaders(cache, method, uri, statusCode, loggingContext, headers);
             return true;
 
@@ -298,13 +328,30 @@ namespace DCL.WebRequests.HTTP2
         /// </summary>
         public static Http2PartialDownloadDataStream InitializeFromUnknownSource(Uri url)
         {
-            var stream = new Http2PartialDownloadDataStream(url, int.MaxValue);
+            var stream = new Http2PartialDownloadDataStream(url, int.MaxValue, 0);
 
             SeekableBufferSegmentStream memoryStream = CreateMemoryStream();
 
             stream.memoryStreamPartialData = new MemoryStreamPartialData(memoryStream);
             stream.opMode = Mode.WRITING_TO_SEGMENTED_STREAM;
             return stream;
+        }
+
+        public override async ValueTask DisposeAsync()
+        {
+            bool fromMainThread = PlayerLoopHelper.IsMainThread;
+
+            // switch to the background thread before disposing the stream as it involves the lock on the database
+            if (fromMainThread)
+                await UniTask.SwitchToThreadPool();
+
+            // ReSharper disable once MethodHasAsyncOverload
+            try { Dispose(); }
+            finally
+            {
+                if (fromMainThread)
+                    await UniTask.SwitchToMainThread();
+            }
         }
 
         private void InitializeFromHeaders(HTTPCache cache, HTTPMethods method, Uri uri, int statusCode, LoggingContext? loggingContext,
@@ -406,6 +453,8 @@ namespace DCL.WebRequests.HTTP2
         /// </summary>
         internal bool TryAppend(Uri uri, BufferSegment segment, LoggingContext? loggingContext)
         {
+            using ProfilerMarker.AutoScope _ = TRY_APPEND_MARKER.Auto();
+
             // Read all available data from the response
 
             switch (opMode)
@@ -421,7 +470,7 @@ namespace DCL.WebRequests.HTTP2
 
                     HTTPCacheContentWriter cacheWriter = cachedPartialData.writeHandler.Value.contentWriter;
 
-                    cacheWriter.Write(segment);
+                    cacheWriter.Write(segment, true);
 
                     // If something went wrong with the cache it will invalidate its hash
                     if (!cacheWriter.Hash.isValid)
@@ -445,14 +494,15 @@ namespace DCL.WebRequests.HTTP2
                     if (processedLength == fullFileSize)
                     {
                         // Finish the cache write
-                        cachedPartialData.EndCacheWrite(loggingContext, false);
-
-                        // Open for reading immediately
                         // Can return false, probably due to the concurrent maintenance
-                        bool streamOpened = cachedPartialData.BeginCacheRead(loggingContext);
+                        bool streamOpened = cachedPartialData.ReadAfterCompletingCacheWrite(loggingContext, false);
 
                         if (!streamOpened)
                         {
+                            // Finish disposal here as the cache entry now is in the intermediate state that can't be properly processed by Dispose
+                            cachedPartialData.headers.Dispose();
+                            opMode = Mode.UNITIALIZED;
+
                             ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) could not be opened for reading after writing to the cache");
                             return false;
                         }
@@ -530,6 +580,8 @@ namespace DCL.WebRequests.HTTP2
 
         protected override void Dispose(bool disposing)
         {
+            using ProfilerMarker.AutoScope _ = DISPOSE_MARKER.Auto();
+
             base.Dispose(disposing);
 
             Hash128 hash = default;
@@ -672,7 +724,7 @@ namespace DCL.WebRequests.HTTP2
 
             private void DeleteCacheEntry(LoggingContext? context = null)
             {
-                cache.Delete(requestHash, context);
+                cache.Delete(requestHash, false, context);
             }
 
             internal bool BeginCacheRead(LoggingContext? context = null)
@@ -696,16 +748,28 @@ namespace DCL.WebRequests.HTTP2
                     DeleteCacheEntry(loggingContext);
             }
 
+            internal bool ReadAfterCompletingCacheWrite(LoggingContext? loggingContext, bool discardCache)
+            {
+                if (!discardCache)
+                    UpdateCacheHeaders(loggingContext);
+
+                Stream? stream = cache.EndCacheAndBeginReadContent(writeHandler!.Value.contentWriter, !discardCache, loggingContext);
+
+                writeHandler = null;
+
+                if (stream == null) return false;
+
+                readHandler = new CacheReadHandler(stream);
+                return true;
+            }
+
             internal void EndCacheWrite(LoggingContext? loggingContext, bool discardCache)
             {
                 if (!discardCache)
                     UpdateCacheHeaders(loggingContext);
 
-                cache.EndCache(writeHandler!.Value.contentWriter, true, loggingContext);
+                cache.EndCache(writeHandler!.Value.contentWriter, !discardCache, loggingContext);
                 writeHandler = null;
-
-                if (discardCache)
-                    DeleteCacheEntry(loggingContext);
             }
 
             /// <summary>

@@ -53,7 +53,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         {
             cache = TestWebRequestController.InitializeCache();
 
-            var requestsHub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, true, chunkSize, false, WebRequestsMode.YET_ANOTHER);
+            var requestsHub = new RequestHub(Substitute.For<IDecentralandUrlsSource>(), cache, true, chunkSize, 10, false, WebRequestsMode.YET_ANOTHER);
 
             webRequestController = new DisposeRequestWrap(new YetAnotherWebRequestController(Substitute.For<IWebRequestsAnalyticsContainer>(),
                 Substitute.For<IWeb3IdentityCache>(), requestsHub));
@@ -72,6 +72,23 @@ namespace DCL.WebRequests.HTTP2.Tests
             stream = null;
         }
 
+        [Test]
+        [TestCase(1024, 6000, 1024)]
+        [TestCase(1024, 1024 * 10, 1024)]
+        [TestCase(1024, (1024 * 10) + 1, 1024 * 2)]
+        [TestCase(1024, 1024 * 17, 1024 * 2)]
+        [TestCase(1024, 1024 * 26, 1024 * 3)]
+        [TestCase(2048, 1024 * 102, 2048 * 6)]
+        [TestCase(2048, 1024 * 170, 2048 * 9)]
+        public void CalculateEffectiveChunkSize(long baseChunkSize, long fullFileSize, long expectedChunkSize)
+        {
+            baseChunkSize *= 1024; // Convert to bytes
+            fullFileSize *= 1024;
+            expectedChunkSize *= 1024;
+            long effectiveChunkSize = Http2PartialDownloadDataStream.CalculateEffectiveChunkSize(baseChunkSize, fullFileSize, 10);
+            Assert.That(effectiveChunkSize, Is.EqualTo(expectedChunkSize));
+        }
+
         /// <summary>
         ///     Successfully initializes from cache if partial data was previously cached
         /// </summary>
@@ -84,7 +101,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             var iterationsCount = (int)Math.Ceiling(contentSize / (double)chunkSize);
 
             // Delete from cache to ensure a fresh start
-            cache.Delete(PARTIAL_TEST_URL_HASH, null);
+            cache.Delete(PARTIAL_TEST_URL_HASH, false, null);
 
             // Perform one iteration
             stream = (Http2PartialDownloadDataStream)await webRequestController.GetPartialAsync(PARTIAL_TEST_URL, ReportCategory.PARTIAL_LOADING, new PartialDownloadArguments(stream))
@@ -141,7 +158,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         public async Task RecoverFullDataFromCacheAsync()
         {
             // Delete from cache to ensure a fresh start
-            cache.Delete(PARTIAL_TEST_URL_HASH, null);
+            cache.Delete(PARTIAL_TEST_URL_HASH, false, null);
 
             await ConstructDataFromChunksAsync();
 
@@ -166,7 +183,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         public async Task ConstructDataFromChunksAsync()
         {
             // Delete from cache to ensure a fresh start
-            cache.Delete(PARTIAL_TEST_URL_HASH, null);
+            cache.Delete(PARTIAL_TEST_URL_HASH, false, null);
 
             ulong fileSize = await GetContentSizeAsync(PARTIAL_TEST_URL);
 
@@ -212,7 +229,7 @@ namespace DCL.WebRequests.HTTP2.Tests
         public async Task ConstructDataFromUnsupportedRangeAsync()
         {
             // Delete from cache to ensure a fresh start
-            cache.Delete(PARTIAL_NOT_SUPPORTED_URL_HASH, null);
+            cache.Delete(PARTIAL_NOT_SUPPORTED_URL_HASH, false, null);
 
             ulong fileSize = await GetContentSizeAsync(PARTIAL_NOT_SUPPORTED_URL);
 

@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.RequestsHub;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DCL.WebRequests
 {
@@ -26,9 +27,17 @@ namespace DCL.WebRequests
         {
             IAcquiredBudget totalBudgetAcquired;
 
+            bool inMainThread = PlayerLoopHelper.IsMainThread;
+
             // Try bypass total budget
             while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
-                await UniTask.Yield(ct);
+            {
+                // Calling `UniTask.Yield` from the background thread will cause switching back to the main thread
+                if (inMainThread)
+                    await UniTask.Yield(ct);
+                else
+                    await Task.Delay(10, ct);
+            }
 
             try
             {

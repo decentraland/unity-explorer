@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.WebRequests
 {
@@ -57,10 +58,12 @@ namespace DCL.WebRequests
 
         public async UniTask<BufferSegmentStream> GetCompleteContentStreamAsync(CancellationToken cancellationToken)
         {
+            await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeAsync();
             var contentStream = new BufferSegmentStream();
 
             while (!cancellationToken.IsCancellationRequested)
             {
+                // The inner function doesn't preserve the synchronization context so it returns to the thread pool
                 (BufferSegment segment, bool finished) = await TryTakeNextAsync(cancellationToken);
 
                 if (finished)

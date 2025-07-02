@@ -25,35 +25,7 @@ namespace DCL.WebRequests
 {
     public class WebRequestsContainer : DCLGlobalContainer<WebRequestsContainer.Settings>
     {
-        [Serializable]
-        public class Settings : IDCLPluginSettings
-        {
-            [Serializable]
-            public class UnityWebRequestsSettings
-            {
-                [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
-                [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
-            }
-
-            [Serializable]
-            public class HTTP2Settings
-            {
-                [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 50;
-                [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 15;
-
-                [field: SerializeField] public float CacheSizeGB { get; private set; } = 2; // 2 GB by default
-                [field: SerializeField] public ushort CacheLifetimeDays { get; private set; } = 2; // 2 days by default
-                [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
-                [field: SerializeField] public ushort PingAckTimeoutSeconds { get; private set; } = 10;
-                [field: SerializeField] public bool EnablePartialDownloading { get; private set; }
-            }
-
-            [field: SerializeField] public WebRequestsMode WebRequestsMode { get; private set; } = WebRequestsMode.HTTP2;
-
-            [field: SerializeField] public UnityWebRequestsSettings DefaultSettings { get; private set; } = new ();
-            [field: SerializeField] public HTTP2Settings Http2Settings { get; private set; } = new ();
-
-        }
+        private RequestHub requestHub = null!;
 
         public WebRequestsMode WebRequestsMode { get; private set; }
 
@@ -64,8 +36,6 @@ namespace DCL.WebRequests
         public IWebRequestController SceneWebRequestController { get; private set; } = null!;
 
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; } = null!;
-
-        private RequestHub requestHub = null!;
 
         public static async UniTask<WebRequestsContainer> CreateAsync(
             IAppArgs appArgs,
@@ -130,7 +100,6 @@ namespace DCL.WebRequests
                 sceneBudget = container.settings.DefaultSettings.SceneWebRequestsBudget;
             }
 
-
             var options = new ArtificialDelayOptions.ElementBindingOptions();
 
             var analyticsContainer = WebRequestsAnalyticsContainer.Create(debugContainerBuilder.TryAddWidget("Web Requests"));
@@ -143,7 +112,7 @@ namespace DCL.WebRequests
 
             int partialChunkSize = container.settings.Http2Settings.PartialChunkSizeMB * 1024 * 1024;
 
-            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, ktxEnabled, container.WebRequestsMode);
+            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, container.settings.Http2Settings.PartialChunksMaxCount, ktxEnabled, container.WebRequestsMode);
             container.requestHub = requestHub;
 
             IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,
@@ -250,11 +219,11 @@ namespace DCL.WebRequests
                 using var client = new TcpClient();
 
                 // Default address of local proxies
-                var connectTask = client.ConnectAsync("127.0.0.1", 8888);
+                Task connectTask = client.ConnectAsync("127.0.0.1", 8888);
                 var timeoutTask = Task.Delay(500, ct);
 
                 // Wait for either the connect or the timeout
-                var finished = await Task.WhenAny(connectTask, timeoutTask);
+                Task? finished = await Task.WhenAny(connectTask, timeoutTask);
 
                 if (finished == connectTask && client.Connected)
                     return true;
@@ -278,6 +247,40 @@ namespace DCL.WebRequests
             WebRequestController.Dispose();
             SceneWebRequestController.Dispose();
             HTTPManager.LocalCache?.Dispose();
+        }
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: SerializeField] public WebRequestsMode WebRequestsMode { get; private set; } = WebRequestsMode.HTTP2;
+
+            [field: SerializeField] public UnityWebRequestsSettings DefaultSettings { get; private set; } = new ();
+            [field: SerializeField] public HTTP2Settings Http2Settings { get; private set; } = new ();
+
+            [Serializable]
+            public class UnityWebRequestsSettings
+            {
+                [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 15;
+                [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 5;
+            }
+
+            [Serializable]
+            public class HTTP2Settings
+            {
+                [field: SerializeField] public int CoreWebRequestsBudget { get; private set; } = 50;
+                [field: SerializeField] public int SceneWebRequestsBudget { get; private set; } = 15;
+
+                [field: SerializeField] public float CacheSizeGB { get; private set; } = 2; // 2 GB by default
+                [field: SerializeField] public ushort CacheLifetimeDays { get; private set; } = 2; // 2 days by default
+                [field: SerializeField] public short PartialChunkSizeMB { get; private set; } = 2; // 2 MB by default
+
+                /// <summary>
+                ///     Splitting a single big asset into too many chunks is not desired as it will lead to creating too many requests and throttling between them that will result in a significantly delayed download.
+                /// </summary>
+                [field: SerializeField] public byte PartialChunksMaxCount { get; private set; } = 10; // 10 chunks by default
+                [field: SerializeField] public ushort PingAckTimeoutSeconds { get; private set; } = 10;
+                [field: SerializeField] public bool EnablePartialDownloading { get; private set; }
+            }
         }
     }
 }
