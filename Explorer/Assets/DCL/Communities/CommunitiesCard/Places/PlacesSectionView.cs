@@ -116,7 +116,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             int realIndex = canModify ? index - 1 : index;
             PlaceInfo placeInfo = membersData.items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.Web3IdentityCache.Identity?.Address) && canModify, spriteCache);
+            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, spriteCache);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),

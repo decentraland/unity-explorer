@@ -17,7 +17,9 @@ namespace MVC
         internal ClipboardManager clipboardManager { get; }
         internal ICursor cursor { get; }
         internal IMVCManager mvcManager { get; }
-        internal IWeb3IdentityCache web3IdentityCache { get; }
+        private IWeb3IdentityCache web3IdentityCache { get; }
+
+        public static IWeb3Identity? CurrentIdentity => Instance.web3IdentityCache.Identity;
 
         public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, ClipboardManager clipboardManager, ICursor cursor,
             IMVCManager mvcManager, IWeb3IdentityCache web3IdentityCache)

@@ -232,7 +232,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
             MemberData memberData = membersData.items[index];
-            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(ViewDependencies.Web3IdentityCache.Identity?.Address), profileRepositoryWrapper);
+            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address), profileRepositoryWrapper);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 OnContextMenuButtonClicked,
