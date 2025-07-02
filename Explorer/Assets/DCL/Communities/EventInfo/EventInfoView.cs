@@ -113,12 +113,13 @@ namespace DCL.Communities.EventInfo
 
         private string CalculateRecurrentSchedulesString(IEventDTO eventData)
         {
-            DateTime.TryParse(eventData.Next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
-
-            for (var i = 0; i < eventData.Recurrent_dates.Length; i++)
+            for (var i = 0; i < eventData.RecurrentDatesProcessed.Length; i++)
             {
-                if (!DateTime.TryParse(eventData.Recurrent_dates[i], null, DateTimeStyles.RoundtripKind, out DateTime date)) continue;
-                if (date < nextStartAt) continue;
+                if (eventData.RecurrentDatesProcessed[i] == default(DateTime)) continue;
+
+                DateTime date = eventData.RecurrentDatesProcessed[i];
+
+                if (date < eventData.NextStartAtProcessed) continue;
 
                 EventUtilities.FormatEventString(date, eventData.Duration, eventSchedulesStringBuilder);
 

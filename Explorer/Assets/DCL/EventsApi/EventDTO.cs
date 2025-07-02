@@ -1,14 +1,16 @@
 using System;
+using UnityEngine;
 
 namespace DCL.EventsApi
 {
-    public interface IEventDTO
+    public interface IEventDTO : ISerializationCallbackReceiver
     {
         string Id {get; set; }
         string Name {get; set; }
         string Image {get; set; }
         string Description {get; set; }
         string Next_start_at {get; set; }
+        DateTime NextStartAtProcessed {get; set; }
         string Next_finish_at {get; set; }
         string Finish_at {get; set; }
         string Scene_name {get; set; }
@@ -24,7 +26,9 @@ namespace DCL.EventsApi
         bool Recurrent {get; set; }
         double Duration {get; set; }
         string Start_at {get; set; }
+        DateTime StartAtProcessed {get; set; }
         string[] Recurrent_dates {get; set; }
+        DateTime[] RecurrentDatesProcessed {get; set; }
         bool World {get; set; }
         int X {get; set; }
         int Y {get; set; }
@@ -86,6 +90,13 @@ namespace DCL.EventsApi
         {
             get => next_start_at;
             set => next_start_at = value;
+        }
+
+        private DateTime nextStartAtProcessed;
+        public DateTime NextStartAtProcessed
+        {
+            get => nextStartAtProcessed;
+            set => nextStartAtProcessed = value;
         }
 
         public string Next_finish_at
@@ -178,10 +189,23 @@ namespace DCL.EventsApi
             set => start_at = value;
         }
 
+        private DateTime startAtProcessed;
+        public DateTime StartAtProcessed
+        {
+            get => startAtProcessed;
+            set => startAtProcessed = value;
+        }
+
         public string[] Recurrent_dates
         {
             get => recurrent_dates;
             set => recurrent_dates = value;
+        }
+
+        private DateTime[] recurrentDatesProcessed;
+        public DateTime[] RecurrentDatesProcessed{
+            get => recurrentDatesProcessed;
+            set => recurrentDatesProcessed = value;
         }
 
         public bool World
@@ -201,5 +225,11 @@ namespace DCL.EventsApi
             get => y;
             set => y = value;
         }
+
+        //No need to serialize anything more than the already present fields
+        public void OnBeforeSerialize() { }
+
+        public void OnAfterDeserialize() =>
+            EventDataParserHelper.ParseDeserializedDates(ref this);
     }
 }
