@@ -592,6 +592,7 @@ namespace Global.Dynamic
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
+            CommunitiesEventBus communitiesEventBus = new CommunitiesEventBus();
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -714,10 +715,10 @@ namespace Global.Dynamic
                     chatMessageFactory,
                     profileRepositoryWrapper,
                     friendServiceProxy,
-                    realmNavigator,
                     communitiesDataProvider,
                     thumbnailCache,
-                    mainUIView.WarningNotification),
+                    mainUIView.WarningNotification,
+                    communitiesEventBus),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -976,7 +977,9 @@ namespace Global.Dynamic
                     eventsApiService,
                     identityCache,
                     sharedSpaceManager,
-                    chatEventBus));
+                    chatEventBus,
+                    communitiesEventBus,
+                    socialServiceContainer.socialServicesRPC));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
