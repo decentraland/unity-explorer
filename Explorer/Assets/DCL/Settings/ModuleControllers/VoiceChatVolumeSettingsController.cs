@@ -1,4 +1,5 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.FeatureFlags;
+using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
 
@@ -22,6 +23,8 @@ namespace DCL.Settings.ModuleControllers
 
             view.SliderView.Slider.onValueChanged.AddListener(SetVoiceChatVolumeSettings);
             SetVoiceChatVolumeSettings(view.SliderView.Slider.value);
+
+            view.SetActive(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.VOICE_CHAT));
         }
 
         private void SetVoiceChatVolumeSettings(float volumePercentage)
