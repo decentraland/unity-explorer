@@ -368,7 +368,6 @@ MonoBehaviour:
   - {fileID: 5175788798212861771, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -7326921190901022776, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -4991993260910906933, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
-  updateInEditor: 1
 --- !u!114 &627882838885633079
 MonoBehaviour:
   m_ObjectHideFlags: 3

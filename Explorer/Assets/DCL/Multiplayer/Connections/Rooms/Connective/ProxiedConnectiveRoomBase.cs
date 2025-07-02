@@ -25,14 +25,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 room.Assign(current.Room(), out _);
         }
 
-        protected async UniTask<bool> RenewAsync(IConnectiveRoom newRoom)
+        protected async UniTask<bool> RenewAsync(IConnectiveRoom newRoom, string debugName = "")
         {
             if (current != null)
                 await current.StopIfNotAsync();
 
             current = newRoom;
             room.Assign(newRoom.Room(), out _);
-            return await newRoom.StartAsync();
+            return await newRoom.StartAsync(debugName);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             room.Assign(NullRoom.INSTANCE, out _);
         }
 
-        public virtual UniTask<bool> StartAsync()
+        public virtual UniTask<bool> StartAsync(string debugName = "")
         {
             if (current == null)
             {
@@ -54,7 +54,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 return UniTask.FromResult(true);
             }
 
-            return current!.StartAsync();
+            return current!.StartAsync(debugName);
         }
 
         public virtual UniTask StopAsync()

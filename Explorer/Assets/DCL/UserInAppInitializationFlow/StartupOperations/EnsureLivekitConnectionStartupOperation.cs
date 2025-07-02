@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.HealthChecks;
 using DCL.RealmNavigation;
 using DCL.UI;
+using System.Diagnostics;
 using System.Threading;
 using Utility.Types;
 
@@ -32,7 +33,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         private async UniTask RunConnect(CancellationToken ct)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            UnityEngine.Debug.Log($"JUANI START LIVEKIT STARTUP OPERATION START");
             Result result = await healthCheck.IsRemoteAvailableAsync(ct);
+            stopwatch.Stop();
+            UnityEngine.Debug.Log($"JUANI LIVEKIT STARTUP OPERATION END {stopwatch.ElapsedMilliseconds}");
+
 
             if (!result.Success)
             {

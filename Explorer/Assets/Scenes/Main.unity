@@ -441,7 +441,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   launchSettings:
     initialRealm: 0
-    targetScene: {x: 0, y: 0}
+    targetScene: {x: 150, y: 150}
     predefinedScenes:
       enabled: 0
       parcels:

@@ -15,6 +15,7 @@ using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
@@ -65,20 +66,18 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 var audioRemixConveyor = new ThreadedAudioRemixConveyor();
                 var audioStreams = new AudioStreams(hub, audioRemixConveyor);
 
-                return new LogRoom(
-                    new Room(
-                        new ArrayMemoryPool(),
-                        new DefaultActiveSpeakers(),
-                        hub,
-                        new TracksFactory(),
-                        new FfiHandleFactory(),
-                        new ParticipantFactory(),
-                        new TrackPublicationFactory(),
-                        new DataPipe(),
-                        new MemoryRoomInfo(),
-                        videoStreams,
-                        audioStreams
-                    )
+                return new Room(
+                    new ArrayMemoryPool(),
+                    new DefaultActiveSpeakers(),
+                    hub,
+                    new TracksFactory(),
+                    new FfiHandleFactory(),
+                    new ParticipantFactory(),
+                    new TrackPublicationFactory(),
+                    new DataPipe(),
+                    new MemoryRoomInfo(),
+                    videoStreams,
+                    audioStreams
                 );
             });
 
@@ -107,15 +106,21 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         protected virtual RoomSelection SelectValidRoom() =>
             RoomSelection.NEW;
 
-        public async UniTask<bool> StartAsync()
+        public async UniTask<bool> StartAsync(string debugName = "")
         {
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
+            UnityEngine.Debug.Log($"JUANI {debugName} START ASYNC START");
+            Stopwatch stopwatch = Stopwatch.StartNew();
             attemptToConnectState.Set(AttemptToConnectState.None);
             roomState.Set(IConnectiveRoom.State.Starting);
-            RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
+            RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token, debugName).Forget();
+
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
+            stopwatch.Stop();
+            UnityEngine.Debug.Log($"JUANI {debugName} START ASYNC END {stopwatch.ElapsedMilliseconds}");
+
             return attemptToConnectState.Value() is not AttemptToConnectState.Error;
         }
 
@@ -139,16 +144,25 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public IRoom Room() =>
             room;
 
-        private async UniTaskVoid RunAsync(CancellationToken token)
+        private async UniTaskVoid RunAsync(CancellationToken token, string debugName = "")
         {
             roomState.Set(IConnectiveRoom.State.Starting);
 
+            Stopwatch stopwatch = Stopwatch.StartNew();
             await ExecuteWithRecoveryAsync(PrewarmAsync, nameof(PrewarmAsync), IConnectiveRoom.ConnectionLoopHealth.Prewarming, IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed, token);
+            stopwatch.Stop();
+            UnityEngine.Debug.Log($"JUANI {debugName} PREWARM END {stopwatch.ElapsedMilliseconds}");
+
 
             while (token.IsCancellationRequested == false)
             {
+                //stopwatch.Restart();
+                //if(!debugName.Contains("Archipelago"))
                 await ExecuteWithRecoveryAsync(CycleStepAsync, nameof(CycleStepAsync), IConnectiveRoom.ConnectionLoopHealth.Running, IConnectiveRoom.ConnectionLoopHealth.CycleFailed, token);
+                //stopwatch.Stop();
+                //UnityEngine.Debug.Log($"JUANI {debugName} CYCLE STEP {stopwatch.ElapsedMilliseconds}");
                 await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
+                UnityEngine.Debug.Log($"JUANI DID A HEARTBEAT WAIT {1000}");
             }
 
             connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);

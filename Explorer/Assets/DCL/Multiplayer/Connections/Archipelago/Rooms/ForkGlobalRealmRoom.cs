@@ -27,8 +27,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         public IArchipelagoIslandRoom AsActivatable() =>
             new Activatable(this);
 
-        public override UniTask<bool> StartAsync() =>
-            RenewAsync(ChooseRoom());
+        public override UniTask<bool> StartAsync(string debugName = "") =>
+            RenewAsync(ChooseRoom(), debugName);
 
         private IConnectiveRoom ChooseRoom()
         {

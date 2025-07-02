@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.RoomHubs
@@ -44,11 +45,16 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public async UniTask<bool> StartAsync()
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            UnityEngine.Debug.Log("JUANI ROOM STARTING");
             var result = await UniTask.WhenAll(
-                archipelagoIslandRoom.StartIfNotAsync(),
-                gateKeeperSceneRoom.StartIfNotAsync(),
-                chatRoom.StartIfNotAsync()
+                archipelagoIslandRoom.StartIfNotAsync("ArchipelagoIslandRoom"),
+                gateKeeperSceneRoom.StartIfNotAsync("GateKeeperSceneRoom"),
+                chatRoom.StartIfNotAsync("ChatRoom")
             );
+            stopwatch.Stop();
+            UnityEngine.Debug.Log($"JUANI ROOM STARTING ENDED {stopwatch.ElapsedMilliseconds}");
+
 
             return result is { Item1: true, Item2: true, Item3: true };
         }

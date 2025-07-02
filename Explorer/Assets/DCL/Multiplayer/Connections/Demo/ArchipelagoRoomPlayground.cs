@@ -40,19 +40,16 @@ namespace DCL.Multiplayer.Connections.Demo
 
             var memoryPool = new ArrayMemoryPool();
 
-            var multiPool = new LogMultiPool(
-                new ThreadSafeMultiPool(),
-                Debug.Log
-            );
+            var multiPool = new ThreadSafeMultiPool();
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY), new Web3AccountFactory());
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(new DecentralandUrlsSource(DecentralandEnvironment.Org, ILaunchMode.PLAY), new Web3AccountFactory());
 
             var archipelagoIslandRoom = new ArchipelagoIslandRoom(
                 loonCharacterObject,
                 identityCache,
                 multiPool,
                 memoryPool,
-                ICurrentAdapterAddress.NewDefault(new IRealmData.Fake())
+                ICurrentAdapterAddress.NewDefault(new RealmData())
             );
             var realFlowLoadingStatus = new LoadingStatus();
             realFlowLoadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
@@ -61,7 +58,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             while (this)
             {
-                system.Update(UnityEngine.Time.deltaTime);
+                //system.Update(UnityEngine.Time.deltaTime);
                 await UniTask.Yield();
             }
         }

@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             proxy.Assign(NullRoom.INSTANCE, out _);
         }
 
-        public UniTask<bool> StartAsync()
+        public UniTask<bool> StartAsync(string debugName = "")
         {
             OriginTargetState = IConnectiveRoom.State.Running;
 
@@ -84,7 +84,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 return UniTask.FromResult(true);
             }
 
-            return origin.StartAsync();
+            return origin.StartAsync(debugName);
         }
 
         public UniTask StopAsync()

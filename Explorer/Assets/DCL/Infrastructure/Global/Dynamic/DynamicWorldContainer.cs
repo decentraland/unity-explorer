@@ -410,13 +410,7 @@ namespace Global.Dynamic
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
                 ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
-                : new SequentialHealthCheck(
-                    new MultipleURLHealthCheck(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource,
-                        DecentralandUrl.ArchipelagoStatus,
-                        DecentralandUrl.GatekeeperStatus
-                    ),
-                    new StartLiveKitRooms(roomHub)
-                );
+                : new StartLiveKitRooms(roomHub);
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)

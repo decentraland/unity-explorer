@@ -104,7 +104,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             cts = null;
         }
 
-        public async UniTask<bool> StartAsync()
+        public async UniTask<bool> StartAsync(string debugName = "")
         {
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
