@@ -1,4 +1,5 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.Prefs;
+using DCL.Settings.ModuleViews;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,8 +8,6 @@ namespace DCL.Settings.ModuleControllers
 {
     public class GraphicsVSyncController : SettingsFeatureController
     {
-        private const string VSYNC_ENABLED_DATA_STORE_KEY = "Settings_VSync";
-
         private readonly SettingsToggleModuleView view;
         private SettingsFeatureController fpsLimitController;
         private int previousTargetFrameRate;
@@ -17,8 +16,8 @@ namespace DCL.Settings.ModuleControllers
         {
             this.view = view;
 
-            if (settingsDataStore.HasKey(VSYNC_ENABLED_DATA_STORE_KEY))
-                view.ToggleView.Toggle.isOn = settingsDataStore.GetToggleValue(VSYNC_ENABLED_DATA_STORE_KEY);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_VSYNC_ENABLED))
+                view.ToggleView.Toggle.isOn = DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_VSYNC_ENABLED);
 
             view.ToggleView.Toggle.onValueChanged.AddListener(SetVSyncEnabled);
         }
@@ -39,7 +38,7 @@ namespace DCL.Settings.ModuleControllers
             }
 
             fpsLimitController?.SetViewInteractable(!enabled);
-            settingsDataStore.SetToggleValue(VSYNC_ENABLED_DATA_STORE_KEY, enabled, save: true);
+            DCLPlayerPrefs.SetBool(DCLPrefKeys.SETTINGS_VSYNC_ENABLED, enabled, save: true);
         }
 
         public override void Dispose() =>
@@ -53,7 +52,7 @@ namespace DCL.Settings.ModuleControllers
                     fpsLimitController = fpsController;
                     break;
                 }
-            fpsLimitController?.SetViewInteractable(!settingsDataStore.GetToggleValue(VSYNC_ENABLED_DATA_STORE_KEY));
+            fpsLimitController?.SetViewInteractable(!DCLPlayerPrefs.GetBool(DCLPrefKeys.SETTINGS_VSYNC_ENABLED));
 
             SettingsDropdownModuleView fpsLimitView = (SettingsDropdownModuleView) fpsLimitController?.controllerView;
             previousTargetFrameRate = 0;

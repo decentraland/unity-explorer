@@ -40,8 +40,7 @@ namespace DCL.CharacterCamera.Tests
             keyboard = InputSystem.AddDevice<Keyboard>();
             mouse = InputSystem.AddDevice<Mouse>();
 
-            var dlcInput = new DCLInput();
-            dlcInput.Enable();
+            DCLInput.Instance.Enable();
 
             hoverEntity = world.Create(new HoverStateComponent());
             entity = world.Create(new CursorComponent(), new ExposedCameraData());
@@ -51,7 +50,7 @@ namespace DCL.CharacterCamera.Tests
             positionControl = mouse.GetChildControl<Vector2Control>("Position");
             Move(positionControl, new Vector2(50, 50), new Vector2(0.5f, 0.5f));
 
-            system = new UpdateCursorInputSystem(world, dlcInput, eventSystem, cursor, crosshairView);
+            system = new UpdateCursorInputSystem(world, eventSystem, cursor, crosshairView);
             system.Initialize();
         }
 

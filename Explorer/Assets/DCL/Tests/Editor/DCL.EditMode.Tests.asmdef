@@ -26,7 +26,6 @@
         "GUID:d414ef88f3b15f746a4b97636b50dfb4",
         "GUID:96825943f4e14954b5172da80fdee63d",
         "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
-        "GUID:a02836be93074ac9b645f6e99b536bc0",
         "GUID:9e314663ce958b746873cb22d57ede55",
         "GUID:5eabe9a3d4dd19d42a16208ea5411062",
         "GUID:e0eedfa2deb9406daf86fd8368728e39",
@@ -82,7 +81,9 @@
         "GUID:887770ff22b647ac864047b3c1af9a8b",
         "GUID:422b93d277444c569adf5e25ecef10ba",
         "GUID:a42927d1d4a3b4cda9b076a7adecb9cc",
-        "GUID:7045ce3c8d4f002439a982bb9e670781"
+        "GUID:7045ce3c8d4f002439a982bb9e670781",
+        "GUID:ead265f036164eb7899edc341131f4d5",
+        "GUID:7213a1d35667f9b40be6aca8cbfcee23"
     ],
     "includePlatforms": [
         "Editor"
@@ -99,7 +100,8 @@
         "Newtonsoft.Json.dll",
         "Google.Protobuf.dll",
         "Microsoft.CodeAnalysis.CSharp.dll",
-        "Microsoft.CodeAnalysis.dll"
+        "Microsoft.CodeAnalysis.dll",
+        "CodeLess.Attributes.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

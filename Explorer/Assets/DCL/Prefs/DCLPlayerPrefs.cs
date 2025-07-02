@@ -16,43 +16,27 @@ namespace DCL.Prefs
         public static void Initialize()
         {
             string[] playmodeTags = CurrentPlayer.ReadOnlyTags();
-
-            if (playmodeTags.Contains("PrefsInMemory"))
-                Initialize(Mode.InMemory);
-            else if (playmodeTags.Contains("PrefsDiskPrefix1"))
-                Initialize(Mode.DiskPrefix1);
-            else if (playmodeTags.Contains("PrefsDiskPrefix2"))
-                Initialize(Mode.DiskPrefix2);
-            else if (playmodeTags.Contains("PrefsDiskPrefix3"))
-                Initialize(Mode.DiskPrefix3);
-            else
-                Initialize(Mode.Disk);
-        }
-
-        private static void Initialize(Mode mode)
-        {
-            if (dclPrefs != null)
-                throw new InvalidOperationException("DCLPrefs already initialized.");
-
-            dclPrefs = mode switch
-                       {
-                           Mode.Disk => new DefaultDCLPlayerPrefs(),
-                           Mode.InMemory => new InMemoryDCLPlayerPrefs(),
-                           Mode.DiskPrefix1 => new DefaultDCLPlayerPrefs("playmode1_"),
-                           Mode.DiskPrefix2 => new DefaultDCLPlayerPrefs("playmode2_"),
-                           Mode.DiskPrefix3 => new DefaultDCLPlayerPrefs("playmode3_"),
-                           _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-                       };
+            Initialize(playmodeTags.Contains("PrefsInMemory"));
         }
 
         public static void SetString(string key, string value) =>
             dclPrefs.SetString(key, value);
 
-        public static void SetInt(string key, int value) =>
+        public static void SetInt(string key, int value, bool save = false)
+        {
             dclPrefs.SetInt(key, value);
 
-        public static void SetFloat(string key, float value) =>
+            if (save)
+                Save();
+        }
+
+        public static void SetFloat(string key, float value, bool save = false)
+        {
             dclPrefs.SetFloat(key, value);
+
+            if (save)
+                Save();
+        }
 
         public static string GetString(string key, string defaultValue = "") =>
             dclPrefs.GetString(key, defaultValue);
@@ -69,19 +53,44 @@ namespace DCL.Prefs
         public static void DeleteKey(string key) =>
             dclPrefs.DeleteKey(key);
 
+        public static void SetBool(string key, bool value, bool save = false)
+        {
+            dclPrefs.SetBool(key, value);
+
+            if (save)
+                Save();
+        }
+
+        public static bool GetBool(string key, bool defaultValue = false) =>
+            dclPrefs.GetBool(key, defaultValue);
+
         public static void DeleteAll() =>
             dclPrefs.DeleteAll();
 
         public static void Save() =>
             dclPrefs.Save();
 
-        public enum Mode
+        private static void Initialize(bool inMemory)
         {
-            Disk,
-            DiskPrefix1,
-            DiskPrefix2,
-            DiskPrefix3,
-            InMemory,
+            if (dclPrefs != null)
+                throw new InvalidOperationException("DCLPrefs already initialized.");
+
+            dclPrefs = inMemory ? new InMemoryDCLPlayerPrefs() : new FileDCLPlayerPrefs();
         }
+
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", priority = 280)]
+        private static void ClearDCLPlayerPrefs()
+        {
+            string[] files = System.IO.Directory.GetFiles(Application.persistentDataPath, "userdata_*");
+
+            foreach (string file in files)
+                System.IO.File.Delete(file);
+        }
+
+        [UnityEditor.MenuItem("Edit/Clear All DCLPlayerPrefs", validate = true)]
+        private static bool ValidateClearDCLPlayerPrefs() =>
+            !Application.isPlaying;
+#endif
     }
 }

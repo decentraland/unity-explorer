@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.Settings.Utils;
@@ -9,7 +10,6 @@ namespace DCL.Settings.ModuleControllers
     public class ChatSoundsSettingsController : SettingsFeatureController
     {
         private const string CHAT_VOLUME_EXPOSED_PARAM = "Chat_Volume";
-        private const string CHAT_SOUNDS_DATA_STORE_KEY = "Settings_ChatSounds";
 
         private readonly SettingsDropdownModuleView view;
         private readonly ChatSettingsAsset chatSettingsAsset;
@@ -21,8 +21,8 @@ namespace DCL.Settings.ModuleControllers
             this.generalAudioMixer = generalAudioMixer;
             this.chatSettingsAsset = chatSettingsAsset;
 
-            if (settingsDataStore.HasKey(CHAT_SOUNDS_DATA_STORE_KEY))
-                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(CHAT_SOUNDS_DATA_STORE_KEY);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS))
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_SOUNDS);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetChatSoundsSettings);
         }
@@ -48,7 +48,7 @@ namespace DCL.Settings.ModuleControllers
                     return;
             }
 
-            settingsDataStore.SetDropdownValue(CHAT_SOUNDS_DATA_STORE_KEY, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, index, save: true);
         }
 
         public override void Dispose()

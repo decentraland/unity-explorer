@@ -1,6 +1,7 @@
 ﻿using DCL.DebugUtilities;
 using DCL.Landscape.Settings;
 using DCL.LOD;
+using DCL.Prefs;
 using DCL.SDKComponents.MediaStream.Settings;
 using ECS.Prioritization;
 using System;
@@ -76,13 +77,13 @@ namespace DCL.Quality.Runtime
 
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset)
         {
-            sceneLoadRadius = PersistentSetting.CreateInt("SceneLoadRadius", currentPreset.environmentSettings.sceneLoadRadius).WithSetForceDefaultValue();
-            lod1Threshold = PersistentSetting.CreateInt("LOD1Threshold", currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
-            terrainLODBias = PersistentSetting.CreateFloat("TerrainLODBias", currentPreset.environmentSettings.terrainLODBias).WithSetForceDefaultValue();
-            detailDensity = PersistentSetting.CreateFloat("DetailDensity", currentPreset.environmentSettings.detailDensity).WithSetForceDefaultValue();
-            grassDistance = PersistentSetting.CreateFloat("GrassDistance", currentPreset.environmentSettings.grassDistance).WithSetForceDefaultValue();
-            environmentDistance = PersistentSetting.CreateFloat("ChunkCullDistance", currentPreset.environmentSettings.chunkCullDistance).WithSetForceDefaultValue();
-            maxSimultaneousVideos = PersistentSetting.CreateInt("MaxSimultaneousVideos", currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
+            sceneLoadRadius = PersistentSetting.CreateInt(DCLPrefKeys.PS_SCENE_LOAD_RADIUS, currentPreset.environmentSettings.sceneLoadRadius).WithSetForceDefaultValue();
+            lod1Threshold = PersistentSetting.CreateInt(DCLPrefKeys.PS_LOD1_THRESHOLD, currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
+            terrainLODBias = PersistentSetting.CreateFloat(DCLPrefKeys.PS_TERRAIN_LOD_BIAS, currentPreset.environmentSettings.terrainLODBias).WithSetForceDefaultValue();
+            detailDensity = PersistentSetting.CreateFloat(DCLPrefKeys.PS_DETAIL_DENSITY, currentPreset.environmentSettings.detailDensity).WithSetForceDefaultValue();
+            grassDistance = PersistentSetting.CreateFloat(DCLPrefKeys.PS_GRASS_DISTANCE, currentPreset.environmentSettings.grassDistance).WithSetForceDefaultValue();
+            environmentDistance = PersistentSetting.CreateFloat(DCLPrefKeys.PS_CHUNK_CULL_DISTANCE, currentPreset.environmentSettings.chunkCullDistance).WithSetForceDefaultValue();
+            maxSimultaneousVideos = PersistentSetting.CreateInt(DCLPrefKeys.PS_MAX_SIMULTANEOUS_VIDEOS, currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
 
             // Apply settings
             SetSceneLoadRadius(sceneLoadRadius.Value);

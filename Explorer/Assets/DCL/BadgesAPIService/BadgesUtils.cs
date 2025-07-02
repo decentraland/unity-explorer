@@ -6,8 +6,6 @@ namespace DCL.BadgesAPIService
 {
     public static class BadgesUtils
     {
-        private const string NEW_BADGES_LOCAL_STORAGE_KEY = "NewBadges";
-
         public static string FormatTimestampDate(string timestampString)
         {
             DateTime date = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timestampString)).DateTime;
@@ -17,25 +15,25 @@ namespace DCL.BadgesAPIService
 
         public static bool IsBadgeNew(string badgeId)
         {
-            string allNewBadges = DCLPlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
+            string allNewBadges = DCLPlayerPrefs.GetString(DCLPrefKeys.NEW_BADGES, string.Empty);
             return allNewBadges.Contains(badgeId);
         }
 
         public static void SetBadgeAsNew(string badgeId)
         {
-            string allNewBadges = DCLPlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
+            string allNewBadges = DCLPlayerPrefs.GetString(DCLPrefKeys.NEW_BADGES, string.Empty);
 
             if (allNewBadges.Contains(badgeId))
                 return;
 
-            DCLPlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, $"{allNewBadges}{badgeId},");
+            DCLPlayerPrefs.SetString(DCLPrefKeys.NEW_BADGES, $"{allNewBadges}{badgeId},");
             DCLPlayerPrefs.Save();
         }
 
         public static void SetBadgeAsRead(string badgeId)
         {
-            string allNewBadges = DCLPlayerPrefs.GetString(NEW_BADGES_LOCAL_STORAGE_KEY, string.Empty);
-            DCLPlayerPrefs.SetString(NEW_BADGES_LOCAL_STORAGE_KEY, allNewBadges.Replace($"{badgeId},", string.Empty));
+            string allNewBadges = DCLPlayerPrefs.GetString(DCLPrefKeys.NEW_BADGES, string.Empty);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.NEW_BADGES, allNewBadges.Replace($"{badgeId},", string.Empty));
             DCLPlayerPrefs.Save();
         }
 

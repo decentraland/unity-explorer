@@ -66,7 +66,6 @@ namespace Global
     /// </summary>
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
-        public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly ObjectProxy<IReadOnlyEntityParticipantTable> EntityParticipantTableProxy = new ();
@@ -98,7 +97,6 @@ namespace Global
         public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
         public Profiler Profiler { get; private set; }
-        public PhysicsTickProvider PhysicsTickProvider { get; private set; }
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
@@ -108,7 +106,6 @@ namespace Global
         public IInputBlock InputBlock { get; private set; }
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
-        public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
         public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
@@ -160,7 +157,6 @@ namespace Global
             IDiskCache<PartialLoadingState> partialsDiskCache,
             UIDocument scenesUIRoot,
             ObjectProxy<IProfileRepository> profileRepository,
-            ObjectProxy<FeatureFlagsCache> featureFlagsCacheProxy,
             CancellationToken ct,
             bool enableGPUInstancing = true)
         {
@@ -170,9 +166,7 @@ namespace Global
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
             var profilingProvider = new Profiler();
             var container = new StaticContainer();
-            var dclInput = new DCLInput();
 
-            container.InputProxy.SetObject(dclInput);
             container.PlayerEntity = playerEntity;
             container.DebugContainerBuilder = debugContainerBuilder;
             container.EthereumApi = ethereumApi;
@@ -216,14 +210,10 @@ namespace Global
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = webRequestsContainer;
-            container.PhysicsTickProvider = new PhysicsTickProvider();
-            container.FeatureFlagsCache = new FeatureFlagsCache();
-            featureFlagsCacheProxy.SetObject(container.FeatureFlagsCache);
 
-            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, container.FeatureFlagsCache, launchMode, decentralandUrlsSource);
+            container.PortableExperiencesController = new ECSPortableExperiencesController(web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache, launchMode, decentralandUrlsSource);
 
-            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
-                container.FeatureFlagsCache);
+            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController);
 
             ArrayPool<byte> buffersPool = ArrayPool<byte>.Create(1024 * 1024 * 50, 50);
             var textureDiskCache = new DiskCache<Texture2DData, SerializeMemoryIterator<TextureDiskSerializer.State>>(diskCache, new TextureDiskSerializer());
@@ -264,12 +254,12 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, container.FeatureFlagsCache, videoTexturePool),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, textureDiskCache, videoTexturePool),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, videoTexturePool),
                 textureResolvePlugin,
-                new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
-                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry),
+                new AssetsCollidersPlugin(sharedDependencies),
+                new AvatarShapePlugin(globalWorld, componentsContainer.ComponentPoolsRegistry, launchMode),
                 new AvatarAttachPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, componentsContainer.ComponentPoolsRegistry, container.EntityParticipantTableProxy),
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
@@ -277,20 +267,20 @@ namespace Global
                 assetBundlePlugin,
                 new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, componentsContainer.ComponentPoolsRegistry, launchMode, useRemoteAssetBundles, container.WebRequestsContainer.WebRequestController, container.LoadingStatus),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, container.InputProxy, scenesUIRoot),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock, scenesUIRoot),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy, container.FeatureFlagsCache),
+                new MediaPlayerPlugin(videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, worldVolumeMacBus, exposedGlobalDataContainer.ExposedCameraData, container.RoomHubProxy),
                 new CharacterTriggerAreaPlugin(globalWorld, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, web3IdentityProvider),
                 new PointerInputAudioPlugin(container.assetsProvisioner),
-                new MapPinPlugin(globalWorld, container.FeatureFlagsCache, container.MapPinsEventBus),
+                new MapPinPlugin(globalWorld, container.MapPinsEventBus),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
                 new InputModifierPlugin(globalWorld, container.PlayerEntity, container.SceneRestrictionBusController),
                 new MainCameraPlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner, exposedGlobalDataContainer.ExposedCameraData, container.SceneRestrictionBusController, globalWorld),
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
-                new PrimaryPointerInfoPlugin(globalWorld, container.InputProxy),
+                new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

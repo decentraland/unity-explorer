@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace DCL.Friends
 {
-    public class FriendsConnectivityStatusTracker : IFriendsConnectivityStatusTracker, IDisposable
+    public class FriendsConnectivityStatusTracker : IDisposable
     {
         private readonly IFriendsEventBus friendEventBus;
         private readonly Dictionary<string, OnlineStatus> friendsOnlineStatus = new ();

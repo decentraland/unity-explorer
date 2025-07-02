@@ -450,7 +450,7 @@ MonoBehaviour:
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
-    useRemoteAssetsBundles: 1
+    useRemoteAssetsBundles: 0
     isolateSceneCommunication: 0
     portableExperiencesEnsToLoadAtGameStart: []
   decentralandEnvironment: 0
@@ -475,8 +475,8 @@ MonoBehaviour:
     showSplash: 1
     showAuthentication: 1
     showLoading: 1
-    enableLandscape: 1
-    enableLOD: 1
+    enableLandscape: 0
+    enableLOD: 0
     enableVersionUpdateGuard: 0
     enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0

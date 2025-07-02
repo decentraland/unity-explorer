@@ -11,12 +11,13 @@ namespace DCL.Settings.ModuleViews
         Numeric,
         Percentage,
         Time,
+        Custom,
     }
     public class SettingsSliderModuleView : SettingsModuleView<SettingsSliderModuleView.Config>
     {
         private const float MAX_TIME_VALUE = 23.998f;
-
         private SliderType sliderType;
+
 
         [Serializable]
         public class Config : SettingsModuleViewConfiguration
@@ -70,8 +71,17 @@ namespace DCL.Settings.ModuleViews
                     var minuteSection = (int)((value - hourSection) * 60);
                     SliderValueText.text = $"{hourSection:00}:{minuteSection:00}";
                     break;
+
+                //If we want to do a custom control for displaying text, we can do it on the respective controller
+                case SliderType.Custom:
+                    break;
             }
 
+            RevaluateButtonLimits(value);
+        }
+
+        public void RevaluateButtonLimits(float value)
+        {
             SliderView.DecreaseButton.interactable = value > SliderView.Slider.minValue;
             SliderView.IncreaseButton.interactable = value < (sliderType == SliderType.Time ? Mathf.Clamp(SliderView.Slider.maxValue, 0, MAX_TIME_VALUE) : SliderView.Slider.maxValue);
         }
