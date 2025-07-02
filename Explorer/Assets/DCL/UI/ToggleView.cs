@@ -39,6 +39,8 @@ namespace DCL.UI
 
         private void OnEnable()
         {
+            if(autoToggleImagesOnToggle)
+                SetToggleGraphics(Toggle.isOn);
             Toggle.onValueChanged.AddListener(OnToggle);
         }
 
