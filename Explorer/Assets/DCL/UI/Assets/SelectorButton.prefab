@@ -263,6 +263,7 @@ MonoBehaviour:
   selectorButton: {fileID: 6430276237837877534}
   selectorButtonText: {fileID: 2191246548326702995}
   selectorPanel: {fileID: 1494069765180602260}
+  selectorPanelScrollRect: {fileID: 8987135111240112651}
   selectorPanelParent: {fileID: 0}
   optionItemGameObject: {fileID: 1261629992894967956}
   backgroundCloseButton: {fileID: 7424665203201326611}

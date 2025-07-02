@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace DCL.UI.SelectorButton
@@ -11,14 +12,16 @@ namespace DCL.UI.SelectorButton
     {
         public event Action<int>? OptionClicked;
 
-        [SerializeField] private Button? selectorButton;
-        [SerializeField] private TMP_Text? selectorButtonText;
-        [SerializeField] private GameObject? selectorPanel;
-        [SerializeField] private ScrollRect? selectorPanelScrollRect;
-        [SerializeField] private Transform? selectorPanelParent;
-        [SerializeField] private SelectorButtonOptionItemView? optionItemGameObject;
-        [SerializeField] private Button? backgroundCloseButton;
+        [SerializeField] private Button selectorButton;
+        [SerializeField] private TMP_Text selectorButtonText;
+        [SerializeField] private GameObject selectorPanel;
+        [SerializeField] private ScrollRect selectorPanelScrollRect;
+        [SerializeField] private Transform selectorPanelParent;
+        [SerializeField] private SelectorButtonOptionItemView optionItemGameObject;
+        [SerializeField] private Button backgroundCloseButton;
+        [SerializeField] private int defaultPoolCapacity = 10;
 
+        private IObjectPool<SelectorButtonOptionItemView> optionsPool;
         private readonly List<SelectorButtonOptionItemView> currentOptions = new ();
 
         private Transform? originalParent;
@@ -26,30 +29,47 @@ namespace DCL.UI.SelectorButton
 
         private void Awake()
         {
-            originalParent = selectorPanel != null ? selectorPanel.transform.parent : null;
-            originalLocalPosition = selectorPanel != null ? selectorPanel.transform.localPosition : Vector2.zero;
-            selectorPanelScrollRect?.SetScrollSensitivityBasedOnPlatform();
+            originalParent = selectorPanel.transform.parent;
+            originalLocalPosition = selectorPanel.transform.localPosition;
+            selectorPanelScrollRect.SetScrollSensitivityBasedOnPlatform();
+
+            optionsPool = new ObjectPool<SelectorButtonOptionItemView>(
+                InstantiateOptionItem,
+                defaultCapacity: defaultPoolCapacity,
+                actionOnGet: optionItemView =>
+                {
+                    optionItemView.gameObject.SetActive(true);
+                    optionItemView.Clicked += OnOptionClicked;
+                    optionItemView.VisibilityChanged += CheckSelectorButtonInteractivity;
+                },
+                actionOnRelease: equippedItemView =>
+                {
+                    equippedItemView.gameObject.SetActive(false);
+                    equippedItemView.Clicked -= OnOptionClicked;
+                    equippedItemView.VisibilityChanged -= CheckSelectorButtonInteractivity;
+                });
         }
 
         private void OnEnable()
         {
-            backgroundCloseButton?.onClick.AddListener(OnCloseOptionsPanel);
-            selectorButton?.onClick.AddListener(OnOpenOptionsPanel);
+            backgroundCloseButton.onClick.AddListener(OnCloseOptionsPanel);
+            selectorButton.onClick.AddListener(OnOpenOptionsPanel);
             OnCloseOptionsPanel();
         }
 
         private void OnDisable()
         {
-            backgroundCloseButton?.onClick.RemoveListener(OnCloseOptionsPanel);
-            selectorButton?.onClick.RemoveListener(OnOpenOptionsPanel);
+            backgroundCloseButton.onClick.RemoveListener(OnCloseOptionsPanel);
+            selectorButton.onClick.RemoveListener(OnOpenOptionsPanel);
         }
 
-        public void SetMainButtonText(string text)
-        {
-            if (selectorButtonText == null)
-                return;
-
+        public void SetMainButtonText(string text) =>
             selectorButtonText.text = text;
+
+        private SelectorButtonOptionItemView InstantiateOptionItem()
+        {
+            SelectorButtonOptionItemView optionItemView = Instantiate(optionItemGameObject, optionItemGameObject.transform.parent);
+            return optionItemView;
         }
 
         public void SetOptions(List<string> options)
@@ -62,12 +82,9 @@ namespace DCL.UI.SelectorButton
             for (var index = 0; index < options.Count; index++)
             {
                 string option = options[index];
-                SelectorButtonOptionItemView optionItem = Instantiate(optionItemGameObject, optionItemGameObject.transform.parent);
+                SelectorButtonOptionItemView optionItem = optionsPool.Get();
                 optionItem.Setup(option);
                 optionItem.transform.name = $"OptionItem_{index}";
-                optionItem.gameObject.SetActive(true);
-                optionItem.Clicked += OnOptionClicked;
-                optionItem.VisibilityChanged += CheckSelectorButtonInteractivity;
                 currentOptions.Add(optionItem);
             }
         }
@@ -86,16 +103,10 @@ namespace DCL.UI.SelectorButton
         private void ClearOptions()
         {
             foreach (SelectorButtonOptionItemView optionItemView in currentOptions)
-            {
-                optionItemView.Clicked -= OnOptionClicked;
-                optionItemView.VisibilityChanged -= CheckSelectorButtonInteractivity;
-                Destroy(optionItemView.gameObject);
-            }
+                optionsPool.Release(optionItemView);
 
             currentOptions.Clear();
-
-            if (selectorButton != null)
-                selectorButton.interactable = true;
+            selectorButton.interactable = true;
         }
 
         private void OnOptionClicked(SelectorButtonOptionItemView optionItem)
@@ -110,9 +121,6 @@ namespace DCL.UI.SelectorButton
 
         private void CheckSelectorButtonInteractivity()
         {
-            if (selectorButton == null)
-                return;
-
             var allOptionsHidden = true;
             foreach (SelectorButtonOptionItemView option in currentOptions)
             {
@@ -128,11 +136,10 @@ namespace DCL.UI.SelectorButton
 
         private void OnOpenOptionsPanel()
         {
-            selectorPanel?.SetActive(true);
-            if (selectorPanelScrollRect != null)
-                selectorPanelScrollRect.verticalNormalizedPosition = 1f;
+            selectorPanel.SetActive(true);
+            selectorPanelScrollRect.verticalNormalizedPosition = 1f;
 
-            if (selectorPanelParent != null && selectorPanel != null)
+            if (selectorPanelParent != null)
             {
                 selectorPanel.transform.parent = originalParent;
                 selectorPanel.transform.localPosition = originalLocalPosition;
@@ -141,6 +148,6 @@ namespace DCL.UI.SelectorButton
         }
 
         private void OnCloseOptionsPanel() =>
-            selectorPanel?.SetActive(false);
+            selectorPanel.SetActive(false);
     }
 }

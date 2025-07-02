@@ -2843,7 +2843,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: -2
+    m_Left: 0
     m_Right: 0
     m_Top: 10
     m_Bottom: 0
@@ -5139,6 +5139,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1726448438995543707, guid: 88d41137eeb023244b6d3150a2a81174, type: 3}
+      propertyPath: selectorPanelParent
+      value: 
+      objectReference: {fileID: 3343914997614938543}
     - target: {fileID: 4529298168230838044, guid: 88d41137eeb023244b6d3150a2a81174, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0
