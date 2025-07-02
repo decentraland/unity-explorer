@@ -94,8 +94,8 @@ namespace DCL.Chat
         private CancellationTokenSource communitiesServiceCts = new();
         private CancellationTokenSource errorNotificationCts = new();
         private CancellationTokenSource memberListCts = new();
-        private CancellationTokenSource isUserAllowedCts;
-        private CancellationTokenSource isUserAllowedCts2; // We can't reuse the same
+        private CancellationTokenSource isUserAllowedInInitializationCts;
+        private CancellationTokenSource isUserAllowedInCommunitiesBusSubscriptionCts;
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
@@ -323,8 +323,8 @@ namespace DCL.Chat
                 viewInstance!.SetupInitialConversationToolbarStatusIconForUsers(connectedUsers);
             }
 
-            isUserAllowedCts = isUserAllowedCts.SafeRestart();
-            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts.Token))
+            isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
+            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
                 await InitializeCommunityCoversationsAsync();
         }
 
@@ -442,7 +442,8 @@ namespace DCL.Chat
             communitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
             memberListCts.SafeCancelAndDispose();
-            isUserAllowedCts.SafeCancelAndDispose();
+            isUserAllowedInInitializationCts.SafeCancelAndDispose();
+            isUserAllowedInCommunitiesBusSubscriptionCts.SafeCancelAndDispose();
         }
 
 #endregion
@@ -975,9 +976,9 @@ namespace DCL.Chat
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
         {
-            isUserAllowedCts2 = isUserAllowedCts2.SafeRestart();
+            isUserAllowedInCommunitiesBusSubscriptionCts = isUserAllowedInCommunitiesBusSubscriptionCts.SafeRestart();
 
-            if (await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts2.Token))
+            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInCommunitiesBusSubscriptionCts.Token))
             {
                 communitiesEventBus.UserConnectedToCommunity += OnCommunitiesEventBusUserConnectedToCommunity;
                 communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;
@@ -995,6 +996,7 @@ namespace DCL.Chat
             if(userConnectivity.Member.Address == web3IdentityCache.Identity!.Address)
                 AddCommunityCoversationAsync(userConnectivity.CommunityId).Forget();
         }
+
         private void OnViewViewCommunityRequested(string communityId)
         {
             viewInstance!.Blur();
