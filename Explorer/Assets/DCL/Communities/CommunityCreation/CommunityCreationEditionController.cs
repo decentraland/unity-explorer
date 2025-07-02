@@ -277,13 +277,14 @@ namespace DCL.Communities.CommunityCreation
 
                 foreach (PlacesData.PlaceInfo worldInfo in worldsResult.Value.data)
                 {
-                    placesToAdd.Add(worldInfo.world_name);
+                    var worldText = $"{worldInfo.title} ({worldInfo.world_name})";
+                    placesToAdd.Add(worldText);
 
                     currentCommunityPlaces.Add(new CommunityPlace
                     {
                         Id = worldInfo.id,
                         IsWorld = true,
-                        Name = worldInfo.world_name,
+                        Name = worldText,
                     });
                 }
             }
@@ -389,7 +390,9 @@ namespace DCL.Communities.CommunityCreation
                         {
                             Id = placeInfo.id,
                             IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
-                            Name = string.IsNullOrEmpty(placeInfo.world_name) ? $"{placeInfo.title} ({placeInfo.base_position})" : placeInfo.world_name,
+                            Name = string.IsNullOrEmpty(placeInfo.world_name) ?
+                                $"{placeInfo.title} ({placeInfo.base_position})" :
+                                $"{placeInfo.title} ({placeInfo.world_name})",
                         }, isRemovalAllowed, updateScrollPosition: false);
                     }
                 }
