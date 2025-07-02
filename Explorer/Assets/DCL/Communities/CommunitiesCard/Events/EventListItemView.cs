@@ -33,13 +33,13 @@ namespace DCL.Communities.CommunitiesCard.Events
         [SerializeField] private TMP_Text eventOnlineUsersText;
         [SerializeField] private TMP_Text eventInterestedUsersText;
 
-        public event Action<PlaceAndEventDTO> MainButtonClicked;
-        public event Action<PlaceAndEventDTO> JumpInButtonClicked;
-        public event Action<PlaceAndEventDTO> InterestedButtonClicked;
-        public event Action<PlaceAndEventDTO, Vector2> ShareButtonClicked;
+        public event Action<PlaceAndEventDTO>? MainButtonClicked;
+        public event Action<PlaceAndEventDTO>? JumpInButtonClicked;
+        public event Action<PlaceAndEventDTO>? InterestedButtonClicked;
+        public event Action<PlaceAndEventDTO, Vector2>? ShareButtonClicked;
 
         private PlaceAndEventDTO? eventData;
-        private ImageController imageController;
+        private ImageController? imageController;
 
         private bool canPlayUnHoverAnimation = true;
         internal bool CanPlayUnHoverAnimation

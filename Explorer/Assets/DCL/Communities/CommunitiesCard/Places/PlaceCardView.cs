@@ -36,22 +36,22 @@ namespace DCL.Communities.CommunitiesCard.Places
         [SerializeField] private Button jumpInButton;
         [SerializeField] private Button deleteButton;
 
-        private Tweener headerTween;
-        private Tweener footerTween;
-        private Tweener descriptionTween;
+        private Tweener? headerTween;
+        private Tweener? footerTween;
+        private Tweener? descriptionTween;
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
 
         private PlaceInfo currentPlaceInfo;
-        private ImageController imageController;
+        private ImageController? imageController;
 
-        public event Action<PlaceInfo, bool, PlaceCardView> LikeToggleChanged;
-        public event Action<PlaceInfo, bool, PlaceCardView> DislikeToggleChanged;
-        public event Action<PlaceInfo, bool, PlaceCardView> FavoriteToggleChanged;
-        public event Action<PlaceInfo, Vector2, PlaceCardView> ShareButtonClicked;
-        public event Action<PlaceInfo> InfoButtonClicked;
-        public event Action<PlaceInfo> JumpInButtonClicked;
-        public event Action<PlaceInfo> DeleteButtonClicked;
+        public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView>? FavoriteToggleChanged;
+        public event Action<PlaceInfo, Vector2, PlaceCardView>? ShareButtonClicked;
+        public event Action<PlaceInfo>? InfoButtonClicked;
+        public event Action<PlaceInfo>? JumpInButtonClicked;
+        public event Action<PlaceInfo>? DeleteButtonClicked;
 
         private bool canPlayUnHoverAnimation = true;
         // This is used to control whether the un-hover animation can be played or not when the user exits the card because the context menu is opened.
