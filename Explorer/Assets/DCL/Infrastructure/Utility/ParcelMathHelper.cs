@@ -197,18 +197,19 @@ namespace Utility
         /// </summary>
         /// <param name="boundingPlanes">The bounding planes of the scene.</param>
         /// <param name="point">The point to find the nearest bounds position for.</param>
+        /// <param name="extraThreshold">Additional space beyond the scene bounds for clamping (default: 0).</param>
         /// <returns>The nearest position on the scene bounds border with the same Y coordinate as the input.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 GetNearestSceneBoundsPosition(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point)
+        public static Vector3 GetNearestSceneBoundsPosition(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point, float extraThreshold = 0f)
         {
             // If the point is already inside the bounds, return it as is
             if (boundingPlanes.Contains(point))
                 return point;
-            
-            // Clamp the X and Z coordinates to the bounds, keep Y unchanged
-            float clampedX = Mathf.Clamp(point.x, boundingPlanes.MinX, boundingPlanes.MaxX);
-            float clampedZ = Mathf.Clamp(point.z, boundingPlanes.MinZ, boundingPlanes.MaxZ);
-            
+
+            // Clamp the X and Z coordinates to the bounds with extra space, keep Y unchanged
+            float clampedX = Mathf.Clamp(point.x, boundingPlanes.MinX - extraThreshold, boundingPlanes.MaxX + extraThreshold);
+            float clampedZ = Mathf.Clamp(point.z, boundingPlanes.MinZ - extraThreshold, boundingPlanes.MaxZ + extraThreshold);
+
             return new Vector3(clampedX, point.y, clampedZ);
         }
 

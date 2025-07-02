@@ -89,8 +89,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
                 return;
             }
 
-            // Position is outside bounds, clamp to border
-            Vector3 clampedPosition = sceneCircumscribedPlanes.GetNearestSceneBoundsPosition(transformComponent.Transform.position);
+            // Position is outside bounds, clamp to border with extra space
+            Vector3 clampedPosition = sceneCircumscribedPlanes.GetNearestSceneBoundsPosition(transformComponent.Transform.position, 0.5f);
             virtualCameraComponent.virtualCameraInstance.transform.position = clampedPosition;
         }
 
