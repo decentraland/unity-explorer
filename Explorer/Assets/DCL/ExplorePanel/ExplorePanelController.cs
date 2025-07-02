@@ -36,7 +36,6 @@ namespace DCL.ExplorePanel
         private readonly bool includeCameraReel;
         private bool includeCommunities;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
@@ -70,8 +69,7 @@ namespace DCL.ExplorePanel
             INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
             bool includeCameraReel,
-            ISharedSpaceManager sharedSpaceManager,
-            CommunitiesFeatureAccess communitiesFeatureAccess)
+            ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
             NavmapController = navmapController;
@@ -86,7 +84,6 @@ namespace DCL.ExplorePanel
             this.inputBlock = inputBlock;
             this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
             CommunitiesBrowserController = communitiesBrowserController;
         }
 
@@ -133,7 +130,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            includeCommunities = await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(ct);
+            includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 

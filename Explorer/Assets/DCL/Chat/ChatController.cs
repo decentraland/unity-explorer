@@ -76,7 +76,6 @@ namespace DCL.Chat
         private readonly ISpriteCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -131,8 +130,7 @@ namespace DCL.Chat
             ICommunitiesDataProvider communitiesDataProvider,
             ISpriteCache thumbnailCache,
             IMVCManager mvcManager,
-            WarningNotificationView warningNotificationView,
-            CommunitiesFeatureAccess communitiesFeatureAccess) : base(viewFactory)
+            WarningNotificationView warningNotificationView) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -154,7 +152,6 @@ namespace DCL.Chat
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -322,7 +319,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedCts = isUserAllowedCts.SafeRestart();
-            if (await communitiesFeatureAccess.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts.Token))
+            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedCts.Token))
                 await InitializeCommunityCoversationsAsync();
         }
 

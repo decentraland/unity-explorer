@@ -1,3 +1,4 @@
+using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
 using DCL.FeatureFlags;
 using DCL.Web3.Identities;
@@ -6,23 +7,19 @@ using System.Threading;
 
 namespace DCL.Communities
 {
-    public class CommunitiesFeatureAccess : IDisposable
+    [Singleton]
+    public partial class CommunitiesFeatureAccess
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly FeatureFlagsConfiguration featureFlagsConfig;
 
         private bool? storedResult;
 
-        public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache, FeatureFlagsConfiguration featureFlagsCache)
+        public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache)
         {
             this.web3IdentityCache = web3IdentityCache;
-            this.featureFlagsConfig = featureFlagsCache;
 
             web3IdentityCache.OnIdentityChanged += OnIdentityCacheChanged;
         }
-
-        public void Dispose() =>
-            web3IdentityCache.OnIdentityChanged -= OnIdentityCacheChanged;
 
         /// <summary>
         /// Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
@@ -36,7 +33,7 @@ namespace DCL.Communities
             if (storedResult != null)
                 return storedResult.Value;
 
-            bool result = featureFlagsConfig.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
+            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
             if (result && !ignoreAllowedList)
             {
@@ -47,7 +44,7 @@ namespace DCL.Communities
                     result = false;
                 else
                 {
-                    featureFlagsConfig.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string walletsAllowlist);
+                    FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string walletsAllowlist);
                     result = string.IsNullOrEmpty(walletsAllowlist) || walletsAllowlist.Contains(ownWalletId, StringComparison.OrdinalIgnoreCase);
                 }
             }

@@ -121,7 +121,6 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly CommunitiesFeatureAccess communitiesFeatureAccess;
 
         private readonly bool includeCameraReel;
 
@@ -192,8 +191,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
             ICommunitiesDataProvider communitiesDataProvider,
-            INftNamesProvider nftNamesProvider,
-            CommunitiesFeatureAccess communitiesFeatureAccess)
+            INftNamesProvider nftNamesProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -248,7 +246,6 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
-            this.communitiesFeatureAccess = communitiesFeatureAccess;
         }
 
         public void Dispose()
@@ -424,7 +421,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                    communitiesBrowserController, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager, communitiesFeatureAccess);
+                    communitiesBrowserController, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);
