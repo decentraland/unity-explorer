@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace DCL.EventsApi
 {
-    public static class EventDataParserHelper
+    public static class EventDataParser
     {
         internal static void ParseDeserializedDates(ref EventDTO eventDTO)
         {

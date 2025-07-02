@@ -230,6 +230,6 @@ namespace DCL.EventsApi
         public void OnBeforeSerialize() { }
 
         public void OnAfterDeserialize() =>
-            EventDataParserHelper.ParseDeserializedDates(ref this);
+            EventDataParser.ParseDeserializedDates(ref this);
     }
 }
