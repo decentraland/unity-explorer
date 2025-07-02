@@ -22,7 +22,7 @@ MonoBehaviour:
     height: 20
   <MaxHeight>k__BackingField: 40
   <OccupancyMap>k__BackingField: {fileID: 0}
-  <TreesPerParcel>k__BackingField: 0.15
+  <TreesPerParcel>k__BackingField: 1
   <DetailDistance>k__BackingField: 200
   <RenderGround>k__BackingField: 1
   <RenderTreesAndDetail>k__BackingField: 1
@@ -37,6 +37,8 @@ MonoBehaviour:
   - <Source>k__BackingField: {fileID: 2214953459268991292, guid: 46ba147d6eb053147b59c469dd34425f, type: 3}
     <Collider>k__BackingField: {fileID: 7013496733605040723, guid: dcca3898bf9ce4a42ad171cb4313e6fa, type: 3}
     <LocalSize>k__BackingField: 21.57782
+    <TrunkRadius>k__BackingField: 0.8
+    <CanopyRadius>k__BackingField: 10
     <Lods>k__BackingField:
     - <Mesh>k__BackingField: {fileID: 4300000, guid: 1cc28936fb720cd469a6755539529d40, type: 3}
       <MinScreenSize>k__BackingField: 0.19794142
@@ -60,6 +62,8 @@ MonoBehaviour:
   - <Source>k__BackingField: {fileID: 2187335638020092438, guid: a5880297cd94bc64697d703509a25311, type: 3}
     <Collider>k__BackingField: {fileID: 845438642989770326, guid: a99cd2a1ca9ce304fb5284edff5da8d1, type: 3}
     <LocalSize>k__BackingField: 24.402372
+    <TrunkRadius>k__BackingField: 1.5
+    <CanopyRadius>k__BackingField: 11
     <Lods>k__BackingField:
     - <Mesh>k__BackingField: {fileID: 4300000, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
       <MinScreenSize>k__BackingField: 0.19976239
@@ -83,6 +87,8 @@ MonoBehaviour:
   - <Source>k__BackingField: {fileID: 757561452486300604, guid: f03a5d1da28bc6e4098274181dec6ed6, type: 3}
     <Collider>k__BackingField: {fileID: 5731890515363948196, guid: 9306a250e75d66d4abb2fdcf55635aad, type: 3}
     <LocalSize>k__BackingField: 42.242
+    <TrunkRadius>k__BackingField: 2
+    <CanopyRadius>k__BackingField: 11
     <Lods>k__BackingField:
     - <Mesh>k__BackingField: {fileID: 4300000, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
       <MinScreenSize>k__BackingField: 0.20516509
@@ -103,6 +109,60 @@ MonoBehaviour:
       <MinScreenSize>k__BackingField: 0.017368691
       <Materials>k__BackingField:
       - {fileID: 2100000, guid: 2dee480ba164e4c4d9565df7b04fdc69, type: 2}
+  - <Source>k__BackingField: {fileID: 7088211124069903763, guid: a579994199f719143991a656821e99ba, type: 3}
+    <Collider>k__BackingField: {fileID: 1205069210736854335, guid: 11a707b17c5787d448539ca562c8404c, type: 3}
+    <LocalSize>k__BackingField: 2.020337
+    <TrunkRadius>k__BackingField: 1
+    <CanopyRadius>k__BackingField: 0
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: -7515708219630606215, guid: 9ddca728df9c124449d9b86a651b3896, type: 3}
+      <MinScreenSize>k__BackingField: 0.05350165
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: f50d7baa6b3e33c47b09d40387bdc634, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4772238169430402490, guid: 9ddca728df9c124449d9b86a651b3896, type: 3}
+      <MinScreenSize>k__BackingField: 0.03484897
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: f50d7baa6b3e33c47b09d40387bdc634, type: 2}
+    - <Mesh>k__BackingField: {fileID: 2289415448551767133, guid: 9ddca728df9c124449d9b86a651b3896, type: 3}
+      <MinScreenSize>k__BackingField: 0.021002172
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: f50d7baa6b3e33c47b09d40387bdc634, type: 2}
+  - <Source>k__BackingField: {fileID: 7276828488207753534, guid: 52b71cdd52d5ecc4bafae3b8c07cbf45, type: 3}
+    <Collider>k__BackingField: {fileID: 7906208086855937056, guid: d58158b48f7c3f448902379aa3b17712, type: 3}
+    <LocalSize>k__BackingField: 1.9055377
+    <TrunkRadius>k__BackingField: 0.7
+    <CanopyRadius>k__BackingField: 0
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: -6016869738107864900, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      <MinScreenSize>k__BackingField: 0.047659174
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 3f84e65f8e32d3348a4bb0e9bddff62e, type: 2}
+    - <Mesh>k__BackingField: {fileID: -6715881877698069216, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      <MinScreenSize>k__BackingField: 0.03279109
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 3f84e65f8e32d3348a4bb0e9bddff62e, type: 2}
+    - <Mesh>k__BackingField: {fileID: 7478756485311197650, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      <MinScreenSize>k__BackingField: 0.021002172
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 3f84e65f8e32d3348a4bb0e9bddff62e, type: 2}
+  - <Source>k__BackingField: {fileID: 3548471741203574768, guid: 70deea155e1dd1f4d86520b1bbc66096, type: 3}
+    <Collider>k__BackingField: {fileID: 5948663709198613720, guid: d66b4298465b17e4380cf539797b807d, type: 3}
+    <LocalSize>k__BackingField: 1.7325938
+    <TrunkRadius>k__BackingField: 0.8
+    <CanopyRadius>k__BackingField: 0
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: -8038188821805132285, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
+      <MinScreenSize>k__BackingField: 0.05179858
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: afb6f42b6f5b7834b96f692291021293, type: 2}
+    - <Mesh>k__BackingField: {fileID: 2142666779476255502, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
+      <MinScreenSize>k__BackingField: 0.03415625
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: afb6f42b6f5b7834b96f692291021293, type: 2}
+    - <Mesh>k__BackingField: {fileID: -8976505993286064269, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
+      <MinScreenSize>k__BackingField: 0.021002172
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: afb6f42b6f5b7834b96f692291021293, type: 2}
   <DetailPrototypes>k__BackingField:
   - <Source>k__BackingField: {fileID: 1333259486307050118, guid: 7326c89d1e84ecb429de2f08a2baf2fe, type: 3}
     <ScatterMode>k__BackingField: 0
@@ -113,12 +173,3 @@ MonoBehaviour:
     <MaxScaleY>k__BackingField: 2
     <Mesh>k__BackingField: {fileID: 8666578268043267355, guid: 396ff52ab0b0210408b55a00b0c3cd57, type: 3}
     <Material>k__BackingField: {fileID: 2100000, guid: 1fb265a1eb82642428d82e5c54ad2148, type: 2}
-  offsetDen:
-    x: 1
-    y: 1
-  offsetDiv:
-    x: 1
-    y: 1
-  scaleDiv:
-    x: 1
-    y: 1

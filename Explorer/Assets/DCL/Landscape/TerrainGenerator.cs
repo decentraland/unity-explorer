@@ -8,7 +8,6 @@ using DCL.Utilities;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
-using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.Landscape
 {
@@ -17,8 +16,6 @@ namespace DCL.Landscape
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
-        private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
-        private const float PROGRESS_COUNTER_DIG_HOLES = 0.5f;
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
         private readonly IMemoryProfiler profilingProvider;
@@ -63,15 +60,11 @@ namespace DCL.Landscape
             this.roads = roads;
             this.occupied = occupied;
             this.empty = empty;
-
-            parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
-
+            parcelSize = terrainGenData.parcelSize;
+            boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
             RootObject = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             RootObject.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
-
-            boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
-
             isInitialized = true;
         }
 
@@ -139,9 +132,6 @@ namespace DCL.Landscape
                         Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
                         boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
                     }
-
-                    processReport?.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
-                    processReport?.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
 
                     terrainModel.UpdateTerrainData(terrainData);
 
