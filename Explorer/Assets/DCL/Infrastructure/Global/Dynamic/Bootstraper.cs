@@ -11,7 +11,9 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
@@ -43,8 +45,8 @@ namespace Global.Dynamic
 {
     public class Bootstrap : IBootstrap
     {
-        private readonly IDebugSettings debugSettings;
-        private readonly IRealmUrls realmUrls;
+        private readonly DebugSettings.DebugSettings debugSettings;
+        private readonly RealmUrls realmUrls;
         private readonly IAppArgs appArgs;
         private readonly ISplashScreen splashScreen;
         private readonly RealmLaunchSettings realmLaunchSettings;
@@ -60,10 +62,10 @@ namespace Global.Dynamic
         public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(
-            IDebugSettings debugSettings,
+            DebugSettings.DebugSettings debugSettings,
             IAppArgs appArgs,
             ISplashScreen splashScreen,
-            IRealmUrls realmUrls,
+            RealmUrls realmUrls,
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
@@ -105,7 +107,6 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument sceneUIRoot,
-            ObjectProxy<FeatureFlagsCache> featureFlagsCache,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -129,7 +130,6 @@ namespace Global.Dynamic
                 diskCache,
                 sceneUIRoot,
                 profileRepositoryProxy,
-                featureFlagsCache,
                 ct
             );
 
@@ -170,6 +170,8 @@ namespace Global.Dynamic
             Uri defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             Uri? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
 
+
+
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
@@ -178,7 +180,7 @@ namespace Global.Dynamic
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     DefaultStartingRealm = defaultStartingRealm,
-                    StartParcel = realmLaunchSettings.targetScene,
+                    StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
@@ -283,11 +285,10 @@ namespace Global.Dynamic
             await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
-        public void ApplyFeatureFlagConfigs(FeatureFlagsCache featureFlagsCache)
+        public void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache)
         {
-            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsCache);
-            webRequestsContainer.SetKTXEnabled(featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
-
+            realmLaunchSettings.CheckStartParcelFeatureFlagOverride(appArgs, featureFlagsConfigurationCache);
+            webRequestsContainer.SetKTXEnabled(featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION));
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,

@@ -1,4 +1,5 @@
-﻿using DCL.Settings.ModuleViews;
+﻿using DCL.Prefs;
+using DCL.Settings.ModuleViews;
 using System;
 using UnityEngine;
 
@@ -6,16 +7,14 @@ namespace DCL.Settings.ModuleControllers
 {
     public class FpsLimitSettingsController : SettingsFeatureController
     {
-        private const string FPS_LIMIT_DATA_STORE_KEY = "Settings_FpsLimit";
-
         private readonly SettingsDropdownModuleView view;
 
         public FpsLimitSettingsController(SettingsDropdownModuleView view)
         {
             this.view = view;
 
-            if (settingsDataStore.HasKey(FPS_LIMIT_DATA_STORE_KEY))
-                view.DropdownView.Dropdown.value = settingsDataStore.GetDropdownValue(FPS_LIMIT_DATA_STORE_KEY);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_FPS_LIMIT))
+                view.DropdownView.Dropdown.value = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_FPS_LIMIT);
 
             view.DropdownView.Dropdown.onValueChanged.AddListener(SetFpsLimitSettings);
             SetFpsLimitSettings(view.DropdownView.Dropdown.value);
@@ -28,7 +27,7 @@ namespace DCL.Settings.ModuleControllers
                 fpsLimitToApply = Convert.ToInt32(view.DropdownView.Dropdown.options[index].text);
 
             Application.targetFrameRate = fpsLimitToApply;
-            settingsDataStore.SetDropdownValue(FPS_LIMIT_DATA_STORE_KEY, index, save: true);
+            DCLPlayerPrefs.SetInt(DCLPrefKeys.SETTINGS_FPS_LIMIT, index, save: true);
         }
 
         public override void Dispose()

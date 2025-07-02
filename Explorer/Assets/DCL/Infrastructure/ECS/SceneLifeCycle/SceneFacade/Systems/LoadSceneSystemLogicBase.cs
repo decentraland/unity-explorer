@@ -92,14 +92,14 @@ namespace ECS.SceneLifeCycle.Systems
                 if (AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, sceneId))
                     return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files, sceneId, sceneAbDto.Date);
 
-                ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundle Version Mismatch for {sceneId}");
+                ReportHub.LogError(reportCategory.WithStaticDebounce(), $"Asset Bundle Version Mismatch for {sceneId}");
                 return SceneAssetBundleManifest.NULL;
             }
             catch (Exception e)
             {
                 // Don't block the scene if the loading manifest failed, just use NULL
                 if (e is not OperationCanceledException)
-                    ReportHub.LogError(reportCategory.WithSessionStatic(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
+                    ReportHub.LogError(reportCategory.WithStaticDebounce(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
 
                 return SceneAssetBundleManifest.NULL;
             }
@@ -116,7 +116,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneContent.TryGetContentUrl(NAME, out var sceneJsonUrl))
             {
                 //What happens if we dont have a scene.json file? Will the default one work?
-                ReportHub.LogWarning(reportCategory.WithSessionStatic(), $"scene.json does not exist for scene {sceneID}, no override is possible");
+                ReportHub.LogWarning(reportCategory.WithStaticDebounce(), $"scene.json does not exist for scene {sceneID}, no override is possible");
                 return default;
             }
 

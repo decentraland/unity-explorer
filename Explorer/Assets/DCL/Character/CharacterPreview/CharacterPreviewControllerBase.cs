@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AvatarRendering.Emotes;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,7 @@ namespace DCL.CharacterPreview
         protected bool zoomEnabled = true;
         protected bool panEnabled = true;
         protected bool rotateEnabled = true;
+        private readonly Func<bool> isPlayingEmoteDelegate;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
@@ -61,6 +63,8 @@ namespace DCL.CharacterPreview
 
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
+
+            isPlayingEmoteDelegate = () => previewController!.Value.IsPlayingEmote();
         }
 
         public virtual void Initialize(Avatar avatar)
@@ -266,6 +270,18 @@ namespace DCL.CharacterPreview
 
         protected void StopEmotes() =>
             previewController?.StopEmotes();
+
+        protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
+        {
+            if (previewController == null) return;
+
+            PlayEmote(emoteURN);
+
+            await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);
+
+            if (previewController!.Value.TryGetPlayingEmote(out CharacterEmoteComponent emoteComponent))
+                await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
+        }
 
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);

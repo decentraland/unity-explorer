@@ -1,6 +1,8 @@
 using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
+using DCL.WebRequests.RequestsHub;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -57,6 +59,34 @@ namespace DCL.WebRequests
             AssignHeaders(webRequest, web3IdentityCache);
         }
 
+        /// <summary>
+        ///     A simplified representation of the request envelope:
+        ///     URL
+        ///     Headers: {headers} if present
+        ///     SignInfo: {signInfo} if present
+        /// </summary>
+        /// <returns></returns>
+        public string GetBreadcrumbString(StringBuilder sb)
+        {
+            sb.Clear();
+
+            sb.AppendLine(CommonArguments.ToString());
+
+            if (HeadersInfo.Value.Count != 0)
+            {
+                sb.Append("Headers: ");
+                sb.AppendLine(HeadersInfo.ToString());
+            }
+
+            if (SignInfo.HasValue)
+            {
+                sb.Append("SignInfo: ");
+                sb.AppendLine(SignInfo.Value.ToString());
+            }
+
+            return sb.ToString();
+        }
+
         public void Dispose()
         {
             // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
@@ -77,7 +107,7 @@ namespace DCL.WebRequests
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetHeaders(IWebRequest unityWebRequest)
         {
-            IReadOnlyList<WebRequestHeader> info = HeadersInfo.Value;
+            var info = HeadersInfo.Value;
             int count = info.Count;
 
             // ReSharper disable once ForCanBeConvertedToForeach
@@ -118,8 +148,10 @@ namespace DCL.WebRequests
         }
     }
 
-    /// <remarks>Because <see cref="RequestEnvelope{TWebRequest,TWebRequestArgs}"/> is generic, we have
-    /// to put this out here, else we get a copy for every specific type of it we create.</remarks>
+    /// <remarks>
+    ///     Because <see cref="RequestEnvelope{TWebRequest,TWebRequestArgs}" /> is generic, we have
+    ///     to put this out here, else we get a copy for every specific type of it we create.
+    /// </remarks>
     internal static class AuthChainHeaderNames
     {
         private static readonly string[] AUTH_CHAIN_HEADER_NAMES;
@@ -129,7 +161,7 @@ namespace DCL.WebRequests
             int maxAuthChainHeaders = Enum.GetNames(typeof(AuthLinkType)).Length;
             AUTH_CHAIN_HEADER_NAMES = new string[maxAuthChainHeaders];
 
-            for (int i = 0; i < maxAuthChainHeaders; i++)
+            for (var i = 0; i < maxAuthChainHeaders; i++)
                 AUTH_CHAIN_HEADER_NAMES[i] = $"x-identity-auth-chain-{i}";
         }
 

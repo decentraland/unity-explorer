@@ -61,7 +61,7 @@ namespace DCL.Time
 
             float cycleHour = CalculateCycleTime(currentTime);
 
-            return cachedTimeInSeconds = CalculateCycleTimeInSeconds(cycleHour);;
+            return cachedTimeInSeconds = CalculateCycleTimeInSeconds(cycleHour);
         }
 
         private float CalculateCycleTimeInSeconds(float cycleHour) => cycleHour * 3600;

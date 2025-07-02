@@ -29,7 +29,6 @@ namespace PortableExperiences.Controller
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
         private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
-        private readonly FeatureFlagsCache featureFlagsCache;
         private readonly ILaunchMode launchMode;
         private readonly IDecentralandUrlsSource urlsSources;
         private GlobalWorld globalWorld;
@@ -49,14 +48,12 @@ namespace PortableExperiences.Controller
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache,
-            FeatureFlagsCache featureFlagsCache,
             ILaunchMode launchMode,
             IDecentralandUrlsSource urlsSources)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
-            this.featureFlagsCache = featureFlagsCache;
             this.launchMode = launchMode;
             this.urlsSources = urlsSources;
         }
@@ -67,11 +64,11 @@ namespace PortableExperiences.Controller
                 switch (isGlobalPortableExperience)
                 {
                     //If it's not a Global PX and common PXs are disabled
-                    case false when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE):
+                    case false when !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE):
                         throw new Exception("Portable Experiences are disabled");
 
                     //If it IS a Global PX but Global PXs are disabled
-                    case true when !featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
+                    case true when !FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE):
                         throw new Exception("Global Portable Experiences are disabled");
                 }
 
@@ -98,7 +95,7 @@ namespace PortableExperiences.Controller
                 throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
 
             Uri? assetBundleRegistry =
-                featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
+                FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
                     ? urlsSources.Url(DecentralandUrl.AssetBundleRegistry).Append("entities/active")
                     : null;
 
@@ -126,7 +123,7 @@ namespace PortableExperiences.Controller
 
         public bool CanKillPortableExperience(ENS ens)
         {
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE)) return false;
 
             ISceneFacade currentSceneFacade = scenesCache.CurrentScene;
             if (currentSceneFacade == null) return false;

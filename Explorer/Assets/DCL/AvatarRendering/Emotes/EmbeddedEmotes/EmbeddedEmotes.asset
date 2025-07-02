@@ -1,0 +1,671 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: baebd206a4254c5590dab13153d940a8, type: 3}
+  m_Name: EmbeddedEmotes
+  m_EditorClassIdentifier: 
+  emotes:
+  - id: clap
+    name: clap
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 902282f4070ec7b469e73bcbdcc0c3dd, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: crafting
+    name: crafting
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 7938434e632b598489b8b03e6effa995, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: 465491e0be2fa411dab6fd5716fe1a54, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: cry
+    name: cry
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: c4ac165a6ecb9194ba6417ac99aa1d0f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: dab
+    name: dab
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: e6a1e80b5ad78344ab7aa751eb27c30d, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: 555e042d4b9b14ac0a4d086bdb749500, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: dance
+    name: dance
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: fb2a51422f4f0f84ca589e9716428e06, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: 37c280bbf7a8f43c5bd4eb8918058365, type: 3}
+    male: {fileID: 8018143466885850673, guid: 37c280bbf7a8f43c5bd4eb8918058365, type: 3}
+    female: {fileID: 8018143466885850673, guid: 8bb64a2e609e8492fae00ad00adb5b16, type: 3}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: disco
+    name: disco
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5dc96a095ce3483459044bf3e74ccb59, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: c62cead1fc46347a9bb0193ed3259ba2, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: dontsee
+    name: dontsee
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 4ee2739d276aba843bd732c5a4a40dad, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: 869cd89681c12421da3da0478168e421, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: fistpump
+    name: fistpump
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 2b2f4028cd39d984e80dabe0732fdd87, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: 7693f9dc71d4e4a58816014d4ece5b06, type: 3}
+    male: {fileID: 8018143466885850673, guid: 7693f9dc71d4e4a58816014d4ece5b06, type: 3}
+    female: {fileID: 8018143466885850673, guid: 3836ede53a59e4965917561b6e227f0c, type: 3}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: hammer
+    name: hammer
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 90d19c500d961c44f8941c69dcdae46a, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: f38d7869f314e4cb4a908407fed6dbd3, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: handsair
+    name: handsair
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 1367a4cc5c746844995474c692ce506f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: headexplode
+    name: headexplode
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: db09a3000c06f1e46a56c971875a6aa1, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: eb3fb75fdcb3b4748863cad3e2fbc570, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: hohoho
+    name: hohoho
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 08fb89e42a3f7d44e9b2a391aa41aff6, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 77a28322abe8e2d48889b4bb91fea3c1, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: kiss
+    name: kiss
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 8845b5e9671db49409bf747319c8f5c7, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 28c3224df1c472940947608d6984ab5b, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: money
+    name: money
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: e2b6332b93b06ab488a93d40b83c69fe, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 73aef91399409734da49e67af4552191, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: raiseHand
+    name: raiseHand
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: ff8a6278dd9d9334da10fa959cdb26dc, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: 4c2f52d666b4140cfb9fabb951379dcd, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: robot
+    name: robot
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 736224c3cee06814dbf03a9bc3396382, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: f47550258031f44b69d3c23a32aadbac, type: 3}
+    male: {fileID: 8018143466885850673, guid: f47550258031f44b69d3c23a32aadbac, type: 3}
+    female: {fileID: 8018143466885850673, guid: cba09626bb9734de784415e4ae55325b, type: 3}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: shrug
+    name: shrug
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: f992e8febb67b5d47a24e9f16d5cc190, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: 9cd9034953b9e43d38a38f3cde21226f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: snowfall
+    name: snowfall
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 9622f862db0a54f49a26e220aac90cbe, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 8689dd2ff74a71649a0c3d9229b5c68b, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: tektonik
+    name: tektonik
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 84771a68677a08b43a7247d73aa5a6d8, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: cbb63c683b55046749f6cb47138ca9bc, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: tik
+    name: tik
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 832a50a328da0294f809c85f37abca0e, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: ab5239f8d474a41838f111c6cf9a26f6, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: Victory
+    name: Victory
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 58f49f496e83e4327a36e0b77fccfdee, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: wave
+    name: wave
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5ff44e022ab99054bb0a1f79b2077c4f, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: c1d9a11790afd475fbf6ad94eb29306c, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: Waving
+    name: Waving
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 21300000, guid: 5ff44e022ab99054bb0a1f79b2077c4f, type: 3}
+    prefab: {fileID: 8018143466885850673, guid: d667e461497064fcb8e5caf9125cc9d8, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: confettipopper
+    name: confetti
+    audioClip: {fileID: 8300000, guid: 5caae9f69edac88479351686704e0c94, type: 3}
+    thumbnail: {fileID: 21300000, guid: 52e4def7262db19429d325d7cb5f1a7a, type: 3}
+    prefab: {fileID: 3460472286760622397, guid: c7a4733cc5ffc1249ada6f436f6dd167, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: buttonDown
+    name: buttonDown
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: e982a29f178d5424a8282d4f1a5caa6a, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: buttonFront
+    name: buttonFront
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 08cba79c456014d3cb6c0a6a148d5951, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: getHit
+    name: getHit
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 1fec9d1abe94d4765ad558df8af5651d, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: knockOut
+    name: knockOut
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 11869768f93ae43ddac9db58c989d161, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: lever
+    name: lever
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 2f30cb19387224c5a97178b7431c085f, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: openChest
+    name: openChest
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 910309eb34a6643b3b52f4a83ed233df, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: openDoor
+    name: openDoor
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: b6c7f4ecdea1d4c06b790a5b918ab049, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: punch
+    name: punch
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 3862f8d18e9df4b848c935c6481199ca, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: push
+    name: push
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: ef06206ba169242be86645c339444be4, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: sittingChair1
+    name: sittingChair1
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: d16e61552f58642b68cefb7eef40e990, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: sittingChair2
+    name: sittingChair2
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: d2e36af30cd8e4f30859c09b4117c755, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: sittingGround1
+    name: sittingGround1
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 8cf943739d65448238526f3792b73b48, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: sittingGround2
+    name: sittingGround2
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 12a124fece040428aa4cfb17819d37c7, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 1
+  - id: swingWeaponOneHand
+    name: swingWeaponOneHand
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 70c3cc6a6898540deb71a4ca4f62a7c8, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: swingWeaponTwoHands
+    name: swingWeaponTwoHands
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: e5e24dbafc47a4b6eb2020547f215ab7, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: throw
+    name: throw
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 6a8ddbff0f641417487e913aa4b952e5, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0
+  - id: fistpump_short
+    name: fistpump_short
+    audioClip: {fileID: 0}
+    thumbnail: {fileID: 0}
+    prefab: {fileID: 8018143466885850673, guid: 6b75cf59917c8064da482571784ac3cc, type: 3}
+    male: {fileID: 0}
+    female: {fileID: 0}
+    entity:
+      representations: []
+      category: 
+      tags: []
+      replaces: []
+      hides: []
+      removesDefaultHiding: []
+      outlineCompatible: 1
+      loop: 0

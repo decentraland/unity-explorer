@@ -90,7 +90,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     // General exception
                     // conclude now, we can't do anything
-                    var failure = new StreamableLoadingResult<TAsset>(reportData.WithSessionStatic(), e);
+                    var failure = new StreamableLoadingResult<TAsset>(reportData.WithStaticDebounce(), e);
                     SetIrrecoverableFailure(failure);
 
                     return failure;

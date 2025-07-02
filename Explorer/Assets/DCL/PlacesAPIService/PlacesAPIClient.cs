@@ -25,10 +25,12 @@ namespace DCL.PlacesAPIService
 
         private readonly URLBuilder urlBuilder = new ();
 
-        private Uri baseURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
+        private Uri basePlacesURL => decentralandUrlsSource.Url(DecentralandUrl.ApiPlaces);
+        private Uri baseWorldsURL => decentralandUrlsSource.Url(DecentralandUrl.ApiWorlds);
         private Uri poiURL => decentralandUrlsSource.Url(DecentralandUrl.POI);
         private Uri mapApiUrl => decentralandUrlsSource.Url(DecentralandUrl.Map);
         private Uri contentModerationReportURL => decentralandUrlsSource.Url(DecentralandUrl.ContentModerationReport);
+        private URLDomain baseURLDomain => URLDomain.FromString(basePlacesURL);
 
         public PlacesAPIClient(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -47,7 +49,7 @@ namespace DCL.PlacesAPIService
             List<PlacesData.PlaceInfo>? resultBuffer = null)
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(baseURL));
+            urlBuilder.AppendDomain(URLDomain.FromString(basePlacesURL));
 
             if (!string.IsNullOrEmpty(searchString))
                 urlBuilder.AppendParameter(new URLParameter("search", searchString.Replace(" ", "+")));
@@ -101,31 +103,35 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeId, CancellationToken ct)
+        public async UniTask<PlacesData.PlacesAPIResponse> GetWorldAsync(string placeId, CancellationToken ct)
         {
+            Uri url = baseWorldsURL.Append($"?names={placeId}");
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            Uri url = baseURL.Append($"/{placeId}?with_realms_detail=true");
 
             var result = webRequestController.GetAsync(
                 url, ReportCategory.UI,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
-            PlacesData.PlacesAPIGetParcelResponse response = await result.CreateFromJsonAsync<PlacesData.PlacesAPIGetParcelResponse>(WRJsonParser.Unity, ct,
-                                                                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing place info:", text))
-                                                                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
+            PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
+
+            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+
+
 
             if (!response.ok)
                 throw new NotAPlaceException(placeId);
 
             // At this moment WR is already disposed
-            return response.data;
+            return response;
         }
 
         public async UniTask SetPlaceFavoriteAsync(string placeId, bool isFavorite, CancellationToken ct)
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            Uri url = baseURL.Append($"/{placeId}/favorites");
+            Uri url = basePlacesURL.Append($"/{placeId}/favorites");
             const string FAVORITE_PAYLOAD = "{\"favorites\": true}";
             const string NOT_FAVORITE_PAYLOAD = "{\"favorites\": false}";
 
@@ -140,7 +146,7 @@ namespace DCL.PlacesAPIService
 
         public async UniTask RatePlaceAsync(bool? isUpvote, string placeId, CancellationToken ct)
         {
-            Uri url = baseURL.Append($"/{placeId}/likes");
+            Uri url = basePlacesURL.Append($"/{placeId}/likes");
             const string LIKE_PAYLOAD = "{\"like\": true}";
             const string DISLIKE_PAYLOAD = "{\"like\": false}";
             const string NO_LIKE_PAYLOAD = "{\"like\": null}";

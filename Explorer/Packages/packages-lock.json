@@ -99,7 +99,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "f7afcfe62d08863b017a747f94d02a98f4b612a2"
+      "hash": "cb7468413582b05ed5c676df4d2bdb2891795617"
     },
     "com.gurbu.gpui-pro": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
@@ -305,6 +305,15 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.unity.multiplayer.playmode": {
+      "version": "1.3.3",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "2.0.2"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.4",
       "depth": 1,
@@ -474,7 +483,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8f0363493c9da0e227f223c6774399b30384ad58"
+      "hash": "38c92a2ff23a5e09ba58c84d068a892da7cdbedd"
     },
     "io.sentry.unity": {
       "version": "https://github.com/getsentry/unity.git#2.1.3",

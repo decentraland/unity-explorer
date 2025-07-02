@@ -12,10 +12,12 @@ using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UI;
 using DCL.Utilities;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
@@ -65,11 +67,9 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly BuildData buildData;
-#if !UNITY_EDITOR
-        private readonly FeatureFlagsCache featureFlagsCache;
-#endif
         private readonly AudioMixerVolumesController audioMixerVolumesController;
         private readonly World world;
+        private readonly AuthScreenEmotesSettings emotesSettings;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -87,7 +87,6 @@ namespace DCL.AuthenticationScreenFlow
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
             ISelfProfile selfProfile,
-            FeatureFlagsCache featureFlagsCache,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -95,14 +94,12 @@ namespace DCL.AuthenticationScreenFlow
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController,
             BuildData buildData,
-            World world)
+            World world,
+            AuthScreenEmotesSettings emotesSettings)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
-#if !UNITY_EDITOR
-            this.featureFlagsCache = featureFlagsCache;
-#endif
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -111,6 +108,7 @@ namespace DCL.AuthenticationScreenFlow
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.buildData = buildData;
             this.world = world;
+            this.emotesSettings = emotesSettings;
         }
 
         public override void Dispose()
@@ -140,12 +138,11 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
             viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
 
-#if UNITY_EDITOR
-            viewInstance.VersionText.text = $"editor-version - {buildData.InstallSource}";
-#else
-            viewInstance.VersionText.text = $"{Application.version} - {buildData.InstallSource}";
-#endif
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+            viewInstance.VersionText.text = Application.isEditor
+                ? $"editor-version - {buildData.InstallSource}"
+                : $"{Application.version} - {buildData.InstallSource}";
+
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
             viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);
@@ -232,18 +229,20 @@ namespace DCL.AuthenticationScreenFlow
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
         {
-#if UNITY_EDITOR
-            return true;
-#else
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT)) return true;
-            if (!featureFlagsCache.Configuration.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT, out List<List<string>>? allowedUsersCsv))
+            if (Application.isEditor)
+                return true;
+
+            FeatureFlagsConfiguration flags = FeatureFlagsConfiguration.Instance;
+
+            if (!flags.IsEnabled(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT)) return true;
+
+            if (!flags.TryGetCsvPayload(FeatureFlagsStrings.USER_ALLOW_LIST, FeatureFlagsStrings.WALLETS_VARIANT, out List<List<string>>? allowedUsersCsv))
                 return true;
 
             bool isUserAllowed = allowedUsersCsv![0]
                .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
 
             return isUserAllowed;
-#endif
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -353,8 +352,13 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            viewInstance!.JumpIntoWorldButton.interactable = false;
+            AnimateAndAwaitAsync().Forget();
+            return;
+
             async UniTaskVoid AnimateAndAwaitAsync()
             {
+                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
                 //Disabled animation until proper animation is setup, otherwise we get animation hash errors
                 //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
@@ -362,8 +366,6 @@ namespace DCL.AuthenticationScreenFlow
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
-
-            AnimateAndAwaitAsync().Forget();
         }
 
         private void SwitchState(ViewState state)
@@ -422,13 +424,16 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
+                    characterPreviewController?.OnShow();
+
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
 
-        private void ResetAnimator(Animator animator)
+        private static void ResetAnimator(Animator animator)
         {
             animator.Rebind();
             animator.Update(0f);
