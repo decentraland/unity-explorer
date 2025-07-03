@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
+
+#if UNITY_STANDALONE_WIN || UNITY_STANDALONE_OSX
 using System.Runtime.InteropServices;
+#endif
+
 using System.Text;
 using UnityEngine;
 
@@ -128,7 +131,7 @@ namespace Utility
         /// <summary>
         /// Returns all existing drive letters (e.g. ["C:\\", "D:\\", ...]).
         /// </summary>
-        public static List<string> GetDrivesByBitmask()
+        private static List<string> GetDrivesByBitmask()
         {
             uint bitmask = GetLogicalDrives();
             var drives = new List<string>();
@@ -157,105 +160,105 @@ namespace Utility
             string lpParameters, string lpDirectory, int nShowCmd);
 
         private const int SW_NORMAL = 1;
-        
+
 #elif UNITY_STANDALONE_OSX
-        
-        // This struct mirrors the native `statfs` structure on macOS.
-        // It's used to receive file system statistics from the getfsstat call.
-        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
-        private struct Statfs
-        {
-            public uint f_bsize;            // fundamental file system block size
-            public int f_iosize;            // optimal transfer block size
-            public ulong f_blocks;          // total data blocks in file system
-            public ulong f_bfree;           // free blocks in fs
-            public ulong f_bavail;          // free blocks avail to non-superuser
-            public ulong f_files;           // total file nodes in file system
-            public ulong f_ffree;           // free file nodes in fs
-            public long f_fsid_val1;        // file system id
-            public long f_fsid_val2;
-            public uint f_owner;            // user that mounted the filesystem
-            public uint f_type;             // type of filesystem
-            public uint f_flags;            // copy of mount exported flags
-            public uint f_fssubtype;        // fs sub-type (flavor)
-            // The mount point path (e.g., "/" or "/Volumes/MyDisk")
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)] // MNAMELEN = 1024 on modern macOS
-            public string f_mntonname;
-            // The underlying device path (e.g., "/dev/disk1s1")
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-            public string f_mntfromname;
-        }
+         
+         // This struct mirrors the native `statfs` structure on macOS.
+         // It's used to receive file system statistics from the getfsstat call.
+         [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+         private struct Statfs
+         {
+             public uint f_bsize;            // fundamental file system block size
+             public int f_iosize;            // optimal transfer block size
+             public ulong f_blocks;          // total data blocks in file system
+             public ulong f_bfree;           // free blocks in fs
+             public ulong f_bavail;          // free blocks avail to non-superuser
+             public ulong f_files;           // total file nodes in file system
+             public ulong f_ffree;           // free file nodes in fs
+             public long f_fsid_val1;        // file system id
+             public long f_fsid_val2;
+             public uint f_owner;            // user that mounted the filesystem
+             public uint f_type;             // type of filesystem
+             public uint f_flags;            // copy of mount exported flags
+             public uint f_fssubtype;        // fs sub-type (flavor)
+             // The mount point path (e.g., "/" or "/Volumes/MyDisk")
+             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)] // MNAMELEN = 1024 on modern macOS
+             public string f_mntonname;
+             // The underlying device path (e.g., "/dev/disk1s1")
+             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
+             public string f_mntfromname;
+         }
 
-        // P/Invoke declaration for getfsstat, which retrieves info for all mounted file systems.
-        // We use EntryPoint "getfsstat" which is correct for 64-bit systems.
-        [DllImport("libc", SetLastError = true)]
-        private static extern int getfsstat(IntPtr buf, int bufsize, int flags);
+         // P/Invoke declaration for getfsstat, which retrieves info for all mounted file systems.
+         // We use EntryPoint "getfsstat" which is correct for 64-bit systems.
+         [DllImport("libc", SetLastError = true)]
+         private static extern int getfsstat(IntPtr buf, int bufsize, int flags);
 
-        private static List<DriveData> GetMacDrivesInfo()
-        {
-            var allDrivesData = new List<DriveData>();
-            
-            // MNT_NOWAIT tells the system not to block if a filesystem is unresponsive.
-            const int MNT_NOWAIT = 2;
+         private static List<DriveData> GetMacDrivesInfo()
+         {
+             var allDrivesData = new List<DriveData>();
+             
+             // MNT_NOWAIT tells the system not to block if a filesystem is unresponsive.
+             const int MNT_NOWAIT = 2;
 
-            // First call with a null buffer to get the number of mounted file systems.
-            int count = getfsstat(IntPtr.Zero, 0, MNT_NOWAIT);
-            if (count < 0)
-            {
-                // An error occurred
-                Debug.LogError("getfsstat failed to get the count of drives.");
-                return allDrivesData;
-            }
+             // First call with a null buffer to get the number of mounted file systems.
+             int count = getfsstat(IntPtr.Zero, 0, MNT_NOWAIT);
+             if (count < 0)
+             {
+                 // An error occurred
+                 Debug.LogError("getfsstat failed to get the count of drives.");
+                 return allDrivesData;
+             }
 
-            int structSize = Marshal.SizeOf<Statfs>();
-            int bufferSize = count * structSize;
-            IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
+             int structSize = Marshal.SizeOf<Statfs>();
+             int bufferSize = count * structSize;
+             IntPtr buffer = Marshal.AllocHGlobal(bufferSize);
 
-            try
-            {
-                // Second call with the allocated buffer to get the actual data.
-                count = getfsstat(buffer, bufferSize, MNT_NOWAIT);
-                if (count < 0)
-                {
-                    Debug.LogError("getfsstat failed to populate drive data.");
-                    return allDrivesData;
-                }
+             try
+             {
+                 // Second call with the allocated buffer to get the actual data.
+                 count = getfsstat(buffer, bufferSize, MNT_NOWAIT);
+                 if (count < 0)
+                 {
+                     Debug.LogError("getfsstat failed to populate drive data.");
+                     return allDrivesData;
+                 }
 
-                for (int i = 0; i < count; i++)
-                {
-                    // Calculate the pointer to the current struct in the array
-                    IntPtr currentPtr = new IntPtr(buffer.ToInt64() + (i * structSize));
-                    
-                    // Marshal the unmanaged data to our managed C# struct
-                    Statfs stat = Marshal.PtrToStructure<Statfs>(currentPtr);
+                 for (int i = 0; i < count; i++)
+                 {
+                     // Calculate the pointer to the current struct in the array
+                     IntPtr currentPtr = new IntPtr(buffer.ToInt64() + (i * structSize));
+                     
+                     // Marshal the unmanaged data to our managed C# struct
+                     Statfs stat = Marshal.PtrToStructure<Statfs>(currentPtr);
 
-                    // Skip certain system-only or virtual file systems
-                    if (stat.f_mntonname.StartsWith("/System/Volumes/"))
-                    {
-                        continue;
-                    }
-                    
-                    allDrivesData.Add(new DriveData
-                    {
-                        Name = stat.f_mntonname, // The mount point path (e.g., "/")
-                        // Available space for non-root users is f_bavail * f_bsize
-                        AvailableFreeSpace = stat.f_bavail * stat.f_bsize,
-                        // Total size is f_blocks * f_bsize
-                        TotalSize = stat.f_blocks * (ulong)stat.f_bsize
-                    });
-                }
-            }
-            finally
-            {
-                // CRITICAL: Always free the unmanaged memory to prevent leaks.
-                if (buffer != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(buffer);
-                }
-            }
+                     // Skip certain system-only or virtual file systems
+                     if (stat.f_mntonname.StartsWith("/System/Volumes/"))
+                     {
+                         continue;
+                     }
+                     
+                     allDrivesData.Add(new DriveData
+                     {
+                         Name = stat.f_mntonname, // The mount point path (e.g., "/")
+                         // Available space for non-root users is f_bavail * f_bsize
+                         AvailableFreeSpace = stat.f_bavail * stat.f_bsize,
+                         // Total size is f_blocks * f_bsize
+                         TotalSize = stat.f_blocks * (ulong)stat.f_bsize
+                     });
+                 }
+             }
+             finally
+             {
+                 // CRITICAL: Always free the unmanaged memory to prevent leaks.
+                 if (buffer != IntPtr.Zero)
+                 {
+                     Marshal.FreeHGlobal(buffer);
+                 }
+             }
 
-            return allDrivesData;
-        }
+             return allDrivesData;
+         }
 
         [DllImport("libc", EntryPoint = "system")]
         private static extern int ExecuteSystemCommand([MarshalAs(UnmanagedType.LPStr)] string command);
