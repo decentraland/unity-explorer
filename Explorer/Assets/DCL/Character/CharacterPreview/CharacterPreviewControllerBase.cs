@@ -26,11 +26,11 @@ namespace DCL.CharacterPreview
         private readonly World world;
         private readonly bool isPreviewPlatformActive;
 
-        private CharacterPreviewController? previewController;
         private bool initialized;
         private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
 
+        protected CharacterPreviewController? previewController;
         protected CharacterPreviewAvatarModel previewAvatarModel;
         protected bool zoomEnabled = true;
         protected bool panEnabled = true;
