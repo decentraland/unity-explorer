@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationGuards;
 using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
@@ -16,6 +17,8 @@ using DCL.FeatureFlags;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.HealthChecks;
+using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -42,6 +45,7 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -50,6 +54,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
+using Utility.Types;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
 namespace Global.Dynamic
@@ -241,12 +246,10 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
+                if (!await InitialGuardsCheckSuccess(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
+                    return;
 
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
-
-                if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
-                    return; // stop bootstrapping;
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
@@ -254,11 +257,7 @@ namespace Global.Dynamic
 
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
-#if UNITY_EDITOR
-                        EditorApplication.isPlaying = false;
-#else
-                        Application.Quit();
-#endif
+                        GuardUtils.Exit();
 
                         return;
                     }
@@ -299,6 +298,23 @@ namespace Global.Dynamic
             }
         }
 
+        private async Task<bool> InitialGuardsCheckSuccess(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
+            CancellationToken ct)
+        {
+            //If Livekit is down, stop bootstrapping
+            if (await IsLivekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
+                return false;
+
+            //If application requires version update, stop bootstrapping
+            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+                return false;
+
+            //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
+            await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
+
+            return true;
+        }
+
         private async UniTask RegisterBlockedPopupAsync(IWebBrowser webBrowser, CancellationToken ct)
         {
             var blockedPopupPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.BlockedScreenPrefab, ct);
@@ -308,6 +324,28 @@ namespace Global.Dynamic
 
             var launcherRedirectionScreenController = new BlockedScreenController(viewFactory, webBrowser);
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
+        }
+
+        private async UniTask<bool> IsLivekitDeadAsync(IWebRequestController webRequestController, DecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        {
+            SequentialHealthCheck healthCheck = new SequentialHealthCheck(
+                new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
+                    DecentralandUrl.ArchipelagoStatus,
+                    DecentralandUrl.GatekeeperStatus
+                ).WithRetries(3));
+
+            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
+
+            if (result.Success) return false;
+
+            var livekitDownPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.LivekitDownPrefab, ct);
+
+            ControllerBase<LivekitHealthGuardView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
+
+            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand());
+            return true;
         }
 
         private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
