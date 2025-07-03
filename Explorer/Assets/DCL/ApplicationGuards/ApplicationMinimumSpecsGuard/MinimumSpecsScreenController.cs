@@ -1,11 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
 using MVC;
-using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -23,7 +22,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.ExitButton.onClick.AddListener(OnExitClicked);
+            viewInstance.ExitButton.onClick.AddListener(GuardUtils.Exit);
             viewInstance.ContinueButton.onClick.AddListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.AddListener(OnReadMoreClicked);
             viewInstance.DontShowAgainToggle.onValueChanged.AddListener(OnToggleChanged);
@@ -40,7 +39,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             if (viewInstance == null)
                 return;
 
-            viewInstance.ExitButton.onClick.RemoveListener(OnExitClicked);
+            viewInstance.ExitButton.onClick.RemoveListener(GuardUtils.Exit);
             viewInstance.ContinueButton.onClick.RemoveListener(OnContinueClicked);
             viewInstance.ReadMoreButton.onClick.RemoveListener(OnReadMoreClicked);
             viewInstance.DontShowAgainToggle.onValueChanged.RemoveListener(OnToggleChanged);
@@ -52,14 +51,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
             HoldingTask?.TrySetResult();
         }
 
-        private static void OnExitClicked()
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            UnityEngine.Application.Quit();
-#endif
-        }
+
 
         private void OnReadMoreClicked() =>
             webBrowser.OpenUrl(DecentralandUrl.MinimumSpecs);

@@ -1,10 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using MVC;
 using System.Threading;
-
-#if !UNITY_EDITOR
-using UnityEngine;
-#endif
 
 namespace DCL.AuthenticationScreenFlow
 {
@@ -26,28 +23,19 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnViewInstantiated()
         {
             viewInstance.SetVersions(current, latest);
-            viewInstance.CloseButton.onClick.AddListener(Quit);
+            viewInstance.CloseButton.onClick.AddListener(GuardUtils.Exit);
             viewInstance.CloseWithLauncherButton.onClick.AddListener(HandleVersionUpdate);
         }
 
         public override void Dispose()
         {
-            viewInstance.CloseButton.onClick.RemoveListener(Quit);
+            viewInstance.CloseButton.onClick.RemoveListener(GuardUtils.Exit);
             viewInstance.CloseWithLauncherButton.onClick.RemoveListener(HandleVersionUpdate);
         }
 
         private void HandleVersionUpdate()
         {
             versionGuard.LaunchOrDownloadLauncherAsync().Forget();
-        }
-
-        private static void Quit()
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

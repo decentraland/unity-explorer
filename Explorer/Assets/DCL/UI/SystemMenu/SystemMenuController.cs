@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
@@ -69,7 +70,7 @@ namespace DCL.UI.SystemMenu
             base.OnViewInstantiated();
 
             viewInstance!.LogoutButton.onClick.AddListener(Logout);
-            viewInstance.ExitAppButton.onClick.AddListener(ExitApp);
+            viewInstance.ExitAppButton.onClick.AddListener(GuardUtils.Exit);
             viewInstance.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
             viewInstance.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
             // viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);
@@ -110,15 +111,6 @@ namespace DCL.UI.SystemMenu
                 return;
 
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId, isOwnProfile: true))).Forget();
-        }
-
-        private void ExitApp()
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-            return;
-#endif
-            Application.Quit();
         }
 
         private void Logout()
