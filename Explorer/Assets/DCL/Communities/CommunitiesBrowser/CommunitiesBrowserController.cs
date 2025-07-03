@@ -193,6 +193,9 @@ namespace DCL.Communities.CommunitiesBrowser
                                                 elementsPerPage: 1000,
                                                 ct: ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return;
+
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
@@ -270,6 +273,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 pageNumber,
                 elementsPerPage,
                 ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
 
             if (!result.Success)
             {
@@ -361,6 +367,9 @@ namespace DCL.Communities.CommunitiesBrowser
         private async UniTaskVoid JoinCommunityAsync(string communityId, CancellationToken ct)
         {
             var result = await dataProvider.JoinCommunityAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
 
             if (!result.Success || !result.Value)
             {

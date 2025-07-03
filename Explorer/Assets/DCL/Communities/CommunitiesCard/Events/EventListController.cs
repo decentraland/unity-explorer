@@ -125,6 +125,9 @@ namespace DCL.Communities.CommunitiesCard.Events
                     : await eventsApiService.MarkAsInterestedAsync(eventData.Event.id, ct)
                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     eventItemView.UpdateInterestedButtonState();
@@ -174,7 +177,10 @@ namespace DCL.Communities.CommunitiesCard.Events
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
             Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.pageNumber, PAGE_SIZE, ct)
-                                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                                                                          .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
 
             if (!eventResponse.Success)
             {
@@ -195,6 +201,9 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
 
             if (!placesResponse.Success)
             {

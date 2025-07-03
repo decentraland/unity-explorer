@@ -168,6 +168,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (token.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
@@ -198,6 +201,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (token.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(KICK_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
@@ -220,6 +226,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             {
                 Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.moderator, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (token.IsCancellationRequested)
+                    return;
 
                 if (!result.Success || !result.Value)
                 {
@@ -254,6 +263,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.member, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (token.IsCancellationRequested)
+                    return;
 
                 if (!result.Success || !result.Value)
                 {
@@ -353,6 +365,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                         break;
                 }
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 await FetchFriendshipStatusAndRefreshAsync(userData.userAddress, ct);
             }
             catch (OperationCanceledException) { }
@@ -381,6 +396,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES)
                 : await communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
 
             if (!response.Success)
             {
@@ -432,6 +450,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 Result<bool> result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.memberAddress, communityData?.id, ct)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!result.Success || !result.Value)
                 {
