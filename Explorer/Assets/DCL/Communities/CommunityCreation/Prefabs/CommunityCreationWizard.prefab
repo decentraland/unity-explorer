@@ -251,6 +251,7 @@ MonoBehaviour:
   creationPanelTitleText: {fileID: 8589843375831761775}
   creationPanelScrollRect: {fileID: 6953688788700206590}
   creationPanelEditProfilePictureButton: {fileID: 8294393226662565609}
+  creationPanelProfilePictureIcon: {fileID: 7466861170140788330}
   creationPanelProfileSelectedImage: {fileID: 5895951136704436539}
   creationPanelProfileDefaultSelectedImage: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
   creationPanelCommunityNameInputField: {fileID: 1356991511893353481}
@@ -1002,6 +1003,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &7466861170140788330 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3563396630889176293, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
+  m_PrefabInstance: {fileID: 6263421827064736399}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &7556609997558448888 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4481745970114865271, guid: 8db4ddf43eb52a540b85b9b0e0d801c4, type: 3}
