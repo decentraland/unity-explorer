@@ -16,7 +16,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.RealmNavigation;
 using DCL.SDKComponents.InputModifier.Components;
 using ECS.LifeCycle;
 using System;
@@ -35,6 +34,7 @@ namespace DCL.Character.Plugin
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IExposedCameraData exposedCameraData;
+
         public readonly ExposedTransform Transform;
 
         private byte bucketPropagationLimit;
@@ -69,7 +69,6 @@ namespace DCL.Character.Plugin
                 error: nameof(characterObject)
             );
 
-            //Setting initial position to allow early connection in Livekit
             bucketPropagationLimit = settings.sceneBucketPropagationLimit;
         }
 

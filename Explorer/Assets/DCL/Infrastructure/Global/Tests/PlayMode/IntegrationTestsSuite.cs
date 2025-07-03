@@ -25,7 +25,6 @@ using NSubstitute;
 using System;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
-using DCL.RealmNavigation;
 using DCL.Utilities;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
