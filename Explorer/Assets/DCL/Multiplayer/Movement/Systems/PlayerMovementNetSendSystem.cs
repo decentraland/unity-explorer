@@ -45,6 +45,7 @@ namespace DCL.Multiplayer.Movement.Systems
         [Query]
         private void SendPlayerNetMovement(
             [Data] float t,
+            in Entity entity,
             ref PlayerMovementNetworkComponent playerMovement,
             ref CharacterAnimationComponent anim,
             ref StunComponent stun,
@@ -58,17 +59,19 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, true);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
 
             float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
 
+            bool justTeleported = World.Has<PlayerTeleportIntent.JustTeleported>(entity);
+
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, justTeleported);
                 return;
             }
 
@@ -82,7 +85,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!isMoving && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move, justTeleported);
             }
 
             return;
@@ -104,7 +107,11 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement,
+            in CharacterAnimationComponent animation,
+            in StunComponent playerStunComponent,
+            in MovementInputComponent input,
+            bool isInstant)
         {
             playerMovement.MessagesSentInSec++;
 
@@ -126,6 +133,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 isStunned = playerStunComponent.IsStunned,
                 isSliding = animation.IsSliding,
+                isInstant = isInstant,
 
                 animState = new AnimationStates
                 {
@@ -140,14 +148,14 @@ namespace DCL.Multiplayer.Movement.Systems
                     MovementBlendValue = animation.States.MovementBlendValue,
                 },
 
-                movementKind = movement.Kind,
+                movementKind = input.Kind,
             };
 
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
             if (debugSettings.SelfSending
-                && movement.Kind != MovementKind.RUN // simulate package lost when Running
+                && input.Kind != MovementKind.RUN // simulate package lost when Running
                )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage,
                                debugSettings.Latency + (debugSettings.Latency * Random.Range(0, debugSettings.LatencyJitter)))
