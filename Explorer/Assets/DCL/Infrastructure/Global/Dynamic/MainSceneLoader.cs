@@ -302,7 +302,7 @@ namespace Global.Dynamic
             CancellationToken ct)
         {
             //If Livekit is down, stop bootstrapping
-            if (await IsLivekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
+            if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
                 return false;
 
             //If application requires version update, stop bootstrapping
@@ -326,7 +326,7 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask<bool> IsLivekitDeadAsync(IWebRequestController webRequestController, DecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        private async UniTask<bool> IsLIvekitDeadAsync(IWebRequestController webRequestController, DecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
         {
             SequentialHealthCheck healthCheck = new SequentialHealthCheck(
                 new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
