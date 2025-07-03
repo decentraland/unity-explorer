@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.SDKComponents.NFTShape.Component;
 using DCL.Shaders;
 using ECS.Abstract;
 using ECS.Groups;
@@ -20,16 +21,35 @@ namespace DCL.SDKComponents.MediaStream
         protected override void Update(float t)
         {
             InitializeMaterialQuery(World);
+            InitializeNftMaterialQuery(World);
         }
 
         [Query]
         public void InitializeMaterial(Entity entity, in MediaPlayerComponent mediaPlayerComponent, in InitializeVideoPlayerMaterialRequest request)
         {
+            if (!TryHandleRequest<InitializeVideoPlayerMaterialRequest>(entity, mediaPlayerComponent, out Vector2 texScale)) return;
+
+            var material = request.Renderer.sharedMaterial;
+            material.SetTextureScale(ShaderUtils.BaseMap, texScale);
+            material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+        }
+
+        [Query]
+        public void InitializeNftMaterial(Entity entity, in MediaPlayerComponent mediaPlayerComponent, in InitializeNftVideoMaterialRequest request)
+        {
+            if (!TryHandleRequest<InitializeNftVideoMaterialRequest>(entity, mediaPlayerComponent, out Vector2 texScale)) return;
+
+            request.Renderer.SetTextureScale(texScale);
+        }
+
+        private bool TryHandleRequest<T>(Entity entity, in MediaPlayerComponent mediaPlayerComponent, out Vector2 texScale)
+        {
+            texScale = Vector2.zero;
+
             if (!mediaPlayerComponent.MediaPlayer.IsAvProPlayer(out var avPro))
             {
-                // We only need to handle AV Pro players
-                World.Remove<InitializeVideoPlayerMaterialRequest>(entity);
-                return;
+                World.Remove<T>(entity);
+                return false;
             }
 
             var textureProducer = avPro!.Value.AvProMediaPlayer.TextureProducer;
@@ -37,17 +57,15 @@ namespace DCL.SDKComponents.MediaStream
             {
                 // AV Pro player not initialized yet (should not happen, but we can just wait)
                 ReportHub.LogWarning(GetReportCategory(), $"Handling {nameof(InitializeVideoPlayerMaterialRequest)} before the AV Pro player was initialized");
-                return;
+                return false;
             }
 
             float vScale = textureProducer.RequiresVerticalFlip() ? -1 : 1;
-            var texScale = new Vector2(1, vScale);
+            texScale = new Vector2(1, vScale);
 
-            var material = request.Renderer.sharedMaterial;
-            material.SetTextureScale(ShaderUtils.BaseMap, texScale);
-            material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+            World.Remove<T>(entity);
 
-            World.Remove<InitializeVideoPlayerMaterialRequest>(entity);
+            return true;
         }
     }
 }
