@@ -45,7 +45,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             poolsRegistry.GetReferenceTypePool<CinemachineFreeLook>().Returns(sdkVirtualCameraPool);
             sdkVirtualCameraPool.Get().Returns(virtualCamera);
 
-            system = new VirtualCameraSystem(world, sdkVirtualCameraPool, sceneStateProvider, new ParcelMathHelper.SceneCircumscribedPlanes());
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
+
+            system = new VirtualCameraSystem(world, sdkVirtualCameraPool, sceneStateProvider, sceneData, new ParcelMathHelper.SceneCircumscribedPlanes());
         }
 
         [TearDown]

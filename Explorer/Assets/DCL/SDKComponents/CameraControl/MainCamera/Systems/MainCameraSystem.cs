@@ -29,6 +29,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private readonly IExposedCameraData cameraData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly World globalWorld;
+        private readonly ISceneData sceneData;
         private CameraMode lastNonSDKCameraMode;
 
         public MainCameraSystem(
@@ -38,7 +39,8 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             ISceneStateProvider sceneStateProvider,
             IExposedCameraData cameraData,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            World globalWorld) : base(world)
+            World globalWorld,
+            ISceneData sceneData) : base(world)
         {
             this.cameraEntity = cameraEntity;
             this.entitiesMap = entitiesMap;
@@ -46,10 +48,13 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
             this.cameraData = cameraData;
             this.globalWorld = globalWorld;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
+            if (!sceneStateProvider.IsCurrent || !sceneData.SceneLoadingConcluded) return;
+
             SetupMainCameraQuery(World);
 
             HandleActiveVirtualCameraLookAtChangeQuery(World);
@@ -63,7 +68,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(DeleteEntityIntention))]
         private void HandleVirtualCameraChange(Entity entity, ref MainCameraComponent mainCameraComponent, in PBMainCamera pbMainCamera)
         {
-            if (entity != cameraEntity || !sceneStateProvider.IsCurrent) return;
+            if (entity != cameraEntity) return;
 
             CRDTEntity? virtualCameraCRDTEntity = pbMainCamera.HasVirtualCameraEntity ? new CRDTEntity((int)pbMainCamera.VirtualCameraEntity) : null;
 
@@ -111,7 +116,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(DeleteEntityIntention))]
         private void HandleActiveVirtualCameraLookAtChange(CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, ref VirtualCameraComponent virtualCameraComponent)
         {
-            if (!sceneStateProvider.IsCurrent || cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
+            if (cameraData.CinemachineBrain!.ActiveVirtualCamera.VirtualCameraGameObject != virtualCameraComponent.virtualCameraInstance.gameObject) return;
 
             CRDTEntity? pbVirtualCameraLookAtEntity = VirtualCameraUtils.GetPBVirtualCameraLookAtCRDTEntity(pbVirtualCamera, crdtEntity);
 
@@ -126,7 +131,7 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(MainCameraComponent), typeof(DeleteEntityIntention))]
         private void SetupMainCamera(Entity entity)
         {
-            if (!sceneStateProvider.IsCurrent || entity != cameraEntity) return;
+            if (entity != cameraEntity) return;
 
             World.Add(entity, new MainCameraComponent());
         }

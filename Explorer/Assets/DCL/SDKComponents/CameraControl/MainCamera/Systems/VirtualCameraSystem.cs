@@ -24,23 +24,29 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
     [LogCategory(ReportCategory.SDK_CAMERA)]
     public partial class VirtualCameraSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        private const float SCENE_BOUNDS_CONSTRAIN_EXTRA_THRESHOLD = 0.25f;
         private readonly IComponentPool<CinemachineFreeLook> poolRegistry;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes;
+        private readonly ISceneData sceneData;
 
         public VirtualCameraSystem(
             World world,
             IComponentPool<CinemachineFreeLook> poolRegistry,
             ISceneStateProvider sceneStateProvider,
+            ISceneData sceneData,
             ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes) : base(world)
         {
             this.poolRegistry = poolRegistry;
             this.sceneStateProvider = sceneStateProvider;
             this.sceneCircumscribedPlanes = sceneCircumscribedPlanes;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
         {
+            if (!sceneStateProvider.IsCurrent || !sceneData.SceneLoadingConcluded) return;
+
             SetupVirtualCameraQuery(World);
 
             HandleVirtualCameraRemovalQuery(World);
@@ -52,8 +58,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         [None(typeof(VirtualCameraComponent), typeof(DeleteEntityIntention))]
         private void SetupVirtualCamera(Entity entity, CRDTEntity crdtEntity, in PBVirtualCamera pbVirtualCamera, in TransformComponent transform)
         {
-            if (!sceneStateProvider.IsCurrent) return;
-
             var virtualCameraInstance = poolRegistry.Get();
             virtualCameraInstance.transform.SetParent(transform.Transform);
             virtualCameraInstance.transform.localPosition = Vector3.zero;
@@ -82,16 +86,18 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void ClampVirtualCameraToSceneBounds(in VirtualCameraComponent virtualCameraComponent, in SDKTransform sdkTransform, in TransformComponent transformComponent)
         {
             if (!sdkTransform.IsDirty) return;
+            Transform virtualCamTransform = virtualCameraComponent.virtualCameraInstance.transform;
 
             if (sceneCircumscribedPlanes.Contains(transformComponent.Transform.position))
             {
-                virtualCameraComponent.virtualCameraInstance.transform.localPosition = Vector3.zero;
+                if (virtualCamTransform.localPosition != Vector3.zero)
+                    virtualCamTransform.localPosition = Vector3.zero;
                 return;
             }
 
-            // Position is outside bounds, clamp to border with extra space
-            Vector3 clampedPosition = sceneCircumscribedPlanes.GetNearestSceneBoundsPosition(transformComponent.Transform.position, 0.5f);
-            virtualCameraComponent.virtualCameraInstance.transform.position = clampedPosition;
+            // Position is outside bounds, clamp to border
+            Vector3 clampedPosition = sceneCircumscribedPlanes.GetNearestSceneBoundsPosition(transformComponent.Transform.position, SCENE_BOUNDS_CONSTRAIN_EXTRA_THRESHOLD);
+            virtualCamTransform.position = clampedPosition;
         }
 
         [Query]

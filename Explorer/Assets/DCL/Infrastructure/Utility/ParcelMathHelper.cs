@@ -202,10 +202,6 @@ namespace Utility
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 GetNearestSceneBoundsPosition(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point, float extraThreshold = 0f)
         {
-            // If the point is already inside the bounds, return it as is
-            if (boundingPlanes.Contains(point))
-                return point;
-
             // Clamp the X and Z coordinates to the bounds with extra space, keep Y unchanged
             float clampedX = Mathf.Clamp(point.x, boundingPlanes.MinX - extraThreshold, boundingPlanes.MaxX + extraThreshold);
             float clampedZ = Mathf.Clamp(point.z, boundingPlanes.MinZ - extraThreshold, boundingPlanes.MaxZ + extraThreshold);
