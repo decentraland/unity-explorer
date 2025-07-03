@@ -154,6 +154,22 @@ namespace DCL.Emoji
             view.EmojiFirstOpen -= ConfigureEmojiSectionSizes;
             view.SectionSelected -= OnSectionSelected;
             emojiSearchController?.Dispose();
+            
+            foreach (EmojiSectionView sectionView in emojiSectionViews)
+            {
+                foreach (Transform emojiButtonTransform in sectionView.EmojiContainer)
+                {
+                    Object.Destroy(emojiButtonTransform.gameObject);
+                }
+                
+                Object.Destroy(sectionView.gameObject);
+            }
+            
+            emojiSectionViews.Clear();
+            EmojiNameMapping.Clear();
+            emojiValueMapping.Clear();
+            sectionTransforms.Clear();
+            foundEmojis.Clear();
         }
     }
 }
