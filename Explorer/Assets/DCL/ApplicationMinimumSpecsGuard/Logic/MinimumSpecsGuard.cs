@@ -141,12 +141,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
                         {
                             throw new Exception($"Could not find a mounted drive corresponding to the path: {persistentPath}");
                         }
-
-                        ReportHub.Log(ReportCategory.UNSPECIFIED, "--- All Detected Drives ---");
-                        foreach (var drive in allDrives)
-                        {
-                            ReportHub.Log(ReportCategory.UNSPECIFIED, drive.ToString());
-                        }
                     }
                     else
                     {
