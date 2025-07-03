@@ -2,18 +2,20 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
-using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.CharacterPreview.Components;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using Global.AppArgs;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -26,33 +28,40 @@ namespace DCL.CharacterPreview
 {
     public readonly struct CharacterPreviewController : IDisposable
     {
+        private const string CHARACTER_PREVIEW_NAME = "CharacterPreview";
+
         private readonly CharacterPreviewCameraController cameraController;
         private readonly CharacterPreviewAvatarContainer characterPreviewAvatarContainer;
         private readonly IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool;
         private readonly Entity characterPreviewEntity;
         private readonly World globalWorld;
+        private readonly bool builderEmotesPreview;
 
-        public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
+        public CharacterPreviewController(World world, RectTransform renderImage, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
-            CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool)
+            CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool, IAppArgs appArgs)
         {
             globalWorld = world;
             characterPreviewAvatarContainer = avatarContainer;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewAvatarContainer, cameraSettings);
+            builderEmotesPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
             this.characterPreviewContainerPool = characterPreviewContainerPool;
 
             Transform? parent = transformPool.Get();
             parent.SetParent(avatarContainer.avatarParent, false);
             parent.gameObject.layer = avatarContainer.avatarParent.gameObject.layer;
-            parent.name = "CharacterPreview";
+            parent.name = CHARACTER_PREVIEW_NAME;
             parent.ResetLocalTRS();
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
-                new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
-                new CharacterPreviewComponent(),
+                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME),
+                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings},
                 new CharacterEmoteComponent());
         }
+
+        public void AddHeadIK() =>
+            globalWorld.Add(characterPreviewEntity, new HeadIKComponent());
 
         public void Dispose()
         {
@@ -65,6 +74,10 @@ namespace DCL.CharacterPreview
             }
 
             StopEmotes();
+
+            if (globalWorld.TryGet(characterPreviewEntity, out AvatarBase avatarBase) && avatarBase != null)
+                avatarBase.HeadIKRig.weight = 0;
+
             characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
             cameraController.Dispose();
         }
@@ -89,19 +102,18 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY
             );
 
-            Entity emotePromiseEntity = globalWorld.Create(EmotePromise.Create(globalWorld,
+            Entity emotePromiseEntity = builderEmotesPreview ? Entity.Null
+                : globalWorld.Create(EmotePromise.Create(globalWorld,
                 EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
                     avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
                 PartitionComponent.TOP_PRIORITY));
 
-            EntityReference emotePromiseRef = globalWorld.Reference(emotePromiseEntity);
-
             avatarShape.IsDirty = true;
 
-            return WaitForAvatarInstantiatedAsync(emotePromiseRef, ct);
+            return WaitForAvatarInstantiatedAsync(emotePromiseEntity, ct);
         }
 
-        private async UniTask WaitForAvatarInstantiatedAsync(EntityReference emotePromiseEntity, CancellationToken ct)
+        private async UniTask WaitForAvatarInstantiatedAsync(Entity emotePromiseEntity, CancellationToken ct)
         {
             World world = globalWorld;
             Entity avatarEntity = characterPreviewEntity;
@@ -111,6 +123,11 @@ namespace DCL.CharacterPreview
 
             ct.ThrowIfCancellationRequested();
 
+            if (world.TryGet(avatarEntity, out AvatarBase avatarBase) && avatarBase != null  && !avatarBase.RigBuilder.enabled)
+            {
+                avatarBase.RigBuilder.enabled = true;
+                avatarBase.HeadIKRig.weight = 1f;
+            }
             return;
 
             bool IsAvatarLoaded()
@@ -118,11 +135,10 @@ namespace DCL.CharacterPreview
                 return !world.Get<AvatarShapeComponent>(avatarEntity).IsDirty;
             }
 
-            bool IsEmoteLoaded()
-            {
-                return !emotePromiseEntity.IsAlive(world)
-                       || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
-            }
+            bool IsEmoteLoaded() =>
+                emotePromiseEntity == Entity.Null
+                || !world.IsAlive(emotePromiseEntity)
+                || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
         }
 
         public void PlayEmote(string emoteId)
@@ -134,6 +150,12 @@ namespace DCL.CharacterPreview
             else
                 globalWorld.Add(characterPreviewEntity, intent);
         }
+
+        public bool IsPlayingEmote() =>
+            globalWorld.TryGet(characterPreviewEntity, out CharacterEmoteComponent emoteComponent) && emoteComponent.IsPlayingEmote;
+
+        public bool TryGetPlayingEmote(out CharacterEmoteComponent emoteComponent) =>
+            globalWorld.TryGet(characterPreviewEntity, out emoteComponent) && emoteComponent.IsPlayingEmote;
 
         public void StopEmotes()
         {

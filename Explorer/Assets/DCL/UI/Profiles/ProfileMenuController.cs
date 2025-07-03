@@ -2,8 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
-using DCL.Profiles.Self;
 using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -33,10 +33,10 @@ namespace DCL.UI.Profiles
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IMVCManager mvcManager,
-            ViewDependencies viewDependencies
+            ProfileRepositoryWrapper profileDataProvider
         ) : base(viewFactory)
         {
-            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, viewDependencies);
+            profileSectionController = new ProfileSectionController(() => viewInstance!.ProfileMenu, identityCache, profileRepository, profileDataProvider);
             systemSectionController = new SystemMenuController(() => viewInstance!.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
             systemSectionController.OnClosed += OnClose;
         }

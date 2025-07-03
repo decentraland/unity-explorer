@@ -9,7 +9,7 @@ namespace DCL.Diagnostics
     {
         private readonly SceneDebugConsoleLogEntryBus sceneDebugConsoleLogEntryBus;
 
-        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, SceneDebugConsoleLogEntryBus sceneDebugConsoleLogEntryBus, bool debounceEnabled) : base(matrix, debounceEnabled)
+        public SceneDebugConsoleReportHandler(ICategorySeverityMatrix matrix, SceneDebugConsoleLogEntryBus sceneDebugConsoleLogEntryBus, bool debounceEnabled) : base(ReportHandler.DebugLog, matrix, debounceEnabled)
         {
             this.sceneDebugConsoleLogEntryBus = sceneDebugConsoleLogEntryBus;
         }
@@ -30,7 +30,7 @@ namespace DCL.Diagnostics
             sceneDebugConsoleLogEntryBus.Send(ecsSystemException.StackTrace, LogType.Exception);
         }
 
-        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object context)
+        internal override void LogExceptionInternal(Exception exception, ReportData reportData, Object? context)
         {
             sceneDebugConsoleLogEntryBus.Send(exception.Message, LogType.Exception);
             sceneDebugConsoleLogEntryBus.Send(exception.StackTrace, LogType.Exception);

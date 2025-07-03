@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Prefs;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -11,8 +12,8 @@ namespace Utility.Storage
         public static PersistentSetting<bool> CreateBool(string key, bool defaultValue)
         {
             PersistentSetting<bool>.ApplyIfNot(
-                static (key, defaultValue) => PlayerPrefs.GetInt(key, defaultValue ? 1 : 0) == 1,
-                static (key, value) => PlayerPrefs.SetInt(key, value ? 1 : 0)
+                static (key, defaultValue) => DCLPlayerPrefs.GetInt(key, defaultValue ? 1 : 0) == 1,
+                static (key, value) => DCLPlayerPrefs.SetInt(key, value ? 1 : 0)
             );
 
             return new PersistentSetting<bool>(key, defaultValue);
@@ -21,8 +22,8 @@ namespace Utility.Storage
         public static PersistentSetting<int> CreateInt(string key, int defaultValue)
         {
             PersistentSetting<int>.ApplyIfNot(
-                static (key, defaultValue) => PlayerPrefs.GetInt(key, defaultValue),
-                static (key, value) => PlayerPrefs.SetInt(key, value)
+                static (key, defaultValue) => DCLPlayerPrefs.GetInt(key, defaultValue),
+                static (key, value) => DCLPlayerPrefs.SetInt(key, value)
             );
 
             return new PersistentSetting<int>(key, defaultValue);
@@ -37,8 +38,8 @@ namespace Utility.Storage
         public static PersistentSetting<float> CreateFloat(string key, float defaultValue)
         {
             PersistentSetting<float>.ApplyIfNot(
-                static (key, defaultValue) => PlayerPrefs.GetFloat(key, defaultValue),
-                static (key, value) => PlayerPrefs.SetFloat(key, value)
+                static (key, defaultValue) => DCLPlayerPrefs.GetFloat(key, defaultValue),
+                static (key, value) => DCLPlayerPrefs.SetFloat(key, value)
             );
 
             return new PersistentSetting<float>(key, defaultValue);
@@ -47,8 +48,8 @@ namespace Utility.Storage
         public static PersistentSetting<T> CreateEnum<T>(string key, T defaultValue) where T: unmanaged, Enum, IEquatable<T>
         {
             PersistentSetting<T>.ApplyIfNot(
-                static (key, defaultValue) => EnumUtils.FromInt<T>(PlayerPrefs.GetInt(key, EnumUtils.ToInt(defaultValue))),
-                static (key, value) => PlayerPrefs.SetInt(key, EnumUtils.ToInt(value))
+                static (key, defaultValue) => EnumUtils.FromInt<T>(DCLPlayerPrefs.GetInt(key, EnumUtils.ToInt(defaultValue))),
+                static (key, value) => DCLPlayerPrefs.SetInt(key, EnumUtils.ToInt(value))
             );
 
             return new PersistentSetting<T>(key, defaultValue);
@@ -57,8 +58,8 @@ namespace Utility.Storage
         public static PersistentSetting<string> CreateString(string key, string defaultValue)
         {
             PersistentSetting<string>.ApplyIfNot(
-                static (key, defaultValue) => PlayerPrefs.GetString(key, defaultValue),
-                static (key, value) => PlayerPrefs.SetString(key, value)
+                static (key, defaultValue) => DCLPlayerPrefs.GetString(key, defaultValue),
+                static (key, value) => DCLPlayerPrefs.SetString(key, value)
             );
 
             return new PersistentSetting<string>(key, defaultValue);
@@ -68,13 +69,13 @@ namespace Utility.Storage
         {
             PersistentSetting<Vector2Int>.ApplyIfNot(
                 static (key, defaultVector) => new Vector2Int(
-                    PlayerPrefs.GetInt($"{key}_vector_x", defaultVector.x),
-                    PlayerPrefs.GetInt($"{key}_vector_y", defaultVector.y)
+                    DCLPlayerPrefs.GetInt($"{key}_vector_x", defaultVector.x),
+                    DCLPlayerPrefs.GetInt($"{key}_vector_y", defaultVector.y)
                 ),
                 static (key, value) =>
                 {
-                    PlayerPrefs.SetInt($"{key}_vector_x", value.x);
-                    PlayerPrefs.SetInt($"{key}_vector_y", value.y);
+                    DCLPlayerPrefs.SetInt($"{key}_vector_x", value.x);
+                    DCLPlayerPrefs.SetInt($"{key}_vector_y", value.y);
                 }
             );
 
@@ -86,14 +87,14 @@ namespace Utility.Storage
             PersistentSetting<Color>.ApplyIfNot(
                 static (key, defaultValue) =>
                 {
-                    string str = PlayerPrefs.GetString(key, string.Empty)!;
+                    string str = DCLPlayerPrefs.GetString(key, string.Empty)!;
 
                     if (string.IsNullOrEmpty(str))
                         return defaultValue;
 
                     return ColorUtility.TryParseHtmlString(str, out Color color) ? color : defaultValue;
                 },
-                static (key, value) => PlayerPrefs.SetString(key, ColorUtility.ToHtmlStringRGBA(value)!)
+                static (key, value) => DCLPlayerPrefs.SetString(key, ColorUtility.ToHtmlStringRGBA(value)!)
             );
 
             return new PersistentSetting<Color>(key, defaultValue);
@@ -101,7 +102,7 @@ namespace Utility.Storage
     }
 
     /// <summary>
-    ///     Value which is stored in PlayerPrefs at runtime and can override values coming from presets
+    ///     Value which is stored in DCLPlayerPrefs at runtime and can override values coming from presets
     /// </summary>
     public readonly struct PersistentSetting<T>
     {

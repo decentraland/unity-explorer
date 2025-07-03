@@ -4,40 +4,69 @@ using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Newtonsoft.Json;
 using rpc_csharp;
+using Sentry;
 using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Threading;
-using UnityEngine;
 using RpcClient = rpc_csharp.RpcClient;
 
 namespace DCL.SocialService
 {
     public interface IRPCSocialServices : IDisposable
     {
-        public RpcClientModule Module();
+        public const int FOREGROUND_CONNECTION_RETRIES = 3;
 
-        public UniTask EnsureRpcConnectionAsync(CancellationToken ct);
+        RpcClientModule Module();
+
+        /// <summary>
+        ///     Try to establish connection to the RPC server until the cancellation token is triggered or the retries count is exhausted.
+        /// </summary>
+        UniTask EnsureRpcConnectionAsync(CancellationToken ct) =>
+            EnsureRpcConnectionAsync(FOREGROUND_CONNECTION_RETRIES, ct);
+
+        UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct);
     }
 
     public class RPCSocialServices : IRPCSocialServices
     {
         private const string RPC_PORT_NAME = "social_service";
         private const string RPC_SERVICE_NAME = "SocialService";
-        private const int CONNECTION_TIMEOUT_SECS = 10;
-        private const int CONNECTION_RETRIES = 3;
-        private const double RETRY_BACKOFF_MULTIPLIER = 1.5;
+        private const string BREADCRUMB_CATEGORY = "RPC Service";
 
+        private const int CONNECTION_TIMEOUT_SECS = 10;
+
+        private const double RETRY_BACKOFF_DELAY_MIN = 1.0;
+        private const double RETRY_BACKOFF_DELAY_MAX = 45.0;
+
+        private const double RETRY_BACKOFF_MULTIPLIER = 2.0;
+
+        /// <summary>
+        ///     Used to ensure that only one connection establishment process is running at a time.
+        /// </summary>
+        private readonly SemaphoreSlim connectionEstablishingMutex = new (1, 1);
+
+        /// <summary>
+        ///     Used to ensure that handshake and disconnection processes do not overlap.
+        /// </summary>
         private readonly SemaphoreSlim handshakeMutex = new (1, 1);
+
         private readonly URLAddress apiUrl;
         private readonly IWeb3IdentityCache identityCache;
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly ISocialServiceEventBus socialServiceEventBus;
 
+        private double retryCurrentDelay = RETRY_BACKOFF_DELAY_MIN;
+
         private RpcClientModule? module;
         private RpcClientPort? port;
         private WebSocketRpcTransport? transport;
         private RpcClient? client;
+
+        private bool isConnectionReady => transport?.State == WebSocketState.Open
+                                          && module != null
+                                          && client != null
+                                          && port != null;
 
         public RPCSocialServices(
             URLAddress apiUrl,
@@ -49,16 +78,11 @@ namespace DCL.SocialService
             this.socialServiceEventBus = socialServiceEventBus;
         }
 
-        private bool isConnectionReady => transport?.State == WebSocketState.Open
-                                          && module != null
-                                          && client != null
-                                          && port != null;
-
         public void Dispose()
         {
             transport?.Dispose();
             client?.Dispose();
-            handshakeMutex.Dispose();
+            connectionEstablishingMutex.Dispose();
             authChainBuffer.Clear();
         }
 
@@ -89,62 +113,90 @@ namespace DCL.SocialService
             finally { handshakeMutex.Release(); }
         }
 
-        public async UniTask EnsureRpcConnectionAsync(CancellationToken ct)
+        public async UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct)
         {
-            var handshakeFinished = false;
-            int retries = CONNECTION_RETRIES;
-            var backoffDelay = 1.0;
+            // Ensuring runs in the infinite loop,
+            // but it's bound to the cancellation token originated from the source of the procedure invocation.
+            // if the source of invocation goes out of scope the next request will take over the ensuring/reconnection process
 
-            while (!handshakeFinished && retries > 0)
-                try
-                {
-                    retries--;
-                    await StartHandshakeAsync(ct);
-                    handshakeFinished = true;
-                }
-                catch (WebSocketException wsEx)
-                {
-                    if (retries == 0)
-                        throw new WebSocketException($"Failed to connect after {CONNECTION_RETRIES} attempts", wsEx);
+            var mutexAcquired = false;
 
-                    await UniTask.Delay(TimeSpan.FromSeconds(backoffDelay), cancellationToken: ct);
-                    backoffDelay *= RETRY_BACKOFF_MULTIPLIER;
-                }
-                catch (TimeoutException)
-                {
-                    if (retries == 0)
-                        throw;
+            try
+            {
+                // by acquiring the mutex while the whole loop is running
+                // prevent ping-ponging between different methods in competition for waiting for the mutex availability
+                await connectionEstablishingMutex.WaitAsync(ct);
+                mutexAcquired = true;
 
-                    await UniTask.Delay(TimeSpan.FromSeconds(backoffDelay), cancellationToken: ct);
-                    backoffDelay *= RETRY_BACKOFF_MULTIPLIER;
+                while (!ct.IsCancellationRequested)
+                {
+                    try
+                    {
+                        connectionRetries--;
+                        await StartHandshakeAsync(ct);
+
+                        // Reset the retry delay after a successful connection
+                        retryCurrentDelay = RETRY_BACKOFF_DELAY_MIN;
+
+                        // Return on success
+                        return;
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException)
+                    {
+                        if (connectionRetries > 0)
+                        {
+                            // Add a breadcrumb to better investigate the issue
+                            SentrySdk.AddBreadcrumb(ex.Message, category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Error);
+
+                            double appliedDelay = retryCurrentDelay;
+
+                            // Preserved the delay in case this process is cancelled
+                            retryCurrentDelay = Math.Min(retryCurrentDelay * RETRY_BACKOFF_MULTIPLIER, RETRY_BACKOFF_DELAY_MAX);
+
+                            await UniTask.Delay(TimeSpan.FromSeconds(appliedDelay), DelayType.UnscaledDeltaTime, cancellationToken: ct);
+                        }
+                        else
+                        {
+                            // If we reach here, it means we exhausted the retries and failed to connect
+                            throw new WebSocketException($"Failed to connect after {connectionRetries} attempts", ex);
+                        }
+                    }
                 }
+            }
+            finally
+            {
+                if (mutexAcquired)
+                    connectionEstablishingMutex.Release();
+            }
         }
 
-
-        private async UniTask StartHandshakeAsync(CancellationToken ct, bool test = false)
+        private async UniTask StartHandshakeAsync(CancellationToken ct)
         {
             var acquired = false;
+
             try
             {
                 await handshakeMutex.WaitAsync(ct);
                 acquired = true;
 
                 if (!isConnectionReady)
+                {
                     await InitializeConnectionAsync(ct);
+                    SentrySdk.AddBreadcrumb("Connection established successfully", category: BREADCRUMB_CATEGORY, level: BreadcrumbLevel.Info);
+                }
             }
             catch (Exception)
             {
                 // If we get here, the connection isn't ready and we should clean up
-                if (acquired)
-                {
-                    port?.Close();
-                    port = null;
-                    module = null;
-                    transport?.Dispose();
-                    transport = null;
-                    client?.Dispose();
-                    client = null;
-                }
+
+                port?.Close();
+                port = null;
+                module = null;
+                transport?.Dispose();
+                transport = null;
+                client?.Dispose();
+                client = null;
+
                 throw;
             }
             finally

@@ -5,6 +5,7 @@ using DCL.Profiles;
 using JetBrains.Annotations;
 using LiveKit.Rooms.Participants;
 using Newtonsoft.Json;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,14 +17,13 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace SceneRuntime.Apis.Modules.Players
 {
-    public class PlayersWrap : IJsApiWrapper
+    public class PlayersWrap : JsApiWrapper
     {
         private readonly IRoomHub roomHub;
         private readonly IProfileRepository profileRepository;
-        private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly IRemoteMetadata remoteMetadata;
 
-        public PlayersWrap(IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata)
+        public PlayersWrap(IRoomHub roomHub, IProfileRepository profileRepository, IRemoteMetadata remoteMetadata, CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.roomHub = roomHub;
             this.profileRepository = profileRepository;
@@ -35,11 +35,11 @@ namespace SceneRuntime.Apis.Modules.Players
         {
             async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
-                Profile? profile = await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), cancellationTokenSource.Token);
+                Profile? profile = await profileRepository.GetAsync(walletId, 0, remoteMetadata.GetLambdaDomainOrNull(walletId), disposeCts.Token);
                 return new PlayersGetUserDataResponse(profile, walletId);
             }
 
-            return ExecuteAsync().ToDisconnectedPromise();
+            return ExecuteAsync().ToDisconnectedPromise(this);
         }
 
         [UsedImplicitly]
@@ -50,15 +50,10 @@ namespace SceneRuntime.Apis.Modules.Players
         public object PlayersInScene() =>
             new PlayerListResponse(roomHub.SceneRoom().Room().Participants);
 
-        public void Dispose()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
-        }
-
         [Serializable]
+        [PublicAPI]
         public struct PlayerListResponse
         {
-            [UsedImplicitly]
             public string playersJson;
 
             public PlayerListResponse(IParticipantsHub participantsHub)
@@ -67,10 +62,14 @@ namespace SceneRuntime.Apis.Modules.Players
 
                 using PooledObject<List<Player>> pooledObj = ListPool<Player>.Get(out List<Player>? players);
 
-                foreach (string identity in identities)
+                // See: https://github.com/decentraland/unity-explorer/issues/3796
+                lock (identities)
                 {
-                    Participant remote = participantsHub.RemoteParticipant(identity)!;
-                    players!.Add(new Player(remote));
+                    foreach (string identity in identities)
+                    {
+                        Participant remote = participantsHub.RemoteParticipant(identity)!;
+                        players!.Add(new Player(remote));
+                    }
                 }
 
                 playersJson = JsonConvert.SerializeObject(players);
@@ -78,6 +77,7 @@ namespace SceneRuntime.Apis.Modules.Players
         }
 
         [Serializable]
+        [PublicAPI]
         public struct Player
         {
             public string userId;
@@ -91,6 +91,7 @@ namespace SceneRuntime.Apis.Modules.Players
         }
 
         [Serializable]
+        [PublicAPI]
         public struct PlayersGetUserDataResponse
         {
             public UserData? data;

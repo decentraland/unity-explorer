@@ -76,5 +76,6 @@ namespace DCL.CharacterMotion.Settings
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
         float StepOffset { get; set; }
+        float HeadIKWeightChangeSpeed { get; }
     }
 }

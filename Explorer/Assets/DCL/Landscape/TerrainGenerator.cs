@@ -27,7 +27,7 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.1f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 12;
+        private const int CACHE_VERSION = 15;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -38,7 +38,7 @@ namespace DCL.Landscape
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
         private readonly IMemoryProfiler profilingProvider;
-        private readonly bool forceCacheRegen;
+        public bool forceCacheRegen;
         private readonly List<Terrain> terrains;
         private readonly List<Collider> terrainChunkColliders;
 
@@ -77,6 +77,9 @@ namespace DCL.Landscape
 
         private TerrainModel terrainModel;
 
+        private ITerrainDetailSetter terrainDetailSetter;
+        private IGPUIWrapper gpuiWrapper;
+
         public TerrainGenerator(IMemoryProfiler profilingProvider, bool measureTime = false,
             bool forceCacheRegen = false)
         {
@@ -113,11 +116,10 @@ namespace DCL.Landscape
 
             terrainChunkColliders[chunkIndex].enabled = isEnabled;
             activeChunk = chunkIndex;
-
         }
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels,
-            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone)
+            ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum, bool isZone, IGPUIWrapper gpuiWrapper, ITerrainDetailSetter terrainDetailSetter)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -130,6 +132,10 @@ namespace DCL.Landscape
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+
+            this.terrainDetailSetter = terrainDetailSetter;
+            this.gpuiWrapper = gpuiWrapper;
+            gpuiWrapper.SetupLocalCache(localCache);
 
             isInitialized = true;
         }
@@ -188,7 +194,7 @@ namespace DCL.Landscape
             }
         }
 
-        public async UniTask GenerateTerrainAndShowAsync(
+        public async UniTask GenerateGenesisTerrainAndShowAsync(
             uint worldSeed = 1,
             bool withHoles = true,
             bool hideTrees = false,
@@ -289,6 +295,8 @@ namespace DCL.Landscape
 
             float endMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
             ReportHub.Log(ReportCategory.LANDSCAPE, $"The landscape generation took {endMemory - startMemory}MB of memory");
+
+            gpuiWrapper.TerrainsInstantiatedAsync(terrainModel.ChunkModels);
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
@@ -355,6 +363,7 @@ namespace DCL.Landscape
 
                 (Terrain terrain, Collider terrainCollider) = factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial);
 
+                chunkModel.terrain = terrain;
                 terrains.Add(terrain);
                 terrainChunkColliders.Add(terrainCollider);
 
@@ -382,7 +391,7 @@ namespace DCL.Landscape
                     !hideDetails
                         ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize,
                             chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData,
-                            worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels)
+                            worldSeed, cancellationToken, true, chunkModel.MinParcel, terrainDetailSetter, chunkModel.OccupiedParcels)
                         : UniTask.CompletedTask,
                     !hideTrees
                         ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits,
@@ -398,16 +407,23 @@ namespace DCL.Landscape
                         {
                             using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
                             {
-                                chunkModel.TerrainData.SetHoles(0, 0,
-                                    await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
-                                await UniTask.Yield(cancellationToken);
+                                if (chunkModel.OutOfTerrainParcels.Count != 0)
+                                {
+                                    chunkModel.TerrainData.SetHoles(0, 0,
+                                        await localCache.GetHolesAsync(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
+
+                                    await UniTask.Yield(cancellationToken);
+                                }
                             }
                         }
                         else
                         {
-                            bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
-                            chunkModel.TerrainData.SetHoles(0, 0, holes);
-                            localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
+                            if (chunkModel.OutOfTerrainParcels.Count != 0)
+                            {
+                                bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
+                                chunkModel.TerrainData.SetHoles(0, 0, holes);
+                                localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
+                            }
                         }
 
                         // await DigHolesAsync(terrainDataDictionary, cancellationToken);

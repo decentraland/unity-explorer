@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using MVC;
 using System;
 using System.Threading;
@@ -19,12 +20,11 @@ namespace DCL.Friends.UI.BlockUserPrompt
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         public BlockUserPromptController(ViewFactoryMethod viewFactory,
-            IFriendsService friendsService,
-            DCLInput dclInput)
+            IFriendsService friendsService)
             : base(viewFactory)
         {
             this.friendsService = friendsService;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
         }
 
         public override void Dispose()
@@ -76,18 +76,8 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid BlockUserAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.BlockUserAsync(inputData.TargetUserId, ct);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
-                finally
-                {
-                    ClosePopup();
-                }
+                await friendsService.BlockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                ClosePopup();
             }
         }
 
@@ -98,18 +88,8 @@ namespace DCL.Friends.UI.BlockUserPrompt
 
             async UniTaskVoid UnblockUserAsync(CancellationToken ct)
             {
-                try
-                {
-                    await friendsService.UnblockUserAsync(inputData.TargetUserId, ct);
-                }
-                catch (Exception e)
-                {
-                    ReportHub.LogException(e, new ReportData(ReportCategory.FRIENDS));
-                }
-                finally
-                {
-                    ClosePopup();
-                }
+                await friendsService.UnblockUserAsync(inputData.TargetUserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+                ClosePopup();
             }
         }
 

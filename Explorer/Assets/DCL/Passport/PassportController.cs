@@ -27,12 +27,14 @@ using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Passport.Modules;
 using DCL.Passport.Modules.Badges;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
@@ -44,6 +46,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Passport
 {
@@ -87,7 +90,7 @@ namespace DCL.Passport
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly int gridLayoutFixedColumnCount;
         private readonly int thumbnailHeight;
         private readonly int thumbnailWidth;
@@ -100,10 +103,10 @@ namespace DCL.Passport
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ViewDependencies viewDependencies;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private Profile? ownProfile;
@@ -162,11 +165,10 @@ namespace DCL.Passport
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IWeb3IdentityCache web3IdentityCache,
-            ViewDependencies viewDependencies,
             INftNamesProvider nftNamesProvider,
             int gridLayoutFixedColumnCount,
             int thumbnailHeight,
@@ -176,7 +178,8 @@ namespace DCL.Passport
             bool includeUserBlocking,
             bool isNameEditorEnabled,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
+            ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -202,7 +205,7 @@ namespace DCL.Passport
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -228,7 +231,6 @@ namespace DCL.Passport
         {
             Assert.IsNotNull(world);
 
-            viewInstance!.InjectDependencies(viewDependencies);
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider, decentralandUrlsSource, isNameEditorEnabled);
@@ -646,8 +648,14 @@ namespace DCL.Passport
                 config.Root.SetActive(false);
 
                 // We only request the first page so we show a couple of mutual thumbnails. This is by design
-                PaginatedFriendsResult mutualFriendsResult = await friendService.GetMutualFriendsAsync(
-                    inputData.UserId, 0, MUTUAL_PAGE_SIZE, ct);
+                Result<PaginatedFriendsResult> promiseResult = await friendService.GetMutualFriendsAsync(
+                                                                                       inputData.UserId, 0, MUTUAL_PAGE_SIZE, ct)
+                                                                                  .SuppressToResultAsync(ReportCategory.FRIENDS);
+
+                if (!promiseResult.Success)
+                    return;
+
+                PaginatedFriendsResult mutualFriendsResult = promiseResult.Value;
 
                 config.Root.SetActive(mutualFriendsResult.Friends.Count > 0);
                 config.AmountLabel.text = $"{mutualFriendsResult.TotalAmount} Mutual";
@@ -660,7 +668,7 @@ namespace DCL.Passport
                     mutualConfig[i].Root.SetActive(friendExists);
                     if (!friendExists) continue;
                     FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
-                    mutualConfig[i].Picture.Setup(mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
+                    mutualConfig[i].Picture.Setup(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address);
                 }
             }
         }
@@ -718,7 +726,7 @@ namespace DCL.Passport
 
             async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.CancelFriendshipAsync(inputData.UserId, ct);
+                await friendService.CancelFriendshipAsync(inputData.UserId, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
                 ShowFriendshipInteraction();
             }

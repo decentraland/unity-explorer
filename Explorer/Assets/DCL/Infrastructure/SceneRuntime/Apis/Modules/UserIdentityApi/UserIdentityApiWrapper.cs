@@ -8,30 +8,24 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility;
 
 namespace SceneRuntime.Apis.Modules.UserIdentityApi
 {
-    public partial class UserIdentityApiWrapper : IJsApiWrapper
+    public partial class UserIdentityApiWrapper : JsApiWrapper
     {
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
         private readonly ISceneExceptionsHandler sceneExceptionsHandler;
         private readonly List<string> wearablesCache = new ();
-        private readonly CancellationTokenSource lifeCycleCts = new ();
 
         public UserIdentityApiWrapper(IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
-            ISceneExceptionsHandler sceneExceptionsHandler)
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            CancellationTokenSource disposeCts) : base(disposeCts)
         {
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
-        }
-
-        public void Dispose()
-        {
-            lifeCycleCts.SafeCancelAndDispose();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/UserIdentity.js ")]
@@ -74,7 +68,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 }
             }
 
-            return GetOwnUserDataAsync(lifeCycleCts.Token).ContinueWith(JsonUtility.ToJson).ToDisconnectedPromise();
+            return GetOwnUserDataAsync(disposeCts.Token).ContinueWith(JsonUtility.ToJson).ToDisconnectedPromise(this);
         }
     }
 }

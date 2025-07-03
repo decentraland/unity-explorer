@@ -30,14 +30,15 @@ namespace DCL.SDKComponents.MediaStream
             isReachable = false;
             this.mediaAddress = newMediaAddress;
 
-            if (mediaAddress.MediaKind is MediaAddress.Kind.LIVEKIT)
+            if (mediaAddress.IsLivekitAddress(out _))
             {
                 isReachable = true;
                 status = Status.Resolved;
                 return;
             }
 
-            string url = mediaAddress.Url;
+            mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
+            string url = urlMediaAddress!.Value.Url;
 
             isReachable = await webRequestController.IsHeadReachableAsync(reportData, URLAddress.FromString(url), ct, 5);
             //This is needed because some servers might not handle HEAD requests correctly and return 404 errors, even thou they are perfectly

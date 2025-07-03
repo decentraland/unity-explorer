@@ -6,8 +6,10 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Web3.Identities;
 using Global.AppArgs;
 using System;
@@ -25,9 +27,13 @@ namespace DCL.Backpack
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
+        private readonly IProfileCache profileCache;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly ICollection<string> forceRender;
+        private readonly List<string> forceRender;
+        private readonly IEmoteStorage emoteStorage;
+        private readonly IWearableStorage wearableStorage;
         private readonly IAppArgs appArgs;
+        private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly World world;
         private readonly Entity playerEntity;
         private CancellationTokenSource? publishProfileCts;
@@ -37,18 +43,25 @@ namespace DCL.Backpack
             IEquippedEmotes equippedEmotes,
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
-            ICollection<string> forceRender,
+            IProfileCache profileCache,
+            List<string> forceRender,
+            IEmoteStorage emoteStorage,
+            IWearableStorage wearableStorage,
             IWeb3IdentityCache web3IdentityCache,
             World world,
             Entity playerEntity,
-            IAppArgs appArgs)
+            IAppArgs appArgs,
+            WarningNotificationView inWorldWarningNotificationView)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
             this.equippedWearables = equippedWearables;
             this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
+            this.profileCache = profileCache;
             this.forceRender = forceRender;
+            this.emoteStorage = emoteStorage;
+            this.wearableStorage = wearableStorage;
 
             backpackEventBus.EquipWearableEvent += EquipWearable;
             backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
@@ -58,10 +71,16 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent += ChangeColor;
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
+            // Avoid publishing an invalid profile
+            // For example: logout while the update operation is being processed
+            // See: https://github.com/decentraland/unity-explorer/issues/4413
+            web3IdentityCache.OnIdentityCleared += CancelUpdateOperation;
+            web3IdentityCache.OnIdentityChanged += CancelUpdateOperation;
 
             this.world = world;
             this.playerEntity = playerEntity;
             this.appArgs = appArgs;
+            this.inWorldWarningNotificationView = inWorldWarningNotificationView;
         }
 
         public void Dispose()
@@ -74,6 +93,8 @@ namespace DCL.Backpack
             backpackEventBus.ChangeColorEvent -= ChangeColor;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
+            web3IdentityCache.OnIdentityCleared -= CancelUpdateOperation;
+            web3IdentityCache.OnIdentityChanged -= CancelUpdateOperation;
             publishProfileCts?.SafeCancelAndDispose();
         }
 
@@ -142,9 +163,47 @@ namespace DCL.Backpack
             bool publishProfileChange = !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS)
                                         && !appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_WEARABLES);
 
-            var profile = await selfProfile.UpdateProfileAsync(publish: publishProfileChange, ct);
-            MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
-            UpdateAvatarInWorld(profile!);
+            Profile? oldProfile = await selfProfile.ProfileAsync(ct);
+
+            if (oldProfile == null)
+            {
+                ShowErrorNotificationAsync(ct).Forget();
+                return;
+            }
+
+            if (!publishProfileChange)
+            {
+                Profile newProfile = oldProfile.CreateNewProfileForUpdate(equippedEmotes, equippedWearables,
+                    forceRender, emoteStorage, wearableStorage);
+
+                // Skip publishing the same profile
+                if (newProfile.IsSameProfile(oldProfile))
+                {
+                    ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected in avatar configuration");
+                    return;
+                }
+
+                profileCache.Set(newProfile.UserId, newProfile);
+                UpdateAvatarInWorld(newProfile);
+                return;
+            }
+
+            try
+            {
+                await selfProfile.UpdateProfileAsync(ct, updateAvatarInWorld: true);
+                MultithreadingUtility.AssertMainThread(nameof(UpdateProfileAsync), true);
+            }
+            catch (OperationCanceledException) { }
+            catch (IdenticalProfileUpdateException)
+            {
+                ReportHub.LogWarning(ReportCategory.PROFILE, "Profile update skipped - no changes detected");
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.PROFILE);
+
+                ShowErrorNotificationAsync(ct).Forget();
+            }
         }
 
         private void UpdateAvatarInWorld(Profile profile)
@@ -158,5 +217,18 @@ namespace DCL.Backpack
             else
                 world.Add(playerEntity, profile);
         }
+
+        private async UniTask ShowErrorNotificationAsync(CancellationToken ct)
+        {
+            inWorldWarningNotificationView.SetText("There was an error updating your avatar profile. Please try again.");
+            inWorldWarningNotificationView.Show(ct);
+
+            await UniTask.Delay(3000, cancellationToken: ct);
+
+            inWorldWarningNotificationView.Hide(ct: ct);
+        }
+
+        private void CancelUpdateOperation() =>
+            publishProfileCts?.SafeCancelAndDispose();
     }
 }

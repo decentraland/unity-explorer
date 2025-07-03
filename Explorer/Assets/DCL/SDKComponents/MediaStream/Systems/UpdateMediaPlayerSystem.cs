@@ -31,8 +31,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
         private readonly WorldVolumeMacBus worldVolumeMacBus;
-        private readonly MediaPlayerCustomPool mediaPlayerPool;
+#endif
+
+        private readonly float audioFadeSpeed;
 
         private float worldVolumePercentage = 1f;
         private float masterVolumePercentage = 1f;
@@ -44,15 +47,14 @@ namespace DCL.SDKComponents.MediaStream
             ISceneStateProvider sceneStateProvider,
             IPerformanceBudget frameTimeBudget,
             WorldVolumeMacBus worldVolumeMacBus,
-            MediaPlayerCustomPool mediaPlayerPool
+            float audioFadeSpeed
         ) : base(world)
         {
             this.webRequestController = webRequestController;
             this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
-            this.worldVolumeMacBus = worldVolumeMacBus;
-            this.mediaPlayerPool = mediaPlayerPool;
+            this.audioFadeSpeed = audioFadeSpeed;
 
             //This following part is a workaround applied for the MacOS platform, the reason
             //is related to the video and audio streams, the MacOS environment does not support
@@ -60,6 +62,7 @@ namespace DCL.SDKComponents.MediaStream
             //from HLS through to Unity. This is a limitation of Apple’s AVFoundation framework
             //Similar issue reported here https://github.com/RenderHeads/UnityPlugin-AVProVideo/issues/1086
 #if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+            this.worldVolumeMacBus = worldVolumeMacBus;
             this.worldVolumeMacBus.OnWorldVolumeChanged += OnWorldVolumeChanged;
             this.worldVolumeMacBus.OnMasterVolumeChanged += OnMasterVolumeChanged;
             masterVolumePercentage = worldVolumeMacBus.GetMasterVolume();
@@ -80,8 +83,8 @@ namespace DCL.SDKComponents.MediaStream
         protected override void Update(float t)
         {
             UpdateMediaPlayerPositionQuery(World);
-            UpdateAudioStreamQuery(World);
-            UpdateVideoStreamQuery(World);
+            UpdateAudioStreamQuery(World, t);
+            UpdateVideoStreamQuery(World, t);
 
             UpdateVideoTextureQuery(World);
         }
@@ -93,14 +96,14 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent)
+        private void UpdateAudioStream(in Entity entity, ref MediaPlayerComponent component, PBAudioStream sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
             {
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume, dt * audioFadeSpeed * actualVolume);
             }
 
             var address = MediaAddress.New(sdkComponent.Url!);
@@ -111,14 +114,14 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
+        private void UpdateVideoStream(in Entity entity, ref MediaPlayerComponent component, PBVideoPlayer sdkComponent, [Data] float dt)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             if (component.State != VideoState.VsError)
             {
                 float actualVolume = (sdkComponent.HasVolume ? sdkComponent.Volume : MediaPlayerComponent.DEFAULT_VOLUME) * worldVolumePercentage * masterVolumePercentage;
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume);
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, actualVolume, dt * audioFadeSpeed * actualVolume);
             }
 
             var address = MediaAddress.New(sdkComponent.Src!);
@@ -133,26 +136,17 @@ namespace DCL.SDKComponents.MediaStream
             if (sdkComponent.IsNotDirty())
                 return false;
 
-            var kind = component.MediaAddress.MediaKind;
-
-            if (kind != address.MediaKind)
-                return PerformRemove(World, ref component, sdkComponent, entity);
-
-            switch (kind)
+            if (component.MediaAddress.IsUrlMediaAddress(out var urlMediaAddress) && address.IsUrlMediaAddress(out var other))
             {
-                case MediaAddress.Kind.URL:
-                    if (component.MediaAddress != address
-                        && (!sceneData.TryGetMediaUrl(address.Url, out var localMediaUrl) || component.MediaAddress.Url != localMediaUrl))
-                        return PerformRemove(World, ref component, sdkComponent, entity);
+                string selfUrl = urlMediaAddress!.Value.Url;
+                string otherUrl = other!.Value.Url;
 
-                    break;
-                case MediaAddress.Kind.LIVEKIT:
-                    if (component.MediaAddress != address)
-                        return PerformRemove(World, ref component, sdkComponent, entity);
-
-                    break;
-                default: throw new ArgumentOutOfRangeException();
+                if (selfUrl != otherUrl
+                    && (!sceneData.TryGetMediaUrl(otherUrl, out var localMediaUrl) || selfUrl != localMediaUrl))
+                    return PerformRemove(World, ref component, sdkComponent, entity);
             }
+            else if (component.MediaAddress != address)
+                return PerformRemove(World, ref component, sdkComponent, entity);
 
             return false;
 
@@ -203,12 +197,15 @@ namespace DCL.SDKComponents.MediaStream
             if (!sdkComponent.IsDirty) return;
 
             bool ShouldUpdateSource(in MediaPlayerComponent component) =>
-                component.MediaAddress.MediaKind switch
-                {
-                    MediaAddress.Kind.URL => !sceneData.TryGetMediaUrl(mediaAddress.Url, out URLAddress localMediaUrl) || component.MediaAddress.Url != localMediaUrl,
-                    MediaAddress.Kind.LIVEKIT => true,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                component.MediaAddress.Match(
+                    (sceneData, mediaAddress),
+                    onUrlMediaAddress: static (ctx, componentAddress) =>
+                    {
+                        string mediaAddressUrl = ctx.mediaAddress.IsUrlMediaAddress(out var otherUrl) ? otherUrl!.Value.Url : "";
+                        return !ctx.sceneData.TryGetMediaUrl(mediaAddressUrl, out URLAddress localMediaUrl) || componentAddress.Url != localMediaUrl;
+                    },
+                    onLivekitAddress: static (_, _) => true
+                );
 
             if (component.MediaAddress != mediaAddress && ShouldUpdateSource(in component))
             {
@@ -261,13 +258,14 @@ namespace DCL.SDKComponents.MediaStream
 
         private void UpdateStreamUrl(ref MediaPlayerComponent component, MediaAddress mediaAddress)
         {
-            if (component.MediaAddress.MediaKind is MediaAddress.Kind.LIVEKIT)
+            if (component.MediaAddress.IsLivekitAddress(out _))
             {
                 component.MediaAddress = mediaAddress;
                 return;
             }
 
-            string url = mediaAddress.Url;
+            mediaAddress.IsUrlMediaAddress(out var urlMediaAddress);
+            string url = urlMediaAddress!.Value.Url;
 
             bool isValidStreamUrl = url.IsValidUrl();
             bool isValidLocalPath = false;

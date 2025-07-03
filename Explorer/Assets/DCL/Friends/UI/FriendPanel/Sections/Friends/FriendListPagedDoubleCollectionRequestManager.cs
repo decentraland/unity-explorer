@@ -1,9 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI;
-using DCL.WebRequests;
-using MVC;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -21,23 +20,25 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         private readonly IProfileRepository profileRepository;
         private readonly CancellationTokenSource addFriendProfileCts = new ();
-        private readonly IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
+        private readonly FriendsConnectivityStatusTracker friendsConnectivityStatusTracker;
         private readonly List<FriendProfile> onlineFriends = new ();
         private readonly List<FriendProfile> offlineFriends = new ();
 
         public event Action<FriendProfile>? JumpInClicked;
         public event Action<FriendProfile, Vector2, FriendListUserView>? ContextMenuClicked;
+        public event Action<FriendProfile>? ChatClicked;
         public event Action? NoFriendsInCollections;
         public event Action? AtLeastOneFriendInCollections;
 
         public FriendListPagedDoubleCollectionRequestManager(IFriendsService friendsService,
             IFriendsEventBus friendEventBus,
             IProfileRepository profileRepository,
-            IFriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
+            FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             LoopListView2 loopListView,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             int pageSize,
-            int elementsMissingThreshold) : base(friendsService, friendEventBus, viewDependencies, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
+            int elementsMissingThreshold
+        ) : base(friendsService, friendEventBus, profileDataProvider, loopListView, pageSize, elementsMissingThreshold, FriendPanelStatus.ONLINE, FriendPanelStatus.OFFLINE, STATUS_ELEMENT_INDEX, EMPTY_ELEMENT_INDEX, USER_ELEMENT_INDEX)
         {
             this.profileRepository = profileRepository;
             this.friendsConnectivityStatusTracker = friendsConnectivityStatusTracker;
@@ -67,6 +68,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             friendsConnectivityStatusTracker.OnFriendBecameOnline -= FriendBecameOnline;
             friendsConnectivityStatusTracker.OnFriendBecameAway -= FriendBecameAway;
             friendsConnectivityStatusTracker.OnFriendBecameOffline -= FriendBecameOffline;
+
+            base.Dispose();
         }
 
         private void AddNewFriendProfile(FriendProfile friendProfile, OnlineStatus onlineStatus)
@@ -91,6 +94,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void FriendBecameOnline(FriendProfile friendProfile)
         {
             offlineFriends.Remove(friendProfile);
+
             if (!onlineFriends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile, OnlineStatus.ONLINE);
 
@@ -100,6 +104,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void FriendBecameAway(FriendProfile friendProfile)
         {
             offlineFriends.Remove(friendProfile);
+
             if (!onlineFriends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile, OnlineStatus.AWAY);
 
@@ -109,6 +114,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private void FriendBecameOffline(FriendProfile friendProfile)
         {
             onlineFriends.Remove(friendProfile);
+
             if (!offlineFriends.Contains(friendProfile))
                 AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
 
@@ -124,7 +130,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
                 if (newFriendProfile != null)
                 {
-                    FriendProfile friendProfile = newFriendProfile.ToFriendProfile();
+                    var friendProfile = newFriendProfile.ToFriendProfile();
+
                     if (!offlineFriends.Contains(friendProfile) && !onlineFriends.Contains(friendProfile))
                     {
                         AddNewFriendProfile(friendProfile, OnlineStatus.OFFLINE);
@@ -175,12 +182,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             elementView.JumpInButton.onClick.RemoveAllListeners();
             elementView.JumpInButton.onClick.AddListener(() => JumpInClicked?.Invoke(elementView.UserProfile));
 
+            elementView.ChatButton.onClick.RemoveAllListeners();
+            elementView.ChatButton.onClick.AddListener(() => ChatClicked?.Invoke(elementView.UserProfile));
+
             elementView.ToggleOnlineStatus(true);
 
             elementView.SetOnlineStatus(friendsConnectivityStatusTracker.GetFriendStatus(elementView.UserProfile.Address));
         }
 
-        protected override void ResetCollections()
+        protected sealed override void ResetCollection()
         {
             onlineFriends.Clear();
             offlineFriends.Clear();

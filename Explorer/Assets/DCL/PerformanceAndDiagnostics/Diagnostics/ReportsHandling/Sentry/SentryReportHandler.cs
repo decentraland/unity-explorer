@@ -1,6 +1,7 @@
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using Sentry;
+using Sentry.Extensibility;
 using Sentry.Unity;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace DCL.Diagnostics.Sentry
         private readonly PerReportScope.Pool scopesPool;
 
         public SentryReportHandler(ICategorySeverityMatrix matrix, bool debounceEnabled)
-            : base(matrix, debounceEnabled)
+            : base(ReportHandler.Sentry, matrix, debounceEnabled)
         {
             scopesPool = new PerReportScope.Pool(scopeConfigurators);
 
@@ -66,15 +67,13 @@ namespace DCL.Diagnostics.Sentry
 
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(category);
-            SentrySdk.CaptureMessage(message.ToString(), reportScope.Value.ExecuteCached, ToSentryLevel(in logType));
+            CaptureMessage(message.ToString(), category, logType);
         }
 
         internal override void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args)
         {
-            using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(category);
             var format = string.Format(message.ToString(), args);
-            SentrySdk.CaptureMessage(format, reportScope.Value.ExecuteCached, ToSentryLevel(in logType));
+            CaptureMessage(format, category, logType);
         }
 
         internal override void LogExceptionInternal<T>(T ecsSystemException)
@@ -88,11 +87,49 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.CaptureException(exception, reportScope.Value.ExecuteCached);
         }
 
+        internal override void HandleSuppressedException(Exception exception, ReportData reportData)
+        {
+            //Add breadcrumb for non AB categories. AB categories will flood our Sentry without meaningful information
+            if (reportData.Category.Equals(ReportCategory.ASSET_BUNDLES))
+                return;
+
+            SentrySdk.AddBreadcrumb(
+                $"Suppressed exception {reportData.Category}: {exception.Message}");
+        }
+
+        private void CaptureMessage(string message, ReportData reportData, LogType logType)
+        {
+            // Avoid reporting non-errors to sentry as separate issues (even if they are enabled in the matrix)
+            // Report them as breadcrumbs instead
+
+            SentryLevel sentryLevel = ToSentryLevel(logType);
+
+            switch (sentryLevel)
+            {
+                case SentryLevel.Info:
+                    SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Info);
+                    break;
+                case SentryLevel.Debug:
+                    SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Debug);
+                    break;
+                case SentryLevel.Warning:
+                    SentrySdk.AddBreadcrumb(message, reportData.Category, level: BreadcrumbLevel.Warning);
+                    break;
+                default:
+                {
+                    using PoolExtensions.Scope<PerReportScope> reportScope = scopesPool.Scope(reportData);
+                    SentrySdk.CaptureMessage(message, reportScope.Value.ExecuteCached, sentryLevel);
+                }
+
+                    break;
+            }
+        }
+
         private bool IsValidConfiguration(SentryUnityOptions options) =>
             !string.IsNullOrEmpty(options.Dsn)
             && options.Dsn != "<REPLACE_DSN>";
 
-        private SentryLevel ToSentryLevel(in LogType logType)
+        private static SentryLevel ToSentryLevel(in LogType logType)
         {
             switch (logType)
             {
@@ -110,22 +147,9 @@ namespace DCL.Diagnostics.Sentry
 
         private class PerReportScope
         {
-            internal class Pool : ThreadSafeObjectPool<PerReportScope>
-            {
-                public Pool(IReadOnlyList<ConfigureScope> scopeConfigurators) : base(
-                    () => new PerReportScope(scopeConfigurators), defaultCapacity: 3, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
-
-                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData)
-                {
-                    PoolExtensions.Scope<PerReportScope> scope = this.AutoScope();
-                    scope.Value.reportData = reportData;
-                    return scope;
-                }
-            }
+            public readonly Action<Scope> ExecuteCached;
 
             private readonly IReadOnlyList<ConfigureScope> scopeConfigurators;
-
-            public readonly Action<Scope> ExecuteCached;
 
             internal ReportData reportData { private get; set; }
 
@@ -154,10 +178,21 @@ namespace DCL.Diagnostics.Sentry
 
             private static void AddSceneInfo(Scope scope, ReportData data)
             {
-                if (data.SceneShortInfo.BaseParcel != Vector2Int.zero) ;
                 scope.SetTag("scene.base_parcel", data.SceneShortInfo.BaseParcel.ToString());
-
                 scope.SetTag("scene.name", data.SceneShortInfo.Name);
+            }
+
+            internal class Pool : ThreadSafeObjectPool<PerReportScope>
+            {
+                public Pool(IReadOnlyList<ConfigureScope> scopeConfigurators) : base(
+                    () => new PerReportScope(scopeConfigurators), defaultCapacity: 3, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
+
+                public PoolExtensions.Scope<PerReportScope> Scope(ReportData reportData)
+                {
+                    PoolExtensions.Scope<PerReportScope> scope = this.AutoScope();
+                    scope.Value.reportData = reportData;
+                    return scope;
+                }
             }
         }
     }

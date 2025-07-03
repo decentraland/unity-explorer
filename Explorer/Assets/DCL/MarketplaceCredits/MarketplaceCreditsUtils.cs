@@ -8,6 +8,15 @@ namespace DCL.MarketplaceCredits
 {
     public static class MarketplaceCreditsUtils
     {
+        public enum SeasonState
+        {
+            RUNNING,
+            ENDED,
+            ERR_SEASON_RUN_OUT_OF_FUNDS,
+            ERR_WEEK_RUN_OUT_OF_FUNDS,
+            ERR_PROGRAM_PAUSED,
+        }
+
         /// <summary>
         /// Formats the time left until the end of the week in a human-readable format.
         /// </summary>
@@ -65,8 +74,8 @@ namespace DCL.MarketplaceCredits
         /// <returns>>A string representing the season date range in a human-readable format.</returns>
         public static string FormatSeasonDateRange(string startDate, string endDate)
         {
-            DateTime startDateDT = DateTime.ParseExact(startDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
-            DateTime endDateDT = DateTime.ParseExact(endDate, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+            DateTime startDateDT = DateTime.Parse(startDate, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+            DateTime endDateDT = DateTime.Parse(endDate, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
             return $"{startDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}-{endDateDT.ToString("MMMM dd", CultureInfo.InvariantCulture)}";
         }
 
@@ -104,7 +113,11 @@ namespace DCL.MarketplaceCredits
         /// </summary>
         /// <returns>True if the program has ended, false otherwise.</returns>
         public static bool IsProgramEnded(this CreditsProgramProgressResponse creditsProgramProgressResponse) =>
-            creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds;
+            creditsProgramProgressResponse.season.timeLeft <= 0f ||
+            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ENDED) ||
+            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ERR_SEASON_RUN_OUT_OF_FUNDS) ||
+            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ERR_WEEK_RUN_OUT_OF_FUNDS) ||
+            creditsProgramProgressResponse.season.seasonState == nameof(SeasonState.ERR_PROGRAM_PAUSED);
 
         /// <summary>
         /// Checks if the user has completed all the weekly goals.
@@ -140,12 +153,12 @@ namespace DCL.MarketplaceCredits
         /// Checks if the user is allowed to use the feature based on the white list from the feature flag.
         /// </summary>
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public static bool IsUserAllowedToUseTheFeatureAsync(bool includeMarketplaceCredits, string userId, FeatureFlagsCache featureFlagsCache, CancellationToken ct)
+        public static bool IsUserAllowedToUseTheFeatureAsync(bool includeMarketplaceCredits, string userId, CancellationToken ct)
         {
             if (!includeMarketplaceCredits)
                 return false;
 
-            featureFlagsCache.Configuration.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
+            FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.MARKETPLACE_CREDITS, FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT, out string walletsForTestingMarketplaceCredits);
 
             return !string.IsNullOrEmpty(userId) && (walletsForTestingMarketplaceCredits == null || walletsForTestingMarketplaceCredits.Contains(userId, StringComparison.OrdinalIgnoreCase));
         }

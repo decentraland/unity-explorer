@@ -27,35 +27,33 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly UIDocument canvas;
 
-        private readonly DCLInput dclInput;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
-        private readonly ICursor cursor;
         private readonly IEventSystem eventSystem;
         private readonly IMVCManager mvcManager;
+        private readonly IMVCManagerMenusAccessFacade menusAccessFacade;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
         private Material hoverMaterial;
         private Material hoverOorMaterial;
 
-        public GlobalInteractionPlugin(DCLInput dclInput,
+        public GlobalInteractionPlugin(
             UIDocument canvas,
             IAssetsProvisioner assetsProvisioner,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
-            ICursor cursor,
             IEventSystem eventSystem,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            IMVCManagerMenusAccessFacade menusAccessFacade)
         {
-            this.dclInput = dclInput;
             this.canvas = canvas;
             this.assetsProvisioner = assetsProvisioner;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.globalInputEvents = globalInputEvents;
-            this.cursor = cursor;
             this.eventSystem = eventSystem;
             this.mvcManager = mvcManager;
+            this.menusAccessFacade = menusAccessFacade;
         }
 
         public void Dispose() { }
@@ -80,10 +78,10 @@ namespace DCL.PluginSystem.Global
                 builder.World.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
                 builder.World);
 
-            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, dclInput.Camera.Point, entityCollidersGlobalCache,
+            PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, DCLInput.Instance.Camera.Point, entityCollidersGlobalCache,
                 playerInteractionEntity, 100f);
 
-            DCLInput.PlayerActions playerInput = dclInput.Player;
+            DCLInput.PlayerActions playerInput = DCLInput.Instance.Player;
 
             // TODO How to add FORWARD/BACKWARD/LEFT/RIGHT properly?
             var actionsMap = new Dictionary<InputAction, UnityEngine.InputSystem.InputAction>
@@ -100,10 +98,11 @@ namespace DCL.PluginSystem.Global
                 { InputAction.IaAction4, playerInput.ActionButton4 },
                 { InputAction.IaAction5, playerInput.ActionButton5 },
                 { InputAction.IaAction6, playerInput.ActionButton6 },
+                { InputAction.IaAny, playerInput.Any },
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
-            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, dclInput, mvcManager);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, menusAccessFacade, mvcManager);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

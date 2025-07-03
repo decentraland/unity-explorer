@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using Utility.Animations;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -9,6 +10,12 @@ namespace DCL.AvatarRendering.Emotes
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
         public bool StopEmote;
+
+        public bool IsPlayingEmote => CurrentAnimationTag == AnimationHashes.EMOTE || CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
+
+        public float PlayingEmoteDuration => CurrentEmoteReference?.avatarClip
+            ? CurrentEmoteReference.avatarClip.length * CurrentEmoteReference.animatorComp!.speed
+            : 0f;
 
         public void Reset()
         {

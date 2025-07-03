@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.Browser.DecentralandUrls;
+using DCL.CharacterCamera;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -44,6 +45,8 @@ namespace Global.Tests.PlayMode
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> CreateStaticContainer(CancellationToken ct)
         {
+            FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
             UIDocument scenesUI = (await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ADDRESS)).GetComponent<UIDocument>(); // This is / should be the only place where we load this via Addressables
@@ -63,6 +66,15 @@ namespace Global.Tests.PlayMode
 
             var diagnosticsContainer = DiagnosticsContainer.Create(reportSettings);
 
+            var world = World.Create();
+            var cameraEntity = world.Create();
+
+            var cameraGameObject = new GameObject("TestCamera");
+            var camera = cameraGameObject.AddComponent<Camera>();
+
+            var cameraComponent = new CameraComponent(camera);
+            world.Add(cameraEntity, cameraComponent);
+
             (StaticContainer? staticContainer, bool success) = await StaticContainer.CreateAsync(
                 dclUrls,
                 assetProvisioner,
@@ -75,9 +87,9 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IEthereumApi>(),
                 ILaunchMode.PLAY,
                 useRemoteAssetBundles: false,
-                World.Create(),
+                world,
                 new Entity(),
-                new SystemMemoryCap(MemoryCapMode.MAX_SYSTEM_MEMORY),
+                new SystemMemoryCap(),
                 new WorldVolumeMacBus(),
                 enableAnalytics: false,
                 Substitute.For<IAnalyticsController>(),
@@ -85,7 +97,6 @@ namespace Global.Tests.PlayMode
                 Substitute.For<IDiskCache<PartialLoadingState>>(),
                 scenesUI,
                 new ObjectProxy<IProfileRepository>(),
-                new ObjectProxy<FeatureFlagsCache>(),
                 ct,
                 enableGPUInstancing: false
             );

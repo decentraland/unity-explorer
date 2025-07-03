@@ -24,6 +24,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Nametags;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.Rendering.GPUInstancing;
 using DCL.UI.SharedSpaceManager;
@@ -49,7 +50,6 @@ namespace DCL.PluginSystem.Global
 {
     public class InWorldCameraPlugin : IDCLGlobalPlugin<InWorldCameraSettings>
     {
-        private readonly DCLInput input;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly SelfProfile selfProfile;
         private readonly RealmData realmData;
@@ -75,9 +75,9 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World globalWorld;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly NametagsData nametagsData;
-        private readonly ViewDependencies viewDependencies;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private ScreenRecorder recorder;
         private GameObject hud;
@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.Global
         private InWorldCameraController inWorldCameraController;
         private CharacterController followTarget;
 
-        public InWorldCameraPlugin(DCLInput input, SelfProfile selfProfile,
+        public InWorldCameraPlugin(SelfProfile selfProfile,
             RealmData realmData, Entity playerEntity, IPlacesAPIService placesAPIService,
             ICharacterObject characterObject, ICoroutineRunner coroutineRunner,
             ICameraReelStorageService cameraReelStorageService, ICameraReelScreenshotsStorage cameraReelScreenshotsStorage, IMVCManager mvcManager,
@@ -100,11 +100,10 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World globalWorld,
             IDebugContainerBuilder debugContainerBuilder,
             NametagsData nametagsData,
-            ViewDependencies viewDependencies,
+            ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
             IWeb3IdentityCache web3IdentityCache)
         {
-            this.input = input;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.playerEntity = playerEntity;
@@ -129,7 +128,7 @@ namespace DCL.PluginSystem.Global
             this.globalWorld = globalWorld;
             this.debugContainerBuilder = debugContainerBuilder;
             this.nametagsData = nametagsData;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
             this.web3IdentityCache = web3IdentityCache;
 
@@ -175,7 +174,7 @@ namespace DCL.PluginSystem.Global
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
-                    viewDependencies
+                    profileRepositoryWrapper
                     ),
                 cameraReelScreenshotsStorage,
                 systemClipboard,
@@ -190,8 +189,8 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, input.InWorldCamera, nametagsData);
-            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, input.InWorldCamera);
+            ToggleInWorldCameraActivitySystem.InjectToWorld(ref builder, settings.TransitionSettings, inWorldCameraController, followTarget, debugContainerBuilder, cursor, DCLInput.Instance.InWorldCamera, nametagsData);
+            EmitInWorldCameraInputSystem.InjectToWorld(ref builder, DCLInput.Instance.InWorldCamera);
             MoveInWorldCameraSystem.InjectToWorld(ref builder, settings.MovementSettings, characterObject.Controller.transform, cursor);
             CaptureScreenshotSystem.InjectToWorld(ref builder, recorder, playerEntity, metadataBuilder, coroutineRunner, cameraReelStorageService, inWorldCameraController);
 

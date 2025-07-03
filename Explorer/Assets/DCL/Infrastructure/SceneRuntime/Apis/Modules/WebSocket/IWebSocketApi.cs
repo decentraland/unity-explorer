@@ -24,7 +24,7 @@ namespace SceneRuntime.Apis.Modules
 
         UniTask ConnectAsync(int websocketId, string url, CancellationToken ct);
 
-        UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, CancellationToken ct);
+        UniTask SendBinaryAsync(int websocketId, IArrayBuffer data, ulong size, CancellationToken ct);
 
         UniTask SendTextAsync(int websocketId, string data, CancellationToken ct);
 

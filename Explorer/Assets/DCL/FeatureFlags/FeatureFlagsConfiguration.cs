@@ -1,13 +1,18 @@
+using CodeLess.Attributes;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace DCL.FeatureFlags
 {
-    public class FeatureFlagsConfiguration
+    [Singleton]
+    public partial class FeatureFlagsConfiguration
     {
         private readonly FeatureFlagsResultDto result;
+
+        public IEnumerable<string> AllEnabledFlags => result.flags.Where(pair => pair.Value).Select(pair => pair.Key);
 
         public FeatureFlagsConfiguration(FeatureFlagsResultDto result)
         {
@@ -22,6 +27,9 @@ namespace DCL.FeatureFlags
             if (!result.variants.TryGetValue(id, out FeatureFlagVariantDto variant)) return false;
             return variant.name == variantId == variant.enabled;
         }
+
+        public bool TryGetVariant(string id, out FeatureFlagVariantDto variant) =>
+            result.variants.TryGetValue(id, out variant);
 
         public bool TryGetJsonPayload<T>(string id, string variantId, out T? json)
         {

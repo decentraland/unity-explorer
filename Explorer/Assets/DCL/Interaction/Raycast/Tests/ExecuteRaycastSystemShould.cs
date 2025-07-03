@@ -1,7 +1,6 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.ResetExtensions;
-using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
@@ -19,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Utility;
+using Component = UnityEngine.Component;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 using Vector3 = Decentraland.Common.Vector3;
 
@@ -38,11 +38,13 @@ namespace DCL.Interaction.Raycast.Tests
         private Entity raycastEntity;
         private PBRaycastResult raycastResult;
         private UnityEngine.Vector3 testScenePos;
+        private ISceneData sceneData;
 
         [SetUp]
         public void SetUp()
         {
-            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
             testScenePos = new UnityEngine.Vector3(10f, 0f, 15f);
             sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(testScenePos, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
 
@@ -223,6 +225,21 @@ namespace DCL.Interaction.Raycast.Tests
         }
 
         [Test]
+        public void DoNothingIfSceneIsNotFinishedLoading()
+        {
+            sceneData.SceneLoadingConcluded.Returns(false);
+
+            CreateColliders(ColliderLayer.ClPhysics);
+            pbRaycast.QueryType = RaycastQueryType.RqtHitFirst;
+            pbRaycast.CollisionMask = (uint)ColliderLayer.ClPhysics;
+
+            system.Update(0);
+
+            Assert.That(world.Get<RaycastComponent>(raycastEntity).Executed, Is.False);
+            ecsToCRDTWriter.DidNotReceive().PutMessage(Arg.Any<PBRaycastResult>(), Arg.Any<CRDTEntity>());
+        }
+
+        [Test]
         public void KeepExecutionIfContinuous()
         {
             pbRaycast.Continuous = true;
@@ -270,7 +287,7 @@ namespace DCL.Interaction.Raycast.Tests
                 entityCollidersSceneCache.TryGetEntity(collider, out Arg.Any<ColliderSceneEntityInfo>())
                                          .Returns(x =>
                                           {
-                                              x[1] = new ColliderSceneEntityInfo(EntityReference.Null, entity, mask);
+                                              x[1] = new ColliderSceneEntityInfo(Entity.Null, entity, mask);
                                               return true;
                                           });
             }

@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.Diagnostics;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
 using DCL.Web3;
@@ -20,7 +21,7 @@ namespace DCL.Chat
     /// <summary>
     /// A UI element that displays a list of chat messages.
     /// </summary>
-    public class ChatMessageViewerElement : MonoBehaviour, IDisposable, IViewWithGlobalDependencies
+    public class ChatMessageViewerElement : MonoBehaviour, IDisposable
     {
         public delegate void ChatMessageOptionsButtonClickedDelegate(string chatMessage, ChatEntryView chatEntryView);
         public delegate void ChatMessageViewerScrollPositionChangedDelegate(Vector2 newScrollPosition);
@@ -72,11 +73,11 @@ namespace DCL.Chat
 
         private IReadOnlyList<ChatMessage>? chatMessages;
         private CancellationTokenSource? fadeoutCts;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private int separatorPositionIndex;
         private int messageCountWhenSeparatorWasSet;
 
-        private ViewDependencies viewDependencies;
         private CancellationTokenSource popupCts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
@@ -274,11 +275,6 @@ namespace DCL.Chat
             IsSeparatorVisible = false;
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-        }
-
         /// <summary>
         /// Checks whether an item of the scroll view is in a position where the user can see it or not.
         /// </summary>
@@ -353,7 +349,6 @@ namespace DCL.Chat
                     messageOptionsButton?.onClick.RemoveAllListeners();
 
                     SetItemDataAsync(index, itemData, itemScript).Forget();
-                    itemScript.messageBubbleElement.SetupHyperlinkHandlerDependencies(viewDependencies);
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
                     if (itemData is { IsSentByOwnUser: false, IsSystemMessage: false })
@@ -367,15 +362,12 @@ namespace DCL.Chat
             return item;
         }
 
-        private bool IsUserBlocked(string userAddress) =>
-            viewDependencies.UserBlockingCacheProxy.Configured && viewDependencies.UserBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
-
         private void OnChatEntryClicked(string walletAddress, Vector2 contextMenuPosition)
         {
             popupCts = popupCts.SafeRestart();
             contextMenuTask?.TrySetResult();
             contextMenuTask = new UniTaskCompletionSource();
-            viewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task).Forget();
+            ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(walletAddress), contextMenuPosition, default(Vector2), popupCts.Token, contextMenuTask.Task, anchorPoint: MenuAnchorPoint.TOP_RIGHT).Forget();
         }
 
         private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
@@ -389,12 +381,12 @@ namespace DCL.Chat
                 itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
             else
             {
-                Profile? profile = await viewDependencies.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
+                Profile? profile = await profileRepositoryWrapper.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {
                     itemView.usernameElement.userName.color = profile.UserNameColor;
-                    itemView.ProfilePictureView.SetupWithDependencies(viewDependencies, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                    itemView.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
                 }
             }
 
@@ -427,6 +419,11 @@ namespace DCL.Chat
         private void OnEnable()
         {
             loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
+        }
+
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileRepositoryWrapper)
+        {
+            this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
     }
 }

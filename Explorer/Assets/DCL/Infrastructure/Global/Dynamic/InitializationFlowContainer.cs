@@ -47,10 +47,8 @@ namespace DCL.UserInAppInitializationFlow
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
             var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, terrainContainer.Landscape);
-            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, staticContainer.FeatureFlagsCache, decentralandUrlsSource, appArgs, realmNavigationContainer.RealmNavigator);
+            var checkOnboardingStartupOperation = new CheckOnboardingStartupOperation(loadingStatus, selfProfile, decentralandUrlsSource, appArgs, realmNavigationContainer.RealmNavigator);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmContainer.RealmController, staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, realmContainer.TeleportController, staticContainer.ExposedGlobalDataContainer.CameraSamplingData, dynamicWorldParams.StartParcel);
-
-            var sentryDiagnostics = new SentryDiagnosticStartupOperation(realmContainer.RealmController, bootstrapContainer.DiagnosticsContainer);
 
             var loadingOperations = new List<IStartupOperation>()
             {
@@ -61,7 +59,6 @@ namespace DCL.UserInAppInitializationFlow
                 checkOnboardingStartupOperation,
                 teleportStartupOperation,
                 ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
-                sentryDiagnostics
             };
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
@@ -69,7 +66,7 @@ namespace DCL.UserInAppInitializationFlow
             if (!localSceneDevelopment)
             {
                 // TODO review why loadGlobalPxOperation is invoked on recovery
-                loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, staticContainer.FeatureFlagsCache, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));
+                loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));
             }
 
             var startUpOps = new AnalyticsSequentialLoadingOperation<IStartupOperation.Params>(

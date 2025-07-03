@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.Web3;
@@ -11,6 +12,7 @@ using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Diagnostics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -24,7 +26,7 @@ namespace DCL.Chat
     public delegate void GetParticipantProfilesDelegate(List<Profile> outProfiles);
 
     // Note: The view never changes any data (chatMessages), that's done by the controller
-    public class ChatView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void FoldingChangedDelegate(bool isUnfolded);
@@ -179,7 +181,7 @@ namespace DCL.Chat
         /// </summary>
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
-        private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
@@ -204,6 +206,9 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
 
+        public event Action OnCloseButtonClicked = () => { };
+        public event Action OnInputButtonClicked = () => { };
+        
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
@@ -267,7 +272,7 @@ namespace DCL.Chat
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
-                            chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id));
+                            chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
                     }
 
@@ -340,6 +345,15 @@ namespace DCL.Chat
                     OnlineStatus.ONLINE :
                     OnlineStatus.OFFLINE);
             }
+        }
+
+        public void SetProfileDataPovider(ProfileRepositoryWrapper profileDataProvider)
+        {
+            conversationsToolbar.SetProfileDataProvider(profileDataProvider);
+            memberListView.SetProfileDataProvider(profileDataProvider);
+            chatMessageViewer.SetProfileDataProvider(profileDataProvider);
+            chatInputBox.SetProfileDataProvider(profileDataProvider);
+            this.profileRepositoryWrapper = profileDataProvider;
         }
 
         private void Start()
@@ -432,20 +446,9 @@ namespace DCL.Chat
             chatInputBox.InputChanged -= OnInputChanged;
             chatInputBox.InputSubmitted -= OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Click.performed -= OnClickUIInputPerformed;
-            viewDependencies.DclInput.UI.Close.performed -= OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            DCLInput.Instance.UI.Click.performed -= OnClickUIInputPerformed;
+            DCLInput.Instance.UI.Close.performed -= OnCloseUIInputPerformed;
             return base.HideAsync(ct, isInstant);
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-            chatInputBox.InjectDependencies(dependencies);
-            chatMessageViewer.InjectDependencies(dependencies);
-            memberListView.InjectDependencies(dependencies);
-            chatTitleBar.InjectDependencies(dependencies);
-            conversationsToolbar.InjectDependencies(dependencies);
         }
 
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
@@ -478,9 +481,9 @@ namespace DCL.Chat
             chatInputBox.InputChanged += OnInputChanged;
             chatInputBox.InputSubmitted += OnInputSubmitted;
 
-            viewDependencies.DclInput.UI.Submit.performed += OnSubmitUIInputPerformed;
-            viewDependencies.DclInput.UI.Close.performed += OnCloseUIInputPerformed;
-            viewDependencies.DclInput.UI.Click.performed += OnClickUIInputPerformed;
+            DCLInput.Instance.UI.Close.performed += OnCloseUIInputPerformed;
+            DCLInput.Instance.UI.Click.performed += OnClickUIInputPerformed;
+            SubscribeToSubmitEvent();
 
             closePopupTask = new UniTaskCompletionSource();
 
@@ -798,7 +801,7 @@ namespace DCL.Chat
             if(!IsUnfolded)
                 return;
 
-            IReadOnlyList<RaycastResult> raycastResults = viewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
+            IReadOnlyList<RaycastResult> raycastResults = ViewDependencies.EventSystem.RaycastAll(InputSystem.GetDevice<Mouse>().position.value);
             bool hasClickedOnPanel = false;
             bool hasClickedOnCloseButton = false;
             bool hasClickedOnEmojiPanel = false;
@@ -855,8 +858,9 @@ namespace DCL.Chat
             {
                 if (!IsUnfolded)
                 {
-                    IsUnfolded = true;
-                    Focus();
+                    // NOTE: notify controller to handle opening the chat
+                    // NOTE: instead of handling it here in the view
+                    OnInputButtonClicked();
                     chatMessageViewer.ShowLastMessage();
                 }
             }
@@ -876,7 +880,7 @@ namespace DCL.Chat
                 closePopupTask.Task);
 
             popupCts = popupCts.SafeRestart();
-            await viewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token);
+            await ViewDependencies.GlobalUIViews.ShowChatEntryMenuPopupAsync(data, popupCts.Token);
 
             isChatViewerMessageContextMenuOpen = false;
         }
@@ -884,7 +888,10 @@ namespace DCL.Chat
         private void OnCloseChatButtonClicked()
         {
             popupCts.SafeCancelAndDispose();
-            IsUnfolded = false;
+            
+            // NOTE: notify controller to handle closing the chat
+            // NOTE: instead of handling it here in the view
+            OnCloseButtonClicked();
         }
 
         private void OnInputChanged(string inputText)
@@ -989,15 +996,37 @@ namespace DCL.Chat
         private void OnConversationsToolbarConversationSelected(ChatChannel.ChannelId channelId)
         {
             if (currentChannel == null || !CurrentChannelId.Equals(channelId))
-                if (!channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                    ConversationSelected?.Invoke(channelId);
-                else
-                    CurrentChannelId = channelId;
+                ConversationSelected?.Invoke(channelId);
         }
 
         private void OnConversationsToolbarConversationRemovalRequested(ChatChannel.ChannelId channelId)
         {
             ChannelRemovalRequested?.Invoke(channelId);
+        }
+
+        private bool isSubmitHooked;
+        public void SubscribeToSubmitEvent()
+        {
+            if (isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to subscribe to submit event when it was already hooked");
+                return;
+            }
+
+            DCLInput.Instance.UI.Submit.performed += OnSubmitUIInputPerformed;
+            isSubmitHooked = true;
+        }
+
+        public void UnsubscribeToSubmitEvent()
+        {
+            if (!isSubmitHooked)
+            {
+                ReportHub.Log(ReportCategory.UNSPECIFIED, "Trying to unsubscribe from submit event when it was not hooked");
+                return;
+            }
+
+            DCLInput.Instance.UI.Submit.performed -= OnSubmitUIInputPerformed;
+            isSubmitHooked = false;
         }
     }
 }

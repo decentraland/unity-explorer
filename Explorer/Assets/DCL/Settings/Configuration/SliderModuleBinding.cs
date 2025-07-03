@@ -8,9 +8,11 @@ using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle.IncreasingRadius;
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
+using Object = UnityEngine.Object;
 
 namespace DCL.Settings.Configuration
 {
@@ -28,6 +30,7 @@ namespace DCL.Settings.Configuration
             MUSIC_VOLUME_FEATURE,
             UI_SOUNDS_VOLUME_FEATURE,
             AVATAR_SOUNDS_VOLUME_FEATURE,
+            STP_FEATURE,
             // add other features...
         }
 
@@ -41,11 +44,13 @@ namespace DCL.Settings.Configuration
             ControlsSettingsAsset controlsSettingsAsset,
             ChatSettingsAsset chatSettingsAsset,
             ISystemMemoryCap systemMemoryCap,
+            SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
-            WorldVolumeMacBus worldVolumeMacBus = null)
+            UpscalingController upscalingController,
+            WorldVolumeMacBus worldVolumeMacBus)
         {
-            var viewInstance = UnityEngine.Object.Instantiate(View, parent);
+            var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
 
             SettingsFeatureController controller = Feature switch
@@ -59,11 +64,11 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.MUSIC_VOLUME_FEATURE => new MusicVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.STP_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(nameof(viewInstance))
+                                                       _ => throw new ArgumentOutOfRangeException(),
                                                    };
 
-            controller.SetView(viewInstance);
             return controller;
         }
     }

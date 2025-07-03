@@ -48,7 +48,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             Assert.That(world.TryGet(e, out GltfContainerComponent component), Is.True);
-            Assert.That(component.Promise.Entity, Is.EqualTo(EntityReference.Null));
+            Assert.That(component.Promise.Entity, Is.EqualTo(Entity.Null));
             cache.Received(1).Dereference("1_Hash", Arg.Any<GltfContainerAsset>());
             collidersSceneCache.Received(2).Remove(Arg.Any<Collider>());
         }

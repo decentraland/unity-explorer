@@ -22,12 +22,10 @@ namespace DCL.Chat.Commands
         public bool DebugOnly => true;
 
         private readonly IPortableExperiencesController portableExperiencesController;
-        private readonly FeatureFlagsCache featureFlagsCache;
 
-        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController, FeatureFlagsCache featureFlagsCache)
+        public KillPortableExperienceChatCommand(IPortableExperiencesController portableExperiencesController)
         {
             this.portableExperiencesController = portableExperiencesController;
-            this.featureFlagsCache = featureFlagsCache;
         }
 
         public bool ValidateParameters(string[] parameters) =>
@@ -35,7 +33,7 @@ namespace DCL.Chat.Commands
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            if (!featureFlagsCache.Configuration.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
                 return "🔴 Error. Portable Experiences Chat Commands are disabled";
 
             string pxName = parameters[0];

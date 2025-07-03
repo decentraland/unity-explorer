@@ -52,7 +52,6 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
-  - rid: 5769833789245358161
   references:
     version: 2
     RefIds:
@@ -87,6 +86,13 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
+        <EmotesSettings>k__BackingField:
+          <TimeBetweenEmotes>k__BackingField: 15
+          <IntroEmoteURN>k__BackingField: raiseHand
+          <JumpInEmoteURN>k__BackingField: fistpump_short
+          <FunnyEmotes>k__BackingField:
+          - robot
+          - disco
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -98,48 +104,51 @@ MonoBehaviour:
             m_SubObjectGUID: 
             m_EditorAssetChanged: 0
           <InputButtons>k__BackingField:
-          - InputAction: 0
+          - PlayerInputAction: {fileID: 8483188427658457040, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 
-            Icon: {fileID: 0}
-          - InputAction: 1
+            Icon: {fileID: 21300000, guid: 1298933c0a6b35a499063fcfb805f66b, type: 3}
+          - PlayerInputAction: {fileID: 2589752990516661850, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: E
             Icon: {fileID: 0}
-          - InputAction: 2
+          - PlayerInputAction: {fileID: -4117738799243451851, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: F
             Icon: {fileID: 0}
-          - InputAction: 3
-            Key: 
+          - PlayerInputAction: {fileID: -6174129951794055311, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: Any
             Icon: {fileID: 0}
-          - InputAction: 4
+          - PlayerInputAction: {fileID: 3239514346835642328, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: W
             Icon: {fileID: 0}
-          - InputAction: 5
+          - PlayerInputAction: {fileID: 3427618249405714940, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: S
             Icon: {fileID: 0}
-          - InputAction: 6
+          - PlayerInputAction: {fileID: -1652773021623687720, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: D
             Icon: {fileID: 0}
-          - InputAction: 7
-            Key: A
-            Icon: {fileID: 0}
-          - InputAction: 8
+          - PlayerInputAction: {fileID: 8119733991161362085, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 
+            Icon: {fileID: 21300000, guid: 0c1f94bccfacc415f8b7916a4f3ae512, type: 3}
+          - PlayerInputAction: {fileID: -273270698691252620, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: SPACE BAR
             Icon: {fileID: 0}
-          - InputAction: 9
+          - PlayerInputAction: {fileID: -1806294599963264830, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: LSHIFT
             Icon: {fileID: 0}
-          - InputAction: 10
+          - PlayerInputAction: {fileID: 8129677363630674292, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 1
             Icon: {fileID: 0}
-          - InputAction: 11
+          - PlayerInputAction: {fileID: 8017425544309595397, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 2
             Icon: {fileID: 0}
-          - InputAction: 12
+          - PlayerInputAction: {fileID: 238014444060475990, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 3
             Icon: {fileID: 0}
-          - InputAction: 13
+          - PlayerInputAction: {fileID: 1953896829860503287, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
             Key: 4
             Icon: {fileID: 0}
+          - PlayerInputAction: {fileID: 5794463069454124747, guid: 6cec26357c7fb8f44b03ce452209387d, type: 3}
+            Key: 
+            Icon: {fileID: 21300000, guid: 0c1f94bccfacc415f8b7916a4f3ae512, type: 3}
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -650,6 +659,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GenericContextMenuTextPrefab:
+          m_AssetGUID: 9c27490a499144f85bed4593943fe86a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -713,10 +728,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 5769833789245358161
-      type: {class: SceneDebugConsolePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <ConsoleSettings>k__BackingField: {fileID: 11400000, guid: 5df92492d483946498f93a4a425c060b, type: 2}
     - rid: 6156380652633325570
       type: {class: MultiplayerCommunicationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

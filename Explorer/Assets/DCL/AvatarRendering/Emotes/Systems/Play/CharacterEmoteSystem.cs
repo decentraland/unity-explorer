@@ -21,6 +21,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Common.Components;
+using Global.AppArgs;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -47,23 +48,31 @@ namespace DCL.AvatarRendering.Emotes.Play
         private readonly IEmotesMessageBus messageBus;
         private readonly URN[] loadEmoteBuffer = new URN[1];
 
-        public CharacterEmoteSystem(World world, IEmoteStorage emoteStorage, IEmotesMessageBus messageBus, AudioSource audioSource, IDebugContainerBuilder debugContainerBuilder) : base(world)
+        public CharacterEmoteSystem(
+            World world,
+            IEmoteStorage emoteStorage,
+            IEmotesMessageBus messageBus,
+            AudioSource audioSource,
+            IDebugContainerBuilder debugContainerBuilder,
+            bool localSceneDevelopment,
+            IAppArgs appArgs) : base(world)
         {
             this.messageBus = messageBus;
             this.emoteStorage = emoteStorage;
             this.debugContainerBuilder = debugContainerBuilder;
-            emotePlayer = new EmotePlayer(audioSource);
+            emotePlayer = new EmotePlayer(audioSource, legacyAnimationsEnabled: localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS));
         }
 
         protected override void Update(float t)
         {
+            CancelEmotesByTeleportIntentionQuery(World);
             ConsumeEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
             CancelEmotesByDeletionQuery(World);
-            CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMovementQuery(World);
             CancelEmotesQuery(World);
             UpdateEmoteTagsQuery(World);
+            DisableCharacterControllerQuery(World);
             CleanUpQuery(World);
         }
 
@@ -76,6 +85,7 @@ namespace DCL.AvatarRendering.Emotes.Play
 
         [Query]
         [All(typeof(PlayerTeleportIntent))]
+        [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             StopEmote(ref emoteComponent, avatarView);
@@ -142,16 +152,19 @@ namespace DCL.AvatarRendering.Emotes.Play
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void StopEmote(ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
         {
-            if (emoteComponent.CurrentEmoteReference != null)
-            {
-                emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
-                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-            }
+            if (emoteComponent.CurrentEmoteReference == null) return;
+
+            emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
+
+            // Create a clean slate for the animator before setting the stop trigger
+            avatarView.ResetTrigger(AnimationHashes.EMOTE);
+            avatarView.ResetTrigger(AnimationHashes.EMOTE_RESET);
+            avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
 
             emoteComponent.Reset();
         }
 
-        // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
+        // This query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent,
@@ -196,13 +209,13 @@ namespace DCL.AvatarRendering.Emotes.Play
                         return;
                     }
 
+                    emoteComponent.EmoteUrn = emoteId;
                     StreamableLoadingResult<AudioClipData>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                    if (!emotePlayer.Play(mainAsset, audioClip, emoteIntent.TriggerSource != TriggerSource.PREVIEW && emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                        ReportHub.LogWarning(GetReportData(), $"Emote {emote.Model.Asset?.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
-                    emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
                 else
@@ -233,6 +246,12 @@ namespace DCL.AvatarRendering.Emotes.Play
         {
             if (!deleteEntityIntention.DeferDeletion)
                 messageBus.OnPlayerRemoved(profile.UserId);
+        }
+
+        [Query]
+        private void DisableCharacterController(ref CharacterController characterController, in CharacterEmoteComponent emoteComponent)
+        {
+            characterController.enabled = !emoteComponent.IsPlayingEmote;
         }
 
         private void LoadEmote(URN emoteId, BodyShape bodyShape)

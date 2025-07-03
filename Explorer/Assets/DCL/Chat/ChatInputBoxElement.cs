@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Emoji;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.Settings.Settings;
 using DCL.UI;
 using DCL.UI.CustomInputField;
@@ -23,7 +24,7 @@ namespace DCL.Chat
     /// <summary>
     ///     This element condenses all the functionality related to the input box of the chat, including triggering suggestions, opening the emoji panel and updating the character counter
     /// </summary>
-    public class ChatInputBoxElement : MonoBehaviour, IViewWithGlobalDependencies
+    public class ChatInputBoxElement : MonoBehaviour
     {
         public delegate void EmojiSelectionVisibilityChangedDelegate(bool isVisible);
         public delegate void InputBoxFocusChangedDelegate(bool isFocused);
@@ -66,7 +67,6 @@ namespace DCL.Chat
         private Mouse device;
         private EmojiPanelController? emojiPanelController;
         private InputSuggestionPanelController? suggestionPanelController;
-        private ViewDependencies viewDependencies;
         private IProfileCache profileCache;
 
         private CancellationTokenSource emojiPanelCts = new ();
@@ -80,6 +80,8 @@ namespace DCL.Chat
         private readonly List<Profile> participantProfiles = new ();
 
         private bool isInputSubmissionEnabled;
+
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public string InputBoxText
         {
@@ -102,9 +104,9 @@ namespace DCL.Chat
         /// </summary>
         public GameObject EmojiSelectionPanel => emojiPanel.gameObject;
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            viewDependencies = dependencies;
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         private bool IsEmojisEnabled
@@ -142,7 +144,7 @@ namespace DCL.Chat
             InitializeEmojiPanelController();
             InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
 
-            suggestionPanelController = new InputSuggestionPanelController(suggestionPanel, viewDependencies);
+            suggestionPanelController = new InputSuggestionPanelController(suggestionPanel);
             suggestionPanelController.SuggestionSelected += OnSuggestionSelected;
 
             inputField.onSelect.AddListener(OnInputSelected);
@@ -168,8 +170,8 @@ namespace DCL.Chat
                 return;
             isInputSubmissionEnabled = false;
 
-            viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
-            viewDependencies.DclInput.UI.Close.performed -= OnUICloseInput;
+            ViewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
+            DCLInput.Instance.UI.Close.performed -= OnUICloseInput;
             inputField.DeactivateInputField();
         }
 
@@ -179,8 +181,8 @@ namespace DCL.Chat
                 return;
             isInputSubmissionEnabled = true;
 
-            viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
-            viewDependencies.DclInput.UI.Close.performed += OnUICloseInput;
+            ViewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
+            DCLInput.Instance.UI.Close.performed += OnUICloseInput;
         }
 
         public void ClosePopups()
@@ -206,7 +208,7 @@ namespace DCL.Chat
 
         private void OnPasteShortcutPerformed()
         {
-            viewDependencies.ClipboardManager.Paste(this);
+            ViewDependencies.ClipboardManager.Paste(this);
         }
 
         private void OnInputChanged(string inputText)
@@ -279,7 +281,7 @@ namespace DCL.Chat
 
         private void OnClicked(PointerEventData.InputButton button)
         {
-            if (button == PointerEventData.InputButton.Right && isInputFocused && viewDependencies.ClipboardManager.HasValue())
+            if (button == PointerEventData.InputButton.Right && isInputFocused && ViewDependencies.ClipboardManager.HasValue())
             {
                 IsPasteMenuOpen = true;
 
@@ -291,7 +293,7 @@ namespace DCL.Chat
                     closePopupTask.Task);
 
                 popupCts = popupCts.SafeRestart();
-                viewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data, popupCts.Token).Forget();
+                ViewDependencies.GlobalUIViews.ShowPastePopupToastAsync(data, popupCts.Token).Forget();
                 inputField.ActivateInputField();
                 InputChanged?.Invoke(inputField.text);
             }
@@ -479,11 +481,11 @@ namespace DCL.Chat
                     if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
                     {
                         if (profileSuggestionData.ProfileData != profile)
-                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, viewDependencies);
+                            profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileRepositoryWrapper);
                     }
                     else
                     {
-                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, viewDependencies));
+                        profileSuggestionsDictionary.TryAdd(profile.DisplayName, new ProfileInputSuggestionData(profile, profileRepositoryWrapper));
                     }
                 }
             }

@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.AvatarRendering.Emotes;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -23,16 +24,18 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private readonly World world;
-        protected CharacterPreviewAvatarModel previewAvatarModel;
+        private readonly bool isPreviewPlatformActive;
 
-        protected bool zoomEnabled = true;
-        protected bool panEnabled = true;
-        protected bool rotateEnabled = true;
-        private CharacterPreviewController? previewController;
         private bool initialized;
         private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
-        private bool isPreviewPlatformActive;
+
+        protected CharacterPreviewController? previewController;
+        protected CharacterPreviewAvatarModel previewAvatarModel;
+        protected bool zoomEnabled = true;
+        protected bool panEnabled = true;
+        protected bool rotateEnabled = true;
+        private readonly Func<bool> isPlayingEmoteDelegate;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
@@ -60,6 +63,8 @@ namespace DCL.CharacterPreview
 
             characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
+
+            isPlayingEmoteDelegate = () => previewController!.Value.IsPlayingEmote();
         }
 
         public virtual void Initialize(Avatar avatar)
@@ -81,18 +86,18 @@ namespace DCL.CharacterPreview
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, TextureUtilities.GetColorSpaceFormat())
+            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 16, TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
+                antiAliasing = 4,
+                useDynamicScale = true,
             };
 
-            newTexture.antiAliasing = 8;
-            newTexture.useDynamicScale = true;
             newTexture.Create();
 
             view.RawImage.texture = newTexture;
 
-            previewController = previewFactory.Create(world, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
+            previewController = previewFactory.Create(world, view.RawImage.rectTransform, newTexture, inputEventBus, view.CharacterPreviewSettingsSo.cameraSettings);
             initialized = true;
 
             OnModelUpdated();
@@ -265,6 +270,18 @@ namespace DCL.CharacterPreview
 
         protected void StopEmotes() =>
             previewController?.StopEmotes();
+
+        protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
+        {
+            if (previewController == null) return;
+
+            PlayEmote(emoteURN);
+
+            await UniTask.WaitUntil(isPlayingEmoteDelegate, cancellationToken: ct);
+
+            if (previewController!.Value.TryGetPlayingEmote(out CharacterEmoteComponent emoteComponent))
+                await UniTask.Delay((int)(emoteComponent.PlayingEmoteDuration * 1000), cancellationToken: ct);
+        }
 
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);

@@ -26,7 +26,7 @@ namespace DCL.UI.ProfileNames
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IProfileChangesBus profileChangesBus;
+        private readonly ProfileChangesBus profileChangesBus;
         private readonly List<TMP_Dropdown.OptionData> dropdownOptions = new ();
         private readonly Regex validNameRegex = new (@"^[a-zA-Z0-9]+$");
         private UniTaskCompletionSource? lifeCycleTask;
@@ -43,7 +43,7 @@ namespace DCL.UI.ProfileNames
             ISelfProfile selfProfile,
             INftNamesProvider nftNamesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
-            IProfileChangesBus profileChangesBus) : base(viewFactory)
+            ProfileChangesBus profileChangesBus) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.selfProfile = selfProfile;
@@ -250,6 +250,7 @@ namespace DCL.UI.ProfileNames
                         if (updatedProfile != null)
                             profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
+                    catch (IdenticalProfileUpdateException) { }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 
@@ -286,6 +287,7 @@ namespace DCL.UI.ProfileNames
                         if (updatedProfile != null)
                             profileChangesBus.PushProfileNameChange(updatedProfile);
                     }
+                    catch (IdenticalProfileUpdateException) { }
                     catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.PROFILE); }
                 }
 

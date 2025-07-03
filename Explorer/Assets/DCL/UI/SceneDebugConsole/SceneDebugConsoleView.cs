@@ -7,13 +7,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Utility;
 
 namespace DCL.UI.SceneDebugConsole
 {
-    public class SceneDebugConsoleView : ViewBase, IView, IViewWithGlobalDependencies, IPointerEnterHandler, IPointerExitHandler, IDisposable
+    public class SceneDebugConsoleView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
     {
         public delegate void FoldingChangedDelegate(bool isUnfolded);
         public delegate void InputBoxFocusChangedDelegate(bool hasFocus);
@@ -80,7 +79,6 @@ namespace DCL.UI.SceneDebugConsole
         /// </summary>
         public event FoldingChangedDelegate FoldingChanged;
 
-        private ViewDependencies viewDependencies;
         private CancellationTokenSource fadeoutCts;
 
         private bool isInputSelected;
@@ -139,7 +137,7 @@ namespace DCL.UI.SceneDebugConsole
             // clearButton.onClick.RemoveListener(OnClearButtonClicked);
             togglePanelButton.onClick.RemoveListener(OnTogglePanelButtonClicked);
 
-            viewDependencies.DclInput.UI.Close.performed -= OnUIClosePerformed;
+            DCLInput.Instance.UI.Close.performed -= OnUIClosePerformed;
         }
 
         public void Initialize(IReadOnlyList<SceneDebugConsoleLogEntry> logEntries, SceneDebugConsoleSettings settings)
@@ -154,7 +152,7 @@ namespace DCL.UI.SceneDebugConsole
             // inputField.onDeselect.AddListener(OnInputFieldDeselected);
             // inputField.onSubmit.AddListener(OnInputFieldSubmit);
 
-            viewDependencies.DclInput.UI.Close.performed += OnUIClosePerformed;
+            DCLInput.Instance.UI.Close.performed += OnUIClosePerformed;
 
             logEntriesViewer.Initialize(logEntries);
         }
@@ -224,11 +222,6 @@ namespace DCL.UI.SceneDebugConsole
         public void OnLogHistoryEntryAdded()
         {
             logEntriesViewer.OnLogEntryAdded();
-        }
-
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
         }
 
         private void OnInputFieldSelected(string value)

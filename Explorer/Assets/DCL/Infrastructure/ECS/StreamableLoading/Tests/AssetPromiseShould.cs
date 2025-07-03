@@ -28,7 +28,7 @@ namespace ECS.StreamableLoading.Tests
         {
             var asset = new Asset();
 
-            world.Add(assetPromise.Entity.Entity, new StreamableLoadingResult<Asset>(asset));
+            world.Add(assetPromise.Entity, new StreamableLoadingResult<Asset>(asset));
 
             Assert.IsTrue(assetPromise.TryGetResult(world, out StreamableLoadingResult<Asset> result));
             Assert.AreEqual(asset, result.Asset);
@@ -48,13 +48,13 @@ namespace ECS.StreamableLoading.Tests
         {
             var asset = new Asset();
 
-            world.Add(assetPromise.Entity.Entity, new StreamableLoadingResult<Asset>(asset));
+            world.Add(assetPromise.Entity, new StreamableLoadingResult<Asset>(asset));
 
             Assert.IsTrue(assetPromise.TryConsume(world, out StreamableLoadingResult<Asset> result));
             Assert.AreEqual(asset, result.Asset);
             Assert.AreEqual(new StreamableLoadingResult<Asset>(asset), assetPromise.Result);
 
-            Assert.IsFalse(assetPromise.Entity.IsAlive(world));
+            Assert.IsFalse(world.IsAlive(assetPromise.Entity));
         }
 
         [Test]
@@ -62,7 +62,7 @@ namespace ECS.StreamableLoading.Tests
         {
             var asset = new Asset();
 
-            world.Add(assetPromise.Entity.Entity, new StreamableLoadingResult<Asset>(asset));
+            world.Add(assetPromise.Entity, new StreamableLoadingResult<Asset>(asset));
 
             Assert.IsTrue(assetPromise.TryConsume(world, out _));
             Assert.Throws<Exception>(() => assetPromise.TryConsume(world, out _));
@@ -74,7 +74,7 @@ namespace ECS.StreamableLoading.Tests
             assetPromise.ForgetLoading(world);
 
             Assert.IsTrue(assetPromise.LoadingIntention.CommonArguments.CancellationToken.IsCancellationRequested);
-            Assert.IsFalse(assetPromise.Entity.IsAlive(world));
+            Assert.IsFalse(world.IsAlive(assetPromise.Entity));
         }
 
         [TearDown]

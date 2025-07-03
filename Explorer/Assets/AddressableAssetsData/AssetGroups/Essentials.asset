@@ -50,11 +50,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 19373184c73f36042a55739551bb8298
-    m_Address: Avatar_CelShading
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1b149c5240fcd49309285605ce2e8067
     m_Address: CategoryMarkerObject
     m_ReadOnly: 0
@@ -200,11 +195,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5df92492d483946498f93a4a425c060b
-    m_Address: SceneDebugConsoleSettings
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5ed0eaf7428cb4135baf7d2e09a9430a
     m_Address: PageSelector
     m_ReadOnly: 0
@@ -342,6 +332,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 99df5d970efa24583937b65c21ff559b
     m_Address: Assets/TextMesh Pro/Fonts & Materials/LiberationSans SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c27490a499144f85bed4593943fe86a
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/Text.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

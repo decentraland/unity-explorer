@@ -6,8 +6,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.Profiles;
-using DCL.UI;
-using DCL.WebRequests;
 using DG.Tweening;
 using MVC;
 using System;
@@ -17,6 +15,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 using DCL.InWorldCamera.PassportBridge;
+using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using Utility;
 
@@ -36,7 +35,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IPassportBridge passportBridge;
         private readonly List<EquippedWearableController> wearableControllers = new();
         private readonly PhotoDetailPoolManager photoDetailPoolManager;
-        private readonly ViewDependencies viewDependencies;
+        private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
 
         private VisiblePerson? visiblePerson;
         private bool isShowingWearables;
@@ -50,7 +49,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             IWearablesProvider wearablesProvider,
             IPassportBridge passportBridge,
             PhotoDetailPoolManager photoDetailPoolManager,
-            ViewDependencies viewDependencies)
+            ProfileRepositoryWrapper profileDataProvider)
         {
             this.view = view;
             this.profileRepository = profileRepository;
@@ -59,7 +58,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.wearablesProvider = wearablesProvider;
             this.passportBridge = passportBridge;
             this.photoDetailPoolManager = photoDetailPoolManager;
-            this.viewDependencies = viewDependencies;
+            this.profileRepositoryWrapper = profileDataProvider;
 
             this.view.userProfileButton.onClick.AddListener(ShowPersonPassportClicked);
             this.view.expandWearableButton.onClick.AddListener(WearableListButtonClicked);
@@ -88,7 +87,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             if (profile is not null)
             {
                 view.userNameTag.gameObject.SetActive(!profile.HasClaimedName);
-                await view.profilePictureView.SetupWithDependenciesAsync(viewDependencies, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
+                await view.profilePictureView.SetupAsync(profileRepositoryWrapper, userColor, profile.Avatar.FaceSnapshotUrl, visiblePerson.userAddress, ct);
             }
             else
             {

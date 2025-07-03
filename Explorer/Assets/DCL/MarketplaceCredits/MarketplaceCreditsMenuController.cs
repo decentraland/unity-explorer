@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.MarketplaceCredits.Sections;
 using DCL.MarketplaceCreditsAPIService;
@@ -9,8 +8,10 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
+using DCL.RealmNavigation;
 using DCL.UI.Buttons;
 using DCL.UI.SharedSpaceManager;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using JetBrains.Annotations;
@@ -52,7 +53,8 @@ namespace DCL.MarketplaceCredits
         private readonly GameObject sidebarCreditsButtonIndicator;
         private readonly IRealmData realmData;
         private readonly ISharedSpaceManager sharedSpaceManager;
-        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ILoadingStatus loadingStatus;
 
         private MarketplaceCreditsWelcomeSubController? marketplaceCreditsWelcomeSubController;
         private MarketplaceCreditsVerifyEmailSubController? marketplaceCreditsVerifyEmailSubController;
@@ -81,7 +83,8 @@ namespace DCL.MarketplaceCredits
             GameObject sidebarCreditsButtonIndicator,
             IRealmData realmData,
             ISharedSpaceManager sharedSpaceManager,
-            FeatureFlagsCache featureFlagsCache) : base(viewFactory)
+            IWeb3IdentityCache web3IdentityCache,
+            ILoadingStatus loadingStatus) : base(viewFactory)
         {
             this.sidebarButton = sidebarButton;
             this.webBrowser = webBrowser;
@@ -94,7 +97,8 @@ namespace DCL.MarketplaceCredits
             this.sidebarCreditsButtonIndicator = sidebarCreditsButtonIndicator;
             this.realmData = realmData;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.featureFlagsCache = featureFlagsCache;
+            this.web3IdentityCache = web3IdentityCache;
+            this.loadingStatus = loadingStatus;
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated += SetSidebarButtonState;
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.CREDITS_GOAL_COMPLETED, OnMarketplaceCreditsNotificationReceived);
@@ -150,7 +154,7 @@ namespace DCL.MarketplaceCredits
             closeTaskCompletionSource = new UniTaskCompletionSource();
             OpenSection(MarketplaceCreditsSection.WELCOME);
             SetSidebarButtonAnimationAsPaused(true);
-            MarketplaceCreditsOpened?.Invoke(inputData.IsOpenedFromNotification);
+            MarketplaceCreditsOpened.Invoke(inputData.IsOpenedFromNotification);
         }
 
         protected override void OnViewClose()
@@ -164,7 +168,7 @@ namespace DCL.MarketplaceCredits
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            ViewShowingComplete?.Invoke(this);
+            ViewShowingComplete.Invoke(this);
             await UniTask.WhenAny(viewInstance!.CloseButton.OnClickAsync(ct), closeTaskCompletionSource.Task);
         }
 
@@ -191,6 +195,7 @@ namespace DCL.MarketplaceCredits
                 case MarketplaceCreditsSection.VERIFY_EMAIL:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsVerifyEmailSubController?.OpenSection();
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(false);
                     break;
                 case MarketplaceCreditsSection.GOALS_OF_THE_WEEK:
                     if (marketplaceCreditsGoalsOfTheWeekSubController != null)
@@ -198,20 +203,20 @@ namespace DCL.MarketplaceCredits
                         marketplaceCreditsGoalsOfTheWeekSubController.HasToPlayClaimCreditsAnimation = haveJustClaimedCredits;
                         marketplaceCreditsGoalsOfTheWeekSubController.OpenSection();
                     }
-
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
                 case MarketplaceCreditsSection.WEEK_GOALS_COMPLETED:
                     haveJustClaimedCredits = false;
                     marketplaceCreditsWeekGoalsCompletedSubController?.OpenSection();
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
                 case MarketplaceCreditsSection.PROGRAM_ENDED:
                     haveJustClaimedCredits = false;
                     viewInstance.TotalCreditsWidget.SetAsProgramEndVersion(isProgramEndVersion: true);
                     marketplaceCreditsProgramEndedSubController?.OpenSection();
+                    viewInstance.TotalCreditsWidget.gameObject.SetActive(true);
                     break;
             }
-
-            viewInstance.TotalCreditsWidget.gameObject.SetActive(section != MarketplaceCreditsSection.WELCOME && section != MarketplaceCreditsSection.VERIFY_EMAIL);
         }
 
         public async UniTaskVoid ShowCreditsUnlockedPanelAsync(float claimedCredits)
@@ -239,6 +244,7 @@ namespace DCL.MarketplaceCredits
             sidebarButtonStateCts.SafeCancelAndDispose();
 
             marketplaceCreditsAPIClient.OnProgramProgressUpdated -= SetSidebarButtonState;
+            web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
 
             if (viewInstance != null)
             {
@@ -264,7 +270,7 @@ namespace DCL.MarketplaceCredits
         }
 
         private void OnAnyPlaceClicked() =>
-            OnAnyPlaceClick?.Invoke();
+            OnAnyPlaceClick.Invoke();
 
         private void OpenInfoLink() =>
             webBrowser.OpenUrl(WEEKLY_REWARDS_INFO_LINK);
@@ -317,12 +323,22 @@ namespace DCL.MarketplaceCredits
                 if (ownProfile == null)
                     return;
 
-                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, ownProfile.UserId, featureFlagsCache, ct);
+                isFeatureActivated = MarketplaceCreditsUtils.IsUserAllowedToUseTheFeatureAsync(true, ownProfile.UserId, ct);
                 if (!isFeatureActivated)
                     return;
 
                 var creditsProgramProgressResponse = await marketplaceCreditsAPIClient.GetProgramProgressAsync(ownProfile.UserId, ct);
                 SetSidebarButtonState(creditsProgramProgressResponse);
+
+                if (!creditsProgramProgressResponse.HasUserStartedProgram())
+                {
+                    // Open the Marketplace Credits panel by default when the user didn't start the program and has landed in Genesis City.
+                    await UniTask.WaitUntil(() => loadingStatus.CurrentStage.Value == LoadingStatus.LoadingStage.Completed && realmData.IsGenesis(), cancellationToken: ct);
+                    await sharedSpaceManager.ShowAsync(PanelsSharingSpace.MarketplaceCredits, new Params(isOpenedFromNotification: false));
+                }
+
+                web3IdentityCache.OnIdentityChanged -= CheckForSidebarButtonState;
+                web3IdentityCache.OnIdentityChanged += CheckForSidebarButtonState;
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -343,7 +359,8 @@ namespace DCL.MarketplaceCredits
 
         private void SetSidebarButtonState(CreditsProgramProgressResponse creditsProgramProgressResponse)
         {
-            if (creditsProgramProgressResponse.season.timeLeft <= 0f || creditsProgramProgressResponse.season.isOutOfFunds)
+            if (creditsProgramProgressResponse.IsProgramEnded())
+
             {
                 SetSidebarButtonAnimationAsAlert(false);
                 SetSidebarButtonAsClaimIndicator(false);
@@ -351,8 +368,8 @@ namespace DCL.MarketplaceCredits
             }
 
             bool thereIsSomethingToClaim = creditsProgramProgressResponse.SomethingToClaim();
-            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || thereIsSomethingToClaim);
-            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim);
+            SetSidebarButtonAnimationAsAlert(!creditsProgramProgressResponse.HasUserStartedProgram() || !creditsProgramProgressResponse.IsUserEmailVerified() || (thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming));
+            SetSidebarButtonAsClaimIndicator(creditsProgramProgressResponse.HasUserStartedProgram() && creditsProgramProgressResponse.IsUserEmailVerified() && thereIsSomethingToClaim && !creditsProgramProgressResponse.credits.isBlockedForClaiming);
         }
     }
 }

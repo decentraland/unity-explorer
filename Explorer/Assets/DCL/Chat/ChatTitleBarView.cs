@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
 using MVC;
@@ -11,7 +12,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatTitleBarView : MonoBehaviour, IViewWithGlobalDependencies
+    public class ChatTitleBarView : MonoBehaviour
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
         public delegate void DeleteChatHistoryRequestedDelegate();
@@ -64,12 +65,6 @@ namespace DCL.Chat
             }
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
-        {
-            viewDependencies = dependencies;
-            profileView.InjectDependencies(dependencies);
-        }
-
         public void Initialize()
         {
             if(isInitialized)
@@ -110,11 +105,11 @@ namespace DCL.Chat
             profileView.gameObject.SetActive(false);
         }
 
-        public void SetupProfileView(Web3Address userId)
+        public void SetupProfileView(Web3Address userId, ProfileRepositoryWrapper profileDataProvider)
         {
             cts = cts.SafeRestart();
             profileView.gameObject.SetActive(true);
-            profileView.SetupAsync(userId, cts.Token).Forget();
+            profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
         }
@@ -126,7 +121,7 @@ namespace DCL.Chat
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
 
-            viewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
+            ViewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
         }
 
         private void OnDeleteChatHistoryButtonClicked()

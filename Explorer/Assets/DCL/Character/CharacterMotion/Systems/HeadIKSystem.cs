@@ -8,13 +8,16 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.IK;
 using DCL.CharacterMotion.Settings;
+using DCL.CharacterPreview.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Diagnostics;
 using DCL.InWorldCamera;
+using DCL.Utilities;
 using ECS.Abstract;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.InputSystem;
 #if UNITY_EDITOR
 using DCL.AvatarRendering.DemoScripts.Components;
 #endif
@@ -33,9 +36,15 @@ namespace DCL.CharacterMotion.Systems
         private readonly ElementBinding<float> horizontalReset;
         private readonly ElementBinding<float> speed;
         private SingleInstanceEntity settingsEntity;
+        private readonly ICharacterControllerSettings settings;
+        private readonly DCLInput dclInput;
+        private readonly Vector3[] previewImageCorners = new Vector3[4];
 
-        private HeadIKSystem(World world, IDebugContainerBuilder builder) : base(world)
+        private HeadIKSystem(World world, IDebugContainerBuilder builder, ICharacterControllerSettings settings) : base(world)
         {
+            this.settings = settings;
+            dclInput = DCLInput.Instance;
+
             verticalLimit = new ElementBinding<float>(0);
             horizontalLimit = new ElementBinding<float>(0);
             horizontalReset = new ElementBinding<float>(0);
@@ -65,9 +74,63 @@ namespace DCL.CharacterMotion.Systems
         protected override void Update(float t)
         {
             UpdateDebugValues();
-
+            UpdatePreviewAvatarIKQuery(World, t);
             if (!World.Has<InWorldCameraComponent>(camera))
                 UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+        }
+
+        [Query]
+        private void UpdatePreviewAvatarIK([Data] float dt, in CharacterPreviewComponent previewComponent, ref HeadIKComponent headIK,
+            ref AvatarBase avatarBase, in CharacterEmoteComponent emoteComponent)
+        {
+            headIK.IsDisabled = emoteComponent.CurrentEmoteReference != null || !this.headIKIsEnabled;
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, headIK.IsDisabled ? 0 : 1, settings.HeadIKWeightChangeSpeed * dt);
+
+            if (headIK.IsDisabled) return;
+
+            (Vector3 bottomLeft, Vector3 topRight) = GetImageScreenCorners(previewComponent.RenderImageRect);
+            Vector3 viewportPos = previewComponent.Camera.WorldToViewportPoint(avatarBase.HeadPositionConstraint.position);
+
+            Vector3 objectScreenPos = new Vector3(
+                Mathf.Lerp(bottomLeft.x, topRight.x, viewportPos.x),
+                Mathf.Lerp(bottomLeft.y, topRight.y, viewportPos.y),
+                previewComponent.Settings.MinAvatarDepth);
+
+            if(!dclInput.UI.Point.enabled)
+                dclInput.UI.Point.Enable();
+
+            Vector2 mousePos = dclInput.UI.Point.ReadValue<Vector2>();
+            Vector3 mouseScreenPos = new Vector3(mousePos.x, mousePos.y, 0);
+
+            var screenVector = objectScreenPos - mouseScreenPos;
+            screenVector.y = -screenVector.y;
+            screenVector.z = LerpAvatarDepth(previewComponent, screenVector);
+
+            ApplyHeadLookAt.Execute(screenVector.normalized, avatarBase, dt * previewComponent.Settings.HeadMoveSpeed, settings, useFrontalReset: false);
+        }
+
+        private static float LerpAvatarDepth(CharacterPreviewComponent previewComponent, Vector3 screenVector)
+        {
+            float screenVector2DMagnitude = new Vector2(screenVector.x, screenVector.y).magnitude;
+            float screenHalfDiagonal = new Vector2(Screen.width, Screen.height).magnitude / 2;
+            float normalizedMagnitude = Mathf.Clamp01(screenVector2DMagnitude / screenHalfDiagonal);
+            float minZ = previewComponent.Settings.MinAvatarDepth;
+            float maxZ = previewComponent.Settings.MaxAvatarDepth;
+
+            return Mathf.Lerp(minZ, maxZ, normalizedMagnitude);
+        }
+
+        private static (Vector3 bottomLeft, Vector3 topRight) GetImageScreenCorners(RectTransform imageRect)
+        {
+            Rect rect = imageRect.rect;
+            var bottomLeftLocal = new Vector3(rect.x, rect.y, 0.0f);
+            var topRightLocal = new Vector3(rect.xMax, rect.yMax, 0.0f);
+
+            Matrix4x4 localToWorldMatrix = imageRect.transform.localToWorldMatrix;
+
+            return (
+                bottomLeft: RectTransformUtility.WorldToScreenPoint(null, localToWorldMatrix.MultiplyPoint(bottomLeftLocal)),
+                topRight: RectTransformUtility.WorldToScreenPoint(null, localToWorldMatrix.MultiplyPoint(topRightLocal)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,7 +170,7 @@ namespace DCL.CharacterMotion.Systems
                              && emoteComponent.CurrentEmoteReference == null
                              && !platformComponent.IsMovingPlatform;
 
-            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, 2 * dt);
+            avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
             if (headIK.IsDisabled) return;

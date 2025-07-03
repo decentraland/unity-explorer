@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -11,7 +12,9 @@ using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -34,7 +37,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private static readonly Vector2 CONTEXT_MENU_OFFSET = new (5, -10);
 
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
+        private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy;
         private readonly IMVCManager mvcManager;
         private readonly IChatEventBus chatEventBus;
         private readonly bool includeUserBlocking;
@@ -53,7 +56,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
-
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource cancellationTokenSource;
         private UniTaskCompletionSource closeContextMenuTask;
@@ -68,7 +71,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             bool includeUserBlocking,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            ObjectProxy<IFriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy)
+            ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -78,6 +82,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
+            this.sharedSpaceManager = sharedSpaceManager;
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
@@ -92,7 +97,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
 
-            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: GenericContextMenuAnchorPoint.BOTTOM_LEFT)
+            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(mentionUserButtonControlSettings)
@@ -104,7 +109,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         public async UniTask ShowUserProfileContextMenuAsync(Profile profile, Vector3 position, Vector2 offset,
             CancellationToken ct, UniTask closeMenuTask, Action onContextMenuHide = null,
-            GenericContextMenuAnchorPoint anchorPoint = GenericContextMenuAnchorPoint.DEFAULT)
+            ContextMenuOpenDirection anchorPoint = ContextMenuOpenDirection.BOTTOM_RIGHT)
         {
             closeContextMenuTask?.TrySetResult();
             closeContextMenuTask = new UniTaskCompletionSource();
@@ -119,6 +124,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                 blockButtonControlSettings.SetData(profile.UserId);
                 jumpInButtonControlSettings.SetData(profile.UserId);
                 contextMenuBlockUserButton.Enabled = includeUserBlocking && friendshipStatus != FriendshipStatus.BLOCKED;
+
                 contextMenuJumpInButton.Enabled = friendshipStatus == FriendshipStatus.FRIEND &&
                                                   friendOnlineStatusCacheProxy.Object.GetFriendStatus(profile.UserId) != OnlineStatus.OFFLINE;
             }
@@ -130,16 +136,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
 
-            if (anchorPoint == GenericContextMenuAnchorPoint.DEFAULT)
-                anchorPoint = GenericContextMenuAnchorPoint.BOTTOM_LEFT;
-
             contextMenu.ChangeAnchorPoint(anchorPoint);
 
             if (offset == default(Vector2))
                 offset = CONTEXT_MENU_OFFSET;
 
             contextMenu.ChangeOffsetFromTarget(offset);
-
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
                 new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
@@ -160,7 +162,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private void OnFriendsButtonClicked(string userAddress, UserProfileContextMenuControlSettings.FriendshipStatus friendshipStatus)
         {
-            //TODO FRAN Issue #3408: we should only have this logic in one place, not repeated in each place that uses this context menu
             switch (friendshipStatus)
             {
                 case UserProfileContextMenuControlSettings.FriendshipStatus.NONE:
@@ -204,7 +205,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
             async UniTaskVoid CancelFriendRequestThenChangeInteractionStatusAsync(CancellationToken ct)
             {
-                await friendService.CancelFriendshipAsync(userAddress, ct);
+                await friendService.CancelFriendshipAsync(userAddress, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
             }
         }
 
@@ -247,21 +248,27 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private void OnMentionUserClicked(string userName)
         {
             closeContextMenuTask.TrySetResult();
+
             //Per design request we need to add an extra character after adding the mention to the chat.
-            chatEventBus.InsertText(userName + " ");
+            ShowChatAsync(() => chatEventBus.InsertText(userName + " ")).Forget();
         }
 
         private void OnOpenConversationButtonClicked(string userId)
         {
             closeContextMenuTask.TrySetResult();
-            chatEventBus.OpenConversationUsingUserId(userId);
+            ShowChatAsync(() => chatEventBus.OpenConversationUsingUserId(userId)).Forget();
+        }
+
+        private async UniTaskVoid ShowChatAsync(Action onChatShown)
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            onChatShown?.Invoke();
         }
 
         private void OnBlockUserClicked(string userId)
         {
             ShowBlockUserPromptAsync(targetProfile).Forget();
         }
-
 
         private async UniTaskVoid ShowBlockUserPromptAsync(Profile profile)
         {
@@ -280,9 +287,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private void JumpToFriendClicked(string targetAddress, Vector2Int parcel) =>
             analytics.Track(AnalyticsEvents.Friends.JUMP_TO_FRIEND_CLICKED, new JsonObject
             {
-                {"receiver_id", targetAddress},
-                {"friend_position", parcel.ToString()},
+                { "receiver_id", targetAddress },
+                { "friend_position", parcel.ToString() },
             });
-
     }
 }

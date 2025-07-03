@@ -70,30 +70,12 @@
         "GUID:a128e9c160e44f65a2f4e0cf0fc535c6",
         "GUID:246f0aa8b201240c8b816c1cd6ad4778",
         "GUID:924e84bd95e84ef3b9bfb35d9681dfc7",
-        "GUID:ace653ac543d483ba8abee112a3ba2a6"
+        "GUID:ace653ac543d483ba8abee112a3ba2a6",
+        "GUID:7045ce3c8d4f002439a982bb9e670781",
+        "GUID:8361fcd8348a45c1a0c36b22ae18723c"
     ],
     "includePlatforms": [],
-    "excludePlatforms": [
-        "Android",
-        "EmbeddedLinux",
-        "GameCoreScarlett",
-        "GameCoreXboxOne",
-        "iOS",
-        "LinuxStandalone64",
-        "CloudRendering",
-        "macOSStandalone",
-        "PS4",
-        "PS5",
-        "QNX",
-        "Stadia",
-        "Switch",
-        "tvOS",
-        "WSA",
-        "WebGL",
-        "WindowsStandalone32",
-        "WindowsStandalone64",
-        "XboxOne"
-    ],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
@@ -101,14 +83,13 @@
         "NSubstitute.dll",
         "Arch.dll",
         "Arch.System.dll",
-        "ClearScript.V8.dll",
-        "ClearScript.Core.dll",
         "ClearScript.V8.ICUData.dll",
         "Newtonsoft.Json.dll",
         "Google.Protobuf.dll",
         "System.Runtime.CompilerServices.Unsafe.dll",
         "CommunityToolkit.HighPerformance.dll",
-        "DOTween.dll"
+        "DOTween.dll",
+        "CodeLess.Attributes.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

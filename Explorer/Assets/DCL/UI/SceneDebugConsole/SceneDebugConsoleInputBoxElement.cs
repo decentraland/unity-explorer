@@ -9,7 +9,7 @@ namespace DCL.UI.SceneDebugConsole
     /// <summary>
     ///     This element condenses all the functionality related to the input box of the chat, including triggering suggestions, opening the emoji panel and updating the character counter
     /// </summary>
-    public class SceneDebugConsoleInputBoxElement : MonoBehaviour, IViewWithGlobalDependencies
+    public class SceneDebugConsoleInputBoxElement : MonoBehaviour
     {
         public delegate void InputBoxSelectionChangedDelegate(bool isSelected);
         public delegate void InputChangedDelegate(string input);
@@ -69,7 +69,7 @@ namespace DCL.UI.SceneDebugConsole
             isInputSubmissionEnabled = false;
 
             // viewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
-            viewDependencies.DclInput.UI.Close.performed -= OnUICloseInput;
+            DCLInput.Instance.UI.Close.performed -= OnUICloseInput;
             inputField.onSubmit.RemoveListener(OnInputFieldSubmitted);
             inputField.DeactivateInputField();
         }
@@ -81,7 +81,7 @@ namespace DCL.UI.SceneDebugConsole
 
             inputField.onSubmit.AddListener(OnInputFieldSubmitted);
             // viewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
-            viewDependencies.DclInput.UI.Close.performed += OnUICloseInput;
+            DCLInput.Instance.UI.Close.performed += OnUICloseInput;
         }
 
         public void FocusInputBox()

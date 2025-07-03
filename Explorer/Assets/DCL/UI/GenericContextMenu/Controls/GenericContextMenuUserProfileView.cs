@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
 using MVC;
 using System;
 using System.Threading;
@@ -12,7 +13,7 @@ using Utility;
 
 namespace DCL.UI.GenericContextMenu.Controls
 {
-    public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase, IViewWithGlobalDependencies
+    public class GenericContextMenuUserProfileView : GenericContextMenuComponentBase
     {
         private const int USER_NAME_MIN_HEIGHT = 20;
         private const int FACE_FRAME_MIN_HEIGHT = 60;
@@ -52,7 +53,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] private Sprite defaultEmptyThumbnail;
 
         private CancellationTokenSource copyAnimationCts = new ();
-        private ViewDependencies viewDependencies;
+        private ProfileRepositoryWrapper profileRepositoryWrapper;
 
         public override void UnregisterListeners()
         {
@@ -73,10 +74,9 @@ namespace DCL.UI.GenericContextMenu.Controls
             CancelFriendButton.onClick.AddListener(new UnityAction(listener));
         }
 
-        public void InjectDependencies(ViewDependencies dependencies)
+        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
-            viewDependencies = dependencies;
-            ProfilePictureView.InjectDependencies(dependencies);
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         public void Configure(UserProfileContextMenuControlSettings settings)
@@ -85,7 +85,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
             ConfigureUserNameAndTag(settings.userName, settings.userAddress, settings.hasClaimedName, settings.userColor);
 
-            ProfilePictureView.Setup(settings.userColor, settings.userThumbnailAddress, settings.userAddress);
+            ProfilePictureView.Setup(profileRepositoryWrapper, settings.userColor, settings.userThumbnailAddress, settings.userAddress);
             ConfigureFriendshipButton(settings);
 
             RectTransformComponent.sizeDelta = new Vector2(RectTransformComponent.sizeDelta.x, CalculateComponentHeight());
@@ -101,7 +101,7 @@ namespace DCL.UI.GenericContextMenu.Controls
 
         private void CopyUserInfo(UserProfileContextMenuControlSettings settings, CopyUserInfoSection section)
         {
-            viewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
+            ViewDependencies.ClipboardManager.Copy(this, section == CopyUserInfoSection.NAME ? settings.userName : settings.userAddress);
             CopyNameAnimationAsync(copyAnimationCts.Token).Forget();
 
             async UniTaskVoid CopyNameAnimationAsync(CancellationToken ct)

@@ -76,7 +76,7 @@ namespace DCL.Profiles
         public string UnclaimedName { get; internal set; }
 
         /// <summary>
-        /// The Display Name with @ before it. Cached here to avoid further allocations.
+        /// The Display Name with @ before it. Cached here to avoid re-allocations.
         /// </summary>
         public string MentionName => mentionName;
 
@@ -212,9 +212,8 @@ namespace DCL.Profiles
 
             ValidatedName = result;
             DisplayName = result;
-            if (HasClaimedName) return;
 
-            if (!string.IsNullOrEmpty(UserId) && UserId.Length > 4)
+            if (!HasClaimedName && !string.IsNullOrEmpty(UserId) && UserId.Length > 4)
             {
                 WalletId = $"#{UserId[^4..]}";
                 DisplayName = $"{result}{WalletId}";
@@ -229,6 +228,27 @@ namespace DCL.Profiles
                 Links = new List<LinkJsonDto>();
             else
                 Links.Clear();
+        }
+
+        public bool IsSameProfile(Profile profile)
+        {
+            if (!Avatar.IsSameAvatar(profile.Avatar)) return false;
+
+            return UserId == profile.UserId
+                   && Name == profile.Name
+                   && HasClaimedName == profile.HasClaimedName
+                   && HasConnectedWeb3 == profile.HasConnectedWeb3
+                   && Description == profile.Description
+                   && TutorialStep == profile.TutorialStep
+                   && Email == profile.Email
+                   && Country == profile.Country
+                   && EmploymentStatus == profile.EmploymentStatus
+                   && Gender == profile.Gender
+                   && Pronouns == profile.Pronouns
+                   && Language == profile.Language
+                   && Profession == profile.Profession
+                   && Birthdate == profile.Birthdate
+                   && Version == profile.Version;
         }
     }
 }

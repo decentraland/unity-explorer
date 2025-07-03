@@ -6,7 +6,6 @@ using DCL.Input;
 using DCL.Input.Component;
 using MVC;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DCL.UI.SceneDebugConsole
@@ -18,7 +17,6 @@ namespace DCL.UI.SceneDebugConsole
         private readonly SceneDebugConsoleLogEntryBus logEntriesBus;
         private readonly SceneDebugConsoleLogHistory logsHistory;
         private readonly IInputBlock inputBlock;
-        private readonly ViewDependencies viewDependencies;
         private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
         private readonly SceneDebugConsoleSettings consoleSettings;
 
@@ -36,9 +34,9 @@ namespace DCL.UI.SceneDebugConsole
                     viewInstance.IsUnfolded = value;
 
                     if (value)
-                        viewDependencies.DclInput.UI.Submit.performed += OnSubmitShortcutPerformed;
+                        DCLInput.Instance.UI.Submit.performed += OnSubmitShortcutPerformed;
                     else
-                        viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
+                        DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
                 }
             }
         }
@@ -50,14 +48,12 @@ namespace DCL.UI.SceneDebugConsole
             SceneDebugConsoleLogEntryBus logEntriesBus,
             SceneDebugConsoleLogHistory logsHistory,
             IInputBlock inputBlock,
-            ViewDependencies viewDependencies,
             SceneDebugConsoleCommandsBus consoleCommandsBus,
             SceneDebugConsoleSettings consoleSettings) : base(viewFactory)
         {
             this.logEntriesBus = logEntriesBus;
             this.logsHistory = logsHistory;
             this.inputBlock = inputBlock;
-            this.viewDependencies = viewDependencies;
             this.consoleCommandsBus = consoleCommandsBus;
             this.consoleSettings = consoleSettings;
         }
@@ -81,8 +77,8 @@ namespace DCL.UI.SceneDebugConsole
                 viewInstance.Dispose();
             }
 
-            viewDependencies.DclInput.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
-            viewDependencies.DclInput.UI.Submit.performed -= OnSubmitShortcutPerformed;
+            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
+            DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
         }
 
         protected override void OnViewInstantiated()
@@ -91,7 +87,6 @@ namespace DCL.UI.SceneDebugConsole
             logsHistory.LogMessageAdded += OnLogsHistoryEntryAdded;
             consoleCommandsBus.OnClearConsole += Clear;
 
-            viewInstance!.InjectDependencies(viewDependencies);
             viewInstance!.Initialize(logsHistory.LogMessages, consoleSettings);
 
             viewInstance.InputBoxFocusChanged += OnViewInputBoxFocusChanged;
@@ -142,7 +137,7 @@ namespace DCL.UI.SceneDebugConsole
         protected override void OnViewShow()
         {
             base.OnViewShow();
-            viewDependencies.DclInput.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
+            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
 
             IsUnfolded = false; // Start hidden by default
         }
@@ -150,7 +145,7 @@ namespace DCL.UI.SceneDebugConsole
         protected override void OnViewClose()
         {
             base.OnViewClose();
-            viewDependencies.DclInput.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
+            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

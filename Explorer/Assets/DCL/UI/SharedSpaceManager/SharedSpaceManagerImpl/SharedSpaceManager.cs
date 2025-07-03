@@ -36,10 +36,10 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, DCLInput dclInput, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
+        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
         {
             this.mvcManager = mvcManager;
-            this.dclInput = dclInput;
+            dclInput = DCLInput.Instance;
             isFriendsFeatureEnabled = isFriendsEnabled;
             isCameraReelFeatureEnabled = isCameraReelEnabled;
             ecsWorld = world;
@@ -120,7 +120,6 @@ namespace DCL.UI.SharedSpaceManager
                             await panelInSharedSpace.OnShownInSharedSpaceAsync(cts.Token, parameters);
                         else
                             isTransitioning = false;
-
                         break;
                     }
                     case PanelsSharingSpace.Friends:
@@ -403,7 +402,7 @@ namespace DCL.UI.SharedSpaceManager
             Entity camera = ecsWorld.CacheCamera();
 
             if (!ecsWorld.Has<InWorldCameraComponent>(camera))
-                await HideAllAsync();
+                await HideAllAsync(PanelsSharingSpace.Chat);
 
             const string SOURCE_SHORTCUT = "Shortcut";
             ecsWorld.Add(camera, new ToggleInWorldCameraRequest { IsEnable = !ecsWorld.Has<InWorldCameraComponent>(camera), Source = SOURCE_SHORTCUT });

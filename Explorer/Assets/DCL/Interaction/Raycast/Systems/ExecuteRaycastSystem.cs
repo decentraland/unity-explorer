@@ -86,7 +86,8 @@ namespace DCL.Interaction.Raycast.Systems
 
         protected override void Update(float t)
         {
-            if (!sceneStateProvider.IsCurrent) return;
+            // SceneLoadingConcluded is TRUE when the scene has been repositioned to its rightful place away from MORDOR
+            if (!sceneStateProvider.IsCurrent || !sceneData.SceneLoadingConcluded) return;
 
             BudgetAndExecute(sceneData.Geometry.BaseParcelPosition);
         }

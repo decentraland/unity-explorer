@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables
         private readonly string builderContentURL;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
-        private readonly bool builderWearablesPreview;
+        private readonly bool builderCollectionsPreview;
         private readonly IRealmData realmData;
         private readonly IWearableStorage wearableStorage;
 
@@ -51,7 +51,7 @@ namespace DCL.AvatarRendering.Wearables
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
             string builderContentURL,
-            bool builderWearablesPreview)
+            bool builderCollectionsPreview)
         {
             this.wearableStorage = wearableStorage;
             this.assetsProvisioner = assetsProvisioner;
@@ -59,7 +59,7 @@ namespace DCL.AvatarRendering.Wearables
             this.realmData = realmData;
             this.assetBundleURL = assetBundleURL;
             this.builderContentURL = builderContentURL;
-            this.builderWearablesPreview = builderWearablesPreview;
+            this.builderCollectionsPreview = builderCollectionsPreview;
 
             cacheCleaner.Register(this.wearableStorage);
         }
@@ -90,16 +90,8 @@ namespace DCL.AvatarRendering.Wearables
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset, wearableStorage);
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
-            if (builderWearablesPreview)
-            {
+            if (builderCollectionsPreview)
                 FinalizeRawWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
-                LoadGLTFSystem.InjectToWorld(ref builder,
-                    new NoCache<GLTFData, GetGLTFIntention>(false, false),
-                    webRequestController,
-                    true,
-                    true,
-                    new GltFastGlobalDownloadStrategy(builderContentURL));
-            }
 
             ResolveAvatarAttachmentThumbnailSystem.InjectToWorld(ref builder);
             ResolveWearablePromisesSystem.InjectToWorld(ref builder, wearableStorage, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
