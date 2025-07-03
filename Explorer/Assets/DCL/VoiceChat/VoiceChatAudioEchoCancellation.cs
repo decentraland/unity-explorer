@@ -47,8 +47,8 @@ namespace DCL.VoiceChat
         public static void Initialize(VoiceChatConfiguration config)
         {
             configuration = config;
-            Debug.LogWarning("SUPRESSOR: Initializing advanced AEC with frequency-domain processing");
-            Debug.LogWarning($"SUPRESSOR: FFT size: {FFT_SIZE}, Frame size: {FRAME_SIZE}, Partitions: {NUM_PARTITIONS}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Initializing advanced AEC with frequency-domain processing");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"FFT size: {FFT_SIZE}, Frame size: {FRAME_SIZE}, Partitions: {NUM_PARTITIONS}");
             Reset();
         }
 
@@ -71,14 +71,14 @@ namespace DCL.VoiceChat
             Array.Clear(fftBuffer, 0, fftBuffer.Length);
             Array.Clear(fftOutput, 0, fftOutput.Length);
             
-            Debug.LogWarning("SUPRESSOR: Reset all AEC buffers and state");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Reset all AEC buffers and state");
         }
 
         public static void ForceResetEchoPath()
         {
             echoPathGain = 1.0f;
             adaptiveFilterGain = 1.0f;
-            Debug.LogWarning("SUPRESSOR: Force reset echo path model");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "Force reset echo path model");
         }
 
         public static bool ProcessAudio(float[] microphoneData, int channels, int samplesPerChannel,
@@ -92,7 +92,7 @@ namespace DCL.VoiceChat
 
             if (shouldLog)
             {
-                Debug.LogWarning($"SUPRESSOR: Processing audio - Mic: {samplesPerChannel} samples, Speaker: {speakerSamples} samples");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Processing audio - Mic: {samplesPerChannel} samples, Speaker: {speakerSamples} samples");
             }
 
             Span<float> monoSpan = microphoneBuffer.AsSpan(0, samplesPerChannel);
@@ -124,8 +124,8 @@ namespace DCL.VoiceChat
             
             if (shouldLog)
             {
-                Debug.LogWarning($"SUPRESSOR: Echo level: {echoLevel:F3}, Correlation: {correlation:F3}, Threshold: {threshold:F3}");
-                Debug.LogWarning($"SUPRESSOR: Echo path gain: {echoPathGain:F3}, Adaptive gain: {adaptiveFilterGain:F3}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Echo level: {echoLevel:F3}, Correlation: {correlation:F3}, Threshold: {threshold:F3}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Echo path gain: {echoPathGain:F3}, Adaptive gain: {adaptiveFilterGain:F3}");
             }
             
             if (echoLevel > threshold && correlation > threshold * 0.5f)
@@ -135,7 +135,7 @@ namespace DCL.VoiceChat
                 
                 if (shouldLog)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Above threshold - Consecutive detections: {consecutiveDetections}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Above threshold - Consecutive detections: {consecutiveDetections}");
                 }
                 
                 if (consecutiveDetections >= 2)
@@ -150,7 +150,7 @@ namespace DCL.VoiceChat
                 
                 if (shouldLog)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Below threshold - Consecutive non-detections: {consecutiveNonDetections}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Below threshold - Consecutive non-detections: {consecutiveNonDetections}");
                 }
                 
                 if (consecutiveNonDetections >= 10)
@@ -163,7 +163,7 @@ namespace DCL.VoiceChat
             {
                 if (!wasEchoDetected)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Feedback detected! Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Feedback detected! Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
                 }
 
                 float attackRate = configuration?.EchoCancellationAttackRate ?? DEFAULT_ATTACK_RATE;
@@ -172,14 +172,14 @@ namespace DCL.VoiceChat
 
                 if (shouldLog)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Applying suppression. Level: {echoCancellationLevel:F3}, Max: {maxStrength:F3}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Applying suppression. Level: {echoCancellationLevel:F3}, Max: {maxStrength:F3}");
                 }
             }
             else
             {
                 if (wasEchoDetected)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Feedback cleared. Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Feedback cleared. Echo level: {echoLevel:F3}, Correlation: {correlation:F3}");
                 }
 
                 float releaseRate = configuration?.EchoCancellationReleaseRate ?? DEFAULT_RELEASE_RATE;
@@ -187,7 +187,7 @@ namespace DCL.VoiceChat
                 
                 if (shouldLog && echoCancellationLevel > 0.01f)
                 {
-                    Debug.LogWarning($"SUPRESSOR: Releasing suppression. Level: {echoCancellationLevel:F3}");
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Releasing suppression. Level: {echoCancellationLevel:F3}");
                 }
             }
 
@@ -204,7 +204,7 @@ namespace DCL.VoiceChat
             
             if (logCounter % LOG_INTERVAL == 0)
             {
-                Debug.LogWarning($"SUPRESSOR: Applying audio suppression. Level: {echoCancellationLevel:F3}, Gain: {suppression:F3}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Applying audio suppression. Level: {echoCancellationLevel:F3}, Gain: {suppression:F3}");
             }
 
             for (int i = 0; i < samplesPerChannel; i++)
@@ -328,7 +328,7 @@ namespace DCL.VoiceChat
             {
                 echoPathGain = 1.0f;
                 adaptiveFilterGain = 1.0f;
-                Debug.LogWarning($"SUPRESSOR: Echo path gain out of bounds, resetting to 1.0");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Echo path gain out of bounds, resetting to 1.0");
             }
         }
 

@@ -3,81 +3,51 @@ using UnityEngine;
 using LiveKit;
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Collections.Concurrent;
-using Utility.Multithreading;
-using Utility;
 
 namespace DCL.VoiceChat
 {
     /// <summary>
-    ///     Custom AudioFilter that applies real-time noise reduction and audio processing
-    ///     to the microphone input using Unity's OnAudioFilterRead callback.
-    ///     Compatible with LiveKit's AudioFilter interface.
-    ///     Processing and resampling are done in a separate thread to avoid audio dropouts.
+    ///     Custom AudioFilter that handles Unity's OnAudioFilterRead callback and dispatches audio to LiveKit.
+    ///     Focused solely on audio thread management and LiveKit buffering.
+    ///     Audio processing is delegated to VoiceChatAudioProcessingManager.
     /// </summary>
     public class VoiceChatMicrophoneAudioFilter : MonoBehaviour, IAudioFilter
     {
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
-        private const int DEFAULT_BUFFER_SIZE = 8192;
         private const int LIVEKIT_FRAME_SIZE = 480; // 10ms at 48kHz
-        private const int PROCESSING_QUEUE_SIZE = 10; // Queue size for processing thread
 
-        private IVoiceChatAudioProcessor audioProcessor;
+        private VoiceChatAudioProcessingManager processingManager;
         private bool isFilterActive = true;
-
-        private readonly List<float> liveKitBuffer = new (LIVEKIT_FRAME_SIZE * 2);
         private int outputSampleRate = VoiceChatConstants.LIVEKIT_SAMPLE_RATE;
-        private float[] resampleBuffer;
 
+        private readonly List<float> liveKitBuffer = new(LIVEKIT_FRAME_SIZE * 2);
         private float[] tempBuffer;
-        private VoiceChatConfiguration voiceChatConfiguration;
-        private bool isProcessingEnabled => voiceChatConfiguration != null && voiceChatConfiguration.EnableAudioProcessing;
+        private float[] processingBuffer;
 
+        private VoiceChatConfiguration voiceChatConfiguration;
         private VoiceChatCombinedStreamsAudioSource combinedAudioSource;
 
-        private float[] echoBuffer = new float[4096]; // Dedicated buffer for echo cancellation (matches speakerOutputBuffer size)
+        // ReSharper disable once NotNullOrRequiredMemberIsNotInitialized
+        public event IAudioFilter.OnAudioDelegate AudioRead;
 
-        private Thread processingThread;
-        private readonly ConcurrentQueue<AudioProcessingJob> processingQueue = new();
-        private readonly ConcurrentQueue<ProcessedAudioData> processedQueue = new();
-        private volatile bool shouldStopProcessing;
-        private readonly ManualResetEvent processingEvent = new(false);
-        private CancellationTokenSource processingCancellationTokenSource;
-
-        private struct AudioProcessingJob
-        {
-            public float[] AudioData;
-            public int Channels;
-            public int SampleRate;
-            public int SamplesPerChannel;
-        }
-
-        private struct ProcessedAudioData
-        {
-            public float[] ProcessedData;
-            public int SamplesPerChannel;
-        }
+        public bool IsValid => processingManager != null && voiceChatConfiguration != null;
 
         private void OnEnable()
         {
             OnAudioConfigurationChanged(false);
             AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
-            StartProcessingThread();
         }
 
         private void OnDisable()
         {
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
-            StopProcessingThread();
-
             liveKitBuffer.Clear();
 
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
 
-            if (resampleBuffer != null)
-                Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
+            if (processingBuffer != null)
+                Array.Clear(processingBuffer, 0, processingBuffer.Length);
 
             outputSampleRate = AudioSettings.outputSampleRate;
         }
@@ -85,16 +55,12 @@ namespace DCL.VoiceChat
         private void OnDestroy()
         {
             AudioRead = null!;
-            StopProcessingThread();
-            audioProcessor = null;
+            processingManager?.Dispose();
+            processingManager = null;
             tempBuffer = null;
-            resampleBuffer = null;
+            processingBuffer = null;
         }
 
-        /// <summary>
-        ///     Unity's audio filter callback
-        ///     Handles buffering and sending to LiveKit, processing is done in separate thread
-        /// </summary>
         private void OnAudioFilterRead(float[] data, int channels)
         {
             if (!isFilterActive || data == null || data.Length == 0)
@@ -102,212 +68,39 @@ namespace DCL.VoiceChat
 
             int samplesPerChannel = data.Length / channels;
 
-            // Ensure we have a temp buffer for format conversion
+            EnsureBuffers(samplesPerChannel);
+
+            int processedSamples = processingManager.ProcessAudio(data, channels, outputSampleRate, samplesPerChannel, processingBuffer.AsSpan());
+
+            for (int i = 0; i < processedSamples; i++)
+                liveKitBuffer.Add(processingBuffer[i]);
+
+            SendCompleteFramesToLiveKit();
+        }
+
+        private void EnsureBuffers(int samplesPerChannel)
+        {
             if (tempBuffer == null || tempBuffer.Length < samplesPerChannel * 2)
-                tempBuffer = new float[Mathf.Max(samplesPerChannel * 2, DEFAULT_BUFFER_SIZE)];
+                tempBuffer = new float[Mathf.Max(samplesPerChannel * 2, LIVEKIT_FRAME_SIZE * 2)];
 
-            Span<float> monoSpan = tempBuffer.AsSpan(0, samplesPerChannel);
+            var maxProcessedSamples = VoiceChatAudioFormatConverter.CalculateLiveKitBufferSize(samplesPerChannel, outputSampleRate);
+            if (processingBuffer == null || processingBuffer.Length < maxProcessedSamples)
+                processingBuffer = new float[Mathf.Max(maxProcessedSamples, LIVEKIT_FRAME_SIZE * 2)];
+        }
 
-            // Convert to mono if needed
-            if (channels > 1)
-            {
-                for (var i = 0; i < samplesPerChannel; i++)
-                {
-                    var sum = 0f;
-                    for (var ch = 0; ch < channels; ch++)
-                        sum += data[(i * channels) + ch];
-                    monoSpan[i] = sum / channels;
-                }
-            }
-            else
-            {
-                data.CopyTo(monoSpan);
-            }
-
-            // Convert to LiveKit format (resample if needed)
-            var processedData = ConvertToLiveKitFormat(monoSpan, samplesPerChannel, outputSampleRate, tempBuffer);
-
-            // Buffer the audio for LiveKit
-            for (var i = 0; i < processedData.SamplesPerChannel; i++)
-                liveKitBuffer.Add(processedData.ProcessedData[i]);
-
-            // Send complete frames to LiveKit
+        private void SendCompleteFramesToLiveKit()
+        {
             while (liveKitBuffer.Count >= LIVEKIT_FRAME_SIZE)
             {
                 if (tempBuffer == null || tempBuffer.Length < LIVEKIT_FRAME_SIZE)
                     tempBuffer = new float[LIVEKIT_FRAME_SIZE];
 
                 liveKitBuffer.CopyTo(0, tempBuffer, 0, LIVEKIT_FRAME_SIZE);
+
                 AudioRead?.Invoke(tempBuffer.AsSpan(0, LIVEKIT_FRAME_SIZE), DEFAULT_LIVEKIT_CHANNELS, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
+
                 liveKitBuffer.RemoveRange(0, LIVEKIT_FRAME_SIZE);
             }
-        }
-
-        /// <summary>
-        ///     Event called from the Unity audio thread when audio data is available
-        /// </summary>
-        // ReSharper disable once NotNullOrRequiredMemberIsNotInitialized
-        public event IAudioFilter.OnAudioDelegate AudioRead;
-
-        public bool IsValid => audioProcessor != null && voiceChatConfiguration != null;
-
-        private void SubmitAudioForProcessing(float[] audioData, int channels, int sampleRate, int samplesPerChannel)
-        {
-            if (processingQueue.Count >= PROCESSING_QUEUE_SIZE)
-            {
-                // Drop the oldest job if the queue is full to prevent memory buildup
-                processingQueue.TryDequeue(out _);
-            }
-
-            var job = new AudioProcessingJob
-            {
-                AudioData = new float[audioData.Length],
-                Channels = channels,
-                SampleRate = sampleRate,
-                SamplesPerChannel = samplesPerChannel
-            };
-
-            audioData.CopyTo(job.AudioData, 0);
-            processingQueue.Enqueue(job);
-            processingEvent.Set();
-        }
-
-        private void StartProcessingThread()
-        {
-            if (processingThread is { IsAlive: true })
-                return;
-
-            shouldStopProcessing = false;
-            processingCancellationTokenSource = new CancellationTokenSource();
-
-            processingThread = new Thread(ProcessingThreadWorker)
-            {
-                Name = "VoiceChatAudioProcessor",
-                IsBackground = true,
-                Priority = System.Threading.ThreadPriority.AboveNormal
-            };
-            processingThread.Start();
-        }
-
-        private void StopProcessingThread()
-        {
-            if (processingThread == null || !processingThread.IsAlive)
-                return;
-
-            shouldStopProcessing = true;
-            processingCancellationTokenSource.SafeCancelAndDispose();
-            processingEvent.Set();
-
-            if (processingThread.Join(1000))
-            {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Audio processing thread stopped successfully");
-            }
-            else
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Audio processing thread did not stop gracefully");
-            }
-
-            // Clear queues
-            while (processingQueue.TryDequeue(out _)) { }
-            while (processedQueue.TryDequeue(out _)) { }
-
-            processingCancellationTokenSource = null;
-            processingThread = null;
-        }
-
-        private void ProcessingThreadWorker()
-        {
-            var localTempBuffer = new float[DEFAULT_BUFFER_SIZE * 2];
-
-            while (!shouldStopProcessing)
-            {
-                try
-                {
-                    // Wait for work with timeout and respect cancellation
-                    if (processingEvent.WaitOne(100))
-                    {
-                        MultithreadingUtility.WaitWhileOnPause();
-
-                        while (processingQueue.TryDequeue(out AudioProcessingJob job) && !shouldStopProcessing)
-                        {
-                            try
-                            {
-                                var processedData = ProcessAudioDataThreaded(job, localTempBuffer);
-                                processedQueue.Enqueue(processedData);
-                            }
-                            catch (Exception ex)
-                            {
-                                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Threaded audio processing error: {ex.Message}");
-                            }
-                        }
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    // Normal cancellation, exit the loop
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Processing thread error: {ex.Message}");
-                    // Continue processing unless we should stop
-                    if (shouldStopProcessing) break;
-                }
-            }
-        }
-
-        private ProcessedAudioData ProcessAudioDataThreaded(AudioProcessingJob job, float[] localTempBuffer)
-        {
-            int samplesPerChannel = job.SamplesPerChannel;
-            Span<float> data = job.AudioData.AsSpan();
-            Span<float> monoSpan = localTempBuffer.AsSpan(0, samplesPerChannel);
-
-            // Convert to mono if needed
-            if (job.Channels > 1)
-            {
-                for (var i = 0; i < samplesPerChannel; i++)
-                {
-                    var sum = 0f;
-
-                    for (var ch = 0; ch < job.Channels; ch++)
-                        sum += data[(i * job.Channels) + ch];
-
-                    monoSpan[i] = sum / job.Channels;
-                }
-            }
-            else { data.CopyTo(monoSpan); }
-
-            audioProcessor.ProcessAudio(monoSpan, job.SampleRate);
-
-            return ConvertToLiveKitFormat(monoSpan, samplesPerChannel, job.SampleRate, localTempBuffer);
-        }
-
-        private ProcessedAudioData ConvertToLiveKitFormat(Span<float> monoSpan, int samplesPerChannel, int sampleRate, float[] tempBuffer)
-        {
-            if (outputSampleRate != VoiceChatConstants.LIVEKIT_SAMPLE_RATE)
-            {
-                var targetSamplesPerChannel = (int)((float)samplesPerChannel * VoiceChatConstants.LIVEKIT_SAMPLE_RATE / outputSampleRate);
-                Span<float> resampledSpan = tempBuffer.AsSpan(samplesPerChannel, targetSamplesPerChannel);
-                VoiceChatAudioResampler.ResampleCubic(monoSpan.Slice(0, samplesPerChannel), outputSampleRate, resampledSpan, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
-
-                var result = new float[targetSamplesPerChannel];
-                resampledSpan.CopyTo(result);
-
-                return new ProcessedAudioData
-                {
-                    ProcessedData = result,
-                    SamplesPerChannel = targetSamplesPerChannel
-                };
-            }
-
-            var monoResult = new float[samplesPerChannel];
-            monoSpan.Slice(0, samplesPerChannel).CopyTo(monoResult);
-
-            return new ProcessedAudioData
-            {
-                ProcessedData = monoResult,
-                SamplesPerChannel = samplesPerChannel
-            };
         }
 
         private void OnAudioConfigurationChanged(bool deviceWasChanged)
@@ -317,34 +110,30 @@ namespace DCL.VoiceChat
 
         public void Initialize(VoiceChatConfiguration configuration, VoiceChatCombinedStreamsAudioSource combinedAudioSource = null)
         {
-            voiceChatConfiguration = configuration;
-            audioProcessor = new OptimizedVoiceChatAudioProcessor(configuration);
-
-            // Initialize both AEC systems so we can switch between them
-            VoiceChatAudioEchoCancellation.Initialize(configuration);
-            VoiceChatWebRTCAEC.Initialize(configuration);
-
+            voiceChatConfiguration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.combinedAudioSource = combinedAudioSource;
+
+            var audioProcessor = new OptimizedVoiceChatAudioProcessor(configuration);
+            processingManager = new VoiceChatAudioProcessingManager(audioProcessor, configuration);
+
+            VoiceChatAudioEchoCancellation.Initialize(configuration);
         }
 
         public void SetFilterActive(bool active)
         {
             isFilterActive = active;
-            audioProcessor?.Reset();
+
+            processingManager?.Reset();
+
             VoiceChatAudioEchoCancellation.Reset();
-            VoiceChatWebRTCAEC.Reset();
 
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
 
-            if (resampleBuffer != null)
-                Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
+            if (processingBuffer != null)
+                Array.Clear(processingBuffer, 0, processingBuffer.Length);
 
-            Array.Clear(echoBuffer, 0, echoBuffer.Length);
-
-            // Clear processing queues when filter is reset
-            while (processingQueue.TryDequeue(out _)) { }
-            while (processedQueue.TryDequeue(out _)) { }
+            liveKitBuffer.Clear();
         }
 
         public void Reset()
@@ -354,13 +143,10 @@ namespace DCL.VoiceChat
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
 
-            if (resampleBuffer != null)
-                Array.Clear(resampleBuffer, 0, resampleBuffer.Length);
+            if (processingBuffer != null)
+                Array.Clear(processingBuffer, 0, processingBuffer.Length);
 
-            while (processingQueue.TryDequeue(out _)) { }
-            while (processedQueue.TryDequeue(out _)) { }
-
-            audioProcessor?.Reset();
+            processingManager?.Reset();
         }
     }
 }
