@@ -1,5 +1,8 @@
-﻿namespace DCL.FeatureFlags
+﻿using System;
+
+namespace DCL.FeatureFlags
 {
+    [Serializable]
     public static class FeatureFlagsStrings
     {
         public const string MULTIPLAYER_COMPRESSION_WIN = "multiplayer_use_compression_win";
@@ -39,6 +42,87 @@
         public const string AUTH_CODE_VALIDATION = "number-validation";
 
         public const string GPUI_ENABLED = "alfa-gpui";
+    }
 
+    public enum FeatureFlag
+    {
+        None = 0,
+        MultiplayerCompressionWin,
+        MultiplayerCompressionMac,
+        PortableExperience,
+        GlobalPortableExperience,
+        PortableExperienceChatCommands,
+        MapPins,
+        CustomMapPinsIcons,
+        UserAllowList,
+        CsvVariant,
+        StringVariant,
+        WalletsVariant,
+        Onboarding,
+        GreetingOnboarding,
+        OnboardingEnabledVariant,
+        OnboardingGreetingsVariant,
+        GenesisStartingParcel,
+        SkyboxSettings,
+        SkyboxSettingsVariant,
+        VideoPrioritization,
+        AssetBundleFallback,
+        ChatHistoryLocalStorage,
+        VoiceChat,
+        CameraReel,
+        Friends,
+        FriendsUserBlocking,
+        FriendsOnlineStatus,
+        ProfileNameEditor,
+        SceneMemoryLimit,
+        Ktx2Conversion,
+        MarketplaceCredits,
+        MarketplaceCreditsWalletsVariant,
+        AuthCodeValidation,
+        GpuiEnabled
+    }
+
+    public static class FeatureFlagExtensions
+    {
+        public static string GetStringValue(this FeatureFlag flag)
+        {
+            return flag switch
+            {
+                FeatureFlag.MultiplayerCompressionWin => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN,
+                FeatureFlag.MultiplayerCompressionMac => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC,
+                FeatureFlag.PortableExperience => FeatureFlagsStrings.PORTABLE_EXPERIENCE,
+                FeatureFlag.GlobalPortableExperience => FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE,
+                FeatureFlag.PortableExperienceChatCommands => FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS,
+                FeatureFlag.MapPins => FeatureFlagsStrings.MAP_PINS,
+                FeatureFlag.CustomMapPinsIcons => FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS,
+                FeatureFlag.UserAllowList => FeatureFlagsStrings.USER_ALLOW_LIST,
+                FeatureFlag.CsvVariant => FeatureFlagsStrings.CSV_VARIANT,
+                FeatureFlag.StringVariant => FeatureFlagsStrings.STRING_VARIANT,
+                FeatureFlag.WalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
+                FeatureFlag.Onboarding => FeatureFlagsStrings.ONBOARDING,
+                FeatureFlag.GreetingOnboarding => FeatureFlagsStrings.GREETING_ONBOARDING,
+                FeatureFlag.OnboardingEnabledVariant => FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT,
+                FeatureFlag.OnboardingGreetingsVariant => FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT,
+                FeatureFlag.GenesisStartingParcel => FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                FeatureFlag.SkyboxSettings => FeatureFlagsStrings.SKYBOX_SETTINGS,
+                FeatureFlag.SkyboxSettingsVariant => FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
+                FeatureFlag.VideoPrioritization => FeatureFlagsStrings.VIDEO_PRIORITIZATION,
+                FeatureFlag.AssetBundleFallback => FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK,
+                FeatureFlag.ChatHistoryLocalStorage => FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE,
+                FeatureFlag.VoiceChat => FeatureFlagsStrings.VOICE_CHAT,
+                FeatureFlag.CameraReel => FeatureFlagsStrings.CAMERA_REEL,
+                FeatureFlag.Friends => FeatureFlagsStrings.FRIENDS,
+                FeatureFlag.FriendsUserBlocking => FeatureFlagsStrings.FRIENDS_USER_BLOCKING,
+                FeatureFlag.FriendsOnlineStatus => FeatureFlagsStrings.FRIENDS_ONLINE_STATUS,
+                FeatureFlag.ProfileNameEditor => FeatureFlagsStrings.PROFILE_NAME_EDITOR,
+                FeatureFlag.SceneMemoryLimit => FeatureFlagsStrings.SCENE_MEMORY_LIMIT,
+                FeatureFlag.Ktx2Conversion => FeatureFlagsStrings.KTX2_CONVERSION,
+                FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
+                FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT,
+                FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
+                FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
+                _ => string.Empty
+            };
+        }
     }
 }

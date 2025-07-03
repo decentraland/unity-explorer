@@ -18,7 +18,6 @@ namespace DCL.PluginSystem.Global
 {
     public class VoiceChatPlugin : IDCLGlobalPlugin<VoiceChatPlugin.Settings>
     {
-        private readonly ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
@@ -40,7 +39,6 @@ namespace DCL.PluginSystem.Global
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
 
         public VoiceChatPlugin(
-            ObjectProxy<VoiceChatSettingsAsset> voiceChatSettingsProxy,
             IAssetsProvisioner assetsProvisioner,
             IRoomHub roomHub,
             MainUIView mainUIView,
@@ -50,7 +48,6 @@ namespace DCL.PluginSystem.Global
             Arch.Core.World world,
             Entity playerEntity)
         {
-            this.voiceChatSettingsProxy = voiceChatSettingsProxy;
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
@@ -98,7 +95,6 @@ namespace DCL.PluginSystem.Global
 
             voiceChatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatSettings, ct: ct);
             VoiceChatSettingsAsset voiceChatSettings = voiceChatSettingsAsset.Value;
-            voiceChatSettingsProxy.SetObject(voiceChatSettings);
 
             voiceChatConfigurationAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatConfiguration, ct: ct);
             VoiceChatConfiguration voiceChatConfiguration = voiceChatConfigurationAsset.Value;

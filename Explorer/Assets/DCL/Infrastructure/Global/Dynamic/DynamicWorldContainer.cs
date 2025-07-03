@@ -368,8 +368,6 @@ namespace Global.Dynamic
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
 
-            var voiceChatSettingsAssetProxy = new ObjectProxy<VoiceChatSettingsAsset>();
-
             var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
 
             IRoomHub roomHub = new RoomHub(
@@ -544,7 +542,7 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
-            IVoiceService voiceService = new VoiceChatServiceAnalyticsDecorator(new RPCVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus), bootstrapContainer.Analytics);
+            IVoiceService voiceService = new RPCVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
             IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -856,7 +854,6 @@ namespace Global.Dynamic
             if (includeCall)
                 globalPlugins.Add(
                     new VoiceChatPlugin(
-                        voiceChatSettingsAssetProxy,
                         assetsProvisioner,
                         roomHub,
                         mainUIView,

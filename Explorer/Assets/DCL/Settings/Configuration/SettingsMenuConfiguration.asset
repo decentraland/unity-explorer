@@ -18,6 +18,7 @@ MonoBehaviour:
   <GraphicsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Graphics Quality
+      <FeatureFlagName>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 5242998342527483906
       - rid: 5242998500334764034
@@ -27,12 +28,14 @@ MonoBehaviour:
       - rid: 5242998503086751747
       - rid: 5015494041161695532
     - <GroupTitle>k__BackingField: Environment
+      <FeatureFlagName>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 5242998342527483909
       - rid: 5242998342527483910
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
+      <FeatureFlagName>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 5242998342527483917
       - rid: 5242998342527483918
@@ -41,17 +44,20 @@ MonoBehaviour:
       - rid: 5242998342527483921
       - rid: 2592369719794466903
     - <GroupTitle>k__BackingField: Call
+      <FeatureFlagName>k__BackingField: 22
       <Modules>k__BackingField:
       - rid: 2592369719794466904
   <ControlsSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Mouse
+      <FeatureFlagName>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 3126482891795070976
       - rid: 3126482891795070977
   <ChatSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: 
+      <FeatureFlagName>k__BackingField: 0
       <Modules>k__BackingField:
       - rid: 4494877371389181952
       - rid: 1708279571579404288
@@ -93,14 +99,14 @@ MonoBehaviour:
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: 
+          <ModuleName>k__BackingField: Voice Chat
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
-          sliderType: 0
+          sliderType: 1
           minValue: 0
-          maxValue: 0
+          maxValue: 100
           wholeNumbers: 0
-          defaultValue: 0
+          defaultValue: 100
         <Feature>k__BackingField: 9
     - rid: 2592369719794466904
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
@@ -195,7 +201,7 @@ MonoBehaviour:
           maxValue: 12
           wholeNumbers: 1
           defaultValue: 10
-        <Feature>k__BackingField: 9
+        <Feature>k__BackingField: 10
     - rid: 5242998342527483906
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

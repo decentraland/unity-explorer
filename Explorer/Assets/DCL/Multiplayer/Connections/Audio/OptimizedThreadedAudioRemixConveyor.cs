@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
 using Livekit.Utils;
@@ -71,7 +72,7 @@ namespace DCL.Multiplayer.Connections.Audio
             }
             catch (Exception ex)
             {
-                Debug.LogError($"ThreadedAudioRemixConveyor: ASYNC PROCESSING FAILED - Error: {ex.Message}");
+                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"ThreadedAudioRemixConveyor: ASYNC PROCESSING FAILED - Error: {ex.Message}");
                 throw;
             }
         }
