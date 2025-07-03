@@ -16,7 +16,7 @@ namespace Utility.Multithreading
         private static bool isPaused;
         private static bool isInPlayMode = !Application.isEditor;
 
-        private static FrameCounter frameCounter;
+        private static FrameCounter? frameCounter;
 
         /// <summary>
         ///     Thread-safe frame count
@@ -58,7 +58,7 @@ namespace Utility.Multithreading
 
         private class FrameCounter : IPlayerLoopItem
         {
-            public long frameCount;
+            internal long frameCount;
 
             public bool MoveNext()
             {
@@ -84,6 +84,23 @@ namespace Utility.Multithreading
             isPaused = state == PauseState.Paused;
         }
 
+        /// <summary>
+        ///     For Unit Tests only.
+        /// </summary>
+        /// <param name="frameCount"></param>
+        internal static void SetFrameCount(long frameCount)
+        {
+            frameCounter ??= new FrameCounter();
+            frameCounter.frameCount = frameCount;
+        }
+
+        /// <summary>
+        ///     For Unit Tests only.
+        /// </summary>
+        internal static void ResetFrameCount()
+        {
+            frameCounter = null;
+        }
 #endif
     }
 }
