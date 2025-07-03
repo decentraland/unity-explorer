@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using Sentry;
-using UnityEditor;
 
 namespace DCL.ApplicationMinimumSpecsGuard
 {
@@ -71,7 +70,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             analytics.Track(AnalyticsEvents.UI.EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN);
 #if UNITY_EDITOR
-            EditorApplication.isPlaying = false;
+            UnityEditor.EditorApplication.isPlaying = false;
 #else
             UnityEngine.Application.Quit();
 #endif
