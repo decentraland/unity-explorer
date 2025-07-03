@@ -13,6 +13,7 @@ using DCL.Passport;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiles;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -48,7 +49,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
-        private readonly Controls.Configs.GenericContextMenu contextMenu;
+        private readonly UI.GenericContextMenuParameter.GenericContextMenu contextMenu;
         private readonly UserProfileContextMenuControlSettings userProfileControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openUserProfileButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> mentionUserButtonControlSettings;
@@ -98,7 +99,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
 
-            contextMenu = new Controls.Configs.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
+            contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
                          .AddControl(new SeparatorContextMenuControlSettings(CONTEXT_MENU_SEPARATOR_HEIGHT, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.left, -CONTEXT_MENU_VERTICAL_LAYOUT_PADDING.right))
                          .AddControl(mentionUserButtonControlSettings)
@@ -144,7 +145,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             contextMenu.ChangeOffsetFromTarget(offset);
 
             await mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
-                new GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
+                new GenericContextMenuParameter.GenericContextMenuParameter(contextMenu, position, actionOnHide: onContextMenuHide, closeTask: closeTask)), ct);
         }
 
         private UserProfileContextMenuControlSettings.FriendshipStatus ConvertFriendshipStatus(FriendshipStatus friendshipStatus)
