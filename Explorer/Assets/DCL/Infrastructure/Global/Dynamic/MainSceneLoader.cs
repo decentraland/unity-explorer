@@ -301,9 +301,6 @@ namespace Global.Dynamic
         private async Task<bool> InitialGuardsCheckSuccess(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
-            //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
-            await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
-
             //If Livekit is down, stop bootstrapping
             if (await IsLivekitDead(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
                 return false;
@@ -311,6 +308,9 @@ namespace Global.Dynamic
             //If application requires version update, stop bootstrapping
             if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                 return false;
+
+            //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
+            await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
 
             return true;
         }
