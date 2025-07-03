@@ -545,6 +545,7 @@ GameObject:
   - component: {fileID: 7874012947161666674}
   - component: {fileID: 8806731477310246440}
   - component: {fileID: 335454819507455171}
+  - component: {fileID: 2052760418151676426}
   - component: {fileID: 4228524009895207432}
   - component: {fileID: 4788930790749866106}
   m_Layer: 5
@@ -676,6 +677,21 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &2052760418151676426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3637341370799021733}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 8806731477310246440}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!114 &4228524009895207432
 MonoBehaviour:
   m_ObjectHideFlags: 0
