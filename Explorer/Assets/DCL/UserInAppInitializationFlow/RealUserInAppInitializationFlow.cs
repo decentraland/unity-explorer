@@ -140,8 +140,9 @@ namespace DCL.UserInAppInitializationFlow
                     ? reloginOps
                     : initOps;
 
+                //Set initial position and start async livekit connection
                 characterObject.Controller.transform.position = startParcel.Peek().ParcelToPositionFlat();
-                ensureLivekitConnectionStartupOperation.ExecuteAsync(new IStartupOperation.Params(), ct);
+                ensureLivekitConnectionStartupOperation.LaunchLivekitConnection(parameters.World, parameters.PlayerEntity, this, ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
@@ -200,9 +201,7 @@ namespace DCL.UserInAppInitializationFlow
                 return UniTask.CompletedTask;
 
             if (result.Error is { Exception: UserBlockedException })
-            {
                 return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
-            }
 
             var message = $"{ToMessage(result)}\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);

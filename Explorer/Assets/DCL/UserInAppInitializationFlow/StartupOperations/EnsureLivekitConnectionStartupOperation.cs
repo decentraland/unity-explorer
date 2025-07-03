@@ -1,6 +1,7 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.HealthChecks;
-using DCL.RealmNavigation;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -8,35 +9,53 @@ using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class EnsureLivekitConnectionStartupOperation : IStartupOperation
+    public class EnsureLivekitConnectionStartupOperation
     {
-        private readonly ILoadingStatus loadingStatus;
         private readonly IHealthCheck healthCheck;
 
-        public EnsureLivekitConnectionStartupOperation(ILoadingStatus loadingStatus, IHealthCheck healthCheck)
+        public EnsureLivekitConnectionStartupOperation(IHealthCheck healthCheck)
         {
-            this.loadingStatus = loadingStatus;
             this.healthCheck = healthCheck;
         }
 
-        public async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params report, CancellationToken ct)
+        public void LaunchLivekitConnection(World world, Entity playerEntity, RealUserInAppInitializationFlow realUserInAppInitializationFlow, CancellationToken ct)
         {
-            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitConnectionEnsuring);
-            DoConnection(ct).Forget();
-            return EnumResult<TaskError>.SuccessResult();
-            //if (result.Success)
-            //    report.Report.SetProgress(finalizationProgress);
-
-            //return result.AsEnumResult(TaskError.MessageError);
+            LaunchConnection(world, playerEntity, realUserInAppInitializationFlow, ct).Forget();
         }
 
-        public async UniTask DoConnection(CancellationToken ct)
+        private async UniTask LaunchConnection(World world, Entity playerEntity, RealUserInAppInitializationFlow realUserInAppInitializationFlow, CancellationToken ct)
         {
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            UnityEngine.Debug.Log("JUANI LIVEKIT STARTED CONNECTING");
-            await healthCheck.IsRemoteAvailableAsync(ct).Timeout(TimeSpan.FromSeconds(10));
-            stopwatch.Stop();
-            UnityEngine.Debug.Log($"JUANI LIVEKIT CONNECTED {stopwatch.ElapsedMilliseconds} ms");
+            try
+            {
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                UnityEngine.Debug.Log("JUANI LIVEKIT STARTED CONNECTING");
+                await healthCheck.IsRemoteAvailableAsync(ct).Timeout(TimeSpan.FromSeconds(60));
+                stopwatch.Stop();
+                UnityEngine.Debug.Log($"JUANI LIVEKIT CONNECTED {stopwatch.ElapsedMilliseconds} ms");
+            }
+            catch (OperationCanceledException e)
+            {
+
+            }
+            catch (Exception e)
+            {
+                DispatchFallbackToMainScreen(world, playerEntity, realUserInAppInitializationFlow);
+            }
+
+        }
+
+        private void DispatchFallbackToMainScreen(World world, Entity playerEntity, RealUserInAppInitializationFlow realUserInAppInitializationFlow)
+        {
+            ReportHub.LogError(ReportCategory.LIVEKIT, "Livekit initialization failed. Fallback to main screen");
+            var parameters = new UserInAppInitializationFlowParameters(
+                true,
+                true,
+                IUserInAppInitializationFlow.LoadSource.Recover,
+                world,
+                playerEntity,
+                EnumResult<TaskError>.ErrorResult(TaskError.Timeout, "Livekit connection Error")
+            );
+            realUserInAppInitializationFlow.ExecuteAsync(parameters, (new CancellationTokenSource()).Token).Forget();
         }
     }
 }
