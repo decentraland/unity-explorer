@@ -1,9 +1,12 @@
 using DCL.UI;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
@@ -13,6 +16,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility.Types;
 using PlaceInfo = DCL.PlacesAPIService.PlacesData.PlaceInfo;
 using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 
@@ -53,10 +57,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         private bool canModify;
         private CommunityData communityData;
         private ObjectProxy<ISpriteCache> spriteCache;
-        private IMVCManager mvcManager;
         private GenericContextMenu contextMenu;
         private CancellationToken cancellationToken;
-        private IWeb3IdentityCache web3IdentityCache;
 
         private PlaceInfo lastClickedPlaceCtx;
 
@@ -89,16 +91,12 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
             ObjectProxy<ISpriteCache> placeThumbnailsCache,
-            IMVCManager mvcManager,
-            CancellationToken panelCancellationToken,
-            IWeb3IdentityCache web3IdentityCache)
+            CancellationToken panelCancellationToken)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getPlacesFetchData = placesDataFunc;
             this.spriteCache = placeThumbnailsCache;
-            this.mvcManager = mvcManager;
             cancellationToken = panelCancellationToken;
-            this.web3IdentityCache = web3IdentityCache;
         }
 
         private LoopGridViewItem GetLoopGridItemByIndex(LoopGridView loopGridView, int index, int row, int column)
@@ -119,7 +117,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             int realIndex = canModify ? index - 1 : index;
             PlaceInfo placeInfo = membersData.items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(web3IdentityCache.Identity?.Address) && canModify, spriteCache);
+            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, spriteCache);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
@@ -140,8 +138,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             lastClickedPlaceCtx = placeInfo;
             placeCardView.CanPlayUnHoverAnimation = false;
 
-            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
-                actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true)), cancellationToken);
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, position,
+                actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true), cancellationToken);
         }
 
         private void ShowBanConfirmationDialog(PlaceInfo placeInfo, string communityName)
@@ -151,16 +149,17 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                    new ConfirmationDialogView.DialogData(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
-                        DELETE_PLACE_CANCEL_TEXT,
-                        DELETE_PLACE_CONFIRM_TEXT,
-                        deleteSprite,
-                        false, false,
-                        DELETE_PLACE_SUB_TEXT),
-                    ct);
+                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
+                                                                                                                      DELETE_PLACE_CANCEL_TEXT,
+                                                                                                                      DELETE_PLACE_CONFIRM_TEXT,
+                                                                                                                      deleteSprite,
+                                                                                                                      false, false,
+                                                                                                                      DELETE_PLACE_SUB_TEXT),
+                                                                                                                  ct)
+                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (!dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
                 ElementDeleteButtonClicked?.Invoke(placeInfo);
             }

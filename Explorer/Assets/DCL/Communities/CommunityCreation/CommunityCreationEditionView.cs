@@ -45,6 +45,7 @@ namespace DCL.Communities.CommunityCreation
         [SerializeField] private TMP_Text creationPanelTitleText;
         [SerializeField] private ScrollRect creationPanelScrollRect;
         [SerializeField] private Button creationPanelEditProfilePictureButton;
+        [SerializeField] private GameObject creationPanelProfilePictureIcon;
         [SerializeField] private ImageView creationPanelProfileSelectedImage;
         [SerializeField] private Sprite creationPanelProfileDefaultSelectedImage;
         [SerializeField] private TMP_InputField creationPanelCommunityNameInputField;
@@ -184,6 +185,7 @@ namespace DCL.Communities.CommunityCreation
         {
             isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(true);
+            creationPanelProfilePictureIcon.SetActive(false);
 
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
@@ -198,6 +200,7 @@ namespace DCL.Communities.CommunityCreation
         {
             isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(sprite is not null);
+            creationPanelProfilePictureIcon.SetActive(!creationPanelProfileSelectedImage.gameObject.activeSelf);
             imageController.SetImage(sprite);
         }
 

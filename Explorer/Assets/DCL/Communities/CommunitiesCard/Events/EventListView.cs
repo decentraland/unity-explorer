@@ -1,6 +1,7 @@
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.Utilities;
 using MVC;
@@ -36,7 +37,6 @@ namespace DCL.Communities.CommunitiesCard.Events
         private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData;
         private bool canModify;
         private ObjectProxy<ISpriteCache> spriteCache;
-        private IMVCManager mvcManager;
         private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
         private GenericContextMenu contextMenu;
@@ -58,13 +58,11 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         public void InitList(Func<SectionFetchData<PlaceAndEventDTO>> currentSectionDataFunc,
             ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
-            IMVCManager mvcManager,
             CancellationToken panelCancellationToken)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
             getEventsFetchData = currentSectionDataFunc;
             this.spriteCache = eventThumbnailSpriteCache;
-            this.mvcManager = mvcManager;
             cancellationToken = panelCancellationToken;
         }
 
@@ -93,8 +91,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             lastClickedEventCtx = eventData;
             eventListItemView.CanPlayUnHoverAnimation = false;
 
-            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
-                actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true)), cancellationToken);
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, position,
+                actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true), cancellationToken);
         }
 
         public void RefreshGrid(bool redraw)

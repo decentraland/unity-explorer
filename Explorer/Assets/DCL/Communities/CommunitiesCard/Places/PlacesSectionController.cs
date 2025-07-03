@@ -70,8 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
-            IWeb3IdentityCache web3IdentityCache) : base (view, PAGE_SIZE)
+            IWebBrowser webBrowser) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -84,7 +83,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.webBrowser = webBrowser;
             this.spriteCache = placeSpriteCache;
 
-            view.InitGrid(() => currentSectionFetchData, placeSpriteCache, mvcManager, cancellationToken, web3IdentityCache);
+            view.InitGrid(() => currentSectionFetchData, placeSpriteCache, cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 

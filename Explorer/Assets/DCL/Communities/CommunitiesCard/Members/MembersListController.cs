@@ -61,7 +61,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             WarningNotificationView inWorldWarningNotificationView,
-            IWeb3IdentityCache web3IdentityCache,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus) : base(view, PAGE_SIZE)
         {
@@ -73,7 +72,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
 
-            this.view.InitGrid(() => currentSectionFetchData, web3IdentityCache, mvcManager);
+            this.view.InitGrid(() => currentSectionFetchData);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
             this.view.ElementMainButtonClicked += OnMainButtonClicked;
             this.view.ContextMenuUserProfileButtonClicked += HandleContextMenuUserProfileButtonAsync;

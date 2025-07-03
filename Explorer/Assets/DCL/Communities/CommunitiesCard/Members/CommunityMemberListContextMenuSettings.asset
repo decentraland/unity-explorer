@@ -12,26 +12,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be4dc9218def432f886c890e61193641, type: 3}
   m_Name: CommunityMemberListContextMenuSettings
   m_EditorClassIdentifier: 
-  contextMenuWidth: 250
-  elementsSpacing: 5
-  verticalPadding:
+  <ContextMenuWidth>k__BackingField: 250
+  <ElementsSpacing>k__BackingField: 5
+  <SeparatorHeight>k__BackingField: 20
+  <VerticalPadding>k__BackingField:
     m_Left: 15
     m_Right: 15
     m_Top: 20
     m_Bottom: 25
-  viewProfileSprite: {fileID: 21300000, guid: c42ef609dd1154fa9a0e37d744af5614, type: 3}
-  viewProfileText: View Profile
-  blockSprite: {fileID: 21300000, guid: 493ac3c2397b64caea2decabee6048e8, type: 3}
-  blockText: Block
-  chatSprite: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
-  chatText: Chat
-  callSprite: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
-  callText: Call
-  removeModeratorSprite: {fileID: 21300000, guid: bc7b3b3ba2e964e21bd23ac21ce74305, type: 3}
-  removeModeratorText: Demote Moderator
-  addModeratorSprite: {fileID: 21300000, guid: aa635ee59944245afb570e44c2caeac7, type: 3}
-  addModeratorText: Promote Moderator
-  kickUserSprite: {fileID: 21300000, guid: 63ca55af13b6147d9a3b2fb88a9e1c2f, type: 3}
-  kickUserText: Remove Member
-  banUserSprite: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
-  banUserText: Ban
+  <ViewProfileSprite>k__BackingField: {fileID: 21300000, guid: c42ef609dd1154fa9a0e37d744af5614, type: 3}
+  <ViewProfileText>k__BackingField: View Profile
+  <BlockSprite>k__BackingField: {fileID: 21300000, guid: 493ac3c2397b64caea2decabee6048e8, type: 3}
+  <BlockText>k__BackingField: Block
+  <ChatSprite>k__BackingField: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
+  <ChatText>k__BackingField: Chat
+  <CallSprite>k__BackingField: {fileID: 21300000, guid: fb395579b9bab46d5bf9eb47377fb219, type: 3}
+  <CallText>k__BackingField: Call
+  <RemoveModeratorSprite>k__BackingField: {fileID: 21300000, guid: bc7b3b3ba2e964e21bd23ac21ce74305, type: 3}
+  <RemoveModeratorText>k__BackingField: Demote Moderator
+  <AddModeratorSprite>k__BackingField: {fileID: 21300000, guid: aa635ee59944245afb570e44c2caeac7, type: 3}
+  <AddModeratorText>k__BackingField: Promote Moderator
+  <KickUserSprite>k__BackingField: {fileID: 21300000, guid: 63ca55af13b6147d9a3b2fb88a9e1c2f, type: 3}
+  <KickUserText>k__BackingField: Remove Member
+  <BanUserSprite>k__BackingField: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
+  <BanUserText>k__BackingField: Ban

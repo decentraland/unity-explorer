@@ -75,7 +75,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.mvcManager = mvcManager;
             this.spriteCache = eventThumbnailSpriteCache;
 
-            view.InitList(() => currentSectionFetchData, eventThumbnailSpriteCache, mvcManager, cancellationToken);
+            view.InitList(() => currentSectionFetchData, eventThumbnailSpriteCache, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
             view.MainButtonClicked += OnMainButtonClicked;

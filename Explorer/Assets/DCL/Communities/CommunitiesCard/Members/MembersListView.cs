@@ -1,10 +1,13 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using UnityEngine;
 using DCL.UI.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using MVC;
 using Nethereum.Siwe.Core.Recap;
@@ -12,6 +15,7 @@ using System;
 using System.Threading;
 using UnityEngine.UI;
 using Utility;
+using Utility.Types;
 using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
@@ -67,8 +71,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private CancellationTokenSource confirmationDialogCts = new ();
         private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData;
         private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private IWeb3IdentityCache web3IdentityCache;
-        private IMVCManager mvcManager;
         private MemberData lastClickedProfileCtx;
         private GenericContextMenu contextMenu;
         private UserProfileContextMenuControlSettings userProfileContextMenuControlSettings;
@@ -127,10 +129,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             communityOptionsSeparatorContextMenuElement.Enabled = removeModeratorContextMenuElement.Enabled || addModeratorContextMenuElement.Enabled || kickUserContextMenuElement.Enabled || banUserContextMenuElement.Enabled;
 
-            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
-                           closeTask: panelTask)), cancellationToken)
-                      .Forget();
+                           closeTask: panelTask), cancellationToken);
         }
 
         private void ShowKickConfirmationDialog(MemberData profile, string communityName)
@@ -141,16 +142,17 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowKickConfirmationDialogAsync(CancellationToken ct)
             {
-                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                    new ConfirmationDialogView.DialogData(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityName),
-                        KICK_MEMBER_CANCEL_TEXT,
-                        KICK_MEMBER_CONFIRM_TEXT,
-                        kickSprite,
-                        false, false,
-                        userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
-                    ct);
+                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityName),
+                                                                                                                      KICK_MEMBER_CANCEL_TEXT,
+                                                                                                                      KICK_MEMBER_CONFIRM_TEXT,
+                                                                                                                      kickSprite,
+                                                                                                                      false, false,
+                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                                                  ct)
+                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (!dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
                 KickUserRequested?.Invoke(profile);
             }
@@ -164,16 +166,17 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                ConfirmationDialogView.ConfirmationResult dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                    new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
-                        BAN_MEMBER_CANCEL_TEXT,
-                        BAN_MEMBER_CONFIRM_TEXT,
-                        banSprite,
-                        false, false,
-                        userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
-                    ct);
+                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
+                                                                                                        new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
+                                                                                                            BAN_MEMBER_CANCEL_TEXT,
+                                                                                                            BAN_MEMBER_CONFIRM_TEXT,
+                                                                                                            banSprite,
+                                                                                                            false, false,
+                                                                                                            userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                                        ct)
+                                                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (dialogResult == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (!dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
                 BanUserRequested?.Invoke(profile);
             }
@@ -203,14 +206,10 @@ namespace DCL.Communities.CommunitiesCard.Members
             scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
         }
 
-        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc,
-            IWeb3IdentityCache web3IdentityCache,
-            IMVCManager mvcManager)
+        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getCurrentSectionFetchData = currentSectionDataFunc;
-            this.web3IdentityCache = web3IdentityCache;
-            this.mvcManager = mvcManager;
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
@@ -233,7 +232,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
 
             MemberData memberData = membersData.items[index];
-            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(web3IdentityCache.Identity?.Address), profileRepositoryWrapper);
+            elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address), profileRepositoryWrapper);
 
             elementView.SubscribeToInteractions(member => ElementMainButtonClicked?.Invoke(member),
                 OnContextMenuButtonClicked,

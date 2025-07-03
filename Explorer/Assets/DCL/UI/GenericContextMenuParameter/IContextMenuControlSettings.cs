@@ -1,5 +1,5 @@
 
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.GenericContextMenuParameter
 {
     public interface IContextMenuControlSettings
     {
