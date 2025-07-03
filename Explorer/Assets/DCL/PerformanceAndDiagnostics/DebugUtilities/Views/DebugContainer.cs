@@ -13,7 +13,6 @@ namespace DCL.DebugUtilities.Views
         internal void Initialize()
         {
             Button toolButton = this.Q<Button>("OpenPanelButton");
-            toolButton.style.display = DisplayStyle.Flex;
             VisualElement panel = this.Q("Panel");
 
             Button closeButton = this.Q<Button>("CloseButton");
