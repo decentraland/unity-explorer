@@ -9,9 +9,9 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PerformanceAndDiagnostics.Analytics.Services;
 using DCL.PluginSystem;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Settings;
-using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Abstract;
 using DCL.Web3.Accounts.Factory;
@@ -57,7 +57,6 @@ namespace Global.Dynamic
         public IAppArgs ApplicationParametersParser { get; private set; }
         public ILaunchMode LaunchMode { get; private set; }
         public bool UseRemoteAssetBundles { get; private set; }
-
         public DecentralandEnvironment Environment { get; private set; }
 
         public override void Dispose()
@@ -104,7 +103,7 @@ namespace Global.Dynamic
                 ApplicationParametersParser = applicationParametersParser,
                 DebugSettings = debugSettings,
                 WorldVolumeMacBus = new WorldVolumeMacBus(),
-                Environment = decentralandEnvironment
+                Environment = decentralandEnvironment,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>

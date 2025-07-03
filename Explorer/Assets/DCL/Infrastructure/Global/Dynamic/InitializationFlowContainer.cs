@@ -1,4 +1,5 @@
 ﻿using DCL.Audio;
+using DCL.Character;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -37,7 +38,8 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appArgs,
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            ICharacterObject characterObject)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
@@ -56,8 +58,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
-                teleportStartupOperation,
-                ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
+                teleportStartupOperation
             };
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
@@ -101,7 +102,10 @@ namespace DCL.UserInAppInitializationFlow
                     reLoginOps,
                     checkOnboardingStartupOperation,
                     bootstrapContainer.IdentityCache.EnsureNotNull(),
-                    appArgs),
+                    ensureLivekitConnectionStartupOperation,
+                    appArgs,
+                    characterObject,
+                    dynamicWorldParams.StartParcel),
             };
         }
     }

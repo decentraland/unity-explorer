@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.Character;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -19,6 +20,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
+using Utility;
 using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
@@ -42,6 +44,10 @@ namespace DCL.UserInAppInitializationFlow
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
+        private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
+
+        private readonly ICharacterObject characterObject;
+        private readonly StartParcel startParcel;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -57,13 +63,19 @@ namespace DCL.UserInAppInitializationFlow
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
             CheckOnboardingStartupOperation checkOnboardingStartupOperation,
             IWeb3IdentityCache identityCache,
-            IAppArgs appArgs)
+            EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
+            IAppArgs appArgs,
+            ICharacterObject characterObject,
+            StartParcel startParcel)
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
             this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
             this.identityCache = identityCache;
+            this.ensureLivekitConnectionStartupOperation = ensureLivekitConnectionStartupOperation;
             this.appArgs = appArgs;
+            this.characterObject = characterObject;
+            this.startParcel = startParcel;
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -127,6 +139,9 @@ namespace DCL.UserInAppInitializationFlow
                 var flowToRun = parameters.LoadSource is IUserInAppInitializationFlow.LoadSource.Logout
                     ? reloginOps
                     : initOps;
+
+                characterObject.Controller.transform.position = startParcel.Peek().ParcelToPositionFlat();
+                ensureLivekitConnectionStartupOperation.ExecuteAsync(new IStartupOperation.Params(), ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(

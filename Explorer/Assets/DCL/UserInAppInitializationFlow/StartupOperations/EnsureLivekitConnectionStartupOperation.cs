@@ -1,6 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.HealthChecks;
 using DCL.RealmNavigation;
+using System;
+using System.Diagnostics;
 using System.Threading;
 using Utility.Types;
 
@@ -20,12 +22,21 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         public async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params report, CancellationToken ct)
         {
             float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitConnectionEnsuring);
-            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
+            DoConnection(ct).Forget();
+            return EnumResult<TaskError>.SuccessResult();
+            //if (result.Success)
+            //    report.Report.SetProgress(finalizationProgress);
 
-            if (result.Success)
-                report.Report.SetProgress(finalizationProgress);
+            //return result.AsEnumResult(TaskError.MessageError);
+        }
 
-            return result.AsEnumResult(TaskError.MessageError);
+        public async UniTask DoConnection(CancellationToken ct)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            UnityEngine.Debug.Log("JUANI LIVEKIT STARTED CONNECTING");
+            await healthCheck.IsRemoteAvailableAsync(ct).Timeout(TimeSpan.FromSeconds(10));
+            stopwatch.Stop();
+            UnityEngine.Debug.Log($"JUANI LIVEKIT CONNECTED {stopwatch.ElapsedMilliseconds} ms");
         }
     }
 }

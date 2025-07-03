@@ -23,6 +23,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Prefs;
+using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
