@@ -4,5 +4,6 @@
     {
         NONE = 0,
         SUM = 1,
+        SUM_PER_FRAME = 2,
     }
 }

@@ -14,8 +14,6 @@ using NUnit.Framework;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace ECS.StreamableLoading.Tests
 {

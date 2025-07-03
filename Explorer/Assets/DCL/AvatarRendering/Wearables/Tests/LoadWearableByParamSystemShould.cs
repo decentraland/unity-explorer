@@ -2,7 +2,6 @@ using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.AvatarRendering.Wearables.Systems;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Tests;

@@ -78,7 +78,7 @@ namespace DCL.WebRequests
 
                     if (exception.IsIrrecoverableError(adapter!, attemptsLeft))
                     {
-                        SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with {envelope}", level: BreadcrumbLevel.Info);
+                        IWebRequestController.AddFailedBreadcrumb(in envelope);
 
                         var adaptedException = new DefaultWebRequestException(adapter!, exception);
                         adapter!.Dispose();

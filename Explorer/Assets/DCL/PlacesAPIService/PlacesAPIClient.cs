@@ -116,6 +116,7 @@ namespace DCL.PlacesAPIService
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
             await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
+                             ct,
                              createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 

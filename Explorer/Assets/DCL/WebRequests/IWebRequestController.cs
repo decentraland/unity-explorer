@@ -7,13 +7,23 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using Global.Dynamic.LaunchModes;
+using Sentry;
 using System;
+using System.Text;
 using System.Threading;
 
 namespace DCL.WebRequests
 {
     public interface IWebRequestController : IDisposable
     {
+        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
+
+        protected static void AddFailedBreadcrumb(in RequestEnvelope envelope)
+        {
+            if (!envelope.CommonArguments.URL.IsFile)
+                SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+        }
+
         static readonly IWebRequestController UNITY = new DefaultWebRequestController(
             IWebRequestsAnalyticsContainer.DEFAULT,
             new IWeb3IdentityCache.Default(),

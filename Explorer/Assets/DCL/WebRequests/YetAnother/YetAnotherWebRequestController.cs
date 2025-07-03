@@ -20,7 +20,7 @@ namespace DCL.WebRequests
         private static readonly string USER_AGENT = $"Yet Another Web Request Controller/Unity {Application.unityVersion}";
 
         private readonly HttpClient httpClient;
-        private readonly IWebRequestsAnalyticsContainer analyticsContainer; // TODO
+        private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IRequestHub requestHub;
 
@@ -121,6 +121,8 @@ namespace DCL.WebRequests
                     finally
                     {
                         // Analytics must be called when the object is not disposed
+                        // TODO despite the request is finished here, the data can be still processed asynchronously
+                        // The analytics approach must be re-thought
                         analyticsContainer.OnRequestFinished(requestWrap, adapter);
                     }
 
@@ -153,7 +155,7 @@ namespace DCL.WebRequests
 
                     if (adapter!.IsIrrecoverableError(attemptsLeft))
                     {
-                        SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on loading {requestWrap.GetType().Name} from {envelope.CommonArguments.URL} with {envelope}", level: BreadcrumbLevel.Info);
+                        IWebRequestController.AddFailedBreadcrumb(in envelope);
 
                         var adaptedException = new YetAnotherHttpWebRequestException(adapter!, exception);
 

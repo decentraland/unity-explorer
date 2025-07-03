@@ -1,5 +1,6 @@
 ﻿using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Profiling;
 using DCL.WebRequests.Analytics.Metrics;
 using System;
 using System.Collections.Generic;
@@ -31,8 +32,8 @@ namespace DCL.WebRequests.Analytics
             new (typeof(TotalCounter), MetricAggregationMode.SUM),
             new (typeof(TotalFailed)),
             new (typeof(CannotConnectCounter), MetricAggregationMode.SUM),
-            new (typeof(BandwidthDown)),
-            new (typeof(BandwidthUp)),
+            new (typeof(BandwidthDown), new MetricRegistration.MetricAggregationType(MetricAggregationMode.SUM, NetworkProfilerCounters.WEB_REQUESTS_DOWNLOADED), new MetricRegistration.MetricAggregationType(MetricAggregationMode.SUM_PER_FRAME, NetworkProfilerCounters.WEB_REQUESTS_DOWNLOADED_FRAME)),
+            new (typeof(BandwidthUp), new MetricRegistration.MetricAggregationType(MetricAggregationMode.SUM, NetworkProfilerCounters.WEB_REQUESTS_UPLOADED), new MetricRegistration.MetricAggregationType(MetricAggregationMode.SUM_PER_FRAME, NetworkProfilerCounters.WEB_REQUESTS_UPLOADED_FRAME)),
             new (typeof(ServeTimeSmallFileAverage)),
             new (typeof(ServeTimePerMBAverage)),
             new (typeof(FillRateAverage)),
@@ -75,10 +76,9 @@ namespace DCL.WebRequests.Analytics
 
                     var registration = new MetricRegistration(instance, binding);
                     registrations.Add(registration);
-                    ;
 
                     // Add to the aggregated metrics
-                    if (metricType.AggregationMode != MetricAggregationMode.NONE)
+                    if (metricType.AggregationModes.Length > 0)
                     {
                         if (!aggregatedMetrics.TryGetValue(metricType.Type, out List<IRequestMetric>? list))
                         {
@@ -95,20 +95,21 @@ namespace DCL.WebRequests.Analytics
 
             foreach (MetricRegistration.MetricType metricType in METRICS)
             {
-                if (metricType.AggregationMode == MetricAggregationMode.NONE) continue;
-
-                if (!aggregatedMetrics.TryGetValue(metricType.Type, out List<IRequestMetric>? list)) continue;
-
-                ElementBinding<ulong>? binding = null;
-
-                if (debugWidgetBuilder != null)
+                foreach (MetricRegistration.MetricAggregationType aggregationType in metricType.AggregationModes)
                 {
-                    binding = new ElementBinding<ulong>(0);
-                    debugWidgetBuilder.AddMarker($"{metricType.AggregationMode}-{metricType.Type.Name}", binding, list[0].GetUnit());
-                }
+                    if (!aggregatedMetrics.TryGetValue(metricType.Type, out List<IRequestMetric>? list)) continue;
 
-                var aggregatedMetric = new MetricRegistration.AggregatedMetric(list, metricType.AggregationMode, binding);
-                container.aggregatedMetrics.Add(aggregatedMetric);
+                    ElementBinding<ulong>? binding = null;
+
+                    if (debugWidgetBuilder != null)
+                    {
+                        binding = new ElementBinding<ulong>(0);
+                        debugWidgetBuilder.AddMarker($"{aggregationType.AggregationMode}-{metricType.Type.Name}", binding, list[0].GetUnit());
+                    }
+
+                    var aggregatedMetric = new MetricRegistration.AggregatedMetric(list, aggregationType, binding);
+                    container.aggregatedMetrics.Add(aggregatedMetric);
+                }
             }
 
             return container;

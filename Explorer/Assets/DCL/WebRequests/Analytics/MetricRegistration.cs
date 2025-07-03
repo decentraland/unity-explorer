@@ -1,18 +1,21 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using System;
 using System.Collections.Generic;
+using Unity.Profiling;
 
 namespace DCL.WebRequests.Analytics
 {
     public readonly struct MetricRegistration
     {
-        public readonly struct AggregatedMetric
+        public class AggregatedMetric
         {
             private readonly IReadOnlyList<IRequestMetric> metrics;
-            private readonly MetricAggregationMode aggregationMode;
+            private readonly MetricAggregationType aggregationMode;
             private readonly ElementBinding<ulong>? debugBinding;
 
-            public AggregatedMetric(IReadOnlyList<IRequestMetric> metrics, MetricAggregationMode aggregationMode, ElementBinding<ulong>? debugBinding)
+            private ulong previousSum;
+
+            public AggregatedMetric(IReadOnlyList<IRequestMetric> metrics, MetricAggregationType aggregationMode, ElementBinding<ulong>? debugBinding)
             {
                 this.metrics = metrics;
                 this.aggregationMode = aggregationMode;
@@ -23,15 +26,35 @@ namespace DCL.WebRequests.Analytics
             {
                 if (debugBinding == null) return;
 
-                switch (aggregationMode)
+                switch (aggregationMode.AggregationMode)
                 {
                     case MetricAggregationMode.SUM:
+                    case MetricAggregationMode.SUM_PER_FRAME:
                         ulong sum = 0;
 
                         foreach (IRequestMetric requestMetric in metrics)
                             sum += requestMetric.GetMetric();
 
-                        debugBinding!.Value = sum;
+                        ulong bindingValue;
+
+                        if (aggregationMode.AggregationMode == MetricAggregationMode.SUM_PER_FRAME)
+                        {
+                            bindingValue = sum - previousSum;
+                            previousSum = sum;
+                        }
+                        else
+                            bindingValue = sum;
+
+                        debugBinding!.Value = bindingValue;
+
+                        ProfilerCounterValue<ulong>? profilerCounterValue = aggregationMode.ProfilerCounterValue;
+
+                        if (profilerCounterValue != null)
+                        {
+                            ProfilerCounterValue<ulong> profilerCounterValueValue = profilerCounterValue.Value;
+                            profilerCounterValueValue.Value = bindingValue;
+                        }
+
                         break;
                 }
             }
@@ -52,13 +75,28 @@ namespace DCL.WebRequests.Analytics
         public readonly struct MetricType
         {
             public readonly Type Type;
-            public readonly MetricAggregationMode AggregationMode;
+            public readonly MetricAggregationType[] AggregationModes;
 
-            public MetricType(Type type, MetricAggregationMode aggregationMode = MetricAggregationMode.NONE)
+            public MetricType(Type type, params MetricAggregationType[] aggregationModes)
             {
                 Type = type;
-                AggregationMode = aggregationMode;
+                AggregationModes = aggregationModes;
             }
+        }
+
+        public readonly struct MetricAggregationType
+        {
+            public readonly MetricAggregationMode AggregationMode;
+            public readonly ProfilerCounterValue<ulong>? ProfilerCounterValue;
+
+            public MetricAggregationType(MetricAggregationMode aggregationMode, ProfilerCounterValue<ulong>? profilerCounterValue)
+            {
+                AggregationMode = aggregationMode;
+                ProfilerCounterValue = profilerCounterValue;
+            }
+
+            public static implicit operator MetricAggregationType(MetricAggregationMode mode) =>
+                new (mode, null);
         }
 
         internal readonly IRequestMetric metric;
