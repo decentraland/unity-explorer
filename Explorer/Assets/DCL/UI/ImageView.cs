@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -63,6 +64,11 @@ namespace DCL.UI
             }
 
             Alpha = 1f;
+        }
+
+        public void ShowImageAnimated()
+        {
+            Image.DOColor(Color.white, imageLoadingFadeDuration);
         }
     }
 }

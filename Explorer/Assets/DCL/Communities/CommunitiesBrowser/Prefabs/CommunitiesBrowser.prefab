@@ -173,6 +173,7 @@ MonoBehaviour:
   myCommunitiesLoadingSpinner: {fileID: 2469477369309723608}
   myCommunitiesLoopList: {fileID: 8673914969252130814}
   myCommunitiesViewAllButton: {fileID: 2355491983493601957}
+  defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
   resultsBackButton: {fileID: 4786048208792907895}
   resultsTitleText: {fileID: 6833303783689177860}
   resultsCountText: {fileID: 4856304596177266866}

@@ -1,7 +1,6 @@
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
@@ -14,6 +13,8 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserView : MonoBehaviour
     {
+        public delegate void FillThumbnailDelegate(string thumbnailUrl, ImageView view, Sprite defaultThumbnail);
+
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
         public event Action ViewAllMyCommunitiesButtonClicked;
@@ -50,6 +51,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject myCommunitiesLoadingSpinner;
         [SerializeField] private LoopListView2 myCommunitiesLoopList;
         [SerializeField] private Button myCommunitiesViewAllButton;
+        [SerializeField] private Sprite defaultThumbnailSprite;
 
         [Header("Results Section")]
         [SerializeField] private Button resultsBackButton;
@@ -65,6 +67,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentResults = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private ISpriteCache spriteCache;
+        private FillThumbnailDelegate fillThumbnailFunction;
 
         private void Awake()
         {
@@ -263,8 +266,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(spriteCache);
-            cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
+            //cardView.ConfigureImageController(spriteCache);
+            fillThumbnailFunction(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite);
 
             // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
@@ -326,6 +329,11 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             CommunityJoined?.Invoke(communityData.id);
+        }
+
+        public void SetFillThumbnailDelegate(FillThumbnailDelegate loadCommunityThumbnailAsync)
+        {
+            fillThumbnailFunction = loadCommunityThumbnailAsync;
         }
     }
 }

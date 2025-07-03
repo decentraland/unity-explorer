@@ -8,10 +8,10 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.WebRequests;
+using DG.Tweening;
 using MVC;
 using System;
 using System.Threading;
@@ -87,6 +87,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
+            view.SetFillThumbnailDelegate(FillThumbnailImplementation);
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
@@ -125,6 +126,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            spriteCache.Clear();
         }
 
         public void Animate(int triggerId) =>
@@ -160,6 +162,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            spriteCache.Clear();
         }
 
         private void ReloadBrowser()
@@ -201,6 +204,31 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.AddMyCommunitiesItems(result.Value.data.results, true);
             view.SetMyCommunitiesAsLoading(false);
+        }
+
+        private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
+
+        private void FillThumbnailImplementation(string thumbnailUrl, ImageView thumbnailView, Sprite defaultThumbnail)
+        {
+            LoadCommunityThumbnailAsync(thumbnailUrl, thumbnailView, defaultThumbnail, myCommunityThumbnailsLoadingCts.Token).Forget();
+        }
+
+        private async UniTaskVoid LoadCommunityThumbnailAsync(string thumbnailUrl, ImageView thumbnailView, Sprite defaultThumbnail, CancellationToken ct)
+        {
+            thumbnailView.SetImage(defaultThumbnail);
+
+            Sprite? loadedSprite = null;
+
+            if (!string.IsNullOrEmpty(thumbnailUrl))
+                loadedSprite = await spriteCache.GetSpriteAsync(thumbnailUrl, ct);
+
+            if (loadedSprite != null)
+            {
+                thumbnailView.SetImage(loadedSprite!);
+
+                thumbnailView.ImageEnabled = true;
+                thumbnailView.ShowImageAnimated();
+            }
         }
 
         private void ViewAllMyCommunitiesResults()
