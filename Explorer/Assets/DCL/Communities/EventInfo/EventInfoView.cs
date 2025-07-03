@@ -4,6 +4,7 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.WebRequests;
 using MVC;

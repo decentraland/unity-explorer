@@ -4,6 +4,7 @@ using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using MVC;

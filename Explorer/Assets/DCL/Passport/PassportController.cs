@@ -33,6 +33,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;

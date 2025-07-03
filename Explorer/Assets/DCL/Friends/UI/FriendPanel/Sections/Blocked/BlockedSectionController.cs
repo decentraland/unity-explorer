@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Friends.UI.BlockUserPrompt;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using MVC;
 using UnityEngine;
 

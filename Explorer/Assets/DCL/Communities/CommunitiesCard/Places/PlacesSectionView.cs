@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -137,8 +138,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             lastClickedPlaceCtx = placeInfo;
             placeCardView.CanPlayUnHoverAnimation = false;
 
-            ViewDependencies.MvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
-                actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true)), cancellationToken);
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, position,
+                actionOnHide: () => placeCardView.CanPlayUnHoverAnimation = true), cancellationToken);
         }
 
         private void ShowBanConfirmationDialog(PlaceInfo placeInfo, string communityName)

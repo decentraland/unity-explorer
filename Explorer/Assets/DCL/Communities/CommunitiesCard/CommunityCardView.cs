@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using MVC;
@@ -173,8 +174,8 @@ namespace DCL.Communities.CommunitiesCard
         {
             openContextMenuButton.interactable = false;
 
-            ViewDependencies.MvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
-                actionOnHide: () => openContextMenuButton.interactable = true)), cancellationToken);
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
+                actionOnHide: () => openContextMenuButton.interactable = true), cancellationToken);
         }
 
         private void OnDisable()

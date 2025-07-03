@@ -1,6 +1,7 @@
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.Utilities;
 using MVC;
@@ -90,8 +91,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             lastClickedEventCtx = eventData;
             eventListItemView.CanPlayUnHoverAnimation = false;
 
-            ViewDependencies.MvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
-                actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true)), cancellationToken);
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, position,
+                actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true), cancellationToken);
         }
 
         public void RefreshGrid(bool redraw)

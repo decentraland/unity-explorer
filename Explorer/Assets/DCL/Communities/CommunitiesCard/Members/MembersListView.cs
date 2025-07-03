@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
 using SuperScrollView;
 using UnityEngine;
@@ -128,10 +129,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             communityOptionsSeparatorContextMenuElement.Enabled = removeModeratorContextMenuElement.Enabled || addModeratorContextMenuElement.Enabled || kickUserContextMenuElement.Enabled || banUserContextMenuElement.Enabled;
 
-            ViewDependencies.MvcManager.ShowAsync(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, buttonPosition,
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition,
                            actionOnHide: () => elementView.CanUnHover = true,
-                           closeTask: panelTask)), cancellationToken)
-                      .Forget();
+                           closeTask: panelTask), cancellationToken);
         }
 
         private void ShowKickConfirmationDialog(MemberData profile, string communityName)
