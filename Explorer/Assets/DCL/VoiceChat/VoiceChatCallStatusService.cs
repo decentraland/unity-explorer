@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
+using System;
 using System.Threading;
 using Utility;
 
@@ -33,7 +34,7 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
 
             this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
-            this.voiceChatService.Reconnected += OnReconnected;
+            this.voiceChatService.Connected += OnConnected;
             this.voiceChatService.Disconnected += OnRCPDisconnected;
             cts = new CancellationTokenSource();
         }
@@ -43,7 +44,7 @@ namespace DCL.VoiceChat
             if (voiceChatService != null)
             {
                 voiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
-                voiceChatService.Reconnected -= OnReconnected;
+                voiceChatService.Connected -= OnConnected;
                 voiceChatService.Disconnected -= OnRCPDisconnected;
                 voiceChatService.Dispose();
             }
@@ -79,7 +80,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnReconnected()
+        private void OnConnected()
         {
             CheckIncomingCallAsync(cts.Token).Forget();
         }
@@ -96,10 +97,7 @@ namespace DCL.VoiceChat
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                 }
             }
-            catch (System.InvalidOperationException e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
-            }
+            catch (InvalidOperationException e) { HandleVoiceChatServiceDisabled(e, resetData: false); }
         }
 
         private void OnRCPDisconnected()
@@ -152,10 +150,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: true);
-            }
+            catch (InvalidOperationException e) { HandleVoiceChatServiceDisabled(e, resetData: true); }
         }
 
         public void AcceptCall()
@@ -187,10 +182,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
-            }
+            catch (InvalidOperationException e) { HandleVoiceChatServiceDisabled(e, resetData: false); }
         }
 
         public void HangUp()
@@ -222,10 +214,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: true);
-            }
+            catch (InvalidOperationException e) { HandleVoiceChatServiceDisabled(e, resetData: true); }
         }
 
         public void RejectCall()
@@ -256,10 +245,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
-            {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
-            }
+            catch (InvalidOperationException e) { HandleVoiceChatServiceDisabled(e, resetData: false); }
         }
 
         private void UpdateStatus(VoiceChatStatus newStatus)
@@ -275,13 +261,12 @@ namespace DCL.VoiceChat
             RoomUrl = string.Empty;
         }
 
-        private void HandleVoiceChatServiceDisabled(System.InvalidOperationException e, bool resetData = false)
+        private void HandleVoiceChatServiceDisabled(InvalidOperationException e, bool resetData = false)
         {
-            ReportHub.LogWarning($"Voice chat service is disabled: {e.Message}", new ReportData(ReportCategory.VOICE_CHAT));
-            if (resetData)
-            {
-                ResetVoiceChatData();
-            }
+            ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Voice chat service is disabled: {e.Message}");
+
+            if (resetData) { ResetVoiceChatData(); }
+
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 

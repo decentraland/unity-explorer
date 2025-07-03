@@ -8,7 +8,7 @@ namespace DCL.VoiceChat.Services
     public interface IVoiceService : IDisposable
     {
         event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
-        event Action Reconnected;
+        event Action Connected;
         event Action Disconnected;
 
         UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct);
