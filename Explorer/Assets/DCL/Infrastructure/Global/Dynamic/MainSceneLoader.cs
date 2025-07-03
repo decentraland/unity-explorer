@@ -332,7 +332,7 @@ namespace Global.Dynamic
                 new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
                     DecentralandUrl.ArchipelagoStatus,
                     DecentralandUrl.GatekeeperStatus
-                ));
+                ).WithRetries(3));
 
             Result result = await healthCheck.IsRemoteAvailableAsync(ct);
 
