@@ -26,7 +26,7 @@ namespace DCL.Chat.MessageBus
         private readonly ChatMessageFactory messageFactory;
         private readonly string routingUser;
         private bool isCommunitiesIncluded;
-        private CancellationTokenSource setupExploreSectionsCts;
+        private readonly CancellationTokenSource setupExploreSectionsCts = new ();
 
         public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
@@ -42,12 +42,14 @@ namespace DCL.Chat.MessageBus
             this.messageFactory = messageFactory;
 
             // Depending on the selected environment, we send the community messages to one user or another
-            string serverEnv = decentralandUrlsSource.Environment == DecentralandEnvironment.Org ? "prd" :
-                               decentralandUrlsSource.Environment == DecentralandEnvironment.Zone ? "dev" :
-                               "local";
+            string serverEnv = decentralandUrlsSource.Environment switch
+                               {
+                                   DecentralandEnvironment.Org => "prd",
+                                   DecentralandEnvironment.Zone => "dev",
+                                   _ => "local"
+                               };
             routingUser = $"message-router-{serverEnv}-0";
 
-            setupExploreSectionsCts = setupExploreSectionsCts.SafeRestart();
             ConfigureMessagePipesHubAsync(setupExploreSectionsCts.Token).Forget();
         }
 

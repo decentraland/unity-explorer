@@ -12,13 +12,14 @@ namespace DCL.Chat
         /// </summary>
         /// <param name="thumbnailCache">A way to access thumbnail images asynchronously.</param>
         /// <param name="imageUrl">The URL to the thumbnail picture.</param>
-        public void SetThumbnailData(ISpriteCache thumbnailCache, string? imageUrl)
+        /// <param name="ct">A cancellation token for the thumbnail download operation.</param>
+        public void SetThumbnailData(ISpriteCache thumbnailCache, string? imageUrl, CancellationToken ct)
         {
             customIcon.gameObject.SetActive(false);
             thumbnailView.SetActive(true);
 
             if(imageUrl != null)
-                thumbnailView.GetComponent<CommunityThumbnailView>().LoadThumbnailAsync(thumbnailCache, imageUrl, CancellationToken.None).Forget();
+                thumbnailView.GetComponent<CommunityThumbnailView>().LoadThumbnailAsync(thumbnailCache, imageUrl, ct).Forget();
         }
     }
 }

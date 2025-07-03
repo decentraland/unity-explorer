@@ -64,7 +64,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private ObjectProxy<ISpriteCache> spriteCache;
+        private ISpriteCache spriteCache;
 
         private void Awake()
         {
@@ -156,7 +156,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 searchBar.inputField.onValueChanged = originalEvent;
         }
 
-        public void InitializeMyCommunitiesList(int itemTotalCount, ObjectProxy<ISpriteCache> thumbnailCache)
+        public void InitializeMyCommunitiesList(int itemTotalCount, ISpriteCache thumbnailCache)
         {
             myCommunitiesLoopList.InitListView(itemTotalCount, SetupMyCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
@@ -178,7 +178,7 @@ namespace DCL.Communities.CommunitiesBrowser
             myCommunitiesLoopList.ScrollRect.verticalNormalizedPosition = 1f;
         }
 
-        public void InitializeResultsGrid(int itemTotalCount, ProfileRepositoryWrapper profileDataProvider, ObjectProxy<ISpriteCache> thumbnailCache)
+        public void InitializeResultsGrid(int itemTotalCount, ProfileRepositoryWrapper profileDataProvider, ISpriteCache thumbnailCache)
         {
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();

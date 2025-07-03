@@ -42,7 +42,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
+        private readonly ISpriteCache spriteCache;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -83,7 +83,7 @@ namespace DCL.Communities.CommunitiesBrowser
             this.selfProfile = selfProfile;
             this.nftNamesProvider = nftNamesProvider;
 
-            spriteCache.SetObject(new SpriteCache(webRequestController));
+            spriteCache = new SpriteCache(webRequestController);
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
@@ -125,7 +125,6 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
-            spriteCache.StrictObject.Clear();
         }
 
         public void Animate(int triggerId) =>
@@ -161,7 +160,6 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
-            spriteCache.StrictObject.Clear();
         }
 
         private void ReloadBrowser()
@@ -371,7 +369,7 @@ namespace DCL.Communities.CommunitiesBrowser
         }
 
         private void OpenCommunityProfile(string communityId) =>
-            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId, spriteCache.StrictObject))).Forget();
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(communityId, spriteCache))).Forget();
 
         private void CreateCommunity()
         {
@@ -394,7 +392,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: canCreate,
                     communityId: string.Empty,
-                    spriteCache.StrictObject)), ct).Forget();
+                    spriteCache)), ct).Forget();
         }
 
         private void OnCommunityUpdated(string _) =>

@@ -88,12 +88,14 @@ namespace DCL.Communities.CommunitiesBrowser
             joinCommunityButton.onClick.RemoveAllListeners();
         }
 
-        public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
+        public void ConfigureImageController(ISpriteCache spriteCache)
         {
             if (imageController != null)
                 return;
 
-            imageController = new ImageController(communityThumbnail, spriteCache);
+            ObjectProxy<ISpriteCache> cache = new ObjectProxy<ISpriteCache>();
+            cache.SetObject(spriteCache);
+            imageController = new ImageController(communityThumbnail, cache);
         }
 
         public void SetCommunityThumbnail(string imageUrl)

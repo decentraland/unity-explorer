@@ -118,10 +118,10 @@ namespace DCL.Chat
             conversationItem.SetClaimedNameIconVisibility(false);
         }
 
-        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, ISpriteCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData)
+        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, ISpriteCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData, CancellationToken ct)
         {
             CommunityChatConversationsToolbarViewItem conversationItem = (CommunityChatConversationsToolbarViewItem)items[channelId];
-            SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache);
+            SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache, ct);
         }
 
         public void SetPrivateConversationData(ChatChannel.ChannelId channelId, CancellationToken ct)
@@ -296,9 +296,9 @@ namespace DCL.Chat
             }
         }
 
-        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, ISpriteCache thumbnailCache)
+        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, ISpriteCache thumbnailCache, CancellationToken ct)
         {
-            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails?.raw);
+            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails?.raw, ct);
             newItem.SetConversationName(communityData.name);
         }
 

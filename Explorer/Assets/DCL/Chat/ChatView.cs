@@ -214,6 +214,7 @@ namespace DCL.Chat
         private bool isChatUnfolded;
         private bool isPointerOverChat;
         private CancellationTokenSource privateConversationItemCts = new CancellationTokenSource();
+        private CancellationTokenSource communityConversationItemCts = new CancellationTokenSource();
         private CancellationTokenSource communityTitleCts;
 
         private ISpriteCache thumbnailCache;
@@ -791,7 +792,7 @@ namespace DCL.Chat
         {
             conversationsToolbar.AddConversation(channelToAdd);
             GetUserCommunitiesData.CommunityData communityData = communitiesData[channelToAdd.Id];
-            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData);
+            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData, communityConversationItemCts.Token);
         }
 
         /// <summary>
