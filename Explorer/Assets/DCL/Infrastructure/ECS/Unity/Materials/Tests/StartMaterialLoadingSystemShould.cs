@@ -324,7 +324,8 @@ namespace ECS.Unity.Materials.Tests
 
             TextureComponent actual = actualNullable.Value;
 
-            Assert.AreEqual(expected.Texture.Src, actual.Src);
+            Assert.That(actual.Src.TextureType, Is.EqualTo(TextureUnion.TexOneofCase.Texture));
+            Assert.AreEqual(expected.Texture.Src, actual.Src.GetUri().OriginalString);
             Assert.AreEqual(expected.Texture.WrapMode.ToUnityWrapMode(), actual.WrapMode);
             Assert.AreEqual(expected.Texture.FilterMode.ToUnityFilterMode(), actual.FilterMode);
         }

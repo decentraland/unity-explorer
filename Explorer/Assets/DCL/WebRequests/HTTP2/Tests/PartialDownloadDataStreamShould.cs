@@ -18,14 +18,14 @@ using UnityEngine.Networking;
 
 namespace DCL.WebRequests.HTTP2.Tests
 {
-    [TestFixture(600 * 1024)] // 600 KB
-    [TestFixture(128 * 1024)] // 128 KB
+    [TestFixture(1024 * 1024)] // 1 MB
+    [TestFixture(2 * 1024 * 1024)] // 2 MB
     public class PartialDownloadDataStreamShould
     {
         private readonly long chunkSize;
 
-        // Content-Size: 1_036_789 (>1MB)
-        private static readonly Uri PARTIAL_TEST_URL = new ("https://docs.decentraland.org/images/editor/scene-editor.png");
+        // Content-Size: ~2.5 MB
+        private static readonly Uri PARTIAL_TEST_URL = new ("https://ab-cdn.decentraland.org/v23/bafybeid3ndectucbjm25d4oywuootdtxibesbfg7txezgxud6ccfak6rg4_windows");
 
         private static readonly Hash128 PARTIAL_TEST_URL_HASH = HTTPCache.CalculateHash(HTTPMethods.Get, PARTIAL_TEST_URL);
 
