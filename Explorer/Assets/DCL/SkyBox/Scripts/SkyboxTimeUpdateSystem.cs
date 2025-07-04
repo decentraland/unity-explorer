@@ -62,7 +62,6 @@ namespace DCL.SkyBox
             hasSceneOverride = false;
             hasCheckedCurrentScene = false;
             skyboxSpeedMultiplier = skyboxSettings.SpeedMultiplier;
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
 
             if (sceneFacade == null && !ffSkyboxSettings.HasValue)
                 TransitionToGlobalTime();
