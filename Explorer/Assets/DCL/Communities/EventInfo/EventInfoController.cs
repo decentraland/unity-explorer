@@ -23,7 +23,6 @@ namespace DCL.Communities.EventInfo
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
 
         private readonly IWebRequestController webRequestController;
-        private readonly IMVCManager mvcManager;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
@@ -36,7 +35,6 @@ namespace DCL.Communities.EventInfo
 
         public EventInfoController(ViewFactoryMethod viewFactory,
             IWebRequestController webRequestController,
-            IMVCManager mvcManager,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
@@ -44,7 +42,6 @@ namespace DCL.Communities.EventInfo
             : base(viewFactory)
         {
             this.webRequestController = webRequestController;
-            this.mvcManager = mvcManager;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
@@ -69,7 +66,7 @@ namespace DCL.Communities.EventInfo
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.Configure(mvcManager, webRequestController);
+            viewInstance!.Configure(webRequestController);
 
             viewInstance.InterestedButtonClicked += OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
@@ -80,7 +77,7 @@ namespace DCL.Communities.EventInfo
         protected override void OnBeforeViewShow()
         {
             panelCts = panelCts.SafeRestart();
-            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData);
+            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, panelCts.Token);
         }
 
         protected override void OnViewClose()

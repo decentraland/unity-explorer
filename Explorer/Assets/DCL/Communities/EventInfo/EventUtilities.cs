@@ -1,6 +1,5 @@
 using DCL.EventsApi;
 using System;
-using System.Globalization;
 using System.Text;
 
 namespace DCL.Communities.EventInfo
@@ -22,11 +21,11 @@ namespace DCL.Communities.EventInfo
         {
             string schedule = string.Empty;
 
-            if (!DateTime.TryParse(eventDTO.Start_at, null, DateTimeStyles.RoundtripKind, out DateTime startAt)) return schedule;
+            if (eventDTO.StartAtProcessed == default(DateTime)) return schedule;
 
             if (eventDTO.Live)
             {
-                TimeSpan elapsed = DateTime.UtcNow - startAt;
+                TimeSpan elapsed = DateTime.UtcNow - eventDTO.StartAtProcessed;
 
                 if (elapsed.TotalDays >= 1)
                     schedule = string.Format(STARTED_EVENT_TIME_FORMAT, (int)elapsed.TotalDays, DAY_STRING);
@@ -37,7 +36,7 @@ namespace DCL.Communities.EventInfo
             }
             else
             {
-                DateTime localDateTime = startAt.ToLocalTime();
+                DateTime localDateTime = eventDTO.StartAtProcessed.ToLocalTime();
                 schedule = localDateTime.ToString(EVENT_TIME_FORMAT).ToUpper();
             }
 

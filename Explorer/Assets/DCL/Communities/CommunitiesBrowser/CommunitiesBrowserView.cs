@@ -207,14 +207,14 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             if (isSuccess)
             {
-                CommunityData resultCommunityData = GetResultCommunityById(communityId);
+                CommunityData? resultCommunityData = GetResultCommunityById(communityId);
                 resultCommunityData?.SetAsJoined(isJoined);
 
-                CommunityData myCommunityData = GetMyCommunityById(communityId);
+                CommunityData? myCommunityData = GetMyCommunityById(communityId);
                 myCommunityData?.SetAsJoined(isJoined);
 
                 // Add/remove the joined/left community to/from My Communities
-                if (isJoined)
+                if (resultCommunityData != null && isJoined)
                     currentMyCommunities.Add(resultCommunityData);
                 else if (myCommunityData != null)
                     currentMyCommunities.RemoveAll(c => c.id == myCommunityData.id);
@@ -223,11 +223,19 @@ namespace DCL.Communities.CommunitiesBrowser
                 SetMyCommunitiesAsEmpty(currentMyCommunities.Count == 0);
             }
 
-            resultLoopGrid.RefreshAllShownItem();
-            myCommunitiesLoopList.RefreshAllShownItem();
+            // Refresh the community card (if exists) in the results' grid
+            for (var i = 0; i < currentResults.Count; i++)
+            {
+                CommunityData communityData = currentResults[i];
+                if (communityData.id == communityId)
+                {
+                    resultLoopGrid.RefreshItemByItemIndex(i);
+                    break;
+                }
+            }
         }
 
-        private CommunityData GetResultCommunityById(string communityId)
+        private CommunityData? GetResultCommunityById(string communityId)
         {
             foreach (CommunityData communityData in currentResults)
             {
@@ -238,7 +246,7 @@ namespace DCL.Communities.CommunitiesBrowser
             return null;
         }
 
-        private CommunityData GetMyCommunityById(string communityId)
+        private CommunityData? GetMyCommunityById(string communityId)
         {
             foreach (CommunityData communityData in currentMyCommunities)
             {
@@ -321,11 +329,11 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             cardView.SetJoiningLoadingActive(true);
 
-            CommunityData communityData = GetResultCommunityById(communityId);
+            CommunityData? communityData = GetResultCommunityById(communityId);
             if (communityData == null)
                 return;
 
-            CommunityJoined?.Invoke(communityData.id);
+            CommunityJoined.Invoke(communityData.id);
         }
     }
 }

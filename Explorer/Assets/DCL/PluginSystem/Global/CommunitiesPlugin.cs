@@ -46,7 +46,6 @@ namespace DCL.PluginSystem.Global
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
 
@@ -71,7 +70,6 @@ namespace DCL.PluginSystem.Global
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
-            IWeb3IdentityCache web3IdentityCache,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             CommunitiesEventBus communitiesEventBus,
@@ -92,7 +90,6 @@ namespace DCL.PluginSystem.Global
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.web3IdentityCache = web3IdentityCache;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
@@ -127,7 +124,6 @@ namespace DCL.PluginSystem.Global
                 clipboard,
                 webBrowser,
                 eventsApiService,
-                web3IdentityCache,
                 sharedSpaceManager,
                 chatEventBus);
 
@@ -148,7 +144,6 @@ namespace DCL.PluginSystem.Global
             var eventInfoViewFactory = EventInfoController.CreateLazily(eventInfoViewAsset, null);
             eventInfoController = new EventInfoController(eventInfoViewFactory,
                 webRequestController,
-                mvcManager,
                 clipboard,
                 webBrowser,
                 eventsApiService,

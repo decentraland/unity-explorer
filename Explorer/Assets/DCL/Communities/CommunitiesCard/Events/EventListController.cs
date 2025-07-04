@@ -11,7 +11,6 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Collections.Generic;
@@ -75,7 +74,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.mvcManager = mvcManager;
             this.spriteCache = eventThumbnailSpriteCache;
 
-            view.InitList(() => currentSectionFetchData, eventThumbnailSpriteCache, mvcManager, cancellationToken);
+            view.InitList(() => currentSectionFetchData, eventThumbnailSpriteCache, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
             view.MainButtonClicked += OnMainButtonClicked;
@@ -125,6 +124,9 @@ namespace DCL.Communities.CommunitiesCard.Events
                     : await eventsApiService.MarkAsInterestedAsync(eventData.Event.id, ct)
                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     eventItemView.UpdateInterestedButtonState();
@@ -173,16 +175,19 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.pageNumber, PAGE_SIZE, ct)
+            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
 
             if (!eventResponse.Success)
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
-                eventsFetchData.pageNumber--;
+                eventsFetchData.PageNumber--;
                 await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                return eventsFetchData.totalToFetch;
+                return eventsFetchData.TotalToFetch;
             }
 
             if (eventResponse.Value.data.total == 0)
@@ -196,13 +201,16 @@ namespace DCL.Communities.CommunitiesCard.Events
             Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return 0;
+
             if (!placesResponse.Success)
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
-                eventsFetchData.pageNumber--;
+                eventsFetchData.PageNumber--;
                 await inWorldWarningNotificationView.AnimatedShowAsync(FAILED_EVENTS_PLACES_FETCHING_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                return eventsFetchData.totalToFetch;
+                return eventsFetchData.TotalToFetch;
             }
 
             placeInfoCache.Clear();
@@ -211,7 +219,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                 placeInfoCache.Add(place.id, place);
 
             foreach (var item in eventResponse.Value.data.events)
-                eventsFetchData.items.Add(new PlaceAndEventDTO
+                eventsFetchData.Items.Add(new PlaceAndEventDTO
                 {
                     Place = placeInfoCache[item.place_id],
                     Event = item

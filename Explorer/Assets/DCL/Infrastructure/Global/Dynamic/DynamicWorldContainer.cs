@@ -78,6 +78,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SocialService;
 using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
@@ -620,7 +621,9 @@ namespace Global.Dynamic
                 unityEventSystem,
                 menusAccessFacade,
                 clipboardManager,
-                dclCursor));
+                dclCursor,
+                new ContextMenuOpener(mvcManager),
+                identityCache));
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
@@ -975,7 +978,6 @@ namespace Global.Dynamic
                     clipboard,
                     webBrowser,
                     eventsApiService,
-                    identityCache,
                     sharedSpaceManager,
                     chatEventBus,
                     communitiesEventBus,

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.UI.GenericContextMenu.Controls.Configs
+namespace DCL.UI.GenericContextMenuParameter
 {
 
     [Serializable]
@@ -20,12 +20,12 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         private static readonly RectOffset DEFAULT_VERTICAL_LAYOUT_PADDING = new (8, 8, 4, 12);
         private static readonly Vector2 DEFAULT_OFFSET_FROM_TARGET = new (11, 18);
 
-        internal readonly List<GenericContextMenuElement> contextMenuSettings = new ();
-        internal readonly float width;
-        internal readonly RectOffset verticalLayoutPadding;
-        internal readonly int elementsSpacing;
-        internal ContextMenuOpenDirection anchorPoint;
-        internal Vector2 offsetFromTarget;
+        public readonly List<GenericContextMenuElement> contextMenuSettings = new ();
+        public readonly float width;
+        public readonly RectOffset verticalLayoutPadding;
+        public readonly int elementsSpacing;
+        public ContextMenuOpenDirection anchorPoint;
+        public Vector2 offsetFromTarget;
 
         /// <summary>
         ///     Main context menu class.
@@ -66,7 +66,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
 
     public class GenericContextMenuElement
     {
-        internal readonly IContextMenuControlSettings setting;
+        public readonly IContextMenuControlSettings setting;
 
         public bool Enabled { get; set; }
 
