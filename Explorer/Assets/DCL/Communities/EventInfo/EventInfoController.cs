@@ -5,6 +5,7 @@ using DCL.Clipboard;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.UI;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
@@ -22,7 +23,6 @@ namespace DCL.Communities.EventInfo
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
 
-        private readonly IWebRequestController webRequestController;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
@@ -32,6 +32,7 @@ namespace DCL.Communities.EventInfo
 
         private CancellationTokenSource panelCts = new ();
         private CancellationTokenSource eventCardOperationsCts = new ();
+        private readonly ThumbnailLoader thumbnailLoader;
 
         public EventInfoController(ViewFactoryMethod viewFactory,
             IWebRequestController webRequestController,
@@ -41,11 +42,11 @@ namespace DCL.Communities.EventInfo
             IRealmNavigator realmNavigator)
             : base(viewFactory)
         {
-            this.webRequestController = webRequestController;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
             this.realmNavigator = realmNavigator;
+            this.thumbnailLoader = new ThumbnailLoader(new SpriteCache(webRequestController));
         }
 
         public override void Dispose()
@@ -66,9 +67,7 @@ namespace DCL.Communities.EventInfo
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.Configure(webRequestController);
-
-            viewInstance.InterestedButtonClicked += OnInterestedButtonClicked;
+            viewInstance!.InterestedButtonClicked += OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
             viewInstance.EventShareButtonClicked += OnEventShareButtonClicked;
             viewInstance.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
@@ -77,7 +76,7 @@ namespace DCL.Communities.EventInfo
         protected override void OnBeforeViewShow()
         {
             panelCts = panelCts.SafeRestart();
-            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, panelCts.Token);
+            viewInstance!.ConfigureEventData(inputData.EventData, inputData.PlaceData, thumbnailLoader, panelCts.Token);
         }
 
         protected override void OnViewClose()

@@ -256,9 +256,9 @@ namespace DCL.Communities.CommunitiesCard
             joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
         }
 
-        public void SetDefaults(ImageController imageController)
+        public void SetDefaults()
         {
-            imageController.SetImage(defaultCommunityImage);
+            CommunityThumbnail.SetImage(defaultCommunityImage);
             communityName.text = string.Empty;
             communityMembersNumber.text = string.Empty;
             communityDescription.text = string.Empty;
@@ -273,14 +273,15 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData,
-            ImageController imageController)
+            ThumbnailLoader thumbnailLoader)
         {
             communityName.text = communityData.name;
             communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
             communityDescription.text = communityData.description;
 
             if (communityData.thumbnails != null)
-                imageController.RequestImage(communityData.thumbnails.Value.raw);
+
+            thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;

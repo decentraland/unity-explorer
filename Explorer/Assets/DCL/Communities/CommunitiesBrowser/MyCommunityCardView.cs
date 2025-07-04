@@ -1,5 +1,4 @@
 using DCL.UI;
-using DCL.Utilities;
 using System;
 using TMPro;
 using UnityEngine;
@@ -14,12 +13,10 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityTitle;
         [SerializeField] private GameObject userRoleContainer;
         [SerializeField] private TMP_Text userRole;
-        [SerializeField] private ImageView communityThumbnail;
+        [field: SerializeField] public ImageView communityThumbnail;
         [SerializeField] private GameObject communityLiveMark;
         [SerializeField] private Button mainButton;
-        [SerializeField] private Sprite defaultThumbnailSprite;
 
-        private ImageController imageController;
         private string currentCommunityId;
 
         private void Awake() =>
@@ -27,24 +24,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnDestroy() =>
             mainButton.onClick.RemoveAllListeners();
-
-        public void ConfigureImageController(ISpriteCache spriteCache)
-        {
-            if (imageController != null)
-                return;
-
-            ObjectProxy<ISpriteCache> cache = new ObjectProxy<ISpriteCache>();
-            cache.SetObject(spriteCache);
-            imageController = new ImageController(communityThumbnail, cache);
-        }
-
-        public void SetCommunityThumbnail(string imageUrl)
-        {
-            imageController.SetImage(defaultThumbnailSprite);
-
-            if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
-        }
 
         public void SetCommunityId(string id) =>
             currentCommunityId = id;
