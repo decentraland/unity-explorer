@@ -11,17 +11,10 @@ namespace DCL.PluginSystem.Global
     public class VoiceChatPluginSettings : ScriptableObject
     {
         [Header("Asset References")]
-        [field: SerializeField] public VoiceChatSettingsReference VoiceChatSettings { get; private set; }
+        [field: SerializeField] public StaticSettings.VoiceChatSettingsRef VoiceChatSettings { get; private set; }
         [field: SerializeField] public MicrophoneAudioFilterReference MicrophoneAudioFilter { get; private set; }
         [field: SerializeField] public CombinedAudioSourceReference CombinedAudioSource { get; private set; }
         [field: SerializeField] public VoiceChatConfigurationReference VoiceChatConfiguration { get; private set; }
-
-
-        [Serializable]
-        public class VoiceChatSettingsReference : AssetReferenceT<DCL.Settings.Settings.VoiceChatSettingsAsset>
-        {
-            public VoiceChatSettingsReference(string guid) : base(guid) { }
-        }
 
         [Serializable]
         public class CombinedAudioSourceReference : ComponentReference<VoiceChatCombinedStreamsAudioSource>
