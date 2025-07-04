@@ -11,7 +11,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.WebRequests;
-using DG.Tweening;
 using MVC;
 using System;
 using System.Threading;
@@ -20,6 +19,8 @@ using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
+    public delegate void FillThumbnailDelegate(string thumbnailUrl, ImageView view, Sprite defaultThumbnail);
+
     public class CommunitiesBrowserController : ISection, IDisposable
     {
         private const int COMMUNITIES_PER_PAGE = 20;

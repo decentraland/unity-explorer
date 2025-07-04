@@ -13,8 +13,6 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunitiesBrowserView : MonoBehaviour
     {
-        public delegate void FillThumbnailDelegate(string thumbnailUrl, ImageView view, Sprite defaultThumbnail);
-
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
         public event Action ViewAllMyCommunitiesButtonClicked;
@@ -66,7 +64,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private ISpriteCache spriteCache;
+ //       private ISpriteCache spriteCache;
         private FillThumbnailDelegate fillThumbnailFunction;
 
         private void Awake()
@@ -163,7 +161,7 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             myCommunitiesLoopList.InitListView(itemTotalCount, SetupMyCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            this.spriteCache = thumbnailCache;
+ //           this.spriteCache = thumbnailCache;
         }
 
         public void ClearMyCommunitiesItems()
@@ -186,7 +184,7 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             profileRepositoryWrapper = profileDataProvider;
-            this.spriteCache = thumbnailCache;
+ //           this.spriteCache = thumbnailCache;
         }
 
         public void ClearResultsItems()
@@ -298,8 +296,10 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(spriteCache);
-            cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
+ //           cardView.ConfigureImageController(spriteCache);
+ //           cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
+            fillThumbnailFunction(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite);
+
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events
@@ -339,9 +339,9 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityJoined.Invoke(communityData.id);
         }
 
-        public void SetFillThumbnailDelegate(FillThumbnailDelegate loadCommunityThumbnailAsync)
+        public void SetFillThumbnailDelegate(FillThumbnailDelegate fillCommunityThumbnailFunction)
         {
-            fillThumbnailFunction = loadCommunityThumbnailAsync;
+            fillThumbnailFunction = fillCommunityThumbnailFunction;
         }
     }
 }

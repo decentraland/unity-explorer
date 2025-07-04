@@ -2,8 +2,6 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
-using DCL.WebRequests;
 using DG.Tweening;
 using System;
 using TMPro;
@@ -33,7 +31,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityTitle;
         [SerializeField] private TMP_Text communityDescription;
         [SerializeField] private CanvasGroup communityDescriptionCanvasGroup;
-        [SerializeField] private ImageView communityThumbnail;
+        [field: SerializeField] public ImageView communityThumbnail;
         [SerializeField] private Image communityPrivacyIcon;
         [SerializeField] private Sprite publicPrivacySprite;
         [SerializeField] private Sprite privatePrivacySprite;
@@ -46,7 +44,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button joinCommunityButton;
         [SerializeField] private GameObject joiningLoading;
         [SerializeField] private MutualFriendsConfig mutualFriends;
-        [SerializeField] private Sprite defaultThumbnailSprite;
+//        [SerializeField] private Sprite defaultThumbnailSprite;
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -87,7 +85,7 @@ namespace DCL.Communities.CommunitiesBrowser
             viewCommunityButton.onClick.RemoveAllListeners();
             joinCommunityButton.onClick.RemoveAllListeners();
         }
-
+/*
         public void ConfigureImageController(ISpriteCache spriteCache)
         {
             if (imageController != null)
@@ -96,15 +94,15 @@ namespace DCL.Communities.CommunitiesBrowser
             ObjectProxy<ISpriteCache> cache = new ObjectProxy<ISpriteCache>();
             cache.SetObject(spriteCache);
             imageController = new ImageController(communityThumbnail, cache);
-        }
-
+        }*/
+/*
         public void SetCommunityThumbnail(string imageUrl)
         {
             imageController.SetImage(defaultThumbnailSprite);
 
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
-        }
+        }*/
 
         public void SetCommunityId(string id) =>
             currentCommunityId = id;
