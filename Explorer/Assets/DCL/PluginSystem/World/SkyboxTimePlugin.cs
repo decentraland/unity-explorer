@@ -40,7 +40,6 @@ namespace DCL.SDKComponents.SkyboxTime
                 sharedDependencies.SceneStateProvider,
                 sceneRestrictionController);
 
-            finalizeWorldSystems.Add(system);
             sceneIsCurrentListeners.Add(system);
         }
 
