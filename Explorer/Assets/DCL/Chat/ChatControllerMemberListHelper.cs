@@ -134,6 +134,9 @@ namespace DCL.Chat
         {
              Result<int> result = await dataProvider.GetOnlineMemberCountAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+             if (ct.IsCancellationRequested)
+                 return;
+
              if (result.Success)
              {
                  viewInstance.MemberCount = result.Value - 1;

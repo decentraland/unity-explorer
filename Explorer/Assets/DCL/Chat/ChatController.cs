@@ -347,6 +347,9 @@ namespace DCL.Chat
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
             Result<GetUserCommunitiesResponse> result = await communitiesDataProvider.GetUserCommunitiesAsync(string.Empty, true, 0, ALL_COMMUNITIES_OF_USER, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (communitiesServiceCts.IsCancellationRequested)
+                return;
+
             if (result.Success)
             {
                 await UniTask.SwitchToMainThread();
@@ -378,6 +381,9 @@ namespace DCL.Chat
         {
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
             Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (communitiesServiceCts.IsCancellationRequested)
+                return;
 
             if (result.Success)
             {
@@ -511,6 +517,10 @@ namespace DCL.Chat
                 return;
 
             Result<ChatUserStateUpdater.ChatUserState> result = await chatUserStateUpdater.GetChatUserStateAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+
+            if (ct.IsCancellationRequested)
+                return;
+
             if (result.Success == false)
                 return;
 
@@ -878,6 +888,9 @@ namespace DCL.Chat
             else if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
             {
                 Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(userCommunities[viewInstance!.CurrentChannelId].id, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (result.Success)
                 {

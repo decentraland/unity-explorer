@@ -124,6 +124,9 @@ namespace DCL.Communities.CommunitiesCard.Events
                     : await eventsApiService.MarkAsInterestedAsync(eventData.Event.id, ct)
                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     eventItemView.UpdateInterestedButtonState();
@@ -175,6 +178,9 @@ namespace DCL.Communities.CommunitiesCard.Events
             Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return 0;
+
             if (!eventResponse.Success)
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
@@ -194,6 +200,9 @@ namespace DCL.Communities.CommunitiesCard.Events
 
             Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
                                                                                 .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
 
             if (!placesResponse.Success)
             {

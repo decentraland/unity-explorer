@@ -160,6 +160,9 @@ namespace DCL.Communities.CommunitiesCard
                 Result<bool> result = await communitiesDataProvider.DeleteCommunityAsync(communityData.id, ct)
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await viewInstance!.warningNotificationView.AnimatedShowAsync(DELETE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
@@ -338,6 +341,9 @@ namespace DCL.Communities.CommunitiesCard
                 Result<bool> result = await communitiesDataProvider.JoinCommunityAsync(communityData.id, ct)
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await viewInstance!.warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
@@ -359,6 +365,9 @@ namespace DCL.Communities.CommunitiesCard
             {
                 Result<bool> result = await communitiesDataProvider.LeaveCommunityAsync(communityData.id, ct)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!result.Success || !result.Value)
                 {
