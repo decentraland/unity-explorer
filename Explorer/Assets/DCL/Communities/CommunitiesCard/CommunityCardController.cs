@@ -58,7 +58,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
 
-//        private ImageController? imageController;
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
         private PlacesSectionController? placesSectionController;
@@ -242,8 +241,6 @@ namespace DCL.Communities.CommunitiesCard
                 webBrowser,
                 realmNavigator);
 
-//            imageController = new ImageController(viewInstance.CommunityThumbnail, spriteCache);
-
             viewInstance.SetCardBackgroundColor(viewInstance.BackgroundColor, BG_SHADER_COLOR_1);
         }
 
@@ -254,7 +251,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();
-            viewInstance!.SetDefaults(/*imageController!*/);
+            viewInstance!.SetDefaults();
             viewInstance.MembersListView.SetSectionButtonsActive(false);
             LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
@@ -275,7 +272,7 @@ namespace DCL.Communities.CommunitiesCard
                 viewInstance.SetLoadingState(false);
 
                 viewInstance.SetPanelCancellationToken(ct);
-                viewInstance.ConfigureCommunity(communityData, thumbnailLoader/*, imageController!*/);
+                viewInstance.ConfigureCommunity(communityData, thumbnailLoader);
 
                 viewInstance.ResetToggle(true);
 

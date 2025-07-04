@@ -44,7 +44,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button joinCommunityButton;
         [SerializeField] private GameObject joiningLoading;
         [SerializeField] private MutualFriendsConfig mutualFriends;
-//        [SerializeField] private Sprite defaultThumbnailSprite;
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -59,7 +58,6 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-//        private ImageController imageController;
         private string currentCommunityId;
         private Tweener headerTween;
         private Tweener footerTween;
@@ -85,24 +83,6 @@ namespace DCL.Communities.CommunitiesBrowser
             viewCommunityButton.onClick.RemoveAllListeners();
             joinCommunityButton.onClick.RemoveAllListeners();
         }
-/*
-        public void ConfigureImageController(ISpriteCache spriteCache)
-        {
-            if (imageController != null)
-                return;
-
-            ObjectProxy<ISpriteCache> cache = new ObjectProxy<ISpriteCache>();
-            cache.SetObject(spriteCache);
-            imageController = new ImageController(communityThumbnail, cache);
-        }*/
-/*
-        public void SetCommunityThumbnail(string imageUrl)
-        {
-            imageController.SetImage(defaultThumbnailSprite);
-
-            if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
-        }*/
 
         public void SetCommunityId(string id) =>
             currentCommunityId = id;

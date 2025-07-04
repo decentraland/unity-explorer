@@ -1,8 +1,6 @@
-using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using MVC;
 using SuperScrollView;
 using System;
@@ -35,11 +33,10 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData = null!;
         private bool canModify;
-//        private ObjectProxy<ISpriteCache>? spriteCache;
         private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
         private GenericContextMenu? contextMenu;
-        private ThumbnailLoader thumbnailLoader;
+        private ThumbnailLoader? thumbnailLoader;
 
         private void Awake()
         {
@@ -57,15 +54,13 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         public void InitList(Func<SectionFetchData<PlaceAndEventDTO>> currentSectionDataFunc,
- //           ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
-            ThumbnailLoader thumbnailLoader,
+            ThumbnailLoader newThumbnailLoader,
             CancellationToken panelCancellationToken)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
             getEventsFetchData = currentSectionDataFunc;
- //           this.spriteCache = eventThumbnailSpriteCache;
             cancellationToken = panelCancellationToken;
-            this.thumbnailLoader = thumbnailLoader;
+            this.thumbnailLoader = newThumbnailLoader;
         }
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
@@ -75,7 +70,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
 
-            itemView.Configure(eventData.Items[index], thumbnailLoader, cancellationToken/* spriteCache!*/);
+            itemView.Configure(eventData.Items[index], thumbnailLoader!, cancellationToken);
 
             itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
                                              data => JumpInButtonClicked?.Invoke(data),

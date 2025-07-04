@@ -38,7 +38,6 @@ namespace DCL.Communities.CommunitiesCard.Events
         public event Action<PlaceAndEventDTO, Vector2>? ShareButtonClicked;
 
         private PlaceAndEventDTO? eventData;
- //       private ImageController? imageController;
 
         private bool canPlayUnHoverAnimation = true;
         internal bool CanPlayUnHoverAnimation
@@ -68,9 +67,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public void Configure(PlaceAndEventDTO data, ThumbnailLoader thumbnailLoader, CancellationToken ct/*, ObjectProxy<ISpriteCache> spriteCache*/)
         {
             eventData = data;
-   //         imageController ??= new ImageController(eventThumbnailImage, spriteCache);
 
-//            imageController.RequestImage(data.Event.image);
             thumbnailLoader.LoadCommunityThumbnailAsync(data.Event.image, eventThumbnailImage, null, ct).Forget();
             eventTimeText.text = EventUtilities.GetEventTimeText(data.Event);
             eventNameText.text = data.Event.name;

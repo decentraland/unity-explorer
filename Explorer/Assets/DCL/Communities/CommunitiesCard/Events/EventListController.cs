@@ -43,7 +43,6 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
-        //private readonly ISpriteCache spriteCache;
         private readonly ThumbnailLoader thumbnailLoader;
 
         private CommunityData? communityData = null;
@@ -55,7 +54,6 @@ namespace DCL.Communities.CommunitiesCard.Events
         public EventListController(EventListView view,
             IEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
-            //ISpriteCache eventThumbnailSpriteCache,
             ThumbnailLoader thumbnailLoader,
             IMVCManager mvcManager,
             WarningNotificationView inWorldWarningNotificationView,
@@ -73,10 +71,9 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
-  //          this.spriteCache = eventThumbnailSpriteCache;
             this.thumbnailLoader = thumbnailLoader;
 
-            view.InitList(() => currentSectionFetchData, thumbnailLoader/*, eventThumbnailSpriteCache*/, cancellationToken);
+            view.InitList(() => currentSectionFetchData, thumbnailLoader, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
             view.MainButtonClicked += OnMainButtonClicked;

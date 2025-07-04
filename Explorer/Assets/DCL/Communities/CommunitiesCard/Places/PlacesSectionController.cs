@@ -7,7 +7,6 @@ using DCL.Communities.CommunityCreation;
 using DCL.Diagnostics;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -80,7 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.webBrowser = webBrowser;
             this.thumbnailLoader = thumbnailLoader;
 
-            view.InitGrid(() => currentSectionFetchData, thumbnailLoader,/* placeSpriteCache,*/ cancellationToken);
+            view.InitGrid(() => currentSectionFetchData, thumbnailLoader, cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
@@ -118,7 +117,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
                     communityId: communityData!.Value.id,
-                    thumbnailLoader.Cache)));
+                    thumbnailLoader.Cache!)));
         }
 
         private void OnElementDeleteButtonClicked(PlaceInfo placeInfo)

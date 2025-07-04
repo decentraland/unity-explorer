@@ -23,7 +23,6 @@ namespace DCL.Communities.EventInfo
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
 
-//        private readonly IWebRequestController webRequestController;
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
@@ -43,7 +42,6 @@ namespace DCL.Communities.EventInfo
             IRealmNavigator realmNavigator)
             : base(viewFactory)
         {
-  //          this.webRequestController = webRequestController;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
@@ -69,8 +67,6 @@ namespace DCL.Communities.EventInfo
 
         protected override void OnViewInstantiated()
         {
-//            viewInstance!.Configure(webRequestController);
-
             viewInstance!.InterestedButtonClicked += OnInterestedButtonClicked;
             viewInstance.JumpInButtonClicked += OnJumpInButtonClicked;
             viewInstance.EventShareButtonClicked += OnEventShareButtonClicked;

@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Communities.CommunitiesBrowser;
 using DCL.Communities.CommunitiesCard.Events;
 using DCL.Communities.CommunitiesCard.Members;
 using DCL.Communities.CommunitiesCard.Photos;
@@ -257,7 +256,7 @@ namespace DCL.Communities.CommunitiesCard
             joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
         }
 
-        public void SetDefaults(/*ImageController imageController*/)
+        public void SetDefaults()
         {
             CommunityThumbnail.SetImage(defaultCommunityImage);
             communityName.text = string.Empty;
@@ -274,7 +273,6 @@ namespace DCL.Communities.CommunitiesCard
         }
 
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData,
-//            ImageController imageController
             ThumbnailLoader thumbnailLoader)
         {
             communityName.text = communityData.name;
@@ -283,7 +281,6 @@ namespace DCL.Communities.CommunitiesCard
 
             if (communityData.thumbnails != null)
 
-            //imageController.RequestImage(communityData.thumbnails.Value.raw);
             thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;

@@ -43,7 +43,6 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Vector2 originalFooterSizeDelta;
 
         private PlaceInfo? currentPlaceInfo;
- //       private ImageController? imageController;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
@@ -90,11 +89,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         {
             currentPlaceInfo = placeInfo;
 
-  /*          imageController ??= new ImageController(placeThumbnailImage, spriteCache);
-
-            imageController.SetImage(defaultPlaceThumbnail);
-            imageController.RequestImage(placeInfo.image);*/
-            thumbnailLoader.LoadCommunityThumbnailAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct);
+            thumbnailLoader.LoadCommunityThumbnailAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct).Forget();
 
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = placeInfo.description;

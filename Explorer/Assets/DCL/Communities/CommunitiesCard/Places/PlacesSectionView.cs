@@ -51,8 +51,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData = null!;
         private bool canModify;
         private CommunityData communityData;
- //       private ObjectProxy<ISpriteCache>? spriteCache;
-        private ThumbnailLoader thumbnailLoader;
+        private ThumbnailLoader? thumbnailLoader;
         private GenericContextMenu? contextMenu;
         private CancellationToken cancellationToken;
 
@@ -86,14 +85,12 @@ namespace DCL.Communities.CommunitiesCard.Places
         }
 
         public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
- //           ObjectProxy<ISpriteCache> placeThumbnailsCache,
-            ThumbnailLoader thumbnailLoader,
+            ThumbnailLoader newThumbnailLoader,
             CancellationToken panelCancellationToken)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getPlacesFetchData = placesDataFunc;
- //           this.spriteCache = placeThumbnailsCache;
-            this.thumbnailLoader = thumbnailLoader;
+            this.thumbnailLoader = newThumbnailLoader;
             cancellationToken = panelCancellationToken;
         }
 

@@ -5,7 +5,6 @@ using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
-using DCL.WebRequests;
 using MVC;
 using System;
 using System.Text;
@@ -48,7 +47,6 @@ namespace DCL.Communities.EventInfo
 
         private readonly UniTask[] closeTasks = new UniTask[2];
         private readonly StringBuilder eventSchedulesStringBuilder = new ();
-//        private ImageController? imageController;
         private IEventDTO? eventDTO;
         private GenericContextMenu? contextMenu;
         private CancellationToken ct;
@@ -80,9 +78,6 @@ namespace DCL.Communities.EventInfo
             return closeTasks;
         }
 
-  //      public void Configure(IWebRequestController webRequestController) =>
-  //          imageController ??= new ImageController(eventImage, webRequestController);
-
         public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo placeData, ThumbnailLoader thumbnailLoader, CancellationToken cancellationToken)
         {
             eventDTO = eventData;
@@ -90,7 +85,6 @@ namespace DCL.Communities.EventInfo
 
             ResetScrollPosition();
 
-//            imageController!.RequestImage(eventData.Image);
             thumbnailLoader.LoadCommunityThumbnailAsync(eventData.Image, eventImage, null, cancellationToken).Forget();
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;

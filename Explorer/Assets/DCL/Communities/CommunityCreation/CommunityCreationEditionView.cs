@@ -3,7 +3,6 @@ using DCL.Audio;
 using DCL.UI;
 using DCL.UI.SelectorButton;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -67,7 +66,6 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
- //       private ImageController imageController;
         private bool isEditionMode;
         private bool isDefaultImageSelected;
 
@@ -175,14 +173,6 @@ namespace DCL.Communities.CommunityCreation
                 UpdateCreateButtonAvailability();
         }
 
- /*       public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
-        {
-            if (imageController != null)
-                return;
-
-            imageController = new ImageController(creationPanelProfileSelectedImage, spriteCache);
-        }
-*/
         public void SetProfileSelectedImage(string imageUrl, ThumbnailLoader thumbnailLoader)
         {
             isDefaultImageSelected = false;
@@ -193,12 +183,10 @@ namespace DCL.Communities.CommunityCreation
             {
                 thumbnailLoadingCts = thumbnailLoadingCts.SafeRestart();
                 thumbnailLoader.LoadCommunityThumbnailAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token).Forget();
-                //imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
             }
             else
             {
                 creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage);
-                //imageController.SetImage(creationPanelProfileDefaultSelectedImage);
                 isDefaultImageSelected = true;
             }
         }
@@ -208,7 +196,6 @@ namespace DCL.Communities.CommunityCreation
             isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(sprite is not null);
             creationPanelProfilePictureIcon.SetActive(!creationPanelProfileSelectedImage.gameObject.activeSelf);
-            //imageController.SetImage(sprite);
         }
 
         public void SetCommunityName(string text, bool isInteractable)

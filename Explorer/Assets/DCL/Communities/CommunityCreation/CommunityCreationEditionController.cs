@@ -9,7 +9,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.UI;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using MVC;
 using System.Collections.Generic;
@@ -86,8 +85,6 @@ namespace DCL.Communities.CommunityCreation
 
         protected override void OnViewInstantiated()
         {
-  //          viewInstance!.ConfigureImageController(spriteCache);
-
             viewInstance!.ConvertGetNameDescriptionUrlsToClickableLinks(GoToAnyLinkFromGetNameDescription);
             viewInstance.GetNameButtonClicked += GoToGetNameLink;
             viewInstance.CancelButtonClicked += OnCancelAction;
@@ -102,7 +99,6 @@ namespace DCL.Communities.CommunityCreation
         {
             lastSelectedImageData = null;
             closeTaskCompletionSource = new UniTaskCompletionSource();
-  //          spriteCache.SetObject(inputData.ThumbnailSpriteCache);
             thumbnailLoader = new ThumbnailLoader(inputData.ThumbnailSpriteCache);
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));

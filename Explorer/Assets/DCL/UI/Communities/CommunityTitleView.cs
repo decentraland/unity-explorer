@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.GenericContextMenu;
 using System.Threading;
 using TMPro;
 using UnityEngine;

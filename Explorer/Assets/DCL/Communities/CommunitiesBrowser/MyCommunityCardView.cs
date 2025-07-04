@@ -16,9 +16,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [field: SerializeField] public ImageView communityThumbnail;
         [SerializeField] private GameObject communityLiveMark;
         [SerializeField] private Button mainButton;
-//        [SerializeField] private Sprite defaultThumbnailSprite;
 
-//        private ImageController imageController;
         private string currentCommunityId;
 
         private void Awake() =>
@@ -27,26 +25,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnDestroy() =>
             mainButton.onClick.RemoveAllListeners();
 
-     /*   public void ConfigureImageController(ISpriteCache spriteCache)
-        {
-            if (imageController != null)
-                return;
-
-            ObjectProxy<ISpriteCache> cache = new ObjectProxy<ISpriteCache>();
-            cache.SetObject(spriteCache);
-            imageController = new ImageController(communityThumbnail, cache);
-        }*/
-/*
-        public void SetDefaultCommunityThumbnail()
-        {
-            communityThumbnail.SetImage(defaultThumbnailSprite);
-        }*/
-/*
-        public void SetCommunityThumbnail(Sprite newThumbnail)
-        {
-            imageController.SetImage(newThumbnail);
-        }
-*/
         public void SetCommunityId(string id) =>
             currentCommunityId = id;
 

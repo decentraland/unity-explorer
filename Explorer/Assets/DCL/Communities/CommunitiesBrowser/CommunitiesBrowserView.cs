@@ -65,7 +65,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
- //       private ISpriteCache spriteCache;
         private ThumbnailLoader thumbnailLoader;
 
         private void Awake()
@@ -162,7 +161,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             myCommunitiesLoopList.InitListView(itemTotalCount, SetupMyCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
- //           this.spriteCache = thumbnailCache;
         }
 
         public void ClearMyCommunitiesItems()
@@ -185,7 +183,6 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             profileRepositoryWrapper = profileDataProvider;
- //           this.spriteCache = thumbnailCache;
         }
 
         public void ClearResultsItems()
@@ -275,7 +272,6 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            //cardView.ConfigureImageController(spriteCache);
             thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             // Setup card events
@@ -299,8 +295,6 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
- //           cardView.ConfigureImageController(spriteCache);
- //           cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
             thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             cardView.SetJoiningLoadingActive(false);

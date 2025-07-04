@@ -19,8 +19,6 @@ using Utility;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
-    public delegate void FillThumbnailDelegate(string thumbnailUrl, ImageView view, Sprite defaultThumbnail);
-
     public class CommunitiesBrowserController : ISection, IDisposable
     {
         private const int COMMUNITIES_PER_PAGE = 20;

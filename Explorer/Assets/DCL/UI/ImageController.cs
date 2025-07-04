@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Utilities;
 using DCL.WebRequests;
 using DG.Tweening;
 using System;
@@ -17,22 +16,9 @@ namespace DCL.UI
 
         private const int PIXELS_PER_UNIT = 50;
         private readonly ImageView view;
-        private readonly ObjectProxy<ISpriteCache>? spriteCache;
         private readonly IWebRequestController? webRequestController;
         private CancellationTokenSource cts = new();
         public event Action<Sprite>? SpriteLoaded;
-
-        /// <summary>
-        /// Use this constructor when the image should be stored in a cache.
-        /// </summary>
-        /// <param name="view">The view where the sprite will be presented after loaded.</param>
-        /// <param name="spriteCache">The cache where the sprite will be cached.</param>
-        public ImageController(ImageView view, ObjectProxy<ISpriteCache> spriteCache)
-        {
-            this.view = view;
-            this.spriteCache = spriteCache;
-            this.webRequestController = null;
-        }
 
         /// <summary>
         /// Use this constructor if the sprite does not need to be cached.
@@ -43,7 +29,6 @@ namespace DCL.UI
         {
             this.view = view;
             this.webRequestController = webRequestController;
-            this.spriteCache = null;
         }
 
         public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false)
@@ -73,11 +58,7 @@ namespace DCL.UI
 
                 Sprite? sprite = null;
 
-                if (spriteCache != null)
-                {
-                    sprite = await spriteCache.StrictObject.GetSpriteAsync(uri, useKtx, ct);
-                }
-                else if (webRequestController != null)
+                if (webRequestController != null)
                 {
                     //TODO potential memory leak, due no CacheCleaner
                     IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
