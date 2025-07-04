@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             CycleFailed,
         }
 
-        UniTask<bool> StartAsync();
+        UniTask<bool> StartAsync(string debugName = "");
 
         UniTask StopAsync();
 
@@ -52,7 +52,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             protected Null() { }
 
-            public UniTask<bool> StartAsync() =>
+            public UniTask<bool> StartAsync(string debugName = "") =>
                 UniTask.FromResult(true);
 
             public UniTask StopAsync() =>
@@ -76,9 +76,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         private const string UNDEFINED = nameof(UNDEFINED);
 
-        public static UniTask<bool> StartIfNotAsync(this IConnectiveRoom room) =>
+        public static UniTask<bool> StartIfNotAsync(this IConnectiveRoom room, string debugName = "") =>
             room.CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping
-                ? room.StartAsync()
+                ? room.StartAsync(debugName)
                 : UniTask.FromResult(true);
 
         public static UniTask StopIfNotAsync(this IConnectiveRoom room) =>

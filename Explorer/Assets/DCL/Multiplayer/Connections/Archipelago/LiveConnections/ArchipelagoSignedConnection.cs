@@ -235,8 +235,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.LiveConnections
                     if (result.result.Success == false)
                         return Result<string>.ErrorResult($"{nameof(ExecuteHandshakeAsync)}: {result.result.Error?.Message}");
 
-                    ;
-
                     using MemoryWrap response = result.result.Value;
                     using var serverPacket = new SmartWrap<ServerPacket>(response.AsMessageServerPacket(), multiPool);
                     using var welcomeMessage = new SmartWrap<WelcomeMessage>(serverPacket.value.Welcome!, multiPool);

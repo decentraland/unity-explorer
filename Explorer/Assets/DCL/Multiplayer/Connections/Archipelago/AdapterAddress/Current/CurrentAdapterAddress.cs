@@ -14,6 +14,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current
         }
 
         public string AdapterUrl() =>
-            adapterAddresses.AdapterUrlAsync(currentRealmData.CommsAdapter);
+            adapterAddresses.AdapterUrlAsync("archipelago:archipelago:wss://archipelago-ea-ws-connector.decentraland.org/ws");
     }
 }
