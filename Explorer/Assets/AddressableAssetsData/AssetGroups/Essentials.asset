@@ -195,11 +195,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
-    m_Address: StylizedSkyboxController
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5ed0eaf7428cb4135baf7d2e09a9430a
     m_Address: PageSelector
     m_ReadOnly: 0
