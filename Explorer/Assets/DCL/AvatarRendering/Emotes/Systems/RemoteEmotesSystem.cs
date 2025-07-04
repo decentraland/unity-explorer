@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Web3.Identities;
@@ -37,7 +38,8 @@ namespace DCL.AvatarRendering.Emotes
                     return;
 
                 foreach (RemoteEmoteIntention remoteEmoteIntention in emoteIntentions.Collection())
-                { // The entity was not created yet, so we wait until its created to be able to consume the intent
+                {
+                    // The entity was not created yet, so we wait until its created to be able to consume the intent
                     if (!entityParticipantTable.TryGet(remoteEmoteIntention.WalletId, out IReadOnlyEntityParticipantTable.Entry entry))
                     {
                         savedIntentions!.Add(remoteEmoteIntention);
@@ -45,7 +47,17 @@ namespace DCL.AvatarRendering.Emotes
                     }
 
                     ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
-                    intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
+                    ref InterpolationComponent interpolation = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+
+                    if (interpolationExists)
+                    {
+                        if (remoteEmoteIntention.Timestamp > interpolation.Present)
+                            intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
+                        else
+                            savedIntentions.Add(remoteEmoteIntention);
+                    }
+                    else
+                        savedIntentions.Add(remoteEmoteIntention);
                 }
             }
 
