@@ -8,11 +8,11 @@
       "hash": "1eb735da57fd7e829ccc1d67518aeadcc8816fe6"
     },
     "avprovideo": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo#feat/avpro-3.x-upgrade",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "5e0b666a071e9840cb35bed24fef9db420919271"
+      "hash": "de7bceffbc41b6d4bb8a43e1e0e786a6348402de"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
