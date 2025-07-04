@@ -70,29 +70,15 @@ namespace DCL.WebRequests
 
             HTTPManager.Logger.Level = Loglevels.Warning;
 
-            if (appArgs.TryGetValue(AppArgsFlags.PROXY_ADDRESS, out string? proxyAddress) && !string.IsNullOrEmpty(proxyAddress))
-                HTTPManager.Proxy = new HTTPProxy(new Uri(proxyAddress));
-            else if (appArgs.HasDebugFlag() && await IsLocalProxyRunningAsync(ct))
-                HTTPManager.Proxy = new HTTPProxy(new Uri("http://127.0.0.1:8888"));
-
             var cacheSize = (ulong)((double)container.settings.Http2Settings.CacheSizeGB * 1024UL * 1024UL * 1024UL);
-
-            // HTTPUpdateDelegator leaks to the scene and initializes internals so the cache actually could be already initialized, dispose of it in this case
-            HTTPManager.LocalCache?.Dispose();
 
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
             var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.Http2Settings.CacheLifetimeDays), cacheSize));
-            HTTPManager.LocalCache = httpCache;
-
-            // Set Threading Mode initialize the cache itself so we must do it after our cache initialization, otherwise there will be a sharing violation exception
-            HTTPUpdateDelegator.Instance.SetThreadingMode(ThreadingMode.Threaded);
 
             if (container.WebRequestsMode != WebRequestsMode.UNITY)
             {
                 coreBudget = container.settings.Http2Settings.CoreWebRequestsBudget;
                 sceneBudget = container.settings.Http2Settings.SceneWebRequestsBudget;
-
-                HTTPManager.PerHostSettings.Get("*").HTTP2ConnectionSettings.Timeout = TimeSpan.FromSeconds(container.settings.Http2Settings.PingAckTimeoutSeconds);
             }
             else
             {
@@ -210,30 +196,6 @@ namespace DCL.WebRequests
                                               }),
                                           new DebugHintDef("Sequential"));
             }
-        }
-
-        private static async Task<bool> IsLocalProxyRunningAsync(CancellationToken ct)
-        {
-            try
-            {
-                using var client = new TcpClient();
-
-                // Default address of local proxies
-                Task connectTask = client.ConnectAsync("127.0.0.1", 8888);
-                var timeoutTask = Task.Delay(500, ct);
-
-                // Wait for either the connect or the timeout
-                Task? finished = await Task.WhenAny(connectTask, timeoutTask);
-
-                if (finished == connectTask && client.Connected)
-                    return true;
-            }
-            catch
-            {
-                // ignored
-            }
-
-            return false;
         }
 
         public void SetKTXEnabled(bool enabled)
