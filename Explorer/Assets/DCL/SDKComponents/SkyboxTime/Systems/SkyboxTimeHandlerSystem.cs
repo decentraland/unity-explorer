@@ -47,7 +47,10 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
             if(sceneStateProvider.IsCurrent == false) return;
 
             if (entity.Id != SpecialEntitiesID.SCENE_ROOT_ENTITY)
+            {
                 World.Remove<PBSkyboxTime>(entity);
+                return;
+            }
 
             sdkSkyboxTime.IsDirty = true;
             skyboxSettings.IsSDKControlled = true;
