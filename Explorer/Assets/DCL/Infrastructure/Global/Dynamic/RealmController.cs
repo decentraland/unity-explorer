@@ -36,6 +36,7 @@ namespace Global.Dynamic
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
+        private readonly ServerAbout serverAboutLB = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IReadOnlyList<int2> staticLoadPositions;
@@ -122,10 +123,13 @@ namespace Global.Dynamic
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
+                GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequestLB = webRequestController.GetAsync(new CommonArguments(URLAddress.FromString(decentralandUrlsSource.Url(DecentralandUrl.LoadBalancerAbout))), ct, ReportCategory.REALM);
+                ServerAbout resultLB = await genericGetRequestLB.OverwriteFromJsonAsync(serverAboutLB, WRJsonParser.Unity);
+
                 string hostname = ResolveHostname(realm, result);
 
                 realmData.Reconfigure(
-                    new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result),
+                    new IpfsRealm(web3IdentityCache, webRequestController, realm, assetBundleRegistry, result, resultLB),
                     result.configurations.realmName.EnsureNotNull("Realm name not found"),
                     result.configurations.networkId,
                     ResolveCommsAdapter(result),

@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         OpenSea,
 
-        PeerAbout,
+        LoadBalancerAbout,
         RemotePeers,
         RemotePeersWorld,
 

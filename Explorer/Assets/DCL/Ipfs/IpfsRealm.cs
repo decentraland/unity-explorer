@@ -33,7 +33,8 @@ namespace DCL.Ipfs
             IWebRequestController webRequestController,
             URLDomain realmName,
             URLDomain assetBundleRegistry,
-            ServerAbout? serverAbout = null)
+            ServerAbout? serverAbout = null,
+            ServerAbout? loadBalancerAbout = null)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -41,12 +42,12 @@ namespace DCL.Ipfs
             // TODO: realmName resolution, for now just accepts custom realm paths...
             CatalystBaseUrl = realmName;
 
-            if (serverAbout != null)
+            if (serverAbout != null && loadBalancerAbout != null)
             {
                 sceneUrns = serverAbout.configurations.scenesUrn;
-                entitiesBaseUrl = URLBuilder.Combine(URLDomain.FromString(serverAbout.content.publicUrl), URLSubdirectory.FromString("entities/"));
-                ContentBaseUrl = URLDomain.FromString(serverAbout.content.publicUrl);
-                LambdasBaseUrl = URLDomain.FromString(serverAbout.lambdas.publicUrl);
+                entitiesBaseUrl = URLBuilder.Combine(URLDomain.FromString(loadBalancerAbout.content.publicUrl), URLSubdirectory.FromString("entities/"));
+                ContentBaseUrl = URLDomain.FromString(loadBalancerAbout.content.publicUrl);
+                LambdasBaseUrl = URLDomain.FromString(loadBalancerAbout.lambdas.publicUrl);
 
                 //Note: Content url requires the subdirectory content, but the actives endpoint requires the base one.
                 EntitiesActiveEndpoint = URLBuilder.Combine(ContentBaseUrl, URLSubdirectory.FromString("entities/active"));
