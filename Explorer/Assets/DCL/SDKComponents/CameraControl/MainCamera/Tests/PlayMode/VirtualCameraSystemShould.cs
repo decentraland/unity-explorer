@@ -16,6 +16,7 @@ using SceneRunner.Scene;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utility;
 
 namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
 {
@@ -44,7 +45,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             poolsRegistry.GetReferenceTypePool<CinemachineFreeLook>().Returns(sdkVirtualCameraPool);
             sdkVirtualCameraPool.Get().Returns(virtualCamera);
 
-            system = new VirtualCameraSystem(world, sdkVirtualCameraPool, sceneStateProvider);
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
+
+            system = new VirtualCameraSystem(world, sdkVirtualCameraPool, sceneStateProvider, sceneData, new ParcelMathHelper.SceneCircumscribedPlanes());
         }
 
         [TearDown]
