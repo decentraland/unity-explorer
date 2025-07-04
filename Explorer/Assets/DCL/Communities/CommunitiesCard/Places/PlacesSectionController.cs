@@ -135,6 +135,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 var result = await communitiesDataProvider.RemovePlaceFromCommunityAsync(communityData!.Value.id, placeInfo.id, ct)
                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
@@ -199,6 +202,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 var result = await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, favoriteValue, ct)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
@@ -220,6 +226,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             {
                 var result = await placesAPIService.RatePlaceAsync(dislikeValue ? false : null, placeInfo.id, ct)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!result.Success)
                 {
@@ -249,6 +258,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             {
                 var result = await placesAPIService.RatePlaceAsync(likeValue ? true : null, placeInfo.id, ct)
                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!result.Success)
                 {
@@ -288,6 +300,9 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
 
             if (!response.Success || !response.Value.ok)
             {

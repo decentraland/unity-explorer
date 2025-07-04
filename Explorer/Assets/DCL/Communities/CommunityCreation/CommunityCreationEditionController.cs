@@ -329,6 +329,9 @@ namespace DCL.Communities.CommunityCreation
             var getCommunityResult = await dataProvider.GetCommunityAsync(inputData.CommunityId, ct)
                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return;
+
             if (!getCommunityResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
@@ -345,6 +348,9 @@ namespace DCL.Communities.CommunityCreation
             var getCommunityPlacesResult = await dataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)
                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return;
+
             if (!getCommunityPlacesResult.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
@@ -358,6 +364,9 @@ namespace DCL.Communities.CommunityCreation
                 // Load places details
                 var getPlacesDetailsResult = await  placesAPIService.GetPlacesByIdsAsync(getCommunityPlacesResult.Value, ct)
                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!getPlacesDetailsResult.Success)
                 {
@@ -412,6 +421,9 @@ namespace DCL.Communities.CommunityCreation
             var result = await dataProvider.CreateOrUpdateCommunityAsync(null, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return;
+
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
@@ -437,6 +449,9 @@ namespace DCL.Communities.CommunityCreation
 
             var result = await dataProvider.CreateOrUpdateCommunityAsync(id, name, description, lastSelectedImageData, lands, worlds, ct)
                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
 
             if (!result.Success)
             {
