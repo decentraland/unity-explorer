@@ -2,14 +2,14 @@ using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.WebRequests;
 using MVC;
 using System;
-using System.Globalization;
 using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,26 +20,26 @@ namespace DCL.Communities.EventInfo
     {
         private const string HOST_FORMAT = "Hosted by <b>{0}</b>";
 
-        [SerializeField] private Button backgroundCloseButton;
-        [SerializeField] private Button closeButton;
-        [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings;
-        [SerializeField] private ScrollRect scrollRect;
-        [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; }
-        [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; }
+        [SerializeField] private Button backgroundCloseButton = null!;
+        [SerializeField] private Button closeButton = null!;
+        [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings = null!;
+        [SerializeField] private ScrollRect scrollRect = null!;
+        [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; } = null!;
 
         [Header("Event Info")]
-        [SerializeField] private ImageView eventImage;
-        [SerializeField] private TMP_Text eventDate;
-        [SerializeField] private TMP_Text eventName;
-        [SerializeField] private TMP_Text hostName;
-        [SerializeField] private ButtonWithSelectableStateView interestedButton;
-        [SerializeField] private Button shareButton;
-        [SerializeField] private Button jumpInButton;
-        [SerializeField] private Button permanentJumpInButton;
-        [SerializeField] private TMP_Text eventDescription;
-        [SerializeField] private TMP_Text eventSchedules;
-        [SerializeField] private TMP_Text placeNameText;
-        [SerializeField] private GameObject liveBadge;
+        [SerializeField] private ImageView eventImage = null!;
+        [SerializeField] private TMP_Text eventDate = null!;
+        [SerializeField] private TMP_Text eventName = null!;
+        [SerializeField] private TMP_Text hostName = null!;
+        [SerializeField] private ButtonWithSelectableStateView interestedButton = null!;
+        [SerializeField] private Button shareButton = null!;
+        [SerializeField] private Button jumpInButton = null!;
+        [SerializeField] private Button permanentJumpInButton = null!;
+        [SerializeField] private TMP_Text eventDescription = null!;
+        [SerializeField] private TMP_Text eventSchedules = null!;
+        [SerializeField] private TMP_Text placeNameText = null!;
+        [SerializeField] private GameObject liveBadge = null!;
 
         public event Action<IEventDTO>? InterestedButtonClicked;
         public event Action<IEventDTO>? JumpInButtonClicked;
@@ -48,52 +48,49 @@ namespace DCL.Communities.EventInfo
 
         private readonly UniTask[] closeTasks = new UniTask[2];
         private readonly StringBuilder eventSchedulesStringBuilder = new ();
-        private ImageController imageController;
-        private IMVCManager mvcManager;
-        private IEventDTO eventDTO;
-        private GenericContextMenu contextMenu;
+        private ImageController? imageController;
+        private IEventDTO? eventDTO;
+        private GenericContextMenu? contextMenu;
+        private CancellationToken ct;
 
         private void Awake()
         {
             scrollRect.SetScrollSensitivityBasedOnPlatform();
 
-            interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO));
+            interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO!));
             interestedButton.Button.onClick.AddListener(() => interestedButton.SetSelected(!interestedButton.Selected));
-            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO));
-            permanentJumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO));
+            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
+            permanentJumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
             shareButton.onClick.AddListener(() => OpenContextMenu(shareButton.transform.position));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               offsetFromTarget: contextMenuSettings.OffsetFromTarget)
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ShareText, contextMenuSettings.ShareSprite, () => EventShareButtonClicked?.Invoke(eventDTO)))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CopyLinkText, contextMenuSettings.CopyLinkSprite, () => EventCopyLinkButtonClicked?.Invoke(eventDTO)));
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ShareText, contextMenuSettings.ShareSprite, () => EventShareButtonClicked?.Invoke(eventDTO!)))
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CopyLinkText, contextMenuSettings.CopyLinkSprite, () => EventCopyLinkButtonClicked?.Invoke(eventDTO!)));
         }
 
         private void OpenContextMenu(Vector2 position) =>
-            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position)));
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, position), ct);
 
         public UniTask[] GetCloseTasks()
         {
-            closeTasks[0] = backgroundCloseButton.OnClickAsync();
-            closeTasks[1] = closeButton.OnClickAsync();
+            closeTasks[0] = backgroundCloseButton.OnClickAsync(ct);
+            closeTasks[1] = closeButton.OnClickAsync(ct);
             return closeTasks;
         }
 
-        public void Configure(IMVCManager mvcManager,
-            IWebRequestController webRequestController)
-        {
-            this.mvcManager = mvcManager;
+        public void Configure(IWebRequestController webRequestController) =>
             imageController ??= new ImageController(eventImage, webRequestController);
-        }
 
-        public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo placeData)
+        public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo placeData, CancellationToken cancellationToken)
         {
             eventDTO = eventData;
+            ct = cancellationToken;
 
             ResetScrollPosition();
 
-            imageController.RequestImage(eventData.Image);
+            imageController!.RequestImage(eventData.Image);
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);
@@ -113,12 +110,13 @@ namespace DCL.Communities.EventInfo
 
         private string CalculateRecurrentSchedulesString(IEventDTO eventData)
         {
-            DateTime.TryParse(eventData.Next_start_at, null, DateTimeStyles.RoundtripKind, out DateTime nextStartAt);
-
-            for (var i = 0; i < eventData.Recurrent_dates.Length; i++)
+            for (var i = 0; i < eventData.RecurrentDatesProcessed.Length; i++)
             {
-                if (!DateTime.TryParse(eventData.Recurrent_dates[i], null, DateTimeStyles.RoundtripKind, out DateTime date)) continue;
-                if (date < nextStartAt) continue;
+                if (eventData.RecurrentDatesProcessed[i] == default(DateTime)) continue;
+
+                DateTime date = eventData.RecurrentDatesProcessed[i];
+
+                if (date < eventData.NextStartAtProcessed) continue;
 
                 EventUtilities.FormatEventString(date, eventData.Duration, eventSchedulesStringBuilder);
 
@@ -132,6 +130,6 @@ namespace DCL.Communities.EventInfo
         }
 
         public void UpdateInterestedButtonState() =>
-            interestedButton.SetSelected(eventDTO.Attending);
+            interestedButton.SetSelected(eventDTO!.Attending);
     }
 }

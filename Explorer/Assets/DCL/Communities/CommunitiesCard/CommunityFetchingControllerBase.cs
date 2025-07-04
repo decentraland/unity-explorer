@@ -45,26 +45,29 @@ namespace DCL.Communities.CommunitiesCard
         {
             isFetching = true;
 
-            SectionFetchData<T> membersData = currentSectionFetchData;
+            try
+            {
 
-            view.SetEmptyStateActive(false);
+                SectionFetchData<T> membersData = currentSectionFetchData;
 
-            if (membersData.pageNumber == 0)
-                view.SetLoadingStateActive(true);
+                view.SetEmptyStateActive(false);
 
-            int count = membersData.items.Count;
+                if (membersData.PageNumber == 0)
+                    view.SetLoadingStateActive(true);
 
-            membersData.pageNumber++;
-            membersData.totalToFetch = await FetchDataAsync(ct);
-            membersData.totalFetched = membersData.pageNumber * pageSize;
+                int count = membersData.Items.Count;
 
-            view.SetLoadingStateActive(false);
+                membersData.PageNumber++;
+                membersData.TotalToFetch = await FetchDataAsync(ct);
+                membersData.TotalFetched = membersData.PageNumber * pageSize;
 
-            view.SetEmptyStateActive(membersData.totalToFetch == 0);
+                view.SetLoadingStateActive(false);
 
-            view.RefreshGrid(count == membersData.items.Count);
+                view.SetEmptyStateActive(membersData.TotalToFetch == 0);
 
-            isFetching = false;
+                view.RefreshGrid(count == membersData.Items.Count);
+            }
+            finally { isFetching = false; }
         }
 
         protected abstract UniTask<int> FetchDataAsync(CancellationToken ct);

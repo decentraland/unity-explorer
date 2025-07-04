@@ -99,11 +99,6 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened += OpenCommunityProfile;
             view.CommunityJoined += JoinCommunity;
             view.CreateCommunityButtonClicked += CreateCommunity;
-            dataProvider.CommunityCreated += ReloadBrowser;
-            dataProvider.CommunityDeleted += ReloadBrowser;
-            dataProvider.CommunityUpdated += OnCommunityUpdated;
-            dataProvider.CommunityJoined += OnCommunityJoined;
-            dataProvider.CommunityLeft += OnCommunityLeft;
         }
 
         public void Activate()
@@ -115,6 +110,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.SetViewActive(true);
             cursor.Unlock();
             ReloadBrowser();
+
+            SubscribeDataProviderEvents();
         }
 
         public void Deactivate()
@@ -127,6 +124,8 @@ namespace DCL.Communities.CommunitiesBrowser
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
             spriteCache.Clear();
+
+            UnsubscribeDataProviderEvents();
         }
 
         public void Animate(int triggerId) =>
@@ -151,11 +150,8 @@ namespace DCL.Communities.CommunitiesBrowser
             view.CommunityProfileOpened -= OpenCommunityProfile;
             view.CommunityJoined -= JoinCommunity;
             view.CreateCommunityButtonClicked -= CreateCommunity;
-            dataProvider.CommunityCreated -= ReloadBrowser;
-            dataProvider.CommunityDeleted -= ReloadBrowser;
-            dataProvider.CommunityUpdated -= OnCommunityUpdated;
-            dataProvider.CommunityJoined -= OnCommunityJoined;
-            dataProvider.CommunityLeft -= OnCommunityLeft;
+
+            UnsubscribeDataProviderEvents();
 
             loadMyCommunitiesCts?.SafeCancelAndDispose();
             loadResultsCts?.SafeCancelAndDispose();
@@ -193,6 +189,9 @@ namespace DCL.Communities.CommunitiesBrowser
                                                 pageNumber: 1,
                                                 elementsPerPage: 1000,
                                                 ct: ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return;
 
             if (!result.Success)
             {
@@ -297,6 +296,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 elementsPerPage,
                 ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return;
+
             if (!result.Success)
             {
                 showErrorCts = showErrorCts.SafeRestart();
@@ -388,6 +390,9 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             var result = await dataProvider.JoinCommunityAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return;
+
             if (!result.Success || !result.Value)
             {
                 showErrorCts = showErrorCts.SafeRestart();
@@ -431,5 +436,23 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnCommunityLeft(string communityId, bool success) =>
             view.UpdateJoinedCommunity(communityId, false, success);
+
+        private void SubscribeDataProviderEvents()
+        {
+            dataProvider.CommunityCreated += ReloadBrowser;
+            dataProvider.CommunityDeleted += ReloadBrowser;
+            dataProvider.CommunityUpdated += OnCommunityUpdated;
+            dataProvider.CommunityJoined += OnCommunityJoined;
+            dataProvider.CommunityLeft += OnCommunityLeft;
+        }
+
+        private void UnsubscribeDataProviderEvents()
+        {
+            dataProvider.CommunityCreated -= ReloadBrowser;
+            dataProvider.CommunityDeleted -= ReloadBrowser;
+            dataProvider.CommunityUpdated -= OnCommunityUpdated;
+            dataProvider.CommunityJoined -= OnCommunityJoined;
+            dataProvider.CommunityLeft -= OnCommunityLeft;
+        }
     }
 }

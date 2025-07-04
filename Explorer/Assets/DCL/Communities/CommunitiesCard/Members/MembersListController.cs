@@ -14,7 +14,6 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
-using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -61,7 +60,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             ObjectProxy<IFriendsService> friendServiceProxy,
             ICommunitiesDataProvider communitiesDataProvider,
             WarningNotificationView inWorldWarningNotificationView,
-            IWeb3IdentityCache web3IdentityCache,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus) : base(view, PAGE_SIZE)
         {
@@ -73,7 +71,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
 
-            this.view.InitGrid(() => currentSectionFetchData, web3IdentityCache, mvcManager);
+            this.view.InitGrid(() => currentSectionFetchData);
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
             this.view.ElementMainButtonClicked += OnMainButtonClicked;
             this.view.ContextMenuUserProfileButtonClicked += HandleContextMenuUserProfileButtonAsync;
@@ -135,7 +133,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 SectionFetchData<MemberData> sectionData = currentSectionFetchData;
 
-                if (sectionData.pageNumber == 0)
+                if (sectionData.PageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
                 else
                     view.RefreshGrid(true);
@@ -169,6 +167,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 Result<bool> result = await communitiesDataProvider.BanUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (token.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(BAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
@@ -176,9 +177,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.items.Remove(profile);
+                allMembersFetchData.Items.Remove(profile);
 
-                List<MemberData> memberList = bannedMembersFetchData.items;
+                List<MemberData> memberList = bannedMembersFetchData.Items;
                 profile.role = CommunityMemberRole.none;
                 memberList.Add(profile);
 
@@ -199,6 +200,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 Result<bool> result = await communitiesDataProvider.KickUserFromCommunityAsync(profile.memberAddress, communityData?.id, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (token.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(KICK_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
@@ -206,7 +210,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                allMembersFetchData.items.Remove(profile);
+                allMembersFetchData.Items.Remove(profile);
                 view.RefreshGrid(false);
             }
         }
@@ -222,6 +226,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.moderator, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (token.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(ADD_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
@@ -229,7 +236,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.items;
+                List<MemberData> memberList = allMembersFetchData.Items;
 
                 foreach (MemberData member in memberList)
                     if (member.memberAddress.Equals(profile.memberAddress))
@@ -256,6 +263,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 Result<bool> result = await communitiesDataProvider.SetMemberRoleAsync(profile.memberAddress, communityData?.id, CommunityMemberRole.member, token)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (token.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(REMOVE_MODERATOR_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, token)
@@ -263,7 +273,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                List<MemberData> memberList = allMembersFetchData.items;
+                List<MemberData> memberList = allMembersFetchData.Items;
                 foreach (MemberData member in memberList)
                     if (member.memberAddress.Equals(profile.memberAddress))
                     {
@@ -354,6 +364,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                         break;
                 }
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 await FetchFriendshipStatusAndRefreshAsync(userData.userAddress, ct);
             }
             catch (OperationCanceledException) { }
@@ -367,7 +380,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         {
             Friends.FriendshipStatus status = await friendServiceProxy.StrictObject.GetFriendshipStatusAsync(userId, ct);
 
-            currentSectionFetchData.items.Find(item => item.memberAddress.Equals(userId))
+            currentSectionFetchData.Items.Find(item => item.memberAddress.Equals(userId))
                                    .friendshipStatus = status.Convert();
 
             view.RefreshGrid(true);
@@ -378,23 +391,26 @@ namespace DCL.Communities.CommunitiesCard.Members
             SectionFetchData<MemberData> membersData = currentSectionFetchData;
 
             Result<GetCommunityMembersResponse> response = currentSection == MembersListView.MemberListSections.ALL
-                ? await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
+                ? await communitiesDataProvider.GetCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct)
                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES)
-                : await communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.pageNumber, PAGE_SIZE, ct)
+                : await communitiesDataProvider.GetBannedCommunityMembersAsync(communityData?.id, membersData.PageNumber, PAGE_SIZE, ct)
                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (ct.IsCancellationRequested)
+                return 0;
 
             if (!response.Success)
             {
                 //If the request fails, we restore the previous page number in order to retry the same request next time
-                membersData.pageNumber--;
-                return membersData.totalToFetch;
+                membersData.PageNumber--;
+                return membersData.TotalToFetch;
             }
 
             foreach (var member in response.Value.data.results)
-                if (!membersData.items.Contains(member))
-                    membersData.items.Add(member);
+                if (!membersData.Items.Contains(member))
+                    membersData.Items.Add(member);
 
-            MembersSorter.SortMembersList(membersData.items);
+            MembersSorter.SortMembersList(membersData.Items);
 
             return response.Value.data.total;
         }
@@ -434,6 +450,9 @@ namespace DCL.Communities.CommunitiesCard.Members
                 Result<bool> result = await communitiesDataProvider.UnBanUserFromCommunityAsync(profile.memberAddress, communityData?.id, ct)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(UNBAN_USER_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
@@ -441,7 +460,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                     return;
                 }
 
-                bannedMembersFetchData.items.Remove(profile);
+                bannedMembersFetchData.Items.Remove(profile);
                 view.RefreshGrid(false);
             }
         }

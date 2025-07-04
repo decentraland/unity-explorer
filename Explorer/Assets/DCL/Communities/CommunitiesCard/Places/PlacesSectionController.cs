@@ -9,12 +9,9 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
@@ -70,8 +67,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             ISystemClipboard clipboard,
-            IWebBrowser webBrowser,
-            IWeb3IdentityCache web3IdentityCache) : base (view, PAGE_SIZE)
+            IWebBrowser webBrowser) : base (view, PAGE_SIZE)
         {
             this.view = view;
             this.communitiesDataProvider = communitiesDataProvider;
@@ -84,7 +80,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.webBrowser = webBrowser;
             this.spriteCache = placeSpriteCache;
 
-            view.InitGrid(() => currentSectionFetchData, placeSpriteCache, mvcManager, cancellationToken, web3IdentityCache);
+            view.InitGrid(() => currentSectionFetchData, placeSpriteCache, cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
@@ -136,6 +132,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 var result = await communitiesDataProvider.RemovePlaceFromCommunityAsync(communityData!.Value.id, placeInfo.id, ct)
                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_DELETE_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
@@ -143,7 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                     return;
                 }
 
-                placesFetchData.items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
+                placesFetchData.Items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
                 view.RefreshGrid(false);
             }
         }
@@ -200,6 +199,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 var result = await placesAPIService.SetPlaceFavoriteAsync(placeInfo.id, favoriteValue, ct)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetFavoriteToggle(!favoriteValue);
@@ -221,6 +223,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             {
                 var result = await placesAPIService.RatePlaceAsync(dislikeValue ? false : null, placeInfo.id, ct)
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!result.Success)
                 {
@@ -251,6 +256,9 @@ namespace DCL.Communities.CommunitiesCard.Places
                 var result = await placesAPIService.RatePlaceAsync(likeValue ? true : null, placeInfo.id, ct)
                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success)
                 {
                     placeCardView.SilentlySetLikeToggle(!likeValue);
@@ -279,7 +287,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
+            int offset = (placesFetchData.PageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
 
             int remaining = total - offset;
@@ -290,15 +298,18 @@ namespace DCL.Communities.CommunitiesCard.Places
             Result<PlacesData.PlacesAPIResponse> response = await placesAPIService.GetPlacesByIdsAsync(slice, ct)
                                                                                   .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (ct.IsCancellationRequested)
+                return 0;
+
             if (!response.Success || !response.Value.ok)
             {
-                placesFetchData.pageNumber--;
+                placesFetchData.PageNumber--;
                 await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                return placesFetchData.totalToFetch;
+                return placesFetchData.TotalToFetch;
             }
 
-            placesFetchData.items.AddRange(response.Value.data);
+            placesFetchData.Items.AddRange(response.Value.data);
 
             return response.Value.total;
         }

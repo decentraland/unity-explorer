@@ -1,6 +1,6 @@
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.Utilities;
 using MVC;
@@ -16,30 +16,29 @@ namespace DCL.Communities.CommunitiesCard.Events
     {
         private const int ELEMENT_MISSING_THRESHOLD = 5;
 
-        [field: SerializeField] private LoopListView2 loopList { get; set; }
-        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; }
-        [field: SerializeField] private GameObject loadingObject { get; set; }
-        [field: SerializeField] private GameObject emptyState { get; set; }
-        [field: SerializeField] private GameObject emptyStateAdminText { get; set; }
-        [field: SerializeField] private Button openWizardButton { get; set; }
-        [field: SerializeField] private CommunityEventsContextMenuConfiguration contextMenuConfiguration { get; set; }
+        [field: SerializeField] private LoopListView2 loopList { get; set; } = null!;
+        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
+        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyState { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyStateAdminText { get; set; } = null!;
+        [field: SerializeField] private Button openWizardButton { get; set; } = null!;
+        [field: SerializeField] private CommunityEventsContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
 
-        public event Action NewDataRequested;
-        public event Action OpenWizardRequested;
+        public event Action? NewDataRequested;
+        public event Action? OpenWizardRequested;
 
-        public event Action<PlaceAndEventDTO> MainButtonClicked;
-        public event Action<PlaceAndEventDTO> JumpInButtonClicked;
-        public event Action<PlaceAndEventDTO, EventListItemView> InterestedButtonClicked;
-        public event Action<PlaceAndEventDTO> EventShareButtonClicked;
-        public event Action<PlaceAndEventDTO> EventCopyLinkButtonClicked;
+        public event Action<PlaceAndEventDTO>? MainButtonClicked;
+        public event Action<PlaceAndEventDTO>? JumpInButtonClicked;
+        public event Action<PlaceAndEventDTO, EventListItemView>? InterestedButtonClicked;
+        public event Action<PlaceAndEventDTO>? EventShareButtonClicked;
+        public event Action<PlaceAndEventDTO>? EventCopyLinkButtonClicked;
 
-        private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData;
+        private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData = null!;
         private bool canModify;
-        private ObjectProxy<ISpriteCache> spriteCache;
-        private IMVCManager mvcManager;
+        private ObjectProxy<ISpriteCache>? spriteCache;
         private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
-        private GenericContextMenu contextMenu;
+        private GenericContextMenu? contextMenu;
 
         private void Awake()
         {
@@ -58,13 +57,11 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         public void InitList(Func<SectionFetchData<PlaceAndEventDTO>> currentSectionDataFunc,
             ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
-            IMVCManager mvcManager,
             CancellationToken panelCancellationToken)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
             getEventsFetchData = currentSectionDataFunc;
             this.spriteCache = eventThumbnailSpriteCache;
-            this.mvcManager = mvcManager;
             cancellationToken = panelCancellationToken;
         }
 
@@ -75,14 +72,14 @@ namespace DCL.Communities.CommunitiesCard.Events
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
 
-            itemView.Configure(eventData.items[index], spriteCache);
+            itemView.Configure(eventData.Items[index], spriteCache!);
 
             itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
                                              data => JumpInButtonClicked?.Invoke(data),
                                              data => InterestedButtonClicked?.Invoke(data, itemView),
                                              (data, position) => OpenCardContextMenu(data, position, itemView));
 
-            if (index >= eventData.totalFetched - ELEMENT_MISSING_THRESHOLD && eventData.totalFetched < eventData.totalToFetch)
+            if (index >= eventData.TotalFetched - ELEMENT_MISSING_THRESHOLD && eventData.TotalFetched < eventData.TotalToFetch)
                 NewDataRequested?.Invoke();
 
             return item;
@@ -93,13 +90,13 @@ namespace DCL.Communities.CommunitiesCard.Events
             lastClickedEventCtx = eventData;
             eventListItemView.CanPlayUnHoverAnimation = false;
 
-            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position,
-                actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true)), cancellationToken);
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, position,
+                actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true), cancellationToken);
         }
 
         public void RefreshGrid(bool redraw)
         {
-            loopList.SetListItemCount(getEventsFetchData().items.Count, false);
+            loopList.SetListItemCount(getEventsFetchData().Items.Count, false);
 
             if (redraw)
                 loopList.RefreshAllShownItem();

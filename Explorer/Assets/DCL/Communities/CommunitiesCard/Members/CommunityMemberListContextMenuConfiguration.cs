@@ -5,62 +5,33 @@ namespace DCL.Communities.CommunitiesCard.Members
     [CreateAssetMenu(fileName = "CommunityMemberListContextMenuSettings", menuName = "DCL/Communities/Members/ContextMenuSettings")]
     public class CommunityMemberListContextMenuConfiguration : ScriptableObject
     {
-        [SerializeField] private int contextMenuWidth = 250;
-        [SerializeField] private int elementsSpacing = 5;
-        [SerializeField] private int separatorHeight = 20;
-        [SerializeField] private RectOffset verticalPadding;
-        [Space(10)]
-        [SerializeField] private Sprite viewProfileSprite;
-        [SerializeField] private string viewProfileText = "View Profile";
-        [Space(10)]
-        [SerializeField] private Sprite blockSprite;
-        [SerializeField] private string blockText = "Block";
+        [field: SerializeField] public int ContextMenuWidth { get; private set; } = 250;
+        [field: SerializeField] public int ElementsSpacing { get; private set; } = 5;
+        [field: SerializeField] public int SeparatorHeight { get; private set; } = 20;
+        [field: SerializeField] public RectOffset VerticalPadding { get; private set; } = null!;
 
-        [SerializeField] private Sprite chatSprite;
-        [SerializeField] private string chatText = "Chat";
+        [field: SerializeField] public Sprite ViewProfileSprite { get; private set; } = null!;
+        [field: SerializeField] public string ViewProfileText { get; private set; } = "View Profile";
 
-        [SerializeField] private Sprite callSprite;
-        [SerializeField] private string callText = "Call";
+        [field: SerializeField] public Sprite BlockSprite { get; private set; } = null!;
+        [field: SerializeField] public string BlockText { get; private set; } = "Block";
 
-        [SerializeField] private Sprite removeModeratorSprite;
-        [SerializeField] private string removeModeratorText = "Remove Moderator";
+        [field: SerializeField] public Sprite ChatSprite { get; private set; } = null!;
+        [field: SerializeField] public string ChatText { get; private set; } = "Chat";
 
-        [SerializeField] private Sprite addModeratorSprite;
-        [SerializeField] private string addModeratorText = "Add Moderator";
+        [field: SerializeField] public Sprite CallSprite { get; private set; } = null!;
+        [field: SerializeField] public string CallText { get; private set; } = "Call";
 
-        [SerializeField] private Sprite kickUserSprite;
-        [SerializeField] private string kickUserText = "Kick";
+        [field: SerializeField] public Sprite RemoveModeratorSprite { get; private set; } = null!;
+        [field: SerializeField] public string RemoveModeratorText { get; private set; } = "Demote Moderator";
 
-        [SerializeField] private Sprite banUserSprite;
-        [SerializeField] private string banUserText = "Ban";
+        [field: SerializeField] public Sprite AddModeratorSprite { get; private set; } = null!;
+        [field: SerializeField] public string AddModeratorText { get; private set; } = "Promote Moderator";
 
-        public int ContextMenuWidth => contextMenuWidth;
-        public int ElementsSpacing => elementsSpacing;
-        public int SeparatorHeight => separatorHeight;
-        public RectOffset VerticalPadding => verticalPadding;
+        [field: SerializeField] public Sprite KickUserSprite { get; private set; } = null!;
+        [field: SerializeField] public string KickUserText { get; private set; } = "Remove Member";
 
-        public Sprite ViewProfileSprite => viewProfileSprite;
-        public string ViewProfileText => viewProfileText;
-
-        public Sprite BlockSprite => blockSprite;
-        public string BlockText => blockText;
-
-        public Sprite ChatSprite => chatSprite;
-        public string ChatText => chatText;
-
-        public Sprite CallSprite => callSprite;
-        public string CallText => callText;
-
-        public Sprite RemoveModeratorSprite => removeModeratorSprite;
-        public string RemoveModeratorText => removeModeratorText;
-
-        public Sprite AddModeratorSprite => addModeratorSprite;
-        public string AddModeratorText => addModeratorText;
-
-        public Sprite KickUserSprite => kickUserSprite;
-        public string KickUserText => kickUserText;
-
-        public Sprite BanUserSprite => banUserSprite;
-        public string BanUserText => banUserText;
+        [field: SerializeField] public Sprite BanUserSprite { get; private set; } = null!;
+        [field: SerializeField] public string BanUserText { get; private set; } = "Ban";
     }
 }

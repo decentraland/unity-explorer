@@ -61,6 +61,13 @@ namespace DCL.EventsApi
             set => next_start_at = value;
         }
 
+        private DateTime nextStartAtProcessed;
+        public DateTime NextStartAtProcessed
+        {
+            get => nextStartAtProcessed;
+            set => nextStartAtProcessed = value;
+        }
+
         public string Next_finish_at
         {
             get => next_finish_at;
@@ -151,10 +158,23 @@ namespace DCL.EventsApi
             set => start_at = value;
         }
 
+        private DateTime startAtProcessed;
+        public DateTime StartAtProcessed
+        {
+            get => startAtProcessed;
+            set => startAtProcessed = value;
+        }
+
         public string[] Recurrent_dates
         {
             get => recurrent_dates;
             set => recurrent_dates = value;
+        }
+
+        private DateTime[] recurrentDatesProcessed;
+        public DateTime[] RecurrentDatesProcessed{
+            get => recurrentDatesProcessed;
+            set => recurrentDatesProcessed = value;
         }
 
         public bool World
@@ -174,5 +194,11 @@ namespace DCL.EventsApi
             get => y;
             set => y = value;
         }
+
+        //No need to serialize anything more than the already present fields
+        public void OnBeforeSerialize() { }
+
+        public void OnAfterDeserialize() =>
+            EventDataParser.ParseDeserializedDates(this);
     }
 }

@@ -5,24 +5,14 @@ namespace DCL.Communities.CommunitiesCard.Places
     [CreateAssetMenu(fileName = "CommunityPlaceContextMenuSettings", menuName = "DCL/Communities/Places/ContextMenuSettings")]
     public class CommunityPlaceContextMenuConfiguration : ScriptableObject
     {
-        [SerializeField] private int contextMenuWidth = 250;
-        [SerializeField] private int elementsSpacing = 5;
-        [SerializeField] private RectOffset verticalPadding;
-        [Space(10)]
-        [SerializeField] private Sprite shareSprite;
-        [SerializeField] private string shareText = "Share on X";
-        [Space(10)]
-        [SerializeField] private Sprite copyLinkSprite;
-        [SerializeField] private string copyLinkText = "Copy link";
+        [field: SerializeField] public int ContextMenuWidth { get; private set; } = 180;
+        [field: SerializeField] public int ElementsSpacing { get; private set; } = 5;
+        [field: SerializeField] public RectOffset VerticalPadding { get; private set; } = null!;
 
-        public int ContextMenuWidth => contextMenuWidth;
-        public int ElementsSpacing => elementsSpacing;
-        public RectOffset VerticalPadding => verticalPadding;
+        [field: SerializeField] public Sprite ShareSprite { get; private set; } = null!;
+        [field: SerializeField] public string ShareText { get; private set; } = "Share on X";
 
-        public Sprite ShareSprite => shareSprite;
-        public string ShareText => shareText;
-
-        public Sprite CopyLinkSprite => copyLinkSprite;
-        public string CopyLinkText => copyLinkText;
+        [field: SerializeField] public Sprite CopyLinkSprite { get; private set; } = null!;
+        [field: SerializeField] public string CopyLinkText { get; private set; } = "Copy link";
     }
 }

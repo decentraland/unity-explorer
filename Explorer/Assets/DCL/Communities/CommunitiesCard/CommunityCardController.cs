@@ -20,7 +20,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -56,7 +55,6 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IEventsApiService eventsApiService;
-        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
 
@@ -88,7 +86,6 @@ namespace DCL.Communities.CommunitiesCard
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
-            IWeb3IdentityCache web3IdentityCache,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus)
             : base(viewFactory)
@@ -105,7 +102,6 @@ namespace DCL.Communities.CommunitiesCard
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
             this.eventsApiService = eventsApiService;
-            this.web3IdentityCache = web3IdentityCache;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
 
@@ -164,6 +160,9 @@ namespace DCL.Communities.CommunitiesCard
                 Result<bool> result = await communitiesDataProvider.DeleteCommunityAsync(communityData.id, ct)
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await viewInstance!.warningNotificationView.AnimatedShowAsync(DELETE_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
@@ -216,7 +215,6 @@ namespace DCL.Communities.CommunitiesCard
                 friendServiceProxy,
                 communitiesDataProvider,
                 viewInstance.warningNotificationView,
-                web3IdentityCache,
                 sharedSpaceManager,
                 chatEventBus);
 
@@ -229,8 +227,7 @@ namespace DCL.Communities.CommunitiesCard
                 realmNavigator,
                 mvcManager,
                 clipboard,
-                webBrowser,
-                web3IdentityCache);
+                webBrowser);
 
             eventListController = new EventListController(viewInstance.EventListView,
                 eventsApiService,
@@ -255,7 +252,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();
-            viewInstance!.SetDefaults(imageController);
+            viewInstance!.SetDefaults(imageController!);
             viewInstance.MembersListView.SetSectionButtonsActive(false);
             LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
@@ -268,14 +265,7 @@ namespace DCL.Communities.CommunitiesCard
                 {
                     isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
 
-                    if (isSpriteCacheExternal)
-                    {
-                        spriteCache.SetObject(inputData.ThumbnailSpriteCache);
-                    }
-                    else
-                    {
-                        spriteCache.SetObject(new SpriteCache(webRequestController));
-                    }
+                    spriteCache.SetObject(isSpriteCacheExternal ? inputData.ThumbnailSpriteCache! : new SpriteCache(webRequestController));
                 }
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
@@ -284,8 +274,8 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.SetLoadingState(false);
 
-                viewInstance.ConfigureCommunity(communityData, imageController);
-                viewInstance.ConfigureContextMenu(mvcManager, ct);
+                viewInstance.ConfigureCommunity(communityData, imageController!);
+                viewInstance.SetPanelCancellationToken(ct);
 
                 viewInstance.ResetToggle(true);
 
@@ -351,6 +341,9 @@ namespace DCL.Communities.CommunitiesCard
                 Result<bool> result = await communitiesDataProvider.JoinCommunityAsync(communityData.id, ct)
                                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+                if (ct.IsCancellationRequested)
+                    return;
+
                 if (!result.Success || !result.Value)
                 {
                     await viewInstance!.warningNotificationView.AnimatedShowAsync(JOIN_COMMUNITY_ERROR_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
@@ -372,6 +365,9 @@ namespace DCL.Communities.CommunitiesCard
             {
                 Result<bool> result = await communitiesDataProvider.LeaveCommunityAsync(communityData.id, ct)
                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+                if (ct.IsCancellationRequested)
+                    return;
 
                 if (!result.Success || !result.Value)
                 {

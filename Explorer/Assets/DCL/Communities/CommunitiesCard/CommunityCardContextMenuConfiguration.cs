@@ -5,28 +5,16 @@ namespace DCL.Communities.CommunitiesCard
     [CreateAssetMenu(fileName = "CommunityCardContextMenuSettings", menuName = "DCL/Communities/Card/ContextMenuSettings")]
     public class CommunityCardContextMenuConfiguration : ScriptableObject
     {
-        [SerializeField] private int contextMenuWidth = 250;
-        [SerializeField] private int elementsSpacing = 5;
-        [SerializeField] private Vector2 offsetFromTarget = Vector2.zero;
-        [SerializeField] private RectOffset verticalPadding;
-        [Space(10)]
-        [SerializeField] private Sprite leaveCommunitySprite;
-        [SerializeField] private string leaveCommunityText = "Leave Community";
-        [Space(10)]
-        [SerializeField] private Sprite deleteCommunitySprite;
-        [SerializeField] private string deleteCommunityText = "Delete Community";
-        [SerializeField] private Color deleteCommunityTextColor = Color.red;
+        [field: SerializeField] public int ContextMenuWidth { get; private set; } = 218;
+        [field: SerializeField] public int ElementsSpacing { get; private set; } = 5;
+        [field: SerializeField] public Vector2 OffsetFromTarget { get; private set; }
+        [field: SerializeField] public RectOffset VerticalPadding { get; private set; } = null!;
 
-        public int ContextMenuWidth => contextMenuWidth;
-        public int ElementsSpacing => elementsSpacing;
-        public Vector2 OffsetFromTarget => offsetFromTarget;
-        public RectOffset VerticalPadding => verticalPadding;
+        [field: SerializeField] public Sprite LeaveCommunitySprite { get; private set; } = null!;
+        [field: SerializeField] public string LeaveCommunityText { get; private set; } = "Leave Community";
 
-        public Sprite LeaveCommunitySprite => leaveCommunitySprite;
-        public string LeaveCommunityText => leaveCommunityText;
-
-        public Sprite DeleteCommunitySprite => deleteCommunitySprite;
-        public string DeleteCommunityText => deleteCommunityText;
-        public Color DeleteCommunityTextColor => deleteCommunityTextColor;
+        [field: SerializeField] public Sprite DeleteCommunitySprite { get; private set; } = null!;
+        [field: SerializeField] public string DeleteCommunityText { get; private set; } = "Delete Community";
+        [field: SerializeField] public Color DeleteCommunityTextColor { get; private set; } = Color.red;
     }
 }

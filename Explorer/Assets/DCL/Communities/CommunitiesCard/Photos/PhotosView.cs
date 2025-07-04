@@ -7,9 +7,9 @@ namespace DCL.Communities.CommunitiesCard.Photos
 {
     public class PhotosView : MonoBehaviour
     {
-        [field: SerializeField] public CameraReelGalleryView GalleryView { get; private set; }
-        [field: SerializeField] private GameObject adminEmptyText;
-        [field: SerializeField] private Button openWizardButton;
+        [field: SerializeField] public CameraReelGalleryView GalleryView { get; private set; } = null!;
+        [field: SerializeField] private GameObject adminEmptyText = null!;
+        [field: SerializeField] private Button openWizardButton = null!;
 
         public event Action? OpenWizardButtonClicked;
 
