@@ -142,7 +142,7 @@ namespace DCL.UserInAppInitializationFlow
 
                 //Set initial position and start async livekit connection
                 characterObject.Controller.transform.position = startParcel.Peek().ParcelToPositionFlat();
-                ensureLivekitConnectionStartupOperation.LaunchLivekitConnection(parameters.World, parameters.PlayerEntity, this, ct);
+                var livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnection(ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
@@ -163,11 +163,16 @@ namespace DCL.UserInAppInitializationFlow
                     );
 
                 result = loadingResult;
-
                 if (result.Success == false)
                 {
+                    //Fail straight away
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+                }
+                else
+                {
+                    //Wait for livekit to end handshake
+                    result = await livekitHandshake;
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);

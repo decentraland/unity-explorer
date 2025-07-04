@@ -1,4 +1,3 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.HealthChecks;
@@ -12,50 +11,26 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     public class EnsureLivekitConnectionStartupOperation
     {
         private readonly IHealthCheck healthCheck;
+        private const int TIMEOUT_IN_SECONDS = 20;
 
         public EnsureLivekitConnectionStartupOperation(IHealthCheck healthCheck)
         {
             this.healthCheck = healthCheck;
         }
 
-        public void LaunchLivekitConnection(World world, Entity playerEntity, RealUserInAppInitializationFlow realUserInAppInitializationFlow, CancellationToken ct)
-        {
-            LaunchConnection(world, playerEntity, realUserInAppInitializationFlow, ct).Forget();
-        }
-
-        private async UniTask LaunchConnection(World world, Entity playerEntity, RealUserInAppInitializationFlow realUserInAppInitializationFlow, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> LaunchLivekitConnection(CancellationToken ct)
         {
             try
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                UnityEngine.Debug.Log("JUANI LIVEKIT STARTED CONNECTING");
-                await healthCheck.IsRemoteAvailableAsync(ct).Timeout(TimeSpan.FromSeconds(60));
-                stopwatch.Stop();
-                UnityEngine.Debug.Log($"JUANI LIVEKIT CONNECTED {stopwatch.ElapsedMilliseconds} ms");
+                var result = await healthCheck.IsRemoteAvailableAsync(ct).Timeout(TimeSpan.FromSeconds(TIMEOUT_IN_SECONDS));
+                return result.AsEnumResult(TaskError.MessageError);
             }
-            catch (OperationCanceledException e)
+            catch (TimeoutException)
             {
-
+                ReportHub.Log(ReportCategory.LIVEKIT, $"Livekit handshake timed out");
+                return EnumResult<TaskError>.ErrorResult(TaskError.Timeout,"Multiplayer services are offline. Try again later");
             }
-            catch (Exception e)
-            {
-                DispatchFallbackToMainScreen(world, playerEntity, realUserInAppInitializationFlow);
-            }
-
         }
 
-        private void DispatchFallbackToMainScreen(World world, Entity playerEntity, RealUserInAppInitializationFlow realUserInAppInitializationFlow)
-        {
-            ReportHub.LogError(ReportCategory.LIVEKIT, "Livekit initialization failed. Fallback to main screen");
-            var parameters = new UserInAppInitializationFlowParameters(
-                true,
-                true,
-                IUserInAppInitializationFlow.LoadSource.Recover,
-                world,
-                playerEntity,
-                EnumResult<TaskError>.ErrorResult(TaskError.Timeout, "Livekit connection Error")
-            );
-            realUserInAppInitializationFlow.ExecuteAsync(parameters, (new CancellationTokenSource()).Token).Forget();
-        }
     }
 }
