@@ -159,7 +159,7 @@ namespace DCL.Communities.CommunitiesCard
                                                                                                                   ct)
                                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (!dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
                 DeleteCommunityRequested?.Invoke();
             }
@@ -200,7 +200,7 @@ namespace DCL.Communities.CommunitiesCard
                                                                                                         ct)
                                                                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (!dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
                 LeaveCommunityRequested?.Invoke();
             }

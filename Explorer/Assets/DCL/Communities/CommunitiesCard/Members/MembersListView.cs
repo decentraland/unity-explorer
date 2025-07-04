@@ -152,7 +152,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                                                   ct)
                                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (!dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
                 KickUserRequested?.Invoke(profile);
             }
@@ -176,7 +176,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                                         ct)
                                                                                                      .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (!dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
                 BanUserRequested?.Invoke(profile);
             }
