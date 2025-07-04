@@ -149,7 +149,7 @@ namespace DCL.Communities.CommunityCreation
         private async UniTask LoadPanelAsync(CancellationToken ct)
         {
             viewInstance!.SetCreationPanelAsLoading(true);
-            await LoadLandsAndWorldsAsync(ct) .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            await LoadLandsAndWorldsAsync(ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (!string.IsNullOrEmpty(inputData.CommunityId))
             {
