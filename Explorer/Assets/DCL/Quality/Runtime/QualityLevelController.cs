@@ -57,6 +57,25 @@ namespace DCL.Quality.Runtime
         {
             foreach (IQualitySettingRuntime? settingRuntime in runtimes)
                 settingRuntime.AddDebugView(debugWidgetBuilder, onUpdate);
+
+            debugWidgetBuilder.AddSingleButton("TOGGLE MEDIA PLAYERS", ToggleMediaPlayers);
+        }
+
+        private static void ToggleMediaPlayers()
+        {
+            // Debugging purposes only, it should be OK to hardcode the game object name
+            const string containerName = "POOL_CONTAINER_MEDIA_PLAYER";
+
+            var container = GameObject.Find(containerName);
+            if (!container)
+            {
+                UnityEngine.Debug.LogError($"Game Object with name '{containerName}' not found");
+                return;
+            }
+
+            // We do not toggle the container directly because GameObject.Find would fail the next time we invoke it
+            foreach (Transform child in container.transform)
+                child.gameObject.SetActive(!child.gameObject.activeSelf);
         }
     }
 }
