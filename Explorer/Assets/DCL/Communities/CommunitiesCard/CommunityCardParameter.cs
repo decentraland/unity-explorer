@@ -9,9 +9,9 @@ namespace DCL.Communities.CommunitiesCard
         /// <summary>
         /// The cache where the community card view will find the already downloaded textures. If null, the view will use its own.
         /// </summary>
-        public readonly ISpriteCache ThumbnailSpriteCache;
+        public readonly ISpriteCache? ThumbnailSpriteCache;
 
-        public CommunityCardParameter(string communityId, ISpriteCache spriteCache = null)
+        public CommunityCardParameter(string communityId, ISpriteCache? spriteCache = null)
         {
             CommunityId = communityId;
             ThumbnailSpriteCache = spriteCache;

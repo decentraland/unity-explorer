@@ -9,12 +9,9 @@ using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility;
 using Utility.Types;
@@ -145,7 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                     return;
                 }
 
-                placesFetchData.items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
+                placesFetchData.Items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
                 view.RefreshGrid(false);
             }
         }
@@ -290,7 +287,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            int offset = (placesFetchData.pageNumber - 1) * PAGE_SIZE;
+            int offset = (placesFetchData.PageNumber - 1) * PAGE_SIZE;
             int total = communityPlaceIds.Length;
 
             int remaining = total - offset;
@@ -306,13 +303,13 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             if (!response.Success || !response.Value.ok)
             {
-                placesFetchData.pageNumber--;
+                placesFetchData.PageNumber--;
                 await inWorldWarningNotificationView.AnimatedShowAsync(COMMUNITY_PLACES_FETCH_ERROR_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, ct)
                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                return placesFetchData.totalToFetch;
+                return placesFetchData.TotalToFetch;
             }
 
-            placesFetchData.items.AddRange(response.Value.data);
+            placesFetchData.Items.AddRange(response.Value.data);
 
             return response.Value.total;
         }

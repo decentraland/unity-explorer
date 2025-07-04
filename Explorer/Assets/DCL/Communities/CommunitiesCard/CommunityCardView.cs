@@ -5,7 +5,6 @@ using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
@@ -57,57 +56,57 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? DeleteCommunityRequested;
 
         [field: Header("References")]
-        [field: SerializeField] private Button closeButton { get; set; }
-        [field: SerializeField] private Button backgroundCloseButton { get; set; }
-        [field: SerializeField] private GameObject loadingObject { get; set; }
-        [field: SerializeField] private Image backgroundImage { get; set; }
+        [field: SerializeField] private Button closeButton { get; set; } = null!;
+        [field: SerializeField] private Button backgroundCloseButton { get; set; } = null!;
+        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private Image backgroundImage { get; set; } = null!;
         [field: SerializeField] public Color BackgroundColor { get; private set; }
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
-        [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; }
-        [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; }
-        [field: SerializeField] private Sprite defaultCommunityImage { get; set; }
-        [field: SerializeField] private Sprite deleteCommunityImage { get; set; }
-        [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; }
+        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
+        [field: SerializeField] internal WarningNotificationView warningNotificationView { get; set; } = null!;
+        [field: SerializeField] internal WarningNotificationView successNotificationView { get; set; } = null!;
+        [field: SerializeField] private Sprite defaultCommunityImage { get; set; } = null!;
+        [field: SerializeField] private Sprite deleteCommunityImage { get; set; } = null!;
+        [field: SerializeField] private CommunityCardContextMenuConfiguration contextMenuSettings { get; set; } = null!;
 
         [field: Header("Community interactions")]
-        [field: SerializeField] private Button openChatButton { get; set; }
-        [field: SerializeField] private Button openWizardButton { get; set; }
-        [field: SerializeField] private Button openContextMenuButton { get; set; }
-        [field: SerializeField] private Button joinedButton { get; set; }
-        [field: SerializeField] private Button joinButton { get; set; }
+        [field: SerializeField] private Button openChatButton { get; set; } = null!;
+        [field: SerializeField] private Button openWizardButton { get; set; } = null!;
+        [field: SerializeField] private Button openContextMenuButton { get; set; } = null!;
+        [field: SerializeField] private Button joinedButton { get; set; } = null!;
+        [field: SerializeField] private Button joinButton { get; set; } = null!;
 
         [field: Header("Community data references")]
-        [field: SerializeField] private TMP_Text communityName { get; set; }
-        [field: SerializeField] private TMP_Text communityMembersNumber { get; set; }
-        [field: SerializeField] private TMP_Text communityDescription { get; set; }
-        [field: SerializeField] public ImageView CommunityThumbnail { get; private set; }
+        [field: SerializeField] private TMP_Text communityName { get; set; } = null!;
+        [field: SerializeField] private TMP_Text communityMembersNumber { get; set; } = null!;
+        [field: SerializeField] private TMP_Text communityDescription { get; set; } = null!;
+        [field: SerializeField] public ImageView CommunityThumbnail { get; private set; } = null!;
 
         [field: Header("-- Sections")]
         [field: Header("Buttons")]
-        [field: SerializeField] private Button photosButton { get; set; }
-        [field: SerializeField] private Button membersButton { get; set; }
-        [field: SerializeField] private Button placesButton { get; set; }
-        [field: SerializeField] private Button placesWithSignButton { get; set; }
-        [field: SerializeField] private Button placesShortcutButton { get; set; }
-        [field: SerializeField] private Button membersTextButton { get; set; }
+        [field: SerializeField] private Button photosButton { get; set; } = null!;
+        [field: SerializeField] private Button membersButton { get; set; } = null!;
+        [field: SerializeField] private Button placesButton { get; set; } = null!;
+        [field: SerializeField] private Button placesWithSignButton { get; set; } = null!;
+        [field: SerializeField] private Button placesShortcutButton { get; set; } = null!;
+        [field: SerializeField] private Button membersTextButton { get; set; } = null!;
 
         [field: Header("Selections")]
-        [field: SerializeField] private GameObject photosSectionSelection { get; set; }
-        [field: SerializeField] private GameObject membersSectionSelection { get; set; }
-        [field: SerializeField] private GameObject placesSectionSelection { get; set; }
-        [field: SerializeField] private GameObject placesWithSignSectionSelection { get; set; }
+        [field: SerializeField] private GameObject photosSectionSelection { get; set; } = null!;
+        [field: SerializeField] private GameObject membersSectionSelection { get; set; } = null!;
+        [field: SerializeField] private GameObject placesSectionSelection { get; set; } = null!;
+        [field: SerializeField] private GameObject placesWithSignSectionSelection { get; set; } = null!;
 
         [field: Header("Sections views")]
         [field: SerializeField] public CameraReelGalleryConfig CameraReelGalleryConfigs { get; private set; }
-        [field: SerializeField] public MembersListView MembersListView { get; private set; }
-        [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; }
-        [field: SerializeField] public EventListView EventListView { get; private set; }
+        [field: SerializeField] public MembersListView MembersListView { get; private set; } = null!;
+        [field: SerializeField] public PlacesSectionView PlacesSectionView { get; private set; } = null!;
+        [field: SerializeField] public EventListView EventListView { get; private set; } = null!;
 
         private readonly UniTask[] closingTasks = new UniTask[3];
         private CancellationTokenSource confirmationDialogCts = new ();
-        private GenericContextMenu contextMenu;
-        private GenericContextMenuElement leaveCommunityContextMenuElement;
-        private GenericContextMenuElement deleteCommunityContextMenuElement;
+        private GenericContextMenu? contextMenu;
+        private GenericContextMenuElement? leaveCommunityContextMenuElement;
+        private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
 
         private void Awake()
@@ -283,8 +282,8 @@ namespace DCL.Communities.CommunitiesCard
             if (communityData.thumbnails != null)
                 imageController.RequestImage(communityData.thumbnails.Value.raw);
 
-            deleteCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.owner;
-            leaveCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.moderator;
+            deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
+            leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
 
             ConfigureInteractionButtons(communityData.role);
 

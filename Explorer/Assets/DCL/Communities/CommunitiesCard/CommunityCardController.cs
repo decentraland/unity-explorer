@@ -20,7 +20,6 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -253,7 +252,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             panelCancellationTokenSource = panelCancellationTokenSource.SafeRestart();
             closeIntentCompletionSource = new UniTaskCompletionSource();
-            viewInstance!.SetDefaults(imageController);
+            viewInstance!.SetDefaults(imageController!);
             viewInstance.MembersListView.SetSectionButtonsActive(false);
             LoadCommunityDataAsync(panelCancellationTokenSource.Token).Forget();
             return;
@@ -266,14 +265,7 @@ namespace DCL.Communities.CommunitiesCard
                 {
                     isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
 
-                    if (isSpriteCacheExternal)
-                    {
-                        spriteCache.SetObject(inputData.ThumbnailSpriteCache);
-                    }
-                    else
-                    {
-                        spriteCache.SetObject(new SpriteCache(webRequestController));
-                    }
+                    spriteCache.SetObject(isSpriteCacheExternal ? inputData.ThumbnailSpriteCache! : new SpriteCache(webRequestController));
                 }
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
@@ -282,7 +274,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.SetLoadingState(false);
 
-                viewInstance.ConfigureCommunity(communityData, imageController);
+                viewInstance.ConfigureCommunity(communityData, imageController!);
                 viewInstance.SetPanelCancellationToken(ct);
 
                 viewInstance.ResetToggle(true);

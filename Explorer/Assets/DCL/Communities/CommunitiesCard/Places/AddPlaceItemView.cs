@@ -6,7 +6,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 {
     public class AddPlaceItemView : MonoBehaviour
     {
-        [field: SerializeField] private Button mainButton { get; set; }
+        [field: SerializeField] private Button mainButton { get; set; } = null!;
 
         public event Action? MainButtonClicked;
 

@@ -58,23 +58,23 @@ namespace DCL.Communities.CommunitiesCard
             CANCEL,
         }
 
-        [field: SerializeField] private CanvasGroup viewCanvasGroup { get; set; }
-        [field: SerializeField] private Button backgroundButton { get; set; }
-        [field: SerializeField] private ButtonWithAnimationView cancelButton { get; set; }
-        [field: SerializeField] private TMP_Text cancelButtonText { get; set; }
-        [field: SerializeField] private ButtonWithAnimationView confirmButton { get; set; }
-        [field: SerializeField] private TMP_Text confirmButtonText { get; set; }
+        [field: SerializeField] private CanvasGroup viewCanvasGroup { get; set; } = null!;
+        [field: SerializeField] private Button backgroundButton { get; set; } = null!;
+        [field: SerializeField] private ButtonWithAnimationView cancelButton { get; set; } = null!;
+        [field: SerializeField] private TMP_Text cancelButtonText { get; set; } = null!;
+        [field: SerializeField] private ButtonWithAnimationView confirmButton { get; set; } = null!;
+        [field: SerializeField] private TMP_Text confirmButtonText { get; set; } = null!;
         [field: SerializeField] private float fadeDuration { get; set; } = 0.3f;
-        [field: SerializeField] private TMP_Text mainText { get; set; }
-        [field: SerializeField] private TMP_Text subText { get; set; }
-        [field: SerializeField] private Image mainImage { get; set; }
-        [field: SerializeField] private GameObject quitImage { get; set; }
-        [field: SerializeField] private Image rimImage { get; set; }
-        [field: SerializeField] private ProfilePictureView profilePictureView { get; set; }
-        [field: SerializeField] private Image profileActionIcon { get; set; }
+        [field: SerializeField] private TMP_Text mainText { get; set; } = null!;
+        [field: SerializeField] private TMP_Text subText { get; set; } = null!;
+        [field: SerializeField] private Image mainImage { get; set; } = null!;
+        [field: SerializeField] private GameObject quitImage { get; set; } = null!;
+        [field: SerializeField] private Image rimImage { get; set; } = null!;
+        [field: SerializeField] private ProfilePictureView profilePictureView { get; set; } = null!;
+        [field: SerializeField] private Image profileActionIcon { get; set; } = null!;
 
         private readonly UniTask[] closeTasks = new UniTask[3];
-        private ProfileRepositoryWrapper profileRepositoryWrapper;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
 
         public void SetProfileRepository(ProfileRepositoryWrapper profileRepositoryWrapper)
         {
@@ -114,7 +114,7 @@ namespace DCL.Communities.CommunitiesCard
             if (hasProfileImage)
             {
                 profilePictureView.SetDefaultThumbnail();
-                profilePictureView.Setup(profileRepositoryWrapper, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
+                profilePictureView.Setup(profileRepositoryWrapper!, dialogData.UserInfo.Color, dialogData.UserInfo.ThumbnailUrl);
             }
 
             await viewCanvasGroup.DOFade(1f, fadeDuration).ToUniTask(cancellationToken: ct);

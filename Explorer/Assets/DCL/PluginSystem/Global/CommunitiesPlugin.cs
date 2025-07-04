@@ -144,7 +144,6 @@ namespace DCL.PluginSystem.Global
             var eventInfoViewFactory = EventInfoController.CreateLazily(eventInfoViewAsset, null);
             eventInfoController = new EventInfoController(eventInfoViewFactory,
                 webRequestController,
-                mvcManager,
                 clipboard,
                 webBrowser,
                 eventsApiService,

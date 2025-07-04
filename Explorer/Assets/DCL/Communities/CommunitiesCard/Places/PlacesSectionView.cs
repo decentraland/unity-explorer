@@ -1,14 +1,11 @@
 using DCL.UI;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
 using MVC;
 using Nethereum.Siwe.Core.Recap;
 using SuperScrollView;
@@ -33,42 +30,42 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string DELETE_PLACE_CANCEL_TEXT = "CANCEL";
         private const string DELETE_PLACE_CONFIRM_TEXT = "DELETE";
 
-        [field: SerializeField] private LoopGridView loopGrid { get; set; }
-        [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; }
-        [field: SerializeField] private GameObject emptyState { get; set; }
-        [field: SerializeField] private GameObject loadingObject { get; set; }
-        [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; }
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
-        [field: SerializeField] private Sprite deleteSprite { get; set; }
+        [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
+        [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyState { get; set; } = null!;
+        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
+        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
+        [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
 
         public event Action? NewDataRequested;
         public event Action? AddPlaceRequested;
 
-        public event Action<PlaceInfo, bool, PlaceCardView> ElementLikeToggleChanged;
-        public event Action<PlaceInfo, bool, PlaceCardView> ElementDislikeToggleChanged;
-        public event Action<PlaceInfo, bool, PlaceCardView> ElementFavoriteToggleChanged;
-        public event Action<PlaceInfo> ElementShareButtonClicked;
-        public event Action<PlaceInfo> ElementCopyLinkButtonClicked;
-        public event Action<PlaceInfo> ElementInfoButtonClicked;
-        public event Action<PlaceInfo> ElementJumpInButtonClicked;
-        public event Action<PlaceInfo> ElementDeleteButtonClicked;
+        public event Action<PlaceInfo, bool, PlaceCardView>? ElementLikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView>? ElementDislikeToggleChanged;
+        public event Action<PlaceInfo, bool, PlaceCardView>? ElementFavoriteToggleChanged;
+        public event Action<PlaceInfo>? ElementShareButtonClicked;
+        public event Action<PlaceInfo>? ElementCopyLinkButtonClicked;
+        public event Action<PlaceInfo>? ElementInfoButtonClicked;
+        public event Action<PlaceInfo>? ElementJumpInButtonClicked;
+        public event Action<PlaceInfo>? ElementDeleteButtonClicked;
 
-        private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData;
+        private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData = null!;
         private bool canModify;
         private CommunityData communityData;
-        private ObjectProxy<ISpriteCache> spriteCache;
-        private GenericContextMenu contextMenu;
+        private ObjectProxy<ISpriteCache>? spriteCache;
+        private GenericContextMenu? contextMenu;
         private CancellationToken cancellationToken;
 
-        private PlaceInfo lastClickedPlaceCtx;
+        private PlaceInfo? lastClickedPlaceCtx;
 
         private void Awake()
         {
             loopGridScrollRect.SetScrollSensitivityBasedOnPlatform();
 
             contextMenu = new GenericContextMenu(contextMenuConfiguration.ContextMenuWidth, verticalLayoutPadding: contextMenuConfiguration.VerticalPadding, elementsSpacing: contextMenuConfiguration.ElementsSpacing)
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.ShareText, contextMenuConfiguration.ShareSprite, () => ElementShareButtonClicked?.Invoke(lastClickedPlaceCtx)))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.CopyLinkText, contextMenuConfiguration.CopyLinkSprite, () => ElementCopyLinkButtonClicked?.Invoke(lastClickedPlaceCtx)));
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.ShareText, contextMenuConfiguration.ShareSprite, () => ElementShareButtonClicked?.Invoke(lastClickedPlaceCtx!)))
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuConfiguration.CopyLinkText, contextMenuConfiguration.CopyLinkSprite, () => ElementCopyLinkButtonClicked?.Invoke(lastClickedPlaceCtx!)));
         }
 
         public void SetActive(bool active) => gameObject.SetActive(active);
@@ -116,8 +113,8 @@ namespace DCL.Communities.CommunitiesCard.Places
             SectionFetchData<PlaceInfo> membersData = getPlacesFetchData();
 
             int realIndex = canModify ? index - 1 : index;
-            PlaceInfo placeInfo = membersData.items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, spriteCache);
+            PlaceInfo placeInfo = membersData.Items[realIndex];
+            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, spriteCache!);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),
@@ -127,7 +124,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 placeInfo => ElementJumpInButtonClicked?.Invoke(placeInfo),
                 placeInfo => ShowBanConfirmationDialog(placeInfo, communityData.name));
 
-            if (realIndex >= membersData.totalFetched - ELEMENT_MISSING_THRESHOLD && membersData.totalFetched < membersData.totalToFetch)
+            if (realIndex >= membersData.TotalFetched - ELEMENT_MISSING_THRESHOLD && membersData.TotalFetched < membersData.TotalToFetch)
                 NewDataRequested?.Invoke();
 
             return listItem;
@@ -167,7 +164,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public void RefreshGrid(bool redraw)
         {
-            int count = getPlacesFetchData().items.Count;
+            int count = getPlacesFetchData().Items.Count;
 
             //Account for the "Add Place" button if the user can modify the places
             if (canModify)
