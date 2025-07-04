@@ -59,7 +59,7 @@ namespace DCL.Friends.UI.Requests
             this.friendsService = friendsService;
             this.profileRepository = profileRepository;
             this.inputBlock = inputBlock;
-            this.profileRepositoryWrapper = profileDataProvider;
+            profileRepositoryWrapper = profileDataProvider;
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -242,19 +242,25 @@ namespace DCL.Friends.UI.Requests
             config.MutualContainer.SetActive(false);
 
             // We only request the first page so we show a couple of mutual thumbnails. This is by design
-            PaginatedFriendsResult mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 0, MUTUAL_PAGE_SIZE_BY_DESIGN, ct);
+            Result<PaginatedFriendsResult> mutualFriendsResult = await friendsService.GetMutualFriendsAsync(user, 0, MUTUAL_PAGE_SIZE_BY_DESIGN, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-            config.MutualContainer.SetActive(mutualFriendsResult.Friends.Count > 0);
-            config.MutalCountText.text = $"{mutualFriendsResult.TotalAmount} Mutual";
+            if (!mutualFriendsResult.Success)
+            {
+                // Handle failure gracefully - show empty state
+                return;
+            }
+
+            config.MutualContainer.SetActive(mutualFriendsResult.Value.Friends.Count > 0);
+            config.MutalCountText.text = $"{mutualFriendsResult.Value.TotalAmount} Mutual";
 
             FriendRequestView.UserAndMutualFriendsConfig.MutualThumbnail[] mutualConfig = config.MutualThumbnails;
 
             for (var i = 0; i < mutualConfig.Length; i++)
             {
-                bool friendExists = i < mutualFriendsResult.Friends.Count;
+                bool friendExists = i < mutualFriendsResult.Value.Friends.Count;
                 mutualConfig[i].Root.SetActive(friendExists);
                 if (!friendExists) continue;
-                FriendProfile mutualFriend = mutualFriendsResult.Friends[i];
+                FriendProfile mutualFriend = mutualFriendsResult.Value.Friends[i];
                 ProfilePictureView view = mutualConfig[i].Image;
                 view.SetupAsync(profileRepositoryWrapper, mutualFriend.UserNameColor, mutualFriend.FacePictureUrl, mutualFriend.Address, ct).Forget();
             }
@@ -271,10 +277,10 @@ namespace DCL.Friends.UI.Requests
 
                 try
                 {
-                    var result = await friendsService.RequestFriendshipAsync(inputData.DestinationUser!.Value,
-                        viewInstance.send.MessageInput.text,
-                        ct)
-                                                     .SuppressToResultAsync(ReportCategory.FRIENDS);
+                    Result<FriendRequest> result = await friendsService.RequestFriendshipAsync(inputData.DestinationUser!.Value,
+                                                                            viewInstance.send.MessageInput.text,
+                                                                            ct)
+                                                                       .SuppressToResultAsync(ReportCategory.FRIENDS);
 
                     if (result.Success)
                     {
@@ -285,6 +291,11 @@ namespace DCL.Friends.UI.Requests
                             ct);
 
                         Close();
+                    }
+                    else
+                    {
+                        // Handle failure gracefully - could show error message to user
+                        ReportHub.LogWarning(new ReportData(ReportCategory.FRIENDS), $"Failed to send friend request: {result.ErrorMessage}");
                     }
                 }
                 finally { viewInstance.send.SendButton.interactable = true; }

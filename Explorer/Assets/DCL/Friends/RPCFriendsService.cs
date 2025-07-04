@@ -50,6 +50,8 @@ namespace DCL.Friends
         private readonly List<FriendProfile> friendProfileBuffer = new ();
         private readonly List<BlockedProfile> blockedProfileBuffer = new ();
 
+        private bool isServiceDisabled = true;
+
         public RPCFriendsService(
             IFriendsEventBus eventBus,
             FriendsCache friendsCache,
@@ -63,6 +65,8 @@ namespace DCL.Friends
 
             // Subscribe to centralized connection management
             connectionSubscription = socialServiceRPC.SubscribeToConnection(CancellationToken.None);
+            connectionSubscription.Connected += OnConnectionEstablished;
+            connectionSubscription.Disconnected += OnConnectionLost;
             connectionSubscription.ConnectionFailed += OnConnectionFailed;
         }
 
@@ -71,9 +75,37 @@ namespace DCL.Friends
             connectionSubscription?.Dispose();
         }
 
+        private void ThrowIfServiceDisabled()
+        {
+            if (isServiceDisabled) { throw new InvalidOperationException("Friends service is disabled due to connection failures."); }
+        }
+
+        private async UniTask EnsureConnectionAsync(CancellationToken ct)
+        {
+            bool connected = await connectionSubscription!.WaitForConnectionAsync(ct);
+
+            if (!connected) { throw new InvalidOperationException("Failed to establish connection within timeout period"); }
+        }
+
+        private void OnConnectionEstablished()
+        {
+            // Re-enable service if it was disabled due to connection failures
+            if (isServiceDisabled)
+            {
+                isServiceDisabled = false;
+                ReportHub.Log(ReportCategory.FRIENDS, "Friends service re-enabled - connection established");
+            }
+        }
+
+        private void OnConnectionLost()
+        {
+            ReportHub.Log(ReportCategory.FRIENDS, "Friends service connection lost");
+        }
+
         private void OnConnectionFailed()
         {
-            ReportHub.LogError(ReportCategory.FRIENDS, "Friends service connection failed - functionality may be limited");
+            isServiceDisabled = true;
+            ReportHub.LogError(ReportCategory.FRIENDS, "Friends service disabled due to connection failures");
         }
 
         public UniTask SubscribeToIncomingFriendshipEventsAsync(CancellationToken ct)
@@ -84,7 +116,7 @@ namespace DCL.Friends
             {
                 try
                 {
-                    await connectionSubscription.WaitForConnectionAsync(ct);
+                    await EnsureConnectionAsync(ct);
 
                     IUniTaskAsyncEnumerable<FriendshipUpdate> stream =
                         socialServiceRPC.Module()
@@ -149,7 +181,7 @@ namespace DCL.Friends
             {
                 try
                 {
-                    await connectionSubscription.WaitForConnectionAsync(ct);
+                    await EnsureConnectionAsync(ct);
 
                     IUniTaskAsyncEnumerable<FriendConnectivityUpdate> stream =
                         socialServiceRPC.Module()!.CallServerStream<FriendConnectivityUpdate>(SUBSCRIBE_TO_CONNECTIVITY_UPDATES, new Empty());
@@ -191,7 +223,7 @@ namespace DCL.Friends
                 try
                 {
                     // Wait for connection to be established
-                    await connectionSubscription.WaitForConnectionAsync(ct);
+                    await EnsureConnectionAsync(ct);
 
                     IUniTaskAsyncEnumerable<BlockUpdate> stream =
                         socialServiceRPC.Module()!.CallServerStream<BlockUpdate>(SUBSCRIBE_TO_BLOCK_STATUS_UPDATES, new Empty());
@@ -217,10 +249,12 @@ namespace DCL.Friends
 
         public async UniTask<PaginatedBlockedProfileResult> GetBlockedUsersAsync(int pageNum, int pageSize, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 var payload = new GetBlockedUsersPayload
                 {
@@ -249,10 +283,12 @@ namespace DCL.Friends
 
         public async UniTask BlockUserAsync(string userId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 var payload = new BlockUserPayload
                 {
@@ -284,10 +320,12 @@ namespace DCL.Friends
 
         public async UniTask UnblockUserAsync(string userId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 var payload = new UnblockUserPayload
                 {
@@ -319,10 +357,12 @@ namespace DCL.Friends
 
         public async UniTask<UserBlockingStatus> GetUserBlockingStatusAsync(CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 GetBlockingStatusResponse? response = await socialServiceRPC.Module()!
                                                                             .CallUnaryProcedure<GetBlockingStatusResponse>(GET_BLOCKING_STATUS, new Empty())
@@ -340,10 +380,12 @@ namespace DCL.Friends
 
         public async UniTask<PaginatedFriendsResult> GetFriendsAsync(int pageNum, int pageSize, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 var payload = new GetFriendsPayload
                 {
@@ -376,10 +418,12 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendsResult> GetMutualFriendsAsync(string userId, int pageNum, int pageSize,
             CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 var payload = new GetMutualFriendsPayload
                 {
@@ -412,10 +456,12 @@ namespace DCL.Friends
 
         public async UniTask<FriendshipStatus> GetFriendshipStatusAsync(string userId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 var payload = new GetFriendshipStatusPayload
                 {
@@ -465,10 +511,12 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendRequestsResult> GetReceivedFriendRequestsAsync(int pageNum, int pageSize,
             CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 receivedFriendRequestsBuffer.Clear();
 
@@ -522,10 +570,12 @@ namespace DCL.Friends
         public async UniTask<PaginatedFriendRequestsResult> GetSentFriendRequestsAsync(int pageNum, int pageSize,
             CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 sentFriendRequestsBuffer.Clear();
 
@@ -578,10 +628,12 @@ namespace DCL.Friends
 
         public async UniTask RejectFriendshipAsync(string friendId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
@@ -605,10 +657,12 @@ namespace DCL.Friends
 
         public async UniTask CancelFriendshipAsync(string friendId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
@@ -632,10 +686,12 @@ namespace DCL.Friends
 
         public async UniTask AcceptFriendshipAsync(string friendId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
                 // Wait for connection to be established
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
@@ -661,9 +717,11 @@ namespace DCL.Friends
 
         public async UniTask DeleteFriendshipAsync(string friendId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {
@@ -690,9 +748,11 @@ namespace DCL.Friends
         public async UniTask<FriendRequest> RequestFriendshipAsync(string friendId, string messageBody,
             CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             try
             {
-                await connectionSubscription.WaitForConnectionAsync(ct);
+                await EnsureConnectionAsync(ct);
 
                 UpsertFriendshipResponse.Types.Accepted response = await UpdateFriendshipAsync(new UpsertFriendshipPayload
                 {

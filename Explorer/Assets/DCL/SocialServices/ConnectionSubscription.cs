@@ -12,9 +12,10 @@ namespace DCL.SocialService
     /// </summary>
     public class ConnectionSubscription : IDisposable
     {
+        private static readonly TimeSpan DEFAULT_CONNECTION_TIMEOUT = TimeSpan.FromSeconds(30);
         private readonly IRPCSocialServices parent;
         private readonly CancellationTokenSource cts;
-        private bool disposed = false;
+        private bool disposed;
 
         public event Action Connected;
         public event Action Disconnected;
@@ -23,7 +24,17 @@ namespace DCL.SocialService
         internal ConnectionSubscription(IRPCSocialServices parent, CancellationToken ct)
         {
             this.parent = parent;
-            this.cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        }
+
+        public void Dispose()
+        {
+            if (disposed) return;
+            disposed = true;
+
+            if (parent is RPCSocialServices rpcServices) { rpcServices.Unsubscribe(this); }
+
+            cts.SafeCancelAndDispose();
         }
 
         /// <summary>
@@ -38,32 +49,28 @@ namespace DCL.SocialService
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct);
             var maxIterations = (int)(timeout.TotalMilliseconds / 100);
             var currentIteration = 0;
-            
+
             while (!parent.IsConnected && !cts.Token.IsCancellationRequested && !ct.IsCancellationRequested)
             {
                 if (currentIteration >= maxIterations)
                 {
                     return false; // Timeout reached
                 }
-                
+
                 await UniTask.Delay(100, cancellationToken: linkedCts.Token);
                 currentIteration++;
             }
-            
+
             return parent.IsConnected;
         }
-
-        private static readonly TimeSpan DEFAULT_CONNECTION_TIMEOUT = TimeSpan.FromSeconds(30);
 
         /// <summary>
         ///     Waits for the connection to be established with a default timeout of 30 seconds.
         /// </summary>
         /// <param name="ct">Cancellation token</param>
         /// <returns>True if connection was established, false if timeout or cancellation occurred</returns>
-        public async UniTask<bool> WaitForConnectionAsync(CancellationToken ct)
-        {
-            return await WaitForConnectionAsync(DEFAULT_CONNECTION_TIMEOUT, ct);
-        }
+        public async UniTask<bool> WaitForConnectionAsync(CancellationToken ct) =>
+            await WaitForConnectionAsync(DEFAULT_CONNECTION_TIMEOUT, ct);
 
         internal void NotifyConnected()
         {
@@ -82,17 +89,5 @@ namespace DCL.SocialService
             if (!disposed)
                 ConnectionFailed?.Invoke();
         }
-
-        public void Dispose()
-        {
-            if (disposed) return;
-            disposed = true;
-            
-            if (parent is RPCSocialServices rpcServices)
-            {
-                rpcServices.Unsubscribe(this);
-            }
-            cts.SafeCancelAndDispose();
-        }
     }
-} 
+}

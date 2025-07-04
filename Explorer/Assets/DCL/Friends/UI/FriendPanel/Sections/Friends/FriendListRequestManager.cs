@@ -2,12 +2,14 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 {
@@ -99,9 +101,18 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            using PaginatedFriendsResult result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct);
+            Result<PaginatedFriendsResult> result = await friendsService.GetFriendsAsync(pageNumber, pageSize, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-            foreach (FriendProfile friend in result.Friends)
+            if (!result.Success)
+            {
+                // Handle failure gracefully - return 0 to indicate no data
+                ReportHub.LogWarning(new ReportData(ReportCategory.FRIENDS), $"Failed to fetch friends: {result.ErrorMessage}");
+                return 0;
+            }
+
+            using PaginatedFriendsResult friendsResult = result.Value;
+
+            foreach (FriendProfile friend in friendsResult.Friends)
             {
                 if (friends.Contains(friend)) continue;
                 friends.Add(friend);
@@ -109,7 +120,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
 
             FriendsSorter.SortFriendList(friends);
 
-            return result.TotalAmount;
+            return friendsResult.TotalAmount;
         }
 
         protected override void ResetCollection() =>

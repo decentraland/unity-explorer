@@ -1,11 +1,14 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 {
@@ -165,23 +168,37 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Requests
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            (PaginatedFriendRequestsResult received, PaginatedFriendRequestsResult sent) =
-                await UniTask.WhenAll(friendsService.GetReceivedFriendRequestsAsync(pageNumber, pageSize, ct),
-                    friendsService.GetSentFriendRequestsAsync(pageNumber, pageSize, ct));
+            var receivedTask = friendsService.GetReceivedFriendRequestsAsync(pageNumber, pageSize, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
+            var sentTask = friendsService.GetSentFriendRequestsAsync(pageNumber, pageSize, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-            foreach (FriendRequest fr in received.Requests)
+            (Result<PaginatedFriendRequestsResult> receivedResult, Result<PaginatedFriendRequestsResult> sentResult) =
+                await UniTask.WhenAll(receivedTask, sentTask);
+
+            if (!receivedResult.Success) { ReportHub.LogWarning(new ReportData(ReportCategory.FRIENDS), $"Failed to fetch received friend requests: {receivedResult.ErrorMessage}"); }
+            else
             {
-                if (receivedRequests.Contains(fr)) continue;
-                receivedRequests.Add(fr);
+                foreach (FriendRequest fr in receivedResult.Value.Requests)
+                {
+                    if (receivedRequests.Contains(fr)) continue;
+                    receivedRequests.Add(fr);
+                }
             }
 
-            foreach (FriendRequest fr in sent.Requests)
+            if (!sentResult.Success) { ReportHub.LogWarning(new ReportData(ReportCategory.FRIENDS), $"Failed to fetch sent friend requests: {sentResult.ErrorMessage}"); }
+            else
             {
-                if (sentRequests.Contains(fr)) continue;
-                sentRequests.Add(fr);
+                foreach (FriendRequest fr in sentResult.Value.Requests)
+                {
+                    if (sentRequests.Contains(fr)) continue;
+                    sentRequests.Add(fr);
+                }
             }
 
-            return received.TotalAmount + sent.TotalAmount;
+            var totalAmount = 0;
+            if (receivedResult.Success) totalAmount += receivedResult.Value.TotalAmount;
+            if (sentResult.Success) totalAmount += sentResult.Value.TotalAmount;
+
+            return totalAmount;
         }
     }
 }
