@@ -81,7 +81,7 @@ namespace DCL.Communities
                 if (i < lands.Count - 1)
                     placeIdsJsonString.Append(", ");
             }
-            if (worlds.Count > 0)
+            if (lands.Count > 0 && worlds.Count > 0)
                 placeIdsJsonString.Append(", ");
             for (var i = 0; i < worlds.Count; i++)
             {
