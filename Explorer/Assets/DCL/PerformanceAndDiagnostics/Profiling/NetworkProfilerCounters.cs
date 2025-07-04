@@ -1,8 +1,8 @@
-﻿#if ENABLE_PROFILER
-using Unity.Profiling;
+﻿using Unity.Profiling;
 
 namespace DCL.Profiling
 {
+    // Don't put it under ENABLE_PROFILER define, Unity keeps the profiler counters contract but with an empty body under the define
     public class NetworkProfilerCounters
     {
         public const string CATEGORY_NAME = "DCL Network";
@@ -72,4 +72,3 @@ namespace DCL.Profiling
             = new (CATEGORY, WEB_REQUESTS_DOWNLOADED_FRAME_NAME, ProfilerMarkerDataUnit.Bytes, ProfilerCounterOptions.FlushOnEndOfFrame);
     }
 }
-#endif
