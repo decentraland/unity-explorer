@@ -99,7 +99,6 @@ namespace DCL.PluginSystem.Global
             voiceChatConfigurationAsset = await assetsProvisioner.ProvideMainAssetAsync(configurations.VoiceChatConfiguration, ct: ct);
             VoiceChatConfiguration voiceChatConfiguration = voiceChatConfigurationAsset.Value;
 
-            microphoneAudioFilter.Value.Initialize(voiceChatConfiguration);
             combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);

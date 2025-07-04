@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using Newtonsoft.Json;
@@ -9,23 +10,45 @@ using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Threading;
+using Utility;
 using RpcClient = rpc_csharp.RpcClient;
 
 namespace DCL.SocialService
 {
     public interface IRPCSocialServices : IDisposable
     {
-        public const int FOREGROUND_CONNECTION_RETRIES = 3;
+        /// <summary>
+        ///     Check if the service is currently connected and ready to handle requests.
+        /// </summary>
+        bool IsConnected { get; }
 
         RpcClientModule Module();
 
         /// <summary>
         ///     Try to establish connection to the RPC server until the cancellation token is triggered or the retries count is exhausted.
         /// </summary>
-        UniTask EnsureRpcConnectionAsync(CancellationToken ct) =>
-            EnsureRpcConnectionAsync(FOREGROUND_CONNECTION_RETRIES, ct);
-
         UniTask EnsureRpcConnectionAsync(int connectionRetries, CancellationToken ct);
+
+        /// <summary>
+        ///     Subscribe to connection management. Returns a subscription that should be disposed when no longer needed.
+        ///     Multiple subscriptions will share the same underlying connection.
+        /// </summary>
+        ConnectionSubscription SubscribeToConnection(CancellationToken ct);
+
+        /// <summary>
+        ///     Start connection management. Will automatically disconnect after 30 seconds if no subscribers join.
+        /// </summary>
+        void StartConnectionManagement();
+
+        /// <summary>
+        ///     Stop connection management.
+        /// </summary>
+        void StopConnectionManagement();
+
+        /// <summary>
+        ///     Unsubscribe from connection management. This is called internally by ConnectionSubscription.Dispose().
+        /// </summary>
+        void Unsubscribe(ConnectionSubscription subscription);
     }
 
     public class RPCSocialServices : IRPCSocialServices
@@ -34,6 +57,7 @@ namespace DCL.SocialService
         private const string RPC_SERVICE_NAME = "SocialService";
 
         private const int CONNECTION_TIMEOUT_SECS = 10;
+        private const int FOREGROUND_CONNECTION_RETRIES = int.MaxValue;
 
         private const double RETRY_BACKOFF_DELAY_MIN = 1.0;
         private const double RETRY_BACKOFF_DELAY_MAX = 45.0;
@@ -55,12 +79,22 @@ namespace DCL.SocialService
         private readonly Dictionary<string, string> authChainBuffer = new ();
         private readonly ISocialServiceEventBus socialServiceEventBus;
 
+        private readonly List<ConnectionSubscription> activeSubscriptions = new ();
+
         private double retryCurrentDelay = RETRY_BACKOFF_DELAY_MIN;
 
         private RpcClientModule? module;
         private RpcClientPort? port;
         private WebSocketRpcTransport? transport;
         private RpcClient? client;
+        private CancellationTokenSource? connectionCts;
+        private bool isConnectionManagementActive;
+        private int consecutiveFailures = 0;
+        private const int MAX_CONSECUTIVE_FAILURES = 10;
+        private const int CONNECTION_MANAGEMENT_TIMEOUT_SECONDS = 30;
+        private static readonly TimeSpan CONNECTION_MANAGEMENT_TIMEOUT = TimeSpan.FromSeconds(CONNECTION_MANAGEMENT_TIMEOUT_SECONDS);
+
+        public bool IsConnected => isConnectionReady;
 
         private bool isConnectionReady => transport?.State == WebSocketState.Open
                                           && module != null
@@ -79,14 +113,152 @@ namespace DCL.SocialService
 
         public void Dispose()
         {
+            StopConnectionManagement();
             transport?.Dispose();
             client?.Dispose();
             connectionEstablishingMutex.Dispose();
+            handshakeMutex.Dispose();
             authChainBuffer.Clear();
         }
 
         public RpcClientModule Module() =>
             module;
+
+        public ConnectionSubscription SubscribeToConnection(CancellationToken ct)
+        {
+            var subscription = new ConnectionSubscription(this, ct);
+
+            lock (activeSubscriptions) { activeSubscriptions.Add(subscription); }
+
+            // Start connection management if not already active
+            if (!isConnectionManagementActive)
+            {
+                StartConnectionManagement();
+            }
+
+            return subscription;
+        }
+
+        public void StartConnectionManagement()
+        {
+            lock (activeSubscriptions)
+            {
+                if (isConnectionManagementActive)
+                    return;
+
+                isConnectionManagementActive = true;
+                consecutiveFailures = 0; // Reset failure counter on new connection attempt
+                connectionCts = new CancellationTokenSource();
+                ManageConnectionAsync(CONNECTION_MANAGEMENT_TIMEOUT, connectionCts.Token).Forget();
+            }
+        }
+
+        public void StopConnectionManagement()
+        {
+            lock (activeSubscriptions)
+            {
+                if (!isConnectionManagementActive)
+                    return;
+
+                isConnectionManagementActive = false;
+                connectionCts?.SafeCancelAndDispose();
+                connectionCts = null;
+            }
+        }
+
+        private async UniTaskVoid ManageConnectionAsync(TimeSpan timeout, CancellationToken ct)
+        {
+            try
+            {
+                while (!ct.IsCancellationRequested)
+                {
+                    // Check if we have any active subscriptions
+                    lock (activeSubscriptions)
+                    {
+                        if (activeSubscriptions.Count == 0)
+                        {
+                            isConnectionManagementActive = false;
+                            return;
+                        }
+                    }
+
+                    try
+                    {
+                        // Try to establish connection
+                        await EnsureRpcConnectionAsync(FOREGROUND_CONNECTION_RETRIES, ct);
+
+                        // Connection successful - reset failure counter
+                        consecutiveFailures = 0;
+
+                        // Notify all subscriptions that connection is ready
+                        lock (activeSubscriptions)
+                        {
+                            foreach (ConnectionSubscription subscription in activeSubscriptions.ToArray()) { subscription.NotifyConnected(); }
+                        }
+
+                        // Wait for connection to be lost or cancellation
+                        while (isConnectionReady && !ct.IsCancellationRequested) { await UniTask.Delay(1000, cancellationToken: ct); }
+
+                        // Notify all subscriptions that connection is lost
+                        lock (activeSubscriptions)
+                        {
+                            foreach (ConnectionSubscription subscription in activeSubscriptions.ToArray()) { subscription.NotifyDisconnected(); }
+                        }
+                    }
+                    catch (OperationCanceledException) { break; }
+                    catch (Exception e)
+                    {
+                        consecutiveFailures++;
+                        ReportHub.LogError(ReportCategory.ENGINE, $"RPC connection failed (attempt {consecutiveFailures}/{MAX_CONSECUTIVE_FAILURES}): {e.Message}");
+
+                        // Check if we've exceeded the maximum consecutive failures
+                        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES)
+                        {
+                            // Permanent failure - notify all subscriptions and stop retrying
+                            ReportHub.LogError(ReportCategory.ENGINE, $"RPC connection permanently failed after {MAX_CONSECUTIVE_FAILURES} consecutive attempts");
+
+                            lock (activeSubscriptions)
+                            {
+                                foreach (ConnectionSubscription subscription in activeSubscriptions.ToArray()) { subscription.NotifyConnectionFailed(); }
+                            }
+
+                            // Stop connection management permanently
+                            isConnectionManagementActive = false;
+                            return;
+                        }
+
+                        // Check if we still have any active subscriptions
+                        lock (activeSubscriptions)
+                        {
+                            if (activeSubscriptions.Count == 0)
+                            {
+                                isConnectionManagementActive = false;
+                                return; // Exit cleanly if no more subscriptions
+                            }
+                        }
+
+                        // Wait before retrying the entire connection management cycle
+                        try { await UniTask.Delay(TimeSpan.FromSeconds(30), cancellationToken: ct); }
+                        catch (OperationCanceledException) { break; }
+                    }
+                }
+            }
+            finally
+            {
+                lock (activeSubscriptions) { isConnectionManagementActive = false; }
+            }
+        }
+
+        public void Unsubscribe(ConnectionSubscription subscription)
+        {
+            lock (activeSubscriptions)
+            {
+                activeSubscriptions.Remove(subscription);
+
+                // Stop connection management if no more subscriptions
+                if (activeSubscriptions.Count == 0) { StopConnectionManagement(); }
+            }
+        }
 
         public async UniTask DisconnectAsync(CancellationToken ct)
         {
