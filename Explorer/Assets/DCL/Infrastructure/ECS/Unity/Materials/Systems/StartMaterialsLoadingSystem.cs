@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.MediaStream;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -195,10 +196,15 @@ namespace ECS.Unity.Materials.Systems
             {
                 var intention = new GetTextureIntention(textureComponentValue.VideoPlayerEntity);
 
-                promise = Promise.CreateFinalized(intention,
-                    textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out Texture2DData? tex)
-                        ? new StreamableLoadingResult<Texture2DData>(tex!)
-                        : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponentValue.VideoPlayerEntity, $"Entity {textureComponentValue.VideoPlayerEntity} not found!. VideoTexture will not be created."))));
+                bool hasConsumer = textureComponentValue.TryAddConsumer(entity, entitiesMap, videoTexturesPool, World, out var info);
+                StreamableLoadingResult<Texture2DData> result = hasConsumer
+                    ? new StreamableLoadingResult<Texture2DData>(info.VideoTexture!)
+                    : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponentValue.VideoPlayerEntity, $"Entity {textureComponentValue.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
+
+                promise = Promise.CreateFinalized(intention, result);
+
+                if (info.VideoRenderer)
+                    World.Add(info.VideoPlayer, new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer });
             }
             else
                 promise = Promise.Create(
