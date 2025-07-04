@@ -140,7 +140,7 @@ namespace DCL.WebRequests
         /// <summary>
         ///     Get is Reachable when the downloading started
         /// </summary>
-        public static async UniTask<bool> IsGetReachableAsync(this IWebRequestController controller, ReportData reportData, URLAddress url, CancellationToken ct)
+        public static async UniTask<bool> IsGetReachableAsync(this IWebRequestController controller, ReportData reportData, Uri url, CancellationToken ct)
         {
             var downloadStarted = false;
 

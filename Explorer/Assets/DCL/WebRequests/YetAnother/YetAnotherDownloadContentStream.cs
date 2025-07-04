@@ -42,6 +42,8 @@ namespace DCL.WebRequests
 
             int bytesRead = await httpContentStream.ReadAsync(buffer, 0, BUFFER_SIZE, ct);
 
+            ct.ThrowIfCancellationRequested();
+
             if (bytesRead <= 0)
             {
                 // No more data to read
