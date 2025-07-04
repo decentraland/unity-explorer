@@ -416,8 +416,6 @@ namespace Global.Dynamic
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
                 : livekitHealthCheck;
 
-            livekitHealthCheck.WithRetries();
-
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             bool includeCameraReel = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
@@ -443,7 +441,8 @@ namespace Global.Dynamic
                 appArgs,
                 backgroundMusic,
                 roomHub,
-                localSceneDevelopment);
+                localSceneDevelopment,
+                staticContainer.CharacterContainer.CharacterObject);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(initializationFlowContainer.InitializationFlow, playerEntity, globalWorld);
 
