@@ -8,10 +8,11 @@ namespace DCL.Communities.CommunitiesCard
     ///         - Refreshing the grid when new data is fetched
     ///         - Manage loading and empty states
     /// </summary>
-    public interface ICommunityFetchingView
+    public interface ICommunityFetchingView<T>
     {
         public event Action? NewDataRequested;
-        void RefreshGrid(bool redraw);
+
+        void RefreshGrid(SectionFetchData<T> membersData, bool redraw);
 
         void SetEmptyStateActive(bool active);
         void SetLoadingStateActive(bool active);

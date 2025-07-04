@@ -18,7 +18,7 @@ using MemberData = DCL.Communities.GetCommunityMembersResponse.MemberData;
 
 namespace DCL.Communities.CommunitiesCard.Members
 {
-    public class MembersListView : MonoBehaviour, ICommunityFetchingView
+    public class MembersListView : MonoBehaviour, ICommunityFetchingView<MemberData>
     {
         public enum MemberListSections
         {
@@ -67,7 +67,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private float scrollViewHeight;
         private MemberListSections currentSection;
         private CancellationTokenSource confirmationDialogCts = new ();
-        private Func<SectionFetchData<MemberData>> getCurrentSectionFetchData = null!;
+        private SectionFetchData<MemberData> membersData = null!;
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
         private MemberData lastClickedProfileCtx = null!;
         private GenericContextMenu? contextMenu;
@@ -78,7 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private GenericContextMenuElement? kickUserContextMenuElement;
         private GenericContextMenuElement? banUserContextMenuElement;
         private GenericContextMenuElement? communityOptionsSeparatorContextMenuElement;
-        private GetCommunityResponse.CommunityData? communityData = null;
+        private GetCommunityResponse.CommunityData? communityData;
         private CancellationToken cancellationToken;
         private UniTask panelTask;
         private bool viewerCanEdit => communityData?.role is CommunityMemberRole.moderator or CommunityMemberRole.owner;
@@ -165,14 +165,14 @@ namespace DCL.Communities.CommunitiesCard.Members
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
                 Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                                                                                                        new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
-                                                                                                            BAN_MEMBER_CANCEL_TEXT,
-                                                                                                            BAN_MEMBER_CONFIRM_TEXT,
-                                                                                                            banSprite,
-                                                                                                            false, false,
-                                                                                                            userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
-                                                                                                        ct)
-                                                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
+                                                                                                                      BAN_MEMBER_CANCEL_TEXT,
+                                                                                                                      BAN_MEMBER_CONFIRM_TEXT,
+                                                                                                                      banSprite,
+                                                                                                                      false, false,
+                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                                                  ct)
+                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
@@ -204,10 +204,9 @@ namespace DCL.Communities.CommunitiesCard.Members
             scrollViewRect.sizeDelta = new Vector2(scrollViewRect.sizeDelta.x, isActive ? scrollViewHeight : scrollViewMaxHeight);
         }
 
-        public void InitGrid(Func<SectionFetchData<MemberData>> currentSectionDataFunc)
+        public void InitGrid()
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
-            getCurrentSectionFetchData = currentSectionDataFunc;
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
@@ -227,8 +226,6 @@ namespace DCL.Communities.CommunitiesCard.Members
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[0].mItemPrefab.name);
             MemberListItemView elementView = listItem.GetComponent<MemberListItemView>();
 
-            SectionFetchData<MemberData> membersData = getCurrentSectionFetchData();
-
             MemberData memberData = membersData.Items[index];
             elementView.Configure(memberData, currentSection, memberData.memberAddress.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address), profileRepositoryWrapper);
 
@@ -243,9 +240,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             return listItem;
         }
 
-        public void RefreshGrid(bool redraw)
+        public void RefreshGrid(SectionFetchData<MemberData> data, bool redraw)
         {
-            loopGrid.SetListItemCount(getCurrentSectionFetchData().Items.Count, false);
+            membersData = data;
+
+            loopGrid.SetListItemCount(membersData.Items.Count, false);
 
             if (redraw)
                 loopGrid.RefreshAllShownItem();

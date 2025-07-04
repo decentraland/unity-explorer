@@ -80,7 +80,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.webBrowser = webBrowser;
             this.spriteCache = placeSpriteCache;
 
-            view.InitGrid(() => currentSectionFetchData, placeSpriteCache, cancellationToken);
+            view.InitGrid(placeSpriteCache, cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
@@ -143,7 +143,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 }
 
                 placesFetchData.Items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
-                view.RefreshGrid(false);
+                RefreshGrid(false);
             }
         }
 

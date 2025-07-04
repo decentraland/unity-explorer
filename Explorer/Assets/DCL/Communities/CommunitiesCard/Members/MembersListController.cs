@@ -71,7 +71,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
 
-            this.view.InitGrid(() => currentSectionFetchData);
+            this.view.InitGrid();
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
             this.view.ElementMainButtonClicked += OnMainButtonClicked;
             this.view.ContextMenuUserProfileButtonClicked += HandleContextMenuUserProfileButtonAsync;
@@ -136,7 +136,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 if (sectionData.PageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
                 else
-                    view.RefreshGrid(true);
+                    RefreshGrid(true);
             }
         }
 
@@ -185,7 +185,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                view.RefreshGrid(false);
+                RefreshGrid(false);
             }
         }
 
@@ -211,7 +211,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 allMembersFetchData.Items.Remove(profile);
-                view.RefreshGrid(false);
+                RefreshGrid(false);
             }
         }
 
@@ -247,7 +247,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                view.RefreshGrid(true);
+                RefreshGrid(true);
             }
         }
 
@@ -283,7 +283,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                view.RefreshGrid(true);
+                RefreshGrid(true);
             }
         }
 
@@ -383,7 +383,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             currentSectionFetchData.Items.Find(item => item.memberAddress.Equals(userId))
                                    .friendshipStatus = status.Convert();
 
-            view.RefreshGrid(true);
+            RefreshGrid(true);
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
@@ -461,7 +461,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 bannedMembersFetchData.Items.Remove(profile);
-                view.RefreshGrid(false);
+                RefreshGrid(false);
             }
         }
     }
