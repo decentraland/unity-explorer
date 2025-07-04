@@ -441,7 +441,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   launchSettings:
     initialRealm: 0
-    targetScene: {x: 150, y: 150}
+    targetScene: {x: 0, y: 0}
     predefinedScenes:
       enabled: 0
       parcels:
@@ -478,7 +478,7 @@ MonoBehaviour:
     enableLandscape: 0
     enableLOD: 0
     enableVersionUpdateGuard: 0
-    enableEmulateNoLivekitConnection: 1
+    enableEmulateNoLivekitConnection: 0
     enableRemotePortableExperiences: 0
     portableExperiencesEnsToLoad: []
     emotesToAddToUserProfile: []
@@ -1083,10 +1083,6 @@ PrefabInstance:
     - target: {fileID: 8550087806236620490, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
       propertyPath: m_Name
       value: Splash
-      objectReference: {fileID: 0}
-    - target: {fileID: 8550087806236620490, guid: fc78f0ea3986a4e08922b0212a1734b5, type: 3}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
