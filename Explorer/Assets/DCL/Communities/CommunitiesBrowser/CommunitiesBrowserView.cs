@@ -16,17 +16,17 @@ namespace DCL.Communities.CommunitiesBrowser
     {
         private const float NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE = 0.01f;
 
-        public event Action ViewAllMyCommunitiesButtonClicked;
-        public event Action ResultsBackButtonClicked;
-        public event Action<string> SearchBarSelected;
-        public event Action<string> SearchBarDeselected;
-        public event Action<string> SearchBarValueChanged;
-        public event Action<string> SearchBarSubmit;
-        public event Action SearchBarClearButtonClicked;
-        public event Action<Vector2> ResultsLoopGridScrollChanged;
-        public event Action<string> CommunityProfileOpened;
-        public event Action<string> CommunityJoined;
-        public event Action CreateCommunityButtonClicked;
+        public event Action? ViewAllMyCommunitiesButtonClicked;
+        public event Action? ResultsBackButtonClicked;
+        public event Action<string>? SearchBarSelected;
+        public event Action<string>? SearchBarDeselected;
+        public event Action<string>? SearchBarValueChanged;
+        public event Action<string>? SearchBarSubmit;
+        public event Action? SearchBarClearButtonClicked;
+        public event Action<Vector2>? ResultsLoopGridScrollChanged;
+        public event Action<string>? CommunityProfileOpened;
+        public event Action<string>? CommunityJoined;
+        public event Action? CreateCommunityButtonClicked;
 
         public bool IsResultsScrollPositionAtBottom =>
             resultLoopGrid.ScrollRect.verticalNormalizedPosition <= NORMALIZED_V_POSITION_OFFSET_FOR_LOADING_MORE;
@@ -34,37 +34,37 @@ namespace DCL.Communities.CommunitiesBrowser
         public int CurrentResultsCount => currentResults.Count;
 
         [Header("Animators")]
-        [SerializeField] private Animator panelAnimator;
-        [SerializeField] private Animator headerAnimator;
+        [SerializeField] private Animator panelAnimator = null!;
+        [SerializeField] private Animator headerAnimator = null!;
 
         [Header("Search")]
-        [SerializeField] private SearchBarView searchBar;
+        [SerializeField] private SearchBarView searchBar = null!;
 
         [Header("Creation Section")]
-        [SerializeField] private Button createCommunityButton;
+        [SerializeField] private Button createCommunityButton = null!;
 
         [Header("My Communities Section")]
-        [SerializeField] private GameObject myCommunitiesSection;
-        [SerializeField] private GameObject myCommunitiesMainContainer;
-        [SerializeField] private GameObject myCommunitiesEmptyContainer;
-        [SerializeField] private GameObject myCommunitiesLoadingSpinner;
-        [SerializeField] private LoopListView2 myCommunitiesLoopList;
-        [SerializeField] private Button myCommunitiesViewAllButton;
+        [SerializeField] private GameObject myCommunitiesSection = null!;
+        [SerializeField] private GameObject myCommunitiesMainContainer = null!;
+        [SerializeField] private GameObject myCommunitiesEmptyContainer = null!;
+        [SerializeField] private GameObject myCommunitiesLoadingSpinner = null!;
+        [SerializeField] private LoopListView2 myCommunitiesLoopList = null!;
+        [SerializeField] private Button myCommunitiesViewAllButton = null!;
 
         [Header("Results Section")]
-        [SerializeField] private Button resultsBackButton;
-        [SerializeField] private TMP_Text resultsTitleText;
-        [SerializeField] private TMP_Text resultsCountText;
-        [SerializeField] private GameObject resultsSection;
-        [SerializeField] private LoopGridView resultLoopGrid;
-        [SerializeField] private GameObject resultsEmptyContainer;
-        [SerializeField] private GameObject resultsLoadingSpinner;
-        [SerializeField] private GameObject resultsLoadingMoreSpinner;
+        [SerializeField] private Button resultsBackButton = null!;
+        [SerializeField] private TMP_Text resultsTitleText = null!;
+        [SerializeField] private TMP_Text resultsCountText = null!;
+        [SerializeField] private GameObject resultsSection = null!;
+        [SerializeField] private LoopGridView resultLoopGrid = null!;
+        [SerializeField] private GameObject resultsEmptyContainer = null!;
+        [SerializeField] private GameObject resultsLoadingSpinner = null!;
+        [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
 
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
-        private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private ObjectProxy<ISpriteCache> spriteCache;
+        private ProfileRepositoryWrapper? profileRepositoryWrapper;
+        private ObjectProxy<ISpriteCache>? spriteCache;
 
         private void Awake()
         {
@@ -271,7 +271,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(spriteCache);
+            if (spriteCache != null)
+                cardView.ConfigureImageController(spriteCache);
             cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
 
             // Setup card events
@@ -295,7 +296,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            cardView.ConfigureImageController(spriteCache);
+            if (spriteCache != null)
+                cardView.ConfigureImageController(spriteCache);
             cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
             cardView.SetJoiningLoadingActive(false);
 
@@ -308,7 +310,8 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.JoinCommunityButtonClicked += OnCommunityJoined;
 
             // Setup mutual friends
-            cardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
+            if (profileRepositoryWrapper != null)
+                cardView.SetupMutualFriends(profileRepositoryWrapper, communityData);
 
             return gridItem;
         }
@@ -333,7 +336,7 @@ namespace DCL.Communities.CommunitiesBrowser
             if (communityData == null)
                 return;
 
-            CommunityJoined.Invoke(communityData.id);
+            CommunityJoined?.Invoke(communityData.id);
         }
     }
 }

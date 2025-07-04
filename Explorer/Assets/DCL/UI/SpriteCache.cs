@@ -77,8 +77,11 @@ namespace DCL.UI
             return await spriteTaskCompletionSource.Task;
         }
 
-        public void AddOrReplaceCachedSprite(string imageUrl, Sprite imageContent)
+        public void AddOrReplaceCachedSprite(string? imageUrl, Sprite imageContent)
         {
+            if (imageUrl == null)
+                return;
+
             if(currentSpriteTasks.TryGetValue(imageUrl, out UniTaskCompletionSource<Sprite?>? task))
                 task.TrySetCanceled();
 

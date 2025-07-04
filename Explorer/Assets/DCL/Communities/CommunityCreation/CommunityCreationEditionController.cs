@@ -44,12 +44,12 @@ namespace DCL.Communities.CommunityCreation
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
-        private CancellationTokenSource createCommunityCts;
-        private CancellationTokenSource loadPanelCts;
-        private CancellationTokenSource showErrorCts;
-        private CancellationTokenSource openImageSelectionCts;
+        private CancellationTokenSource? createCommunityCts;
+        private CancellationTokenSource? loadPanelCts;
+        private CancellationTokenSource? showErrorCts;
+        private CancellationTokenSource? openImageSelectionCts;
 
-        private Sprite lastSelectedProfileThumbnail;
+        private Sprite? lastSelectedProfileThumbnail;
         private bool isProfileThumbnailDirty;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -63,7 +63,7 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
-        private byte[] lastSelectedImageData;
+        private byte[]? lastSelectedImageData;
         private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
 
         public CommunityCreationEditionController(
@@ -113,7 +113,7 @@ namespace DCL.Communities.CommunityCreation
 
         protected override void OnViewClose()
         {
-            viewInstance.CleanCreationPanel();
+            viewInstance!.CleanCreationPanel();
             RestoreInput();
 
             createCommunityCts?.SafeCancelAndDispose();
@@ -166,7 +166,7 @@ namespace DCL.Communities.CommunityCreation
                 return;
 
             webBrowser.OpenUrl($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
-            viewInstance.PlayOnLinkClickAudio();
+            viewInstance!.PlayOnLinkClickAudio();
         }
 
         private void GoToGetNameLink() =>
@@ -464,7 +464,7 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            if (isProfileThumbnailDirty)
+            if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
             {
                 spriteCache.StrictObject.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
                 isProfileThumbnailDirty = false;

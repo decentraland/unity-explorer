@@ -7,20 +7,15 @@ namespace DCL.Communities.CommunityCreation
 {
     public class CommunityPlaceTag : MonoBehaviour
     {
-        public Action RemoveButtonClicked;
+        public Action? RemoveButtonClicked;
 
-        [SerializeField] private TMP_Text tagText;
-        [SerializeField] private Button removeButton;
+        [SerializeField] private TMP_Text tagText = null!;
+        [SerializeField] private Button removeButton = null!;
 
-        public string Id { get; private set; }
+        public string Id { get; private set; } = null!;
         public bool IsWorld { get; private set; }
 
-        public string Text
-        {
-            get => tagText.text;
-            private set => tagText.text = value;
-
-        }
+        public string Text { set => tagText.text = value; }
 
         private void Awake() =>
             removeButton.onClick.AddListener(() => RemoveButtonClicked?.Invoke());
