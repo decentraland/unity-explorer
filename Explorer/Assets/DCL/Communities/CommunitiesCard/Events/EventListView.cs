@@ -35,10 +35,11 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData = null!;
         private bool canModify;
-        private ObjectProxy<ISpriteCache>? spriteCache;
+//        private ObjectProxy<ISpriteCache>? spriteCache;
         private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
         private GenericContextMenu? contextMenu;
+        private ThumbnailLoader thumbnailLoader;
 
         private void Awake()
         {
@@ -56,13 +57,15 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         public void InitList(Func<SectionFetchData<PlaceAndEventDTO>> currentSectionDataFunc,
-            ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
+ //           ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
+            ThumbnailLoader thumbnailLoader,
             CancellationToken panelCancellationToken)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
             getEventsFetchData = currentSectionDataFunc;
-            this.spriteCache = eventThumbnailSpriteCache;
+ //           this.spriteCache = eventThumbnailSpriteCache;
             cancellationToken = panelCancellationToken;
+            this.thumbnailLoader = thumbnailLoader;
         }
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
@@ -72,7 +75,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
 
-            itemView.Configure(eventData.Items[index], spriteCache!);
+            itemView.Configure(eventData.Items[index], thumbnailLoader, cancellationToken/* spriteCache!*/);
 
             itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
                                              data => JumpInButtonClicked?.Invoke(data),

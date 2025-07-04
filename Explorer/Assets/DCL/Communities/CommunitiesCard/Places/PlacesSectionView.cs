@@ -1,10 +1,8 @@
-using DCL.UI;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using MVC;
 using Nethereum.Siwe.Core.Recap;
@@ -53,7 +51,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData = null!;
         private bool canModify;
         private CommunityData communityData;
-        private ObjectProxy<ISpriteCache>? spriteCache;
+ //       private ObjectProxy<ISpriteCache>? spriteCache;
+        private ThumbnailLoader thumbnailLoader;
         private GenericContextMenu? contextMenu;
         private CancellationToken cancellationToken;
 
@@ -87,12 +86,14 @@ namespace DCL.Communities.CommunitiesCard.Places
         }
 
         public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
-            ObjectProxy<ISpriteCache> placeThumbnailsCache,
+ //           ObjectProxy<ISpriteCache> placeThumbnailsCache,
+            ThumbnailLoader thumbnailLoader,
             CancellationToken panelCancellationToken)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
             getPlacesFetchData = placesDataFunc;
-            this.spriteCache = placeThumbnailsCache;
+ //           this.spriteCache = placeThumbnailsCache;
+            this.thumbnailLoader = thumbnailLoader;
             cancellationToken = panelCancellationToken;
         }
 
@@ -114,7 +115,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             int realIndex = canModify ? index - 1 : index;
             PlaceInfo placeInfo = membersData.Items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, spriteCache!);
+            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader, cancellationToken/*, spriteCache!*/);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),

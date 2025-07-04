@@ -1,7 +1,7 @@
 using DCL.UI;
-using DCL.Utilities;
 using DG.Tweening;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -43,7 +43,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Vector2 originalFooterSizeDelta;
 
         private PlaceInfo? currentPlaceInfo;
-        private ImageController? imageController;
+ //       private ImageController? imageController;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
         public event Action<PlaceInfo, bool, PlaceCardView>? DislikeToggleChanged;
@@ -86,14 +86,15 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceInfo placeInfo, bool userOwnsPlace, ObjectProxy<ISpriteCache> spriteCache)
+        public void Configure(PlaceInfo placeInfo, bool userOwnsPlace, ThumbnailLoader thumbnailLoader, CancellationToken ct/*, ObjectProxy<ISpriteCache> spriteCache*/)
         {
             currentPlaceInfo = placeInfo;
 
-            imageController ??= new ImageController(placeThumbnailImage, spriteCache);
+  /*          imageController ??= new ImageController(placeThumbnailImage, spriteCache);
 
             imageController.SetImage(defaultPlaceThumbnail);
-            imageController.RequestImage(placeInfo.image);
+            imageController.RequestImage(placeInfo.image);*/
+            thumbnailLoader.LoadCommunityThumbnailAsync(placeInfo.image, placeThumbnailImage, defaultPlaceThumbnail, ct);
 
             placeNameText.text = placeInfo.title;
             placeDescriptionText.text = placeInfo.description;

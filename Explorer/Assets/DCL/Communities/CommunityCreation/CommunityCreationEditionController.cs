@@ -64,7 +64,8 @@ namespace DCL.Communities.CommunityCreation
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
         private byte[] lastSelectedImageData;
-        private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
+        private readonly ISpriteCache spriteCache;
+        private ThumbnailLoader thumbnailLoader;
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
@@ -85,8 +86,9 @@ namespace DCL.Communities.CommunityCreation
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.ConfigureImageController(spriteCache);
-            viewInstance.ConvertGetNameDescriptionUrlsToClickableLinks(GoToAnyLinkFromGetNameDescription);
+  //          viewInstance!.ConfigureImageController(spriteCache);
+
+            viewInstance!.ConvertGetNameDescriptionUrlsToClickableLinks(GoToAnyLinkFromGetNameDescription);
             viewInstance.GetNameButtonClicked += GoToGetNameLink;
             viewInstance.CancelButtonClicked += OnCancelAction;
             viewInstance.SelectProfilePictureButtonClicked += OpenImageSelection;
@@ -100,7 +102,8 @@ namespace DCL.Communities.CommunityCreation
         {
             lastSelectedImageData = null;
             closeTaskCompletionSource = new UniTaskCompletionSource();
-            spriteCache.SetObject(inputData.ThumbnailSpriteCache);
+  //          spriteCache.SetObject(inputData.ThumbnailSpriteCache);
+            thumbnailLoader = new ThumbnailLoader(inputData.ThumbnailSpriteCache);
             viewInstance!.SetAccess(inputData.CanCreateCommunities);
             viewInstance.SetAsEditionMode(!string.IsNullOrEmpty(inputData.CommunityId));
 
@@ -340,7 +343,7 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw);
+            viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw, thumbnailLoader);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
 
@@ -466,7 +469,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (isProfileThumbnailDirty)
             {
-                spriteCache.StrictObject.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                spriteCache.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
                 isProfileThumbnailDirty = false;
                 lastSelectedProfileThumbnail = null;
             }

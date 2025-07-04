@@ -1,7 +1,7 @@
 using DCL.Communities.EventInfo;
 using DCL.UI;
-using DCL.Utilities;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -38,7 +38,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public event Action<PlaceAndEventDTO, Vector2>? ShareButtonClicked;
 
         private PlaceAndEventDTO? eventData;
-        private ImageController? imageController;
+ //       private ImageController? imageController;
 
         private bool canPlayUnHoverAnimation = true;
         internal bool CanPlayUnHoverAnimation
@@ -65,12 +65,13 @@ namespace DCL.Communities.CommunitiesCard.Events
             offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, offlineShareButton.transform.position));
         }
 
-        public void Configure(PlaceAndEventDTO data, ObjectProxy<ISpriteCache> spriteCache)
+        public void Configure(PlaceAndEventDTO data, ThumbnailLoader thumbnailLoader, CancellationToken ct/*, ObjectProxy<ISpriteCache> spriteCache*/)
         {
             eventData = data;
-            imageController ??= new ImageController(eventThumbnailImage, spriteCache);
+   //         imageController ??= new ImageController(eventThumbnailImage, spriteCache);
 
-            imageController.RequestImage(data.Event.image);
+//            imageController.RequestImage(data.Event.image);
+            thumbnailLoader.LoadCommunityThumbnailAsync(data.Event.image, eventThumbnailImage, null, ct).Forget();
             eventTimeText.text = EventUtilities.GetEventTimeText(data.Event);
             eventNameText.text = data.Event.name;
             UpdateInterestedCounter();

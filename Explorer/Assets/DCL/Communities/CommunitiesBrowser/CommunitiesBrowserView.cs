@@ -4,6 +4,7 @@ using DCL.UI.Utilities;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -65,7 +66,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentResults = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
  //       private ISpriteCache spriteCache;
-        private FillThumbnailDelegate fillThumbnailFunction;
+        private ThumbnailLoader thumbnailLoader;
 
         private void Awake()
         {
@@ -261,6 +262,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private void SetSearchBarClearButtonActive(bool isActive) =>
             searchBar.clearSearchButton.gameObject.SetActive(isActive);
 
+        private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
+
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
             CommunityData communityData = currentMyCommunities[index];
@@ -273,7 +276,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
             //cardView.ConfigureImageController(spriteCache);
-            fillThumbnailFunction(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite);
+            thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
@@ -298,7 +301,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetLiveMarkAsActive(communityData.isLive);
  //           cardView.ConfigureImageController(spriteCache);
  //           cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
-            fillThumbnailFunction(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite);
+            thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             cardView.SetJoiningLoadingActive(false);
 
@@ -339,9 +342,9 @@ namespace DCL.Communities.CommunitiesBrowser
             CommunityJoined.Invoke(communityData.id);
         }
 
-        public void SetFillThumbnailDelegate(FillThumbnailDelegate fillCommunityThumbnailFunction)
+        public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
         {
-            fillThumbnailFunction = fillCommunityThumbnailFunction;
+            this.thumbnailLoader = newThumbnailLoader;
         }
     }
 }

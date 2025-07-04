@@ -48,7 +48,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private readonly ISystemClipboard clipboard;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
-        private readonly ObjectProxy<ISpriteCache> spriteCache;
+        private readonly ThumbnailLoader thumbnailLoader;
 
         private string[] communityPlaceIds;
 
@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private CancellationTokenSource placeCardOperationsCts = new ();
 
         public PlacesSectionController(PlacesSectionView view,
-            ObjectProxy<ISpriteCache> placeSpriteCache,
+            ThumbnailLoader thumbnailLoader,
             ICommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
@@ -78,9 +78,9 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.mvcManager = mvcManager;
             this.clipboard = clipboard;
             this.webBrowser = webBrowser;
-            this.spriteCache = placeSpriteCache;
+            this.thumbnailLoader = thumbnailLoader;
 
-            view.InitGrid(() => currentSectionFetchData, placeSpriteCache, cancellationToken);
+            view.InitGrid(() => currentSectionFetchData, thumbnailLoader,/* placeSpriteCache,*/ cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
@@ -118,7 +118,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
                     communityId: communityData!.Value.id,
-                    spriteCache.StrictObject)));
+                    thumbnailLoader.Cache)));
         }
 
         private void OnElementDeleteButtonClicked(PlaceInfo placeInfo)

@@ -67,11 +67,12 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
-        private ImageController imageController;
+ //       private ImageController imageController;
         private bool isEditionMode;
         private bool isDefaultImageSelected;
 
         private CancellationTokenSource updateScrollPositionCts;
+        private CancellationTokenSource thumbnailLoadingCts;
 
         private void Awake()
         {
@@ -129,6 +130,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelPlacesDropdown.OptionClicked -= OnPlacesDropdownOptionSelected;
 
             updateScrollPositionCts.SafeCancelAndDispose();
+            thumbnailLoadingCts.SafeCancelAndDispose();
         }
 
         public void SetCreationPanelAsLoading(bool isLoading)
@@ -173,25 +175,30 @@ namespace DCL.Communities.CommunityCreation
                 UpdateCreateButtonAvailability();
         }
 
-        public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
+ /*       public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
         {
             if (imageController != null)
                 return;
 
             imageController = new ImageController(creationPanelProfileSelectedImage, spriteCache);
         }
-
-        public void SetProfileSelectedImage(string imageUrl)
+*/
+        public void SetProfileSelectedImage(string imageUrl, ThumbnailLoader thumbnailLoader)
         {
             isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(true);
             creationPanelProfilePictureIcon.SetActive(false);
 
             if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+            {
+                thumbnailLoadingCts = thumbnailLoadingCts.SafeRestart();
+                thumbnailLoader.LoadCommunityThumbnailAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token).Forget();
+                //imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+            }
             else
             {
-                imageController.SetImage(creationPanelProfileDefaultSelectedImage);
+                creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage);
+                //imageController.SetImage(creationPanelProfileDefaultSelectedImage);
                 isDefaultImageSelected = true;
             }
         }
@@ -201,7 +208,7 @@ namespace DCL.Communities.CommunityCreation
             isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(sprite is not null);
             creationPanelProfilePictureIcon.SetActive(!creationPanelProfileSelectedImage.gameObject.activeSelf);
-            imageController.SetImage(sprite);
+            //imageController.SetImage(sprite);
         }
 
         public void SetCommunityName(string text, bool isInteractable)

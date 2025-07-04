@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private ImageController imageController;
+//        private ImageController imageController;
         private string currentCommunityId;
         private Tweener headerTween;
         private Tweener footerTween;

@@ -44,6 +44,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISpriteCache spriteCache;
+        private readonly ThumbnailLoader thumbnailLoader;
 
         private CancellationTokenSource loadMyCommunitiesCts;
         private CancellationTokenSource loadResultsCts;
@@ -88,7 +89,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
-            view.SetFillThumbnailDelegate(FillThumbnailImplementation);
+            thumbnailLoader = new ThumbnailLoader(spriteCache);
+            view.SetThumbnailLoader(thumbnailLoader);
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
@@ -204,31 +206,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
             view.AddMyCommunitiesItems(result.Value.data.results, true);
             view.SetMyCommunitiesAsLoading(false);
-        }
-
-        private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
-
-        private void FillThumbnailImplementation(string thumbnailUrl, ImageView thumbnailView, Sprite defaultThumbnail)
-        {
-            LoadCommunityThumbnailAsync(thumbnailUrl, thumbnailView, defaultThumbnail, myCommunityThumbnailsLoadingCts.Token).Forget();
-        }
-
-        private async UniTaskVoid LoadCommunityThumbnailAsync(string thumbnailUrl, ImageView thumbnailView, Sprite defaultThumbnail, CancellationToken ct)
-        {
-            thumbnailView.SetImage(defaultThumbnail);
-
-            Sprite? loadedSprite = null;
-
-            if (!string.IsNullOrEmpty(thumbnailUrl))
-                loadedSprite = await spriteCache.GetSpriteAsync(thumbnailUrl, ct);
-
-            if (loadedSprite != null)
-            {
-                thumbnailView.SetImage(loadedSprite!);
-
-                thumbnailView.ImageEnabled = true;
-                thumbnailView.ShowImageAnimated();
-            }
         }
 
         private void ViewAllMyCommunitiesResults()
