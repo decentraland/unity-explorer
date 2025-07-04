@@ -30,13 +30,13 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string DELETE_PLACE_CANCEL_TEXT = "CANCEL";
         private const string DELETE_PLACE_CONFIRM_TEXT = "DELETE";
 
-        [field: SerializeField] private LoopGridView loopGrid { get; set; }
-        [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; }
-        [field: SerializeField] private GameObject emptyState { get; set; }
-        [field: SerializeField] private GameObject loadingObject { get; set; }
-        [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; }
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
-        [field: SerializeField] private Sprite deleteSprite { get; set; }
+        [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
+        [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyState { get; set; } = null!;
+        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
+        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
+        [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
 
         public event Action? NewDataRequested;
         public event Action? AddPlaceRequested;

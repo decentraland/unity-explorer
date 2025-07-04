@@ -16,13 +16,13 @@ namespace DCL.Communities.CommunitiesCard.Events
     {
         private const int ELEMENT_MISSING_THRESHOLD = 5;
 
-        [field: SerializeField] private LoopListView2 loopList { get; set; }
-        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; }
-        [field: SerializeField] private GameObject loadingObject { get; set; }
-        [field: SerializeField] private GameObject emptyState { get; set; }
-        [field: SerializeField] private GameObject emptyStateAdminText { get; set; }
-        [field: SerializeField] private Button openWizardButton { get; set; }
-        [field: SerializeField] private CommunityEventsContextMenuConfiguration contextMenuConfiguration { get; set; }
+        [field: SerializeField] private LoopListView2 loopList { get; set; } = null!;
+        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
+        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyState { get; set; } = null!;
+        [field: SerializeField] private GameObject emptyStateAdminText { get; set; } = null!;
+        [field: SerializeField] private Button openWizardButton { get; set; } = null!;
+        [field: SerializeField] private CommunityEventsContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
 
         public event Action? NewDataRequested;
         public event Action? OpenWizardRequested;

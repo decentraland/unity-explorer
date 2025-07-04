@@ -14,27 +14,27 @@ namespace DCL.Communities.CommunitiesCard.Members
     {
         private const string MUTUAL_FRIENDS_FORMAT = "{0} Mutual Friends";
 
-        [field: SerializeField] private Image background { get; set; }
+        [field: SerializeField] private Image background { get; set; } = null!;
         [field: SerializeField] private Color normalColor { get; set; }
         [field: SerializeField] private Color hoveredColor { get; set; }
-        [field: SerializeField] private Button mainButton { get; set; }
-        [field: SerializeField] private Button contextMenuButton { get; set; }
-        [field: SerializeField] private Button unbanButton { get; set; }
+        [field: SerializeField] private Button mainButton { get; set; } = null!;
+        [field: SerializeField] private Button contextMenuButton { get; set; } = null!;
+        [field: SerializeField] private Button unbanButton { get; set; } = null!;
 
         [field: Header("User")]
-        [field: SerializeField] private TMP_Text userName { get; set; }
-        [field: SerializeField] private TMP_Text userNameTag { get; set; }
-        [field: SerializeField] private GameObject verifiedIcon { get; set; }
-        [field: SerializeField] private ProfilePictureView profilePicture { get; set; }
-        [field: SerializeField] private TMP_Text mutualFriendsText { get; set; }
-        [field: SerializeField] private TMP_Text roleText { get; set; }
+        [field: SerializeField] private TMP_Text userName { get; set; } = null!;
+        [field: SerializeField] private TMP_Text userNameTag { get; set; } = null!;
+        [field: SerializeField] private GameObject verifiedIcon { get; set; } = null!;
+        [field: SerializeField] private ProfilePictureView profilePicture { get; set; } = null!;
+        [field: SerializeField] private TMP_Text mutualFriendsText { get; set; } = null!;
+        [field: SerializeField] private TMP_Text roleText { get; set; } = null!;
 
         [field: Header("Friend buttons")]
-        [field: SerializeField] private Button addFriendButton { get; set; }
-        [field: SerializeField] private Button acceptFriendButton { get; set; }
-        [field: SerializeField] private Button removeFriendButton { get; set; }
-        [field: SerializeField] private Button cancelFriendButton { get; set; }
-        [field: SerializeField] private Button unblockFriendButton { get; set; }
+        [field: SerializeField] private Button addFriendButton { get; set; } = null!;
+        [field: SerializeField] private Button acceptFriendButton { get; set; } = null!;
+        [field: SerializeField] private Button removeFriendButton { get; set; } = null!;
+        [field: SerializeField] private Button cancelFriendButton { get; set; } = null!;
+        [field: SerializeField] private Button unblockFriendButton { get; set; } = null!;
 
         private bool canUnHover = true;
         private bool isUserCard = false;

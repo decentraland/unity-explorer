@@ -34,18 +34,18 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
         private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
 
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; }
-        [field: SerializeField] private LoopGridView loopGrid { get; set; }
-        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; }
-        [field: SerializeField] private RectTransform sectionButtons { get; set; }
-        [field: SerializeField] private RectTransform scrollViewRect { get; set; }
-        [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; }
-        [field: SerializeField] private GameObject loadingObject { get; set; }
+        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
+        [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
+        [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
+        [field: SerializeField] private RectTransform sectionButtons { get; set; } = null!;
+        [field: SerializeField] private RectTransform scrollViewRect { get; set; } = null!;
+        [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; } = null!;
+        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
 
         [field: Header("Assets")]
-        [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings;
-        [field: SerializeField] private Sprite kickSprite { get; set; }
-        [field: SerializeField] private Sprite banSprite { get; set; }
+        [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
+        [field: SerializeField] private Sprite kickSprite { get; set; } = null!;
+        [field: SerializeField] private Sprite banSprite { get; set; } = null!;
 
         public event Action<MemberListSections>? ActiveSectionChanged;
         public event Action? NewDataRequested;

@@ -20,26 +20,26 @@ namespace DCL.Communities.EventInfo
     {
         private const string HOST_FORMAT = "Hosted by <b>{0}</b>";
 
-        [SerializeField] private Button backgroundCloseButton;
-        [SerializeField] private Button closeButton;
-        [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings;
-        [SerializeField] private ScrollRect scrollRect;
-        [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; }
-        [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; }
+        [SerializeField] private Button backgroundCloseButton = null!;
+        [SerializeField] private Button closeButton = null!;
+        [SerializeField] private EventInfoContextMenuConfiguration contextMenuSettings = null!;
+        [SerializeField] private ScrollRect scrollRect = null!;
+        [field: SerializeField] public WarningNotificationView SuccessNotificationView { get; private set; } = null!;
+        [field: SerializeField] public WarningNotificationView ErrorNotificationView { get; private set; } = null!;
 
         [Header("Event Info")]
-        [SerializeField] private ImageView eventImage;
-        [SerializeField] private TMP_Text eventDate;
-        [SerializeField] private TMP_Text eventName;
-        [SerializeField] private TMP_Text hostName;
-        [SerializeField] private ButtonWithSelectableStateView interestedButton;
-        [SerializeField] private Button shareButton;
-        [SerializeField] private Button jumpInButton;
-        [SerializeField] private Button permanentJumpInButton;
-        [SerializeField] private TMP_Text eventDescription;
-        [SerializeField] private TMP_Text eventSchedules;
-        [SerializeField] private TMP_Text placeNameText;
-        [SerializeField] private GameObject liveBadge;
+        [SerializeField] private ImageView eventImage = null!;
+        [SerializeField] private TMP_Text eventDate = null!;
+        [SerializeField] private TMP_Text eventName = null!;
+        [SerializeField] private TMP_Text hostName = null!;
+        [SerializeField] private ButtonWithSelectableStateView interestedButton = null!;
+        [SerializeField] private Button shareButton = null!;
+        [SerializeField] private Button jumpInButton = null!;
+        [SerializeField] private Button permanentJumpInButton = null!;
+        [SerializeField] private TMP_Text eventDescription = null!;
+        [SerializeField] private TMP_Text eventSchedules = null!;
+        [SerializeField] private TMP_Text placeNameText = null!;
+        [SerializeField] private GameObject liveBadge = null!;
 
         public event Action<IEventDTO>? InterestedButtonClicked;
         public event Action<IEventDTO>? JumpInButtonClicked;

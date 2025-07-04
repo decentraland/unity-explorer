@@ -15,26 +15,26 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 112f;
 
-        [SerializeField] private RectTransform headerContainer;
-        [SerializeField] private RectTransform footerContainer;
-        [SerializeField] private CanvasGroup interactionButtonsCanvasGroup;
-        [SerializeField] private Sprite defaultPlaceThumbnail;
+        [SerializeField] private RectTransform headerContainer = null!;
+        [SerializeField] private RectTransform footerContainer = null!;
+        [SerializeField] private CanvasGroup interactionButtonsCanvasGroup = null!;
+        [SerializeField] private Sprite defaultPlaceThumbnail = null!;
 
         [Header("Place info")]
-        [SerializeField] private ImageView placeThumbnailImage;
-        [SerializeField] private TMP_Text onlineMembersText;
-        [SerializeField] private TMP_Text placeNameText;
-        [SerializeField] private TMP_Text placeDescriptionText;
-        [SerializeField] private TMP_Text placeCoordsText;
+        [SerializeField] private ImageView placeThumbnailImage = null!;
+        [SerializeField] private TMP_Text onlineMembersText = null!;
+        [SerializeField] private TMP_Text placeNameText = null!;
+        [SerializeField] private TMP_Text placeDescriptionText = null!;
+        [SerializeField] private TMP_Text placeCoordsText = null!;
 
         [Header("Buttons")]
-        [SerializeField] private ToggleView likeToggle;
-        [SerializeField] private ToggleView dislikeToggle;
-        [SerializeField] private ToggleView favoriteToggle;
-        [SerializeField] private Button shareButton;
-        [SerializeField] private Button infoButton;
-        [SerializeField] private Button jumpInButton;
-        [SerializeField] private Button deleteButton;
+        [SerializeField] private ToggleView likeToggle = null!;
+        [SerializeField] private ToggleView dislikeToggle = null!;
+        [SerializeField] private ToggleView favoriteToggle = null!;
+        [SerializeField] private Button shareButton = null!;
+        [SerializeField] private Button infoButton = null!;
+        [SerializeField] private Button jumpInButton = null!;
+        [SerializeField] private Button deleteButton = null!;
 
         private Tweener? headerTween;
         private Tweener? footerTween;

@@ -11,26 +11,26 @@ namespace DCL.Communities.CommunitiesCard.Events
 {
     public class EventListItemView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        [SerializeField] private GameObject offlineInteractionContainer;
-        [SerializeField] private GameObject liveInteractionContainer;
+        [SerializeField] private GameObject offlineInteractionContainer = null!;
+        [SerializeField] private GameObject liveInteractionContainer = null!;
 
-        [SerializeField] private Button mainButton;
-        [SerializeField] private Button jumpInButton;
-        [SerializeField] private Button liveShareButton;
-        [SerializeField] private ButtonWithSelectableStateView interestedButton;
-        [SerializeField] private Button offlineShareButton;
+        [SerializeField] private Button mainButton = null!;
+        [SerializeField] private Button jumpInButton = null!;
+        [SerializeField] private Button liveShareButton = null!;
+        [SerializeField] private ButtonWithSelectableStateView interestedButton = null!;
+        [SerializeField] private Button offlineShareButton = null!;
 
         [Space(10)]
-        [SerializeField] private GameObject liveBadgeContainer;
-        [SerializeField] private GameObject liveBadgePlayerIcon;
-        [SerializeField] private GameObject interestedContainer;
+        [SerializeField] private GameObject liveBadgeContainer = null!;
+        [SerializeField] private GameObject liveBadgePlayerIcon = null!;
+        [SerializeField] private GameObject interestedContainer = null!;
 
         [Header("Event info")]
-        [SerializeField] private ImageView eventThumbnailImage;
-        [SerializeField] private TMP_Text eventTimeText;
-        [SerializeField] private TMP_Text eventNameText;
-        [SerializeField] private TMP_Text eventOnlineUsersText;
-        [SerializeField] private TMP_Text eventInterestedUsersText;
+        [SerializeField] private ImageView eventThumbnailImage = null!;
+        [SerializeField] private TMP_Text eventTimeText = null!;
+        [SerializeField] private TMP_Text eventNameText = null!;
+        [SerializeField] private TMP_Text eventOnlineUsersText = null!;
+        [SerializeField] private TMP_Text eventInterestedUsersText = null!;
 
         public event Action<PlaceAndEventDTO>? MainButtonClicked;
         public event Action<PlaceAndEventDTO>? JumpInButtonClicked;
