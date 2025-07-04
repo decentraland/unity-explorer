@@ -260,10 +260,13 @@ namespace DCL.Communities.CommunitiesCard
             {
                 viewInstance!.SetLoadingState(true);
 
-                isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
+                if (spriteCache == null)
+                {
+                    isSpriteCacheExternal = inputData.ThumbnailSpriteCache != null;
 
-                spriteCache = isSpriteCacheExternal ? inputData.ThumbnailSpriteCache! : new SpriteCache(webRequestController);
-                thumbnailLoader.Cache = spriteCache;
+                    spriteCache = isSpriteCacheExternal ? inputData.ThumbnailSpriteCache! : new SpriteCache(webRequestController);
+                    thumbnailLoader.Cache = spriteCache;
+                }
 
                 GetCommunityResponse response = await communitiesDataProvider.GetCommunityAsync(inputData.CommunityId, ct);
                 communityPlaceIds = (await communitiesDataProvider.GetCommunityPlacesAsync(inputData.CommunityId, ct)).ToArray();
@@ -285,6 +288,7 @@ namespace DCL.Communities.CommunitiesCard
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
             communityOperationsCancellationTokenSource.SafeCancelAndDispose();
+            spriteCache = null;
 
             ResetSubControllers();
             viewInstance.ResetToggle(false);

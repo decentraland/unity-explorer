@@ -63,7 +63,6 @@ namespace DCL.Communities.CommunityCreation
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
         private byte[] lastSelectedImageData;
-        private readonly ISpriteCache spriteCache;
         private ThumbnailLoader thumbnailLoader;
 
         public CommunityCreationEditionController(
@@ -465,7 +464,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (isProfileThumbnailDirty)
             {
-                spriteCache.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                thumbnailLoader.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
                 isProfileThumbnailDirty = false;
                 lastSelectedProfileThumbnail = null;
             }

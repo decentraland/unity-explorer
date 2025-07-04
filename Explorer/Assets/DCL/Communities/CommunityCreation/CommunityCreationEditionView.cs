@@ -196,6 +196,7 @@ namespace DCL.Communities.CommunityCreation
             isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(sprite is not null);
             creationPanelProfilePictureIcon.SetActive(!creationPanelProfileSelectedImage.gameObject.activeSelf);
+            creationPanelProfileSelectedImage.SetImage(sprite);
         }
 
         public void SetCommunityName(string text, bool isInteractable)
