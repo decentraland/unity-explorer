@@ -41,7 +41,7 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}";
+            var url = $"{communitiesBaseUrl}/{communityId}";
 
             GetCommunityResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                       .CreateFromJson<GetCommunityResponse>(WRJsonParser.Newtonsoft);
@@ -118,7 +118,7 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            var url = $"{communitiesBaseUrl}/{communityId}/members?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                            .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
@@ -127,7 +127,7 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetBannedCommunityMembersAsync(string communityId, int pageNumber, int elementsPerPage, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/bans?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
+            var url = $"{communitiesBaseUrl}/{communityId}/bans?offset={(pageNumber * elementsPerPage) - elementsPerPage}&limit={elementsPerPage}";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                              .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
@@ -139,7 +139,7 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members?offset=0&limit=1000&onlyOnline=true";
+            var url = $"{communitiesBaseUrl}/{communityId}/members?offset=0&limit=1000&onlyOnline=true";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                            .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
@@ -148,7 +148,7 @@ namespace DCL.Communities
 
         public async UniTask<int> GetOnlineMemberCountAsync(string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members?offset=0&limit=0&onlyOnline=true";
+            var url = $"{communitiesBaseUrl}/{communityId}/members?offset=0&limit=0&onlyOnline=true";
 
             GetCommunityMembersResponse response = await webRequestController.SignedFetchGetAsync(url, string.Empty, ct)
                                                                            .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
@@ -178,7 +178,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> BanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members/{userId}/bans";
+            var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}/bans";
 
             var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
@@ -189,7 +189,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> UnBanUserFromCommunityAsync(string userId, string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members/{userId}/bans";
+            var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}/bans";
 
             var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
@@ -200,7 +200,7 @@ namespace DCL.Communities
 
         private async UniTask<bool> RemoveMemberFromCommunityAsync(string userId, string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
+            var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
 
             var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
@@ -217,7 +217,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members";
+            var url = $"{communitiesBaseUrl}/{communityId}/members";
 
             var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
@@ -230,7 +230,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> DeleteCommunityAsync(string communityId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}";
+            var url = $"{communitiesBaseUrl}/{communityId}";
 
             var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                       .WithNoOpAsync()
@@ -244,7 +244,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
+            var url = $"{communitiesBaseUrl}/{communityId}/members/{userId}";
 
             var result = await webRequestController.SignedFetchPatchAsync(url, GenericPatchArguments.CreateJson($"{{\"role\": \"{newRole.ToString()}\"}}"), string.Empty, ct)
                                                    .WithNoOpAsync()
@@ -255,7 +255,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> RemovePlaceFromCommunityAsync(string communityId, string placeId, CancellationToken ct)
         {
-            string url = $"{communitiesBaseUrl}/{communityId}/places/{placeId}";
+            var url = $"{communitiesBaseUrl}/{communityId}/places/{placeId}";
 
             var result = await webRequestController.SignedFetchDeleteAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()

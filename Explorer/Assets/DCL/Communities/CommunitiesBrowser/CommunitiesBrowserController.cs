@@ -42,13 +42,13 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
-        private readonly ObjectProxy<ISpriteCache> spriteCache = new ObjectProxy<ISpriteCache>();
+        private readonly ObjectProxy<ISpriteCache> spriteCache = new ();
 
-        private CancellationTokenSource loadMyCommunitiesCts;
-        private CancellationTokenSource loadResultsCts;
-        private CancellationTokenSource searchCancellationCts;
-        private CancellationTokenSource showErrorCts;
-        private CancellationTokenSource openCommunityCreationCts;
+        private CancellationTokenSource? loadMyCommunitiesCts;
+        private CancellationTokenSource? loadResultsCts;
+        private CancellationTokenSource? searchCancellationCts;
+        private CancellationTokenSource? showErrorCts;
+        private CancellationTokenSource? openCommunityCreationCts;
 
         private bool isSectionActivated;
         private string currentNameFilter;
