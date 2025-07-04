@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using DCL.WebRequests;
@@ -30,14 +31,14 @@ namespace ECS.StreamableLoading.NFTShapes
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly bool ktxEnabled;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, bool ktxEnabled,
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache,
             ExtendedObjectPool<Texture2D> videoTexturePool, IDecentralandUrlsSource urlsSource)
             : base(world, cache, new DiskCacheOptions<Texture2DData, GetNFTShapeIntention>(diskCache, GetNFTShapeIntention.DiskHashCompute.INSTANCE, "nft"))
         {
             this.webRequestController = webRequestController;
             this.videoTexturePool = videoTexturePool;
             this.urlsSource = urlsSource;
-            this.ktxEnabled = ktxEnabled;
+            this.ktxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION); ;
         }
 
         protected override async UniTask<StreamableLoadingResult<Texture2DData>> FlowInternalAsync(GetNFTShapeIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)

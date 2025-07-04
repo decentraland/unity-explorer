@@ -61,7 +61,6 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     new NftShapeCache(),
                     IWebRequestController.DEFAULT,
                     IDiskCache<Texture2DData>.Null.INSTANCE,
-                    true,
                     VideoTextureFactory.CreateVideoTexturesPool(),
                     new DecentralandUrlsSource(DecentralandEnvironment.Zone, ILaunchMode.PLAY)
                 ).InitializeAndReturnSelf(),

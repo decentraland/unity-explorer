@@ -1,4 +1,6 @@
 ﻿using Arch.Core;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache.Disk;
@@ -24,7 +26,7 @@ namespace ECS.StreamableLoading.Tests
             // set-up
             var world = World.Create();
             var loadSystem = new LoadTextureSystem(world, new TexturesCache<GetTextureIntention>(), IWebRequestController.DEFAULT, IDiskCache<Texture2DData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
+                Substitute.For<IAvatarTextureUrlProvider>(), Substitute.For<IDecentralandUrlsSource>(),Substitute.For<ExtendedObjectPool<Texture2D>>());
             var promises = new List<Promise>(REQUESTS_COUNT);
             for (var i = 0; i < REQUESTS_COUNT; i++) promises.Add(NewPromise(world));
 

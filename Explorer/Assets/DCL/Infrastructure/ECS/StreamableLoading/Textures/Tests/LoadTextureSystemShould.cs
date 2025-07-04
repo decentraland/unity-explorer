@@ -1,4 +1,6 @@
-﻿using DCL.WebRequests;
+﻿using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
+using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Tests;
@@ -28,7 +30,7 @@ namespace ECS.StreamableLoading.Textures.Tests
         protected override LoadTextureSystem CreateSystem()
         {
             return new LoadTextureSystem (world, cache, TestWebRequestController.INSTANCE, IDiskCache<Texture2DData>.Null.INSTANCE,
-                Substitute.For<IAvatarTextureUrlProvider>());
+                Substitute.For<IAvatarTextureUrlProvider>(), Substitute.For<IDecentralandUrlsSource>(), Substitute.For<ExtendedObjectPool<Texture2D>>());
         }
 
         protected override void AssertSuccess(Texture2DData data)
