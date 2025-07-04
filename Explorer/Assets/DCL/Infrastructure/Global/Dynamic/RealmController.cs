@@ -154,8 +154,8 @@ namespace Global.Dynamic
 
                 CurrentDomain = realm;
 
-                realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), result.lambdas.publicUrl,
-                    result.content.publicUrl);
+                realmNavigatorDebugView.UpdateRealmName(CurrentDomain.Value.ToString(), realmData.Ipfs.LambdasBaseUrl.Value,
+                    realmData.Ipfs.ContentBaseUrl.Value);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
