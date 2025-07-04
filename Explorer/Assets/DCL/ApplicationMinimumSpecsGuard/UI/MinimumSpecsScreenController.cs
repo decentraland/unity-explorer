@@ -68,7 +68,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         private void OnExitClicked()
         {
-            analytics.Track(AnalyticsEvents.UI.EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN);
+            analytics.Track(AnalyticsEvents.UI.EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN, null, true);
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
