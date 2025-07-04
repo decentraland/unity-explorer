@@ -19,7 +19,7 @@ using CommunityData = DCL.Communities.GetCommunityResponse.CommunityData;
 
 namespace DCL.Communities.CommunitiesCard.Places
 {
-    public class PlacesSectionView : MonoBehaviour, ICommunityFetchingView
+    public class PlacesSectionView : MonoBehaviour, ICommunityFetchingView<PlaceInfo>
     {
         private const int ELEMENT_MISSING_THRESHOLD = 5;
         private const int ADD_PLACE_PREFAB_INDEX = 0;
@@ -50,7 +50,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         public event Action<PlaceInfo>? ElementJumpInButtonClicked;
         public event Action<PlaceInfo>? ElementDeleteButtonClicked;
 
-        private Func<SectionFetchData<PlaceInfo>> getPlacesFetchData = null!;
+        private SectionFetchData<PlaceInfo> placesInfo = null!;
         private bool canModify;
         private CommunityData communityData;
         private ObjectProxy<ISpriteCache>? spriteCache;
@@ -86,12 +86,10 @@ namespace DCL.Communities.CommunitiesCard.Places
             communityData = community;
         }
 
-        public void InitGrid(Func<SectionFetchData<PlaceInfo>> placesDataFunc,
-            ObjectProxy<ISpriteCache> placeThumbnailsCache,
+        public void InitGrid(ObjectProxy<ISpriteCache> placeThumbnailsCache,
             CancellationToken panelCancellationToken)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
-            getPlacesFetchData = placesDataFunc;
             this.spriteCache = placeThumbnailsCache;
             cancellationToken = panelCancellationToken;
         }
@@ -110,7 +108,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             LoopGridViewItem listItem = loopGridView.NewListViewItem(loopGridView.ItemPrefabDataList[PLACE_PREFAB_INDEX].mItemPrefab.name);
             PlaceCardView elementView = listItem.GetComponent<PlaceCardView>();
 
-            SectionFetchData<PlaceInfo> membersData = getPlacesFetchData();
+            SectionFetchData<PlaceInfo> membersData = placesInfo;
 
             int realIndex = canModify ? index - 1 : index;
             PlaceInfo placeInfo = membersData.Items[realIndex];
@@ -162,9 +160,10 @@ namespace DCL.Communities.CommunitiesCard.Places
             }
         }
 
-        public void RefreshGrid(bool redraw)
+        public void RefreshGrid(SectionFetchData<PlaceInfo> placesInfo, bool redraw)
         {
-            int count = getPlacesFetchData().Items.Count;
+            this.placesInfo = placesInfo;
+            int count = placesInfo.Items.Count;
 
             //Account for the "Add Place" button if the user can modify the places
             if (canModify)
