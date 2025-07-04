@@ -20,7 +20,9 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
 
-        private SkyboxTimeHandlerSystem(World world, SkyboxSettingsAsset skyboxSettings, Entity rootEntity, ISceneStateProvider sceneStateProvider, ISceneRestrictionBusController sceneRestrictionController) : base(world)
+        private SkyboxTimeHandlerSystem(World world, SkyboxSettingsAsset skyboxSettings, Entity rootEntity,
+            ISceneStateProvider sceneStateProvider,
+            ISceneRestrictionBusController sceneRestrictionController) : base(world)
         {
             this.skyboxSettings = skyboxSettings;
             this.rootEntity = rootEntity;
@@ -30,6 +32,8 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         protected override void Update(float t)
         {
+            if (sceneStateProvider.IsCurrent == false) return;
+
             ref PBSkyboxTime sdkSkyboxTime = ref World.TryGetRef<PBSkyboxTime>(rootEntity, out bool hasComponent);
             if (!hasComponent)
             {
@@ -39,22 +43,24 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
                 return;
             }
 
-            if(sceneStateProvider.IsCurrent == false) return;
-            if(!sdkSkyboxTime.IsDirty) return;
+            if (!sdkSkyboxTime.IsDirty) return;
 
-            SetSDKsettings(sdkSkyboxTime);
+            SetSDKsettings(ref sdkSkyboxTime);
         }
 
-        private void SetSDKsettings(PBSkyboxTime sdkSkyboxTime)
+        private void SetSDKsettings(ref PBSkyboxTime sdkSkyboxTime)
         {
             skyboxSettings.IsSDKControlled = true;
 
             skyboxSettings.IsDayCycleEnabled = false;
             skyboxSettings.TargetTransitionTimeOfDay = sdkSkyboxTime.FixedTime;
-            skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward ? SkyBox.TransitionMode.FORWARD : SkyBox.TransitionMode.BACKWARD;
+            skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
+                ? SkyBox.TransitionMode.FORWARD
+                : SkyBox.TransitionMode.BACKWARD;
             skyboxSettings.IsTransitioning = true;
 
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
+            sceneRestrictionController.PushSceneRestriction(
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
 
             sdkSkyboxTime.IsDirty = false;
         }
@@ -66,7 +72,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
                 ref PBSkyboxTime sdkSkyboxTime = ref World.TryGetRef<PBSkyboxTime>(rootEntity, out bool hasComponent);
 
                 if (hasComponent)
-                    SetSDKsettings(sdkSkyboxTime);
+                    SetSDKsettings(ref sdkSkyboxTime);
 
                 return;
             }
@@ -77,7 +83,8 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         private void ResetSDKControlled()
         {
             skyboxSettings.IsSDKControlled = false;
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+            sceneRestrictionController.PushSceneRestriction(
+                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
         }
     }
 }
