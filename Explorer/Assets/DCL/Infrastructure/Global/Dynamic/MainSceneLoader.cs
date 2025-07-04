@@ -246,7 +246,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                if (!await InitialGuardsCheckSuccess(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
+                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
                     return;
 
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
@@ -298,7 +298,7 @@ namespace Global.Dynamic
             }
         }
 
-        private async Task<bool> InitialGuardsCheckSuccess(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
+        private async Task<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
             CancellationToken ct)
         {
             //If Livekit is down, stop bootstrapping
