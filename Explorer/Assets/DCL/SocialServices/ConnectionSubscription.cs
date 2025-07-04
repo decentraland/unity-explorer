@@ -35,6 +35,7 @@ namespace DCL.SocialService
         /// <returns>True if connection was established, false if timeout or cancellation occurred</returns>
         public async UniTask<bool> WaitForConnectionAsync(TimeSpan timeout, CancellationToken ct)
         {
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, ct);
             var maxIterations = (int)(timeout.TotalMilliseconds / 100);
             var currentIteration = 0;
             
@@ -45,7 +46,7 @@ namespace DCL.SocialService
                     return false; // Timeout reached
                 }
                 
-                await UniTask.Delay(100, cancellationToken: UniTask.WhenAny(cts.Token, ct).Token);
+                await UniTask.Delay(100, cancellationToken: linkedCts.Token);
                 currentIteration++;
             }
             

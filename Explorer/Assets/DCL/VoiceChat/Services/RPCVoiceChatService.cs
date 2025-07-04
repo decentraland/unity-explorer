@@ -34,23 +34,20 @@ namespace DCL.VoiceChat.Services
         private const string GET_INCOMING_PRIVATE_VOICE_CHAT_REQUEST = "GetIncomingPrivateVoiceChatRequest";
 
         private readonly IRPCSocialServices socialServiceRPC;
-        private readonly CancellationTokenSource subscriptionCts = new ();
-        private CancellationTokenSource streamCts = new ();
+        private readonly CancellationTokenSource serviceCts = new();
+        private ConnectionSubscription connectionSubscription;
 
         private bool isServiceDisabled = true;
-        private bool isStreamConnected;
-        private ConnectionSubscription connectionSubscription;
 
         public event Action<PrivateVoiceChatUpdate> PrivateVoiceChatUpdateReceived;
         public event Action Connected;
         public event Action Disconnected;
 
-        public RPCVoiceChatService(
-            IRPCSocialServices socialServiceRPC)
+        public RPCVoiceChatService(IRPCSocialServices socialServiceRPC)
         {
             this.socialServiceRPC = socialServiceRPC;
 
-            connectionSubscription = socialServiceRPC.SubscribeToConnection(subscriptionCts.Token);
+            connectionSubscription = socialServiceRPC.SubscribeToConnection(serviceCts.Token);
             connectionSubscription.Connected += OnConnectionEstablished;
             connectionSubscription.Disconnected += OnConnectionLost;
             connectionSubscription.ConnectionFailed += OnConnectionFailed;
@@ -60,14 +57,15 @@ namespace DCL.VoiceChat.Services
         {
             connectionSubscription?.Dispose();
             connectionSubscription = null;
-
-            streamCts.SafeCancelAndDispose();
-            subscriptionCts.SafeCancelAndDispose();
+            serviceCts.SafeCancelAndDispose();
         }
 
         private void ThrowIfServiceDisabled()
         {
-            if (isServiceDisabled) { throw new InvalidOperationException("Voice chat service is disabled due to connection failures."); }
+            if (isServiceDisabled)
+            {
+                throw new InvalidOperationException("Voice chat service is disabled due to connection failures.");
+            }
         }
 
         private async UniTask EnsureConnectionAsync(CancellationToken ct)
@@ -81,43 +79,20 @@ namespace DCL.VoiceChat.Services
 
         private void OnConnectionEstablished()
         {
-            // Re-enable service if it was disabled due to connection failures
-            if (isServiceDisabled)
-            {
-                isServiceDisabled = false;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "Voice chat service re-enabled - connection restored");
-            }
-
-            Connected?.Invoke();
-            StartVoiceChatStream();
+            SubscribeToPrivateVoiceChatUpdatesAsync(serviceCts.Token).Forget();
         }
 
         private void OnConnectionLost()
         {
-            isStreamConnected = false;
-            StopVoiceChatStream();
+            serviceCts.SafeRestart();
             Disconnected?.Invoke();
         }
 
         private void OnConnectionFailed()
         {
-            // Connection attempts exhausted - disable the service
             isServiceDisabled = true;
-            isStreamConnected = false;
-            StopVoiceChatStream();
             ReportHub.LogError(ReportCategory.VOICE_CHAT, "Voice chat service disabled due to connection failures");
             Disconnected?.Invoke();
-        }
-
-        private void StartVoiceChatStream()
-        {
-            streamCts = streamCts.SafeRestart();
-            SubscribeToPrivateVoiceChatUpdatesAsync(streamCts.Token).Forget();
-        }
-
-        private void StopVoiceChatStream()
-        {
-            streamCts = streamCts.SafeRestart();
         }
 
         public async UniTask<StartPrivateVoiceChatResponse> StartPrivateVoiceChatAsync(string userId, CancellationToken ct)
@@ -253,78 +228,78 @@ namespace DCL.VoiceChat.Services
             }
         }
 
-        public UniTask SubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)
+        public async UniTask SubscribeToPrivateVoiceChatUpdatesAsync(CancellationToken ct)
         {
-            return OpenStreamAndProcessUpdatesAsync();
+            var retryAttempt = 0;
 
-            async UniTask OpenStreamAndProcessUpdatesAsync()
+            while (retryAttempt < MAX_STREAM_RETRY_ATTEMPTS && !ct.IsCancellationRequested)
             {
-                var retryAttempt = 0;
-                var streamOpened = false;
-
-                while (retryAttempt < MAX_STREAM_RETRY_ATTEMPTS && !ct.IsCancellationRequested)
+                try
                 {
+                    await EnsureConnectionAsync(ct);
+
+                    IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream =
+                        socialServiceRPC.Module()!.CallServerStream<PrivateVoiceChatUpdate>(SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, new Empty());
+
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Successfully opened private voice chat updates stream");
+
+                    // Re-enable service if it was disabled due to connection failures
+                    if (isServiceDisabled)
+                    {
+                        isServiceDisabled = false;
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, "Voice chat service re-enabled - subscription stream established");
+                    }
+
+                    Connected?.Invoke();
+
+                    await foreach (PrivateVoiceChatUpdate? response in stream)
+                    {
+                        try
+                        {
+                            PrivateVoiceChatUpdateReceived?.Invoke(response);
+                        }
+                        catch (Exception e) when (e is not OperationCanceledException)
+                        {
+                            ReportHub.LogException(e, ReportCategory.VOICE_CHAT);
+                        }
+                    }
+
+                    // Stream ended normally - no need to retry
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Private voice chat updates stream ended normally");
+                    break;
+                }
+                catch (OperationCanceledException)
+                {
+                    // Cancellation requested, exit the retry loop
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "Private voice chat updates stream cancelled");
+                    break;
+                }
+                catch (Exception e)
+                {
+                    retryAttempt++;
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Failed to open private voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS}): {e.Message}");
+
+                    if (retryAttempt >= MAX_STREAM_RETRY_ATTEMPTS)
+                    {
+                        ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to open private voice chat updates stream after {MAX_STREAM_RETRY_ATTEMPTS} attempts. Disabling voice chat service.");
+                        isServiceDisabled = true;
+                        break;
+                    }
+
+                    // Calculate exponential backoff delay
+                    int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"Retrying private voice chat updates stream connection in {delaySeconds} seconds...");
+
                     try
                     {
-                        await EnsureConnectionAsync(ct);
-
-                        IUniTaskAsyncEnumerable<PrivateVoiceChatUpdate> stream =
-                            socialServiceRPC.Module()!.CallServerStream<PrivateVoiceChatUpdate>(SUBSCRIBE_TO_PRIVATE_VOICE_CHAT_UPDATES, new Empty());
-
-                        streamOpened = true;
-                        isStreamConnected = true;
-
-                        if (isStreamConnected && isServiceDisabled)
-                        {
-                            isServiceDisabled = false;
-                            ReportHub.Log(ReportCategory.VOICE_CHAT, "Voice chat service enabled - stream connection established");
-                        }
-
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, "Successfully opened private voice chat updates stream");
-
-                        await foreach (PrivateVoiceChatUpdate? response in stream)
-                        {
-                            try { PrivateVoiceChatUpdateReceived?.Invoke(response); }
-                            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, ReportCategory.VOICE_CHAT); }
-                        }
-
-                        // If we reach here, the stream has ended normally
-                        isStreamConnected = false;
-                        break;
+                        await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
                     }
                     catch (OperationCanceledException)
                     {
-                        // Cancellation requested, exit the retry loop
-                        isStreamConnected = false;
+                        // Cancellation requested during delay, exit the retry loop
                         break;
                     }
-                    catch (Exception e)
-                    {
-                        retryAttempt++;
-                        isStreamConnected = false;
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"Failed to open private voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}");
-
-                        if (retryAttempt >= MAX_STREAM_RETRY_ATTEMPTS)
-                        {
-                            ReportHub.LogError(ReportCategory.VOICE_CHAT, $"Failed to open private voice chat updates stream after {MAX_STREAM_RETRY_ATTEMPTS} attempts. Disabling voice chat service.");
-                            isServiceDisabled = true;
-                            break;
-                        }
-
-                        // Calculate exponential backoff delay
-                        int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"Retrying private voice chat updates stream connection in {delaySeconds} seconds...");
-
-                        try { await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct); }
-                        catch (OperationCanceledException)
-                        {
-                            // Cancellation requested during delay, exit the retry loop
-                            break;
-                        }
-                    }
                 }
-
-                if (!streamOpened && !ct.IsCancellationRequested) { ReportHub.LogError(ReportCategory.VOICE_CHAT, "Failed to establish private voice chat updates stream after all retry attempts"); }
             }
         }
     }
