@@ -29,8 +29,8 @@ namespace DCL.Communities.CommunityCreation
         private const string GET_COMMUNITY_ERROR_MESSAGE = "There was an error getting the community. Please try again.";
         private const string GET_COMMUNITY_PLACES_ERROR_MESSAGE = "There was an error getting the community places. Please try again.";
         private const string INCOMPATIBLE_IMAGE_GENERAL_ERROR = "Invalid image file selected. Please check file type and size.";
-        private const string INCOMPATIBLE_IMAGE_WEIGHT_ERROR = "Invalid image file selected. Please upload an image under 500KB.";
-        private const string INCOMPATIBLE_IMAGE_RESOLUTION_ERROR = "Invalid image file selected. Size must be 512x512 px or smaller.";
+        private const string INCOMPATIBLE_IMAGE_WEIGHT_ERROR = "Selected image exceeds 500KB size limit.";
+        private const string INCOMPATIBLE_IMAGE_RESOLUTION_ERROR = "Selected image exceeds 512x512 px size limit.";
         private const string FILE_BROWSER_TITLE = "Select image";
         private const int MAX_IMAGE_SIZE_BYTES = 512000; // 500 KB
         private const int MAX_IMAGE_DIMENSION_PIXELS = 512;
