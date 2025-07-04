@@ -35,7 +35,7 @@ namespace DCL.WebRequests
         }
 
         public override UnityWebRequest CreateUnityWebRequest() =>
-            UnityWebRequestTexture.GetTexture(GetEffectiveUrl());
+            ktxEnabled ? UnityWebRequest.Get(GetEffectiveUrl()) : UnityWebRequestTexture.GetTexture(GetEffectiveUrl());
 
         public override HTTPRequest CreateHttp2Request() =>
             new (GetEffectiveUrl());
@@ -68,7 +68,7 @@ namespace DCL.WebRequests
             switch (wr.nativeRequest)
             {
                 case UnityWebRequest unityWebRequest:
-                    if (useKtx)
+                    if (isKtx)
                         return await ExecuteKtxAsync(unityWebRequest.downloadHandler.nativeData.AsWritableSliceUnsafe(), wrapMode, filterMode, ct);
 
                     return ExecuteNoCompression(unityWebRequest, wrapMode, filterMode);

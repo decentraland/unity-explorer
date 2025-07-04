@@ -7,8 +7,10 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using Sentry;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -70,6 +72,8 @@ namespace DCL.WebRequests
 
                     envelope.InitializedWebRequest(identityCache, adapter);
 
+                    HttpRequestHeaders? originalHeaders = nativeRequest.Headers;
+
                     analyticsContainer.OnRequestStarted(requestWrap, adapter);
 
                     // TODO Timeout per request configuration: how to split it for Receiving headers and getting the body? Do we ever need it?
@@ -87,6 +91,11 @@ namespace DCL.WebRequests
 
                             (nativeRequest, uploadSize) = requestWrap.CreateYetAnotherHttpRequest();
                             nativeRequest.RequestUri = response.Headers.Location;
+
+                            // Preserve the original headers
+                            foreach (KeyValuePair<string, IEnumerable<string>> header in originalHeaders)
+                                nativeRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+
                             nativeRequest.Headers.Referrer = lastUri;
 
                             adapter.SetRedirected(nativeRequest);
