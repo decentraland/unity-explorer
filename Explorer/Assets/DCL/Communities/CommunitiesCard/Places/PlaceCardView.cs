@@ -42,7 +42,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
 
-        private PlaceInfo currentPlaceInfo;
+        private PlaceInfo? currentPlaceInfo;
         private ImageController? imageController;
 
         public event Action<PlaceInfo, bool, PlaceCardView>? LikeToggleChanged;
@@ -74,13 +74,13 @@ namespace DCL.Communities.CommunitiesCard.Places
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
 
-            likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo, value, this));
-            dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo, value, this));
-            favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo, value, this));
-            shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo, shareButton.transform.position, this));
-            infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo));
-            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo));
-            deleteButton.onClick.AddListener(() => DeleteButtonClicked?.Invoke(currentPlaceInfo));
+            likeToggle.Toggle.onValueChanged.AddListener(value => LikeToggleChanged?.Invoke(currentPlaceInfo!, value, this));
+            dislikeToggle.Toggle.onValueChanged.AddListener(value => DislikeToggleChanged?.Invoke(currentPlaceInfo!, value, this));
+            favoriteToggle.Toggle.onValueChanged.AddListener(value => FavoriteToggleChanged?.Invoke(currentPlaceInfo!, value, this));
+            shareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(currentPlaceInfo!, shareButton.transform.position, this));
+            infoButton.onClick.AddListener(() => InfoButtonClicked?.Invoke(currentPlaceInfo!));
+            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(currentPlaceInfo!));
+            deleteButton.onClick.AddListener(() => DeleteButtonClicked?.Invoke(currentPlaceInfo!));
         }
 
         private void OnEnable() =>

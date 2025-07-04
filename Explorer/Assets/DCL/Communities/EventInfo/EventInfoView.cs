@@ -2,15 +2,14 @@ using Cysharp.Threading.Tasks;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
 using DCL.WebRequests;
 using MVC;
 using System;
-using System.Globalization;
 using System.Text;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -49,52 +48,49 @@ namespace DCL.Communities.EventInfo
 
         private readonly UniTask[] closeTasks = new UniTask[2];
         private readonly StringBuilder eventSchedulesStringBuilder = new ();
-        private ImageController imageController;
-        private IMVCManager mvcManager;
-        private IEventDTO eventDTO;
-        private GenericContextMenu contextMenu;
+        private ImageController? imageController;
+        private IEventDTO? eventDTO;
+        private GenericContextMenu? contextMenu;
+        private CancellationToken ct;
 
         private void Awake()
         {
             scrollRect.SetScrollSensitivityBasedOnPlatform();
 
-            interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO));
+            interestedButton.Button.onClick.AddListener(() => InterestedButtonClicked?.Invoke(eventDTO!));
             interestedButton.Button.onClick.AddListener(() => interestedButton.SetSelected(!interestedButton.Selected));
-            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO));
-            permanentJumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO));
+            jumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
+            permanentJumpInButton.onClick.AddListener(() => JumpInButtonClicked?.Invoke(eventDTO!));
             shareButton.onClick.AddListener(() => OpenContextMenu(shareButton.transform.position));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               offsetFromTarget: contextMenuSettings.OffsetFromTarget)
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ShareText, contextMenuSettings.ShareSprite, () => EventShareButtonClicked?.Invoke(eventDTO)))
-                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CopyLinkText, contextMenuSettings.CopyLinkSprite, () => EventCopyLinkButtonClicked?.Invoke(eventDTO)));
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ShareText, contextMenuSettings.ShareSprite, () => EventShareButtonClicked?.Invoke(eventDTO!)))
+                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.CopyLinkText, contextMenuSettings.CopyLinkSprite, () => EventCopyLinkButtonClicked?.Invoke(eventDTO!)));
         }
 
         private void OpenContextMenu(Vector2 position) =>
-            mvcManager.ShowAndForget(GenericContextMenuController.IssueCommand(new GenericContextMenuParameter(contextMenu, position)));
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, position), ct);
 
         public UniTask[] GetCloseTasks()
         {
-            closeTasks[0] = backgroundCloseButton.OnClickAsync();
-            closeTasks[1] = closeButton.OnClickAsync();
+            closeTasks[0] = backgroundCloseButton.OnClickAsync(ct);
+            closeTasks[1] = closeButton.OnClickAsync(ct);
             return closeTasks;
         }
 
-        public void Configure(IMVCManager mvcManager,
-            IWebRequestController webRequestController)
-        {
-            this.mvcManager = mvcManager;
+        public void Configure(IWebRequestController webRequestController) =>
             imageController ??= new ImageController(eventImage, webRequestController);
-        }
 
-        public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo placeData)
+        public void ConfigureEventData(IEventDTO eventData, PlacesData.PlaceInfo placeData, CancellationToken cancellationToken)
         {
             eventDTO = eventData;
+            ct = cancellationToken;
 
             ResetScrollPosition();
 
-            imageController.RequestImage(eventData.Image);
+            imageController!.RequestImage(eventData.Image);
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);
@@ -134,6 +130,6 @@ namespace DCL.Communities.EventInfo
         }
 
         public void UpdateInterestedButtonState() =>
-            interestedButton.SetSelected(eventDTO.Attending);
+            interestedButton.SetSelected(eventDTO!.Attending);
     }
 }

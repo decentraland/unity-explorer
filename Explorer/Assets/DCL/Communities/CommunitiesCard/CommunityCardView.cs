@@ -5,7 +5,6 @@ using DCL.Communities.CommunitiesCard.Photos;
 using DCL.Communities.CommunitiesCard.Places;
 using DCL.Diagnostics;
 using DCL.UI;
-using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
@@ -105,9 +104,9 @@ namespace DCL.Communities.CommunitiesCard
 
         private readonly UniTask[] closingTasks = new UniTask[3];
         private CancellationTokenSource confirmationDialogCts = new ();
-        private GenericContextMenu contextMenu;
-        private GenericContextMenuElement leaveCommunityContextMenuElement;
-        private GenericContextMenuElement deleteCommunityContextMenuElement;
+        private GenericContextMenu? contextMenu;
+        private GenericContextMenuElement? leaveCommunityContextMenuElement;
+        private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private CancellationToken cancellationToken;
 
         private void Awake()
@@ -283,8 +282,8 @@ namespace DCL.Communities.CommunitiesCard
             if (communityData.thumbnails != null)
                 imageController.RequestImage(communityData.thumbnails.Value.raw);
 
-            deleteCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.owner;
-            leaveCommunityContextMenuElement.Enabled = communityData.role == CommunityMemberRole.moderator;
+            deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
+            leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;
 
             ConfigureInteractionButtons(communityData.role);
 

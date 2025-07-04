@@ -52,20 +52,20 @@ namespace DCL.Communities.CommunitiesCard
 
                 view.SetEmptyStateActive(false);
 
-                if (membersData.pageNumber == 0)
+                if (membersData.PageNumber == 0)
                     view.SetLoadingStateActive(true);
 
-                int count = membersData.items.Count;
+                int count = membersData.Items.Count;
 
-                membersData.pageNumber++;
-                membersData.totalToFetch = await FetchDataAsync(ct);
-                membersData.totalFetched = membersData.pageNumber * pageSize;
+                membersData.PageNumber++;
+                membersData.TotalToFetch = await FetchDataAsync(ct);
+                membersData.TotalFetched = membersData.PageNumber * pageSize;
 
                 view.SetLoadingStateActive(false);
 
-                view.SetEmptyStateActive(membersData.totalToFetch == 0);
+                view.SetEmptyStateActive(membersData.TotalToFetch == 0);
 
-                view.RefreshGrid(count == membersData.items.Count);
+                view.RefreshGrid(count == membersData.Items.Count);
             }
             finally { isFetching = false; }
         }

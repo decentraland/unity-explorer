@@ -1,7 +1,6 @@
 using DCL.Communities.EventInfo;
 using DCL.UI;
 using DCL.Utilities;
-using DCL.WebRequests;
 using System;
 using TMPro;
 using UnityEngine;

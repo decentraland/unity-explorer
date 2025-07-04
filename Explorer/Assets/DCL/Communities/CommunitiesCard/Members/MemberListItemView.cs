@@ -40,7 +40,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private bool isUserCard = false;
         private MembersListView.MemberListSections currentSection = MembersListView.MemberListSections.ALL;
 
-        public MemberData UserProfile { get; protected set; }
+        public MemberData? UserProfile { get; protected set; }
 
         public event Action<MemberData>? MainButtonClicked;
         public event Action<MemberData, Vector2, MemberListItemView>? ContextMenuButtonClicked;
@@ -71,15 +71,15 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile));
-            unbanButton.onClick.AddListener(() => UnbanButtonClicked?.Invoke(UserProfile));
-            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile, contextMenuButton.transform.position, this));
+            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(UserProfile!));
+            unbanButton.onClick.AddListener(() => UnbanButtonClicked?.Invoke(UserProfile!));
+            contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(UserProfile!, contextMenuButton.transform.position, this));
 
-            addFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            acceptFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            removeFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            cancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
-            unblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile));
+            addFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
+            acceptFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
+            removeFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
+            cancelFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
+            unblockFriendButton.onClick.AddListener(() => FriendButtonClicked?.Invoke(UserProfile!));
 
             background.color = normalColor;
         }

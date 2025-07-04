@@ -4,29 +4,26 @@ namespace DCL.Communities.CommunitiesCard
 {
     public class SectionFetchData<T>
     {
-        private readonly int pageSize;
+        public int PageNumber;
+        public int TotalFetched;
+        public int TotalToFetch;
 
-        public int pageNumber;
-        public int totalFetched;
-        public int totalToFetch;
-
-        public readonly List<T> items;
+        public readonly List<T> Items;
 
         public SectionFetchData(int pageSize)
         {
-            this.pageSize = pageSize;
-            pageNumber = 0;
-            totalFetched = 0;
-            totalToFetch = 0;
-            items = new List<T>(pageSize);
+            PageNumber = 0;
+            TotalFetched = 0;
+            TotalToFetch = 0;
+            Items = new List<T>(pageSize);
         }
 
         public void Reset()
         {
-            pageNumber = 0;
-            totalFetched = 0;
-            totalToFetch = 0;
-            items.Clear();
+            PageNumber = 0;
+            TotalFetched = 0;
+            TotalToFetch = 0;
+            Items.Clear();
         }
     }
 }
