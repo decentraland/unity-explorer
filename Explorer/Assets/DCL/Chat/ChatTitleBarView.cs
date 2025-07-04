@@ -5,6 +5,7 @@ using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
+using DCL.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -112,6 +113,11 @@ namespace DCL.Chat
             profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
+        }
+
+        public void SetConnectionStatus(OnlineStatus status)
+        {
+            profileView.SetConnectionStatus(status);
         }
 
         private void OnOpenContextMenuButtonClicked()
