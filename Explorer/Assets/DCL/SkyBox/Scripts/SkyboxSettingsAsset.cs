@@ -103,6 +103,7 @@ namespace DCL.SkyBox
             TransitionMode = TransitionMode.FORWARD;
             CanUIControl = true;
             IsUIControlled = false;
+            IsSDKControlled = false;
         }
 
         private float NormalizeTimeIfNeeded(float time)
