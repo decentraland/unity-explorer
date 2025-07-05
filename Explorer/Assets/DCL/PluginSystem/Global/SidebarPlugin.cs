@@ -5,6 +5,7 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.FeatureFlags;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;

@@ -17,6 +17,40 @@ namespace DCL.Chat.History
         public static readonly ChannelId EMPTY_CHANNEL_ID = new ();
         public static readonly ChatChannel NEARBY_CHANNEL = new (ChatChannelType.NEARBY, ChatChannelType.NEARBY.ToString());
 
+        private const string COMMUNITY_PREFIX = "community:";
+
+        /// <summary>
+        /// Creates a channel Id with the format expected for a community channel.
+        /// </summary>
+        /// <param name="communityId">The UUID of the community as it is stored in the database.</param>
+        /// <returns>The new channel Id.</returns>
+        public static ChannelId NewCommunityChannelId(string communityId) =>
+            new (COMMUNITY_PREFIX + communityId);
+
+        /// <summary>
+        /// Checks if a channel Id belongs to a community channel or not.
+        /// </summary>
+        /// <param name="channelId">The channel id to check.</param>
+        /// <returns>True if it belongs to a community channel; False otherwise.</returns>
+        public static bool IsCommunityChannelId(ChannelId channelId) =>
+            channelId.Id.StartsWith(COMMUNITY_PREFIX);
+
+        /// <summary>
+        /// Checks if a channel Id belongs to a community channel or not.
+        /// </summary>
+        /// <param name="channelId">The channel id to check.</param>
+        /// <returns>True if it belongs to a community channel; False otherwise.</returns>
+        public static bool IsCommunityChannelId(string channelId) =>
+            channelId.StartsWith(COMMUNITY_PREFIX);
+
+        /// <summary>
+        /// Extracts the community Id from a community channel Id.
+        /// </summary>
+        /// <param name="channelId">The channel id from which to extract the community Id.</param>
+        /// <returns>The Id of the community, without prefix or suffix.</returns>
+        public static string GetCommunityIdFromChannelId(ChannelId channelId) =>
+            channelId.Id.Substring(COMMUNITY_PREFIX.Length);
+
         /// <summary>
         /// The unique identifier of a chat channel.
         /// </summary>

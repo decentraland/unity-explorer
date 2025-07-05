@@ -63,6 +63,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SoftMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -117,7 +121,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color1: {r: 0.858401, g: 1, b: 0.5613208, a: 1}
+    - _Color1: {r: 0.36489382, g: 0.16841257, b: 0.5588235, a: 1}
     - _Color2: {r: 0.24313726, g: 0.047058824, b: 0.39607844, a: 1}
     - _Color3: {r: 0.29401788, g: 0.030081892, b: 0.49056602, a: 1}
     - _Color4: {r: 0.18431373, g: 0.015686275, b: 0.24705882, a: 1}

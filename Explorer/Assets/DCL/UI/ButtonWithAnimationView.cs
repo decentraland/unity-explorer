@@ -1,5 +1,4 @@
 using DCL.Audio;
-using DCL.Character.CharacterMotion.Components;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -33,6 +32,9 @@ namespace DCL.UI
             Button.onClick.RemoveListener(OnClick);
             ButtonAnimator.enabled = false;
         }
+
+        public void ResetButtonAnimationScale() =>
+            transform.localScale = Vector3.one;
 
         public void OnPointerEnter(PointerEventData eventData)
         {

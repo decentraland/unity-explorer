@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using MVC;
 using System;
 using System.Threading;
@@ -12,17 +13,7 @@ using Utility;
 
 namespace DCL.UI.GenericContextMenu
 {
-    public enum ContextMenuOpenDirection
-    {
-        BOTTOM_RIGHT,
-        TOP_RIGHT,
-        CENTER_RIGHT,
-        BOTTOM_LEFT,
-        TOP_LEFT,
-        CENTER_LEFT,
-    }
-
-    public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter>, IDisposable
+    public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter.GenericContextMenuParameter>, IDisposable
     {
         private const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
 
@@ -152,7 +143,7 @@ namespace DCL.UI.GenericContextMenu
             float3 tempPos = tempPositionCache[0];
             tempPos.x += offsetByDirection.x;
             tempPos.y += offsetByDirection.y;
-            
+
             float3 adjustedInitialPosition = tempPos;
 
             float4 boundaryRect = overlapRect.HasValue ? BurstRectUtils.RectToFloat4(overlapRect.Value) : backgroundWorldRect;
@@ -204,7 +195,7 @@ namespace DCL.UI.GenericContextMenu
             float3 tempSmartPos = tempPositionCache[1];
             tempSmartPos.x += offsetBySmartDirection.x;
             tempSmartPos.y += offsetBySmartDirection.y;
-            
+
             float3 adjustedBasePosition = tempSmartPos;
 
             float4 smartMenuRect = GetProjectedRect(new Vector3(adjustedBasePosition.x, adjustedBasePosition.y, adjustedBasePosition.z));
@@ -246,7 +237,7 @@ namespace DCL.UI.GenericContextMenu
                     tempPosForLoop.x = currentAnchoredPosition.x + currentOffsetByDirection.x;
                     tempPosForLoop.y = currentAnchoredPosition.y + currentOffsetByDirection.y;
                     tempPosForLoop.z = currentAnchoredPosition.z;
-            
+
                     float3 adjustedCurrentPosition = tempPosForLoop;
 
                     float3 boundaryAdjustedPosition = AdjustPositionToFitBounds(adjustedCurrentPosition, boundaryRect);

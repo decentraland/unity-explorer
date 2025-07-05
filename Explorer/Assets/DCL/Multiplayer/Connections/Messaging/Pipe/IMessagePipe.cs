@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             ORIGIN_THREAD
         }
 
-        MessageWrap<T> NewMessage<T>() where T: class, IMessage, new();
+        MessageWrap<T> NewMessage<T>(string topic = "") where T: class, IMessage, new();
 
         void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, ThreadStrict threadStrict = ThreadStrict.MAIN_THREAD_ONLY) where T: class, IMessage, new();
 
@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
             public static readonly Null INSTANCE = new ();
 
-            public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
+            public MessageWrap<T> NewMessage<T>(string topic) where T: class, IMessage, new() =>
                 throw new Exception("Null implementation");
 
             public void Subscribe<T>(Packet.MessageOneofCase _, Action<ReceivedMessage<T>> __, ThreadStrict ___) where T: class, IMessage, new() { }

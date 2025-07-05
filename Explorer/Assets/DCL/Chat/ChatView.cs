@@ -2,10 +2,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Settings.Settings;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI;
+using DCL.UI.Communities;
 using DCL.Web3;
 using MVC;
 using DG.Tweening;
@@ -23,7 +25,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public delegate void GetParticipantProfilesDelegate(List<Profile> outProfiles);
+    public delegate UniTask GetChannelMembersDelegate(List<ChatUserData> outProfiles, CancellationToken ct);
 
     // Note: The view never changes any data (chatMessages), that's done by the controller
     public class ChatView : ViewBase, IView, IPointerEnterHandler, IPointerExitHandler, IDisposable
@@ -40,6 +42,7 @@ namespace DCL.Chat
         public delegate void ChannelRemovalRequestedDelegate(ChatChannel.ChannelId channelId);
         public delegate void ConversationSelectedDelegate(ChatChannel.ChannelId channelId);
         public delegate void DeleteChatHistoryRequestedDelegate();
+        public delegate void ViewCommunityRequestedDelegate(string communityId);
 
         [Header("Settings")]
         [Tooltip("The time it takes, in seconds, for the background of the chat window to fade-in/out when hovering with the mouse.")]
@@ -181,8 +184,13 @@ namespace DCL.Chat
         /// </summary>
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
+        /// <summary>
+        /// Raised when the user wants to see the community card for the current conversation.
+        /// </summary>
+        public event ViewCommunityRequestedDelegate ViewCommunityRequested;
+
         private ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly List<ChatMemberListView.MemberData> sortedMemberData = new ();
+        private readonly List<ChatUserData> sortedMemberData = new ();
 
         private IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel>? channels;
         private UniTaskCompletionSource closePopupTask;
@@ -205,10 +213,16 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
+        private CancellationTokenSource privateConversationItemCts = new CancellationTokenSource();
+        private CancellationTokenSource communityTitleCts;
+
+        private ISpriteCache thumbnailCache;
+        private CommunityTitleView.OpenContextMenuDelegate openContextMenuAction;
+        private Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communitiesData = new ();
 
         public event Action OnCloseButtonClicked = () => { };
         public event Action OnInputButtonClicked = () => { };
-        
+
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
@@ -274,6 +288,12 @@ namespace DCL.Chat
                         case ChatChannel.ChatChannelType.USER:
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
+                        case ChatChannel.ChatChannelType.COMMUNITY:
+                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
+                            communityTitleCts = communityTitleCts.SafeRestart();
+                            chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : null, openContextMenuAction, communityTitleCts.Token);
+                            break;
                     }
 
                     CurrentChannelChanged?.Invoke();
@@ -338,12 +358,16 @@ namespace DCL.Chat
 
         public void SetupInitialConversationToolbarStatusIconForUsers(HashSet<string> userIds)
         {
-            foreach (var channelId in channels!.Keys)
+            foreach (var channelPair in channels)
             {
-                conversationsToolbar.SetConnectionStatus(channelId,
-                    userIds.Contains(channelId.Id) ?
-                    OnlineStatus.ONLINE :
-                    OnlineStatus.OFFLINE);
+                if (channelPair.Value.ChannelType == ChatChannel.ChatChannelType.USER)
+                {
+                    conversationsToolbar.SetConnectionStatus(channelPair.Value.Id,
+                        userIds.Contains(channelPair.Value.Id.Id) ?
+                        OnlineStatus.ONLINE :
+                        OnlineStatus.OFFLINE);
+                }
+
             }
         }
 
@@ -394,6 +418,8 @@ namespace DCL.Chat
             chatInputBox.Dispose();
             fadeoutCts.SafeCancelAndDispose();
             popupCts.SafeCancelAndDispose();
+            privateConversationItemCts.SafeCancelAndDispose();
+            communityTitleCts.SafeCancelAndDispose();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -431,6 +457,7 @@ namespace DCL.Chat
             chatTitleBar.HideMemberListButtonClicked -= OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged -= OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested -= OnDeleteChatHistoryRequested;
+            chatTitleBar.ViewCommunityRequested -= OnTitleBarViewCommunityRequested;
 
             chatMessageViewer.ChatMessageOptionsButtonClicked -= OnChatMessageOptionsButtonClickedAsync;
             chatMessageViewer.ChatMessageViewerScrollPositionChanged -= OnChatMessageViewerScrollPositionChanged;
@@ -451,11 +478,25 @@ namespace DCL.Chat
             return base.HideAsync(ct, isInstant);
         }
 
+        /// <summary>
+        /// Provides the view a reference to the data it needs to draw the information in the UI, before the community conversations are added.
+        /// </summary>
+        /// <param name="communities">The data of the communities.</param>
+        public void SetCommunitiesData(Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities)
+        {
+            communitiesData = communities;
+        }
+
         public void Initialize(IReadOnlyDictionary<ChatChannel.ChannelId, ChatChannel> chatChannels,
             ChatSettingsAsset chatSettings,
-            GetParticipantProfilesDelegate getParticipantProfilesDelegate,
-            ILoadingStatus loadingStatus)
+            GetChannelMembersDelegate getParticipantProfilesDelegate,
+            ILoadingStatus loadingStatus,
+            IProfileCache profileCache,
+            ISpriteCache thumbnailCache,
+            CommunityTitleView.OpenContextMenuDelegate openContextMenuAction)
         {
+            this.thumbnailCache = thumbnailCache;
+            this.openContextMenuAction = openContextMenuAction;
             channels = chatChannels;
 
             chatTitleBar.Initialize();
@@ -465,6 +506,7 @@ namespace DCL.Chat
             chatTitleBar.HideMemberListButtonClicked += OnMemberListClosingButtonClicked;
             chatTitleBar.ContextMenuVisibilityChanged += OnChatContextMenuVisibilityChanged;
             chatTitleBar.DeleteChatHistoryRequested += OnDeleteChatHistoryRequested;
+            chatTitleBar.ViewCommunityRequested += OnTitleBarViewCommunityRequested;
 
             this.loadingStatus = loadingStatus;
             loadingStatus.CurrentStage.OnUpdate += SetInputFieldInteractable;
@@ -475,7 +517,7 @@ namespace DCL.Chat
             scrollToBottomButton.onClick.AddListener(OnScrollToEndButtonClicked);
             memberListView.VisibilityChanged += OnMemberListViewVisibilityChanged;
 
-            chatInputBox.Initialize(chatSettings, getParticipantProfilesDelegate);
+            chatInputBox.Initialize(chatSettings, getParticipantProfilesDelegate, profileCache);
             chatInputBox.InputBoxFocusChanged += OnInputBoxSelectionChanged;
             chatInputBox.EmojiSelectionVisibilityChanged += OnEmojiSelectionVisibilityChanged;
             chatInputBox.InputChanged += OnInputChanged;
@@ -492,7 +534,17 @@ namespace DCL.Chat
 
             // Initializes the conversations toolbar
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channelPair in channels)
-                AddConversation(channelPair.Value);
+            {
+                if(channelPair.Value.ChannelType == ChatChannel.ChatChannelType.NEARBY)
+                    AddNearbyConversation(channelPair.Value);
+                else if(channelPair.Value.ChannelType == ChatChannel.ChatChannelType.USER)
+                    AddPrivateConversation(channelPair.Value);
+            }
+        }
+
+        private void OnTitleBarViewCommunityRequested()
+        {
+            ViewCommunityRequested?.Invoke(communitiesData[CurrentChannelId].id);
         }
 
         private void OnDeleteChatHistoryRequested()
@@ -673,7 +725,7 @@ namespace DCL.Chat
         /// The list will be refreshed during the next Update.
         /// </summary>
         /// <param name="memberData">The data of the members to be displayed in the member list.</param>
-        public void SetMemberData(List<ChatMemberListView.MemberData> memberData)
+        public void SetMemberData(List<ChatUserData> memberData)
         {
             sortedMemberData.Clear();
             sortedMemberData.AddRange(memberData);
@@ -714,12 +766,32 @@ namespace DCL.Chat
         /// Creates a new item in the conversation toolbar.
         /// </summary>
         /// <param name="channelToAdd">The channel for which the item will be created.</param>
-        public void AddConversation(ChatChannel channelToAdd)
+        public void AddNearbyConversation(ChatChannel channelToAdd)
         {
-            if (channelToAdd.Id.Equals(ChatChannel.NEARBY_CHANNEL.Id))
-                conversationsToolbar.AddConversation(channelToAdd, nearbyConversationIcon);
-            else
-                conversationsToolbar.AddConversation(channelToAdd);
+            conversationsToolbar.AddConversation(channelToAdd);
+            conversationsToolbar.SetNearbyConversationData(nearbyConversationIcon);
+        }
+
+        /// <summary>
+        /// Creates a new item in the conversation toolbar.
+        /// </summary>
+        /// <param name="channelToAdd">The channel for which the item will be created.</param>
+        public void AddPrivateConversation(ChatChannel channelToAdd)
+        {
+            conversationsToolbar.AddConversation(channelToAdd);
+            conversationsToolbar.SetPrivateConversationData(channelToAdd.Id, privateConversationItemCts.Token);
+        }
+
+        /// <summary>
+        /// Creates a new item in the conversation toolbar.
+        /// </summary>
+        /// <param name="channelToAdd">The channel for which the item will be created.</param>
+        /// <param name="thumbnailCache">A reference to the thumbnail cache to get the icon of the toolbar.</param>
+        public void AddCommunityConversation(ChatChannel channelToAdd, ISpriteCache thumbnailCache)
+        {
+            conversationsToolbar.AddConversation(channelToAdd);
+            GetUserCommunitiesData.CommunityData communityData = communitiesData[channelToAdd.Id];
+            conversationsToolbar.SetCommunityConversationData(channelToAdd.Id, thumbnailCache, communityData);
         }
 
         /// <summary>
@@ -744,6 +816,7 @@ namespace DCL.Chat
             conversationsToolbar.RemoveAllConversations();
             currentChannel = null;
         }
+
 #endregion
 
         public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
@@ -888,7 +961,7 @@ namespace DCL.Chat
         private void OnCloseChatButtonClicked()
         {
             popupCts.SafeCancelAndDispose();
-            
+
             // NOTE: notify controller to handle closing the chat
             // NOTE: instead of handling it here in the view
             OnCloseButtonClicked();
@@ -938,10 +1011,15 @@ namespace DCL.Chat
 
         private void OnMemberListViewVisibilityChanged(bool isVisible)
         {
-            chatTitleBar.ChangeTitleBarVisibility(isVisible);
+            chatTitleBar.ChangeTitleBarVisibility(isVisible, currentChannel.ChannelType);
             chatInputBox.gameObject.SetActive(!isVisible);
             chatAndConversationsPanel.gameObject.SetActive(!isVisible);
             unfoldedPanelInteractableArea.enabled = !isVisible;
+
+            if (currentChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                chatTitleBar.SetChannelNameText(communitiesData[CurrentChannelId].name);
+            }
 
             MemberListVisibilityChanged?.Invoke(isVisible);
         }
@@ -1027,6 +1105,15 @@ namespace DCL.Chat
 
             DCLInput.Instance.UI.Submit.performed -= OnSubmitUIInputPerformed;
             isSubmitHooked = false;
+        }
+
+        /// <summary>
+        /// In the conversation toolbar, the channel is moved to the top beneath the nearby channel.
+        /// </summary>
+        /// <param name="channelToMove">The channel to be moved.</param>
+        public void MoveChannelToTop(ChatChannel.ChannelId channelToMove)
+        {
+            conversationsToolbar.MoveConversationToPosition(channelToMove, 1);
         }
     }
 }

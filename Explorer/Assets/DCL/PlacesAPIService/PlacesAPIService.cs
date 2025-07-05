@@ -126,6 +126,15 @@ namespace DCL.PlacesAPIService
             return rentedPlaces;
         }
 
+        public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByIdsAsync(IEnumerable<string> placeIds, CancellationToken ct, bool renewCache = false) =>
+            client.GetPlacesByIdsAsync(placeIds, ct);
+
+        public UniTask<PlacesData.PlacesAPIResponse> GetPlacesByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
+            client.GetPlacesAsync(ct, ownerAddress: ownerAddress);
+
+        public UniTask<PlacesData.PlacesAPIResponse> GetWorldsByOwnerAsync(string ownerAddress, CancellationToken ct, bool renewCache = false) =>
+            client.GetWorldsAsync(ct, ownerAddress: ownerAddress);
+
         public async UniTask<IReadOnlyList<OptimizedPlaceInMapResponse>> GetOptimizedPlacesFromTheMapAsync(string category, CancellationToken ct) =>
             await client.GetOptimizedPlacesFromTheMapAsync(category, ct);
 

@@ -1,3 +1,4 @@
+using DCL.UI.GenericContextMenuParameter;
 using System;
 using UnityEngine;
 
@@ -17,33 +18,30 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             DISABLED,
         }
 
-        internal string userName;
-        internal string userAddress;
-        internal bool hasClaimedName;
-        internal string userThumbnailAddress;
-        internal Color userColor;
+        public struct UserData
+        {
+            public string userName;
+            public string userAddress;
+            public bool hasClaimedName;
+            public string userThumbnailAddress;
+            public Color userColor;
+        }
+
+        internal UserData userData;
         internal FriendshipStatus friendshipStatus;
         internal readonly RectOffset horizontalLayoutPadding;
-        internal readonly Action<string, FriendshipStatus> friendButtonClickAction;
+        internal readonly Action<UserData, FriendshipStatus> friendButtonClickAction;
 
-        public UserProfileContextMenuControlSettings(Action<string, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null)
+        public UserProfileContextMenuControlSettings(Action<UserData, FriendshipStatus> friendButtonClickAction, RectOffset? horizontalLayoutPadding = null)
         {
             this.friendButtonClickAction = friendButtonClickAction;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? DEFAULT_HORIZONTAL_LAYOUT_PADDING;
         }
 
-        public void SetInitialData(string userName,
-            string userAddress,
-            bool hasClaimedName,
-            Color userColor,
-            FriendshipStatus friendshipStatus,
-            string userThumbnailAddress = null)
+        public void SetInitialData(UserData data,
+            FriendshipStatus friendshipStatus)
         {
-            this.userName = userName;
-            this.userAddress = userAddress;
-            this.hasClaimedName = hasClaimedName;
-            this.userColor = userColor;
-            this.userThumbnailAddress = userThumbnailAddress;
+            this.userData = data;
             this.friendshipStatus = friendshipStatus;
         }
     }

@@ -12,6 +12,8 @@ namespace DCL.Chat
         public readonly string SenderWalletId;
         public readonly string ChannelId;
         public readonly bool IsPrivateMessage;
+        public readonly bool IsCommunityMessage;
+        public readonly string CommunityName;
         public readonly bool IsOwnMessage;
         public bool IsDirty;
         public readonly Color RecipientNameColor;
@@ -25,7 +27,9 @@ namespace DCL.Chat
             bool isOwnMessage,
             string recipientValidatedName,
             string recipientWalletId,
-            Color recipientNameColor)
+            Color recipientNameColor,
+            bool isCommunityMessage,
+            string communityName)
         {
             ChatMessage = chatMessage;
             SenderDisplayName = senderDisplayName;
@@ -38,6 +42,8 @@ namespace DCL.Chat
             RecipientWalletId = recipientWalletId;
             RecipientNameColor = recipientNameColor;
             IsDirty = true;
+            IsCommunityMessage = isCommunityMessage;
+            CommunityName = communityName;
         }
     }
 }

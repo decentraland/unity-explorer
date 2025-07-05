@@ -17,25 +17,25 @@ namespace DCL.UI.ProfileElements
 
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private CancellationTokenSource? cts;
-        private string? currentUserId;
+        private string? currentUrl;
 
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
         }
 
-        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct)
         {
             this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
-            await LoadThumbnailAsync(faceSnapshotUrl, userId, ct);
+            await LoadThumbnailAsync(faceSnapshotUrl, ct);
         }
 
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _="")
         {
             this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
-            LoadThumbnailAsync(faceSnapshotUrl, userId).Forget();
+            LoadThumbnailAsync(faceSnapshotUrl).Forget();
         }
 
         public void SetupOnlyColor(Color userColor)
@@ -52,7 +52,7 @@ namespace DCL.UI.ProfileElements
         public void SetDefaultThumbnail()
         {
             thumbnailImageView.SetImage(defaultEmptyThumbnail);
-            currentUserId = null;
+            currentUrl = null;
         }
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
@@ -62,18 +62,18 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, CancellationToken ct = default)
         {
-            if (userId.Equals(currentUserId)) return;
+            if (faceSnapshotUrl.Equals(currentUrl)) return;
 
             cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
-            currentUserId = userId;
+            currentUrl = faceSnapshotUrl;
 
             try
             {
                 ct.ThrowIfCancellationRequested();
 
-                Sprite? sprite = profileRepositoryWrapper.GetProfileThumbnail(userId);
+                Sprite? sprite = profileRepositoryWrapper.GetProfileThumbnail(faceSnapshotUrl);
 
                 if (sprite != null)
                 {
@@ -86,22 +86,22 @@ namespace DCL.UI.ProfileElements
                 SetLoadingState(true);
                 thumbnailImageView.Alpha = 0f;
 
-                sprite = await profileRepositoryWrapper.GetProfileThumbnailAsync(userId, faceSnapshotUrl, cts.Token);
+                sprite = await profileRepositoryWrapper.GetProfileThumbnailAsync(faceSnapshotUrl, cts.Token);
 
                 if (sprite == null)
-                    currentUserId = null;
+                    currentUrl = null;
 
                 await SetThumbnailImageWithAnimationAsync(sprite ? sprite! : defaultEmptyThumbnail, cts.Token);
             }
             catch (OperationCanceledException)
             {
-                currentUserId = null;
+                currentUrl = null;
             }
             catch (Exception e)
             {
                 ReportHub.LogError(ReportCategory.UI, e.Message + e.StackTrace);
 
-                currentUserId = null;
+                currentUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }
         }
