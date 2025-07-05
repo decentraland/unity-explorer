@@ -161,5 +161,35 @@ namespace DCL.ApplicationMinimumSpecsGuard
         {
             return SystemInfo.supportsComputeShaders;
         }
+        
+        /// <summary>
+        ///     Checks if the provided memory size meets the minimum requirement,
+        ///     accounting for reporting discrepancies (e.g., 15.9 GB for a 16 GB module).
+        ///     This method is suitable for both System RAM and GPU VRAM.
+        /// </summary>
+        /// <param name="actualMemoryMB">The memory size reported by the system in Megabytes.</param>
+        /// <param name="requiredMemoryMB">The minimum required memory size in Megabytes (e.g., 16384 for 16 GB).</param>
+        /// <returns>True if the effective memory size meets the requirement.</returns>
+        public static bool IsMemorySizeSufficient(int actualMemoryMB, int requiredMemoryMB)
+        {
+            // To handle cases where hardware is marketed in decimal Gigabytes (GB)
+            // but reported by the OS in binary Megabytes (MB), we can't do a direct comparison.
+            // A 16 GB module often reports as ~16280 MB, which is less than the binary 16 GiB (16384 MB).
+            //
+            // The solution is to compare values in their effective "advertised" Gigabyte size.
+
+            // 1. Convert requirement to whole GB (e.g., 16384 -> 16).
+            int requiredGB = requiredMemoryMB / 1024;
+
+            // 2. Convert actual MB to a floating-point GB value (e.g., 16280 -> 15.9).
+            float actualGBFloat = actualMemoryMB / 1024f;
+
+            // 3. Round to the nearest whole number (e.g., 15.9 -> 16).
+            // This correctly identifies the "advertised" size of the hardware.
+            int roundedActualGB = Mathf.RoundToInt(actualGBFloat);
+
+            // 4. Compare the effective (rounded) GB against the required GB.
+            return roundedActualGB >= requiredGB;
+        }
     }
 }

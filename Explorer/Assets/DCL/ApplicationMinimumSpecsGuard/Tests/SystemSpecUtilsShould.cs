@@ -88,5 +88,88 @@ namespace DCL.ApplicationMinimumSpecsGuard.Tests
             // Assert
             Assert.AreEqual(expectedResult, isAcceptable);
         }
+        
+        [Test]
+        // --- Standard Cases (Originals) ---
+        [TestCase(16280, 16384, true, TestName = "Memory Check - 15.9GB (reported) for 16GB (required) should PASS")]
+        [TestCase(8100, 16384, false, TestName = "Memory Check - 7.9GB (reported) for 16GB (required) should FAIL")]
+        [TestCase(8100, 8192, true, TestName = "Memory Check - 7.9GB (reported) for 8GB (required) should PASS")]
+        [TestCase(4000, 4096, true, TestName = "Memory Check - 3.9GB (reported) for 4GB (required) should PASS")]
+        [TestCase(16384, 16384, true, TestName = "Memory Check - Exact 16GB for 16GB (required) should PASS")]
+
+        // --- Rounding Edge Cases (Key to the fix) ---
+        [TestCase(15871, 16384, false, TestName = "Rounding - 15.499GB (rounds down to 15) for 16GB should FAIL")]
+        [TestCase(15872, 16384, true, TestName = "Rounding - 15.5GB (rounds up to 16) for 16GB should PASS")]
+        [TestCase(16077, 16384, true, TestName = "Rounding - 15.7GB (rounds up to 16) for 16GB should PASS")]
+        [TestCase(7679, 8192, false, TestName = "Rounding - 7.499GB (rounds down to 7) for 8GB should FAIL")]
+        [TestCase(7680, 8192, true, TestName = "Rounding - 7.5GB (rounds up to 8) for 8GB should PASS")]
+        
+        // --- High Memory Values ---
+        [TestCase(32650, 32768, true, TestName = "High Memory - 31.8GB (reported) for 32GB (required) should PASS")]
+        [TestCase(65000, 65536, false, TestName = "High Memory - 63.4GB (reported) for 64GB (required) should FAIL")]
+        [TestCase(16383, 32768, false, TestName = "High Memory - Almost 16GB for 32GB (required) should FAIL")]
+
+        // --- Low Memory Values (e.g., VRAM on integrated cards) ---
+        [TestCase(2000, 2048, true, TestName = "Low Memory - 1.95GB (reported) for 2GB (required) should PASS")]
+        [TestCase(1500, 2048, false, TestName = "Low Memory - 1.46GB (reported) for 2GB (required) should FAIL")]
+        [TestCase(1000, 1024, true, TestName = "Low Memory - 0.97GB (reported) for 1GB (required) should PASS")]
+
+        // --- Identical Reported and Required Values ---
+        [TestCase(8192, 8192, true, TestName = "Exact Match - 8GB exactly for 8GB (required) should PASS")]
+        [TestCase(4096, 4096, true, TestName = "Exact Match - 4GB exactly for 4GB (required) should PASS")]
+
+        // --- Values Just Above and Below Requirement ---
+        [TestCase(16385, 16384, true, TestName = "Slightly Above - 16.001GB for 16GB (required) should PASS")]
+        [TestCase(15871, 16384, false, TestName = "Slightly Below - 15.499GB for 16GB (required) should FAIL (as tested above)")]
+        
+        // --- Zero and Unusual Values ---
+        [TestCase(0, 4096, false, TestName = "Zero Value - 0MB for 4GB (required) should FAIL")]
+        [TestCase(4096, 0, true, TestName = "Zero Requirement - 4GB for 0GB (required) should PASS")]
+        [TestCase(0, 0, true, TestName = "Zero for Zero - 0MB for 0MB (required) should PASS")]
+        
+        // --- Non-standard Requirement Values ---
+        [TestCase(6000, 6144, true, TestName = "Non-Standard - 5.86GB (reported) for 6GB (required) should PASS")] // 5.86 rounds to 6
+        [TestCase(5500, 6144, false, TestName = "Non-Standard - 5.37GB (reported) for 6GB (required) should FAIL")] // 5.37 rounds to 5
+        public void ValidateMemorySizeSufficient(int actualMB, int requiredMB, bool expectedResult)
+        {
+            // Act: Call the method being tested.
+            bool isSufficient = SystemSpecUtils.IsMemorySizeSufficient(actualMB, requiredMB);
+
+            // Assert: Verify the result is what we expect.
+            Assert.AreEqual(expectedResult, isSufficient, $"Failed on actual: {actualMB}MB, required: {requiredMB}MB");
+        }
+        
+        [Test]
+        // --- Standard Discrete GPU VRAM ---
+        [TestCase(8100, true, TestName = "VRAM Check - 8GB Card (e.g., RTX 2070) should PASS")]
+        [TestCase(6088, true, TestName = "VRAM Check - 6GB Card (e.g., RTX 2060, reported as 5.9GB) should PASS")]
+        [TestCase(4050, false, TestName = "VRAM Check - 4GB Card (e.g., GTX 1650) should FAIL")]
+        [TestCase(12150, true, TestName = "VRAM Check - 12GB Card (e.g., RTX 3060) should PASS")]
+
+        // --- Apple Silicon Unified Memory ---
+        // An 8GB Mac cannot dedicate 6GB to VRAM, so it must fail. This is a critical test.
+        [TestCase(10922, true, TestName = "VRAM Check - Apple M1/M2 16GB Mac (reports ~10.6GB) should PASS")]
+        [TestCase(5461, false, TestName = "VRAM Check - Apple M1/M2 8GB Mac (reports ~5.3GB) should FAIL")]
+
+        // --- Integrated Graphics (Intel/AMD APU) ---
+        // These will always fail a 6GB check.
+        [TestCase(2048, false, TestName = "VRAM Check - Integrated GPU (2GB allocated) should FAIL")]
+        [TestCase(512, false, TestName = "VRAM Check - Integrated GPU (512MB allocated) should FAIL")]
+
+        // --- Rounding Edge Cases (for 6GB requirement) ---
+        // This tests the critical 5.5GB boundary.
+        [TestCase(5631, false, TestName = "VRAM Check - Rounding 5.499GB (rounds down to 5) for 6GB should FAIL")]
+        [TestCase(5632, true, TestName = "VRAM Check - Rounding 5.5GB (rounds up to 6) for 6GB should PASS")]
+        public void ValidateVramSizeSufficient(int actualVramMB, bool expectedResult)
+        {
+            // Arrange: The requirement for this test suite is 6GB.
+            const int requiredVramMB = 6144; // 6 * 1024
+
+            // Act: Call the method being tested.
+            bool isSufficient = SystemSpecUtils.IsMemorySizeSufficient(actualVramMB, requiredVramMB);
+
+            // Assert: Verify the result is what we expect.
+            Assert.AreEqual(expectedResult, isSufficient, $"Failed on VRAM actual: {actualVramMB}MB, required: {requiredVramMB}MB");
+        }
     }
 }

@@ -93,13 +93,21 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
             // VRAM
             int actualVramMB = SystemInfo.graphicsMemorySize;
-            int vramGB = Mathf.CeilToInt(actualVramMB / 1024f);
-            results.Add(new SpecResult(SpecCategory.VRAM, actualVramMB >= profile.MinVramMB, profile.VramRequirement, $"{vramGB} GB"));
+            bool isVramMet = SystemSpecUtils.IsMemorySizeSufficient(actualVramMB, profile.MinVramMB);
+            int roundedActualVramGB = Mathf.RoundToInt(actualVramMB / 1024f);
+            
+            // NOTE: e.g., shows "16 GB" not "15.7 GB"
+            string actualVramDisplay = $"{roundedActualVramGB} GB";
+            results.Add(new SpecResult(SpecCategory.VRAM, isVramMet, profile.VramRequirement, actualVramDisplay));
 
             // RAM
             int actualRamMB = SystemInfo.systemMemorySize;
-            int ramGB = Mathf.CeilToInt(actualRamMB / 1024f);
-            results.Add(new SpecResult(SpecCategory.RAM, actualRamMB >= profile.MinRamMB, profile.RamRequirement, $"{ramGB} GB"));
+            bool isRamMet = SystemSpecUtils.IsMemorySizeSufficient(actualRamMB, profile.MinRamMB);
+            int roundedActualRamGB = Mathf.RoundToInt(actualRamMB / 1024f);
+            
+            // NOTE: e.g., shows "16 GB" not "15.7 GB"
+            string actualRamDisplay = $"{roundedActualRamGB} GB";
+            results.Add(new SpecResult(SpecCategory.RAM, isRamMet, profile.RamRequirement, actualRamDisplay));
 
             try
             {
@@ -132,7 +140,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
                             SpecCategory.Storage,
                             actualAvailableStorageMB >= profile.MinStorageMB,
                             profile.StorageRequirement,
-                            $"{availableStorageGB:F2} GB"
+                            $"{availableStorageGB:F1} GB"
                         ));
                     }
                     else
