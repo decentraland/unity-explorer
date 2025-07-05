@@ -19,6 +19,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
         private readonly Entity playerEntity;
         private readonly World globalWorld;
         private ClientWebSocket? webSocket;
+        private CancellationTokenSource? reloadCancellationTokenSource;
 
         public LocalSceneDevelopmentController(IReloadScene reloadScene,
             Entity playerEntity,
@@ -33,6 +34,8 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
         {
             try
             {
+                reloadCancellationTokenSource?.Cancel();
+                reloadCancellationTokenSource?.Dispose();
                 webSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, CancellationToken.None);
                 webSocket?.Dispose();
             }
@@ -75,12 +78,21 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                     try
                     {
+                        reloadCancellationTokenSource?.Cancel();
+                        reloadCancellationTokenSource?.Dispose();
+                        reloadCancellationTokenSource = new CancellationTokenSource();
+                        var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, reloadCancellationTokenSource.Token);
+
                         // We need to freeze the character movement until the scene is reloaded
                         globalWorld.AddOrGet(playerEntity, new StopCharacterMotion());
 
-                        await reloadScene.TryReloadSceneAsync(ct,
+                        await reloadScene.TryReloadSceneAsync(linkedCts.Token,
                                               wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateScene ? wsSceneMessage.UpdateScene.SceneId : wsSceneMessage.UpdateModel.SceneId)
                                          .Timeout(TimeSpan.FromSeconds(RELOAD_SCENE_TIMEOUT_SECS));
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Previously-running scene reload was cancelled, new reload takes its place
                     }
                     catch (TimeoutException) { }
                     finally { globalWorld.Remove<StopCharacterMotion>(playerEntity); }
