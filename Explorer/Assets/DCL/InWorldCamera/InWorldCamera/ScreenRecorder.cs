@@ -46,7 +46,7 @@ namespace DCL.InWorldCamera
         public void Dispose()
         {
             if(screenshot != null)
-                Object.Destroy(screenshot);
+                UnityObjectUtils.SafeDestroy(screenshot);
 
             if (originalBaseTargetTexture != null)
                 RenderTexture.ReleaseTemporary(originalBaseTargetTexture);
@@ -74,8 +74,8 @@ namespace DCL.InWorldCamera
             CropTexture2D(newScreenShot, rescaledScreenFrame.CalculateFrameCorners(), rescaledScreenFrame.FrameWidthInt, rescaledScreenFrame.FrameHeightInt);
             ResizeTexture2D(newScreenShot);
 
-            Object.Destroy(screenshotTexture);
-            Object.Destroy(newScreenShot);
+            UnityObjectUtils.SafeDestroy(screenshotTexture);
+            UnityObjectUtils.SafeDestroy(newScreenShot);
 
             State = RecordingState.SCREENSHOT_READY;
         }

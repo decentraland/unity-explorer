@@ -28,8 +28,8 @@ namespace Utility
         /// </summary>
         public static void SafeDestroyGameObject<T>(T? component) where T: Component
         {
-            // If Application is quitting component may be already invalid
-            if (IsQuitting && (!component || !component.gameObject))
+            // If Application is quitting or component is null do nothing
+            if (IsQuitting || !component || !component.gameObject)
                 return;
 
             if (!Application.isPlaying)
@@ -40,8 +40,8 @@ namespace Utility
 
         public static void SafeDestroy(Object @object)
         {
-            // If Application is quitting component may be already invalid
-            if (IsQuitting && !@object)
+            // If Application is quitting or object is null do nothing
+            if (IsQuitting || !@object)
                 return;
 
             if (!Application.isPlaying)

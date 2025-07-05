@@ -149,7 +149,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance.mainImageCanvasGroup.alpha = 0;
 
             if (viewInstance.mainImage.texture != null)
-                GameObject.Destroy(viewInstance.mainImage.texture);
+                UnityObjectUtils.SafeDestroy(viewInstance.mainImage.texture);
 
             viewInstance.mainImage.texture = null;
             PhotoDetailInfoController.Release();
@@ -224,7 +224,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance.mainImageLoadingSpinner.gameObject.SetActive(true);
 
             if (viewInstance.mainImage.texture != null)
-                GameObject.Destroy(viewInstance!.mainImage.texture);
+                UnityObjectUtils.SafeDestroy(viewInstance!.mainImage.texture);
 
             CameraReelResponseCompact reel = inputData.AllReels[reelIndex];
 

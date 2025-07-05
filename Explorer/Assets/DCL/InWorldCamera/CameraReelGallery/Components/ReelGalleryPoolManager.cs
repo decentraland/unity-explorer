@@ -2,6 +2,7 @@ using DCL.InWorldCamera.CameraReelStorageService;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.InWorldCamera.CameraReelGallery.Components
 {
@@ -34,7 +35,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     thumbnail.PoolRelease(unusedThumbnailPoolObjectParent.transform),
                 thumbnail =>
                 {
-                    GameObject.Destroy(thumbnail.view.gameObject);
+                    UnityObjectUtils.SafeDestroy(thumbnail.view.gameObject);
                     thumbnail.Dispose();
                 },
                 true,
@@ -59,7 +60,7 @@ namespace DCL.InWorldCamera.CameraReelGallery.Components
                     grid.view.transform.SetParent(unusedGridPoolObjectParent.transform, false);
                     grid.view.gameObject.SetActive(false);
                 },
-                grid => GameObject.Destroy(grid.view.gameObject),
+                grid => UnityObjectUtils.SafeDestroy(grid.view.gameObject),
                 true,
                 gridDefaultCapacity,
                 gridMaxSize);
