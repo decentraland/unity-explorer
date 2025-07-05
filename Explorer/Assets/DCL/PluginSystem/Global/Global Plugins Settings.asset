@@ -20,7 +20,6 @@ MonoBehaviour:
   - rid: 5215741520409264128
   - rid: 5215741520409264129
   - rid: 1501337502808539138
-  - rid: 2152807656697888768
   - rid: 1095376790733193218
   - rid: 4107643854440628226
   - rid: 3022170012058910723
@@ -38,12 +37,10 @@ MonoBehaviour:
   - rid: 758312859982102531
   - rid: 3601421940623147010
   - rid: 2306906494740202818
-  - rid: 3601422469352914946
   - rid: 2872862648882692098
   - rid: 2872862648882692099
   - rid: 3601422141625466883
   - rid: 3601422469352914947
-  - rid: 2799748226177040387
   - rid: 2799748311381442562
   - rid: 6849204606292983808
   - rid: 4782308287844188162
@@ -87,12 +84,8 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
         <EmotesSettings>k__BackingField:
-          <TimeBetweenEmotes>k__BackingField: 15
           <IntroEmoteURN>k__BackingField: raiseHand
           <JumpInEmoteURN>k__BackingField: fistpump_short
-          <FunnyEmotes>k__BackingField:
-          - robot
-          - disco
     - rid: 1268264176566403074
       type: {class: GlobalInteractionPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -313,9 +306,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <StartYPosition>k__BackingField: 1
         <sceneBucketPropagationLimit>k__BackingField: 3
-    - rid: 2152807656697888768
-      type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data: 
     - rid: 2168772563850493955
       type: {class: FriendsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -387,9 +377,6 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         <BuildData>k__BackingField: {fileID: 11400000, guid: b5fb13ac5db3bbb49a6e6aa3d2df0309, type: 2}
-    - rid: 2799748226177040387
-      type: {class: ConnectionStatusPanelPlugin/ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data: 
     - rid: 2799748311381442562
       type: {class: ErrorPopupPlugin/ErrorPopupSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -525,9 +512,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-    - rid: 3601422469352914946
-      type: {class: MainUIPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data: 
     - rid: 3601422469352914947
       type: {class: SidebarPlugin/SidebarSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
