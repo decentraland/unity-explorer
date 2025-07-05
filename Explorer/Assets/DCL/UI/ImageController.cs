@@ -47,14 +47,12 @@ namespace DCL.UI
             {
                 view.LoadingObject.SetActive(true);
 
-                //TODO potential memory leak, due no CacheCleaner
+                //TODO potential memory leak, due to no CacheCleaner
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                     new CommonArguments(URLAddress.FromString(uri)),
                     new GetTextureArguments(TextureType.Albedo, useKtx),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                    ct,
-                    ReportCategory.UI
-                );
+                    ReportCategory.UI)
+                                                                         .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);
 
                 var texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;

@@ -14,6 +14,7 @@ using ECS;
 using ECS.StreamableLoading.Cache;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.Systems.Load
 {
@@ -36,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
             this.wearablesSubdirectory = wearablesSubdirectory;
         }
 
-        protected override URLAddress BuildUrlFromIntention(in GetWearableByParamIntention intention)
+        protected override Uri BuildUrlFromIntention(in GetWearableByParamIntention intention)
         {
             string userID = intention.UserID;
             IReadOnlyList<(string, string)> urlEncodedParams = intention.Params;
@@ -44,7 +45,8 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
 
             if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
             {
-                var url = new Uri(intention.CommonArguments.URL);
+                Uri url = intention.CommonArguments.URL;
+
                 urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))
                           .AppendSubDirectory(URLSubdirectory.FromString(url.AbsolutePath));
             }
@@ -64,10 +66,10 @@ namespace DCL.AvatarRendering.Wearables.Systems.Load
         protected override WearablesResponse AssetFromPreparedIntention(in GetWearableByParamIntention intention) =>
             new (intention.Results, intention.TotalAmount);
 
-        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<WearableDTO>>> ParseResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJsonAsync<WearableDTO.LambdaResponse>(WRJsonParser.Unity, ct);
 
-        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
+        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<WearableDTO>>> ParseBuilderResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJsonAsync<BuilderWearableDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft, ct);
     }
 }

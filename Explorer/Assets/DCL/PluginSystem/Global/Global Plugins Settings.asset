@@ -50,6 +50,7 @@ MonoBehaviour:
   - rid: 2168772563850493955
   - rid: 7621844642437005314
   - rid: 7621844642437005315
+  - rid: 3440223528247361540
   - rid: 8449516130764587014
   - rid: 8813103964372074592
   references:
@@ -477,6 +478,22 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 3440223528247361540
+      type: {class: WebRequestsContainer/Settings, ns: DCL.WebRequests, asm: DCL.Plugins}
+      data:
+        <WebRequestsMode>k__BackingField: 2
+        <DefaultSettings>k__BackingField:
+          <CoreWebRequestsBudget>k__BackingField: 15
+          <SceneWebRequestsBudget>k__BackingField: 5
+        <Http2Settings>k__BackingField:
+          <CoreWebRequestsBudget>k__BackingField: 50
+          <SceneWebRequestsBudget>k__BackingField: 15
+          <CacheSizeGB>k__BackingField: 2
+          <CacheLifetimeDays>k__BackingField: 2
+          <PartialChunkSizeMB>k__BackingField: 2
+          <PartialChunksMaxCount>k__BackingField: 10
+          <PingAckTimeoutSeconds>k__BackingField: 10
+          <EnablePartialDownloading>k__BackingField: 1
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -783,8 +800,6 @@ MonoBehaviour:
         frameTimeCapDeepProfiler: 300
         <ScenesLoadingBudget>k__BackingField: 100
         <AssetsLoadingBudget>k__BackingField: 50
-        <CoreWebRequestsBudget>k__BackingField: 15
-        <SceneWebRequestsBudget>k__BackingField: 5
     - rid: 6784895265412481026
       type: {class: CharacterCameraSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

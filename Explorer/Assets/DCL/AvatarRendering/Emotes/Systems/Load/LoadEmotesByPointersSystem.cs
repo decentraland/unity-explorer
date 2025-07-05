@@ -260,10 +260,10 @@ namespace DCL.AvatarRendering.Emotes.Load
 
                 urlBuilder.Clear();
                 urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
-                URLAddress url = urlBuilder.Build();
+                Uri url = urlBuilder.Build();
 
                 // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
-                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, url.Value, audioType, partitionComponent);
+                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World!, url, audioType, partitionComponent);
                 World!.Create(promise, component, bodyShape);
             }
         }

@@ -25,7 +25,7 @@ namespace ECS.StreamableLoading.GLTF
             MecanimAnimationClips = mecanimAnimationClips;
 
             CommonArguments = new CommonLoadingArguments(
-                URLAddress.EMPTY,
+                null!,
                 cancellationTokenSource: cancellationTokenSource);
         }
 

@@ -10,6 +10,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -17,7 +18,7 @@ using UnityEngine;
 
 namespace DCL.AvatarRendering.Loading.Systems.Abstract
 {
-    public abstract class LoadElementsByPointersSystem<TAsset, TIntention, TDTO> : LoadSystemBase<TAsset, TIntention> where TIntention: struct, IPointersLoadingIntention
+    public abstract class LoadElementsByPointersSystem<TAsset, TIntention, TDTO> : LoadSystemBase<TAsset, TIntention> where TIntention: struct, IPointersLoadingIntention, IEquatable<TIntention>
     {
         // When the number of wearables to request is greater than MAX_WEARABLES_PER_REQUEST, we split the request into several smaller ones.
         // In this way we avoid to send a very long url string that would fail due to the web request size limitations.
@@ -57,7 +58,7 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
         protected abstract TAsset CreateAssetFromListOfDTOs(RepoolableList<TDTO> list);
 
-        private async UniTask DoPartialRequestAsync(URLAddress url,
+        private async UniTask DoPartialRequestAsync(Uri url,
             IReadOnlyList<URN> wearablesToRequest, int startIndex, int endIndex, List<TDTO> results, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
@@ -80,8 +81,8 @@ namespace DCL.AvatarRendering.Loading.Systems.Abstract
 
             using PoolExtensions.Scope<List<TDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct, GetReportCategory())
-                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+            await webRequestController.PostAsync(new CommonArguments(url), GenericUploadArguments.CreateJson(bodyBuilder.ToString()), GetReportCategory())
+                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, ct, WRThreadFlags.SwitchToThreadPool);
 
             lock (results) { results.AddRange(dtoPooledList.Value); }
         }

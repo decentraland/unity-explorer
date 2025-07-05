@@ -24,7 +24,10 @@ using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
 
-#if UNITY_EDITOR
+#if !UNITY_EDITOR
+using DCL.Web3;
+using System.Collections.Generic;
+#else
 using UnityEditor;
 #endif
 
@@ -54,7 +57,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private const int ANIMATION_DELAY = 300;
 
-        private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
+        private static readonly Uri REQUEST_BETA_ACCESS_LINK = new ("https://68zbqa0m12c.typeform.com/to/y9fZeNWm");
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -458,7 +461,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private void RequestAlphaAccess() =>
-            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
+            webBrowser.OpenUrl((Uri)REQUEST_BETA_ACCESS_LINK);
 
         private void ExitApp()
         {

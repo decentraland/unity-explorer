@@ -80,6 +80,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             try
             {
+                await UniTask.SwitchToMainThread();
                 var result = await options.SceneRoomMetaDataSource.MetaDataAsync(options.SceneRoomMetaDataSource.GetMetadataInput(), token);
 
                 if (result.Success == false)
@@ -150,12 +151,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            string url = options.AdapterUrl;
+            Uri url = options.AdapterUrl;
             AdapterResponse response = await webRequests.SignedFetchPostAsync(
                                                              url,
                                                              meta.ToJson(),
-                                                             token)
-                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+                                                             ReportCategory.LIVEKIT)
+                                                        .CreateFromJsonAsync<AdapterResponse>(WRJsonParser.Unity, token);
 
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");

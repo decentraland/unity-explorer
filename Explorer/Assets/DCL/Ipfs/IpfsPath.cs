@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using System;
 
 namespace DCL.Ipfs
 {
@@ -13,7 +14,7 @@ namespace DCL.Ipfs
             BaseUrl = baseUrl;
         }
 
-        public URLAddress GetUrl(URLDomain defaultContentUrl)
+        public Uri GetUrl(URLDomain defaultContentUrl)
         {
             var entityAsPath = URLPath.FromString(EntityId);
             return URLBuilder.Combine(!BaseUrl.IsEmpty ? BaseUrl : defaultContentUrl, entityAsPath);

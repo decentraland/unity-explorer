@@ -65,7 +65,7 @@ namespace SceneRunner.Scene
         public bool TryGet(string hash, out string convertedFile) =>
             convertedFiles.TryGetValue(hash, out convertedFile);
 
-        public URLAddress GetAssetBundleURL(string hash)
+        public Uri GetAssetBundleURL(string hash)
         {
             if (hasSceneIDInPath)
                 return assetBundlesBaseUrl.Append(new URLPath($"{version}/{sceneID}/{hash}"));
@@ -78,10 +78,5 @@ namespace SceneRunner.Scene
 
         public string GetSceneID() =>
             sceneID;
-
-        //Used for the OngoingRequests cache. We need to avoid version and sceneID in this URL to be able to reuse assets.
-        //The first loaded hash will be the one used for all the other requests
-        public URLAddress GetCacheableURL(string hash) =>
-            assetBundlesBaseUrl.Append(new URLPath(hash));
     }
 }

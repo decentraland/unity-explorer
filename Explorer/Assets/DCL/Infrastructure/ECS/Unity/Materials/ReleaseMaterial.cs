@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using Decentraland.Common;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
@@ -7,6 +8,7 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Utils;
 using UnityEngine;
 using Utility.Primitives;
+using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials
@@ -61,7 +63,7 @@ namespace ECS.Unity.Materials
             if (forgetLoading)
                 promiseValue.ForgetLoading(world);
 
-            if (promiseValue.LoadingIntention.IsVideoTexture)
+            if (promiseValue.LoadingIntention.Src.TextureType == TextureUnion.TexOneofCase.VideoTexture)
             {
                 ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(entity, out bool hasConsumer);
 

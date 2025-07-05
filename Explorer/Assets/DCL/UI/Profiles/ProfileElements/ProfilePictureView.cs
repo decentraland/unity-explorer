@@ -24,14 +24,14 @@ namespace DCL.UI.ProfileElements
             cts.SafeCancelAndDispose();
         }
 
-        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId, CancellationToken ct)
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string userId, CancellationToken ct)
         {
             this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
             await LoadThumbnailAsync(faceSnapshotUrl, userId, ct);
         }
 
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string userId)
         {
             this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
@@ -62,7 +62,7 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, string userId, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(Uri faceSnapshotUrl, string userId, CancellationToken ct = default)
         {
             if (userId.Equals(currentUserId)) return;
 

@@ -215,8 +215,7 @@ namespace ECS.Unity.Materials.Systems
                         textureComponentValue.WrapMode,
                         textureComponentValue.FilterMode,
                         textureComponentValue.TextureType,
-                        attemptsCount: attemptsCount,
-                        isAvatarTexture: textureComponentValue.IsAvatarTexture
+                        attemptsCount: attemptsCount
                     ),
                     partitionComponent
                 );

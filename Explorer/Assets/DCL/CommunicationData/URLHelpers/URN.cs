@@ -52,7 +52,7 @@ namespace CommunicationData.URLHelpers
         public override string ToString() =>
             originalUrn;
 
-        public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
+        public Uri? ToUrlOrEmpty(Uri baseUrl)
         {
             string currentUrn = originalUrn;
 
@@ -84,7 +84,7 @@ namespace CommunicationData.URLHelpers
             if (success == false)
             {
                 LogError();
-                return URLAddress.EMPTY;
+                return null;
             }
 
             index--;
@@ -93,7 +93,7 @@ namespace CommunicationData.URLHelpers
             if (success == false)
             {
                 LogError();
-                return URLAddress.EMPTY;
+                return null;
             }
 
             index--;
@@ -102,7 +102,7 @@ namespace CommunicationData.URLHelpers
             if (success == false)
             {
                 LogError();
-                return URLAddress.EMPTY;
+                return null;
             }
 
             index--;
@@ -111,11 +111,11 @@ namespace CommunicationData.URLHelpers
             if (success == false)
             {
                 LogError();
-                return URLAddress.EMPTY;
+                return null;
             }
 
             return URLAddress.FromString(
-                baseUrl.Value
+                baseUrl.OriginalString
                        .Replace("{chain}", new string(chain))
                        .Replace("{address}", new string(address)) //may be optimized further, or create custom ReplaceMethod that works with spans
                        .Replace("{id}", new string(id))

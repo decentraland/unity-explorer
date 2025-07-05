@@ -12,7 +12,7 @@ namespace DCL.Optimization.Pools
         public HashSetObjectPool(
             Action<HashSet<T>> actionOnGet = null,
             Action<HashSet<T>> actionOnDestroy = null,
-            bool collectionCheck = true,
+            bool collectionCheck = PoolConstants.CHECK_COLLECTIONS,
             int hashsetInstanceDefaultCapacity = 100,
             int defaultCapacity = 10,
             int maxSize = 10000) : base(() => new HashSet<T>(hashsetInstanceDefaultCapacity),

@@ -39,7 +39,7 @@ namespace ECS.SceneLifeCycle.Systems
                 ? intention.IpfsRealm.ContentBaseUrl
                 : ipfsPath.BaseUrl;
 
-            var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
+            ISceneContent? hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory, ct);
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
             var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
@@ -67,7 +67,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
 
-        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory);
+        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, ReportData reportCategory, CancellationToken ct);
 
         protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, ReportData reportCategory, CancellationToken ct)
         {
@@ -77,7 +77,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneContent.TryGetContentUrl(NAME, out var url))
                 return ReadOnlyMemory<byte>.Empty;
 
-            return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
+            return await webRequestController.GetAsync(new CommonArguments(url), reportCategory).GetDataCopyAsync(ct);
         }
 
         protected async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, ReportData reportCategory, CancellationToken ct)
@@ -86,8 +86,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             try
             {
-                var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
-                    .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                SceneAbDto sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url), reportCategory)
+                                                                  .CreateFromJsonAsync<SceneAbDto>(WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
                 if (AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, sceneId))
                     return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files, sceneId, sceneAbDto.Date);
@@ -95,10 +95,12 @@ namespace ECS.SceneLifeCycle.Systems
                 ReportHub.LogError(reportCategory.WithStaticDebounce(), $"Asset Bundle Version Mismatch for {sceneId}");
                 return SceneAssetBundleManifest.NULL;
             }
-            catch
+            catch (Exception e)
             {
                 // Don't block the scene if the loading manifest failed, just use NULL
-                ReportHub.LogError(reportCategory.WithStaticDebounce(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
+                if (e is not OperationCanceledException)
+                    ReportHub.LogError(reportCategory.WithStaticDebounce(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
+
                 return SceneAssetBundleManifest.NULL;
             }
         }
@@ -120,8 +122,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             var target = intention.DefinitionComponent.Definition.metadata;
 
-            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
-                .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), reportCategory)
+                                      .OverwriteFromJsonAsync(target, WRJsonParser.Unity, ct, WRThreadFlags.SwitchToThreadPool);
 
             intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
 

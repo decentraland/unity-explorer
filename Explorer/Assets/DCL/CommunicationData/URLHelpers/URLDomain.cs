@@ -30,13 +30,8 @@ namespace CommunicationData.URLHelpers
         public static URLDomain FromString(string url) =>
             new (url);
 
-        /// <summary>
-        ///     URLDomain is a full domain so it's safe to assume that itself it's a valid URL
-        /// </summary>
-        /// <param name="address"></param>
-        /// <returns></returns>
-        public static implicit operator URLAddress(in URLDomain address) =>
-            new (address.Value);
+        public static URLDomain FromString(Uri url) =>
+            new (url.OriginalString);
 
         public bool Equals(URLDomain other) =>
             Value == other.Value;
