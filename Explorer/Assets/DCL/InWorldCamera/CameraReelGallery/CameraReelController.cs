@@ -57,8 +57,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
             //TODO (Lorenzo): Close gallery and open camera
         }
 
-        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, true, reelDeleteIntention)));
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
+            Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
+                false, PhotoDetailParameter.CallerContext.CameraReel, reelDeleteIntention, 
+                reelListRefreshIntention)));
 
         private void StorageFullIconEnter() =>
             view.storageFullToast.DOFade(1f, view.storageFullToastFadeTime);

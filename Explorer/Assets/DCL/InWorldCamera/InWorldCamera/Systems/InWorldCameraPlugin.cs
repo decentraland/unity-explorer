@@ -171,16 +171,19 @@ namespace DCL.PluginSystem.Global
                     decentralandUrlsSource,
                     new ECSThumbnailProvider(realmData, globalWorld, assetBundleURL, webRequestController),
                     new PassportBridgeOpener(),
+                    web3IdentityCache,
                     rarityBackgroundsMapping,
                     rarityColorMappings,
                     categoryIconsMapping,
                     profileRepositoryWrapper
                     ),
                 cameraReelScreenshotsStorage,
+                cameraReelStorageService,
                 systemClipboard,
                 decentralandUrlsSource,
                 webBrowser,
-                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage)));
+                new PhotoDetailStringMessages(settings.ShareToXMessage, settings.PhotoSuccessfullyDownloadedMessage,
+                    settings.PhotoSuccessfullySetAsPublicMessage, settings.LinkCopiedMessage)));
 
 
             inWorldCameraController = new InWorldCameraController(() => hud.GetComponent<InWorldCameraView>(), sidebarButton, globalWorld, mvcManager, cameraReelStorageService, sharedSpaceManager);
@@ -220,6 +223,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] internal AssetReferenceGameObject PhotoDetailPrefab { get; private set; }
             [field: SerializeField, Tooltip("Spaces will be HTTP sanitized, care for special characters")] internal string ShareToXMessage { get; private set; }
             [field: SerializeField] internal string PhotoSuccessfullyDownloadedMessage { get; private set; }
+            [field: SerializeField] internal string PhotoSuccessfullySetAsPublicMessage { get; private set; }
             [field: SerializeField] internal string LinkCopiedMessage { get; private set; }
             [field: SerializeField] internal AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 
