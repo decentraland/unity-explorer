@@ -28,7 +28,7 @@ namespace DCL.Time
         private float cachedTimeInSeconds;
         private bool isPaused;
 
-        private string TIME_SERVER_URL => decentralandUrlsSource.Url(DecentralandUrl.PeerAbout);
+        private string TIME_SERVER_URL => decentralandUrlsSource.Url(DecentralandUrl.LoadBalancerAbout);
 
         public WorldTimeProvider(IDecentralandUrlsSource decentralandUrlsSource, IWebRequestController webRequestController)
         {

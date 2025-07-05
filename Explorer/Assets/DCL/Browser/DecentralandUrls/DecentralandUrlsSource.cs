@@ -15,7 +15,6 @@ namespace DCL.Browser.DecentralandUrls
         private const string ASSET_BUNDLE_URL_TEMPLATE = "https://ab-cdn.decentraland.{0}";
         private const string GENESIS_URL_TEMPLATE = "https://realm-provider-ea.decentraland.{0}/main";
 
-
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly ILaunchMode launchMode;
 
@@ -96,7 +95,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
-                DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
+                DecentralandUrl.LoadBalancerAbout => $"https://peer.decentraland.{ENV}/about",
                 DecentralandUrl.RemotePeers => $"https://archipelago-ea-stats.decentraland.{ENV}/comms/peers",
                 DecentralandUrl.RemotePeersWorld => $"https://worlds-content-server.decentraland.org/wallet/[USER-ID]/connected-world",
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
