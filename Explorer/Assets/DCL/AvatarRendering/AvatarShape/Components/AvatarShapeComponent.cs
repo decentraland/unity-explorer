@@ -11,6 +11,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public bool IsDirty;
         public bool IsVisible;
         public bool HiddenByModifierArea;
+        public bool IsPreview;
 
         public Color SkinColor;
         public Color HairColor;
@@ -40,6 +41,7 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             EyesColor = eyesColor;
             IsVisible = true;
             HiddenByModifierArea = false;
+            IsPreview = false;
         }
 
         public void CreateOutlineCompatibilityList()
