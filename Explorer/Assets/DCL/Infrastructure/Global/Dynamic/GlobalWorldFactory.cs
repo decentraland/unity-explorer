@@ -148,9 +148,9 @@ namespace Global.Dynamic
             LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams);
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams, localSceneDevelopment);
             else
-                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
+                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL, localSceneDevelopment);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
