@@ -1,5 +1,5 @@
 using Cysharp.Threading.Tasks;
-using DCL.StylizedSkybox.Scripts;
+using DCL.SkyBox;
 using DCL.UI.SharedSpaceManager;
 using MVC;
 using System.Threading;
@@ -10,14 +10,14 @@ namespace DCL.UI.Skybox
 {
     public class SkyboxMenuController : ControllerBase<SkyboxMenuView>, IControllerInSharedSpace<SkyboxMenuView>
     {
-        private readonly StylizedSkyboxSettingsAsset skyboxSettings;
+        private readonly SkyboxSettingsAsset skyboxSettings;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private CancellationTokenSource skyboxMenuCts = new ();
 
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
-        public SkyboxMenuController(ViewFactoryMethod viewFactory, StylizedSkyboxSettingsAsset skyboxSettings) : base(viewFactory)
+        public SkyboxMenuController(ViewFactoryMethod viewFactory, SkyboxSettingsAsset skyboxSettings) : base(viewFactory)
         {
             this.skyboxSettings = skyboxSettings;
         }
@@ -39,22 +39,36 @@ namespace DCL.UI.Skybox
         {
             base.OnViewInstantiated();
 
+            skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
+
             viewInstance!.CloseButton.onClick.AddListener(OnClose);
 
-            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeOfDaySliderValueChanged);
-            viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleValueChanged);
+            viewInstance.TimeProgressionToggle.onValueChanged.AddListener(OnTimeProgressionToggleChanged);
+            viewInstance.TimeSlider.onValueChanged.AddListener(OnTimeSliderValueChanged);
 
-            skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
-            skyboxSettings.DayCycleEnabledChanged += OnDayCycleEnabledChanged;
-
-            viewInstance.TimeProgressionToggle.SetIsOnWithoutNotify(skyboxSettings.IsDayCycleEnabled);
-            viewInstance!.TimeSlider.SetValueWithoutNotify(skyboxSettings.TimeOfDayNormalized);
-            viewInstance.TimeText.text = GetFormatedTime(skyboxSettings.TimeOfDayNormalized);
+            ToggleDayCycleEnabled(skyboxSettings.IsDayCycleEnabled);
+            OnTimeOfDayChanged(skyboxSettings.TimeOfDayNormalized);
         }
 
-        private void OnDayCycleEnabledChanged(bool cycleEnabled)
+        private void ToggleDayCycleEnabled(bool isEnabled)
         {
-            viewInstance!.TimeProgressionToggle.isOn = cycleEnabled;
+            viewInstance!.TimeProgressionToggle.isOn = isEnabled;
+            viewInstance.TopSliderGroup.enabled = isEnabled;
+            viewInstance.TextSliderGroup.enabled = isEnabled;
+        }
+
+        private void OnTimeSliderValueChanged(float sliderValue)
+        {
+            skyboxSettings.TimeOfDayNormalized = sliderValue;
+            skyboxSettings.ShouldUpdateSkybox = true;
+            viewInstance!.TimeText.text = GetFormatedTime(sliderValue);
+        }
+
+        private void OnTimeProgressionToggleChanged(bool isOn)
+        {
+            skyboxSettings.IsUIControlled = !isOn;
+
+            ToggleDayCycleEnabled(isOn);
         }
 
         protected override void OnBeforeViewShow()
@@ -63,37 +77,15 @@ namespace DCL.UI.Skybox
             skyboxMenuCts = skyboxMenuCts.SafeRestart();
         }
 
-        private void OnTimeProgressionToggleValueChanged(bool dayCycleEnabled)
-        {
-            skyboxSettings.DayCycleEnabledChanged -= OnDayCycleEnabledChanged;
-
-            skyboxSettings.IsDayCycleEnabled = dayCycleEnabled;
-            skyboxSettings.SkyboxTimeSource = dayCycleEnabled ? SkyboxTimeSource.GLOBAL : SkyboxTimeSource.PLAYER_FIXED;
-            SetTimeSliderEnabled(!skyboxSettings.IsDayCycleEnabled);
-
-            skyboxSettings.DayCycleEnabledChanged += OnDayCycleEnabledChanged;
-        }
-
         private void OnTimeOfDayChanged(float time)
         {
             viewInstance!.TimeSlider.SetValueWithoutNotify(time);
             viewInstance!.TimeText.text = GetFormatedTime(time);
         }
 
-        private void OnTimeOfDaySliderValueChanged(float time)
+        private static string GetFormatedTime(float time)
         {
-            skyboxSettings.TimeOfDayNormalized = time;
-        }
-
-        private void SetTimeSliderEnabled(bool enabled)//rename to controls
-        {
-            viewInstance!.TopSliderGroup.enabled = !enabled;
-            viewInstance!.TextSliderGroup.enabled = !enabled;
-        }
-
-        private string GetFormatedTime(float time)
-        {
-            int totalMinutes = (int)Mathf.Round(time * StylizedSkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
+            int totalMinutes = (int)Mathf.Round(time * SkyboxSettingsAsset.TOTAL_MINUTES_IN_DAY);
 
             int hours = totalMinutes / 60;
             int minutes = totalMinutes % 60;
@@ -110,10 +102,10 @@ namespace DCL.UI.Skybox
         {
             base.Dispose();
             skyboxMenuCts.SafeCancelAndDispose();
-            skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
-            skyboxSettings.DayCycleEnabledChanged -= OnDayCycleEnabledChanged;
 
-            if(!viewInstance) return;
+            skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
+
+            if (!viewInstance) return;
             viewInstance.CloseButton.onClick.RemoveAllListeners();
             viewInstance.TimeSlider.onValueChanged.RemoveAllListeners();
             viewInstance.TimeProgressionToggle.onValueChanged.RemoveAllListeners();
