@@ -17,5 +17,8 @@ namespace DCL.ApplicationMinimumSpecsGuard
 
         [field: SerializeField]
         public Toggle DontShowAgainToggle { get; private set; } = null!;
+
+        [field: SerializeField]
+        public MinimumSpecsTableView TableView { get; private set; } = null!;
     }
 }
