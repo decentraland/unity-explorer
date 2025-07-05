@@ -74,19 +74,20 @@ namespace DCL.Multiplayer.Emotes
         public void OnPlayerRemoved(string walletId) =>
             messageDeduplication.RemoveWallet(walletId);
 
-        private void SendTo(URN emoteId, uint timestamp, IMessagePipe messagePipe)
+        private void SendTo(URN emoteId, uint incrementalId, IMessagePipe messagePipe)
         {
             MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
 
             emote.Payload.Urn = emoteId;
-            emote.Payload.IncrementalId = timestamp;
+            emote.Payload.IncrementalId = incrementalId;
+            emote.Payload.Timestamp = UnityEngine.Time.unscaledTime;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
         private async UniTaskVoid SelfSendWithDelayAsync(URN urn, uint id)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, id);
+            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, id, UnityEngine.Time.unscaledTime);
         }
 
         private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)
@@ -99,20 +100,20 @@ namespace DCL.Multiplayer.Emotes
                     return;
                 }
 
-                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.IncrementalId);
+                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.IncrementalId, receivedMessage.Payload.Timestamp);
             }
         }
 
         private bool IsUserBlocked(string userAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
-        private void Inbox(string walletId, URN emoteURN, uint incrementalId)
+        private void Inbox(string walletId, URN emoteURN, uint incrementalId, float timestamp)
         {
             if (messageDeduplication.TryPass(walletId, incrementalId) == false)
                 return;
 
             using (sync.GetScope())
-                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId));
+                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId, timestamp));
         }
 
         public void SaveForRetry(RemoteEmoteIntention intention)

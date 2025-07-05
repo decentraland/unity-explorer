@@ -16,6 +16,8 @@ namespace DCL.Multiplayer.Movement
 
         public bool Enabled { get; private set; }
 
+        public float Present => Start.timestamp + Time;
+
         public void Restart(NetworkMovementMessage from, NetworkMovementMessage to, InterpolationType interpolationType, ICharacterControllerSettings settings)
         {
             SplineType = interpolationType;

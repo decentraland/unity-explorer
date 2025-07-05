@@ -132,6 +132,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongFall = proto.IsLongFall,
                 },
                 isStunned = proto.IsStunned,
+                isInstant = proto.IsInstant,
             };
         }
 
@@ -169,6 +170,8 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.PositionY = message.position.y;
             movement.PositionZ = message.position.z;
 
+            movement.RotationY = message.rotationY;
+
             movement.VelocityX = message.velocity.x;
             movement.VelocityY = message.velocity.y;
             movement.VelocityZ = message.velocity.z;
@@ -181,10 +184,8 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsLongJump = message.animState.IsLongJump;
             movement.IsFalling = message.animState.IsFalling;
             movement.IsLongFall = message.animState.IsLongFall;
-
             movement.IsStunned = message.isStunned;
-
-            movement.RotationY = message.rotationY;
+            movement.IsInstant = message.isInstant;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)
