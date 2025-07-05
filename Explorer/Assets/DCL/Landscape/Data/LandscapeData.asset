@@ -13,10 +13,8 @@ MonoBehaviour:
   m_Name: LandscapeData
   m_EditorClassIdentifier: 
   showSatelliteView: 1
-  drawTerrain: 1
-  drawTerrainDetails: 1
   mapChunk: {fileID: 1448041327893328029, guid: 63b41593f2fa6c04d8772db2b2b61589, type: 3}
-  terrainData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
-  worldsTerrainData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
-  gpuiAssets: {fileID: 11400000, guid: 4177f048c26079f4296ecc8377c8d7fb, type: 2}
-  detailDistanceValue: 1000
+  genesisCityData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
+  worldData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
+  terrainData: {fileID: 11400000, guid: 11ce4e9f83b596341a5883081f7d710d, type: 2}
+  environmentDistance: 200
