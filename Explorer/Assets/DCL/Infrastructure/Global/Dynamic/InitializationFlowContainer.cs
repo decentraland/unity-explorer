@@ -37,7 +37,6 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appArgs,
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
-            IChatHistory chatHistory,
             bool localSceneDevelopment)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
@@ -98,7 +97,6 @@ namespace DCL.UserInAppInitializationFlow
                     realmContainer.RealmController,
                     staticContainer.PortableExperiencesController,
                     roomHub,
-                    chatHistory,
                     startUpOps,
                     reLoginOps,
                     checkOnboardingStartupOperation,

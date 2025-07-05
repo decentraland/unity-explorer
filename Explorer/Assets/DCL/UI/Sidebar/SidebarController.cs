@@ -45,7 +45,7 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
-        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly ISceneRestrictionBusController? sceneRestrictionBusController;
         private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
@@ -106,7 +106,7 @@ namespace DCL.UI.Sidebar
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
 
-            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            sceneRestrictionBusController?.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
 
         protected override void OnViewInstantiated()

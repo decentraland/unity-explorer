@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using MVC;
@@ -20,7 +21,7 @@ namespace DCL.ApplicationBlocklistGuard
         {
             if (viewInstance != null)
             {
-                viewInstance.CloseButton.onClick.AddListener(OnExitClicked);
+                viewInstance.CloseButton.onClick.AddListener(GuardUtils.Exit);
                 viewInstance.SupportButton.onClick.AddListener(OnSupportClicked);
             }
         }
@@ -30,17 +31,8 @@ namespace DCL.ApplicationBlocklistGuard
             if (viewInstance == null)
                 return;
 
-            viewInstance.CloseButton.onClick.RemoveListener(OnExitClicked);
+            viewInstance.CloseButton.onClick.RemoveListener(GuardUtils.Exit);
             viewInstance.SupportButton.onClick.RemoveListener(OnSupportClicked);
-        }
-
-        private static void OnExitClicked()
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            UnityEngine.Application.Quit();
-#endif
         }
 
         private void OnSupportClicked()

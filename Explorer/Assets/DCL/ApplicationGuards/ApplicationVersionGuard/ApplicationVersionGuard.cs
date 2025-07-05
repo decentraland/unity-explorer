@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -60,7 +61,7 @@ namespace DCL.ApplicationVersionGuard
             if (string.IsNullOrEmpty(launcherPath))
             {
                 DownloadLauncher();
-                Quit();
+                GuardUtils.Exit();
             }
             else
             {
@@ -77,18 +78,9 @@ namespace DCL.ApplicationVersionGuard
                 finally
                 {
                     await UniTask.Delay(2000, cancellationToken: ct);
-                    Quit();
+                    GuardUtils.Exit();
                 }
             }
-        }
-
-        private static void Quit()
-        {
-#if UNITY_EDITOR
-            EditorApplication.isPlaying = false;
-#else
-                Application.Quit();
-#endif
         }
 
         private void DownloadLauncher()
