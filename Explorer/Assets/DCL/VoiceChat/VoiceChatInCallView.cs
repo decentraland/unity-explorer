@@ -7,34 +7,34 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatInCallView : MonoBehaviour
     {
-        [field: SerializeField]
+        [SerializeField]
         public MicrophoneButton MicrophoneButton;
 
-        [field: SerializeField]
+        [SerializeField]
         public Button HangUpButton;
 
-        [field: SerializeField]
+        [SerializeField]
         public Button ExpandButton;
 
-        [field: SerializeField]
+        [SerializeField]
         public SimpleProfileView ProfileView;
 
-        [field: SerializeField]
+        [SerializeField]
         public RectTransform NoPlayerTalking;
 
-        [field: SerializeField]
+        [SerializeField]
         public RectTransform PeopleTalkingContainer;
 
-        [field: SerializeField]
+        [SerializeField]
         public TMP_Text MultiplePeopleTalking;
 
-        [field: SerializeField]
+        [SerializeField]
         public TMP_Text PlayerNameTalking;
 
-        [field: SerializeField]
+        [SerializeField]
         public RectTransform isSpeakingIconRect;
 
-        [field: SerializeField]
+        [SerializeField]
         public RectTransform isSpeakingIconOuterRect;
     }
 }
