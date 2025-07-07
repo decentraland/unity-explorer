@@ -69,78 +69,73 @@ namespace DCL.VoiceChat
         private void OnCallButtonClicked()
         {
             cts = cts?.SafeRestart();
-            WaitAndClosePopup(cts!.Token).Forget();
+            HandleCallButtonClick(cts!.Token).Forget();
+        }
 
+        private async UniTaskVoid HandleCallButtonClick(CancellationToken ct)
+        {
             if (isClickedOnce)
             {
+                // If already clicked once, immediately hide tooltip and reset state
                 view.TooltipParent.gameObject.SetActive(false);
                 isClickedOnce = false;
+                return;
             }
-            else
+
+            // First click - set the flag and handle the logic
+            isClickedOnce = true;
+
+            if (voiceChatCallStatusService.Status is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
-                isClickedOnce = true;
+                await ShowTooltipWithAutoClose(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
+                return;
+            }
 
-                if (voiceChatCallStatusService.Status is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
-                {
-                    EnableTooltipParent(cts.Token);
-                    view.TooltipText.text = OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT;
-                    return;
-                }
-
-                switch (otherUserStatus)
-                {
-                    case OtherUserCallStatus.USER_OFFLINE:
-                        EnableTooltipParent(cts.Token);
-                        view.TooltipText.text = USER_OFFLINE_TOOLTIP_TEXT;
-                        break;
-                    case OtherUserCallStatus.USER_AVAILABLE:
-                        view.TooltipParent.gameObject.SetActive(false);
-                        isClickedOnce = false;
-                        StartCall?.Invoke(CurrentUserId);
-                        break;
-                    case OtherUserCallStatus.OWN_USER_IN_CALL:
-                        EnableTooltipParent(cts.Token);
-                        view.TooltipText.text = OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT;
-                        break;
-                    case OtherUserCallStatus.USER_REJECTS_CALLS:
-                        EnableTooltipParent(cts.Token);
-                        view.TooltipText.text = USER_REJECTS_CALLS_TOOLTIP_TEXT;
-                        break;
-                    case OtherUserCallStatus.OWN_USER_REJECTS_CALLS:
-                        EnableTooltipParent(cts.Token);
-                        view.TooltipText.text = OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT;
-                        break;
-                }
+            switch (otherUserStatus)
+            {
+                case OtherUserCallStatus.USER_OFFLINE:
+                    await ShowTooltipWithAutoClose(USER_OFFLINE_TOOLTIP_TEXT, ct);
+                    break;
+                case OtherUserCallStatus.USER_AVAILABLE:
+                    // For available users, immediately start call without showing tooltip
+                    view.TooltipParent.gameObject.SetActive(false);
+                    isClickedOnce = false;
+                    StartCall?.Invoke(CurrentUserId);
+                    break;
+                case OtherUserCallStatus.OWN_USER_IN_CALL:
+                    await ShowTooltipWithAutoClose(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
+                    break;
+                case OtherUserCallStatus.USER_REJECTS_CALLS:
+                    await ShowTooltipWithAutoClose(USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
+                    break;
+                case OtherUserCallStatus.OWN_USER_REJECTS_CALLS:
+                    await ShowTooltipWithAutoClose(OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
+                    break;
             }
         }
 
-        private async UniTaskVoid WaitAndClosePopup(CancellationToken ct)
-        {
-            await UniTask.Delay(WAIT_TIME_BEFORE_TOOLTIP_CLOSES_MS, cancellationToken: ct);
-            view.TooltipParentCanvas.DOFade(0, ANIMATION_DURATION).OnComplete(() =>
-            {
-                view.TooltipParent.gameObject.SetActive(false);
-                view.TooltipParentCanvas.interactable = false;
-                view.TooltipParentCanvas.blocksRaycasts = false;
-                isClickedOnce = false;
-            });
-        }
-
-        private void EnableTooltipParent(CancellationToken ct)
+        private async UniTask ShowTooltipWithAutoClose(string tooltipText, CancellationToken ct)
         {
             view.TooltipParentCanvas.alpha = 0;
             view.TooltipParent.gameObject.SetActive(true);
             view.TooltipParentCanvas.interactable = true;
             view.TooltipParentCanvas.blocksRaycasts = true;
-            view.TooltipParentCanvas.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
+            view.TooltipText.text = tooltipText;
+
+            await view.TooltipParentCanvas.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
+            await UniTask.Delay(WAIT_TIME_BEFORE_TOOLTIP_CLOSES_MS, cancellationToken: ct);
+            await view.TooltipParentCanvas.DOFade(0, ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
+            view.TooltipParent.gameObject.SetActive(false);
+            view.TooltipParentCanvas.interactable = false;
+            view.TooltipParentCanvas.blocksRaycasts = false;
+            isClickedOnce = false;
         }
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus newStatus)
         {
             if (newStatus == VoiceChatStatus.VOICE_CHAT_USER_BUSY)
             {
-                EnableTooltipParent(cts.Token);
-                view.TooltipText.text = USER_ALREADY_IN_CALL_TOOLTIP_TEXT;
+                ShowTooltipWithAutoClose(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
             }
         }
 
