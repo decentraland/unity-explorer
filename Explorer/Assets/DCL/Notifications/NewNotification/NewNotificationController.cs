@@ -118,7 +118,8 @@ namespace DCL.Notifications.NewNotification
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
                         break;
                     case NotificationType.REFERRAL_INVITED_USERS_ACCEPTED:
-                    case NotificationType.REFERRAL_NEW_TIER_REACHED:
+                        // REFERRAL_NEW_TIER_REACHED ignored, no need to show profile picture
+                    // case NotificationType.REFERRAL_NEW_TIER_REACHED:
                         await ProcessReferralNotificationAsync((ReferralNotification) notification, ct);
                         break;
                     default:
