@@ -9,6 +9,8 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatErrorView : MonoBehaviour
     {
+        private const int HIDE_ERROR_PANEL_DELAY = 5000;
+
         [field: SerializeField]
         public CanvasGroup PanelCanvasGroup;
 
@@ -35,12 +37,20 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid StartErrorPanelDisableFlowAsync(CancellationToken ct)
         {
-            await UniTask.Delay(5000, cancellationToken: ct);
-            PanelCanvasGroup.DOFade(0, 0.5f).OnComplete(() =>
+            try
+            {
+                await UniTask.Delay(HIDE_ERROR_PANEL_DELAY, cancellationToken: ct);
+                PanelCanvasGroup.DOFade(0, 0.5f).ToUniTask(cancellationToken: ct);
+            }
+            catch (Exception e)
+            {
+                PanelCanvasGroup.alpha = 0;
+            }
+            finally
             {
                 PanelCanvasGroup.interactable = false;
                 PanelCanvasGroup.blocksRaycasts = false;
-            });
+            }
         }
     }
 }
