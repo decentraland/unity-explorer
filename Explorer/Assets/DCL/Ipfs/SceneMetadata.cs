@@ -15,6 +15,41 @@ namespace DCL.Ipfs
         public List<string> requiredPermissions;
         public List<SpawnPoint>? spawnPoints;
         public bool isPortableExperience;
+        public WorldConfiguration? worldConfiguration;
+        public SkyboxConfigData? skyboxConfig;
+
+        /// <summary>
+        /// Configuration specific to Decentraland Worlds (Realms).
+        /// NOTE: more about the setup: https://docs.decentraland.org/creator/worlds/about/
+        /// </summary>
+        [Serializable]
+        public struct WorldConfiguration
+        {
+            /// <summary>
+            /// The unique name of the world (e.g., an ENS name).
+            /// </summary>
+            public string? Name { get; set; }
+
+            /// <summary>
+            /// Defines settings for the world's skybox.
+            /// This config is no longer limited to worlds, so now it's supported at the scene level config, but it's maintained here for backwards compatibility.
+            /// </summary>
+            public SkyboxConfigData? SkyboxConfig { get; set; }
+
+            /// <summary>
+            /// Specifies the adapter used for scene deployment or loading (e.g., "offline:offline").
+            /// </summary>
+            public string? FixedAdapter { get; set; }
+        }
+
+        /// <summary>
+        /// Defines settings for the world's skybox.
+        /// </summary>
+        [Serializable]
+        public struct SkyboxConfigData
+        {
+            public float fixedTime;
+        }
 
         [JsonIgnore]
         public string OriginalJson { get; set; }

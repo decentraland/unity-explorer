@@ -45,8 +45,6 @@ namespace DCL.UI.HyperlinkHandler
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (!initialized) return;
-
             if (lastHighlightedIndex != -1)
             {
                 cancellationTokenSource = cancellationTokenSource.SafeRestart();
@@ -88,12 +86,7 @@ namespace DCL.UI.HyperlinkHandler
             if (isHighlighting)
                 ResetPreviousHighlight();
         }
-
-        public void InjectDependencies()
-        {
-            initialized = true;
-        }
-
+        
         private void AddLinkHandlers()
         {
             linkHandlers.Add(HyperlinkConstants.URL, HandleURLLink);

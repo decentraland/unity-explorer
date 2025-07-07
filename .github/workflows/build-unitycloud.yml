@@ -242,8 +242,8 @@ jobs:
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 180  # matches your GLOBAL_TIMEOUT = 10800s
-          max_attempts: 3
-          retry_on: any
+          max_attempts: 2
+          retry_on_exit_code: 99
           retry_wait_seconds: 30
           on_retry_command: |
             echo "::warning::🔁 Unity Cloud Build retry triggered at $(date '+%Y-%m-%d %H:%M:%S')"

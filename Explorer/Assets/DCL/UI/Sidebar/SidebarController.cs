@@ -16,6 +16,8 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -31,6 +33,9 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
+        private const string IDLE_ICON_ANIMATOR = "Empty";
+        private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
+
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
         private readonly INotificationsBusController notificationsBusController;
@@ -46,6 +51,7 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly URLBuilder urlBuilder = new ();
 
@@ -53,8 +59,7 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
         private CancellationTokenSource? referralNotificationCts;
-        private const string IDLE_ICON_ANIMATOR = "Empty";
-        private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
+        private bool? pendingSkyboxInteractableState;
 
         public event Action? HelpOpened;
 
@@ -78,6 +83,7 @@ namespace DCL.UI.Sidebar
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
             IRealmData realmData,
+            ISceneRestrictionBusController sceneRestrictionBusController,
             IDecentralandUrlsSource decentralandUrlsSource)
             : base(viewFactory)
         {
@@ -97,6 +103,7 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
+            sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
@@ -106,6 +113,7 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
+            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
             referralNotificationCts.SafeCancelAndDispose();
         }
 
@@ -133,7 +141,6 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_NEW_TIER_REACHED, OnReferralNewTierNotificationClicked);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
             viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
-            ;
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
@@ -167,6 +174,24 @@ namespace DCL.UI.Sidebar
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
+
+            if (pendingSkyboxInteractableState.HasValue)
+            {
+                viewInstance.skyboxButton.interactable = pendingSkyboxInteractableState.Value;
+                pendingSkyboxInteractableState = null;
+            }
+        }
+
+        private void OnSceneRestrictionChanged(SceneRestriction restriction)
+        {
+            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_BLOCKED)
+            {
+                bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
+                if (viewInstance)
+                    viewInstance.skyboxButton.interactable = !isRestricted;
+                else
+                    pendingSkyboxInteractableState = !isRestricted;
+            }
         }
 
         private void OnReferralNewTierNotificationClicked(object[] parameters)
