@@ -12,7 +12,6 @@ using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Participants.Factory;
 using LiveKit.Rooms.Streaming.Audio;
 using LiveKit.Rooms.TrackPublications;
-using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
@@ -57,6 +56,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         protected readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
 
+        // Events for state changes
+        public event Action<IConnectiveRoom.State>? StateChanged;
+        public event Action<IConnectiveRoom.ConnectionLoopHealth>? ConnectionLoopHealthChanged;
+
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
             () =>
             {
@@ -95,7 +98,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             logPrefix = GetType().Name;
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
@@ -117,7 +120,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 throw new InvalidOperationException("Room is already running");
 
             attemptToConnectState.Set(AttemptToConnectState.NONE);
-            roomState.Set(IConnectiveRoom.State.Starting);
+            SetRoomState(IConnectiveRoom.State.Starting);
             RunAsync((cancellationTokenSource = new CancellationTokenSource()).Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
             return attemptToConnectState.Value() is not AttemptToConnectState.ERROR;
@@ -128,9 +131,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             if (CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping)
                 throw new InvalidOperationException("Room is already stopped");
 
-            roomState.Set(IConnectiveRoom.State.Stopping);
+            SetRoomState(IConnectiveRoom.State.Stopping);
             await room.ResetRoom(roomPool, CancellationToken.None);
-            roomState.Set(IConnectiveRoom.State.Stopped);
+            SetRoomState(IConnectiveRoom.State.Stopped);
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = null;
         }
@@ -143,9 +146,31 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         public IRoom Room() =>
             room;
 
+        protected void SetRoomState(IConnectiveRoom.State newState)
+        {
+            var oldState = roomState.Value();
+            roomState.Set(newState);
+
+            if (newState != oldState)
+            {
+                StateChanged?.Invoke(newState);
+            }
+        }
+
+        protected void SetConnectionLoopHealth(IConnectiveRoom.ConnectionLoopHealth newHealth)
+        {
+            var oldHealth = connectionLoopHealth.Value();
+            connectionLoopHealth.Set(newHealth);
+
+            if (newHealth != oldHealth)
+            {
+                ConnectionLoopHealthChanged?.Invoke(newHealth);
+            }
+        }
+
         private async UniTaskVoid RunAsync(CancellationToken token)
         {
-            roomState.Set(IConnectiveRoom.State.Starting);
+            SetRoomState(IConnectiveRoom.State.Starting);
 
             await ExecuteWithRecoveryAsync(PrewarmAsync, nameof(PrewarmAsync), IConnectiveRoom.ConnectionLoopHealth.Prewarming, IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed, token);
 
@@ -155,7 +180,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 await UniTask.Delay(HEARTBEATS_INTERVAL, cancellationToken: token);
             }
 
-            connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.Stopped);
+            SetConnectionLoopHealth(IConnectiveRoom.ConnectionLoopHealth.Stopped);
         }
 
         private async UniTask ExecuteWithRecoveryAsync(Func<CancellationToken, UniTask> func, string funcName, IConnectiveRoom.ConnectionLoopHealth enterState, IConnectiveRoom.ConnectionLoopHealth stateOnException, CancellationToken ct)
@@ -164,13 +189,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 try
                 {
-                    connectionLoopHealth.Set(enterState);
+                    SetConnectionLoopHealth(enterState);
                     await func(ct);
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
                     ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - {funcName} failed: {e}");
-                    connectionLoopHealth.Set(stateOnException);
+                    SetConnectionLoopHealth(stateOnException);
                     await RecoveryDelayAsync(ct);
                 }
             }
@@ -186,9 +211,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{logPrefix} - Trying to disconnect current room started");
 
-            roomState.Set(IConnectiveRoom.State.Stopping);
+            SetRoomState(IConnectiveRoom.State.Stopping);
             await room.ResetRoom(roomPool, token);
-            roomState.Set(IConnectiveRoom.State.Stopped);
+            SetRoomState(IConnectiveRoom.State.Stopped);
 
             if (connectionIsNoLongerRequired)
                 attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
@@ -218,7 +243,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             switch (roomSelection)
             {
                 case RoomSelection.NEW:
-                    roomState.Set(IConnectiveRoom.State.Running);
+                    SetRoomState(IConnectiveRoom.State.Running);
                     ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to finished successfully {connectionString}");
 
                     break;

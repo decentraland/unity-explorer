@@ -28,6 +28,17 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
     public class VoiceChatConnectiveRoom : ConnectiveRoom
     {
+        public enum VoiceChatConnectionState
+        {
+            DISCONNECTED,
+            CONNECTING,
+            CONNECTED,
+            RECONNECTING,
+            FAILED
+        }
+
+        public event Action<VoiceChatConnectionState>? ConnectionStateChanged;
+
         private class Activatable : ActivatableConnectiveRoom, IVoiceChatActivatableConnectiveRoom
         {
             private readonly VoiceChatConnectiveRoom origin;
@@ -43,9 +54,29 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         private const int CONNECTION_TIMEOUT_SECONDS = 60;
         private string connectionString = string.Empty;
+        private VoiceChatConnectionState currentConnectionState = VoiceChatConnectionState.DISCONNECTED;
+
+        private void NotifyConnectionStateChanged(VoiceChatConnectionState newState)
+        {
+            if (currentConnectionState != newState)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{logPrefix} - Connection state changed: {currentConnectionState} -> {newState}");
+                currentConnectionState = newState;
+                ConnectionStateChanged?.Invoke(newState);
+            }
+        }
 
         private async UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString)
         {
+            // Set the connection string first
+            connectionString = newConnectionString;
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Empty connection string provided");
+                return false;
+            }
+
             try
             {
                 if (CurrentState() is not IConnectiveRoom.State.Stopped)
@@ -103,12 +134,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public IVoiceChatActivatableConnectiveRoom AsActivatable() =>
             new Activatable(this);
 
-        protected override async UniTask PrewarmAsync(CancellationToken token)
-        {
-            // Voice chat rooms don't need prewarming since we always create fresh rooms
-            await UniTask.CompletedTask;
-        }
-
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
             if (CurrentState() is not IConnectiveRoom.State.Running)
@@ -122,9 +147,70 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
                 await TryConnectToRoomAsync(connectionString, token);
             }
+        }
 
-            // Simulate connection state changes to prevent LiveKit disconnection messages
-            room.SimulateConnectionStateChanged();
+        protected override async UniTask PrewarmAsync(CancellationToken token)
+        {
+            // Voice chat rooms don't need prewarming since we always create fresh rooms
+            await UniTask.CompletedTask;
+
+            StateChanged += OnStateChanged;
+            ConnectionLoopHealthChanged += OnHealthChanged;
+        }
+
+        public override void Dispose()
+        {
+            // Unsubscribe from events
+            StateChanged -= OnStateChanged;
+            ConnectionLoopHealthChanged -= OnHealthChanged;
+
+            base.Dispose();
+        }
+
+        private void OnStateChanged(IConnectiveRoom.State newState)
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{logPrefix} - Room state changed: {newState}");
+
+            switch (newState)
+            {
+                case IConnectiveRoom.State.Starting:
+                    NotifyConnectionStateChanged(VoiceChatConnectionState.CONNECTING);
+                    break;
+                case IConnectiveRoom.State.Running:
+                    if (CurrentConnectionLoopHealth == IConnectiveRoom.ConnectionLoopHealth.Running)
+                    {
+                        NotifyConnectionStateChanged(VoiceChatConnectionState.CONNECTED);
+                    }
+                    break;
+                case IConnectiveRoom.State.Stopping:
+                case IConnectiveRoom.State.Stopped:
+                    NotifyConnectionStateChanged(VoiceChatConnectionState.DISCONNECTED);
+                    break;
+            }
+        }
+
+        private void OnHealthChanged(IConnectiveRoom.ConnectionLoopHealth newHealth)
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{logPrefix} - Connection loop health changed: {newHealth}");
+            
+            switch (newHealth)
+            {
+                case IConnectiveRoom.ConnectionLoopHealth.Running:
+                    if (CurrentState() == IConnectiveRoom.State.Running)
+                    {
+                        NotifyConnectionStateChanged(VoiceChatConnectionState.CONNECTED);
+                    }
+                    break;
+                case IConnectiveRoom.ConnectionLoopHealth.CycleFailed:
+                    NotifyConnectionStateChanged(VoiceChatConnectionState.RECONNECTING);
+                    break;
+                case IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed:
+                    NotifyConnectionStateChanged(VoiceChatConnectionState.FAILED);
+                    break;
+                case IConnectiveRoom.ConnectionLoopHealth.Stopped:
+                    NotifyConnectionStateChanged(VoiceChatConnectionState.DISCONNECTED);
+                    break;
+            }
         }
 
 
@@ -153,7 +239,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             // Always use new room for voice chat
             room.Assign(freshRoom, out IRoom _);
-            roomState.Set(IConnectiveRoom.State.Running);
+            SetRoomState(IConnectiveRoom.State.Running);
             ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to finished successfully {connectionString}");
 
             return RoomSelection.NEW;
