@@ -85,7 +85,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnEnable() =>
             PlayHoverExitAnimation(instant: true);
 
-        public void Configure(PlaceInfo placeInfo, bool userOwnsPlace, ThumbnailLoader thumbnailLoader, CancellationToken ct/*, ObjectProxy<ISpriteCache> spriteCache*/)
+        public void Configure(PlaceInfo placeInfo, bool userOwnsPlace, ThumbnailLoader thumbnailLoader, CancellationToken ct)
         {
             currentPlaceInfo = placeInfo;
 

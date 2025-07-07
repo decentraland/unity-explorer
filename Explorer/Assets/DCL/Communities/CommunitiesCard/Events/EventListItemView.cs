@@ -64,7 +64,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             offlineShareButton.onClick.AddListener(() => ShareButtonClicked?.Invoke(eventData!.Value, offlineShareButton.transform.position));
         }
 
-        public void Configure(PlaceAndEventDTO data, ThumbnailLoader thumbnailLoader, CancellationToken ct/*, ObjectProxy<ISpriteCache> spriteCache*/)
+        public void Configure(PlaceAndEventDTO data, ThumbnailLoader thumbnailLoader, CancellationToken ct)
         {
             eventData = data;
 
