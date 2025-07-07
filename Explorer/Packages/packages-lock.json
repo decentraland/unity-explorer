@@ -148,14 +148,14 @@
       "url": "https://package.openupm.com"
     },
     "com.tivadar.best.http": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/BestHTTP#fix/http-cache-atomicity",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/BestHTTP",
       "depth": 0,
       "source": "git",
       "dependencies": {
         "com.unity.burst": "1.8.19",
         "com.unity.profiling.core": "1.0.0"
       },
-      "hash": "86a7b72ce17d135ac8546ac267da834c04874767"
+      "hash": "a47b01f4fb8cf59b9c1e594a814dd0a3bb87122b"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
