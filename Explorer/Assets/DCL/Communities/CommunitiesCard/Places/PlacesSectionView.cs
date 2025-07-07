@@ -1,10 +1,8 @@
-using DCL.UI;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using MVC;
 using Nethereum.Siwe.Core.Recap;
@@ -53,7 +51,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private SectionFetchData<PlaceInfo> placesInfo = null!;
         private bool canModify;
         private CommunityData communityData;
-        private ObjectProxy<ISpriteCache>? spriteCache;
+        private ThumbnailLoader? thumbnailLoader;
         private GenericContextMenu? contextMenu;
         private CancellationToken cancellationToken;
 
@@ -86,11 +84,11 @@ namespace DCL.Communities.CommunitiesCard.Places
             communityData = community;
         }
 
-        public void InitGrid(ObjectProxy<ISpriteCache> placeThumbnailsCache,
+        public void InitGrid(ThumbnailLoader newThumbnailLoader,
             CancellationToken panelCancellationToken)
         {
             loopGrid.InitGridView(0, GetLoopGridItemByIndex);
-            this.spriteCache = placeThumbnailsCache;
+            this.thumbnailLoader = newThumbnailLoader;
             cancellationToken = panelCancellationToken;
         }
 
@@ -112,7 +110,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             int realIndex = canModify ? index - 1 : index;
             PlaceInfo placeInfo = membersData.Items[realIndex];
-            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, spriteCache!);
+            elementView.Configure(placeInfo, placeInfo.owner.EqualsIgnoreCase(ViewDependencies.CurrentIdentity?.Address) && canModify, thumbnailLoader!, cancellationToken);
 
             elementView.SubscribeToInteractions((placeInfo, value, cardView) => ElementLikeToggleChanged?.Invoke(placeInfo, value, cardView),
                 (placeInfo, value, cardView) => ElementDislikeToggleChanged?.Invoke(placeInfo, value, cardView),

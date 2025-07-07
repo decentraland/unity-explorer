@@ -2,7 +2,6 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DG.Tweening;
 using System;
 using TMPro;
@@ -32,7 +31,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityTitle = null!;
         [SerializeField] private TMP_Text communityDescription = null!;
         [SerializeField] private CanvasGroup communityDescriptionCanvasGroup = null!;
-        [SerializeField] private ImageView communityThumbnail = null!;
+        [field: SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private Image communityPrivacyIcon = null!;
         [SerializeField] private Sprite publicPrivacySprite = null!;
         [SerializeField] private Sprite privatePrivacySprite = null!;
@@ -45,7 +44,6 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Button joinCommunityButton = null!;
         [SerializeField] private GameObject joiningLoading = null!;
         [SerializeField] private MutualFriendsConfig mutualFriends;
-        [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -60,8 +58,7 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private ImageController? imageController;
-        private string? currentCommunityId;
+        private string currentCommunityId;
         private Tweener? headerTween;
         private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
@@ -99,24 +96,6 @@ namespace DCL.Communities.CommunitiesBrowser
             mainButton.onClick.RemoveAllListeners();
             viewCommunityButton.onClick.RemoveAllListeners();
             joinCommunityButton.onClick.RemoveAllListeners();
-        }
-
-        public void ConfigureImageController(ISpriteCache spriteCache)
-        {
-            if (imageController != null)
-                return;
-
-            ObjectProxy<ISpriteCache> cache = new ObjectProxy<ISpriteCache>();
-            cache.SetObject(spriteCache);
-            imageController = new ImageController(communityThumbnail, cache);
-        }
-
-        public void SetCommunityThumbnail(string? imageUrl)
-        {
-            imageController?.SetImage(defaultThumbnailSprite);
-
-            if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
         }
 
         public void SetCommunityId(string id) =>

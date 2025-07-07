@@ -1,5 +1,4 @@
 using DCL.UI;
-using DCL.Utilities;
 using System;
 using TMPro;
 using UnityEngine;
@@ -14,13 +13,11 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private TMP_Text communityTitle = null!;
         [SerializeField] private GameObject userRoleContainer = null!;
         [SerializeField] private TMP_Text userRole = null!;
-        [SerializeField] private ImageView communityThumbnail = null!;
+        [field: SerializeField] public ImageView communityThumbnail = null!;
         [SerializeField] private GameObject communityLiveMark = null!;
         [SerializeField] private Button mainButton = null!;
-        [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        private ImageController? imageController;
-        private string? currentCommunityId;
+        private string currentCommunityId;
 
         private void Awake() =>
             mainButton.onClick.AddListener(() =>
@@ -31,24 +28,6 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void OnDestroy() =>
             mainButton.onClick.RemoveAllListeners();
-
-        public void ConfigureImageController(ISpriteCache spriteCache)
-        {
-            if (imageController != null)
-                return;
-
-            ObjectProxy<ISpriteCache> cache = new ObjectProxy<ISpriteCache>();
-            cache.SetObject(spriteCache);
-            imageController = new ImageController(communityThumbnail, cache);
-        }
-
-        public void SetCommunityThumbnail(string? imageUrl)
-        {
-            imageController?.SetImage(defaultThumbnailSprite);
-
-            if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
-        }
 
         public void SetCommunityId(string id) =>
             currentCommunityId = id;

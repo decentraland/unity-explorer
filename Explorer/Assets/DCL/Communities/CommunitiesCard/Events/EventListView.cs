@@ -1,8 +1,6 @@
-using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using MVC;
 using SuperScrollView;
 using System;
@@ -35,10 +33,10 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private SectionFetchData<PlaceAndEventDTO> eventsFetchData = null!;
         private bool canModify;
-        private ObjectProxy<ISpriteCache>? spriteCache;
         private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
         private GenericContextMenu? contextMenu;
+        private ThumbnailLoader? thumbnailLoader;
 
         private void Awake()
         {
@@ -55,12 +53,12 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.canModify = canModify;
         }
 
-        public void InitList(ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
+        public void InitList(ThumbnailLoader newThumbnailLoader,
             CancellationToken panelCancellationToken)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
-            this.spriteCache = eventThumbnailSpriteCache;
             cancellationToken = panelCancellationToken;
+            this.thumbnailLoader = newThumbnailLoader;
         }
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
@@ -70,7 +68,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
 
-            itemView.Configure(eventData.Items[index], spriteCache!);
+            itemView.Configure(eventData.Items[index], thumbnailLoader!, cancellationToken);
 
             itemView.SubscribeToInteractions(data => MainButtonClicked?.Invoke(data),
                                              data => JumpInButtonClicked?.Invoke(data),

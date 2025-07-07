@@ -3,7 +3,6 @@ using DCL.Audio;
 using DCL.UI;
 using DCL.UI.SelectorButton;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -67,10 +66,10 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
-        private ImageController? imageController;
         private bool isEditionMode;
 
         private CancellationTokenSource? updateScrollPositionCts;
+        private CancellationTokenSource? thumbnailLoadingCts;
 
         private void Awake()
         {
@@ -128,6 +127,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelPlacesDropdown.OptionClicked -= OnPlacesDropdownOptionSelected;
 
             updateScrollPositionCts.SafeCancelAndDispose();
+            thumbnailLoadingCts.SafeCancelAndDispose();
         }
 
         public void SetCreationPanelAsLoading(bool isLoading)
@@ -172,32 +172,27 @@ namespace DCL.Communities.CommunityCreation
                 UpdateCreateButtonAvailability();
         }
 
-        public void ConfigureImageController(ObjectProxy<ISpriteCache> spriteCache)
-        {
-            if (imageController != null)
-                return;
-
-            imageController = new ImageController(creationPanelProfileSelectedImage, spriteCache);
-        }
-
-        public void SetProfileSelectedImage(string? imageUrl)
+        public void SetProfileSelectedImage(string imageUrl, ThumbnailLoader thumbnailLoader)
         {
             creationPanelProfileSelectedImage.gameObject.SetActive(true);
             creationPanelProfilePictureIcon.SetActive(false);
 
             if (!string.IsNullOrEmpty(imageUrl))
-                imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
+            {
+                thumbnailLoadingCts = thumbnailLoadingCts.SafeRestart();
+                thumbnailLoader.LoadCommunityThumbnailAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token).Forget();
+            }
             else
-                imageController?.SetImage(creationPanelProfileDefaultSelectedImage);
+            {
+                creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage);
+            }
         }
 
         public void SetProfileSelectedImage(Sprite? sprite)
         {
             creationPanelProfileSelectedImage.gameObject.SetActive(sprite is not null);
             creationPanelProfilePictureIcon.SetActive(!creationPanelProfileSelectedImage.gameObject.activeSelf);
-
-            if (sprite != null)
-                imageController?.SetImage(sprite);
+            creationPanelProfileSelectedImage.SetImage(sprite);
         }
 
         public void SetCommunityName(string text, bool isInteractable)

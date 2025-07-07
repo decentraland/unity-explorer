@@ -8,7 +8,6 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.WebRequests;
@@ -43,6 +42,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISpriteCache spriteCache;
+        private readonly ThumbnailLoader thumbnailLoader;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
         private CancellationTokenSource? loadResultsCts;
@@ -87,6 +87,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
+            thumbnailLoader = new ThumbnailLoader(spriteCache);
+            view.SetThumbnailLoader(thumbnailLoader);
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
@@ -122,6 +124,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            spriteCache.Clear();
 
             UnsubscribeDataProviderEvents();
         }
@@ -156,6 +159,7 @@ namespace DCL.Communities.CommunitiesBrowser
             searchCancellationCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openCommunityCreationCts?.SafeCancelAndDispose();
+            spriteCache.Clear();
         }
 
         private void ReloadBrowser()

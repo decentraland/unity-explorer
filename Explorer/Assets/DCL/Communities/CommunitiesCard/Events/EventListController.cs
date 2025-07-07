@@ -9,7 +9,6 @@ using DCL.Diagnostics;
 using DCL.EventsApi;
 using DCL.PlacesAPIService;
 using DCL.UI;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -44,7 +43,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
-        private readonly ObjectProxy<ISpriteCache> spriteCache;
+        private readonly ThumbnailLoader thumbnailLoader;
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
@@ -55,7 +54,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public EventListController(EventListView view,
             IEventsApiService eventsApiService,
             IPlacesAPIService placesAPIService,
-            ObjectProxy<ISpriteCache> eventThumbnailSpriteCache,
+            ThumbnailLoader thumbnailLoader,
             IMVCManager mvcManager,
             WarningNotificationView inWorldWarningNotificationView,
             WarningNotificationView inWorldSuccessNotificationView,
@@ -72,9 +71,9 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
-            this.spriteCache = eventThumbnailSpriteCache;
+            this.thumbnailLoader = thumbnailLoader;
 
-            view.InitList(eventThumbnailSpriteCache, cancellationToken);
+            view.InitList(thumbnailLoader, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
             view.MainButtonClicked += OnMainButtonClicked;
@@ -170,7 +169,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                 CommunityCreationEditionController.IssueCommand(new CommunityCreationEditionParameter(
                     canCreateCommunities: true,
                     communityId: communityData!.Value.id,
-                    spriteCache.StrictObject)));
+                    thumbnailLoader.Cache)));
         }
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)

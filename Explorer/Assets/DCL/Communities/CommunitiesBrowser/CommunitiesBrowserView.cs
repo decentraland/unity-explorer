@@ -1,10 +1,10 @@
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.Utilities;
-using DCL.Utilities;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -50,6 +50,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject myCommunitiesLoadingSpinner = null!;
         [SerializeField] private LoopListView2 myCommunitiesLoopList = null!;
         [SerializeField] private Button myCommunitiesViewAllButton = null!;
+        [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
         [Header("Results Section")]
         [SerializeField] private Button resultsBackButton = null!;
@@ -64,7 +65,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly List<CommunityData> currentMyCommunities = new ();
         private readonly List<CommunityData> currentResults = new ();
         private ProfileRepositoryWrapper? profileRepositoryWrapper;
-        private ISpriteCache? spriteCache;
+        private ThumbnailLoader? thumbnailLoader;
 
         private void Awake()
         {
@@ -160,7 +161,6 @@ namespace DCL.Communities.CommunitiesBrowser
         {
             myCommunitiesLoopList.InitListView(itemTotalCount, SetupMyCommunityCardByIndex);
             myCommunitiesLoopList.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
-            this.spriteCache = thumbnailCache;
         }
 
         public void ClearMyCommunitiesItems()
@@ -183,7 +183,6 @@ namespace DCL.Communities.CommunitiesBrowser
             resultLoopGrid.InitGridView(itemTotalCount, SetupCommunityResultCardByIndex);
             resultLoopGrid.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
             profileRepositoryWrapper = profileDataProvider;
-            this.spriteCache = thumbnailCache;
         }
 
         public void ClearResultsItems()
@@ -260,6 +259,8 @@ namespace DCL.Communities.CommunitiesBrowser
         private void SetSearchBarClearButtonActive(bool isActive) =>
             searchBar.clearSearchButton.gameObject.SetActive(isActive);
 
+        private CancellationTokenSource myCommunityThumbnailsLoadingCts = new();
+
         private LoopListViewItem2 SetupMyCommunityCardByIndex(LoopListView2 loopListView, int index)
         {
             CommunityData communityData = currentMyCommunities[index];
@@ -271,9 +272,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            if (spriteCache != null)
-                cardView.ConfigureImageController(spriteCache);
-            cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
@@ -296,9 +295,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            if (spriteCache != null)
-                cardView.ConfigureImageController(spriteCache);
-            cardView.SetCommunityThumbnail(communityData.thumbnails?.raw);
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events
@@ -337,6 +334,11 @@ namespace DCL.Communities.CommunitiesBrowser
                 return;
 
             CommunityJoined?.Invoke(communityData.id);
+        }
+
+        public void SetThumbnailLoader(ThumbnailLoader newThumbnailLoader)
+        {
+            this.thumbnailLoader = newThumbnailLoader;
         }
     }
 }
