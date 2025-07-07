@@ -42,6 +42,7 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -243,7 +244,7 @@ namespace Global.Dynamic
 
                 await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
 
-                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
+                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
 
                 if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
                     return; // stop bootstrapping;
@@ -310,18 +311,34 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
+        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
-            MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
-            if (DCLPlayerPrefs.GetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
+            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
+
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
+            });
+
+
+            bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
+
+            if (!shouldShowScreen)
                 return;
 
-            var minimumRequirementsPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+            var minimumRequirementsPrefab = await bootstrapContainer!
+                .AssetsProvisioner!
+                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
-            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
-                MinimumSpecsScreenController.CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
+                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
-            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser);
+            var minimumSpecsResults = minimumSpecsGuard.Results;
+            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
             dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
             dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
             await minimumSpecsScreenController.HoldingTask.Task;
