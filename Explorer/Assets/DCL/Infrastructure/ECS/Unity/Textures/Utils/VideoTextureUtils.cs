@@ -17,38 +17,51 @@ namespace ECS.Unity.Textures.Utils
             IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap,
             IObjectPool<Texture2D> videoTexturesPool,
             World world,
-            out Texture2DData? texture)
+            out VideoRenderingInfo info)
         {
-            if (entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out Entity videoPlayerEntity) && world.IsAlive(videoPlayerEntity))
-            {
-                ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(videoPlayerEntity, out bool exists);
+            info = default(VideoRenderingInfo);
 
-                if (!exists)
-                {
-                    var texture2D = videoTexturesPool.Get();
-                    //This allows to clear the existing data on the texture,
-                    //to avoid "ghost" images in the textures before they are loaded with new data,
-                    //particularly when dealing with streaming textures from videos
-                    texture2D.Reinitialize(1, 1);
-                    texture2D.SetPixel(0,0, Color.clear);
-                    texture2D.Apply();
-                    world.Add(videoPlayerEntity, new VideoTextureConsumer(texture2D));
-                    consumer = ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
-                }
+            if (!entitiesMap.TryGetValue(textureComponent.VideoPlayerEntity, out info.VideoPlayer) || !world.IsAlive(info.VideoPlayer))
+                return false;
 
-                texture = consumer.Texture;
-                texture.AddReference();
+            ref VideoTextureConsumer consumer = ref world.TryGetRef<VideoTextureConsumer>(info.VideoPlayer, out bool hasConsumer);
 
-                ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasMesh);
+            if (!hasConsumer)
+                consumer = ref CreateTextureConsumer(world, videoTexturesPool.Get(), info.VideoPlayer);
 
-                if (hasMesh)
-                    consumer.AddConsumerMeshRenderer(meshRenderer.MeshRenderer);
+            info.VideoTexture = consumer.Texture;
+            info.VideoTexture.AddReference();
 
-                return true;
-            }
+            ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasRenderer);
 
-            texture = null;
-            return false;
+            if (hasRenderer)
+                consumer.AddConsumerMeshRenderer(meshRenderer.MeshRenderer);
+
+            info.VideoRenderer = hasRenderer ? meshRenderer.MeshRenderer : null;
+
+            return true;
+        }
+
+        private static ref VideoTextureConsumer CreateTextureConsumer(World world, Texture2D texture, Entity videoPlayerEntity)
+        {
+            // This allows to clear the existing data on the texture,
+            // to avoid "ghost" images in the textures before they are loaded with new data,
+            // particularly when dealing with streaming textures from videos
+            texture.Reinitialize(1, 1);
+            texture.SetPixel(0, 0, Color.clear);
+            texture.Apply();
+
+            world.Add(videoPlayerEntity, new VideoTextureConsumer(texture));
+            return ref world.Get<VideoTextureConsumer>(videoPlayerEntity);
+        }
+
+        public struct VideoRenderingInfo
+        {
+            public Entity VideoPlayer;
+
+            public Texture2DData? VideoTexture;
+
+            public Renderer? VideoRenderer;
         }
     }
 }
