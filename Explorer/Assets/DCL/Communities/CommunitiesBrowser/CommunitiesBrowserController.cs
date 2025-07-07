@@ -411,10 +411,16 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityLeft(string communityId, bool success) =>
             view.UpdateJoinedCommunity(communityId, false, success);
 
+        private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
+            ReloadBrowser();
+
+        private void OnCommunityDeleted(string communityId) =>
+            ReloadBrowser();
+
         private void SubscribeDataProviderEvents()
         {
-            dataProvider.CommunityCreated += ReloadBrowser;
-            dataProvider.CommunityDeleted += ReloadBrowser;
+            dataProvider.CommunityCreated += OnCommunityCreated;
+            dataProvider.CommunityDeleted += OnCommunityDeleted;
             dataProvider.CommunityUpdated += OnCommunityUpdated;
             dataProvider.CommunityJoined += OnCommunityJoined;
             dataProvider.CommunityLeft += OnCommunityLeft;
@@ -422,8 +428,8 @@ namespace DCL.Communities.CommunitiesBrowser
 
         private void UnsubscribeDataProviderEvents()
         {
-            dataProvider.CommunityCreated -= ReloadBrowser;
-            dataProvider.CommunityDeleted -= ReloadBrowser;
+            dataProvider.CommunityCreated -= OnCommunityCreated;
+            dataProvider.CommunityDeleted -= OnCommunityDeleted;
             dataProvider.CommunityUpdated -= OnCommunityUpdated;
             dataProvider.CommunityJoined -= OnCommunityJoined;
             dataProvider.CommunityLeft -= OnCommunityLeft;
