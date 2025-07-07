@@ -1,10 +1,13 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities.Extensions;
 using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 {
@@ -88,15 +91,24 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Blocked
 
         protected override async UniTask<int> FetchDataAsync(int pageNumber, int pageSize, CancellationToken ct)
         {
-            using PaginatedBlockedProfileResult result = await friendsService.GetBlockedUsersAsync(pageNumber, pageSize, ct);
+            Result<PaginatedBlockedProfileResult> result = await friendsService.GetBlockedUsersAsync(pageNumber, pageSize, ct).SuppressToResultAsync(ReportCategory.FRIENDS);
 
-            foreach (var blockedProfile in result.BlockedProfiles)
+            if (!result.Success)
+            {
+                // Handle failure gracefully - return 0 to indicate no data
+                ReportHub.LogWarning(new ReportData(ReportCategory.FRIENDS), $"Failed to fetch blocked users: {result.ErrorMessage}");
+                return 0;
+            }
+
+            using PaginatedBlockedProfileResult blockedResult = result.Value;
+
+            foreach (BlockedProfile? blockedProfile in blockedResult.BlockedProfiles)
                 if (!blockedProfiles.Contains(blockedProfile))
                     blockedProfiles.Add(blockedProfile);
 
             FriendsSorter.SortFriendList(blockedProfiles);
 
-            return result.TotalAmount;
+            return blockedResult.TotalAmount;
         }
 
         protected override void ResetCollection() =>

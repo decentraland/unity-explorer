@@ -6,6 +6,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Settings.Settings;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -20,7 +21,17 @@ namespace DCL.Chat
 {
     public class ChatUserStateUpdater : IDisposable
     {
+        public enum ChatUserState
+        {
+            CONNECTED, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
+            BLOCKED_BY_OWN_USER, //Own user blocked the other user
+            PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
+            PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
+            DISCONNECTED, //The other user is either offline or has blocked the own user.
+        }
+
         private const string PRIVACY_SETTING_ALL = "all";
+
         //private readonly IChatUsersStateCache chatUsersStateCache;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly IParticipantsHub participantsHub;
@@ -32,7 +43,7 @@ namespace DCL.Chat
         private readonly IRoom chatRoom;
 
         /// <summary>
-        /// We will use this to track which conversations are open and decide if its necessary to notify the controller about changes
+        ///     We will use this to track which conversations are open and decide if its necessary to notify the controller about changes
         /// </summary>
         private readonly HashSet<string> openConversations = new ();
         private readonly HashSet<string> chatUsers = new (1);
@@ -62,7 +73,18 @@ namespace DCL.Chat
             this.friendsService = friendsService;
         }
 
-        public async UniTask<HashSet<string>> InitializeAsync(IEnumerable<ChatChannel.ChannelId> openConversations)
+        public void Dispose()
+        {
+            if (isDisposed) return;
+
+            isDisposed = true;
+            cts.SafeCancelAndDispose();
+            UnsubscribeFromEvents();
+            openConversations.Clear();
+            CurrentConversation = string.Empty;
+        }
+
+        public async UniTask<HashSet<string>> InitializeAsync(IEnumerable<ChatChannel.ChannelId> conversations)
         {
             SubscribeToEvents();
             isDisposed = false;
@@ -71,7 +93,7 @@ namespace DCL.Chat
 
             cts = cts.SafeRestart();
 
-            foreach (ChatChannel.ChannelId conversation in openConversations)
+            foreach (ChatChannel.ChannelId conversation in conversations)
                 this.openConversations.Add(conversation.Id);
 
             var conversationParticipants = new HashSet<string>();
@@ -83,10 +105,7 @@ namespace DCL.Chat
 
                 ProcessInitialParticipants(ref conversationParticipants);
             }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}");
-            }
+            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogError(ReportCategory.CHAT_MESSAGES, $"Error during initialization: {e.Message}"); }
 
             return conversationParticipants;
         }
@@ -102,13 +121,22 @@ namespace DCL.Chat
 
         public async UniTask<ChatUserState> GetChatUserStateAsync(string userId, CancellationToken ct)
         {
-            var friendshipStatus = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, ct);
-            var participant = chatRoom.Participants.RemoteParticipant(userId);
+            Result<FriendshipStatus> friendshipStatusResult = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, ct).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+
+            // If we can't determine friendship status, assume disconnected
+            if (!friendshipStatusResult.Success)
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.CHAT_MESSAGES), $"Failed to get friendship status for user {userId}: {friendshipStatusResult.ErrorMessage}");
+                return ChatUserState.DISCONNECTED;
+            }
+
+            FriendshipStatus friendshipStatus = friendshipStatusResult.Value;
+            Participant? participant = chatRoom.Participants.RemoteParticipant(userId);
             bool isUserConnected = participant != null;
 
             //If it's a friend we just return its connection status
             if (friendshipStatus == FriendshipStatus.FRIEND)
-                return isUserConnected? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED;
+                return isUserConnected ? ChatUserState.CONNECTED : ChatUserState.DISCONNECTED;
 
             //If the user is blocked by us, we show that first
             if (friendshipStatus == FriendshipStatus.BLOCKED)
@@ -124,7 +152,7 @@ namespace DCL.Chat
                 return ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER;
 
             //If we allow ALL messages, we need to know their settings.
-            var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant!.Metadata);
+            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(participant!.Metadata);
 
             if (message.private_messages_privacy != PRIVACY_SETTING_ALL)
                 return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
@@ -139,7 +167,7 @@ namespace DCL.Chat
 
             chatUsers.Clear();
             chatUsers.Add(userId);
-            var response = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(chatUsers, cts.Token);
+            RPCChatPrivacyService.PrivacySettingsForUsersPayload response = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(chatUsers, cts.Token);
 
             if (response.OnlyFriends.Count > 0)
                 return ChatUserState.PRIVATE_MESSAGES_BLOCKED;
@@ -165,18 +193,9 @@ namespace DCL.Chat
             openConversations.Remove(conversationId);
         }
 
-        public enum ChatUserState
-        {
-            CONNECTED, //Online friends and other users that are not blocked if both users have ALL set in privacy setting.
-            BLOCKED_BY_OWN_USER, //Own user blocked the other user
-            PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER, //Own user has privacy settings set to ONLY FRIENDS
-            PRIVATE_MESSAGES_BLOCKED, //The other user has its privacy settings set to ONLY FRIENDS
-            DISCONNECTED //The other user is either offline or has blocked the own user.
-        }
-
         private async UniTaskVoid RequestParticipantsPrivacySettingsAsync(HashSet<string> participants, CancellationToken ct)
         {
-            var allParticipants = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(participants, ct);
+            RPCChatPrivacyService.PrivacySettingsForUsersPayload allParticipants = await rpcChatPrivacyService.GetPrivacySettingForUsersAsync(participants, ct);
 
             if (allParticipants.OnlyFriends.Contains(CurrentConversation))
                 chatUserStateEventBus.OnCurrentConversationUserUnavailable();
@@ -199,12 +218,12 @@ namespace DCL.Chat
         private void OnUpdatesFromParticipant(Participant participant, UpdateFromParticipant update)
         {
             ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Update From Participant {update.ToString()}");
-            var userId = participant.Identity;
+            string userId = participant.Identity;
 
             switch (update)
             {
                 case UpdateFromParticipant.Connected:
-                    //If the user is not blocked, we add it as a connected user, then check if its a friend, otherwise, we add it as a blocked user
+                    //If the user is not blocked, we add it as a connected user, then check if it's a friend, otherwise, we add it as a blocked user
                     if (!userBlockingCacheProxy.StrictObject.UserIsBlocked(userId))
                     {
                         if (openConversations.Contains(userId))
@@ -220,6 +239,7 @@ namespace DCL.Chat
                         //If the user is blocked (or blocking us) we consider them as if they remained offline.
                         chatUserStateEventBus.OnUserConnectionStateChanged(userId, false);
                     }
+
                     break;
                 case UpdateFromParticipant.MetadataChanged:
                     ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Metadata Changed {participant.Metadata}");
@@ -228,7 +248,7 @@ namespace DCL.Chat
                     if (CurrentConversation != userId) return;
                     if (userBlockingCacheProxy.StrictObject.UserIsBlocked(userId)) return;
 
-                    ReportHub.Log(ReportCategory.CHAT_MESSAGES, $"Metadata Changed - Passed all checks");
+                    ReportHub.Log(ReportCategory.CHAT_MESSAGES, "Metadata Changed - Passed all checks");
 
                     //We only care about their data if it's the current conversation, we allow messages from ALL and the user it's not blocked.
 
@@ -266,9 +286,9 @@ namespace DCL.Chat
 
         private async UniTaskVoid CheckUserMetadataAsync(string userId, string metadata)
         {
-            var message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(metadata);
+            ParticipantPrivacyMetadata message = JsonUtility.FromJson<ParticipantPrivacyMetadata>(metadata);
 
-            //If they accept all conversations, we dont need to check if they are friends or not
+            //If they accept all conversations, we don't need to check if they are friends or not
             if (message.private_messages_privacy == PRIVACY_SETTING_ALL)
             {
                 chatUserStateEventBus.OnUserConnectionStateChanged(userId, true);
@@ -339,7 +359,7 @@ namespace DCL.Chat
 
         private void OnYouBlockedProfile(BlockedProfile profile)
         {
-            var userId = profile.Address;
+            Web3Address userId = profile.Address;
 
             if (openConversations.Contains(userId))
             {
@@ -347,7 +367,6 @@ namespace DCL.Chat
 
                 if (CurrentConversation == userId)
                     chatUserStateEventBus.OnUserBlocked(userId);
-
             }
         }
 
@@ -362,22 +381,6 @@ namespace DCL.Chat
                 if (CurrentConversation == userId)
                     chatUserStateEventBus.OnUserDisconnected(userId);
             }
-        }
-
-        [Serializable]
-        public struct ParticipantPrivacyMetadata
-        {
-            /// <summary>
-            /// The possible values are "all" or "only_friends"
-            /// </summary>
-            public string private_messages_privacy;
-            public ParticipantPrivacyMetadata(string privacy)
-            {
-                private_messages_privacy = privacy;
-            }
-
-            public override string ToString() =>
-                $"(Private Messages Privacy: {private_messages_privacy}";
         }
 
         private void SubscribeToEvents()
@@ -408,15 +411,23 @@ namespace DCL.Chat
             friendsEventBus.OnYouRemovedFriend -= OnFriendRemoved;
         }
 
-        public void Dispose()
+        [Serializable]
+        public struct ParticipantPrivacyMetadata
         {
-            if (isDisposed) return;
+            /// <summary>
+            ///     The possible values are "all" or "only_friends"
+            /// </summary>
 
-            isDisposed = true;
-            cts.SafeCancelAndDispose();
-            UnsubscribeFromEvents();
-            openConversations.Clear();
-            CurrentConversation = string.Empty;
+            // ReSharper disable once InconsistentNaming
+            public string private_messages_privacy;
+
+            public ParticipantPrivacyMetadata(string privacy)
+            {
+                private_messages_privacy = privacy;
+            }
+
+            public override string ToString() =>
+                $"(Private Messages Privacy: {private_messages_privacy}";
         }
     }
 }

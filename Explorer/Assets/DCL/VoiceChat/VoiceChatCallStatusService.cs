@@ -1,10 +1,13 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
+using System;
 using System.Threading;
 using Utility;
+using Utility.Types;
 
 namespace DCL.VoiceChat
 {
@@ -33,7 +36,7 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
 
             this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
-            this.voiceChatService.Reconnected += OnReconnected;
+            this.voiceChatService.Connected += OnConnected;
             this.voiceChatService.Disconnected += OnRCPDisconnected;
             cts = new CancellationTokenSource();
         }
@@ -43,7 +46,7 @@ namespace DCL.VoiceChat
             if (voiceChatService != null)
             {
                 voiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
-                voiceChatService.Reconnected -= OnReconnected;
+                voiceChatService.Connected -= OnConnected;
                 voiceChatService.Disconnected -= OnRCPDisconnected;
                 voiceChatService.Dispose();
             }
@@ -79,26 +82,27 @@ namespace DCL.VoiceChat
             }
         }
 
-        private void OnReconnected()
+        private void OnConnected()
         {
             CheckIncomingCallAsync(cts.Token).Forget();
         }
 
         private async UniTaskVoid CheckIncomingCallAsync(CancellationToken ct)
         {
-            try
-            {
-                GetIncomingPrivateVoiceChatRequestResponse response = await voiceChatService.GetIncomingPrivateVoiceChatRequestAsync(ct);
+            var result = await voiceChatService.GetIncomingPrivateVoiceChatRequestAsync(ct).SuppressToResultAsync();
 
+            if (result.Success)
+            {
+                var response = result.Value;
                 if (response.ResponseCase == GetIncomingPrivateVoiceChatRequestResponse.ResponseOneofCase.Ok)
                 {
                     CallId = response.Ok.CallId;
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                 }
             }
-            catch (System.InvalidOperationException e)
+            else
             {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
+                HandleVoiceChatServiceDisabled(result, resetData: false);
             }
         }
 
@@ -128,10 +132,11 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid StartCallAsync(Web3Address walletId, CancellationToken ct)
         {
-            try
-            {
-                StartPrivateVoiceChatResponse response = await voiceChatService.StartPrivateVoiceChatAsync(walletId.ToString(), ct);
+            var result = await voiceChatService.StartPrivateVoiceChatAsync(walletId.ToString(), ct).SuppressToResultAsync();
 
+            if (result.Success)
+            {
+                var response = result.Value;
                 switch (response.ResponseCase)
                 {
                     //When the call can be started
@@ -152,9 +157,9 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            else
             {
-                HandleVoiceChatServiceDisabled(e, resetData: true);
+                HandleVoiceChatServiceDisabled(result, resetData: true);
             }
         }
 
@@ -171,13 +176,13 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid AcceptCallAsync(string callId, CancellationToken ct)
         {
-            try
-            {
-                AcceptPrivateVoiceChatResponse response = await voiceChatService.AcceptPrivateVoiceChatAsync(callId, ct);
+            var result = await voiceChatService.AcceptPrivateVoiceChatAsync(callId, ct).SuppressToResultAsync();
 
+            if (result.Success)
+            {
+                var response = result.Value;
                 switch (response.ResponseCase)
                 {
-                    //When the call has been ended
                     case AcceptPrivateVoiceChatResponse.ResponseOneofCase.Ok:
                         RoomUrl = response.Ok.Credentials.ConnectionUrl;
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
@@ -187,9 +192,9 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            else
             {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
+                HandleVoiceChatServiceDisabled(result, resetData: false);
             }
         }
 
@@ -205,10 +210,11 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid HangUpAsync(string callId, CancellationToken ct)
         {
-            try
-            {
-                EndPrivateVoiceChatResponse response = await voiceChatService.EndPrivateVoiceChatAsync(callId, ct);
+            var result = await voiceChatService.EndPrivateVoiceChatAsync(callId, ct).SuppressToResultAsync();
 
+            if (result.Success)
+            {
+                var response = result.Value;
                 switch (response.ResponseCase)
                 {
                     //When the call has been ended
@@ -222,9 +228,9 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            else
             {
-                HandleVoiceChatServiceDisabled(e, resetData: true);
+                HandleVoiceChatServiceDisabled(result, resetData: true);
             }
         }
 
@@ -241,13 +247,13 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid RejectCallAsync(string callId, CancellationToken ct)
         {
-            try
-            {
-                RejectPrivateVoiceChatResponse response = await voiceChatService.RejectPrivateVoiceChatAsync(callId, ct);
+            var result = await voiceChatService.RejectPrivateVoiceChatAsync(callId, ct).SuppressToResultAsync();
 
+            if (result.Success)
+            {
+                var response = result.Value;
                 switch (response.ResponseCase)
                 {
-                    //When the call has been ended
                     case RejectPrivateVoiceChatResponse.ResponseOneofCase.Ok:
                         UpdateStatus(VoiceChatStatus.DISCONNECTED);
                         break;
@@ -256,9 +262,9 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            else
             {
-                HandleVoiceChatServiceDisabled(e, resetData: false);
+                HandleVoiceChatServiceDisabled(result, resetData: false);
             }
         }
 
@@ -275,13 +281,22 @@ namespace DCL.VoiceChat
             RoomUrl = string.Empty;
         }
 
-        private void HandleVoiceChatServiceDisabled(System.InvalidOperationException e, bool resetData = false)
+        private void HandleVoiceChatServiceDisabled<T>(Result<T> result, bool resetData = false)
         {
-            ReportHub.LogWarning($"Voice chat service is disabled: {e.Message}", new ReportData(ReportCategory.VOICE_CHAT));
-            if (resetData)
+            if (result.Success)
+                return;
+
+            var enumResult = result.AsEnumResult(TaskError.UnexpectedException);
+            if (enumResult.Error?.State == TaskError.Cancelled)
             {
-                ResetVoiceChatData();
+                // Operation was cancelled, no need to handle
+                return;
             }
+
+            ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"Voice chat service is disabled: {enumResult.Error?.Message ?? "Unknown error"}");
+
+            if (resetData) { ResetVoiceChatData(); }
+
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 

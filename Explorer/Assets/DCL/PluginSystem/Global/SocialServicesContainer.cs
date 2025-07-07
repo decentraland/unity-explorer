@@ -1,10 +1,8 @@
-using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SocialService;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using Global.AppArgs;
@@ -16,12 +14,11 @@ namespace DCL.PluginSystem.Global
 {
     public class SocialServicesContainer : IDisposable
     {
+        internal readonly RPCSocialServices socialServicesRPC;
         private readonly IDecentralandUrlsSource dclUrlSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IAppArgs appArgs;
-
-        internal readonly RPCSocialServices socialServicesRPC;
 
         private CancellationTokenSource cts = new ();
 
@@ -35,12 +32,13 @@ namespace DCL.PluginSystem.Global
             this.socialServiceEventBus = socialServiceEventBus;
             this.appArgs = appArgs;
 
-            // We need to restart the connection to the service as identity changes
-            // since that affects which friends the user can access
-            web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
+            // We need to restart the connection to the service as identity changes            web3IdentityCache.OnIdentityCleared += DisconnectRpcClient;
             web3IdentityCache.OnIdentityChanged += ReInitializeRpcClient;
 
             socialServicesRPC = new RPCSocialServices(GetApiUrl(), web3IdentityCache, socialServiceEventBus);
+            
+            // Start connection management - will timeout if no services subscribe
+            socialServicesRPC.StartConnectionManagement();
         }
 
         public void Dispose()
@@ -61,7 +59,7 @@ namespace DCL.PluginSystem.Global
                 try
                 {
                     await socialServicesRPC.DisconnectAsync(ct);
-                    await socialServicesRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
+                    socialServicesRPC.StartConnectionManagement();
                 }
                 catch (OperationCanceledException) { }
                 catch (Exception e) { ReportHub.LogException(e, ReportCategory.ENGINE); }
