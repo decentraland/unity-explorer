@@ -50,6 +50,7 @@ namespace DCL.Communities.CommunityCreation
         private CancellationTokenSource? loadPanelCts;
         private CancellationTokenSource? showErrorCts;
         private CancellationTokenSource? openImageSelectionCts;
+        private CancellationTokenSource? openCommunityCardAfterCreationCts;
 
         private Sprite? lastSelectedProfileThumbnail;
         private bool isProfileThumbnailDirty;
@@ -143,6 +144,7 @@ namespace DCL.Communities.CommunityCreation
             loadPanelCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openImageSelectionCts?.SafeCancelAndDispose();
+            openCommunityCardAfterCreationCts?.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -438,7 +440,9 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
-            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, spriteCache.StrictObject))).Forget();
+
+            openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, spriteCache.StrictObject)), openCommunityCardAfterCreationCts.Token).Forget();
         }
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds)
