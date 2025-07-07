@@ -28,6 +28,8 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.PERFORMANCE,
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.MEMORY_LIMITS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
                     };
                 }
                 else
@@ -43,6 +45,8 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.MEMORY,
                         IDebugContainerBuilder.Categories.REALM,
                         IDebugContainerBuilder.Categories.ANALYTICS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
                     };
                 }
             }
