@@ -41,6 +41,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 await origin.TrySetConnectionStringAndActivateAsync(newConnectionString);
         }
 
+        private const int CONNECTION_TIMEOUT_SECONDS = 60;
         private string connectionString = string.Empty;
 
         private async UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString)
@@ -48,7 +49,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             try
             {
                 if (CurrentState() is not IConnectiveRoom.State.Stopped)
+                {
                     await StopAsync();
+                }
             }
             catch (Exception e)
             {
@@ -61,7 +64,32 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             {
                 try
                 {
-                    await StartAsync();
+                    // Wrap StartAsync with timeout
+                    using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECONDS));
+                    var startTask = StartAsync();
+                    var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(CONNECTION_TIMEOUT_SECONDS), cancellationToken: timeoutCts.Token).ContinueWith(() => false);
+
+                    var (winIndex, result) = await UniTask.WhenAny(new[] { startTask, timeoutTask });
+
+                    if (winIndex == 1) // Timeout won
+                    {
+                        ReportHub.LogError(ReportCategory.LIVEKIT, $"{logPrefix} - Connection timeout after {CONNECTION_TIMEOUT_SECONDS} seconds");
+                        timeoutCts.Cancel();
+
+                        // Stop the ongoing connection attempt
+                        try
+                        {
+                            await StopAsync();
+                        }
+                        catch (Exception stopEx)
+                        {
+                            ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{logPrefix} - Failed to stop room after timeout: {stopEx}");
+                        }
+
+                        return false;
+                    }
+
+                    return result;
                 }
                 catch (Exception e)
                 {
@@ -75,16 +103,31 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public IVoiceChatActivatableConnectiveRoom AsActivatable() =>
             new Activatable(this);
 
-        protected override UniTask PrewarmAsync(CancellationToken token) =>
-            UniTask.CompletedTask;
+        protected override async UniTask PrewarmAsync(CancellationToken token)
+        {
+            // Voice chat rooms don't need prewarming since we always create fresh rooms
+            await UniTask.CompletedTask;
+        }
 
         protected override async UniTask CycleStepAsync(CancellationToken token)
         {
-            if (CurrentState() is not IConnectiveRoom.State.Running && connectionString != string.Empty)
+            if (CurrentState() is not IConnectiveRoom.State.Running)
             {
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    // No connection string set, abort the connection attempt
+                    attemptToConnectState.Set(AttemptToConnectState.NO_CONNECTION_REQUIRED);
+                    return;
+                }
+
                 await TryConnectToRoomAsync(connectionString, token);
             }
+
+            // Simulate connection state changes to prevent LiveKit disconnection messages
+            room.SimulateConnectionStateChanged();
         }
+
+
 
         // We override this to use fresh rooms instead of pooling, because right now reusing rooms causes issues with the audio.
         // TODO: We should use a pool of rooms, but we need to fix the audio issues first.
@@ -136,7 +179,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 new MemoryRoomInfo(),
                 videoStreams,
                 audioStreams,
-                null!
+                null
             );
 
             return new LogRoom(newRoom);
@@ -144,7 +187,24 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public static class Null
         {
-            public static readonly VoiceChatConnectiveRoom INSTANCE = new();
+            public static readonly IVoiceChatActivatableConnectiveRoom INSTANCE = new NullVoiceChatActivatableConnectiveRoom();
+        }
+
+        private class NullVoiceChatActivatableConnectiveRoom : IVoiceChatActivatableConnectiveRoom
+        {
+            public bool Activated { get; private set; } = true;
+            public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => IConnectiveRoom.ConnectionLoopHealth.Stopped;
+            public AttemptToConnectState AttemptToConnectState => AttemptToConnectState.NO_CONNECTION_REQUIRED;
+            public IConnectiveRoom.State CurrentState() => IConnectiveRoom.State.Stopped;
+            public IRoom Room() => NullRoom.INSTANCE;
+
+            public UniTask<bool> StartAsync() => UniTask.FromResult(true);
+            public UniTask StopAsync() => UniTask.CompletedTask;
+            public void Dispose() { }
+
+            public UniTask ActivateAsync() => UniTask.CompletedTask;
+            public UniTask DeactivateAsync() => UniTask.CompletedTask;
+            public UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString) => UniTask.FromResult(true);
         }
     }
 }

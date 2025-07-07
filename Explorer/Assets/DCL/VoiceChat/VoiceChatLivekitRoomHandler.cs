@@ -100,7 +100,7 @@ namespace DCL.VoiceChat
 
             if (!success)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatCallStatusService.RoomUrl}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Connection failed for room {voiceChatCallStatusService.RoomUrl}");
                 voiceChatCallStatusService.HandleLivekitConnectionFailed();
             }
         }
@@ -307,44 +307,14 @@ namespace DCL.VoiceChat
 
             if (remoteCount == 0)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] No remote participants in room, skipping reconnection attempts");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] No remote participants in room, skipping reconnection");
                 voiceChatCallStatusService.HandleLivekitConnectionFailed();
                 return;
             }
 
-            reconnectionAttempts = 0;
-            reconnectionCts = reconnectionCts.SafeRestart();
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Starting reconnection attempts");
-            AttemptReconnectionAsync(reconnectionCts.Token).Forget();
-        }
-
-        private async UniTaskVoid AttemptReconnectionAsync(CancellationToken ct)
-        {
-            while (!ct.IsCancellationRequested)
-            {
-                if (reconnectionAttempts >= configuration.MaxReconnectionAttempts)
-                {
-                    reconnectionAttempts = 0;
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Max reconnection attempts ({configuration.MaxReconnectionAttempts}) reached - calling HandleLivekitConnectionFailed");
-                    voiceChatCallStatusService.HandleLivekitConnectionFailed();
-                    return;
-                }
-
-                reconnectionAttempts++;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts}/{configuration.MaxReconnectionAttempts}");
-                await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct);
-
-                bool success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
-
-                if (success)
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnection successful");
-                    CleanupReconnectionState();
-                    return;
-                }
-
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts} failed");
-            }
+            // Let the room handle reconnection internally
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Unexpected disconnection - room will handle reconnection");
+            ConnectToRoomAsync().Forget();
         }
     }
 }
