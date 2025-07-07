@@ -92,9 +92,6 @@ namespace Global.Dynamic
             Uri realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
 
-            // Hides the debug UI during the initial flow
-            debugUiRoot.rootVisualElement.EnsureNotNull().style.display = DisplayStyle.None;
-
             // Initialize .NET logging ASAP since it might be used by another systems
             // Otherwise we might get exceptions in different platforms
             DotNetLoggingPlugin.Initialize();
