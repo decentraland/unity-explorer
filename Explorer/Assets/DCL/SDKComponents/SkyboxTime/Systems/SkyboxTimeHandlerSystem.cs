@@ -76,8 +76,8 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
                 return;
             }
-
-            ResetSDKControlled();
+            if(skyboxSettings.IsSDKControlled)
+                ResetSDKControlled();
         }
 
         private void ResetSDKControlled()

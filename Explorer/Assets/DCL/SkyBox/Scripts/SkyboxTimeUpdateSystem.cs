@@ -61,14 +61,14 @@ namespace DCL.SkyBox
             scene = sceneFacade;
             hasSceneOverride = false;
             hasCheckedCurrentScene = false;
-            skyboxSpeedMultiplier = skyboxSettings.SpeedMultiplier;
 
-            if (sceneFacade == null && !ffSkyboxSettings.HasValue)
+            if (sceneFacade == null && !ffSkyboxSettings.HasValue && !skyboxSettings.IsUIControlled)
                 TransitionToGlobalTime();
         }
 
         private void TransitionToGlobalTime()
         {
+            skyboxSpeedMultiplier = skyboxSettings.SpeedMultiplier;
             skyboxSettings.IsDayCycleEnabled = true;
             skyboxSettings.TransitionMode = TransitionMode.FORWARD;
             skyboxSettings.IsTransitioning = true;
