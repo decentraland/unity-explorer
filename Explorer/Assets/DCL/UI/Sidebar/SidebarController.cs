@@ -282,7 +282,6 @@ namespace DCL.UI.Sidebar
                 ownProfile.UserId,
                 ct);
 
-            includeMarketplaceCredits = false;
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);

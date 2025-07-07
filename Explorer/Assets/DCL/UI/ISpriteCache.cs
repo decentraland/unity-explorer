@@ -38,7 +38,7 @@ namespace DCL.UI
         /// </summary>
         /// <param name="imageUrl">The URL from where the image was obtained.</param>
         /// <param name="imageContent">The new content. If the image already exists, it will be replaced.</param>
-        void AddOrReplaceCachedSprite(string imageUrl, Sprite imageContent);
+        void AddOrReplaceCachedSprite(string? imageUrl, Sprite imageContent);
 
         /// <summary>
         /// Empties all the buffers and cache.

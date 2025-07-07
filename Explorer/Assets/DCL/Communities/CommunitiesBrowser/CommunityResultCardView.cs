@@ -3,7 +3,6 @@ using DCL.UI.ProfileElements;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
-using DCL.WebRequests;
 using DG.Tweening;
 using System;
 using TMPro;
@@ -16,37 +15,37 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class CommunityResultCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private Tweener descriptionTween;
+        private Tweener? descriptionTween;
         private const float HOVER_ANIMATION_DURATION = 0.3f;
         private const float HOVER_ANIMATION_HEIGHT_TO_APPLY = 45f;
 
-        public event Action<string> MainButtonClicked;
-        public event Action<string> ViewCommunityButtonClicked;
-        public event Action<string, CommunityResultCardView> JoinCommunityButtonClicked;
+        public event Action<string>? MainButtonClicked;
+        public event Action<string>? ViewCommunityButtonClicked;
+        public event Action<string, CommunityResultCardView>? JoinCommunityButtonClicked;
 
         private const string PUBLIC_PRIVACY_TEXT = "Public";
         private const string PRIVATE_PRIVACY_TEXT = "Private";
         private const string MEMBERS_COUNTER_FORMAT = "{0} Members";
 
-        [SerializeField] private RectTransform headerContainer;
-        [SerializeField] private RectTransform footerContainer;
-        [SerializeField] private TMP_Text communityTitle;
-        [SerializeField] private TMP_Text communityDescription;
-        [SerializeField] private CanvasGroup communityDescriptionCanvasGroup;
-        [SerializeField] private ImageView communityThumbnail;
-        [SerializeField] private Image communityPrivacyIcon;
-        [SerializeField] private Sprite publicPrivacySprite;
-        [SerializeField] private Sprite privatePrivacySprite;
-        [SerializeField] private TMP_Text communityPrivacyText;
-        [SerializeField] private TMP_Text communityMembersCountText;
-        [SerializeField] private GameObject communityLiveMark;
-        [SerializeField] private Button mainButton;
-        [SerializeField] private GameObject buttonsContainer;
-        [SerializeField] private Button viewCommunityButton;
-        [SerializeField] private Button joinCommunityButton;
-        [SerializeField] private GameObject joiningLoading;
+        [SerializeField] private RectTransform headerContainer = null!;
+        [SerializeField] private RectTransform footerContainer = null!;
+        [SerializeField] private TMP_Text communityTitle = null!;
+        [SerializeField] private TMP_Text communityDescription = null!;
+        [SerializeField] private CanvasGroup communityDescriptionCanvasGroup = null!;
+        [SerializeField] private ImageView communityThumbnail = null!;
+        [SerializeField] private Image communityPrivacyIcon = null!;
+        [SerializeField] private Sprite publicPrivacySprite = null!;
+        [SerializeField] private Sprite privatePrivacySprite = null!;
+        [SerializeField] private TMP_Text communityPrivacyText = null!;
+        [SerializeField] private TMP_Text communityMembersCountText = null!;
+        [SerializeField] private GameObject communityLiveMark = null!;
+        [SerializeField] private Button mainButton = null!;
+        [SerializeField] private GameObject buttonsContainer = null!;
+        [SerializeField] private Button viewCommunityButton = null!;
+        [SerializeField] private Button joinCommunityButton = null!;
+        [SerializeField] private GameObject joiningLoading = null!;
         [SerializeField] private MutualFriendsConfig mutualFriends;
-        [SerializeField] private Sprite defaultThumbnailSprite;
+        [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
         [Serializable]
         internal struct MutualFriendsConfig
@@ -61,18 +60,32 @@ namespace DCL.Communities.CommunitiesBrowser
             }
         }
 
-        private ImageController imageController;
-        private string currentCommunityId;
-        private Tweener headerTween;
-        private Tweener footerTween;
+        private ImageController? imageController;
+        private string? currentCommunityId;
+        private Tweener? headerTween;
+        private Tweener? footerTween;
         private Vector2 originalHeaderSizeDelta;
         private Vector2 originalFooterSizeDelta;
 
         private void Awake()
         {
-            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
-            viewCommunityButton.onClick.AddListener(() => ViewCommunityButtonClicked?.Invoke(currentCommunityId));
-            joinCommunityButton.onClick.AddListener(() => JoinCommunityButtonClicked?.Invoke(currentCommunityId, this));
+            mainButton.onClick.AddListener(() =>
+            {
+                if (currentCommunityId != null)
+                    MainButtonClicked?.Invoke(currentCommunityId);
+            });
+
+            viewCommunityButton.onClick.AddListener(() =>
+            {
+                if (currentCommunityId != null)
+                    ViewCommunityButtonClicked?.Invoke(currentCommunityId);
+            });
+
+            joinCommunityButton.onClick.AddListener(() =>
+            {
+                if (currentCommunityId != null)
+                    JoinCommunityButtonClicked?.Invoke(currentCommunityId, this);
+            });
 
             originalHeaderSizeDelta = headerContainer.sizeDelta;
             originalFooterSizeDelta = footerContainer.sizeDelta;
@@ -98,9 +111,9 @@ namespace DCL.Communities.CommunitiesBrowser
             imageController = new ImageController(communityThumbnail, cache);
         }
 
-        public void SetCommunityThumbnail(string imageUrl)
+        public void SetCommunityThumbnail(string? imageUrl)
         {
-            imageController.SetImage(defaultThumbnailSprite);
+            imageController?.SetImage(defaultThumbnailSprite);
 
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);

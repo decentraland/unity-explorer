@@ -9,21 +9,25 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class MyCommunityCardView : MonoBehaviour
     {
-        public event Action<string> MainButtonClicked;
+        public event Action<string>? MainButtonClicked;
 
-        [SerializeField] private TMP_Text communityTitle;
-        [SerializeField] private GameObject userRoleContainer;
-        [SerializeField] private TMP_Text userRole;
-        [SerializeField] private ImageView communityThumbnail;
-        [SerializeField] private GameObject communityLiveMark;
-        [SerializeField] private Button mainButton;
-        [SerializeField] private Sprite defaultThumbnailSprite;
+        [SerializeField] private TMP_Text communityTitle = null!;
+        [SerializeField] private GameObject userRoleContainer = null!;
+        [SerializeField] private TMP_Text userRole = null!;
+        [SerializeField] private ImageView communityThumbnail = null!;
+        [SerializeField] private GameObject communityLiveMark = null!;
+        [SerializeField] private Button mainButton = null!;
+        [SerializeField] private Sprite defaultThumbnailSprite = null!;
 
-        private ImageController imageController;
-        private string currentCommunityId;
+        private ImageController? imageController;
+        private string? currentCommunityId;
 
         private void Awake() =>
-            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
+            mainButton.onClick.AddListener(() =>
+            {
+                if (currentCommunityId != null)
+                    MainButtonClicked?.Invoke(currentCommunityId);
+            });
 
         private void OnDestroy() =>
             mainButton.onClick.RemoveAllListeners();
@@ -38,9 +42,9 @@ namespace DCL.Communities.CommunitiesBrowser
             imageController = new ImageController(communityThumbnail, cache);
         }
 
-        public void SetCommunityThumbnail(string imageUrl)
+        public void SetCommunityThumbnail(string? imageUrl)
         {
-            imageController.SetImage(defaultThumbnailSprite);
+            imageController?.SetImage(defaultThumbnailSprite);
 
             if (!string.IsNullOrEmpty(imageUrl))
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);

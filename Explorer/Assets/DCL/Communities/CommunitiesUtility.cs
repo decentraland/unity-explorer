@@ -8,7 +8,7 @@ namespace DCL.Communities
 
         public static string NumberToCompactString(long number)
         {
-            int charsWritten = 0;
+            var charsWritten = 0;
             Span<char> destination = stackalloc char[16];
 
             switch (number)

@@ -89,7 +89,7 @@ namespace DCL.Passport.Fields
                 }
             }
 
-            EditionDropdown.value = selectedIndex;
+            EditionDropdown.SetValueWithoutNotify(selectedIndex);
             EditionTextInput.text = value;
 
             EditionDropdown.gameObject.SetActive(isInEditMode && selectedIndex < EditionDropdown.options.Count - 1);
