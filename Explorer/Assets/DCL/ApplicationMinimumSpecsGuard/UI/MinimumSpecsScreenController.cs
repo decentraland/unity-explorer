@@ -62,7 +62,6 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private void OnContinueClicked()
         {
             analytics.Track(AnalyticsEvents.UI.SKIP_MINIMUM_REQUIREMENTS_SCREEN);
-            SentrySdk.AddBreadcrumb("Skipping minimum requirements warning screen");
             HoldingTask?.TrySetResult();
         }
 

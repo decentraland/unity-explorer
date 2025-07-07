@@ -318,7 +318,13 @@ namespace Global.Dynamic
             bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
             bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
             bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
-            
+
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
+            });
+
+
             bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
 
             if (!shouldShowScreen)
