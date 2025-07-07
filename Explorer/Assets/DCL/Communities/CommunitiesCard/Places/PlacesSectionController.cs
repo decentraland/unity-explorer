@@ -79,7 +79,7 @@ namespace DCL.Communities.CommunitiesCard.Places
             this.webBrowser = webBrowser;
             this.thumbnailLoader = thumbnailLoader;
 
-            view.InitGrid(() => currentSectionFetchData, thumbnailLoader, cancellationToken);
+            view.InitGrid(thumbnailLoader, cancellationToken);
 
             view.AddPlaceRequested += OnAddPlaceClicked;
 
@@ -142,7 +142,7 @@ namespace DCL.Communities.CommunitiesCard.Places
                 }
 
                 placesFetchData.Items.RemoveAll(elem => elem.id.Equals(placeInfo.id));
-                view.RefreshGrid(false);
+                RefreshGrid(false);
             }
         }
 

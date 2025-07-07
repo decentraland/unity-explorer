@@ -84,7 +84,7 @@ namespace DCL.WebRequests
         public readonly Dictionary<string, string> AsMutableDictionary() =>
             values?.ToDictionary(e => e.Name, e => e.Value) ?? new Dictionary<string, string>();
 
-        public override readonly string ToString()
+        public readonly override string ToString()
         {
             if (values == null) return "WebRequestHeadersInfo: EMPTY";
 

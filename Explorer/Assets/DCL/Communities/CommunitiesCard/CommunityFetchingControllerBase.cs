@@ -11,7 +11,7 @@ namespace DCL.Communities.CommunitiesCard
     ///         - Handling the fetch logic + loading and empty states
     /// </summary>
     public abstract class CommunityFetchingControllerBase<T, U> : IDisposable
-    where U : ICommunityFetchingView
+        where U: ICommunityFetchingView<T>
     {
         private readonly int pageSize;
         protected CancellationToken cancellationToken;
@@ -65,17 +65,20 @@ namespace DCL.Communities.CommunitiesCard
 
                 view.SetEmptyStateActive(membersData.TotalToFetch == 0);
 
-                view.RefreshGrid(count == membersData.Items.Count);
+                view.RefreshGrid(currentSectionFetchData, count == membersData.Items.Count);
             }
             finally { isFetching = false; }
         }
 
         protected abstract UniTask<int> FetchDataAsync(CancellationToken ct);
 
+        protected void RefreshGrid(bool redraw) =>
+            view.RefreshGrid(currentSectionFetchData, redraw);
+
         public virtual void Reset()
         {
             isFetching = false;
-            view.RefreshGrid(true);
+            RefreshGrid(true);
         }
     }
 }

@@ -17,5 +17,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
         void Hide();
 
         void Show();
+
+        void SetTextureScale(Vector2 texScale);
     }
 }

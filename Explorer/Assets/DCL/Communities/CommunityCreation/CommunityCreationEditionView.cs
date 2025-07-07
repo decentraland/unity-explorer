@@ -20,57 +20,56 @@ namespace DCL.Communities.CommunityCreation
         private const string EDIT_COMMUNITY_TITLE = "Edit Community";
         private const string PLACES_DROPDOWN_TITLE = "Select LAND or World";
 
-        public Action CancelButtonClicked;
-        public Action GetNameButtonClicked;
-        public Action SelectProfilePictureButtonClicked;
-        public Action<string, string, List<string>, List<string>> CreateCommunityButtonClicked;
-        public Action<string, string, List<string>, List<string>> SaveCommunityButtonClicked;
-        public Action<int> AddPlaceButtonClicked;
-        public Action<int> RemovePlaceButtonClicked;
+        public Action? CancelButtonClicked;
+        public Action? GetNameButtonClicked;
+        public Action? SelectProfilePictureButtonClicked;
+        public Action<string, string, List<string>, List<string>>? CreateCommunityButtonClicked;
+        public Action<string, string, List<string>, List<string>>? SaveCommunityButtonClicked;
+        public Action<int>? AddPlaceButtonClicked;
+        public Action<int>? RemovePlaceButtonClicked;
 
-        [SerializeField] public Button backgroundCloseButton;
+        [SerializeField] public Button backgroundCloseButton = null!;
 
         [Header("Get Name Panel")]
-        [SerializeField] private GameObject getNamePanel;
-        [SerializeField] private TMP_Text getNamePanelDescriptionText;
-        [SerializeField] private Button getNamePanelGetNameButton;
-        [SerializeField] private Button getNamePanelCancelButton;
-        [SerializeField] private AudioClipConfig clickOnLinksAudio;
+        [SerializeField] private GameObject getNamePanel = null!;
+        [SerializeField] private TMP_Text getNamePanelDescriptionText = null!;
+        [SerializeField] private Button getNamePanelGetNameButton = null!;
+        [SerializeField] private Button getNamePanelCancelButton = null!;
+        [SerializeField] private AudioClipConfig clickOnLinksAudio = null!;
 
         [Header("Creation / Edition Panel")]
-        [SerializeField] private GameObject creationPanel;
-        [SerializeField] private GameObject creationPanelContent;
-        [SerializeField] private GameObject creationPanelMainLoadingSpinner;
-        [SerializeField] private TMP_Text creationPanelTitleText;
-        [SerializeField] private ScrollRect creationPanelScrollRect;
-        [SerializeField] private Button creationPanelEditProfilePictureButton;
-        [SerializeField] private GameObject creationPanelProfilePictureIcon;
-        [SerializeField] private ImageView creationPanelProfileSelectedImage;
-        [SerializeField] private Sprite creationPanelProfileDefaultSelectedImage;
-        [SerializeField] private TMP_InputField creationPanelCommunityNameInputField;
-        [SerializeField] private GameObject creationPanelCommunityNameInputFieldOutline;
-        [SerializeField] private TMP_Text creationPanelCommunityNameCharCounter;
-        [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField;
-        [SerializeField] private GameObject creationPanelCommunityDescriptionInputFieldOutline;
-        [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter;
-        [SerializeField] private SelectorButtonView creationPanelPlacesDropdown;
-        [SerializeField] private Transform placeTagsContainer;
-        [SerializeField] private CommunityPlaceTag placeTagPrefab;
-        [SerializeField] private Button creationPanelCancelButton;
-        [SerializeField] private Button creationPanelCreateButton;
-        [SerializeField] private TMP_Text creationPanelCreateButtonText;
-        [SerializeField] private GameObject creationPanelCreateButtonLoading;
+        [SerializeField] private GameObject creationPanel = null!;
+        [SerializeField] private GameObject creationPanelContent = null!;
+        [SerializeField] private GameObject creationPanelMainLoadingSpinner = null!;
+        [SerializeField] private TMP_Text creationPanelTitleText = null!;
+        [SerializeField] private ScrollRect creationPanelScrollRect = null!;
+        [SerializeField] private Button creationPanelEditProfilePictureButton = null!;
+        [SerializeField] private GameObject creationPanelProfilePictureIcon = null!;
+        [SerializeField] private ImageView creationPanelProfileSelectedImage = null!;
+        [SerializeField] private Sprite creationPanelProfileDefaultSelectedImage = null!;
+        [SerializeField] private TMP_InputField creationPanelCommunityNameInputField = null!;
+        [SerializeField] private GameObject creationPanelCommunityNameInputFieldOutline = null!;
+        [SerializeField] private TMP_Text creationPanelCommunityNameCharCounter = null!;
+        [SerializeField] private TMP_InputField creationPanelCommunityDescriptionInputField = null!;
+        [SerializeField] private GameObject creationPanelCommunityDescriptionInputFieldOutline = null!;
+        [SerializeField] private TMP_Text creationPanelCommunityDescriptionCharCounter = null!;
+        [SerializeField] private SelectorButtonView creationPanelPlacesDropdown = null!;
+        [SerializeField] private Transform placeTagsContainer = null!;
+        [SerializeField] private CommunityPlaceTag placeTagPrefab = null!;
+        [SerializeField] private Button creationPanelCancelButton = null!;
+        [SerializeField] private Button creationPanelCreateButton = null!;
+        [SerializeField] private TMP_Text creationPanelCreateButtonText = null!;
+        [SerializeField] private GameObject creationPanelCreateButtonLoading = null!;
 
         [field: Header("Common")]
-        [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; }
+        [field: SerializeField] public WarningNotificationView WarningNotificationView { get; private set; } = null!;
 
         private readonly List<CommunityPlaceTag> currentPlaceTags = new();
 
         private bool isEditionMode;
-        private bool isDefaultImageSelected;
 
-        private CancellationTokenSource updateScrollPositionCts;
-        private CancellationTokenSource thumbnailLoadingCts;
+        private CancellationTokenSource? updateScrollPositionCts;
+        private CancellationTokenSource? thumbnailLoadingCts;
 
         private void Awake()
         {
@@ -175,7 +174,6 @@ namespace DCL.Communities.CommunityCreation
 
         public void SetProfileSelectedImage(string imageUrl, ThumbnailLoader thumbnailLoader)
         {
-            isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(true);
             creationPanelProfilePictureIcon.SetActive(false);
 
@@ -187,13 +185,11 @@ namespace DCL.Communities.CommunityCreation
             else
             {
                 creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage);
-                isDefaultImageSelected = true;
             }
         }
 
-        public void SetProfileSelectedImage(Sprite sprite)
+        public void SetProfileSelectedImage(Sprite? sprite)
         {
-            isDefaultImageSelected = false;
             creationPanelProfileSelectedImage.gameObject.SetActive(sprite is not null);
             creationPanelProfilePictureIcon.SetActive(!creationPanelProfileSelectedImage.gameObject.activeSelf);
             creationPanelProfileSelectedImage.SetImage(sprite);
@@ -301,7 +297,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityNameInputFieldOutline.SetActive(true);
         }
 
-        private void CreationPanelCommunityNameInputDeselected(string _)
+        private void CreationPanelCommunityNameInputDeselected(string? _)
         {
             creationPanelCommunityNameCharCounter.gameObject.SetActive(false);
             creationPanelCommunityNameInputFieldOutline.SetActive(false);
@@ -319,7 +315,7 @@ namespace DCL.Communities.CommunityCreation
             creationPanelCommunityDescriptionCharCounter.gameObject.SetActive(true);
         }
 
-        private void CreationPanelCommunityDescriptionInputDeselected(string _)
+        private void CreationPanelCommunityDescriptionInputDeselected(string? _)
         {
             creationPanelCommunityDescriptionInputFieldOutline.SetActive(false);
             creationPanelCommunityDescriptionCharCounter.gameObject.SetActive(false);

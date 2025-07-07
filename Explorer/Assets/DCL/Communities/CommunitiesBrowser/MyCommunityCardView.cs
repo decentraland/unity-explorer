@@ -8,19 +8,23 @@ namespace DCL.Communities.CommunitiesBrowser
 {
     public class MyCommunityCardView : MonoBehaviour
     {
-        public event Action<string> MainButtonClicked;
+        public event Action<string>? MainButtonClicked;
 
-        [SerializeField] private TMP_Text communityTitle;
-        [SerializeField] private GameObject userRoleContainer;
-        [SerializeField] private TMP_Text userRole;
-        [field: SerializeField] public ImageView communityThumbnail;
-        [SerializeField] private GameObject communityLiveMark;
-        [SerializeField] private Button mainButton;
+        [SerializeField] private TMP_Text communityTitle = null!;
+        [SerializeField] private GameObject userRoleContainer = null!;
+        [SerializeField] private TMP_Text userRole = null!;
+        [field: SerializeField] public ImageView communityThumbnail = null!;
+        [SerializeField] private GameObject communityLiveMark = null!;
+        [SerializeField] private Button mainButton = null!;
 
         private string currentCommunityId;
 
         private void Awake() =>
-            mainButton.onClick.AddListener(() => MainButtonClicked?.Invoke(currentCommunityId));
+            mainButton.onClick.AddListener(() =>
+            {
+                if (currentCommunityId != null)
+                    MainButtonClicked?.Invoke(currentCommunityId);
+            });
 
         private void OnDestroy() =>
             mainButton.onClick.RemoveAllListeners();

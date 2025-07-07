@@ -2,6 +2,7 @@ using Crosstales;
 using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -40,15 +41,17 @@ namespace DCL.Communities.CommunityCreation
         private readonly ICommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
+        private readonly IMVCManager mvcManager;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
-        private CancellationTokenSource createCommunityCts;
-        private CancellationTokenSource loadPanelCts;
-        private CancellationTokenSource showErrorCts;
-        private CancellationTokenSource openImageSelectionCts;
+        private CancellationTokenSource? createCommunityCts;
+        private CancellationTokenSource? loadPanelCts;
+        private CancellationTokenSource? showErrorCts;
+        private CancellationTokenSource? openImageSelectionCts;
+        private CancellationTokenSource? openCommunityCardAfterCreationCts;
 
-        private Sprite lastSelectedProfileThumbnail;
+        private Sprite? lastSelectedProfileThumbnail;
         private bool isProfileThumbnailDirty;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -62,8 +65,8 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
         private readonly List<CommunityPlace> addedCommunityPlaces = new ();
-        private byte[] lastSelectedImageData;
-        private ThumbnailLoader thumbnailLoader;
+        private byte[]? lastSelectedImageData;
+        private ThumbnailLoader? thumbnailLoader;
 
         public CommunityCreationEditionController(
             ViewFactoryMethod viewFactory,
@@ -71,13 +74,15 @@ namespace DCL.Communities.CommunityCreation
             IInputBlock inputBlock,
             ICommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile) : base(viewFactory)
+            ISelfProfile selfProfile,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.dataProvider = dataProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
+            this.mvcManager = mvcManager;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -111,7 +116,7 @@ namespace DCL.Communities.CommunityCreation
 
         protected override void OnViewClose()
         {
-            viewInstance.CleanCreationPanel();
+            viewInstance!.CleanCreationPanel();
             RestoreInput();
 
             createCommunityCts?.SafeCancelAndDispose();
@@ -137,6 +142,7 @@ namespace DCL.Communities.CommunityCreation
             loadPanelCts?.SafeCancelAndDispose();
             showErrorCts?.SafeCancelAndDispose();
             openImageSelectionCts?.SafeCancelAndDispose();
+            openCommunityCardAfterCreationCts?.SafeCancelAndDispose();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -164,7 +170,7 @@ namespace DCL.Communities.CommunityCreation
                 return;
 
             webBrowser.OpenUrl($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
-            viewInstance.PlayOnLinkClickAudio();
+            viewInstance!.PlayOnLinkClickAudio();
         }
 
         private void GoToGetNameLink() =>
@@ -432,6 +438,9 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
+
+            openCommunityCardAfterCreationCts = openCommunityCardAfterCreationCts.SafeRestart();
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, thumbnailLoader!.Cache)), openCommunityCardAfterCreationCts.Token).Forget();
         }
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds)
@@ -462,9 +471,9 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            if (isProfileThumbnailDirty)
+            if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
             {
-                thumbnailLoader.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
                 isProfileThumbnailDirty = false;
                 lastSelectedProfileThumbnail = null;
             }

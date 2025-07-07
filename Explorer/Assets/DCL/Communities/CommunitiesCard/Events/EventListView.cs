@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace DCL.Communities.CommunitiesCard.Events
 {
-    public class EventListView : MonoBehaviour, ICommunityFetchingView
+    public class EventListView : MonoBehaviour, ICommunityFetchingView<PlaceAndEventDTO>
     {
         private const int ELEMENT_MISSING_THRESHOLD = 5;
 
@@ -31,7 +31,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         public event Action<PlaceAndEventDTO>? EventShareButtonClicked;
         public event Action<PlaceAndEventDTO>? EventCopyLinkButtonClicked;
 
-        private Func<SectionFetchData<PlaceAndEventDTO>> getEventsFetchData = null!;
+        private SectionFetchData<PlaceAndEventDTO> eventsFetchData = null!;
         private bool canModify;
         private PlaceAndEventDTO lastClickedEventCtx;
         private CancellationToken cancellationToken;
@@ -53,19 +53,17 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.canModify = canModify;
         }
 
-        public void InitList(Func<SectionFetchData<PlaceAndEventDTO>> currentSectionDataFunc,
-            ThumbnailLoader newThumbnailLoader,
+        public void InitList(ThumbnailLoader newThumbnailLoader,
             CancellationToken panelCancellationToken)
         {
             loopList.InitListView(0, GetLoopListItemByIndex);
-            getEventsFetchData = currentSectionDataFunc;
             cancellationToken = panelCancellationToken;
             this.thumbnailLoader = newThumbnailLoader;
         }
 
         private LoopListViewItem2 GetLoopListItemByIndex(LoopListView2 loopListView, int index)
         {
-            SectionFetchData<PlaceAndEventDTO> eventData = getEventsFetchData();
+            SectionFetchData<PlaceAndEventDTO> eventData = eventsFetchData;
 
             LoopListViewItem2 item = loopList.NewListViewItem(loopList.ItemPrefabDataList[0].mItemPrefab.name);
             EventListItemView itemView = item.GetComponent<EventListItemView>();
@@ -92,9 +90,10 @@ namespace DCL.Communities.CommunitiesCard.Events
                 actionOnHide: () => eventListItemView.CanPlayUnHoverAnimation = true), cancellationToken);
         }
 
-        public void RefreshGrid(bool redraw)
+        public void RefreshGrid(SectionFetchData<PlaceAndEventDTO> data, bool redraw)
         {
-            loopList.SetListItemCount(getEventsFetchData().Items.Count, false);
+            eventsFetchData = data;
+            loopList.SetListItemCount(data.Items.Count, false);
 
             if (redraw)
                 loopList.RefreshAllShownItem();

@@ -44,11 +44,11 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISpriteCache spriteCache;
         private readonly ThumbnailLoader thumbnailLoader;
 
-        private CancellationTokenSource loadMyCommunitiesCts;
-        private CancellationTokenSource loadResultsCts;
-        private CancellationTokenSource searchCancellationCts;
-        private CancellationTokenSource showErrorCts;
-        private CancellationTokenSource openCommunityCreationCts;
+        private CancellationTokenSource? loadMyCommunitiesCts;
+        private CancellationTokenSource? loadResultsCts;
+        private CancellationTokenSource? searchCancellationCts;
+        private CancellationTokenSource? showErrorCts;
+        private CancellationTokenSource? openCommunityCreationCts;
 
         private bool isSectionActivated;
         private string currentNameFilter;

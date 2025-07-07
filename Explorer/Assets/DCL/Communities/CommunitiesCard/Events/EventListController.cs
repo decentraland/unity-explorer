@@ -73,7 +73,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
 
-            view.InitList(() => currentSectionFetchData, thumbnailLoader, cancellationToken);
+            view.InitList(thumbnailLoader, cancellationToken);
 
             view.OpenWizardRequested += OnOpenWizardRequested;
             view.MainButtonClicked += OnMainButtonClicked;
@@ -198,7 +198,7 @@ namespace DCL.Communities.CommunitiesCard.Events
                 eventPlaceIds.Add(item.place_id);
 
             Result<PlacesData.PlacesAPIResponse> placesResponse = await placesAPIService.GetPlacesByIdsAsync(eventPlaceIds, ct)
-                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                                                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
                 return 0;
