@@ -1,6 +1,7 @@
 
 using System;
 
+// ReSharper disable InconsistentNaming
 namespace DCL.Communities
 {
     [Serializable]
