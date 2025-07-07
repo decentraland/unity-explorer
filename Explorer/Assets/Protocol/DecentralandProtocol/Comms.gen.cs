@@ -56,20 +56,20 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "ASgIEhQKDGlzX2xvbmdfZmFsbBgNIAEoCBISCgppc19mYWxsaW5nGA4gASgI",
             "EhIKCmlzX3N0dW5uZWQYDyABKAgSEgoKcm90YXRpb25feRgQIAEoAhISCgpp",
             "c19pbnN0YW50GBEgASgIIkIKEk1vdmVtZW50Q29tcHJlc3NlZBIVCg10ZW1w",
-            "b3JhbF9kYXRhGAEgASgFEhUKDW1vdmVtZW50X2RhdGEYAiABKAMiRQoLUGxh",
-            "eWVyRW1vdGUSFgoOaW5jcmVtZW50YWxfaWQYASABKA0SCwoDdXJuGAIgASgJ",
-            "EhEKCXRpbWVzdGFtcBgDIAEoAiI1CgpTY2VuZUVtb3RlEhcKD3NjZW5lX2Vu",
-            "dGl0eV9pZBgBIAEoCRIOCgZzb3VyY2UYAiABKAkiMQoWQW5ub3VuY2VQcm9m",
-            "aWxlVmVyc2lvbhIXCg9wcm9maWxlX3ZlcnNpb24YASABKA0iOgoOUHJvZmls",
-            "ZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9wcm9maWxlX3ZlcnNpb24Y",
-            "AyABKA0iPwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNlcmlhbGl6ZWRfcHJvZmls",
-            "ZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSJaCgRDaGF0Eg8KB21lc3NhZ2UY",
-            "ASABKAkSEQoJdGltZXN0YW1wGAIgASgBEhsKDmZvcndhcmRlZF9mcm9tGAMg",
-            "ASgJSACIAQFCEQoPX2ZvcndhcmRlZF9mcm9tIicKBVNjZW5lEhAKCHNjZW5l",
-            "X2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNlEhcKD2VuY29kZWRf",
-            "c2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVjb2RlYxgDIAEoDjIw",
-            "LmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5Wb2ljZS5Wb2ljZUNv",
-            "ZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZwcm90bzM="));
+            "b3JhbF9kYXRhGAEgASgFEhUKDW1vdmVtZW50X2RhdGEYAiABKAMiLQoLUGxh",
+            "eWVyRW1vdGUSEQoJdGltZXN0YW1wGAEgASgCEgsKA3VybhgCIAEoCSI1CgpT",
+            "Y2VuZUVtb3RlEhcKD3NjZW5lX2VudGl0eV9pZBgBIAEoCRIOCgZzb3VyY2UY",
+            "AiABKAkiMQoWQW5ub3VuY2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxlX3Zl",
+            "cnNpb24YASABKA0iOgoOUHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEo",
+            "CRIXCg9wcm9maWxlX3ZlcnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3BvbnNl",
+            "EhoKEnNlcmlhbGl6ZWRfcHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEo",
+            "CSJaCgRDaGF0Eg8KB21lc3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgB",
+            "EhsKDmZvcndhcmRlZF9mcm9tGAMgASgJSACIAQFCEQoPX2ZvcndhcmRlZF9m",
+            "cm9tIicKBVNjZW5lEhAKCHNjZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwi",
+            "iwEKBVZvaWNlEhcKD2VuY29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgC",
+            "IAEoDRI/CgVjb2RlYxgDIAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29t",
+            "bXMucmZjNC5Wb2ljZS5Wb2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNf",
+            "T1BVUxAAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
@@ -77,7 +77,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned", "RotationY", "IsInstant" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed), global::Decentraland.Kernel.Comms.Rfc4.MovementCompressed.Parser, new[]{ "TemporalData", "MovementData" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn", "Timestamp" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "Timestamp", "Urn" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.SceneEmote), global::Decentraland.Kernel.Comms.Rfc4.SceneEmote.Parser, new[]{ "SceneEntityId", "Source" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion), global::Decentraland.Kernel.Comms.Rfc4.AnnounceProfileVersion.Parser, new[]{ "ProfileVersion" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest), global::Decentraland.Kernel.Comms.Rfc4.ProfileRequest.Parser, new[]{ "Address", "ProfileVersion" }, null, null, null, null),
@@ -2409,9 +2409,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PlayerEmote(PlayerEmote other) : this() {
-      incrementalId_ = other.incrementalId_;
-      urn_ = other.urn_;
       timestamp_ = other.timestamp_;
+      urn_ = other.urn_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2421,15 +2420,15 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       return new PlayerEmote(this);
     }
 
-    /// <summary>Field number for the "incremental_id" field.</summary>
-    public const int IncrementalIdFieldNumber = 1;
-    private uint incrementalId_;
+    /// <summary>Field number for the "timestamp" field.</summary>
+    public const int TimestampFieldNumber = 1;
+    private float timestamp_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public uint IncrementalId {
-      get { return incrementalId_; }
+    public float Timestamp {
+      get { return timestamp_; }
       set {
-        incrementalId_ = value;
+        timestamp_ = value;
       }
     }
 
@@ -2442,18 +2441,6 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       get { return urn_; }
       set {
         urn_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "timestamp" field.</summary>
-    public const int TimestampFieldNumber = 3;
-    private float timestamp_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Timestamp {
-      get { return timestamp_; }
-      set {
-        timestamp_ = value;
       }
     }
 
@@ -2472,9 +2459,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (IncrementalId != other.IncrementalId) return false;
-      if (Urn != other.Urn) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Timestamp, other.Timestamp)) return false;
+      if (Urn != other.Urn) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2482,9 +2468,8 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (IncrementalId != 0) hash ^= IncrementalId.GetHashCode();
-      if (Urn.Length != 0) hash ^= Urn.GetHashCode();
       if (Timestamp != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Timestamp);
+      if (Urn.Length != 0) hash ^= Urn.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2503,17 +2488,13 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (IncrementalId != 0) {
-        output.WriteRawTag(8);
-        output.WriteUInt32(IncrementalId);
+      if (Timestamp != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Timestamp);
       }
       if (Urn.Length != 0) {
         output.WriteRawTag(18);
         output.WriteString(Urn);
-      }
-      if (Timestamp != 0F) {
-        output.WriteRawTag(29);
-        output.WriteFloat(Timestamp);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -2525,17 +2506,13 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (IncrementalId != 0) {
-        output.WriteRawTag(8);
-        output.WriteUInt32(IncrementalId);
+      if (Timestamp != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(Timestamp);
       }
       if (Urn.Length != 0) {
         output.WriteRawTag(18);
         output.WriteString(Urn);
-      }
-      if (Timestamp != 0F) {
-        output.WriteRawTag(29);
-        output.WriteFloat(Timestamp);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -2547,14 +2524,11 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (IncrementalId != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(IncrementalId);
+      if (Timestamp != 0F) {
+        size += 1 + 4;
       }
       if (Urn.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Urn);
-      }
-      if (Timestamp != 0F) {
-        size += 1 + 4;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2568,14 +2542,11 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (other == null) {
         return;
       }
-      if (other.IncrementalId != 0) {
-        IncrementalId = other.IncrementalId;
+      if (other.Timestamp != 0F) {
+        Timestamp = other.Timestamp;
       }
       if (other.Urn.Length != 0) {
         Urn = other.Urn;
-      }
-      if (other.Timestamp != 0F) {
-        Timestamp = other.Timestamp;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2592,16 +2563,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 8: {
-            IncrementalId = input.ReadUInt32();
+          case 13: {
+            Timestamp = input.ReadFloat();
             break;
           }
           case 18: {
             Urn = input.ReadString();
-            break;
-          }
-          case 29: {
-            Timestamp = input.ReadFloat();
             break;
           }
         }
@@ -2619,16 +2586,12 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 8: {
-            IncrementalId = input.ReadUInt32();
+          case 13: {
+            Timestamp = input.ReadFloat();
             break;
           }
           case 18: {
             Urn = input.ReadString();
-            break;
-          }
-          case 29: {
-            Timestamp = input.ReadFloat();
             break;
           }
         }

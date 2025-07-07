@@ -29,7 +29,6 @@ namespace DCL.Multiplayer.Emotes
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesDeduplication messageDeduplication;
-        private EmoteSendIdProvider sendIdProvider;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MutexSync sync = new();
@@ -62,32 +61,31 @@ namespace DCL.Multiplayer.Emotes
             if (cancellationTokenSource.IsCancellationRequested)
                 throw new Exception("EmoteMessagesBus is disposed");
 
-            uint sendId = sendIdProvider.GetNextID(emote, loopCyclePassed);
+            float timestamp = UnityEngine.Time.unscaledTime;
 
-            SendTo(emote, sendId, messagePipesHub.IslandPipe());
-            SendTo(emote, sendId, messagePipesHub.ScenePipe());
+            SendTo(emote, timestamp, messagePipesHub.IslandPipe());
+            SendTo(emote, timestamp, messagePipesHub.ScenePipe());
 
             if (settings.Value.SelfSending)
-                SelfSendWithDelayAsync(emote, sendId).Forget();
+                SelfSendWithDelayAsync(emote, timestamp).Forget();
         }
 
         public void OnPlayerRemoved(string walletId) =>
             messageDeduplication.RemoveWallet(walletId);
 
-        private void SendTo(URN emoteId, uint incrementalId, IMessagePipe messagePipe)
+        private void SendTo(URN emoteId, float timestamp, IMessagePipe messagePipe)
         {
             MessageWrap<PlayerEmote> emote = messagePipe.NewMessage<PlayerEmote>();
 
             emote.Payload.Urn = emoteId;
-            emote.Payload.IncrementalId = incrementalId;
-            emote.Payload.Timestamp = UnityEngine.Time.unscaledTime;
+            emote.Payload.Timestamp = timestamp;
             emote.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
-        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, uint id)
+        private async UniTaskVoid SelfSendWithDelayAsync(URN urn, float timestamp)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(LATENCY), cancellationToken: cancellationTokenSource.Token);
-            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, id, UnityEngine.Time.unscaledTime);
+            Inbox(RemotePlayerMovementComponent.TEST_ID, urn, timestamp);
         }
 
         private void OnMessageReceived(ReceivedMessage<PlayerEmote> receivedMessage)
@@ -100,16 +98,16 @@ namespace DCL.Multiplayer.Emotes
                     return;
                 }
 
-                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.IncrementalId, receivedMessage.Payload.Timestamp);
+                Inbox(receivedMessage.FromWalletId, receivedMessage.Payload.Urn, receivedMessage.Payload.Timestamp);
             }
         }
 
         private bool IsUserBlocked(string userAddress) =>
             userBlockingCacheProxy.Configured && userBlockingCacheProxy.Object!.UserIsBlocked(userAddress);
 
-        private void Inbox(string walletId, URN emoteURN, uint incrementalId, float timestamp)
+        private void Inbox(string walletId, URN emoteURN, float timestamp)
         {
-            if (messageDeduplication.TryPass(walletId, incrementalId) == false)
+            if (messageDeduplication.TryPass(walletId, timestamp) == false)
                 return;
 
             using (sync.GetScope())
