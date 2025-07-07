@@ -86,6 +86,11 @@ namespace DCL.UI
                     view.Image.DOColor(Color.white, view.imageLoadingFadeDuration);
                 }
             }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.ENGINE);
+            }
             finally
             {
                 view.LoadingObject.SetActive(false);
