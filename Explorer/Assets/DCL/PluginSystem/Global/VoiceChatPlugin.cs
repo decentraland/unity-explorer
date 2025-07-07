@@ -114,7 +114,12 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
-            controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            controller = new VoiceChatController(
+                mainUIView.VoiceChatView,
+                voiceChatCallStatusService,
+                voiceChatHandler,
+                profileDataProvider,
+                roomHub.VoiceChatRoom());
 
         }
 

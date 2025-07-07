@@ -1,8 +1,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.Multiplayer.Connections.Archipelago.Rooms.Chat;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatView view;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ProfileRepositoryWrapper profileDataProvider;
-        private readonly IRoom voiceChatRoom;
+        private readonly IVoiceChatActivatableConnectiveRoom voiceChatRoom;
         private readonly MicrophoneButtonController micController;
 
         private CancellationTokenSource cts;
@@ -26,7 +26,7 @@ namespace DCL.VoiceChat
             IVoiceChatCallStatusService voiceChatCallStatusService,
             VoiceChatMicrophoneHandler microphoneHandler,
             ProfileRepositoryWrapper profileDataProvider,
-            IRoom voiceChatRoom)
+            IVoiceChatActivatableConnectiveRoom voiceChatRoom)
         {
             this.view = view;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
@@ -50,14 +50,14 @@ namespace DCL.VoiceChat
             micController = new MicrophoneButtonController(list, microphoneHandler, view.MuteMicrophoneAudio, view.UnMuteMicrophoneAudio);
 
             this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
-            this.voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
-            this.voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
-            this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
+            this.voiceChatRoom.Room().Participants.UpdatesFromParticipant += OnParticipantUpdated;
+            this.voiceChatRoom.Room().ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
+            this.voiceChatRoom.ConnectionStateChanged += OnConnectionUpdated;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
+        private void OnConnectionUpdated(VoiceChatConnectionState voiceChatConnectionState)
         {
-            if (connectionUpdate == ConnectionUpdate.Connected)
+            if (voiceChatConnectionState == VoiceChatConnectionState.CONNECTED)
                 view.SetInCallSection();
         }
 
@@ -73,16 +73,16 @@ namespace DCL.VoiceChat
             string userName = string.Empty;
             await UniTask.SwitchToMainThread();
 
-            if (voiceChatRoom.ActiveSpeakers.Count == 1)
+            if (voiceChatRoom.Room().ActiveSpeakers.Count == 1)
             {
-                foreach (string activeSpeaker in voiceChatRoom.ActiveSpeakers)
+                foreach (string activeSpeaker in voiceChatRoom.Room().ActiveSpeakers)
                 {
                     Profile profileAsync = await profileDataProvider.GetProfileAsync(activeSpeaker, ct);
                     if (profileAsync != null) userName = profileAsync.Name;
                 }
             }
 
-            view.SetSpeakingStatus(voiceChatRoom.ActiveSpeakers.Count, userName);
+            view.SetSpeakingStatus(voiceChatRoom.Room().ActiveSpeakers.Count, userName);
         }
 
         private void OnParticipantUpdated(Participant participant, UpdateFromParticipant update)
@@ -129,8 +129,9 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             this.voiceChatCallStatusService.StatusChanged -= OnVoiceChatStatusChanged;
-            this.voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
-            this.voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            this.voiceChatRoom.Room().Participants.UpdatesFromParticipant -= OnParticipantUpdated;
+            this.voiceChatRoom.Room().ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
+            this.voiceChatRoom.ConnectionStateChanged -= OnConnectionUpdated;
             micController.Dispose();
         }
     }

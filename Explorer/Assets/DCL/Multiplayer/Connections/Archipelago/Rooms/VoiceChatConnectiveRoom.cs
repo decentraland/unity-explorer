@@ -24,19 +24,20 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
     public interface IVoiceChatActivatableConnectiveRoom : IActivatableConnectiveRoom
     {
         UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString);
+        event Action<VoiceChatConnectionState>? ConnectionStateChanged;
+    }
+
+    public enum VoiceChatConnectionState
+    {
+        DISCONNECTED,
+        CONNECTING,
+        CONNECTED,
+        RECONNECTING,
+        FAILED
     }
 
     public class VoiceChatConnectiveRoom : ConnectiveRoom
     {
-        public enum VoiceChatConnectionState
-        {
-            DISCONNECTED,
-            CONNECTING,
-            CONNECTED,
-            RECONNECTING,
-            FAILED
-        }
-
         public event Action<VoiceChatConnectionState>? ConnectionStateChanged;
 
         private class Activatable : ActivatableConnectiveRoom, IVoiceChatActivatableConnectiveRoom
@@ -50,11 +51,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
             public async UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString) =>
                 await origin.TrySetConnectionStringAndActivateAsync(newConnectionString);
+
+            public event Action<VoiceChatConnectionState>? ConnectionStateChanged
+            {
+                add => origin.ConnectionStateChanged += value;
+                remove => origin.ConnectionStateChanged -= value;
+            }
         }
 
         private const int CONNECTION_TIMEOUT_SECONDS = 60;
+        private const int RECONNECTION_TIMEOUT_SECONDS = 30;
         private string connectionString = string.Empty;
         private VoiceChatConnectionState currentConnectionState = VoiceChatConnectionState.DISCONNECTED;
+        private DateTime? reconnectionStartTime;
 
         private void NotifyConnectionStateChanged(VoiceChatConnectionState newState)
         {
@@ -192,22 +201,39 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private void OnHealthChanged(IConnectiveRoom.ConnectionLoopHealth newHealth)
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{logPrefix} - Connection loop health changed: {newHealth}");
-            
+
             switch (newHealth)
             {
                 case IConnectiveRoom.ConnectionLoopHealth.Running:
+                    reconnectionStartTime = null;
+
                     if (CurrentState() == IConnectiveRoom.State.Running)
                     {
                         NotifyConnectionStateChanged(VoiceChatConnectionState.CONNECTED);
                     }
                     break;
                 case IConnectiveRoom.ConnectionLoopHealth.CycleFailed:
+                    if (reconnectionStartTime == null)
+                    {
+                        reconnectionStartTime = DateTime.UtcNow;
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{logPrefix} - Starting low-level reconnection timer");
+                    }
+
+                    if (reconnectionStartTime.HasValue &&
+                        DateTime.UtcNow - reconnectionStartTime.Value > TimeSpan.FromSeconds(RECONNECTION_TIMEOUT_SECONDS))
+                    {
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{logPrefix} - Low-level reconnection timeout after {RECONNECTION_TIMEOUT_SECONDS} seconds - transitioning to FAILED");
+                        NotifyConnectionStateChanged(VoiceChatConnectionState.FAILED);
+                        return;
+                    }
                     NotifyConnectionStateChanged(VoiceChatConnectionState.RECONNECTING);
                     break;
                 case IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed:
+                    reconnectionStartTime = null;
                     NotifyConnectionStateChanged(VoiceChatConnectionState.FAILED);
                     break;
                 case IConnectiveRoom.ConnectionLoopHealth.Stopped:
+                    reconnectionStartTime = null;
                     NotifyConnectionStateChanged(VoiceChatConnectionState.DISCONNECTED);
                     break;
             }
@@ -291,6 +317,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             public UniTask ActivateAsync() => UniTask.CompletedTask;
             public UniTask DeactivateAsync() => UniTask.CompletedTask;
             public UniTask<bool> TrySetConnectionStringAndActivateAsync(string newConnectionString) => UniTask.FromResult(true);
+
+            public event Action<VoiceChatConnectionState>? ConnectionStateChanged;
         }
     }
 }
