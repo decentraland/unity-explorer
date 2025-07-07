@@ -192,7 +192,7 @@ namespace DCL.Chat
                     // https://github.com/decentraland/unity-explorer/issues/4186
                     if (chatUserStateUpdater.CurrentConversation.Equals(ChatChannel.NEARBY_CHANNEL_ID.Id))
                     {
-                        viewInstance.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                        SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
                         return;
                     }
 
@@ -378,7 +378,7 @@ namespace DCL.Chat
                 view.CurrentChannelId = channelId;
                 if (channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
                 {
-                    view.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                    SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
                     return;
                 }
             }
@@ -395,7 +395,7 @@ namespace DCL.Chat
             ChatUserStateUpdater.ChatUserState userState = result.Value;
             if (TryGetView(out var view))
             {
-                view.SetupViewWithUserState(userState);
+                SetupViewWithUserStateOnMainThreadAsync(userState).Forget();
 
                 if (!updateToolbar) return;
 
@@ -671,7 +671,7 @@ namespace DCL.Chat
             if(!viewInstance!.IsUnfolded) return;
 
             var state = chatUserStateUpdater.GetDisconnectedUserState(userId);
-            viewInstance!.SetupViewWithUserState(state);
+            SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, userId);
         }
 
@@ -683,36 +683,36 @@ namespace DCL.Chat
         private async UniTaskVoid GetAndSetupNonFriendUserStateAsync(string userId)
         {
             //We might need a new state of type "LOADING" or similar to display until we resolve the real state
-            viewInstance!.SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.DISCONNECTED);
+            SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.DISCONNECTED).Forget();
             var state = await chatUserStateUpdater.GetConnectedNonFriendUserStateAsync(userId);
-            viewInstance!.SetupViewWithUserState(state);
+            SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, userId);
         }
 
         private void OnFriendConnected(string userId)
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-            viewInstance!.SetupViewWithUserState(state);
+            SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, userId);
         }
 
         private void OnUserBlockedByOwnUser(string userId)
         {
             var state = ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-            viewInstance!.SetupViewWithUserState(state);
+            SetupViewWithUserStateOnMainThreadAsync(state).Forget();
         }
 
         private void OnCurrentConversationUserUnavailable()
         {
             var state = ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED;
-            viewInstance!.SetupViewWithUserState(state);
+            SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
 
         private void OnCurrentConversationUserAvailable()
         {
             var state = ChatUserStateUpdater.ChatUserState.CONNECTED;
-            viewInstance!.SetupViewWithUserState(state);
+            SetupViewWithUserStateOnMainThreadAsync(state).Forget();
             UpdateCallButtonUserState(state, viewInstance!.CurrentChannelId.Id);
         }
 
@@ -722,6 +722,12 @@ namespace DCL.Chat
         }
 
         #endregion
+
+        private async UniTaskVoid SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState userState)
+        {
+            await UniTask.SwitchToMainThread();
+            viewInstance!.SetupViewWithUserState(userState);
+        }
 
         private void MarkCurrentChannelAsRead()
         {

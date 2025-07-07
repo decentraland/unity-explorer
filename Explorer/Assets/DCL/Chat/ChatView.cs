@@ -208,7 +208,7 @@ namespace DCL.Chat
 
         public event Action OnCloseButtonClicked = () => { };
         public event Action OnInputButtonClicked = () => { };
-        
+
         /// <summary>
         /// Get or sets the current content of the input box.
         /// </summary>
@@ -746,19 +746,16 @@ namespace DCL.Chat
         }
 #endregion
 
+        /// <summary>
+        /// Must be called from MainThread or will fail.
+        /// </summary>
+        /// <param name="userState"></param>
         public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
             chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
-            SetupViewWithUserStateAsync(userState, isOtherUserConnected).Forget();
-        }
-
-        private async UniTaskVoid SetupViewWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
-        {
-            await UniTask.SwitchToMainThread();
-
             chatInputBoxGameObject.SetActive(isOtherUserConnected);
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 
@@ -890,7 +887,7 @@ namespace DCL.Chat
         private void OnCloseChatButtonClicked()
         {
             popupCts.SafeCancelAndDispose();
-            
+
             // NOTE: notify controller to handle closing the chat
             // NOTE: instead of handling it here in the view
             OnCloseButtonClicked();
