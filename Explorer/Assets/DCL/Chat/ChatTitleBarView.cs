@@ -1,11 +1,11 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
 using MVC;
 using System;
 using System.Threading;
-using DCL.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

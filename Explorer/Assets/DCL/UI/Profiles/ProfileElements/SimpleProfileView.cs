@@ -41,7 +41,7 @@ namespace DCL.UI.ProfileElements
             connectionStatusIndicatorContainer.gameObject.SetActive(profile != null);
             
             if (profile == null) return;
-            
+
             currentWalledId = playerId;
             userNameElement.Setup(profile);
             await profilePictureView.SetupAsync(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId, ct);
