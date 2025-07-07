@@ -514,6 +514,10 @@ MonoBehaviour:
       Severity: 1
     - Category: PARTIAL_LOADING
       Severity: 0
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
   sentryMatrix:
     entries: []
   debounceEnabled: 1

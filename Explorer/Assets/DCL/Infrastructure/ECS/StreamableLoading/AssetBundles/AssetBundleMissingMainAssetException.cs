@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public override string ToString() =>
             $"{sourceName} doesn't contain assets with {type} extensions";
     }
-    
+
     /// <summary>
     ///     Indicates that a given source does not contain root assets of the specified type (and thus can't be used further)
     /// </summary>
@@ -33,6 +33,6 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public override string ToString() =>
-            $"{sourceName} contains a shader in it when it should be a dependecy. This will cause a leak";
+            $"{sourceName} contains a shader in it when it should be a dependency. This will cause a leak";
     }
 }

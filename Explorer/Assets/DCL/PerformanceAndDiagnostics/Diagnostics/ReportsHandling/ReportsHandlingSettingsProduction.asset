@@ -344,6 +344,10 @@ MonoBehaviour:
       Severity: 0
     - Category: PARTIAL_LOADING
       Severity: 2
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: AUDIO_SOURCES

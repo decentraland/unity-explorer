@@ -153,7 +153,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 //All gameobject asset bundles should at least have the dependency on the shader.
                 //This will cause a material leak, as the same material will be loaded again. This needs to be solved at asset bundle level
                 if (dependencies.Length == 0)
-                    throw new AssetBundleContainsShaderException(assetBundle.name);
+                    throw new StreamableLoadingException(LogType.Warning, nameof(PartialLoadAssetBundleSystem), new AssetBundleContainsShaderException(assetBundle.name));
             }
 
             Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
@@ -183,7 +183,7 @@ namespace ECS.StreamableLoading.AssetBundles
             switch (assets.Length)
             {
                 case 0:
-                    throw new AssetBundleMissingMainAssetException(assetBundle.name, objectType);
+                    throw new StreamableLoadingException(LogType.Warning, nameof(PartialLoadAssetBundleSystem), new AssetBundleMissingMainAssetException(assetBundle.name, objectType));
                 case > 1:
                     ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
                     break;
