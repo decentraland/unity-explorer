@@ -292,11 +292,19 @@ namespace DCL.Passport
 
         private async UniTaskVoid OnStartCallAsync()
         {
-            //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
-            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(inputData.UserId);
-            await UniTask.Delay(500);
-            chatEventBus.StartCallInCurrentConversation();
+            try
+            {
+                //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
+                await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+                chatEventBus.OpenConversationUsingUserId(inputData.UserId);
+                await UniTask.Delay(500);
+                chatEventBus.StartCallInCurrentConversation();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.VOICE_CHAT), $"Error starting call from passport {ex.Message}");
+            }
         }
 
         private void OnChatButtonClicked()
