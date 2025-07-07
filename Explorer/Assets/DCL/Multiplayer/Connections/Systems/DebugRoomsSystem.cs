@@ -27,6 +27,7 @@ namespace DCL.Multiplayer.Connections.Systems
         private readonly RoomsStatus roomsStatus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ElementBinding<bool> debugAvatarsRooms;
+        private bool enabled;
 
         public DebugRoomsSystem(
             World world,
@@ -39,13 +40,14 @@ namespace DCL.Multiplayer.Connections.Systems
             IDebugContainerBuilder debugBuilder,
             IObjectPool<DebugRoomIndicatorView> roomIndicatorPool) : base(world)
         {
+            enabled = true;
             this.roomsStatus = roomsStatus;
             this.entityParticipantTable = entityParticipantTable;
             this.roomIndicatorPool = roomIndicatorPool;
 
             DebugWidgetBuilder? infoWidget = debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.ROOM_INFO);
-
-            if (infoWidget == null)
+            enabled = infoWidget != null;
+            if (!enabled)
             {
                 roomDisplay = new IRoomDisplay.Null();
                 return;
@@ -103,6 +105,8 @@ namespace DCL.Multiplayer.Connections.Systems
 
         protected override void Update(float t)
         {
+            if (!enabled) return;
+
             roomDisplay.Update();
             roomsStatus.Update();
 
