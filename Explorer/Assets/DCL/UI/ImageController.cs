@@ -45,7 +45,7 @@ namespace DCL.UI
         {
             try
             {
-                view.LoadingObject.SetActive(true);
+                StartLoading();
 
                 //TODO potential memory leak, due no CacheCleaner
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
@@ -75,6 +75,11 @@ namespace DCL.UI
         {
             view.Image.sprite = sprite;
             view.LoadingObject.SetActive(false);
+        }
+
+        public void StartLoading()
+        {
+            view.LoadingObject.SetActive(true);
         }
 
         public void StopLoading()
