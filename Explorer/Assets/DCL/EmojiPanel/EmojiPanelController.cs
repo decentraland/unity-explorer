@@ -159,10 +159,10 @@ namespace DCL.Emoji
             {
                 foreach (Transform emojiButtonTransform in sectionView.EmojiContainer)
                 {
-                    Object.Destroy(emojiButtonTransform.gameObject);
+                    UnityObjectUtils.SafeDestroy(emojiButtonTransform.gameObject);
                 }
                 
-                Object.Destroy(sectionView.gameObject);
+                UnityObjectUtils.SafeDestroy(sectionView.gameObject);
             }
             
             emojiSectionViews.Clear();
