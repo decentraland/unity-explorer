@@ -2,6 +2,7 @@ using Crosstales;
 using Crosstales.FB;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Communities.CommunitiesCard;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
@@ -41,6 +42,7 @@ namespace DCL.Communities.CommunityCreation
         private readonly ICommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
+        private readonly IMVCManager mvcManager;
         private readonly string[] allowedImageExtensions = { "jpg", "png" };
 
         private UniTaskCompletionSource closeTaskCompletionSource = new ();
@@ -72,13 +74,15 @@ namespace DCL.Communities.CommunityCreation
             IInputBlock inputBlock,
             ICommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
-            ISelfProfile selfProfile) : base(viewFactory)
+            ISelfProfile selfProfile,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.inputBlock = inputBlock;
             this.dataProvider = dataProvider;
             this.placesAPIService = placesAPIService;
             this.selfProfile = selfProfile;
+            this.mvcManager = mvcManager;
 
             FileBrowser.Instance.AllowSyncCalls = true;
         }
@@ -434,6 +438,7 @@ namespace DCL.Communities.CommunityCreation
             }
 
             closeTaskCompletionSource.TrySetResult();
+            mvcManager.ShowAsync(CommunityCardController.IssueCommand(new CommunityCardParameter(result.Value.data.id, spriteCache.StrictObject))).Forget();
         }
 
         private void UpdateCommunity(string name, string description, List<string> lands, List<string> worlds)
