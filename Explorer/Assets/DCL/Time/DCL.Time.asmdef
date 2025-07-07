@@ -1,10 +1,7 @@
 {
     "name": "DCL.Time",
     "rootNamespace": "",
-    "references": [
-        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
-        "GUID:275e22790c04e9b47a5085d7b0c4432a"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -62,7 +62,7 @@ def get_target(target):
     else:
         print("Failed to get target data with status code:", response.status_code)
         print("Response body:", response.text)
-        sys.exit(1)
+        sys.exit(99)
 
 def clone_current_target(use_cache):
     def generate_body(template_target, name, branch, options, remoteCacheStrategy):
@@ -164,7 +164,7 @@ def clone_current_target(use_cache):
     else:
         print('Target failed to clone/update with status code:', response.status_code)
         print('Response body:', response.text)
-        sys.exit(1)
+        sys.exit(99)
 
 def get_param_env_variables():
     param_variables = {}
@@ -189,7 +189,7 @@ def set_parameters(params):
     else:
         print("Parameters failed with status code:", response.status_code)
         print("Response body:", response.text)
-        sys.exit(1)
+        sys.exit(99)
 
 def get_latest_build(target):
     response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
