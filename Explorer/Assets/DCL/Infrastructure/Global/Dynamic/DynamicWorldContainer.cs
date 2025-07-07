@@ -368,7 +368,7 @@ namespace Global.Dynamic
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
 
-            var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
+            var voiceChatRoom = new VoiceChatConnectiveRoom().AsActivatable();
 
             IRoomHub roomHub = new RoomHub(
                 localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,

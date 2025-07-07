@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         private readonly IConnectiveRoom archipelagoIslandRoom;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IConnectiveRoom chatRoom;
-        private readonly VoiceChatActivatableConnectiveRoom voiceChatRoom;
+        private readonly IVoiceChatActivatableConnectiveRoom voiceChatRoom;
 
         private readonly IParticipantsHub islandParticipantsHub;
         private readonly IParticipantsHub sceneParticipantsHub;
@@ -23,7 +23,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         private long participantsUpdateLastFrame = -1;
 
-        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom chatRoom, VoiceChatActivatableConnectiveRoom voiceChatRoom)
+        public RoomHub(IConnectiveRoom archipelagoIslandRoom, IGateKeeperSceneRoom gateKeeperSceneRoom, IConnectiveRoom chatRoom, IVoiceChatActivatableConnectiveRoom voiceChatRoom)
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         public IRoom ChatRoom() => chatRoom.Room();
 
-        public VoiceChatActivatableConnectiveRoom VoiceChatRoom() => voiceChatRoom;
+        public IVoiceChatActivatableConnectiveRoom VoiceChatRoom() => voiceChatRoom;
 
         /// <summary>
         /// Starts all rooms except the Voice Chat, as this one only starts when there is a live voice chat going

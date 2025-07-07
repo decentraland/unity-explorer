@@ -49,13 +49,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
         internal readonly string logPrefix;
 
-        private readonly InteriorRoom room = new ();
+        protected readonly InteriorRoom room = new ();
 
-        private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
+        protected readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
 
-        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
+        protected readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
 
-        private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
+        protected readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
 
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
             () =>
@@ -198,7 +198,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                .Log($"{logPrefix} - Trying to disconnect current room finished");
         }
 
-        protected async UniTask<RoomSelection> TryConnectToRoomAsync(string connectionString, CancellationToken token)
+        protected virtual async UniTask<RoomSelection> TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
             ReportHub.Log(ReportCategory.LIVEKIT, $"{logPrefix} - Trying to connect to started: {connectionString}");
 

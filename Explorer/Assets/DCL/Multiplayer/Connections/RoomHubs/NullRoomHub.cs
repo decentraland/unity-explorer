@@ -21,8 +21,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public IRoom ChatRoom() =>
             NullRoom.INSTANCE;
 
-        public VoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
-            VoiceChatActivatableConnectiveRoom.Null.INSTANCE;
+        public IVoiceChatActivatableConnectiveRoom VoiceChatRoom() =>
+            VoiceChatConnectiveRoom.Null.INSTANCE.AsActivatable();
 
         public UniTask StopLocalRoomsAsync() =>
             UniTask.CompletedTask;
