@@ -95,12 +95,13 @@ Material:
     - _Billboard: 0
     - _BillboardKwToggle: 0
     - _BillboardShadowFade: 0.5
+    - _BillboardingVerticalRotation: 0
     - _Blend: 0
     - _BumpScale: 1
     - _ColorMapHeight: 0.5
     - _ColorMapStrength: 1
     - _Cull: 0
-    - _Cutoff: 0.5
+    - _Cutoff: 0.75
     - _Darkening: 0.487
     - _DstBlend: 0
     - _EnvironmentReflections: 1
