@@ -5,6 +5,8 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.RequestsHub;
 using Sentry;
 using System;
+using System.Text;
+using System.Threading;
 using UnityEngine.Networking;
 using Utility.Multithreading;
 
@@ -15,6 +17,8 @@ namespace DCL.WebRequests
         private readonly IWebRequestsAnalyticsContainer analyticsContainer;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRequestHub requestHub;
+
+        private static readonly ThreadLocal<StringBuilder> BREADCRUMB_BUILDER = new (() => new StringBuilder(150));
 
         public WebRequestController(IWebRequestsAnalyticsContainer analyticsContainer, IWeb3IdentityCache web3IdentityCache, IRequestHub requestHub)
         {
@@ -81,7 +85,10 @@ namespace DCL.WebRequests
 
                     if (exception.IsIrrecoverableError(attemptsLeft) && !envelope.IgnoreIrrecoverableErrors)
                     {
-                        SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n", level: BreadcrumbLevel.Info);
+                        // Ignore the file error as we always try to read from the file first
+                        if (!envelope.CommonArguments.URL.Value.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+                            SentrySdk.AddBreadcrumb($"Irrecoverable exception occured on executing {envelope.GetBreadcrumbString(BREADCRUMB_BUILDER.Value)}", level: BreadcrumbLevel.Info);
+
                         throw;
                     }
                 }

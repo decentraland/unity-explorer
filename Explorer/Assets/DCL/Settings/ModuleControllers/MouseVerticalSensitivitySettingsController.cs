@@ -14,8 +14,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.controlsSettingsAsset = controlsSettingsAsset;
 
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY))
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetVerticalMouseSensitivity);
             SetVerticalMouseSensitivity(view.SliderView.Slider.value);
@@ -24,7 +24,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetVerticalMouseSensitivity(float sensitivity)
         {
             controlsSettingsAsset.VerticalMouseSensitivity = sensitivity;
-            settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY, sensitivity, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VERTICAL_MOUSE_SENSITIVITY, sensitivity, save: true);
         }
 
         public override void Dispose()

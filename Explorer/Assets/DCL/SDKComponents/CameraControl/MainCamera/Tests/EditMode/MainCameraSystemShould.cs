@@ -93,7 +93,10 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Tests
             cameraData.CinemachineBrain.Returns(cinemachineBrain);
             cameraData.CameraEntityProxy.Returns(cameraEntityProxy);
 
-            system = new MainCameraSystem(world, mainCameraEntity, entitiesMap, sceneStateProvider, cameraData, Substitute.For<ISceneRestrictionBusController>(), globalWorld);
+            var sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneLoadingConcluded.Returns(true);
+
+            system = new MainCameraSystem(world, mainCameraEntity, entitiesMap, sceneStateProvider, cameraData, Substitute.For<ISceneRestrictionBusController>(), globalWorld, sceneData);
         }
 
         protected override void OnTearDown()

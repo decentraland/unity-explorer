@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
+using DCL.SDKComponents.NFTShape.Renderer;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -13,7 +14,6 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using UnityEngine;
-using Utility.Arch;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
 
 namespace DCL.SDKComponents.NFTShape.System
@@ -47,42 +47,50 @@ namespace DCL.SDKComponents.NFTShape.System
         [Query]
         private void FinishAndApply(Entity entity, ref NFTLoadingComponent nftLoadingComponent, in NftShapeRendererComponent nftShapeRendererComponent)
         {
-            if (!nftLoadingComponent.Promise.IsConsumed && nftLoadingComponent.Promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result))
+            if (nftLoadingComponent.Promise.IsConsumed || !nftLoadingComponent.Promise.TryConsume(World!, out StreamableLoadingResult<Texture2DData> result)) return;
+
+            INftShapeRenderer nftRenderer = nftShapeRendererComponent.PoolableComponent;
+
+            if (!result.Succeeded)
             {
-                if (result.Succeeded)
-                {
-                    nftShapeRendererComponent.PoolableComponent.Apply(result.Asset!);
-
-                    if (result.Asset?.VideoURL != null)
-                    {
-                        var vtc = new VideoTextureConsumer(result.Asset);
-                        var texture2D = vtc.Texture.Asset;
-                        texture2D.Reinitialize(1, 1);
-                        texture2D.SetPixel(0, 0, Color.clear);
-                        texture2D.Apply();
-
-                        if (World.TryGet<PBVideoPlayer>(entity, out var videoPlayer))
-                        {
-                            videoPlayer!.Src = result.Asset.VideoURL;
-                            videoPlayer.IsDirty = true;
-
-                            World.Add(entity, vtc);
-                        }
-                        else
-                        {
-                            var pbVideo = new PBVideoPlayer
-                            {
-                                Src = result.Asset.VideoURL,
-                                Playing = true,
-                                Loop = true,
-                            };
-
-                            World.Add(entity, pbVideo, vtc);
-                        }
-                    }
-                }
-                else { nftShapeRendererComponent.PoolableComponent.NotifyFailed(); }
+                nftRenderer.NotifyFailed();
+                return;
             }
+
+            nftRenderer.Apply(result.Asset!);
+            nftRenderer.SetTextureScale(Vector2.one);
+
+            if (result.Asset?.VideoURL != null) InitializeNftVideo(entity, result.Asset, nftRenderer);
+        }
+
+        private void InitializeNftVideo(Entity entity, Texture2DData textureData, INftShapeRenderer nftRenderer)
+        {
+            var vtc = new VideoTextureConsumer(textureData);
+            var texture2D = vtc.Texture.Asset;
+            texture2D.Reinitialize(1, 1);
+            texture2D.SetPixel(0, 0, Color.clear);
+            texture2D.Apply();
+
+            if (World.TryGet<PBVideoPlayer>(entity, out var videoPlayer))
+            {
+                videoPlayer!.Src = textureData.VideoURL;
+                videoPlayer.IsDirty = true;
+
+                World.Add(entity, vtc);
+            }
+            else
+            {
+                var pbVideo = new PBVideoPlayer
+                {
+                    Src = textureData.VideoURL,
+                    Playing = true,
+                    Loop = true,
+                };
+
+                World.Add(entity, pbVideo, vtc);
+            }
+
+            World.Add(entity, new InitializeNftVideoMaterialRequest { Renderer = nftRenderer });
         }
     }
 }
