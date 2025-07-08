@@ -85,6 +85,21 @@ namespace DCL.Notifications
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                           .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
 
+            notifications.Add(new ReferralNotification(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED)
+            {
+                Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
+                Address = "0x43D803D72ba0a4A785f0e46d3b2366CD224e49dF".ToLower(),
+                Id = Guid.NewGuid().ToString(),
+                Read = false,
+                Metadata = new ReferralNotificationMetadata
+                {
+                    invitedUserAddress = "0x33E8c8a39a71D7A002b7037De1BE4DE8F0A6a357".ToLower(),
+                    address = "0x43D803D72ba0a4A785f0e46d3b2366CD224e49dF".ToLower(),
+                    invitedUsers = 1,
+                    image = "https://assets-cdn.decentraland.zone/referral/starter/2d/normal.png",
+                }
+            });
+
             return notifications;
         }
 

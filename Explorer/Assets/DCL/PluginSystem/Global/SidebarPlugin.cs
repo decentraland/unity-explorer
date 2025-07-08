@@ -61,6 +61,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
+        private readonly IProfileThumbnailCache profileThumbnailCache;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -87,7 +88,8 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            IDecentralandUrlsSource decentralandUrls)
+            IDecentralandUrlsSource decentralandUrls,
+            IProfileThumbnailCache profileThumbnailCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -114,6 +116,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
+            this.profileThumbnailCache = profileThumbnailCache;
         }
 
         public void Dispose() { }
@@ -136,7 +139,7 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileThumbnailCache, profileRepository),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
