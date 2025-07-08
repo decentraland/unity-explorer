@@ -85,7 +85,7 @@
       "hash": "cb7468413582b05ed5c676df4d2bdb2891795617"
     },
     "com.gurbu.gpui-pro": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro#chore/fix-GPUIEditorSettings-file",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -93,7 +93,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "4c1451d6b2b9ac5c10a223a8085948b92d4c16e1"
+      "hash": "d8112ca7ebc0c660d7850d72850d46a3e376dc08"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
