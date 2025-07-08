@@ -56,6 +56,14 @@ jobs:
             exit 0
           fi
 
+          REQUIRES_QA=true
+          if jq -r '.[].name' <<< "$LABELS_JSON" | grep -qi "^no QA needed$"; then
+            REQUIRES_QA=false
+            echo "ℹ️ 'no QA needed' label found — QA approval NOT required."
+          else
+            echo "ℹ️ 'no QA needed' label not found — QA approval required."
+          fi
+
           echo "🔍 Fetching team members..."
           QA_TEAM="qa"
           DEV_TEAM="explorer-devs"
@@ -106,9 +114,9 @@ jobs:
             fi
           done
 
-          if [ "$HAS_QA_APPROVAL" != true ] || [ "$HAS_DEV_APPROVAL" != true ]; then
+          if { [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ]; } || [ "$HAS_DEV_APPROVAL" != true ]; then
             MISSING=()
-            [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
+            [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
             [ "$HAS_DEV_APPROVAL" != true ] && MISSING+=("DEV approval")
             MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
             echo "❌ PR must have at least 1: $MISSING_MSG."
