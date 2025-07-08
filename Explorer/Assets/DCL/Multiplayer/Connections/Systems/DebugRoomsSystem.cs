@@ -40,7 +40,6 @@ namespace DCL.Multiplayer.Connections.Systems
             IDebugContainerBuilder debugBuilder,
             IObjectPool<DebugRoomIndicatorView> roomIndicatorPool) : base(world)
         {
-            enabled = true;
             this.roomsStatus = roomsStatus;
             this.entityParticipantTable = entityParticipantTable;
             this.roomIndicatorPool = roomIndicatorPool;
