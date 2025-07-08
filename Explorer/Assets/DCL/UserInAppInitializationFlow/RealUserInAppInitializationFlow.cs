@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
-using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -33,7 +32,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IChatHistory chatHistory;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> initOps;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> reloginOps;
 
@@ -54,7 +52,6 @@ namespace DCL.UserInAppInitializationFlow
             IRealmController realmController,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            IChatHistory chatHistory,
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
             CheckOnboardingStartupOperation checkOnboardingStartupOperation,
@@ -75,7 +72,6 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
             this.portableExperiencesController = portableExperiencesController;
-            this.chatHistory = chatHistory;
             this.roomHub = roomHub;
         }
 

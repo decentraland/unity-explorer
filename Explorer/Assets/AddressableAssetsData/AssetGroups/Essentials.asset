@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Essentials
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
+  - m_GUID: 022077403db6945e58f0023757b0155f
+    m_Address: Assets/DCL/ApplicationsGuards/ApplicationLivekitGuard/LivekitDownGuardPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 04a7ffcd277754f7c91237894604f522
     m_Address: NftRarityBackgrounds
     m_ReadOnly: 0
