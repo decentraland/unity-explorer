@@ -140,7 +140,9 @@ namespace DCL.VoiceChat
 
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
 
-                    voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
+                    if (microphoneTrack != null)
+                        voiceChatRoom.Participants.LocalParticipant().UnpublishTrack(microphoneTrack, true);
+
                     CloseMedia();
 
                     if (!isOrderedDisconnection)
