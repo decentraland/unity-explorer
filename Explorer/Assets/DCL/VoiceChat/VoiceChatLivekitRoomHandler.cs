@@ -16,6 +16,7 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatLivekitRoomHandler : IDisposable
     {
+        private const int WAIT_BEFORE_DISCONNECT_DELAY = 500;
         private readonly VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource;
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
         private readonly IRoomHub roomHub;
@@ -164,18 +165,14 @@ namespace DCL.VoiceChat
         {
             orderedDisconnectionCts = orderedDisconnectionCts.SafeRestart();
 
-            try
-            {
-                await UniTask.Delay(500, cancellationToken: orderedDisconnectionCts.Token);
+            await UniTask.Delay(WAIT_BEFORE_DISCONNECT_DELAY, cancellationToken: orderedDisconnectionCts.Token).SuppressCancellationThrow();
 
-                if (!isOrderedDisconnection)
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] No ordered disconnection received after 5 seconds - starting reconnection attempts");
-                    HandleUnexpectedDisconnection();
-                }
-                else { ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Ordered disconnection received during grace period - no reconnection needed"); }
+            if (!isOrderedDisconnection)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] No ordered disconnection received after 5 seconds - starting reconnection attempts");
+                HandleUnexpectedDisconnection();
             }
-            catch (OperationCanceledException) { ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Grace period cancelled - ordered disconnection received"); }
+            else { ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Ordered disconnection received during grace period - no reconnection needed"); }
         }
 
         private void CleanupReconnectionState()

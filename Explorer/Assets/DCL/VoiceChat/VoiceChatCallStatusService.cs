@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
+using System;
 using System.Threading;
 using Utility;
 
@@ -96,7 +97,7 @@ namespace DCL.VoiceChat
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
                 }
             }
-            catch (System.InvalidOperationException e)
+            catch (Exception e)
             {
                 HandleVoiceChatServiceDisabled(e, resetData: false);
             }
@@ -152,7 +153,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            catch (Exception e)
             {
                 HandleVoiceChatServiceDisabled(e, resetData: true);
             }
@@ -187,7 +188,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            catch (Exception e)
             {
                 HandleVoiceChatServiceDisabled(e, resetData: false);
             }
@@ -222,7 +223,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            catch (Exception e)
             {
                 HandleVoiceChatServiceDisabled(e, resetData: true);
             }
@@ -256,7 +257,7 @@ namespace DCL.VoiceChat
                         break;
                 }
             }
-            catch (System.InvalidOperationException e)
+            catch (Exception e)
             {
                 HandleVoiceChatServiceDisabled(e, resetData: false);
             }
@@ -275,7 +276,7 @@ namespace DCL.VoiceChat
             RoomUrl = string.Empty;
         }
 
-        private void HandleVoiceChatServiceDisabled(System.InvalidOperationException e, bool resetData = false)
+        private void HandleVoiceChatServiceDisabled(Exception e, bool resetData = false)
         {
             ReportHub.LogWarning($"Voice chat service is disabled: {e.Message}", new ReportData(ReportCategory.VOICE_CHAT));
             if (resetData)

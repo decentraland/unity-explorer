@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Connections.Audio
 
         public void Dispose()
         {
-            resampler?.Dispose();
+            resampler.Dispose();
         }
 
         public void Process(
