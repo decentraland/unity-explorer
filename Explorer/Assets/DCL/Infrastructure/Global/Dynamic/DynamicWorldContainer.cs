@@ -104,6 +104,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.InWorldCamera;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -297,6 +298,8 @@ namespace Global.Dynamic
             var profileRepository = new LogProfileRepository(
                 new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
             );
+            
+            GalleryEventBus galleryEventBus = new GalleryEventBus();
 
             static IMultiPool MultiPoolFactory() =>
                 new DCLMultiPool();
@@ -756,7 +759,8 @@ namespace Global.Dynamic
                     staticContainer.SceneLoadingLimit,
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
-                    upscaleController
+                    upscaleController,
+                    galleryEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -835,7 +839,8 @@ namespace Global.Dynamic
                     isNameEditorEnabled,
                     chatEventBus,
                     sharedSpaceManager,
-                    profileRepositoryWrapper
+                    profileRepositoryWrapper,
+                    galleryEventBus
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -922,7 +927,8 @@ namespace Global.Dynamic
                     nametagsData,
                     profileRepositoryWrapper,
                     sharedSpaceManager,
-                    identityCache));
+                    identityCache,
+                    galleryEventBus));
 
             if (includeMarketplaceCredits)
             {

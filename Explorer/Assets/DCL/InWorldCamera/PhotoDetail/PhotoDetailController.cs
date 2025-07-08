@@ -38,6 +38,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebBrowser webBrowser;
         private readonly PhotoDetailStringMessages photoDetailStringMessages;
+        private readonly GalleryEventBus galleryEventBus;
 
         private AspectRatioFitter aspectRatioFitter;
         private MetadataSidePanelAnimator metadataSidePanelAnimator;
@@ -59,7 +60,8 @@ namespace DCL.InWorldCamera.PhotoDetail
             ISystemClipboard systemClipboard,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWebBrowser webBrowser,
-            PhotoDetailStringMessages photoDetailStringMessages)
+            PhotoDetailStringMessages photoDetailStringMessages,
+            GalleryEventBus galleryEventBus)
             : base(viewFactory)
         {
             this.PhotoDetailInfoController = photoDetailInfoController;
@@ -69,6 +71,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.webBrowser = webBrowser;
             this.photoDetailStringMessages = photoDetailStringMessages;
+            this.galleryEventBus = galleryEventBus;
 
             this.PhotoDetailInfoController.JumpIn += JumpInClicked;
         }
@@ -94,6 +97,16 @@ namespace DCL.InWorldCamera.PhotoDetail
                 DelayedHideDeleteModalAsync().Forget();
             else
                 HideDeleteModal();
+        }
+
+        private void OnReelPublicStateChange(string reelId, bool isPublic)
+        {
+            foreach (var reel in inputData.AllReels)
+            {
+                if(reel.id != reelId) continue;
+                
+                reel.isPublic = isPublic;
+            }
         }
 
         private void JumpInClicked()
@@ -222,9 +235,10 @@ namespace DCL.InWorldCamera.PhotoDetail
             {
                 try
                 {
-                    await cameraReelStorageService.UpdateScreenshotVisibilityAsync(inputData.AllReels[currentReelIndex].id,
+                    string reelId = inputData.AllReels[currentReelIndex].id;
+                    await cameraReelStorageService.UpdateScreenshotVisibilityAsync(reelId,
                         isPublic, ct);
-                    inputData.AllReels[currentReelIndex].isPublic = isPublic;
+                    galleryEventBus.ReelPublicStateChanged(reelId, isPublic);
                     viewInstance!.cameraReelToastMessage?.ShowToastMessage(CameraReelToastMessageType.SUCCESS,
                         photoDetailStringMessages.PhotoSuccessfullyUpdatedMessage);
                     

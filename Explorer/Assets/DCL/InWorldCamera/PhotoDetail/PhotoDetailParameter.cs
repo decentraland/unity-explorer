@@ -22,6 +22,7 @@ namespace DCL.InWorldCamera.PhotoDetail
         //If the PhotoDetailUI was opened from a panel, that contains reels from other users. (Used to hide functionality)
         public readonly bool OpenedFromPublicBoard;
         public readonly CallerContext OpenedFrom;
+        public readonly GalleryEventBus GalleryEventBus;
         //Action to execute when the user wants to delete a reel (only if UserOwnedReels is true, otherwise an error will be returned by the backend)
         public event Action<CameraReelResponseCompact> ReelDeleteIntention;
         //Hides reel from list, used when reel is displayed from passport view, and user sets reel to private, which
@@ -30,7 +31,7 @@ namespace DCL.InWorldCamera.PhotoDetail
 
         public PhotoDetailParameter(List<CameraReelResponseCompact> allReels, int currentReelIndex, bool openedFromPublicBoard, 
             CallerContext openedFrom, Action<CameraReelResponseCompact> reelDeleteAction, 
-            Action<CameraReelResponseCompact> hideReelFromListIntention)
+            Action<CameraReelResponseCompact> hideReelFromListIntention, GalleryEventBus galleryEventBus)
         {
             this.AllReels = allReels;
             this.CurrentReelIndex = currentReelIndex;
@@ -38,6 +39,7 @@ namespace DCL.InWorldCamera.PhotoDetail
             this.OpenedFrom = openedFrom;
             ReelDeleteIntention = reelDeleteAction;
             HideReelFromListIntention = hideReelFromListIntention;
+            GalleryEventBus = galleryEventBus;
         }
 
         public void ExecuteDeleteAction(int index) =>

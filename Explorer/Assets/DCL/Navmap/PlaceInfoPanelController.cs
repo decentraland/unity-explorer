@@ -4,6 +4,7 @@ using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.EventsApi;
+using DCL.InWorldCamera;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
@@ -39,6 +40,7 @@ namespace DCL.Navmap
         private readonly SharePlacesAndEventsContextMenuController shareContextMenu;
         private readonly IWebBrowser webBrowser;
         private readonly IMVCManager mvcManager;
+        private readonly GalleryEventBus galleryEventBus;
         private readonly ImageController thumbnailImage;
         private readonly MultiStateButtonController dislikeButton;
         private readonly MultiStateButtonController likeButton;
@@ -70,7 +72,8 @@ namespace DCL.Navmap
             ICameraReelStorageService? cameraReelStorageService = null,
             ICameraReelScreenshotsStorage? cameraReelScreenshotsStorage = null,
             ReelGalleryConfigParams? reelGalleryConfigParams = null,
-            bool? reelUseSignedRequest = null)
+            bool? reelUseSignedRequest = null,
+            GalleryEventBus galleryEventBus = null)
         {
             this.view = view;
             this.webRequestController = webRequestController;
@@ -83,12 +86,19 @@ namespace DCL.Navmap
             this.shareContextMenu = shareContextMenu;
             this.webBrowser = webBrowser;
             this.mvcManager = mvcManager;
+            this.galleryEventBus = galleryEventBus;
 
             thumbnailImage = new ImageController(view.Thumbnail, webRequestController);
 
             if (view.CameraReelGalleryView != null)
             {
-                this.cameraReelGalleryController = new CameraReelGalleryController(view.CameraReelGalleryView, cameraReelStorageService!, cameraReelScreenshotsStorage!, reelGalleryConfigParams!.Value, reelUseSignedRequest!.Value);
+                this.cameraReelGalleryController = new CameraReelGalleryController(
+                    view.CameraReelGalleryView, 
+                    cameraReelStorageService!, 
+                    cameraReelScreenshotsStorage!, 
+                    reelGalleryConfigParams!.Value, 
+                    reelUseSignedRequest!.Value, 
+                    galleryEventBus: galleryEventBus);
                 this.cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
                 this.cameraReelGalleryController.MaxThumbnailsUpdated += UpdatePhotosTabText;
             }
@@ -134,7 +144,7 @@ namespace DCL.Navmap
             Action<CameraReelResponseCompact> reelDeleteIntention,  Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index,
                 true, PhotoDetailParameter.CallerContext.PlaceInfoPanel, reelDeleteIntention, 
-                reelListRefreshIntention)));
+                reelListRefreshIntention, galleryEventBus)));
 
         private void UpdatePhotosTabText(int count) =>
             view.SetPhotoTabText(count);

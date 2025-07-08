@@ -15,7 +15,9 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using NUnit.Framework.Internal;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
@@ -70,6 +72,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly IDecentralandUrlsSource? decentralandUrlsSource;
         private readonly ISystemClipboard? systemClipboard;
         private readonly IWebBrowser? webBrowser;
+        private readonly GalleryEventBus galleryEventBus;
         private readonly ReelGalleryPoolManager reelGalleryPoolManager;
         private readonly Dictionary<DateTime, MonthGridController> monthViews = new ();
         private readonly Dictionary<CameraReelResponseCompact, Texture> reelThumbnailCache = new ();
@@ -104,7 +107,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IExplorePanelEscapeAction? explorePanelEscapeAction = null,
             ISystemClipboard? systemClipboard = null,
             ReelGalleryStringMessages? reelGalleryStringMessages = null,
-            IMVCManager? mvcManager = null)
+            IMVCManager? mvcManager = null,
+            GalleryEventBus galleryEventBus = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
@@ -121,6 +125,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.systemClipboard = systemClipboard;
             this.webBrowser = webBrowser;
+            this.galleryEventBus = galleryEventBus;
 
             this.view.scrollRect.SetScrollSensitivityBasedOnPlatform();
 

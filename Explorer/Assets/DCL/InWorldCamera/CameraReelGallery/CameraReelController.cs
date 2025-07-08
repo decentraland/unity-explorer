@@ -24,6 +24,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IMVCManager mvcManager;
+        private readonly GalleryEventBus galleryEventBus;
 
         private CancellationTokenSource showCancellationTokenSource;
 
@@ -33,6 +34,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ICameraReelStorageService cameraReelStorageService,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
+            GalleryEventBus galleryEventBus,
             string storageProgressBarLabelText)
         {
             this.view = view;
@@ -40,6 +42,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.web3IdentityCache = web3IdentityCache;
             this.CameraReelGalleryController = cameraReelGalleryController;
             this.mvcManager = mvcManager;
+            this.galleryEventBus = galleryEventBus;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -61,7 +64,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
                 false, PhotoDetailParameter.CallerContext.CameraReel, reelDeleteIntention, 
-                reelListRefreshIntention)));
+                reelListRefreshIntention, galleryEventBus)));
 
         private void StorageFullIconEnter() =>
             view.storageFullToast.DOFade(1f, view.storageFullToastFadeTime);

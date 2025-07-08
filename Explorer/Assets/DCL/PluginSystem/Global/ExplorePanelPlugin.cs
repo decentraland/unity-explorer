@@ -42,6 +42,7 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.EventsApi;
 using DCL.Friends.UserBlocking;
+using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
@@ -130,6 +131,7 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
+        private readonly GalleryEventBus galleryEventBus;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -181,7 +183,8 @@ namespace DCL.PluginSystem.Global
             SceneLoadingLimit sceneLoadingLimit,
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
-            UpscalingController upscalingController)
+            UpscalingController upscalingController,
+            GalleryEventBus galleryEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -234,6 +237,7 @@ namespace DCL.PluginSystem.Global
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
             this.upscalingController = upscalingController;
+            this.galleryEventBus = galleryEventBus;
         }
 
         public void Dispose()
@@ -320,7 +324,14 @@ namespace DCL.PluginSystem.Global
             placeInfoPanelController = new PlaceInfoPanelController(navmapView.PlacesAndEventsPanelView.PlaceInfoPanelView,
                 webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
                 eventElementsPool, shareContextMenu, webBrowser, mvcManager, cameraReelStorageService, cameraReelScreenshotsStorage,
-                new ReelGalleryConfigParams(settings.PlaceGridLayoutFixedColumnCount, settings.PlaceThumbnailHeight, settings.PlaceThumbnailWidth, false, false), false);
+                new ReelGalleryConfigParams(
+                    settings.PlaceGridLayoutFixedColumnCount, 
+                    settings.PlaceThumbnailHeight, 
+                    settings.PlaceThumbnailWidth, 
+                    false, 
+                    false), 
+                false, 
+                galleryEventBus: galleryEventBus);
 
             eventInfoPanelController = new EventInfoPanelController(navmapView.PlacesAndEventsPanelView.EventInfoPanelView,
                 webRequestController, navmapBus, chatMessagesBus, eventsApiService, eventScheduleElementsPool,
@@ -338,7 +349,7 @@ namespace DCL.PluginSystem.Global
             PlaceInfoToastController placeToastController = new (navmapView.PlaceToastView,
                 new PlaceInfoPanelController(navmapView.PlaceToastView.PlacePanelView,
                     webRequestController, placesAPIService, mapPathEventBus, navmapBus, chatMessagesBus, eventsApiService,
-                    eventElementsPool, shareContextMenu, webBrowser, mvcManager),
+                    eventElementsPool, shareContextMenu, webBrowser, mvcManager, galleryEventBus: galleryEventBus),
                 placesAPIService, eventsApiService, navmapBus);
 
             settingsController = new SettingsController(
@@ -378,16 +389,20 @@ namespace DCL.PluginSystem.Global
 
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
-                new CameraReelGalleryController(cameraReelView.CameraReelGalleryView, this.cameraReelStorageService,
+                new CameraReelGalleryController(
+                    cameraReelView.CameraReelGalleryView, 
+                    this.cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
                     cameraReelView.CameraReelOptionsButton,
                     webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
                     new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
-                    mvcManager),
+                    mvcManager, 
+                    galleryEventBus: galleryEventBus),
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
+                galleryEventBus,
                 settings.StorageProgressBarText);
 
             ExplorePanelController explorePanelController = new
