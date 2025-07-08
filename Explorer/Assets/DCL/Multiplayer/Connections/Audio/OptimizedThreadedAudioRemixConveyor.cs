@@ -6,13 +6,13 @@ using System;
 using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Connections.Audio
 {
     public class OptimizedThreadedAudioRemixConveyor : IAudioRemixConveyor
     {
         private const short SILENCE_THRESHOLD = 32;
+        private const int CHUNK_SIZE = 1024;
 
         private AudioResampler.ThreadSafe resampler = new ();
         private uint lastInputSampleRate;
@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Connections.Audio
                 if (ownedAudioFrame.sampleRate != lastInputSampleRate ||
                     ownedAudioFrame.numChannels != lastInputChannels)
                 {
-                    resampler?.Dispose();
+                    resampler.Dispose();
                     resampler = new AudioResampler.ThreadSafe();
 
                     lastInputSampleRate = ownedAudioFrame.sampleRate;
@@ -57,7 +57,7 @@ namespace DCL.Multiplayer.Connections.Audio
                 if (isEmptyFrame)
                 {
                     var targetSamples = (int)(ownedAudioFrame.Length / sizeof(short) / ownedAudioFrame.numChannels * numChannels);
-                    var silenceDataSize = targetSamples * sizeof(short);
+                    int silenceDataSize = targetSamples * sizeof(short);
 
                     WriteSilenceToBuffer(outputBuffer, silenceDataSize);
                     return;
@@ -104,30 +104,27 @@ namespace DCL.Multiplayer.Connections.Audio
             guard.Value.Write(data);
         }
 
-
         private static void WriteSilenceToBuffer(Mutex<RingBuffer> outputBuffer, int silenceDataSize)
         {
             using Mutex<RingBuffer>.Guard guard = outputBuffer.Lock();
-            
-            const int chunkSize = 1024;
-            var chunk = ArrayPool<byte>.Shared.Rent(chunkSize);
+
+            byte[]? chunk = ArrayPool<byte>.Shared.Rent(CHUNK_SIZE);
+
             try
             {
-                Array.Clear(chunk, 0, chunkSize);
-                
+                Array.Clear(chunk, 0, CHUNK_SIZE);
+
                 int remainingBytes = silenceDataSize;
+
                 while (remainingBytes > 0)
                 {
-                    int bytesToWrite = Math.Min(chunkSize, remainingBytes);
-                    var chunkSpan = chunk.AsSpan(0, bytesToWrite);
+                    int bytesToWrite = Math.Min(CHUNK_SIZE, remainingBytes);
+                    Span<byte> chunkSpan = chunk.AsSpan(0, bytesToWrite);
                     guard.Value.Write(chunkSpan);
                     remainingBytes -= bytesToWrite;
                 }
             }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(chunk);
-            }
+            finally { ArrayPool<byte>.Shared.Return(chunk); }
         }
     }
 }

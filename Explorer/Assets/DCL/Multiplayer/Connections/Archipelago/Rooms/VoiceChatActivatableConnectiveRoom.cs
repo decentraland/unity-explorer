@@ -24,6 +24,7 @@ using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 {
+    // TODO: This Room will be refactored following the comments left and tracked on this ticket: 4693
     public class VoiceChatActivatableConnectiveRoom : IActivatableConnectiveRoom
     {
         private const string LOG_PREFIX = "VoiceChatRoom";
@@ -39,10 +40,6 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public bool Activated { get; private set; }
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => connectionLoopHealth.Value();
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
-
-        public VoiceChatActivatableConnectiveRoom()
-        {
-        }
 
         public void Dispose()
         {
@@ -183,7 +180,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<bool> TryConnectToRoomAsync(CancellationToken ct)
         {
             var credentials = new ConnectionStringCredentials(connectionString);
-            
+
             // Create a fresh room instance each time to ensure clean state
             var freshRoom = CreateFreshRoom();
 
