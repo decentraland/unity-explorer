@@ -1,12 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.InputSystem;
 
 namespace MVC
 {
-    public class WindowStackManager : IWindowsStackManager, IDisposable
+    public class WindowStackManager : IWindowsStackManager
     {
         internal List<IController> popupStack { get; } = new ();
         internal List<IController> persistentStack { get; } = new ();

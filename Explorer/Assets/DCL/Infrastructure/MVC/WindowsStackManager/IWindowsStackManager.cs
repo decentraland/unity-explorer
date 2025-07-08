@@ -1,8 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 
 namespace MVC
 {
-    public interface IWindowsStackManager
+    public interface IWindowsStackManager : IDisposable
     {
         UniTaskCompletionSource GetTopMostCloseTask(IController controller);
         IController TopMostPopup { get; }

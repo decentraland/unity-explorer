@@ -36,6 +36,7 @@ namespace MVC
                 controllersValue.Dispose();
 
             destructionCancellationTokenSource?.Dispose();
+            windowsStackManager.Dispose();
         }
 
         /// <summary>
