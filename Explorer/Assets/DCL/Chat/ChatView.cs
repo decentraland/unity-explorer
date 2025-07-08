@@ -205,6 +205,7 @@ namespace DCL.Chat
         private bool isChatFocused;
         private bool isChatUnfolded;
         private bool isPointerOverChat;
+        private bool isSubmitHooked;
 
         public event Action OnCloseButtonClicked = () => { };
         public event Action OnInputButtonClicked = () => { };
@@ -221,7 +222,7 @@ namespace DCL.Chat
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
-        /// </ summary>
+        /// </summary>
         public bool IsScrollAtBottom => chatMessageViewer.IsScrollAtBottom;
 
         /// <summary>
@@ -325,7 +326,7 @@ namespace DCL.Chat
             }
         }
 
-        public void UpdateConversationToolbarStatusIconForUser(string userId, OnlineStatus status)
+        public void UpdateConversationStatusIconForUser(string userId, OnlineStatus status)
         {
             UpdateStatusIconForChannelAsync(new ChatChannel.ChannelId(userId), status).Forget();
         }
@@ -333,7 +334,13 @@ namespace DCL.Chat
         private async UniTaskVoid UpdateStatusIconForChannelAsync(ChatChannel.ChannelId channelId, OnlineStatus status)
         {
             await UniTask.SwitchToMainThread();
+            
             conversationsToolbar.SetConnectionStatus(channelId, status);
+            
+            if(currentChannel != null 
+               && currentChannel.ChannelType == ChatChannel.ChatChannelType.USER 
+               && currentChannel.Id.Id == channelId.Id)
+                SetTitleBarUserConnectionStatus(status);
         }
 
         public void SetupInitialConversationToolbarStatusIconForUsers(HashSet<string> userIds)
@@ -342,6 +349,13 @@ namespace DCL.Chat
             {
                 conversationsToolbar.SetConnectionStatus(channelId,
                     userIds.Contains(channelId.Id) ?
+                    OnlineStatus.ONLINE :
+                    OnlineStatus.OFFLINE);
+            }
+
+            if (currentChannel!.ChannelType == ChatChannel.ChatChannelType.USER)
+            {
+                SetTitleBarUserConnectionStatus(userIds.Contains(currentChannel.Id.Id) ?
                     OnlineStatus.ONLINE :
                     OnlineStatus.OFFLINE);
             }
@@ -779,6 +793,11 @@ namespace DCL.Chat
                 chatMessageViewer.StartChatEntriesFadeout();
         }
 
+        private void SetTitleBarUserConnectionStatus(OnlineStatus status)
+        {
+            chatTitleBar.SetConnectionStatus(status);
+        }
+
         private void OnSubmitUIInputPerformed(InputAction.CallbackContext obj)
         {
             if (isChatFocused)
@@ -1004,7 +1023,6 @@ namespace DCL.Chat
             ChannelRemovalRequested?.Invoke(channelId);
         }
 
-        private bool isSubmitHooked;
         public void SubscribeToSubmitEvent()
         {
             if (isSubmitHooked)
