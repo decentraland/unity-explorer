@@ -108,7 +108,8 @@ namespace DCL.VoiceChat
 
                     foreach (string participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
                     {
-                        if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry)) { world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true }); }
+                        if (entityParticipantTable.TryGet(participantId, out IReadOnlyEntityParticipantTable.Entry entry))
+                            world.AddOrSet(entry.Entity, new VoiceChatNametagComponent(false) { IsRemoving = true });
                     }
 
                     break;

@@ -20,7 +20,6 @@ using System;
 using UnityEngine;
 using UnityEngine.Pool;
 using Unity.Mathematics;
-using System.Collections.Generic;
 
 // #if UNITY_EDITOR
 // using Utility.Editor;
@@ -40,14 +39,12 @@ namespace DCL.Nametags
         private readonly IObjectPool<NametagView> nametagViewPool;
         private readonly NametagsData nametagsData;
         private readonly ChatBubbleConfigurationSO chatBubbleConfigurationSo;
-
-        private SingleInstanceEntity playerCamera;
         private readonly float maxDistance;
         private readonly float maxDistanceSqr;
+
+        private SingleInstanceEntity playerCamera;
         private CameraComponent cameraComponent;
         private bool cameraInitialized;
-
-        private readonly List<Entity> entitiesToRemove = new ();
 
         public NametagPlacementSystem(
             World world,
@@ -83,7 +80,6 @@ namespace DCL.Nametags
             NametagMathHelper.CalculateCameraForward(cameraComponent.Camera.transform.rotation, out float3 cameraForward);
             NametagMathHelper.CalculateCameraUp(cameraComponent.Camera.transform.rotation, out float3 cameraUp);
 
-            entitiesToRemove.Clear();
             EnableTagQuery(World);
             UpdateTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             AddTagForPlayerAvatarsQuery(World, cameraComponent, cameraForward, cameraUp);
@@ -91,11 +87,6 @@ namespace DCL.Nametags
             UpdateOwnTagQuery(World, cameraComponent, fovScaleFactor, cameraForward, cameraUp);
             ProcessChatBubbleComponentsQuery(World);
             UpdateNametagSpeakingStateQuery(World);
-
-            for (int i = 0; i < entitiesToRemove.Count; i++)
-            {
-                World.Remove<VoiceChatNametagComponent>(entitiesToRemove[i]);
-            }
         }
 
         [Query]
@@ -151,7 +142,7 @@ namespace DCL.Nametags
             nametagView.ProfileVersion = profile.Version;
 
             // If version is different, it might be because some part of the profile was updated, but not necessarily the name, so we also check
-            // if the name is different in this case, otherwise we dont re-setup the own tag.
+            // if the name is different in this case, otherwise we don't re-setup the own tag.
             if (nametagView.IsSameName(profile.ValidatedName, profile.HasClaimedName)) return;
 
             nametagView.Id = avatarShape.ID;
@@ -164,7 +155,7 @@ namespace DCL.Nametags
 
         [Query]
         [All(typeof(ChatBubbleComponent))]
-        private void ProcessChatBubbleComponents(Entity e, in NametagView nametagView, ref ChatBubbleComponent chatBubbleComponent)
+        private void ProcessChatBubbleComponents(in NametagView nametagView, ref ChatBubbleComponent chatBubbleComponent)
         {
             if (!chatBubbleComponent.IsDirty)
                 return;
@@ -182,12 +173,14 @@ namespace DCL.Nametags
                 return;
 
             nametagView.SetIsSpeaking(voiceChatComponent.IsSpeaking);
-            voiceChatComponent.IsDirty = false;
 
             if (voiceChatComponent.IsRemoving)
             {
-                entitiesToRemove.Add(e);
+                World.Remove<VoiceChatNametagComponent>(e);
+                return;
             }
+
+            voiceChatComponent.IsDirty = false;
         }
 
         [Query]
