@@ -47,11 +47,11 @@ namespace DCL.AvatarRendering.Emotes
                     }
 
                     ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
-                    ref InterpolationComponent interpolation = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
+                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool interpolationExists);
 
                     if (interpolationExists)
                     {
-                        if (remoteEmoteIntention.Timestamp > interpolation.Present)
+                        if (replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp)
                             intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                         else
                             savedIntentions.Add(remoteEmoteIntention);
