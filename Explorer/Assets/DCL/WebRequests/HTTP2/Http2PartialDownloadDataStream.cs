@@ -30,7 +30,7 @@ namespace DCL.WebRequests.HTTP2
     /// </summary>
     public class Http2PartialDownloadDataStream : PartialDownloadStream
     {
-        internal enum Mode
+        public enum Mode
         {
             UNITIALIZED = 0,
 
@@ -102,11 +102,11 @@ namespace DCL.WebRequests.HTTP2
 
         private bool discardOnDisposal;
 
-        public override bool IsFullyDownloaded => opMode is Mode.COMPLETE_DATA_CACHED or Mode.COMPLETE_SEGMENTED_STREAM or Mode.EMBEDDED_FILE_STREAM;
+        public override bool IsFullyDownloaded => OpMode is Mode.COMPLETE_DATA_CACHED or Mode.COMPLETE_SEGMENTED_STREAM or Mode.EMBEDDED_FILE_STREAM;
 
-        internal Mode opMode { get; private set; }
+        public Mode OpMode { get; private set; }
 
-        internal long partialContentLength => opMode switch
+        internal long partialContentLength => OpMode switch
                                               {
                                                   Mode.COMPLETE_DATA_CACHED or Mode.INCOMPLETE_DATA_CACHED or Mode.WRITING_TO_DISK_CACHE => cachedPartialData.partialContentLength,
                                                   Mode.COMPLETE_SEGMENTED_STREAM or Mode.WRITING_TO_SEGMENTED_STREAM => memoryStreamPartialData.stream.Length,
@@ -142,7 +142,7 @@ namespace DCL.WebRequests.HTTP2
             return new Http2PartialDownloadDataStream(uri, (int)fileStream.Length, 0)
             {
                 fileStreamData = new FileStreamData(fileStream),
-                opMode = Mode.EMBEDDED_FILE_STREAM,
+                OpMode = Mode.EMBEDDED_FILE_STREAM,
             };
         }
 
@@ -205,11 +205,11 @@ namespace DCL.WebRequests.HTTP2
             };
 
             // Set the state - whether it is fully cached or not
-            partialStream.opMode = partialStream.cachedPartialData.partialContentLength == fullFileSize
+            partialStream.OpMode = partialStream.cachedPartialData.partialContentLength == fullFileSize
                 ? Mode.COMPLETE_DATA_CACHED
                 : Mode.INCOMPLETE_DATA_CACHED;
 
-            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({requestHash}) initialized as {partialStream.opMode} "
+            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({requestHash}) initialized as {partialStream.OpMode} "
                                                           + $"{BytesFormatter.Convert((ulong)partialStream.cachedPartialData.partialContentLength, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} / "
                                                           + $"{BytesFormatter.Convert((ulong)fullFileSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} KB");
 
@@ -333,7 +333,7 @@ namespace DCL.WebRequests.HTTP2
             SeekableBufferSegmentStream memoryStream = CreateMemoryStream();
 
             stream.memoryStreamPartialData = new MemoryStreamPartialData(memoryStream);
-            stream.opMode = Mode.WRITING_TO_SEGMENTED_STREAM;
+            stream.OpMode = Mode.WRITING_TO_SEGMENTED_STREAM;
             return stream;
         }
 
@@ -357,7 +357,7 @@ namespace DCL.WebRequests.HTTP2
         private void InitializeFromHeaders(HTTPCache cache, HTTPMethods method, Uri uri, int statusCode, LoggingContext? loggingContext,
             WebRequestHeaders headersResult)
         {
-            switch (opMode)
+            switch (OpMode)
             {
                 // No cached data
                 case Mode.UNITIALIZED:
@@ -368,9 +368,9 @@ namespace DCL.WebRequests.HTTP2
 
                         // When the cache is reserved, the stream is open for write
                         cachedPartialData.writeHandler = writeHandler;
-                        opMode = Mode.WRITING_TO_DISK_CACHE;
+                        OpMode = Mode.WRITING_TO_DISK_CACHE;
 
-                        ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) initialized as {opMode} "
+                        ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) initialized as {OpMode} "
                                                                       + $"{BytesFormatter.Convert((ulong)cachedPartialData.partialContentLength, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} / "
                                                                       + $"{BytesFormatter.Convert((ulong)fullFileSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} KB");
 
@@ -381,7 +381,7 @@ namespace DCL.WebRequests.HTTP2
                     ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Disk Cache is full, Partial Downloading of {uri} ({cachedPartialData.requestHash}) will be served from memory");
 
                     memoryStreamPartialData = new MemoryStreamPartialData(CreateMemoryStream());
-                    opMode = Mode.WRITING_TO_SEGMENTED_STREAM;
+                    OpMode = Mode.WRITING_TO_SEGMENTED_STREAM;
 
                     return;
 
@@ -412,9 +412,9 @@ namespace DCL.WebRequests.HTTP2
 
                             writeHandler.contentWriter.Write(bufferSegment);
 
-                            opMode = Mode.WRITING_TO_DISK_CACHE;
+                            OpMode = Mode.WRITING_TO_DISK_CACHE;
 
-                            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) initialized as {opMode} "
+                            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) initialized as {OpMode} "
                                                                           + $"{BytesFormatter.Convert((ulong)cachedPartialData.partialContentLength, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} / "
                                                                           + $"{BytesFormatter.Convert((ulong)fullFileSize, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Kilobyte)} KB");
 
@@ -431,7 +431,7 @@ namespace DCL.WebRequests.HTTP2
                         memoryStream.Write(bufferSegment);
 
                         memoryStreamPartialData = new MemoryStreamPartialData(memoryStream);
-                        opMode = Mode.WRITING_TO_SEGMENTED_STREAM;
+                        OpMode = Mode.WRITING_TO_SEGMENTED_STREAM;
 
                         ReportHub.Log(ReportCategory.PARTIAL_LOADING,
                             $"Disk Cache is full, Partial Downloading of {uri} ({cachedPartialData.requestHash}) will be served from memory\n"
@@ -457,7 +457,7 @@ namespace DCL.WebRequests.HTTP2
 
             // Read all available data from the response
 
-            switch (opMode)
+            switch (OpMode)
             {
                 case Mode.WRITING_TO_DISK_CACHE:
                     // Make sure the writer is open
@@ -501,15 +501,15 @@ namespace DCL.WebRequests.HTTP2
                         {
                             // Finish disposal here as the cache entry now is in the intermediate state that can't be properly processed by Dispose
                             cachedPartialData.headers.Dispose();
-                            opMode = Mode.UNITIALIZED;
+                            OpMode = Mode.UNITIALIZED;
 
                             ReportHub.LogWarning(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) could not be opened for reading after writing to the cache");
                             return false;
                         }
 
-                        opMode = Mode.COMPLETE_DATA_CACHED;
+                        OpMode = Mode.COMPLETE_DATA_CACHED;
 
-                        ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) completed in {opMode} mode");
+                        ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} ({cachedPartialData.requestHash}) completed in {OpMode} mode");
                     }
 
                     return true;
@@ -531,8 +531,8 @@ namespace DCL.WebRequests.HTTP2
 
                     if (streamLength == fullFileSize)
                     {
-                        opMode = Mode.COMPLETE_SEGMENTED_STREAM;
-                        ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} completed in {opMode} mode");
+                        OpMode = Mode.COMPLETE_SEGMENTED_STREAM;
+                        ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {uri} completed in {OpMode} mode");
                     }
 
                     return true;
@@ -547,9 +547,9 @@ namespace DCL.WebRequests.HTTP2
         /// </summary>
         internal void ForceFinalize()
         {
-            if (opMode == Mode.WRITING_TO_SEGMENTED_STREAM && fullFileSize == int.MaxValue)
+            if (OpMode == Mode.WRITING_TO_SEGMENTED_STREAM && fullFileSize == int.MaxValue)
             {
-                opMode = Mode.COMPLETE_SEGMENTED_STREAM;
+                OpMode = Mode.COMPLETE_SEGMENTED_STREAM;
                 return;
             }
 
@@ -558,7 +558,7 @@ namespace DCL.WebRequests.HTTP2
 
         private void LogImproperState(string funcName, string? context = null)
         {
-            ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"{funcName} can't be invoked in the current state: {opMode}\n{context}");
+            ReportHub.LogError(ReportCategory.PARTIAL_LOADING, $"{funcName} can't be invoked in the current state: {OpMode}\n{context}");
         }
 
         /// <summary>
@@ -567,7 +567,7 @@ namespace DCL.WebRequests.HTTP2
         internal void DiscardAndDispose()
         {
             // If the cache is complete, don't discard the data
-            switch (opMode)
+            switch (OpMode)
             {
                 case Mode.INCOMPLETE_DATA_CACHED:
                 case Mode.WRITING_TO_DISK_CACHE:
@@ -586,7 +586,7 @@ namespace DCL.WebRequests.HTTP2
 
             Hash128 hash = default;
 
-            switch (opMode)
+            switch (OpMode)
             {
                 case Mode.COMPLETE_DATA_CACHED:
                 case Mode.INCOMPLETE_DATA_CACHED:
@@ -608,12 +608,12 @@ namespace DCL.WebRequests.HTTP2
                     break;
             }
 
-            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {fromUrl} ({hash}) disposed in {opMode} mode");
+            ReportHub.Log(ReportCategory.PARTIAL_LOADING, $"Partial Download Stream {fromUrl} ({hash}) disposed in {OpMode} mode");
 
             cachedPartialData = default(CachedPartialData);
             memoryStreamPartialData = default(MemoryStreamPartialData);
             fileStreamData = default(FileStreamData);
-            opMode = Mode.UNITIALIZED;
+            OpMode = Mode.UNITIALIZED;
         }
 
         /// <summary>
@@ -802,7 +802,7 @@ namespace DCL.WebRequests.HTTP2
         {
             get
             {
-                Stream? stream = opMode switch
+                Stream? stream = OpMode switch
                                  {
                                      Mode.COMPLETE_DATA_CACHED => cachedPartialData.readHandler!.Value.stream,
                                      Mode.COMPLETE_SEGMENTED_STREAM => memoryStreamPartialData.stream,
@@ -811,7 +811,7 @@ namespace DCL.WebRequests.HTTP2
                                  };
 
                 if (stream == null)
-                    throw new InvalidOperationException($"The underlying stream created from {fromUrl} is `null` in the mode {opMode}");
+                    throw new InvalidOperationException($"The underlying stream created from {fromUrl} is `null` in the mode {OpMode}");
 
                 return stream;
             }

@@ -49,6 +49,7 @@ namespace DCL.DebugUtilities
                             IDebugContainerBuilder.Categories.MEMORY,
                             IDebugContainerBuilder.Categories.REALM,
                             IDebugContainerBuilder.Categories.ANALYTICS,
+                            IDebugContainerBuilder.Categories.PARTIAL_DOWNLOAD,
                         }
                 )
             );

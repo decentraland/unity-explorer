@@ -35,7 +35,7 @@ namespace DCL.DebugUtilities
             public const string ANALYTICS = "Analytics";
             public const string GPU_INSTANCING = "GPU Instancing";
             public const string MEMORY_LIMITS = "Memory Limits";
-
+            public const string PARTIAL_DOWNLOAD = "Partial Download";
         }
     }
 

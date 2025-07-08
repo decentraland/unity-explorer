@@ -125,8 +125,7 @@ namespace DCL.WebRequests
             {
                 debugContainerBuilder
                    .TryAddWidget("Web Requests Debug Metrics")
- ?
-.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
+                  ?.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
                         DebugLongMarkerDef.Unit.NoFormat)
                    .AddMarker("Requests complete", requestCompleteDebugMetric,
                         DebugLongMarkerDef.Unit.NoFormat)

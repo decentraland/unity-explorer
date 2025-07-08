@@ -248,6 +248,8 @@ namespace Global
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
+            var webRequestsPlugin = new WebRequestsPlugin(container.WebRequestsContainer.AnalyticsContainer, container.DebugContainerBuilder);
+
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
@@ -282,6 +284,7 @@ namespace Global
                 new LightSourcePlugin(componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
                 new PrimaryPointerInfoPlugin(globalWorld),
                 promisesAnalyticsPlugin,
+                webRequestsPlugin,
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
 #endif
@@ -296,6 +299,7 @@ namespace Global
                 new AdaptivePerformancePlugin(container.assetsProvisioner, container.Profiler, container.LoadingStatus),
                 textureResolvePlugin,
                 promisesAnalyticsPlugin,
+                webRequestsPlugin,
             };
 
             return (container, true);

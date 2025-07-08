@@ -119,7 +119,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             Http2PartialDownloadDataStream.CachedPartialData partialData = stream.GetCachedPartialData();
             long firstItSize = partialData.partialContentLength;
             Assert.That(firstItSize, Is.GreaterThan(0));
-            Assert.That(stream.opMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.WRITING_TO_DISK_CACHE));
+            Assert.That(stream.OpMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.WRITING_TO_DISK_CACHE));
 
             // Close the stream
             stream.Dispose();
@@ -140,7 +140,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             Assert.That(stream.IsFullyDownloaded, Is.EqualTo(finalize));
             Assert.That(stream.GetMemoryStreamPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.MemoryStreamPartialData)));
             Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
-            Assert.That(stream.opMode, Is.EqualTo(finalize ? Http2PartialDownloadDataStream.Mode.COMPLETE_DATA_CACHED : Http2PartialDownloadDataStream.Mode.WRITING_TO_DISK_CACHE));
+            Assert.That(stream.OpMode, Is.EqualTo(finalize ? Http2PartialDownloadDataStream.Mode.COMPLETE_DATA_CACHED : Http2PartialDownloadDataStream.Mode.WRITING_TO_DISK_CACHE));
 
             partialData = stream.GetCachedPartialData();
 
@@ -176,7 +176,7 @@ namespace DCL.WebRequests.HTTP2.Tests
             Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
             Http2PartialDownloadDataStream.CachedPartialData partialData = stream.GetCachedPartialData();
             Assert.That(partialData.partialContentLength, Is.GreaterThan(0));
-            Assert.That(stream.opMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.COMPLETE_DATA_CACHED));
+            Assert.That(stream.OpMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.COMPLETE_DATA_CACHED));
         }
 
         [Test]
@@ -239,7 +239,7 @@ namespace DCL.WebRequests.HTTP2.Tests
 
             Assert.IsTrue(stream is { IsFullyDownloaded: true });
 
-            Assert.That(stream.opMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.COMPLETE_DATA_CACHED));
+            Assert.That(stream.OpMode, Is.EqualTo(Http2PartialDownloadDataStream.Mode.COMPLETE_DATA_CACHED));
 
             Assert.That(stream.GetMemoryStreamPartialData(), Is.EqualTo(default(Http2PartialDownloadDataStream.MemoryStreamPartialData)));
             Assert.That(stream.GetFileStreamData(), Is.EqualTo(default(Http2PartialDownloadDataStream.FileStreamData)));
