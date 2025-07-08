@@ -3,27 +3,24 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Movement;
+using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
-using DCL.Web3.Identities;
 using ECS.Abstract;
 using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(RemotePlayersMovementSystem))]
     public partial class RemoteEmotesSystem : BaseUnityLoopSystem
     {
-        private readonly IWeb3IdentityCache identityCache;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly IEmotesMessageBus emotesMessageBus;
-        private readonly Entity playerEntity;
 
-        internal RemoteEmotesSystem(World world, IWeb3IdentityCache identityCache, IReadOnlyEntityParticipantTable entityParticipantTable, IEmotesMessageBus emotesMessageBus, Entity playerEntity) : base(world)
+        internal RemoteEmotesSystem(World world, IReadOnlyEntityParticipantTable entityParticipantTable, IEmotesMessageBus emotesMessageBus) : base(world)
         {
-            this.identityCache = identityCache;
             this.entityParticipantTable = entityParticipantTable;
-            this.playerEntity = playerEntity;
             this.emotesMessageBus = emotesMessageBus;
         }
 
@@ -49,13 +46,9 @@ namespace DCL.AvatarRendering.Emotes
                     ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
                     ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool interpolationExists);
 
-                    if (interpolationExists)
-                    {
-                        if (replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp)
-                            intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
-                        else
-                            savedIntentions.Add(remoteEmoteIntention);
-                    }
+                    // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
+                    if (interpolationExists && replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp)
+                        intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                     else
                         savedIntentions.Add(remoteEmoteIntention);
                 }
