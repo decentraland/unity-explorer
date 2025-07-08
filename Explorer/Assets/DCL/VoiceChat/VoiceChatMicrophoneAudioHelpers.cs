@@ -9,6 +9,10 @@ namespace DCL.VoiceChat
     /// </summary>
     public static class VoiceChatMicrophoneAudioHelpers
     {
+        private const float SIMPLE_RATIO_TOLERANCE = 0.1f;
+        // Consider ratios close to 1:1, 2:1, 1:2, 4:1, 1:4 as simple
+        private static readonly float[] SIMPLE_RATIOS = { 0.25f, 0.5f, 1.0f, 2.0f, 4.0f };
+
         /// <summary>
         /// Converts multi-channel audio to mono
         /// </summary>
@@ -84,6 +88,51 @@ namespace DCL.VoiceChat
             {
                 output[i] = (input[i * 2] + input[i * 2 + 1]) * 0.5f;
             }
+        }
+
+        /// <summary>
+        /// Smart resampling that automatically chooses the best algorithm
+        /// </summary>
+        /// <param name="input">Input audio data span</param>
+        /// <param name="inputRate">Input sample rate</param>
+        /// <param name="output">Output audio data span</param>
+        /// <param name="outputRate">Output sample rate</param>
+        /// <param name="useHighQuality">Force high quality resampling even for simple ratios</param>
+        [BurstCompile]
+        public static void Resample(Span<float> input, int inputRate, Span<float> output, int outputRate, bool useHighQuality = false)
+        {
+            if (inputRate == outputRate)
+            {
+                input.CopyTo(output);
+                return;
+            }
+
+            float ratio = (float)inputRate / outputRate;
+            
+            // Use linear interpolation for simple ratios or when high quality isn't needed
+            if (!useHighQuality && IsSimpleRatio(ratio))
+            {
+                ResampleLinear(input, output, ratio);
+            }
+            else
+            {
+                ResampleCubic(input, inputRate, output, outputRate);
+            }
+        }
+
+        /// <summary>
+        /// Determines if a resampling ratio is simple enough for linear interpolation
+        /// </summary>
+        [BurstCompile]
+        private static bool IsSimpleRatio(float ratio)
+        {
+            for (int i = 0; i < SIMPLE_RATIOS.Length; i++)
+            {
+                if (math.abs(ratio - SIMPLE_RATIOS[i]) < SIMPLE_RATIO_TOLERANCE)
+                    return true;
+            }
+            
+            return false;
         }
 
         /// <summary>

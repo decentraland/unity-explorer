@@ -265,7 +265,7 @@ namespace DCL.VoiceChat
                 var targetSamplesPerChannel = (int)((float)samplesPerChannel * VoiceChatConstants.LIVEKIT_SAMPLE_RATE / outputSampleRate);
                 Span<float> resampledSpan = localTempBuffer.AsSpan(samplesPerChannel, targetSamplesPerChannel);
                 
-                VoiceChatMicrophoneAudioHelpers.ResampleCubic(
+                VoiceChatMicrophoneAudioHelpers.Resample(
                     monoSpan.Slice(0, samplesPerChannel), 
                     outputSampleRate, 
                     resampledSpan, 
