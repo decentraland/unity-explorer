@@ -99,7 +99,7 @@ namespace DCL.VoiceChat
             int samplesPerChannel = data.Length / channels;
             Span<float> sendBuffer = data;
 
-            if (isProcessingEnabled && audioProcessor != null && data.Length > 0)
+            if (audioProcessor != null && data.Length > 0)
             {
                 SubmitAudioForProcessing(data, channels, outputSampleRate, samplesPerChannel);
 
@@ -253,28 +253,23 @@ namespace DCL.VoiceChat
             Span<float> data = job.AudioData.AsSpan();
             Span<float> monoSpan = localTempBuffer.AsSpan(0, samplesPerChannel);
 
-            // Convert to mono if needed
-            if (job.Channels > 1)
+            VoiceChatMicrophoneAudioHelpers.ConvertToMono(data, monoSpan, job.Channels, samplesPerChannel);
+
+            if (isProcessingEnabled)
             {
-                for (var i = 0; i < samplesPerChannel; i++)
-                {
-                    var sum = 0f;
-
-                    for (var ch = 0; ch < job.Channels; ch++)
-                        sum += data[(i * job.Channels) + ch];
-
-                    monoSpan[i] = sum / job.Channels;
-                }
+                audioProcessor.ProcessAudio(monoSpan, job.SampleRate);
             }
-            else { data.CopyTo(monoSpan); }
-
-            audioProcessor.ProcessAudio(monoSpan, job.SampleRate);
 
             if (outputSampleRate != VoiceChatConstants.LIVEKIT_SAMPLE_RATE)
             {
                 var targetSamplesPerChannel = (int)((float)samplesPerChannel * VoiceChatConstants.LIVEKIT_SAMPLE_RATE / outputSampleRate);
                 Span<float> resampledSpan = localTempBuffer.AsSpan(samplesPerChannel, targetSamplesPerChannel);
-                VoiceChatAudioResampler.ResampleCubic(monoSpan.Slice(0, samplesPerChannel), outputSampleRate, resampledSpan, VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
+                
+                VoiceChatMicrophoneAudioHelpers.ResampleCubic(
+                    monoSpan.Slice(0, samplesPerChannel), 
+                    outputSampleRate, 
+                    resampledSpan, 
+                    VoiceChatConstants.LIVEKIT_SAMPLE_RATE);
 
                 var result = new float[targetSamplesPerChannel];
                 resampledSpan.CopyTo(result);

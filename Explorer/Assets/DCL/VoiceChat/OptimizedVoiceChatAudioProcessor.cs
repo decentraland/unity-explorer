@@ -1,10 +1,10 @@
 using UnityEngine;
 using System;
-using Unity.Burst;
-using Unity.Mathematics;
 
 namespace DCL.VoiceChat
 {
+    // TODO: Review if this class will be needed, if so, we need to improve it by using Burst and potentially Jobs.
+    // This would require further benchmarking to see if its worth.
     public class OptimizedVoiceChatAudioProcessor : IVoiceChatAudioProcessor
     {
         private readonly VoiceChatConfiguration configuration;
@@ -32,13 +32,11 @@ namespace DCL.VoiceChat
         private float bufferLookback;
         private float preGateAttenuation;
 
-        [BurstCompile]
         private struct BiquadState
         {
             public float x1, x2, y1, y2;
         }
 
-        [BurstCompile]
         private struct BiquadCoefficients
         {
             public float b0, b1, b2, a1, a2;

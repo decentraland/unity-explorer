@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EnableLocalTrackPlayback: 0
   HoldThresholdInSeconds: 0.5
-  EnableAudioProcessing: 1
+  EnableAudioProcessing: 0
   EnableNoiseGate: 1
   NoiseGateThreshold: 0.0001
   NoiseGateHoldTime: 2
