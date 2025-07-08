@@ -25,18 +25,20 @@ namespace DCL.VoiceChat
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
+        private readonly IDisposable statusSubscription;
 
-        private bool disposed;
         private ITrack microphoneTrack;
-        private CancellationTokenSource cts;
-        private bool isMediaOpen;
         private OptimizedMonoRtcAudioSource monoRtcAudioSource;
         private int reconnectionAttempts;
-        private CancellationTokenSource? reconnectionCts;
+
         private bool isOrderedDisconnection;
+        private bool isMediaOpen;
+        private bool isDisposed;
+
         private VoiceChatStatus currentStatus;
-        private CancellationTokenSource? orderedDisconnectionCts;
-        private IDisposable? statusSubscription;
+        private CancellationTokenSource orderedDisconnectionCts;
+        private CancellationTokenSource reconnectionCts;
+        private CancellationTokenSource trackPublishingCts;
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource,
@@ -63,8 +65,8 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            if (disposed) return;
-            disposed = true;
+            if (isDisposed) return;
+            isDisposed = true;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
             voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
@@ -129,10 +131,10 @@ namespace DCL.VoiceChat
                     if (!isMediaOpen)
                     {
                         isMediaOpen = true;
-                        cts = cts.SafeRestart();
+                        trackPublishingCts = trackPublishingCts.SafeRestart();
 
                         SubscribeToRemoteTracks();
-                        PublishTrack(cts.Token);
+                        PublishTrack(trackPublishingCts.Token);
                     }
 
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
@@ -319,30 +321,52 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid AttemptReconnectionAsync(CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested)
+            try
             {
-                if (reconnectionAttempts >= configuration.MaxReconnectionAttempts)
+                while (!ct.IsCancellationRequested)
                 {
-                    reconnectionAttempts = 0;
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Max reconnection attempts ({configuration.MaxReconnectionAttempts}) reached - calling HandleLivekitConnectionFailed");
-                    voiceChatCallStatusService.HandleLivekitConnectionFailed();
-                    return;
+                    if (reconnectionAttempts >= configuration.MaxReconnectionAttempts)
+                    {
+                        reconnectionAttempts = 0;
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Max reconnection attempts ({configuration.MaxReconnectionAttempts}) reached - calling HandleLivekitConnectionFailed");
+                        voiceChatCallStatusService.HandleLivekitConnectionFailed();
+                        return;
+                    }
+
+                    reconnectionAttempts++;
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts}/{configuration.MaxReconnectionAttempts}");
+
+                    try { await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct); }
+                    catch (OperationCanceledException)
+                    {
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnection cancelled");
+                        return;
+                    }
+
+                    var success = false;
+
+                    try { success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl); }
+                    catch (Exception ex)
+                    {
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Exception during reconnection attempt {reconnectionAttempts}: {ex.Message}");
+
+                        // Continue to next attempt
+                    }
+
+                    if (success)
+                    {
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnection successful");
+                        CleanupReconnectionState();
+                        return;
+                    }
+
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts} failed");
                 }
-
-                reconnectionAttempts++;
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts}/{configuration.MaxReconnectionAttempts}");
-                await UniTask.Delay(configuration.ReconnectionDelayMs, cancellationToken: ct);
-
-                bool success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
-
-                if (success)
-                {
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnection successful");
-                    CleanupReconnectionState();
-                    return;
-                }
-
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Reconnection attempt {reconnectionAttempts} failed");
+            }
+            catch (Exception ex)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Unexpected exception in reconnection loop: {ex.Message}");
+                voiceChatCallStatusService.HandleLivekitConnectionFailed();
             }
         }
     }
