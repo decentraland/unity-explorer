@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DCL.Profiles;
@@ -163,6 +164,11 @@ namespace DCL.Chat
             profileView.gameObject.SetActive(false);
             communityChannelContainer.gameObject.SetActive(true);
             communityChannelContainer.SetupAsync(thumbnailCache, communityId, communityName, thumbnailUrl, openContextMenuAction, ct).Forget();
+        }
+
+        public void SetConnectionStatus(OnlineStatus status)
+        {
+            profileView.SetConnectionStatus(status);
         }
 
         private void OnOpenContextMenuButtonClicked()

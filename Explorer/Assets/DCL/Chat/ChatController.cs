@@ -532,7 +532,7 @@ namespace DCL.Chat
                 return;
 
             bool offline = userState is ChatUserStateUpdater.ChatUserState.DISCONNECTED or ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER;
-            viewInstance.UpdateConversationToolbarStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
+            viewInstance.UpdateConversationStatusIconForUser(userId, offline ? OnlineStatus.OFFLINE : OnlineStatus.ONLINE);
         }
 
 #endregion
@@ -838,7 +838,7 @@ namespace DCL.Chat
 
         private void OnUserConnectionStateChanged(string userId, bool isConnected)
         {
-            viewInstance!.UpdateConversationToolbarStatusIconForUser(userId, isConnected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+            viewInstance!.UpdateConversationStatusIconForUser(userId, isConnected? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
         }
 
         #endregion
