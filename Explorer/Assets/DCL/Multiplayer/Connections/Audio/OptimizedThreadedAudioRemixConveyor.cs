@@ -4,7 +4,6 @@ using LiveKit.Rooms.Streaming.Audio;
 using Livekit.Utils;
 using System;
 using System.Buffers;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using UnityEngine;
@@ -109,17 +108,25 @@ namespace DCL.Multiplayer.Connections.Audio
         private static void WriteSilenceToBuffer(Mutex<RingBuffer> outputBuffer, int silenceDataSize)
         {
             using Mutex<RingBuffer>.Guard guard = outputBuffer.Lock();
-
-            const int chunkSize = 1024; // 1KB chunks
-            var chunk = Unsafe.stackalloc byte[chunkSize];
-
-            int remainingBytes = silenceDataSize;
-            while (remainingBytes > 0)
+            
+            const int chunkSize = 1024;
+            var chunk = ArrayPool<byte>.Shared.Rent(chunkSize);
+            try
             {
-                int bytesToWrite = Math.Min(chunkSize, remainingBytes);
-                var chunkSpan = chunk.Slice(0, bytesToWrite);
-                guard.Value.Write(chunkSpan);
-                remainingBytes -= bytesToWrite;
+                Array.Clear(chunk, 0, chunkSize);
+                
+                int remainingBytes = silenceDataSize;
+                while (remainingBytes > 0)
+                {
+                    int bytesToWrite = Math.Min(chunkSize, remainingBytes);
+                    var chunkSpan = chunk.AsSpan(0, bytesToWrite);
+                    guard.Value.Write(chunkSpan);
+                    remainingBytes -= bytesToWrite;
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(chunk);
             }
         }
     }
