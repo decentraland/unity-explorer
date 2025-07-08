@@ -49,9 +49,14 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
+  - rid: 79327740284895321
   references:
     version: 2
     RefIds:
+    - rid: 79327740284895321
+      type: {class: SceneDebugConsolePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ConsoleSettings>k__BackingField: {fileID: 11400000, guid: 5df92492d483946498f93a4a425c060b, type: 2}
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

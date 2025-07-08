@@ -1,0 +1,33 @@
+{
+    "name": "DCL.UI.SceneDebugConsole",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:ff38b7506167d314d987b4b8e8406988",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:9cce9838ccdc58d46b673e02f1058718",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:2f30d6e5229a74284acedda491abcc6e",
+        "GUID:029c1c1b674aaae47a6841a0b89ad80e",
+        "GUID:f95146f37dffdf240b6b2a7c4c8bdc45",
+        "GUID:d5368878df29ff849933a7d3586d18c6",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5",
+        "GUID:ba053ae967dabc94a811350e36a486f3",
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:37cb5599d7914a6f8aa89a24fe37578f",
+        "GUID:924e84bd95e84ef3b9bfb35d9681dfc7"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
