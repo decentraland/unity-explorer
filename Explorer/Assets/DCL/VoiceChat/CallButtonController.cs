@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DCL.Chat.EventBus;
+using DCL.Utilities;
 using System;
 using System.Threading;
 using Utility;
@@ -26,6 +27,7 @@ namespace DCL.VoiceChat
         private bool isClickedOnce = false;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
+        private IDisposable? statusSubscription;
 
         public CallButtonController(CallButtonView view, IVoiceChatCallStatusService voiceChatCallStatusService, IChatEventBus chatEventBus)
         {
@@ -34,7 +36,7 @@ namespace DCL.VoiceChat
             this.chatEventBus = chatEventBus;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
-            voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
+            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnVoiceChatStatusChanged);
             chatEventBus.StartCall += OnChatEventBusStartCall;
         }
 
@@ -85,7 +87,7 @@ namespace DCL.VoiceChat
             // First click - set the flag and handle the logic
             isClickedOnce = true;
 
-            if (voiceChatCallStatusService.Status is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
+            if (voiceChatCallStatusService.Status.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
                 await ShowTooltipWithAutoClose(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                 return;
@@ -141,7 +143,7 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            voiceChatCallStatusService.StatusChanged -= OnVoiceChatStatusChanged;
+            statusSubscription?.Dispose();
             chatEventBus.StartCall -= OnChatEventBusStartCall;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
         }

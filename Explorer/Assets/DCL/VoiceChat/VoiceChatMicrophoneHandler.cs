@@ -64,7 +64,7 @@ namespace DCL.VoiceChat
                 if (audioSource != null)
                 {
                     audioSource.volume = 0f;
-                    StopAudioSource();
+                    audioSource.Stop();
                     audioSource.clip = null;
                 }
 
@@ -73,26 +73,6 @@ namespace DCL.VoiceChat
                 if (audioFilter != null)
                     audioFilter.enabled = false;
             }
-        }
-
-        private void StopAudioSource()
-        {
-            if (!PlayerLoopHelper.IsMainThread)
-            {
-                StopAudioSourceAsync().Forget();
-                return;
-            }
-
-            if (audioSource != null)
-                audioSource.Stop();
-        }
-
-        private async UniTaskVoid StopAudioSourceAsync()
-        {
-            await UniTask.SwitchToMainThread();
-
-            if (audioSource != null)
-                audioSource.Stop();
         }
 
         private void OnPressed(InputAction.CallbackContext obj)

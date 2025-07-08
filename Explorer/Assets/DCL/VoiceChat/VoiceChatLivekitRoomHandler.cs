@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Utilities;
 using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -35,6 +36,7 @@ namespace DCL.VoiceChat
         private bool isOrderedDisconnection;
         private VoiceChatStatus currentStatus;
         private CancellationTokenSource? orderedDisconnectionCts;
+        private IDisposable? statusSubscription;
 
         public VoiceChatLivekitRoomHandler(
             VoiceChatCombinedStreamsAudioSource combinedStreamsAudioSource,
@@ -52,10 +54,11 @@ namespace DCL.VoiceChat
             this.roomHub = roomHub;
             this.configuration = configuration;
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
+
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
             voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
-            voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
+            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
         }
 
         public void Dispose()
@@ -65,7 +68,7 @@ namespace DCL.VoiceChat
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
             voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
             voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
-            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
+            statusSubscription?.Dispose();
             reconnectionCts.SafeCancelAndDispose();
             CloseMedia();
         }

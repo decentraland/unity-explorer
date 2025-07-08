@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.Utilities;
 using System;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ namespace DCL.VoiceChat
         private VoiceChatStatus currentCallStatus;
         private bool isRoomConnected;
         private bool disposed;
+        private IDisposable? statusSubscription;
 
         public VoiceChatMicrophoneStateManager(
             VoiceChatMicrophoneHandler microphoneHandler,
@@ -20,7 +22,7 @@ namespace DCL.VoiceChat
             this.microphoneHandler = microphoneHandler;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
 
-            voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
+            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
         }
 
         public void Dispose()
@@ -28,7 +30,7 @@ namespace DCL.VoiceChat
             if (disposed) return;
             disposed = true;
 
-            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
+            statusSubscription?.Dispose();
         }
 
         public void OnRoomConnectionChanged(bool connected)

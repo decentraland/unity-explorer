@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
@@ -20,6 +21,7 @@ namespace DCL.VoiceChat
         private readonly MicrophoneButtonController micController;
 
         private CancellationTokenSource cts;
+        private IDisposable? statusSubscription;
 
         public VoiceChatController(
             VoiceChatView view,
@@ -49,7 +51,7 @@ namespace DCL.VoiceChat
 
             micController = new MicrophoneButtonController(list, microphoneHandler, view.MuteMicrophoneAudio, view.UnMuteMicrophoneAudio);
 
-            this.voiceChatCallStatusService.StatusChanged += OnVoiceChatStatusChanged;
+            statusSubscription = this.voiceChatCallStatusService.Status.Subscribe(OnVoiceChatStatusChanged);
             this.voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
@@ -128,7 +130,7 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            this.voiceChatCallStatusService.StatusChanged -= OnVoiceChatStatusChanged;
+            statusSubscription?.Dispose();
             this.voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
             micController.Dispose();

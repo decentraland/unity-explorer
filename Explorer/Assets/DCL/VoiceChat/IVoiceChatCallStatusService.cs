@@ -1,13 +1,12 @@
 using DCL.Web3;
+using DCL.Utilities;
 using System;
 
 namespace DCL.VoiceChat
 {
     public interface IVoiceChatCallStatusService : IDisposable
     {
-        public delegate void VoiceChatStatusChangeDelegate(VoiceChatStatus newStatus);
-        event VoiceChatStatusChangeDelegate StatusChanged;
-        VoiceChatStatus Status { get; }
+        IReadonlyReactiveProperty<VoiceChatStatus> Status { get; }
         public Web3Address CurrentTargetWallet { get; }
         public string RoomUrl { get;}
 

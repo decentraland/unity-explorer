@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
+using DCL.Utilities;
 using Decentraland.SocialService.V2;
 using System;
 using System.Threading;
@@ -14,7 +15,8 @@ namespace DCL.VoiceChat
         private readonly IVoiceService voiceChatService;
 
         private CancellationTokenSource cts;
-        public VoiceChatStatus Status { get; private set; }
+        private readonly ReactiveProperty<VoiceChatStatus> statusProperty;
+        public IReadonlyReactiveProperty<VoiceChatStatus> Status => statusProperty;
         public Web3Address CurrentTargetWallet { get; private set; }
 
         /// <summary>
@@ -27,11 +29,10 @@ namespace DCL.VoiceChat
         /// </summary>
         public string RoomUrl { get; private set; }
 
-        public event IVoiceChatCallStatusService.VoiceChatStatusChangeDelegate StatusChanged;
-
         public VoiceChatCallStatusService(IVoiceService voiceChatService)
         {
             this.voiceChatService = voiceChatService;
+            this.statusProperty = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
 
             this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             this.voiceChatService.Reconnected += OnReconnected;
@@ -49,6 +50,7 @@ namespace DCL.VoiceChat
                 voiceChatService.Dispose();
             }
 
+            statusProperty.Dispose();
             cts.SafeCancelAndDispose();
         }
 
@@ -105,7 +107,7 @@ namespace DCL.VoiceChat
 
         private void OnRCPDisconnected()
         {
-            if (Status is not VoiceChatStatus.VOICE_CHAT_IN_CALL)
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
                 ResetVoiceChatData();
                 UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
@@ -115,7 +117,7 @@ namespace DCL.VoiceChat
         public void StartCall(Web3Address walletId)
         {
             //We can start a call only if we are not connected or trying to start a call
-            if (Status is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_USER_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
+            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_USER_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
 
             CurrentTargetWallet = walletId;
 
@@ -162,7 +164,7 @@ namespace DCL.VoiceChat
         public void AcceptCall()
         {
             //We can accept a call only if we are receiving a call
-            if (Status is not VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL) return;
 
             cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
@@ -197,7 +199,7 @@ namespace DCL.VoiceChat
         public void HangUp()
         {
             //We can stop a call only if we are starting a call or inside a call
-            if (Status is not (VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_IN_CALL)) return;
+            if (Status.Value is not (VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_IN_CALL)) return;
 
             cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_ENDING_CALL);
@@ -232,7 +234,7 @@ namespace DCL.VoiceChat
         public void RejectCall()
         {
             //We can reject a call only if we are receiving a call
-            if (Status is not VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL) return;
 
             cts = cts.SafeRestart();
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_REJECTING_CALL);
@@ -266,8 +268,7 @@ namespace DCL.VoiceChat
         private void UpdateStatus(VoiceChatStatus newStatus)
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"New status is {newStatus}");
-            Status = newStatus;
-            StatusChanged?.Invoke(Status);
+            statusProperty.Value = newStatus;
         }
 
         private void ResetVoiceChatData()
@@ -288,7 +289,7 @@ namespace DCL.VoiceChat
 
         public void HandleLivekitConnectionFailed()
         {
-            if (Status is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL)
+            if (Status.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL)
             {
                 ResetVoiceChatData();
                 UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);

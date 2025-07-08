@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Utilities;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using System;
@@ -18,6 +19,7 @@ namespace DCL.VoiceChat
         private readonly World world;
         private readonly Entity playerEntity;
         private HashSet<string> activeSpeakers = new ();
+        private IDisposable? statusSubscription;
 
         private bool disposed;
 
@@ -34,7 +36,7 @@ namespace DCL.VoiceChat
             this.world = world;
             this.playerEntity = playerEntity;
 
-            voiceChatCallStatusService.StatusChanged += OnCallStatusChanged;
+            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
             voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
         }
@@ -44,7 +46,7 @@ namespace DCL.VoiceChat
             if (disposed) return;
             disposed = true;
 
-            voiceChatCallStatusService.StatusChanged -= OnCallStatusChanged;
+            statusSubscription?.Dispose();
             voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
         }
