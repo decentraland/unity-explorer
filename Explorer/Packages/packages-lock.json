@@ -93,7 +93,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "6e1a521f6ae184a394aed3c03b9eb5a768712bda"
+      "hash": "4c1451d6b2b9ac5c10a223a8085948b92d4c16e1"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
