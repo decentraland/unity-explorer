@@ -71,6 +71,7 @@ using DCL.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
+using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SocialService;
 using DCL.StylizedSkybox.Scripts.Plugin;
@@ -482,7 +483,7 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 mapPathEventBus,
                 staticContainer.SceneRestrictionBusController,
-                dynamicWorldParams.StartParcel,
+                dynamicWorldParams.StartParcel.Peek(),
                 sharedSpaceManager,
                 clipboard,
                 bootstrapContainer.DecentralandUrlsSource
@@ -571,6 +572,9 @@ namespace Global.Dynamic
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
+
+            DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, realmNavigator, ct);
+            deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
             var friendOnlineStatusCacheProxy = new ObjectProxy<FriendsConnectivityStatusTracker>();
@@ -843,9 +847,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
 
             if (localSceneDevelopment)
-            {
                 globalPlugins.Add(new LocalSceneDevelopmentPlugin(reloadSceneController, realmUrls));
-            }
             else
             {
                 globalPlugins.Add(lodContainer.LODPlugin);
@@ -935,7 +937,9 @@ namespace Global.Dynamic
                     mvcManager,
                     notificationsBusController,
                     staticContainer.RealmData,
-                    sharedSpaceManager));
+                    sharedSpaceManager,
+                    identityCache,
+                    staticContainer.LoadingStatus));
             }
 
             if (dynamicWorldParams.EnableAnalytics)

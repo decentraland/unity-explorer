@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.AvatarShape.Systems
             bool isRotationManagedByTween)
         {
             ref CharacterInterpolationMovementComponent characterInterpolationMovementComponent = ref globalWorld.TryGetRef<CharacterInterpolationMovementComponent>(
-                sdkAvatarShapeComponent.globalWorldEntity,
+                sdkAvatarShapeComponent.GlobalWorldEntity,
                 out bool hasCharacterInterpolationMovement);
 
             if (!hasCharacterInterpolationMovement)

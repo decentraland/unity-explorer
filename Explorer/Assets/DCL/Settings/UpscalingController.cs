@@ -18,7 +18,6 @@ namespace DCL.Utilities
         private const float STP_MID_RESOLUTION_WINDOWS = 1f;
         private const float INITIAL_UPSCALE_VALUE = 1f;
 
-        private readonly SettingsDataStore settingsDataStore;
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
 
@@ -45,11 +44,9 @@ namespace DCL.Utilities
             characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += CharacterViewClosed;
             savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
 
-            settingsDataStore = new SettingsDataStore();
-
-            if (settingsDataStore.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
-                SetUpscalingValue(settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER), true);
+                SetUpscalingValue(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER), true);
                 ignoreFirstResolutionChange = true;
             }
             else
@@ -82,13 +79,17 @@ namespace DCL.Utilities
 
             if (updateStoredValue)
             {
-                settingsDataStore.SetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
                 OnUpscalingChanged?.Invoke(sliderValue);
             }
         }
 
         public void ResolutionChanged(Resolution resolution)
         {
+            //TODO (Juani): Resolution setting is not correct. You can chose a higher resolution, even if your monitor is not on that resolution.
+            //Therefore, automatically setting it is not currently reliable
+            return;
+            
             //Helper bool for the first stp value set. ResolutionChanged is invoked on application start, and if the value does exist in PlayerPrefs,
             //the first invoke should be ignored
             if (ignoreFirstResolutionChange)
@@ -108,6 +109,6 @@ namespace DCL.Utilities
         }
 
         public float GetCurrentUpscale() =>
-            settingsDataStore.GetSliderValue(DCLPrefKeys.SETTINGS_UPSCALER);
+            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
     }
 }
