@@ -63,6 +63,7 @@ jobs:
             git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
             $jsonFilePath = "Explorer/Packages/manifest.json"
             (Get-Content $jsonFilePath) `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `

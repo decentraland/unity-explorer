@@ -23,8 +23,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
             previous = previous is NullDataPipe ? null : previous;
         }
 
-        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind) =>
-            DataReceived?.Invoke(data, participant, kind);
+        private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind) =>
+            DataReceived?.Invoke(data, participant, topic, kind);
 
         public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind = DataPacketKind.KindLossy) =>
             assigned.EnsureAssigned().PublishData(data, topic, destinationSids, kind);

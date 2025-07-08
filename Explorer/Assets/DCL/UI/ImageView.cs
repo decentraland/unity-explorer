@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,11 @@ namespace DCL.UI
 
         [field: SerializeField]
         internal Image Image { get; private set; }
+
+        [field: SerializeField]
+        internal float imageLoadingFadeDuration { get; private set; } = 0.3f;
+
+        public Sprite ImageSprite => Image.sprite;
 
         public bool IsLoading
         {
@@ -58,6 +64,11 @@ namespace DCL.UI
             }
 
             Alpha = 1f;
+        }
+
+        public void ShowImageAnimated()
+        {
+            Image.DOColor(Color.white, imageLoadingFadeDuration);
         }
     }
 }

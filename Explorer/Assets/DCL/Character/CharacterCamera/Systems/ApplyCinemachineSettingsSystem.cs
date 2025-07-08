@@ -25,7 +25,7 @@ namespace DCL.Character.CharacterCamera.Systems
         private readonly ElementBinding<float> maxDistance;
         private readonly ElementBinding<float> currentDistance;
         private readonly ControlsSettingsAsset controlsSettingsAsset;
-
+        private readonly DebugWidgetBuilder? widget;
         private float currentSens;
         private bool cameraNoise;
 
@@ -41,13 +41,13 @@ namespace DCL.Character.CharacterCamera.Systems
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.isDebug = isDebug;
 
-            DebugWidgetBuilder? widget = debugBuilder.TryAddWidget("Camera");
+            widget = debugBuilder.TryAddWidget("Camera");
 
             widget?.AddFloatSliderField("Sensitivity", sensitivitySlider, 0.01f, 100f)
                    .AddToggleField("Enable Noise", OnNoiseChange, false)
                    .AddFloatSliderField("Noise Value", noiseSlider, 0, 20);
 
-            if (isDebug)
+            if (isDebug && widget != null)
             {
                 minAltitude = new ElementBinding<float>(0);
                 maxAltitude = new ElementBinding<float>(0);
@@ -55,7 +55,7 @@ namespace DCL.Character.CharacterCamera.Systems
                 maxDistance = new ElementBinding<float>(0);
                 currentDistance = new ElementBinding<float>(0);
 
-                widget?.AddFloatField("Min Draw Dist. Altitude", minAltitude)
+                widget.AddFloatField("Min Draw Dist. Altitude", minAltitude)
                        .AddFloatField("Max Draw Dist. Altitude", maxAltitude)
                        .AddFloatField("Min Draw Dist.", minDistance)
                        .AddFloatField("Max Draw Dist.", maxDistance)
@@ -72,6 +72,8 @@ namespace DCL.Character.CharacterCamera.Systems
 
         private void InitializeFarClipPlaneControls()
         {
+            if (widget == null) return;
+
             var cinemachinePreset = World.Get<ICinemachinePreset>(World.CacheCamera());
 
             var farClipSettings = cinemachinePreset.FarClipPlaneSettings;
@@ -113,7 +115,7 @@ namespace DCL.Character.CharacterCamera.Systems
             cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed * controlsSettingsAsset.HorizontalMouseSensitivity;
             cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed * controlsSettingsAsset.VerticalMouseSensitivity;
 
-            if (isDebug)
+            if (isDebug && widget != null)
             {
                 CameraFarClipPlaneSettings farClipSettings = cinemachinePreset.FarClipPlaneSettings;
                 farClipSettings.MinFarClipPlaneAltitude = minAltitude.Value;
