@@ -28,7 +28,7 @@ namespace DCL.Settings.ModuleControllers
         private void UpdateUpscalingValue(float value)
         {
             //Sent in decimal form
-            upscalingController.SetUpscalingValue(value / STEP_MULTIPLIER, true);
+            upscalingController.SetUpscalingValue(value / STEP_MULTIPLIER);
         }
 
         private void UpdateSliderView(float value)
