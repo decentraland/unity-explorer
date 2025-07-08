@@ -63,12 +63,19 @@
       "dependencies": {},
       "hash": "232e2c6e028e35f5ae55cd644e6ae2c5dcbf441b"
     },
+    "com.decentraland.filebrowserpro": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e2daa643b01fc072db3dd3276e584db705a3d9a9"
+    },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a3d04b4bba166375ba225b90256e57eea07febd5"
+      "hash": "8d05bfc7c7e1b74c34a0ad8397f55f91ccb7ea86"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
