@@ -55,7 +55,7 @@ namespace ECS.StreamableLoading.Cache
     /// <typeparam name="TLoadingIntention"></typeparam>
     public interface IStreamableCache<TAsset, TLoadingIntention> : IDisposable where TLoadingIntention: IEquatable<TLoadingIntention>
     {
-        IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>> OngoingRequests { get; }
+        IDictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAsset>>> OngoingRequests { get; }
         IDictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>?> IrrecoverableFailures { get; }
 
         /// <summary>

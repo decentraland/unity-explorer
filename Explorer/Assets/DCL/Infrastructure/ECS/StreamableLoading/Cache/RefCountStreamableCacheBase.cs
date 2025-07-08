@@ -19,8 +19,8 @@ namespace ECS.StreamableLoading.Cache
 
         private bool disposed;
 
-        public IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>> OngoingRequests { get; }
-            = new Dictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>>(IntentionsComparer<TLoadingIntention>.INSTANCE);
+        public IDictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>> OngoingRequests { get; }
+            = new Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAssetData>>>();
 
         public IDictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAssetData>?> IrrecoverableFailures { get; }
             = new Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAssetData>?>();

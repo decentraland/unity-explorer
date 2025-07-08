@@ -15,10 +15,8 @@ namespace ECS.StreamableLoading.Cache
     /// <typeparam name="TLoadingIntention"></typeparam>
     public class NoCache<TAsset, TLoadingIntention> : IStreamableCache<TAsset, TLoadingIntention> where TLoadingIntention: struct, ILoadingIntention, IEquatable<TLoadingIntention>
     {
-        private static readonly EqualityComparer EQUALITY_COMPARER = new ();
-
-        private static readonly DictionaryObjectPool<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>
-            ONGOING_REQUEST_POOL = new (defaultCapacity: PoolConstants.SCENES_COUNT, maxSize: PoolConstants.SCENES_MAX_CAPACITY, equalityComparer: EQUALITY_COMPARER);
+        private static readonly DictionaryObjectPool<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>
+            ONGOING_REQUEST_POOL = new (defaultCapacity: PoolConstants.SCENES_COUNT, maxSize: PoolConstants.SCENES_MAX_CAPACITY);
 
         private class EqualityComparer : IEqualityComparer<TLoadingIntention>
         {
@@ -34,7 +32,7 @@ namespace ECS.StreamableLoading.Cache
         private readonly bool useOngoingRequestCache;
         private readonly bool useIrrecoverableFailureCache;
 
-        public IDictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>> OngoingRequests { get; }
+        public IDictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAsset>>> OngoingRequests { get; }
         public IDictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>?> IrrecoverableFailures { get; }
 
         private bool disposed { get; set; }
@@ -47,7 +45,7 @@ namespace ECS.StreamableLoading.Cache
             if (useOngoingRequestCache)
                 OngoingRequests = ONGOING_REQUEST_POOL.Get();
             else
-                OngoingRequests = FakeDictionaryCache<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>.INSTANCE;
+                OngoingRequests = FakeDictionaryCache<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>.INSTANCE;
 
             if (useIrrecoverableFailureCache)
                 IrrecoverableFailures = DictionaryPool<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>?>.Get();
@@ -61,7 +59,7 @@ namespace ECS.StreamableLoading.Cache
                 return;
 
             if (useOngoingRequestCache)
-                ONGOING_REQUEST_POOL.Release((Dictionary<TLoadingIntention, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>)OngoingRequests);
+                ONGOING_REQUEST_POOL.Release((Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, UniTaskCompletionSource<OngoingRequestResult<TAsset>>>)OngoingRequests);
 
             if (useIrrecoverableFailureCache)
                 DictionaryPool<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>>.Release(IrrecoverableFailures as Dictionary<IntentionsComparer<TLoadingIntention>.SourcedIntentionId, StreamableLoadingResult<TAsset>>);
