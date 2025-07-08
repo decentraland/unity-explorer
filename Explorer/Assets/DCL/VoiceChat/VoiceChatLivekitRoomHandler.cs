@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
@@ -12,6 +13,7 @@ using LiveKit.Rooms.Tracks;
 using System;
 using System.Threading;
 using Utility;
+using Utility.Types;
 
 namespace DCL.VoiceChat
 {
@@ -102,11 +104,11 @@ namespace DCL.VoiceChat
         private async UniTaskVoid ConnectToRoomAsync()
         {
             CleanupReconnectionState();
-            bool success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl);
+            Result<bool> result = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl).SuppressToResultAsync();
 
-            if (!success)
+            if (!result.Success)
             {
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatCallStatusService.RoomUrl}");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"Initial connection failed for room {voiceChatCallStatusService.RoomUrl}: {result.ErrorMessage}");
                 voiceChatCallStatusService.HandleLivekitConnectionFailed();
             }
         }
@@ -116,9 +118,13 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Starting ordered disconnection");
             isOrderedDisconnection = true;
             CleanupReconnectionState();
-            await roomHub.VoiceChatRoom().DeactivateAsync();
+
+            EnumResult<TaskError> result = await roomHub.VoiceChatRoom().DeactivateAsync().SuppressToResultAsync();
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT,
+                result.Success ? "Completed ordered disconnection" : $"Exception during ordered disconnection: {result.Error?.Message}");
+
             isOrderedDisconnection = false;
-            ReportHub.Log(ReportCategory.VOICE_CHAT, "Completed ordered disconnection");
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
@@ -284,7 +290,7 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid CloseMediaAsync()
         {
-            if (!PlayerLoopHelper.IsMainThread) { await UniTask.SwitchToMainThread(); }
+            if (!PlayerLoopHelper.IsMainThread) await UniTask.SwitchToMainThread();
 
             CloseMediaInternal();
         }
@@ -343,17 +349,9 @@ namespace DCL.VoiceChat
                         return;
                     }
 
-                    var success = false;
+                    Result<bool> result = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl).SuppressToResultAsync();
 
-                    try { success = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl); }
-                    catch (Exception ex)
-                    {
-                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"[VoiceChatLivekitRoomHandler] Exception during reconnection attempt {reconnectionAttempts}: {ex.Message}");
-
-                        // Continue to next attempt
-                    }
-
-                    if (success)
+                    if (result.Success)
                     {
                         ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Reconnection successful");
                         CleanupReconnectionState();
