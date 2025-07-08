@@ -37,6 +37,9 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public ProfileMenuView SkyMenuView { get; private set; } = null!;
 
+        [field: SerializeField]
+        public WarningNotificationView? WarningNotificationView { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig? BackgroundMusic { get; private set; }
