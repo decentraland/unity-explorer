@@ -7,7 +7,9 @@ using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
+using System;
 using UnityEngine.Pool;
+using Utility.PriorityQueue;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -44,10 +46,11 @@ namespace DCL.AvatarRendering.Emotes
                     }
 
                     ref CharacterEmoteIntent intention = ref World!.AddOrGet<CharacterEmoteIntent>(entry.Entity);
-                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool interpolationExists);
+                    ref RemotePlayerMovementComponent replicaMovement = ref World.TryGetRef<RemotePlayerMovementComponent>(entry.Entity, out bool _);
+                    ref InterpolationComponent intComp = ref World.TryGetRef<InterpolationComponent>(entry.Entity, out bool interpolationExists);
 
                     // If interpolation passed the time of emote, then we can play it (otherwise emote is still in the interpolation future)
-                    if (interpolationExists && replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp)
+                    if (interpolationExists && EmoteIsInPresentOrPast(replicaMovement, remoteEmoteIntention, intComp))
                         intention.UpdateRemoteId(remoteEmoteIntention.EmoteId);
                     else
                         savedIntentions.Add(remoteEmoteIntention);
@@ -56,6 +59,11 @@ namespace DCL.AvatarRendering.Emotes
 
             foreach (RemoteEmoteIntention savedIntention in savedIntentions!)
                 emotesMessageBus.SaveForRetry(savedIntention);
+
+            return;
+
+            bool EmoteIsInPresentOrPast(RemotePlayerMovementComponent replicaMovement, RemoteEmoteIntention remoteEmoteIntention, InterpolationComponent intComp) =>
+                intComp.Time + t >= remoteEmoteIntention.Timestamp || replicaMovement.PastMessage.timestamp >= remoteEmoteIntention.Timestamp;
         }
     }
 }
