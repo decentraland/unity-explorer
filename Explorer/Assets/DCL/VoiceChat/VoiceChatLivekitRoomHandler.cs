@@ -108,7 +108,7 @@ namespace DCL.VoiceChat
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Starting ordered disconnection");
             isOrderedDisconnection = true;
             CleanupReconnectionState();
-            await roomHub.VoiceChatRoom().DeactivateAsync();
+            await roomHub.VoiceChatRoom().StopAsync();
             isOrderedDisconnection = false;
             ReportHub.Log(ReportCategory.VOICE_CHAT, "Completed ordered disconnection");
         }
@@ -132,6 +132,7 @@ namespace DCL.VoiceChat
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                     break;
                 case VoiceChatConnectionState.DISCONNECTED:
+                case VoiceChatConnectionState.FAILED:
                     CleanupReconnectionState();
                     isMediaOpen = false;
 
@@ -155,10 +156,6 @@ namespace DCL.VoiceChat
                     break;
                 case VoiceChatConnectionState.CONNECTING:
                     // Just connecting, no special handling needed
-                    break;
-                case VoiceChatConnectionState.FAILED:
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Connection failed");
-                    voiceChatCallStatusService.HandleLivekitConnectionFailed();
                     break;
             }
         }
