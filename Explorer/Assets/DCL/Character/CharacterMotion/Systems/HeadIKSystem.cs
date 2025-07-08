@@ -75,8 +75,8 @@ namespace DCL.CharacterMotion.Systems
         {
             UpdateDebugValues();
             UpdatePreviewAvatarIKQuery(World, t);
-            if (!World.Has<InWorldCameraComponent>(camera))
-                UpdateIKQuery(World, t, in camera.GetCameraComponent(World));
+
+            UpdateIKQuery(World, t, in camera.GetCameraComponent(World), World.Has<InWorldCameraComponent>(camera));
         }
 
         [Query]
@@ -151,6 +151,7 @@ namespace DCL.CharacterMotion.Systems
         private void UpdateIK(
             [Data] float dt,
             [Data] in CameraComponent cameraComponent,
+            [Data] bool inWorldCameraActive,
             ref HeadIKComponent headIK,
             ref AvatarBase avatarBase,
             in ICharacterControllerSettings settings,
@@ -167,13 +168,13 @@ namespace DCL.CharacterMotion.Systems
                              && !rigidTransform.IsOnASteepSlope
                              && !headIK.IsDisabled
                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
-                             && emoteComponent.CurrentEmoteReference == null
+                             && !emoteComponent.IsPlayingEmote
                              && !platformComponent.IsMovingPlatform;
 
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, settings.HeadIKWeightChangeSpeed * dt);
 
             // TODO: When enabling and disabling we should reset the reference position
-            if (headIK.IsDisabled) return;
+            if (headIK.IsDisabled || inWorldCameraActive) return;
 
             // TODO: Tie this to a proper look-at system to decide what to look at
             Vector3 targetDirection = cameraComponent.Camera.transform.forward;
