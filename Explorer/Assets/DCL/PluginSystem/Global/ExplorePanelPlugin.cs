@@ -257,6 +257,7 @@ namespace DCL.PluginSystem.Global
             inputHandler?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
+            upscalingController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
