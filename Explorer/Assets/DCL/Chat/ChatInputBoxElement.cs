@@ -433,6 +433,7 @@ namespace DCL.Chat
 
             inputField.Clicked -= OnClicked;
             inputField.PasteShortcutPerformed -= OnPasteShortcutPerformed;
+            emojiPanelButton.Button.onClick.RemoveListener(OnEmojiPanelButtonClicked);
         }
 
         private void OnSuggestionSelected(string suggestionId)
