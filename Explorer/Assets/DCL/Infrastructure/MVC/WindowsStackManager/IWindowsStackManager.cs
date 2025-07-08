@@ -1,7 +1,10 @@
-﻿namespace MVC
+﻿using Cysharp.Threading.Tasks;
+
+namespace MVC
 {
     public interface IWindowsStackManager
     {
+        UniTaskCompletionSource GetTopMostCloseTask(IController controller);
         IController TopMostPopup { get; }
 
         IController CurrentFullscreenController { get; }

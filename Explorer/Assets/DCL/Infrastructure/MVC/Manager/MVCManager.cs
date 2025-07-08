@@ -175,7 +175,8 @@ namespace MVC
                 // Hide the popup closer
                 popupCloser.HideAsync(ct).Forget();
 
-                await command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct);
+                await UniTask.WhenAny(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct),
+                    windowsStackManager.GetTopMostCloseTask(controller).Task);
 
                 await controller.HideViewAsync(ct);
             }
@@ -195,7 +196,8 @@ namespace MVC
 
                 await UniTask.WhenAny(
                     UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
-                    WaitForPopupCloserClickAsync(controller, ct));
+                    WaitForPopupCloserClickAsync(controller, ct),
+                    windowsStackManager.GetTopMostCloseTask(controller).Task);
 
                 // "Close" command has been received
                 await controller.HideViewAsync(ct);

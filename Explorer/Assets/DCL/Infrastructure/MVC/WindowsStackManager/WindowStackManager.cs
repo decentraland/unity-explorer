@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using Cysharp.Threading.Tasks;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.InputSystem;
 
 namespace MVC
 {
-    public class WindowStackManager : IWindowsStackManager
+    public class WindowStackManager : IWindowsStackManager, IDisposable
     {
         internal List<IController> popupStack { get; } = new ();
         internal List<IController> persistentStack { get; } = new ();
@@ -13,15 +16,40 @@ namespace MVC
         public IController? TopMostPopup => popupStack.LastOrDefault();
         public IController CurrentFullscreenController => fullscreenController;
 
+        private readonly Dictionary<IController, UniTaskCompletionSource> closeTasks = new ();
+        private readonly List<IController> fullScreenPopupStack = new ();
+
+        public WindowStackManager()
+        {
+            DCLInput.Instance.UI.Close.performed += CloseNextUI;
+        }
+
+        public void Dispose() =>
+            DCLInput.Instance.UI.Close.performed -= CloseNextUI;
+
+        public UniTaskCompletionSource GetTopMostCloseTask(IController controller) =>
+            closeTasks[controller];
+
+        private void CloseNextUI(InputAction.CallbackContext obj)
+        {
+            if (fullScreenPopupStack.Count == 0) return;
+
+            IController? topMost = fullScreenPopupStack.LastOrDefault();
+            if (topMost != null && closeTasks.TryGetValue(topMost, out var taskCs))
+                taskCs.TrySetResult();
+        }
+
         public PopupPushInfo PushPopup(IController controller)
         {
             int orderInLayer = popupStack.Count * 2;
             popupStack.Add(controller);
-            
+            fullScreenPopupStack.Add(controller);
+            closeTasks.Add(controller, new UniTaskCompletionSource());
+
             foreach (var persistant in persistentStack)
                 if (persistant.State == ControllerState.ViewFocused)
                     persistant.Blur();
-            
+
             return new PopupPushInfo(
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer),
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer - 1),
@@ -33,6 +61,8 @@ namespace MVC
         public FullscreenPushInfo PushFullscreen(IController controller)
         {
             fullscreenController = controller;
+            fullScreenPopupStack.Add(controller);
+            closeTasks.Add(controller, new UniTaskCompletionSource());
 
             foreach (IController persistentController in persistentStack)
                 if(persistentController.State == ControllerState.ViewFocused)
@@ -47,6 +77,8 @@ namespace MVC
                 persistentController.Focus();
 
             fullscreenController = null;
+            closeTasks.Remove(controller);
+            fullScreenPopupStack.Remove(controller);
         }
 
         public PersistentPushInfo PushPersistent(IController controller)
@@ -72,6 +104,8 @@ namespace MVC
         public PopupPopInfo PopPopup(IController controller)
         {
             popupStack.Remove(controller);
+            closeTasks.Remove(controller);
+            fullScreenPopupStack.Remove(controller);
 
             if (popupStack.Count == 0)
             {
@@ -79,8 +113,8 @@ namespace MVC
                     if (persistant.State == ControllerState.ViewBlurred)
                         persistant.Focus();
             }
-            
-            
+
+
             return new PopupPopInfo(
                 new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, ((popupStack.Count - 1) * 2) - 1),
                 TopMostPopup);
