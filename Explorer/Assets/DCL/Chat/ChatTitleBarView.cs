@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
@@ -112,6 +113,11 @@ namespace DCL.Chat
             profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
+        }
+
+        public void SetConnectionStatus(OnlineStatus status)
+        {
+            profileView.SetConnectionStatus(status);
         }
 
         private void OnOpenContextMenuButtonClicked()
