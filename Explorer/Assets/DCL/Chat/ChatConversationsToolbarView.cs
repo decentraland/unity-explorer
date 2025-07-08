@@ -101,7 +101,7 @@ namespace DCL.Chat
             }
 
             newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
-            
+
             items.Add(channel.Id, newItem);
 
             if(items.Count == 1)
@@ -116,7 +116,7 @@ namespace DCL.Chat
         /// <param name="channelId">The Id of the conversation to find the item.</param>
         public void RemoveConversation(ChatChannel.ChannelId channelId)
         {
-            Destroy(items[channelId].gameObject);
+            UnityObjectUtils.SafeDestroy(items[channelId].gameObject);
             items.Remove(channelId);
             UpdateScrollButtonsVisibility();
         }

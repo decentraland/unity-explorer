@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.MediaStream
                     {
                         MediaPlayerInfo? expiredPlayerInfo = queue.Dequeue();
                         expiredPlayerInfo.mediaPlayer.CloseMedia();
-                        GameObject.Destroy(expiredPlayerInfo.mediaPlayer.gameObject);
+                        UnityObjectUtils.SafeDestroy(expiredPlayerInfo.mediaPlayer.gameObject);
                     }
 
                     if (queue.Count == 0)
