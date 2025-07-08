@@ -349,6 +349,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private void JumpIntoWorld()
         {
+            viewInstance!.JumpIntoWorldButton.interactable = false;
             AnimateAndAwaitAsync().Forget();
             return;
 
@@ -420,6 +421,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
+                    viewInstance.JumpIntoWorldButton.interactable = true;
                     characterPreviewController?.OnShow();
 
                     break;
@@ -428,7 +430,7 @@ namespace DCL.AuthenticationScreenFlow
             }
         }
 
-        private void ResetAnimator(Animator animator)
+        private static void ResetAnimator(Animator animator)
         {
             animator.Rebind();
             animator.Update(0f);

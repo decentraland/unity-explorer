@@ -104,6 +104,11 @@ namespace Utility
             return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
         }
 
+        public static bool Contains(this ParcelCorners corners, Vector3 position)
+        {
+            return position.x >= corners.minXZ.x && position.x < corners.maxXZ.x &&
+                   position.z >= corners.minXZ.z && position.z < corners.maxXZ.z;
+        }
 
         public static void ParcelsInRange(Vector3 position, int loadRadius, HashSet<int2> results)
         {
@@ -185,6 +190,24 @@ namespace Utility
         public static bool Contains(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point) =>
             boundingPlanes.MinX < point.x && boundingPlanes.MaxX > point.x
                                           && boundingPlanes.MinZ < point.z && boundingPlanes.MaxZ > point.z;
+
+        /// <summary>
+        /// Gets the nearest position on the scene bounds border. If the point is already inside the bounds,
+        /// returns the original point. Otherwise, clamps the X and Z coordinates to the bounds while preserving Y.
+        /// </summary>
+        /// <param name="boundingPlanes">The bounding planes of the scene.</param>
+        /// <param name="point">The point to find the nearest bounds position for.</param>
+        /// <param name="extraThreshold">Additional space beyond the scene bounds for clamping (default: 0).</param>
+        /// <returns>The nearest position on the scene bounds border with the same Y coordinate as the input.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 GetNearestSceneBoundsPosition(this in SceneCircumscribedPlanes boundingPlanes, Vector3 point, float extraThreshold = 0f)
+        {
+            // Clamp the X and Z coordinates to the bounds with extra space, keep Y unchanged
+            float clampedX = Mathf.Clamp(point.x, boundingPlanes.MinX - extraThreshold, boundingPlanes.MaxX + extraThreshold);
+            float clampedZ = Mathf.Clamp(point.z, boundingPlanes.MinZ - extraThreshold, boundingPlanes.MaxZ + extraThreshold);
+
+            return new Vector3(clampedX, point.y, clampedZ);
+        }
 
         public readonly struct ParcelCorners
         {

@@ -42,6 +42,7 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+mono_crash.*
 
 # Unity3D generated meta files
 *.pidb.meta
@@ -63,3 +64,6 @@ Explorer/UserSettings
 # OS generated
 .DS_Store
 .DS_Store?
+
+# Cursor.AI
+.cursorignore
