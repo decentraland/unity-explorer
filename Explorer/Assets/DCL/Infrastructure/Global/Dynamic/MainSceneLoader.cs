@@ -246,12 +246,10 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
+                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
+                    return;
 
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
-
-                if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
-                    return; // stop bootstrapping;
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
