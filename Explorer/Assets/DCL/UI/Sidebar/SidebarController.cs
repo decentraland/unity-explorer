@@ -3,6 +3,7 @@ using DCL.Browser;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
@@ -13,6 +14,8 @@ using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles.Self;
+using DCL.SceneRestrictionBusController.SceneRestriction;
+using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI.Controls;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
@@ -22,7 +25,6 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -44,12 +46,15 @@ namespace DCL.UI.Sidebar
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
+        private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private bool includeMarketplaceCredits;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
+        private CancellationTokenSource checkForCommunitiesFeatureCts;
         private const string IDLE_ICON_ANIMATOR = "Empty";
         private const string HIGHLIGHTED_ICON_ANIMATOR = "Active";
+        private bool? pendingSkyboxInteractableState;
 
         public event Action? HelpOpened;
 
@@ -72,7 +77,8 @@ namespace DCL.UI.Sidebar
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
-            IRealmData realmData)
+            IRealmData realmData,
+            ISceneRestrictionBusController sceneRestrictionBusController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -91,6 +97,8 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
+
+            sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
 
         public override void Dispose()
@@ -99,6 +107,9 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
+
+            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -112,6 +123,7 @@ namespace DCL.UI.Sidebar
             });
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
+            viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
 
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
@@ -123,7 +135,7 @@ namespace DCL.UI.Sidebar
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
             viewInstance.skyboxButton.onClick.AddListener(OpenSkyboxSettingsAsync);
-            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);;
+            viewInstance.sidebarSettingsWidget.ViewShowingComplete += (panel) => viewInstance.sidebarSettingsButton.OnSelect(null);
             viewInstance.controlsButton.onClick.AddListener(OnControlsButtonClickedAsync);
             viewInstance.unreadMessagesButton.onClick.AddListener(OnUnreadMessagesButtonClicked);
             viewInstance.emotesWheelButton.onClick.AddListener(OnEmotesWheelButtonClickedAsync);
@@ -157,6 +169,27 @@ namespace DCL.UI.Sidebar
 
             checkForMarketplaceCreditsFeatureCts = checkForMarketplaceCreditsFeatureCts.SafeRestart();
             CheckForMarketplaceCreditsFeatureAsync(checkForMarketplaceCreditsFeatureCts.Token).Forget();
+
+            if (pendingSkyboxInteractableState.HasValue)
+            {
+                viewInstance.skyboxButton.interactable = pendingSkyboxInteractableState.Value;
+                pendingSkyboxInteractableState = null;
+            }
+
+            checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
+            CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
+        }
+
+        private void OnSceneRestrictionChanged(SceneRestriction restriction)
+        {
+            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_BLOCKED)
+            {
+                bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
+                if (viewInstance)
+                    viewInstance.skyboxButton.interactable = !isRestricted;
+                else
+                    pendingSkyboxInteractableState = !isRestricted;
+            }
         }
 
         private void OnMvcManagerViewClosed(IController closedController)
@@ -252,6 +285,13 @@ namespace DCL.UI.Sidebar
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+        }
+
+        private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.communitiesButton.gameObject.SetActive(false);
+            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
         #region Sidebar button handlers

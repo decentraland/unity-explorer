@@ -1,4 +1,5 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controllers

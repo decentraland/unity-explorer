@@ -15,6 +15,8 @@ namespace DCL.Nametags
 {
     public class NametagView : MonoBehaviour
     {
+        private const float COMMUNITY_TEXT_MARGIN = 0.02f;
+
         private static NativeArray<Keyframe> alphaCurveKeysNative;
         private static AnimationCurveEvaluator curveEvaluator;
         private static float verifiedIconWidth;
@@ -65,6 +67,9 @@ namespace DCL.Nametags
         [field: SerializeField] internal RectTransform isSpeakingIconOuterRect { get; private set; }
 
         [field: SerializeField] internal TMP_Text privateMessageText { get; private set; }
+        [field: SerializeField] internal TMP_Text communityNameText { get; private set; }
+        [field: SerializeField] internal RectTransform communityNameTextBackground { get; private set; }
+        [field: SerializeField] internal SpriteRenderer communityNameTextBackgroundRenderer { get; private set; }
 
         private enum AnimationState
         {
@@ -79,6 +84,7 @@ namespace DCL.Nametags
         private bool isMention;
         private bool isTransparent;
         private bool isPrivateMessage;
+        private bool isCommunityMessage;
         private bool showPrivateMessageRecipient;
         private bool isInitialized;
         private bool isSpeaking = true;
@@ -108,6 +114,8 @@ namespace DCL.Nametags
         private Color currentIsTalkingSpriteColor;
         private Color currentRecipientNameColor;
         private Color currentUsernameColor;
+        private Color communityNameColor;
+        private Color communityNameBackgroundColor;
 
         private float cachedUsernameWidth;
 
@@ -156,6 +164,9 @@ namespace DCL.Nametags
             isSpeakingIconRenderer.sharedMaterial = sharedMaterial;
             isSpeakingIconOuterRenderer.sharedMaterial = sharedMaterial;
             SetIsSpeaking(false);
+            communityNameTextBackgroundRenderer.sharedMaterial = sharedMaterial;
+            communityNameColor = communityNameText.color;
+            communityNameBackgroundColor = communityNameTextBackgroundRenderer.color;
         }
 
         private void OnEnable()
@@ -330,14 +341,18 @@ namespace DCL.Nametags
             UpdateMaterialState(NameTagAlpha < 1f);
         }
 
-        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string recipientValidatedName, string recipientWalletId, Color recipientNameColor)
+        public void SetChatMessage(string chatMessage, bool isMention, bool isPrivateMessage, bool isOwnMessage, string recipientValidatedName, string recipientWalletId, Color recipientNameColor, bool isCommunityMessage, string communityName)
         {
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             this.isMention = isMention;
             this.isPrivateMessage = isPrivateMessage;
+            this.isCommunityMessage = isCommunityMessage;
             privateMessageIcon.gameObject.SetActive(isPrivateMessage);
             privateMessageText.gameObject.SetActive(false);
+            communityNameText.gameObject.SetActive(isCommunityMessage);
+            communityNameTextBackground.gameObject.SetActive(isCommunityMessage);
+
             if (isPrivateMessage)
             {
                 privateMessageIconRenderer.color = NametagViewConstants.DEFAULT_TRANSPARENT_COLOR;
@@ -345,6 +360,10 @@ namespace DCL.Nametags
                 privateMessageText.gameObject.SetActive(showPrivateMessageRecipient);
                 if (showPrivateMessageRecipient)
                     SetPrivateMessageText(recipientValidatedName, recipientWalletId, recipientNameColor);
+            }
+            else if (isCommunityMessage)
+            {
+                communityNameText.text = communityName;
             }
 
             StartChatBubbleFlowAsync(chatMessage, cts.Token).Forget();
@@ -410,6 +429,9 @@ namespace DCL.Nametags
             isSpeakingCurrentSequence = null;
             BackgroundSprite.transform.localPosition = Vector3.zero;
             mentionBackgroundSprite.transform.localPosition = Vector3.zero;
+            communityNameText.gameObject.SetActive(false);
+            communityNameText.rectTransform.anchoredPosition = NametagViewConstants.ZERO_VECTOR;
+            communityNameTextBackground.gameObject.SetActive(false);
         }
 
         private async UniTaskVoid StartChatBubbleFlowAsync(string messageText, CancellationToken ct)
@@ -475,6 +497,22 @@ namespace DCL.Nametags
             preferredSize.x += bubbleMarginOffsetWidth;
             preferredSize.y = messageContent.preferredHeight + bubbleMarginOffsetHeight;
 
+            Vector2 textBackgroundTargetSize = Vector2.zero;
+
+            if (isCommunityMessage)
+            {
+                // Size of the background of the community name
+                textBackgroundTargetSize = new Vector2((communityNameText.preferredWidth + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.x, (communityNameText.preferredHeight + COMMUNITY_TEXT_MARGIN * 2.0f) / communityNameTextBackgroundRenderer.transform.localScale.y);
+
+                // Size of the bubble, its width cannot be lower than the width of the name of the community
+                preferredSize.x = textBackgroundTargetSize.x * communityNameTextBackgroundRenderer.transform.localScale.x + bubbleMarginOffsetWidth > preferredSize.x ? textBackgroundTargetSize.x * communityNameTextBackgroundRenderer.transform.localScale.x + bubbleMarginOffsetWidth : preferredSize.x;
+                preferredSize.x = Mathf.Min(NametagViewConstants.MAX_BUBBLE_WIDTH, preferredSize.x);
+                preferredSize.y += communityNameText.preferredHeight + communityNameText.preferredHeight * 1.5f + COMMUNITY_TEXT_MARGIN;
+
+                // The width of the message text is adapted according to the updated size of the bubble
+                messageContentRectTransform.sizeDelta = new Vector2(preferredSize.x - bubbleMarginOffsetWidth, preferredSize.y - bubbleMarginOffsetHeight);
+            }
+
             usernameFinalPosition = CalculateUsernameFinalPosition(preferredSize.x, usernameText.preferredWidth, bubbleMarginOffsetWidth);
             usernameFinalPosition.y = messageContent.preferredHeight + bubbleMarginOffsetHeightThird;
 
@@ -524,6 +562,17 @@ namespace DCL.Nametags
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(privateMessageTextFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
                                    .Join(privateMessageText.DOColor(currentRecipientNameColor, animationInDurationQuarter));
                 }
+            }
+            else if (isCommunityMessage)
+            {
+                Vector2 communityTextFinalPosition = usernameFinalPosition + new Vector2((communityNameText.preferredWidth - usernameText.preferredWidth) * 0.5f + COMMUNITY_TEXT_MARGIN, usernameText.preferredHeight + communityNameText.preferredHeight * 0.5f);
+
+                currentSequence.Join(communityNameText.rectTransform.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(communityNameText.DOColor(communityNameColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(DOTween.To(() => communityNameTextBackgroundRenderer.size, v => communityNameTextBackgroundRenderer.size = v, textBackgroundTargetSize, animationInDuration).SetEase(backgroundEaseAnimationCurve)).
+                                Join(communityNameTextBackground.DOAnchorPos(communityTextFinalPosition, animationInDuration)).SetEase(backgroundEaseAnimationCurve).
+                                Join(communityNameTextBackgroundRenderer.DOColor(communityNameBackgroundColor, animationInDuration)).SetEase(backgroundEaseAnimationCurve);
+
             }
 
             currentSequence.Join(usernameText.rectTransform.DOAnchorPos(usernameFinalPosition, animationInDuration).SetEase(backgroundEaseAnimationCurve))
@@ -597,6 +646,13 @@ namespace DCL.Nametags
                     currentSequence.Join(privateMessageText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
                                    .Join(privateMessageText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
             }
+            else if (isCommunityMessage)
+            {
+                currentSequence.Join(communityNameText.rectTransform.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
+                               .Join(communityNameText.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve)
+                               .Join(communityNameTextBackground.DOAnchorPos(NametagViewConstants.ZERO_VECTOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve)
+                               .Join(communityNameTextBackgroundRenderer.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth)).SetEase(backgroundEaseAnimationCurve);
+            }
 
             currentSequence.Join(messageContent.rectTransform.DOAnchorPos(textContentInitialPosition, animationOutDurationHalf).SetEase(NametagViewConstants.LINEAR_EASE))
                            .Join(messageContent.DOColor(NametagViewConstants.DEFAULT_TRANSPARENT_COLOR, animationOutDurationTenth));
@@ -621,6 +677,8 @@ namespace DCL.Nametags
                 BackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth) / 2, 0, 0);
                 mentionBackgroundSprite.transform.localPosition = new Vector3((isSpeakingIconWidth) / 2, 0, 0);
             }
+            communityNameText.gameObject.SetActive(false);
+            communityNameTextBackground.gameObject.SetActive(false);
         }
 
         private Vector2 CalculatePreferredSize(out float availableWidthForPrivateMessage) =>

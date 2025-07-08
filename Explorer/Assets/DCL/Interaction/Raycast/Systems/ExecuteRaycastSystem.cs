@@ -86,7 +86,7 @@ namespace DCL.Interaction.Raycast.Systems
 
         protected override void Update(float t)
         {
-            if (!sceneStateProvider.IsCurrent) return;
+            if (!sceneStateProvider.IsCurrent || !sceneData.SceneLoadingConcluded) return;
 
             BudgetAndExecute(sceneData.Geometry.BaseParcelPosition);
         }

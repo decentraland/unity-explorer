@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.Clipboard;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.ExplorePanel;
@@ -14,9 +15,13 @@ using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.UI;
+using DCL.UI.GenericContextMenu;
+using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DG.Tweening;
 using ECS;
@@ -35,7 +40,7 @@ namespace DCL.Minimap
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins | MapLayer.Path | MapLayer.LiveEvents;
         private const string DEFAULT_BACK_FROM_WORLD_TEXT = "JUMP BACK TO GENESIS CITY";
-        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { {"onboardingdcl.dcl.eth", "EXIT TUTORIAL"} };
+        private static readonly Dictionary<string, string> CUSTOM_BACK_FROM_WORLD_TEXTS = new () { { "onboardingdcl.dcl.eth", "EXIT TUTORIAL" } };
         private const float ANIMATION_TIME = 0.2f;
 
         private readonly IMapRenderer mapRenderer;
@@ -49,6 +54,9 @@ namespace DCL.Minimap
         private readonly Vector2Int startParcelInGenesis;
         private readonly CancellationTokenSource disposeCts;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly ISystemClipboard systemClipboard;
+        private readonly IDecentralandUrlsSource decentralandUrls;
+        private GenericContextMenu? contextMenu;
         private CancellationTokenSource? placesApiCts;
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController? mapCameraController;
@@ -71,7 +79,9 @@ namespace DCL.Minimap
             IMapPathEventBus mapPathEventBus,
             ISceneRestrictionBusController sceneRestrictionBusController,
             Vector2Int startParcelInGenesis,
-            ISharedSpaceManager sharedSpaceManager
+            ISharedSpaceManager sharedSpaceManager,
+            ISystemClipboard systemClipboard,
+            IDecentralandUrlsSource decentralandUrls
         ) : base(() => minimapView)
         {
             this.mapRenderer = mapRenderer;
@@ -84,9 +94,23 @@ namespace DCL.Minimap
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.startParcelInGenesis = startParcelInGenesis;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.systemClipboard = systemClipboard;
+            this.decentralandUrls = decentralandUrls;
             minimapView.SetCanvasActive(false);
             disposeCts = new CancellationTokenSource();
         }
+
+        public override void Dispose()
+        {
+            placesApiCts.SafeCancelAndDispose();
+            disposeCts.Cancel();
+            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
+            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+            sceneRestrictionsController?.Dispose();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
 
         public void HookPlayerPositionTrackingSystem(TrackPlayerPositionSystem system) =>
             AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
@@ -119,6 +143,31 @@ namespace DCL.Minimap
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();
             viewInstance.sdk6Label.gameObject.SetActive(false);
+
+            contextMenu = new GenericContextMenu()
+                          // Add title control to prevent incorrect layout height when the context menu has a single control
+                          // May be removed if a new control is added
+                         .AddControl(new TextContextMenuControlSettings("Minimap"))
+                         .AddControl(new SeparatorContextMenuControlSettings())
+                         .AddControl(new ButtonContextMenuControlSettings("Copy Link", viewInstance.contextMenuConfig.copyLinkIcon, CopyJumpInLink));
+
+            viewInstance.contextMenuConfig.button.onClick.AddListener(ShowContextMenu);
+        }
+
+        private void ShowContextMenu()
+        {
+            mvcManager.ShowAsync(GenericContextMenuController.IssueCommand(
+                           new GenericContextMenuParameter(contextMenu, viewInstance!.contextMenuConfig.button.transform.position)))
+                      .Forget();
+        }
+
+        private void CopyJumpInLink()
+        {
+            string link = realmData.ScenesAreFixed
+                ? $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?realm={realmData.RealmName}&position={previousParcelPosition.x},{previousParcelPosition.y}"
+                : $"{decentralandUrls.Url(DecentralandUrl.Host)}/jump?position={previousParcelPosition.x},{previousParcelPosition.y}";
+
+            systemClipboard.Set(link);
         }
 
         private void ExpandMinimap()
@@ -270,18 +319,6 @@ namespace DCL.Minimap
 
             viewInstance.minimapAnimator.runtimeAnimatorController = isGenesisModeActivated ? viewInstance.genesisCityAnimatorController : viewInstance.worldsAnimatorController;
         }
-
-        public override void Dispose()
-        {
-            placesApiCts.SafeCancelAndDispose();
-            disposeCts.Cancel();
-            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
-            sceneRestrictionsController?.Dispose();
-        }
-
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            UniTask.Never(ct);
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]

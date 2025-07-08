@@ -41,6 +41,8 @@ namespace DCL.UI
 
         private void OnEnable()
         {
+            if(autoToggleImagesOnToggle)
+                SetToggleGraphics(Toggle.isOn);
             Toggle.onValueChanged.AddListener(OnToggle);
         }
 
@@ -55,6 +57,7 @@ namespace DCL.UI
             OffImage.SetActive(!toggle);
             OnBackgroundImage.gameObject.SetActive(toggle);
             OffBackgroundImage.gameObject.SetActive(!toggle);
+            Toggle.targetGraphic = toggle ? OnBackgroundImage : OffBackgroundImage;
         }
 
         private void OnToggle(bool toggle)

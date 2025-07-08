@@ -2199,7 +2199,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Map"",
                     ""type"": ""Button"",
                     ""id"": ""78bba755-0c5b-440f-87ae-634652b31146"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2308,6 +2308,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""type"": ""Button"",
                     ""id"": ""beb1ee53-edda-4028-98bb-2706bb7d853e"",
                     ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Communities"",
+                    ""type"": ""Button"",
+                    ""id"": ""2f15709f-9167-4392-b768-90dc8f335a4d"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2498,6 +2507,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""FriendPanel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e712ed19-0407-4153-9a6c-cc9ced6dcc5d"",
+                    ""path"": ""<Keyboard>/o"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Communities"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -3879,6 +3899,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_OpenChatCommandLine = m_Shortcuts.FindAction("OpenChatCommandLine", throwIfNotFound: true);
         m_Shortcuts_Controls = m_Shortcuts.FindAction("Controls", throwIfNotFound: true);
         m_Shortcuts_FriendPanel = m_Shortcuts.FindAction("FriendPanel", throwIfNotFound: true);
+        m_Shortcuts_Communities = m_Shortcuts.FindAction("Communities", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -4927,6 +4948,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_OpenChatCommandLine;
     private readonly InputAction m_Shortcuts_Controls;
     private readonly InputAction m_Shortcuts_FriendPanel;
+    private readonly InputAction m_Shortcuts_Communities;
     /// <summary>
     /// Provides access to input actions defined in input action map "Shortcuts".
     /// </summary>
@@ -4999,6 +5021,10 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @FriendPanel => m_Wrapper.m_Shortcuts_FriendPanel;
         /// <summary>
+        /// Provides access to the underlying input action "Shortcuts/Communities".
+        /// </summary>
+        public InputAction @Communities => m_Wrapper.m_Shortcuts_Communities;
+        /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
@@ -5069,6 +5095,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @FriendPanel.started += instance.OnFriendPanel;
             @FriendPanel.performed += instance.OnFriendPanel;
             @FriendPanel.canceled += instance.OnFriendPanel;
+            @Communities.started += instance.OnCommunities;
+            @Communities.performed += instance.OnCommunities;
+            @Communities.canceled += instance.OnCommunities;
         }
 
         /// <summary>
@@ -5125,6 +5154,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @FriendPanel.started -= instance.OnFriendPanel;
             @FriendPanel.performed -= instance.OnFriendPanel;
             @FriendPanel.canceled -= instance.OnFriendPanel;
+            @Communities.started -= instance.OnCommunities;
+            @Communities.performed -= instance.OnCommunities;
+            @Communities.canceled -= instance.OnCommunities;
         }
 
         /// <summary>
@@ -6408,6 +6440,13 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnFriendPanel(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Communities" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnCommunities(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Emotes" which allows adding and removing callbacks.

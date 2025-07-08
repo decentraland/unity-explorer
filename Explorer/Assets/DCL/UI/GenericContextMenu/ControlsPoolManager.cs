@@ -1,7 +1,7 @@
 using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
-using MVC;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,6 +18,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuToggleWithIconView> toggleWithIconPool;
         private readonly IObjectPool<GenericContextMenuUserProfileView> userProfilePool;
         private readonly IObjectPool<GenericContextMenuButtonWithStringDelegateView> buttonWithStringDelegatePool;
+        private readonly IObjectPool<GenericContextMenuTextView> textPool;
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
@@ -28,7 +29,8 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuToggleView togglePrefab,
             GenericContextMenuToggleWithIconView toggleWithIconPrefab,
             GenericContextMenuUserProfileView userProfilePrefab,
-            GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab)
+            GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab,
+            GenericContextMenuTextView textPrefab)
         {
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => Object.Instantiate(separatorPrefab, controlsParent),
@@ -71,6 +73,11 @@ namespace DCL.UI.GenericContextMenu
                 actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
                 actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
 
+            textPool = new ObjectPool<GenericContextMenuTextView>(
+                createFunc:  () => Object.Instantiate(textPrefab, controlsParent),
+                actionOnGet: textView => textView.gameObject.SetActive(true),
+                actionOnRelease: textView => textView?.gameObject.SetActive(false),
+                actionOnDestroy: textView => Object.Destroy(textView.gameObject));
         }
 
         public void Dispose() =>
@@ -86,6 +93,7 @@ namespace DCL.UI.GenericContextMenu
                                                             ToggleContextMenuControlSettings toggleSettings => GetToggle(toggleSettings),
                                                             UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
                                                             ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
+                                                            TextContextMenuControlSettings textSettings => GetText(textSettings),
                                                             _ => throw new ArgumentOutOfRangeException(),
                                                         };
 
@@ -142,6 +150,13 @@ namespace DCL.UI.GenericContextMenu
             return view;
         }
 
+        private GenericContextMenuComponentBase GetText(TextContextMenuControlSettings settings)
+        {
+            GenericContextMenuTextView view = textPool.Get();
+            view.Configure(settings);
+            return view;
+        }
+
         public void ReleaseAllCurrentControls()
         {
             foreach (GenericContextMenuComponentBase control in currentControls)
@@ -167,6 +182,9 @@ namespace DCL.UI.GenericContextMenu
                         break;
                     case GenericContextMenuButtonWithStringDelegateView buttonView:
                         buttonWithStringDelegatePool.Release(buttonView);
+                        break;
+                    case GenericContextMenuTextView textView:
+                        textPool.Release(textView);
                         break;
                 }
             }

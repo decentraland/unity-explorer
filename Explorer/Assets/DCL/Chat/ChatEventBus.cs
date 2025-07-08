@@ -2,18 +2,24 @@ namespace DCL.Chat.EventBus
 {
     public class ChatEventBus : IChatEventBus
     {
-        public event IChatEventBus.InsertTextInChatDelegate? InsertTextInChat;
-        public event IChatEventBus.OpenConversationDelegate? OpenConversation;
+        public event IChatEventBus.InsertTextInChatRequestedDelegate? InsertTextInChatRequested;
+        public event IChatEventBus.OpenPrivateConversationRequestedDelegate? OpenPrivateConversationRequested;
+        public event IChatEventBus.OpenCommunityConversationRequestedDelegate? OpenCommunityConversationRequested;
         public event IChatEventBus.StartCallDelegate? StartCall;
 
         public void InsertText(string text)
         {
-            InsertTextInChat?.Invoke(text);
+            InsertTextInChatRequested?.Invoke(text);
         }
 
-        public void OpenConversationUsingUserId(string userId)
+        public void OpenPrivateConversationUsingUserId(string userId)
         {
-            OpenConversation?.Invoke(userId);
+            OpenPrivateConversationRequested?.Invoke(userId);
+        }
+
+        public void OpenCommunityConversationUsingUserId(string communityId)
+        {
+            OpenCommunityConversationRequested?.Invoke(communityId);
         }
 
         public void StartCallInCurrentConversation()

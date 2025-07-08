@@ -55,35 +55,15 @@ jobs:
         with:
           path: Explorer/Library
           key: Library-Explorer-Windows
-          
-      - name: Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
-      - name: 'Add GitHub to the SSH known hosts file'
-        run: |
-          $sshPath = Join-Path $env:USERPROFILE ".ssh"
-          if (-not (Test-Path $sshPath)) {
-              New-Item -ItemType Directory -Path $sshPath -Force
-          }
-          
-          $knownHostsPath = Join-Path $sshPath "known_hosts"
-          $githubKeys = (Invoke-RestMethod -Uri 'https://api.github.com/meta').ssh_keys
-          $githubKeys | ForEach-Object { "github.com $_" } | Out-File -FilePath $knownHostsPath -Append
-          
-          # Set permissions (600 in Windows terms)
-          $acl = Get-Acl $knownHostsPath
-          $acl.SetAccessRuleProtection($true, $false)
-          $rule = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "Read, Write", "Allow")
-          $acl.AddAccessRule($rule)
-          Set-Acl $knownHostsPath $acl
 
       - name: Clone Packages To Use Locally
+        env:
+          REPOS_READ_ONLY_TOKEN: ${{ secrets.REPOS_READ_ONLY_TOKEN }}
         run: |
-            git clone git@github.com:decentraland/unity-explorer-packages.git            
+            git clone https://x-access-token:$env:REPOS_READ_ONLY_TOKEN@github.com/decentraland/unity-explorer-packages.git
             $jsonFilePath = "Explorer/Packages/manifest.json"
             (Get-Content $jsonFilePath) `
+                -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/FileBrowserPro', 'file:../../unity-explorer-packages/FileBrowserPro' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/RenderGraphs/RenderFeatures', 'file:../../unity-explorer-packages/RenderGraphs/RenderFeatures' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' `
@@ -93,11 +73,9 @@ jobs:
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain', 'file:../../unity-explorer-packages/GPUInstancerPro/com.gurbu.gpui-pro.terrain' `
                 -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/GPUInstancerPro/com.dcl.gpui-assets', 'file:../../unity-explorer-packages/GPUInstancerPro/com.dcl.gpui-assets' |
                 Set-Content $jsonFilePath
-            
+
             Get-ChildItem
             Get-Content $jsonFilePath
-
-
 
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.3.1

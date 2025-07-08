@@ -55,11 +55,13 @@ namespace DCL.CharacterPreview
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
-                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME),
-                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings},
-                new HeadIKComponent(),
+                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
+                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent());
         }
+
+        public void AddHeadIK() =>
+            globalWorld.Add(characterPreviewEntity, new HeadIKComponent());
 
         public void Dispose()
         {

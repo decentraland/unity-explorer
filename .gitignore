@@ -42,6 +42,7 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+mono_crash.*
 
 # Unity3D generated meta files
 *.pidb.meta
@@ -67,3 +68,4 @@ Explorer/UserSettings
 # Cursor Rules
 **/.cursor/
 Explorer/.cursorignore
+.cursorignore

@@ -22,11 +22,21 @@ namespace DCL.Prefs
         public static void SetString(string key, string value) =>
             dclPrefs.SetString(key, value);
 
-        public static void SetInt(string key, int value) =>
+        public static void SetInt(string key, int value, bool save = false)
+        {
             dclPrefs.SetInt(key, value);
 
-        public static void SetFloat(string key, float value) =>
+            if (save)
+                Save();
+        }
+
+        public static void SetFloat(string key, float value, bool save = false)
+        {
             dclPrefs.SetFloat(key, value);
+
+            if (save)
+                Save();
+        }
 
         public static string GetString(string key, string defaultValue = "") =>
             dclPrefs.GetString(key, defaultValue);
@@ -42,6 +52,17 @@ namespace DCL.Prefs
 
         public static void DeleteKey(string key) =>
             dclPrefs.DeleteKey(key);
+
+        public static void SetBool(string key, bool value, bool save = false)
+        {
+            dclPrefs.SetBool(key, value);
+
+            if (save)
+                Save();
+        }
+
+        public static bool GetBool(string key, bool defaultValue = false) =>
+            dclPrefs.GetBool(key, defaultValue);
 
         public static void DeleteAll() =>
             dclPrefs.DeleteAll();

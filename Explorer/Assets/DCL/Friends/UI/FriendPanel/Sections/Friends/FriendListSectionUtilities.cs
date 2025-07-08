@@ -5,6 +5,7 @@ using DCL.Friends.UI.BlockUserPrompt;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.VoiceChat;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;

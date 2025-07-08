@@ -156,6 +156,9 @@ MonoBehaviour:
   profilePictureView: {fileID: 4412615754287031995}
   openProfileButton: {fileID: 9043400043820160296}
   userNameElement: {fileID: 709559888419875594}
+  connectionStatusIndicator: {fileID: 3740424257692389339}
+  connectionStatusIndicatorContainer: {fileID: 1474324828363321871}
+  onlineStatusConfiguration: {fileID: 11400000, guid: bbca3b81bc8c54e1fb00e0cc1fa3f195, type: 2}
 --- !u!114 &1970045264706548885
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -518,6 +521,22 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6957087857531807891}
   m_SourcePrefab: {fileID: 100100000, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+--- !u!1 &1474324828363321871 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2394429623367430270, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+  m_PrefabInstance: {fileID: 3841398480960389745}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3740424257692389339 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 479575754860711338, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}
+  m_PrefabInstance: {fileID: 3841398480960389745}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &3914467961918810958 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 224503025678412095, guid: d64840fd5d5fce94fbdc7bddcba01226, type: 3}

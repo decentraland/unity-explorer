@@ -26,7 +26,6 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} data received {data.Length} bytes from {participant.ReadableString()} - {kind}");
-
             DataReceived?.Invoke(data, participant, topic, kind);
         }
 

@@ -330,5 +330,11 @@ namespace DCL.Diagnostics
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
 
         public const string VOICE_CHAT = nameof(VOICE_CHAT);
+
+        public const string RUNTIME_DEEPLINKS = nameof(RUNTIME_DEEPLINKS);
+
+        public const string SKYBOX = nameof(SKYBOX);
+
+        public const string COMMUNITIES = nameof(COMMUNITIES);
     }
 }

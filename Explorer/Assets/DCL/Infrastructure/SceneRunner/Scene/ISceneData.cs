@@ -9,7 +9,11 @@ namespace SceneRunner.Scene
 {
     public interface ISceneData
     {
+        /// <summary>
+        ///     SceneLoadingConcluded is TRUE when the scene has been repositioned to its rightful place away from MORDOR
+        /// </summary>
         bool SceneLoadingConcluded { get; set; }
+
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }

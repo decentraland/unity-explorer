@@ -12,7 +12,6 @@ namespace ECS.Unity.Materials.Systems
 {
     public abstract class CreateMaterialSystemBase : BaseUnityLoopSystem
     {
-        private static readonly Vector2 VIDEO_TEXTURE_VERTICAL_FLIP = new (1, -1);
         private readonly IObjectPool<Material> materialsPool;
 
         protected CreateMaterialSystemBase(World world, IObjectPool<Material> materialsPool) : base(world)
@@ -62,22 +61,18 @@ namespace ECS.Unity.Materials.Systems
 
             material.SetTexture(propId, textureResult.Asset!);
 
-            if (textureComponent is { IsVideoTexture: true })
-                material.SetTextureScale(propId, VIDEO_TEXTURE_VERTICAL_FLIP);
-
-            // When the material is re-used for another texture we need to restore the texture scale
-            // Otherwise in case it was previously a video texture it gets x:1,y:-1 scale which is undesired
-            // This case happens on nft-museum at sdk-goerli-plaza 85,-8. A plane exists which has a texture that acts as a "preview" of the stream.
-            // Whenever you get close or far, the texture is changed either to video stream or regular exposing this issue
+            if (textureComponent == null)
+            {
+                // When the material is re-used for another texture we need to restore the texture scale
+                // Otherwise in case it was previously a video texture it might have x:1,y:-1 scale which is undesired
+                // This case happens on nft-museum at sdk-goerli-plaza 85,-8. A plane exists which has a texture that acts as a "preview" of the stream.
+                // Whenever you get close or far, the texture is changed either to video stream or regular exposing this issue
+                material.SetTextureScale(propId, Vector2.one);
+            }
             else
             {
-                material.SetTextureScale(propId, Vector2.one);
-
-                if (textureComponent != null)
-                {
-                    material.SetTextureOffset(propId, textureComponent.Value.TextureOffset);
-                    material.SetTextureScale(propId, textureComponent.Value.TextureTiling);
-                }
+                material.SetTextureScale(propId, textureComponent.Value.TextureTiling);
+                material.SetTextureOffset(propId, textureComponent.Value.TextureOffset);
             }
         }
     }
