@@ -5,7 +5,7 @@ using DCL.Backpack;
 using DCL.Notifications;
 using DCL.Notifications.NewNotification;
 using DCL.NotificationsBusController.NotificationsBus;
-using DCL.Profiles;
+using DCL.UI.SharedSpaceManager;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -21,23 +21,20 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly ISharedSpaceManager sharedSpaceManager;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
             INotificationsBusController notificationsBusController,
-            IProfileThumbnailCache profileThumbnailCache,
-            IProfileRepository profileRepository)
+            ISharedSpaceManager sharedSpaceManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
-            this.profileThumbnailCache = profileThumbnailCache;
-            this.profileRepository = profileRepository;
+            this.sharedSpaceManager = sharedSpaceManager;
         }
 
         public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)
@@ -52,9 +49,7 @@ namespace DCL.PluginSystem.Global
                     notificationsBusController,
                     notificationIconTypes,
                     rarityBackgroundMapping,
-                    webRequestController,
-                    profileThumbnailCache,
-                    profileRepository
+                    webRequestController
                 );
 
             mvcManager.RegisterController(newNotificationController);

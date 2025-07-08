@@ -801,8 +801,7 @@ namespace Global.Dynamic
                     mvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     notificationsBusController,
-                    profileThumbnailCache,
-                    profileRepository),
+                    sharedSpaceManager),
                 new RewardPanelPlugin(mvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,

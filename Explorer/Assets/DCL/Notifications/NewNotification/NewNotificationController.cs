@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
-using DCL.Profiles;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
@@ -26,16 +25,13 @@ namespace DCL.Notifications.NewNotification
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly IProfileRepository profileRepository;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying;
-        private ImageController? thumbnailImageController;
-        private ImageController? badgeThumbnailImageController;
-        private ImageController? friendsThumbnailImageController;
-        private ImageController? marketplaceCreditsThumbnailImageController;
-        private CancellationTokenSource animationCts;
-
+        private ImageController thumbnailImageController;
+        private ImageController badgeThumbnailImageController;
+        private ImageController friendsThumbnailImageController;
+        private ImageController marketplaceCreditsThumbnailImageController;
+        private CancellationTokenSource cts;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public NewNotificationController(
@@ -43,19 +39,15 @@ namespace DCL.Notifications.NewNotification
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
-            IWebRequestController webRequestController,
-            IProfileThumbnailCache profileThumbnailCache,
-            IProfileRepository profileRepository) : base(viewFactory)
+            IWebRequestController webRequestController) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
-            this.profileThumbnailCache = profileThumbnailCache;
-            this.profileRepository = profileRepository;
             notificationsBusController.SubscribeToAllNotificationTypesReceived(QueueNewNotification);
-            animationCts = new CancellationTokenSource();
-            animationCts.Token.ThrowIfCancellationRequested();
+            cts = new CancellationTokenSource();
+            cts.Token.ThrowIfCancellationRequested();
         }
 
         protected override void OnViewInstantiated()
@@ -74,9 +66,9 @@ namespace DCL.Notifications.NewNotification
 
         private void StopAnimation()
         {
-            animationCts.SafeCancelAndDispose();
-            animationCts = new CancellationTokenSource();
-            animationCts.Token.ThrowIfCancellationRequested();
+            cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            cts.Token.ThrowIfCancellationRequested();
         }
 
         private void ClickedNotification(NotificationType notificationType, INotification notification)
@@ -89,10 +81,10 @@ namespace DCL.Notifications.NewNotification
         {
             notificationQueue.Enqueue(newNotification);
 
-            if (!isDisplaying) { DisplayNewNotificationAsync(animationCts.Token).Forget(); }
+            if (!isDisplaying) { DisplayNewNotificationAsync().Forget(); }
         }
 
-        private async UniTaskVoid DisplayNewNotificationAsync(CancellationToken ct)
+        private async UniTaskVoid DisplayNewNotificationAsync()
         {
             if (viewInstance == null)
                 return;
@@ -116,10 +108,6 @@ namespace DCL.Notifications.NewNotification
                         break;
                     case NotificationType.CREDITS_GOAL_COMPLETED:
                         await ProcessMarketplaceCreditsNotificationAsync(notification);
-                        break;
-                    case NotificationType.REFERRAL_INVITED_USERS_ACCEPTED:
-                    case NotificationType.REFERRAL_NEW_TIER_REACHED:
-                        await ProcessReferralNotificationAsync((ReferralNotification) notification, ct);
                         break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
@@ -171,7 +159,6 @@ namespace DCL.Notifications.NewNotification
                 viewInstance.FriendsNotificationView.PlayAcceptedNotificationAudio();
             else
                 viewInstance.FriendsNotificationView.PlayRequestNotificationAudio();
-
             await AnimateNotificationCanvasGroupAsync(viewInstance.FriendsNotificationViewCanvasGroup);
         }
 
@@ -186,42 +173,6 @@ namespace DCL.Notifications.NewNotification
                 badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
 
             await AnimateBadgeNotificationAsync();
-        }
-
-        private async UniTask ProcessReferralNotificationAsync(ReferralNotification notification, CancellationToken ct)
-        {
-            viewInstance!.NotificationView.HeaderText.text = notification.GetHeader();
-            viewInstance.NotificationView.TitleText.text = notification.GetTitle();
-            viewInstance.NotificationView.NotificationType = notification.Type;
-            viewInstance.NotificationView.Notification = notification;
-
-            if (!string.IsNullOrEmpty(notification.Metadata.invitedUserAddress))
-                await DownloadProfileThumbnailAsync(notification.Metadata.invitedUserAddress);
-            else if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                thumbnailImageController!.RequestImage(notification.GetThumbnail(), true);
-
-            viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
-
-            await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
-
-            return;
-
-            async UniTask DownloadProfileThumbnailAsync(string user)
-            {
-                thumbnailImageController!.StartLoading();
-
-                Profile? profile = await profileRepository.GetAsync(user, ct);
-
-                if (profile != null)
-                {
-                    Sprite? sprite = await profileThumbnailCache.GetThumbnailAsync(user, profile.Avatar.FaceSnapshotUrl, ct);
-
-                    if (sprite != null)
-                        thumbnailImageController!.SetImage(sprite);
-                }
-
-                thumbnailImageController.StopLoading();
-            }
         }
 
         private async UniTask ProcessMarketplaceCreditsNotificationAsync(INotification notification)
@@ -258,8 +209,8 @@ namespace DCL.Notifications.NewNotification
             {
                 notificationCanvasGroup.interactable = true;
                 notificationCanvasGroup.blocksRaycasts = true;
-                await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: animationCts.Token);
-                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: animationCts.Token);
+                await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
             }
             catch (OperationCanceledException) { }
             finally
@@ -279,7 +230,7 @@ namespace DCL.Notifications.NewNotification
             {
                 viewInstance.BadgeNotificationView.PlayNotificationAudio();
                 viewInstance.BadgeNotificationAnimator.SetTrigger(SHOW_TRIGGER);
-                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: animationCts.Token);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
             }
             catch (OperationCanceledException) { }
             finally { viewInstance.BadgeNotificationAnimator.SetTrigger(HIDE_TRIGGER); }
@@ -294,7 +245,7 @@ namespace DCL.Notifications.NewNotification
             {
                 viewInstance.MarketplaceCreditsNotificationView.PlayNotificationAudio();
                 viewInstance.MarketplaceCreditsNotificationAnimator.SetTrigger(SHOW_TRIGGER);
-                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: animationCts.Token);
+                await UniTask.Delay(TIME_BEFORE_HIDE_NOTIFICATION_TIME_SPAN, cancellationToken: cts.Token);
             }
             catch (OperationCanceledException) { }
             finally { viewInstance.MarketplaceCreditsNotificationAnimator.SetTrigger(HIDE_TRIGGER); }
