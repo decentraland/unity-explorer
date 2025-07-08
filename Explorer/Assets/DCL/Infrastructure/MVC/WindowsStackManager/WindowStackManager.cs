@@ -32,8 +32,6 @@ namespace MVC
 
         private void CloseNextUI(InputAction.CallbackContext obj)
         {
-            if (fullScreenPopupStack.Count == 0) return;
-
             IController? topMost = fullScreenPopupStack.LastOrDefault();
             if (topMost != null && closeTasks.TryGetValue(topMost, out var taskCs))
                 taskCs.TrySetResult();
