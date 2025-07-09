@@ -36,6 +36,7 @@
         public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_WALLETS_VARIANT = "wallets";
+        public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
 
         public const string AUTH_CODE_VALIDATION = "number-validation";
 
