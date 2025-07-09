@@ -31,7 +31,7 @@ namespace DCL.UI
             this.webRequestController = webRequestController;
         }
 
-        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false)
+        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false, bool fitAndCenterImage = false)
         {
             if (removePrevious)
                 view.Image.sprite = null;
@@ -40,7 +40,7 @@ namespace DCL.UI
                 view.Image.enabled = false;
 
             cts = cts.SafeRestart();
-            RequestImageAsync(uri, useKtx, cts.Token).Forget();
+            RequestImageAsync(uri, useKtx, cts.Token, fitAndCenterImage).Forget();
         }
 
         public void SetVisible(bool isVisible)
@@ -48,7 +48,7 @@ namespace DCL.UI
             view.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask RequestImageAsync(string uri, bool useKtx, CancellationToken ct)
+        public async UniTask RequestImageAsync(string uri, bool useKtx, CancellationToken ct, bool fitAndCenterImage = false)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace DCL.UI
 
                 if (sprite != null)
                 {
-                    SetImage(sprite);
+                    SetImage(sprite, fitAndCenterImage);
                     SpriteLoaded?.Invoke(sprite);
                     view.Image.enabled = true;
                     view.Image.DOColor(Color.white, view.imageLoadingFadeDuration);
@@ -98,10 +98,8 @@ namespace DCL.UI
             }
         }
 
-        public void SetImage(Sprite sprite)
-        {
-            view.SetImage(sprite);
-        }
+        public void SetImage(Sprite sprite, bool fitAndCenterImage = false) =>
+            view.SetImage(sprite, fitAndCenterImage);
 
         public void StopLoading()
         {
