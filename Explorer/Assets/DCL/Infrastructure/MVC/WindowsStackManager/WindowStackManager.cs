@@ -40,8 +40,12 @@ namespace MVC
         {
             int orderInLayer = popupStack.Count * 2;
             popupStack.Add(controller);
-            fullScreenPopupStack.Add(controller);
-            closeTasks.Add(controller, new UniTaskCompletionSource());
+
+            if (controller.CanBeClosedByEscape)
+            {
+                fullScreenPopupStack.Add(controller);
+                closeTasks.Add(controller, new UniTaskCompletionSource());
+            }
 
             foreach (var persistant in persistentStack)
                 if (persistant.State == ControllerState.ViewFocused)
@@ -58,8 +62,12 @@ namespace MVC
         public FullscreenPushInfo PushFullscreen(IController controller)
         {
             fullscreenController = controller;
-            fullScreenPopupStack.Add(controller);
-            closeTasks.Add(controller, new UniTaskCompletionSource());
+
+            if (controller.CanBeClosedByEscape)
+            {
+                fullScreenPopupStack.Add(controller);
+                closeTasks.Add(controller, new UniTaskCompletionSource());
+            }
 
             foreach (IController persistentController in persistentStack)
                 if(persistentController.State == ControllerState.ViewFocused)
@@ -74,6 +82,9 @@ namespace MVC
                 persistentController.Focus();
 
             fullscreenController = null;
+
+            if (!controller.CanBeClosedByEscape) return;
+
             closeTasks.Remove(controller);
             fullScreenPopupStack.Remove(controller);
         }
@@ -101,8 +112,12 @@ namespace MVC
         public PopupPopInfo PopPopup(IController controller)
         {
             popupStack.Remove(controller);
-            closeTasks.Remove(controller);
-            fullScreenPopupStack.Remove(controller);
+
+            if (controller.CanBeClosedByEscape)
+            {
+                closeTasks.Remove(controller);
+                fullScreenPopupStack.Remove(controller);
+            }
 
             if (popupStack.Count == 0)
             {

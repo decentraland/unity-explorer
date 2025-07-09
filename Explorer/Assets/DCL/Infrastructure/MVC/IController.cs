@@ -7,6 +7,8 @@ namespace MVC
     {
         ControllerState State { get; }
 
+        bool CanBeClosedByEscape => Layer != CanvasOrdering.SortingLayer.Persistent;
+
         CanvasOrdering.SortingLayer Layer { get; }
 
         /// <summary>
