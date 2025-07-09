@@ -100,8 +100,7 @@ namespace DCL.UI
 
         public void SetImage(Sprite sprite)
         {
-            view.Image.sprite = sprite;
-            view.LoadingObject.SetActive(false);
+            view.SetImage(sprite);
         }
 
         public void StopLoading()
