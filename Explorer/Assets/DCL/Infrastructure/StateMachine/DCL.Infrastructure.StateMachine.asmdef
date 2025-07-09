@@ -1,0 +1,16 @@
+{
+    "name": "DCL.Infrastructure.StateMachine",
+    "rootNamespace": "DCL.Infrastructure.StateMachine",
+    "references": [
+        "DCL.Optimization"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
