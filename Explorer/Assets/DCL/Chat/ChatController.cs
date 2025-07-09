@@ -489,6 +489,29 @@ namespace DCL.Chat
             viewInstance.Focus();
         }
 
+        private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
+        {
+            ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);
+            userCommunities[channelId] = new GetUserCommunitiesData.CommunityData()
+                {
+                    id = newCommunity.id,
+                    thumbnails = newCommunity.thumbnails,
+                    description = newCommunity.description,
+                    ownerAddress = newCommunity.ownerAddress,
+                    name = newCommunity.name,
+                    privacy = newCommunity.privacy,
+                    role = CommunityMemberRole.owner,
+                    membersCount = 1
+                };
+            chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
+        }
+
+        private void OnCommunitiesDataProviderCommunityDeleted(string communityId)
+        {
+            ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(communityId);
+            chatHistory.RemoveChannel(channelId);
+        }
+
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
         {
             if(!IsViewReady)
@@ -985,6 +1008,9 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
 
+            communitiesDataProvider.CommunityCreated += OnCommunitiesDataProviderCommunityCreated;
+            communitiesDataProvider.CommunityDeleted += OnCommunitiesDataProviderCommunityDeleted;
+
             SubscribeToCommunitiesBusEventsAsync().Forget();
         }
 
@@ -1070,6 +1096,9 @@ namespace DCL.Chat
 
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
+
+            communitiesDataProvider.CommunityCreated -= OnCommunitiesDataProviderCommunityCreated;
+            communitiesDataProvider.CommunityDeleted -= OnCommunitiesDataProviderCommunityDeleted;
         }
 
         private async UniTaskVoid ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)
