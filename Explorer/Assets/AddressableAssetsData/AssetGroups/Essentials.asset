@@ -385,11 +385,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: dc412497f06504faeb6e30b848c0842d
-    m_Address: FallbackSceneTipsConfiguration
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: dcc6085d51c3e443f82d4d58e0087519
     m_Address: Assets/DCL/Friends/Prefabs/FriendRequest.prefab
     m_ReadOnly: 0
