@@ -125,7 +125,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.EmailSubscriptions => $"https://notifications.decentraland.{ENV}",
                 DecentralandUrl.Communities => $"https://social-api.decentraland.{ENV}/v1/communities",
                 DecentralandUrl.DecentralandWorlds => "https://decentraland.org/blog/about-decentraland/decentraland-worlds-your-own-virtual-space?utm_org=dcl&utm_source=explorer&utm_medium=organic",
-                DecentralandUrl.DecentralandLambdasOverwrite => LAMBDAS_URL_OVERRIDE,
+                DecentralandUrl.DecentralandLambdasOverride => LAMBDAS_URL_OVERRIDE,
                 DecentralandUrl.DecentralandContentOverride => CONTENT_URL_OVERRIDE,
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null!)
             };

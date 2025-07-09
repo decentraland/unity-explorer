@@ -125,7 +125,7 @@ namespace Global.Dynamic
                 if (decentralandUrlsSource.RequiresAboutOverride())
                 {
                     result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
-                    result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
+                    result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandLambdasOverride);
                 }
 
                 string hostname = ResolveHostname(realm, result);

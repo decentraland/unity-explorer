@@ -87,6 +87,6 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         DecentralandWorlds,
 
         DecentralandContentOverride,
-        DecentralandLambdasOverwrite,
+        DecentralandLambdasOverride,
     }
 }
