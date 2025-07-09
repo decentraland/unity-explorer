@@ -573,7 +573,6 @@ namespace DCL.Chat
             SetupViewWithUserStateOnMainThreadAsync(userState).Forget();
             UpdateCallButtonUserState(userState, userId);
 
-
             if (!updateToolbar)
                 return;
 
@@ -583,6 +582,8 @@ namespace DCL.Chat
 
         private void UpdateCallButtonUserState(ChatUserStateUpdater.ChatUserState userState, string userId)
         {
+            if (!isCallEnabled) return;
+
             CallButtonController.OtherUserCallStatus callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
 
             switch (userState)
