@@ -22,26 +22,29 @@ namespace DCL.SkyBox
             public int speed;
         }
 
-        private readonly FeatureFlagSkyboxSettings? ffSkyboxSettings = null;
+        private readonly FeatureFlagSkyboxSettings? ffSkyboxSettings;
         private readonly SkyboxSettingsAsset skyboxSettings;
-        private readonly IScenesCache scenesCache;
-
-        private float timeSinceLastUpdate;
-        private float globalTimeOfDay { get; set; }
-        private ISceneFacade scene;
-        private bool hasCheckedCurrentScene = false;
-        private bool hasSceneOverride = false;
-
-        private float skyboxSpeedMultiplier;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
+        private readonly SkyboxRenderController skyboxRenderController;
+
+        private float globalTimeOfDay;
+        private float timeSinceLastUpdate;
+        private ISceneFacade scene;
+        private bool hasCheckedCurrentScene;
+        private bool hasSceneOverride;
+        private float skyboxSpeedMultiplier;
         private bool wasUIControlledLastFrame;
         private bool wasSDKControlledLastFrame;
 
-        private SkyboxTimeUpdateSystem([NotNull] World world, SkyboxSettingsAsset skyboxSettings, IScenesCache scenesCache, ISceneRestrictionBusController sceneRestrictionController) : base(world)
+        private SkyboxTimeUpdateSystem([NotNull] World world,
+            SkyboxSettingsAsset skyboxSettings,
+            IScenesCache scenesCache,
+            ISceneRestrictionBusController sceneRestrictionController,
+            SkyboxRenderController skyboxRenderController) : base(world)
         {
             this.skyboxSettings = skyboxSettings;
-            this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
+            this.skyboxRenderController = skyboxRenderController;
             globalTimeOfDay = skyboxSettings.initialTimeOfDay;
             skyboxSpeedMultiplier = skyboxSettings.SpeedMultiplier;
 
@@ -79,7 +82,13 @@ namespace DCL.SkyBox
         {
             UpdateGlobalTime(deltaTime);
 
-            if(TryHandleTransition(deltaTime)) return;
+            if (skyboxSettings.ShouldUpdateSkybox)
+            {
+                skyboxRenderController.UpdateSkybox(skyboxSettings.TimeOfDayNormalized);
+                skyboxSettings.ShouldUpdateSkybox = false;
+            }
+
+            if (TryHandleTransition(deltaTime)) return;
 
             // Check hierarchy from highest to lowest priority
             if (TryHandleSDKComponent()) return;
@@ -100,7 +109,7 @@ namespace DCL.SkyBox
 
         private bool TryHandleSDKComponent()
         {
-            if(wasSDKControlledLastFrame && !skyboxSettings.IsSDKControlled && skyboxSettings.CanUIControl)
+            if (wasSDKControlledLastFrame && !skyboxSettings.IsSDKControlled && skyboxSettings.CanUIControl)
                 TransitionToGlobalTime();
 
             wasSDKControlledLastFrame = skyboxSettings.IsSDKControlled;
@@ -185,7 +194,7 @@ namespace DCL.SkyBox
             {
                 hasCheckedCurrentScene = true;
 
-                if (scene?.SceneData?.SceneEntityDefinition?.metadata == null)
+                if (scene?.SceneData.SceneEntityDefinition.metadata == null)
                 {
                     hasSceneOverride = false;
                     return hasSceneOverride;

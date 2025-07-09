@@ -2,7 +2,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -25,27 +24,23 @@ namespace DCL.SkyBox
         private readonly Light directionalLight;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
-        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         public SkyboxPlugin(IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
             IScenesCache scenesCache,
-            ISceneRestrictionBusController sceneRestrictionController,
-            IDebugContainerBuilder debugContainerBuilder)
+            ISceneRestrictionBusController sceneRestrictionController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.directionalLight = directionalLight;
             this.scenesCache = scenesCache;
             this.sceneRestrictionController = sceneRestrictionController;
-            this.debugContainerBuilder = debugContainerBuilder;
         }
 
         public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            SkyboxRenderUpdateSystem.InjectToWorld(ref builder, skyboxRenderController, skyboxSettings);
-            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController);
+            SkyboxTimeUpdateSystem.InjectToWorld(ref builder, skyboxSettings, scenesCache, sceneRestrictionController, skyboxRenderController);
         }
 
         public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
