@@ -11,9 +11,12 @@ namespace DCL.Browser.DecentralandUrls
         private const string ENV = "{ENV}";
         private static string ASSET_BUNDLE_URL;
         private static string GENESIS_URL;
+        private static string ASSET_BUNDLE_REGISTRY;
 
         private const string ASSET_BUNDLE_URL_TEMPLATE = "https://ab-cdn.decentraland.{0}";
         private const string GENESIS_URL_TEMPLATE = "https://realm-provider-ea.decentraland.{0}/main";
+        private const string ASSET_BUNDLE_REGISTRY_TEMPLATE = "https://asset-bundle-registry.decentraland.{0}/entities/active";
+
 
 
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
@@ -34,6 +37,7 @@ namespace DCL.Browser.DecentralandUrls
                 case DecentralandEnvironment.Zone:
                     ASSET_BUNDLE_URL = string.Format(ASSET_BUNDLE_URL_TEMPLATE, DecentralandDomain);
                     GENESIS_URL = string.Format(GENESIS_URL_TEMPLATE, DecentralandDomain);
+                    ASSET_BUNDLE_REGISTRY = string.Format(ASSET_BUNDLE_REGISTRY, DecentralandDomain);
                     break;
                 case DecentralandEnvironment.Today:
 
@@ -41,9 +45,10 @@ namespace DCL.Browser.DecentralandUrls
                     //We want to fetch pointers from org, but asset bundles from today
                     //Thats because how peer-testing.decentraland.org works.
                     //Its a catalyst that replicates the org environment and eth network, but doesnt propagate back to the production catalysts
-                    DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
-                    ASSET_BUNDLE_URL = "https://ab-cdn.decentraland.today";
+                    ASSET_BUNDLE_URL = string.Format(ASSET_BUNDLE_URL_TEMPLATE, DecentralandDomain);
+                    ASSET_BUNDLE_REGISTRY =  string.Format(ASSET_BUNDLE_REGISTRY_TEMPLATE, DecentralandDomain);
 
+                    DecentralandDomain = DecentralandEnvironment.Org.ToString()!.ToLower();
                     //On staging, we hardcode the catalyst because its the only valid one with a valid comms configuration
                     GENESIS_URL = "https://peer-testing.decentraland.org";
                     break;
@@ -118,7 +123,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.CameraReelLink => $"https://reels.decentraland.{ENV}",
                 DecentralandUrl.Blocklist => $"https://config.decentraland.{ENV}/denylist.json",
                 DecentralandUrl.ApiFriends => $"wss://rpc-social-service-ea.decentraland.{ENV}",
-                DecentralandUrl.AssetBundleRegistry => $"https://asset-bundle-registry.decentraland.{ENV}/entities/active",
+                DecentralandUrl.AssetBundleRegistry => ASSET_BUNDLE_REGISTRY,
                 DecentralandUrl.MarketplaceClaimName => $"https://decentraland.{ENV}/marketplace/names/claim",
                 DecentralandUrl.WorldContentServer => $"https://worlds-content-server.decentraland.{ENV}/world",
                 DecentralandUrl.Servers => $"https://peer.decentraland.{ENV}/lambdas/contracts/servers",
