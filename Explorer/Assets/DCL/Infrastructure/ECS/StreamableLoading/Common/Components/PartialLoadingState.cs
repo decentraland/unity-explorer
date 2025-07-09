@@ -26,7 +26,7 @@ namespace ECS.StreamableLoading.Common.Components
         public void Dispose()
         {
             if (ownershipTransferred) return;
-            PartialDownloadStream.Dispose();
+            PartialDownloadStream.DisposeAsync();
         }
     }
 }
