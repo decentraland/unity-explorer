@@ -733,7 +733,8 @@ namespace Global.Dynamic
                     thumbnailCache,
                     mainUIView.WarningNotification,
                     communitiesEventBus,
-                    voiceChatCallStatusService),
+                    voiceChatCallStatusService,
+                    includeVoiceChat),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

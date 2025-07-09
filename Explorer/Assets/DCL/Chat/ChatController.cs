@@ -83,6 +83,7 @@ namespace DCL.Chat
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
+        private readonly bool isCallEnabled;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -140,7 +141,8 @@ namespace DCL.Chat
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            bool isCallEnabled) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -164,6 +166,7 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
+            this.isCallEnabled = isCallEnabled;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -290,6 +293,7 @@ namespace DCL.Chat
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
 
             callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService, chatEventBus);
+            viewInstance.chatTitleBar.CallButton.gameObject.SetActive(isCallEnabled);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
