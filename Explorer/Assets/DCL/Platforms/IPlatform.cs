@@ -11,8 +11,6 @@ namespace DCL.Platforms
 
         Kind CurrentPlatform();
 
-        void Quit();
-
         static readonly IPlatform DEFAULT = new Platform();
     }
 
