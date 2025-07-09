@@ -83,6 +83,7 @@ namespace DCL.Chat
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
+        private readonly bool isCallEnabled;
 
         private readonly List<ChatUserData> membersBuffer = new ();
         private readonly List<ChatUserData> participantProfileBuffer = new ();
@@ -140,7 +141,8 @@ namespace DCL.Chat
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            bool isCallEnabled) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -164,6 +166,7 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
+            this.isCallEnabled = isCallEnabled;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -290,6 +293,7 @@ namespace DCL.Chat
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
 
             callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService, chatEventBus);
+            viewInstance.chatTitleBar.CallButton.gameObject.SetActive(isCallEnabled);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -499,10 +503,34 @@ namespace DCL.Chat
 
             viewInstance.Focus();
         }
-
+        
         private void OnStartCall(string userId)
         {
             voiceChatCallStatusService.StartCall(new Web3Address(userId));
+            
+        }
+        
+        private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
+        {
+            ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);
+            userCommunities[channelId] = new GetUserCommunitiesData.CommunityData()
+                {
+                    id = newCommunity.id,
+                    thumbnails = newCommunity.thumbnails,
+                    description = newCommunity.description,
+                    ownerAddress = newCommunity.ownerAddress,
+                    name = newCommunity.name,
+                    privacy = newCommunity.privacy,
+                    role = CommunityMemberRole.owner,
+                    membersCount = 1
+                };
+            chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
+        }
+
+        private void OnCommunitiesDataProviderCommunityDeleted(string communityId)
+        {
+            ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(communityId);
+            chatHistory.RemoveChannel(channelId);
         }
 
         private void OnSelectConversation(ChatChannel.ChannelId channelId)
@@ -545,7 +573,6 @@ namespace DCL.Chat
             SetupViewWithUserStateOnMainThreadAsync(userState).Forget();
             UpdateCallButtonUserState(userState, userId);
 
-
             if (!updateToolbar)
                 return;
 
@@ -555,6 +582,8 @@ namespace DCL.Chat
 
         private void UpdateCallButtonUserState(ChatUserStateUpdater.ChatUserState userState, string userId)
         {
+            if (!isCallEnabled) return;
+
             CallButtonController.OtherUserCallStatus callStatus = CallButtonController.OtherUserCallStatus.USER_OFFLINE;
 
             switch (userState)
@@ -1041,6 +1070,9 @@ namespace DCL.Chat
             DCLInput.Instance.Shortcuts.ToggleNametags.performed += OnToggleNametagsShortcutPerformed;
             DCLInput.Instance.Shortcuts.OpenChatCommandLine.performed += OnOpenChatCommandLineShortcutPerformed;
 
+            communitiesDataProvider.CommunityCreated += OnCommunitiesDataProviderCommunityCreated;
+            communitiesDataProvider.CommunityDeleted += OnCommunitiesDataProviderCommunityDeleted;
+
             SubscribeToCommunitiesBusEventsAsync().Forget();
         }
 
@@ -1127,6 +1159,9 @@ namespace DCL.Chat
 
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
+
+            communitiesDataProvider.CommunityCreated -= OnCommunitiesDataProviderCommunityCreated;
+            communitiesDataProvider.CommunityDeleted -= OnCommunitiesDataProviderCommunityDeleted;
         }
 
         private async UniTaskVoid ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)

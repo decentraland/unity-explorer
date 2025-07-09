@@ -140,7 +140,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <CallButton>k__BackingField: {fileID: 3919913914439165951}
   <TooltipParent>k__BackingField: {fileID: 3424399997868077773}
-  <TooltipParentCanvas>k__BackingField: {fileID: 0}
+  <TooltipParentCanvas>k__BackingField: {fileID: 6157199245500043435}
   <TooltipText>k__BackingField: {fileID: 6596129100208517890}
 --- !u!114 &2333280079885905979
 MonoBehaviour:
@@ -337,6 +337,7 @@ GameObject:
   - component: {fileID: 2514859554678556593}
   - component: {fileID: 598904607195312324}
   - component: {fileID: 6224068719566595129}
+  - component: {fileID: 6157199245500043435}
   m_Layer: 0
   m_Name: Tooltip
   m_TagString: Untagged
@@ -486,6 +487,18 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 1
   m_TargetDisplay: 0
+--- !u!225 &6157199245500043435
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3424399997868077773}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &3617465789172689849
 GameObject:
   m_ObjectHideFlags: 0
