@@ -78,7 +78,7 @@ namespace DCL.Multiplayer.Movement.Systems
             AnimationSlideBlendLogic.SetAnimatorParameters(ref animationComponent, view);
 
             // other states
-            bool jumpTriggered = (animationComponent.States.IsGrounded && !message.animState.IsGrounded) || (!animationComponent.States.IsJumping && message.animState.IsJumping);
+            bool jumpTriggered = !animationComponent.States.IsJumping && message.animState.IsJumping;
             animationComponent.States.IsGrounded = message.animState.IsGrounded;
             animationComponent.States.IsJumping = message.animState.IsJumping;
             animationComponent.States.IsLongJump = message.animState.IsLongJump;
