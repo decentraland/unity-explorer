@@ -1,3 +1,4 @@
+using DCL.Prefs;
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Settings;
 using TMPro;
@@ -7,7 +8,6 @@ namespace DCL.Settings.ModuleControllers
 {
     public class InputDeviceController : SettingsFeatureController
     {
-        private const string MICROPHONE_DEVICE_NAME = "Settings_MicrophoneName";
         private readonly SettingsDropdownModuleView view;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
 
@@ -25,7 +25,7 @@ namespace DCL.Settings.ModuleControllers
 
         private void ApplySettings(int pickedMicrophoneIndex)
         {
-            settingsDataStore.SetStringValue(MICROPHONE_DEVICE_NAME, Microphone.devices[pickedMicrophoneIndex], true);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME, Microphone.devices[pickedMicrophoneIndex]);
             voiceChatSettings.OnMicrophoneChanged(pickedMicrophoneIndex);
         }
 
@@ -39,9 +39,9 @@ namespace DCL.Settings.ModuleControllers
 
         private void SetSelection()
         {
-            if (settingsDataStore.HasKey(MICROPHONE_DEVICE_NAME))
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME))
             {
-                string microphoneName = settingsDataStore.GetStringValue(MICROPHONE_DEVICE_NAME);
+                string microphoneName = DCLPlayerPrefs.GetString(DCLPrefKeys.SETTINGS_MICROPHONE_DEVICE_NAME);
 
                 for (var i = 0; i < Microphone.devices.Length; i++)
                 {

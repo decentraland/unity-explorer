@@ -2,13 +2,13 @@
 using DCL.Settings.ModuleViews;
 using DCL.Settings.Utils;
 using UnityEngine.Audio;
+using DCL.Prefs;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class VoiceChatVolumeSettingsController : SettingsFeatureController
     {
         private const string VOICE_CHAT_VOLUME_EXPOSED_PARAM = "VoiceChat_Volume";
-        private const string VOICE_CHAT_VOLUME_DATA_STORE_KEY = "Settings_VoiceChatVolume";
 
         private readonly SettingsSliderModuleView view;
         private readonly AudioMixer generalAudioMixer;
@@ -18,8 +18,8 @@ namespace DCL.Settings.ModuleControllers
             this.view = view;
             this.generalAudioMixer = generalAudioMixer;
 
-            if (settingsDataStore.HasKey(VOICE_CHAT_VOLUME_DATA_STORE_KEY))
-                view.SliderView.Slider.value = settingsDataStore.GetSliderValue(VOICE_CHAT_VOLUME_DATA_STORE_KEY);
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME))
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME);
 
             view.SliderView.Slider.onValueChanged.AddListener(SetVoiceChatVolumeSettings);
             SetVoiceChatVolumeSettings(view.SliderView.Slider.value);
@@ -30,7 +30,7 @@ namespace DCL.Settings.ModuleControllers
         private void SetVoiceChatVolumeSettings(float volumePercentage)
         {
             generalAudioMixer.SetFloat(VOICE_CHAT_VOLUME_EXPOSED_PARAM,  AudioUtils.PercentageVolumeToDecibel(volumePercentage));
-            settingsDataStore.SetSliderValue(VOICE_CHAT_VOLUME_DATA_STORE_KEY, volumePercentage, save: true);
+            DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_VOICE_CHAT_VOLUME, volumePercentage, save: true);
         }
 
         public override void Dispose()
