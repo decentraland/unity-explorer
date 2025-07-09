@@ -71,10 +71,10 @@ namespace DCL.VoiceChat
         private void OnCallButtonClicked()
         {
             cts = cts?.SafeRestart();
-            HandleCallButtonClick(cts!.Token).Forget();
+            HandleCallButtonClickAsync(cts!.Token).Forget();
         }
 
-        private async UniTaskVoid HandleCallButtonClick(CancellationToken ct)
+        private async UniTaskVoid HandleCallButtonClickAsync(CancellationToken ct)
         {
             if (isClickedOnce)
             {
@@ -89,14 +89,14 @@ namespace DCL.VoiceChat
 
             if (voiceChatCallStatusService.Status.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
-                await ShowTooltipWithAutoClose(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
+                await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                 return;
             }
 
             switch (otherUserStatus)
             {
                 case OtherUserCallStatus.USER_OFFLINE:
-                    await ShowTooltipWithAutoClose(USER_OFFLINE_TOOLTIP_TEXT, ct);
+                    await ShowTooltipWithAutoCloseAsync(USER_OFFLINE_TOOLTIP_TEXT, ct);
                     break;
                 case OtherUserCallStatus.USER_AVAILABLE:
                     // For available users, immediately start call without showing tooltip
@@ -105,18 +105,18 @@ namespace DCL.VoiceChat
                     StartCall?.Invoke(CurrentUserId);
                     break;
                 case OtherUserCallStatus.OWN_USER_IN_CALL:
-                    await ShowTooltipWithAutoClose(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
+                    await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                     break;
                 case OtherUserCallStatus.USER_REJECTS_CALLS:
-                    await ShowTooltipWithAutoClose(USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
+                    await ShowTooltipWithAutoCloseAsync(USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
                     break;
                 case OtherUserCallStatus.OWN_USER_REJECTS_CALLS:
-                    await ShowTooltipWithAutoClose(OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
+                    await ShowTooltipWithAutoCloseAsync(OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT, ct);
                     break;
             }
         }
 
-        private async UniTask ShowTooltipWithAutoClose(string tooltipText, CancellationToken ct)
+        private async UniTask ShowTooltipWithAutoCloseAsync(string tooltipText, CancellationToken ct)
         {
             view.TooltipParentCanvas.alpha = 0;
             view.TooltipParent.gameObject.SetActive(true);
@@ -137,7 +137,7 @@ namespace DCL.VoiceChat
         {
             if (newStatus == VoiceChatStatus.VOICE_CHAT_USER_BUSY)
             {
-                ShowTooltipWithAutoClose(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
+                ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
             }
         }
 
