@@ -5,6 +5,7 @@ using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
@@ -59,6 +60,7 @@ namespace DCL.UI.Sidebar
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource checkForMarketplaceCreditsFeatureCts;
         private CancellationTokenSource? referralNotificationCts;
+        private CancellationTokenSource checkForCommunitiesFeatureCts;
         private bool? pendingSkyboxInteractableState;
 
         public event Action? HelpOpened;
@@ -115,6 +117,7 @@ namespace DCL.UI.Sidebar
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
             sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
             referralNotificationCts.SafeCancelAndDispose();
+            checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
 
         protected override void OnViewInstantiated()
@@ -128,6 +131,7 @@ namespace DCL.UI.Sidebar
             });
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
+            viewInstance.communitiesButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Communities).Forget());
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Navmap).Forget());
 
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileMenuAsync);
@@ -180,6 +184,9 @@ namespace DCL.UI.Sidebar
                 viewInstance.skyboxButton.interactable = pendingSkyboxInteractableState.Value;
                 pendingSkyboxInteractableState = null;
             }
+
+            checkForCommunitiesFeatureCts = checkForCommunitiesFeatureCts.SafeRestart();
+            CheckForCommunitiesFeatureAsync(checkForCommunitiesFeatureCts.Token).Forget();
         }
 
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
@@ -311,7 +318,15 @@ namespace DCL.UI.Sidebar
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
         }
 
-#region Sidebar button handlers
+        private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.communitiesButton.gameObject.SetActive(false);
+            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
+        }
+
+        #region Sidebar button handlers
+
         private void OnUnreadMessagesButtonClicked()
         {
             // Note: It is persistent, it's not possible to wait for it to close, it is managed with events

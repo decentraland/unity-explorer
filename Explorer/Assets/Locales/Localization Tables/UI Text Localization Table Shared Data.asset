@@ -37,6 +37,10 @@ MonoBehaviour:
     m_Key: Gallery
     m_Metadata:
       m_Items: []
+  - m_Id: 208414847697555456
+    m_Key: Communities
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -11,8 +11,8 @@ namespace DCL.Chat.MessageBus
 {
     public interface IChatMessagesBus : IDisposable
     {
-        public event Action<ChatChannel.ChannelId, ChatMessage> MessageAdded;
-        public void Send(ChatChannel channel, string message, string origin);
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage> MessageAdded;
+        public void Send(ChatChannel channel, string message, string origin, string topic = "");
     }
 
     public static class ChatMessageBusExtensions

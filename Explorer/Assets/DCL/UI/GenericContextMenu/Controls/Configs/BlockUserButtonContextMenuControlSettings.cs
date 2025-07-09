@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using DCL.UI.GenericContextMenuParameter;
 using System;
 using UnityEngine;
 
