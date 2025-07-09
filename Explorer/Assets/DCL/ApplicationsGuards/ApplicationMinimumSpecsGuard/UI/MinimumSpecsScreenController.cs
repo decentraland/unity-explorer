@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using DCL.Browser;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Prefs;
@@ -68,11 +69,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private void OnExitClicked()
         {
             analytics.Track(AnalyticsEvents.UI.EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN, null, true);
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            UnityEngine.Application.Quit();
-#endif
+            ExitUtils.Exit();
         }
 
         private void OnReadMoreClicked()

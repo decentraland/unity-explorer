@@ -97,8 +97,9 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
 
-            sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            this.sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
 
         public override void Dispose()
