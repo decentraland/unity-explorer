@@ -122,6 +122,12 @@ namespace Global.Dynamic
                 GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
+                if (decentralandUrlsSource.RequiresAboutOverride())
+                {
+                    result.content.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
+                    result.lambdas.publicUrl = decentralandUrlsSource.Url(DecentralandUrl.DecentralandContentOverride);
+                }
+
                 string hostname = ResolveHostname(realm, result);
 
                 realmData.Reconfigure(
