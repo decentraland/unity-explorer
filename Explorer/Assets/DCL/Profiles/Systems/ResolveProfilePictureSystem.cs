@@ -27,7 +27,7 @@ namespace DCL.Profiles
         {
             if (promise.TryGetResult(World, out StreamableLoadingResult<Texture2DData> result))
             {
-                profile.ProfilePicture = result.ToFullRectSpriteData(ProfileUtils.DEFAULT_PROFILE_PIC);
+                profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
 
                 promise.Consume(World);
                 World.Destroy(entity);
