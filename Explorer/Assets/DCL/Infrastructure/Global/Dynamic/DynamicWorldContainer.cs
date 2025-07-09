@@ -624,7 +624,8 @@ namespace Global.Dynamic
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
                 profileRepository,
-                sharedSpaceManager);
+                sharedSpaceManager,
+                includeVoiceChat);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
