@@ -142,7 +142,7 @@ namespace DCL.UserInAppInitializationFlow
 
                 //Set initial position and start async livekit connection
                 characterObject.Controller.transform.position = startParcel.Peek().ParcelToPositionFlat();
-                var livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnection(ct);
+                var livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(

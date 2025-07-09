@@ -17,7 +17,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.healthCheck = healthCheck;
         }
 
-        public async UniTask<EnumResult<TaskError>> LaunchLivekitConnection(CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> LaunchLivekitConnectionAsync(CancellationToken ct)
         {
             try
             {
