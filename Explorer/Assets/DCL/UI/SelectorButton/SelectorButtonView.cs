@@ -14,7 +14,9 @@ namespace DCL.UI.SelectorButton
 
         [SerializeField] private Button selectorButton;
         [SerializeField] private TMP_Text selectorButtonText;
-        [SerializeField] private GameObject selectorPanel;
+        [SerializeField] private RectTransform selectorPanel;
+        [SerializeField] private RectTransform selectorPanelContentContainer;
+        [SerializeField] private float selectorPanelMaxHeight = 150f;
         [SerializeField] private ScrollRect selectorPanelScrollRect;
         [SerializeField] private Transform selectorPanelParent;
         [SerializeField] private SelectorButtonOptionItemView optionItemGameObject;
@@ -29,8 +31,8 @@ namespace DCL.UI.SelectorButton
 
         private void Awake()
         {
-            originalParent = selectorPanel.transform.parent;
-            originalLocalPosition = selectorPanel.transform.localPosition;
+            originalParent = selectorPanel.parent;
+            originalLocalPosition = selectorPanel.localPosition;
             selectorPanelScrollRect.SetScrollSensitivityBasedOnPlatform();
 
             optionsPool = new ObjectPool<SelectorButtonOptionItemView>(
@@ -136,18 +138,26 @@ namespace DCL.UI.SelectorButton
 
         private void OnOpenOptionsPanel()
         {
-            selectorPanel.SetActive(true);
+            selectorPanel.gameObject.SetActive(true);
             selectorPanelScrollRect.verticalNormalizedPosition = 1f;
+            RefreshSelectorPanelSize();
 
             if (selectorPanelParent != null)
             {
-                selectorPanel.transform.parent = originalParent;
-                selectorPanel.transform.localPosition = originalLocalPosition;
-                selectorPanel.transform.parent = selectorPanelParent;
+                selectorPanel.parent = originalParent;
+                selectorPanel.localPosition = originalLocalPosition;
+                selectorPanel.parent = selectorPanelParent;
             }
         }
 
         private void OnCloseOptionsPanel() =>
-            selectorPanel.SetActive(false);
+            selectorPanel.gameObject.SetActive(false);
+
+        private void RefreshSelectorPanelSize()
+        {
+            float contentHeight = selectorPanelContentContainer.rect.height;
+            float maxHeight = Mathf.Min(contentHeight, selectorPanelMaxHeight);
+            selectorPanel.sizeDelta = new Vector2(selectorPanel.sizeDelta.x, maxHeight);
+        }
     }
 }
