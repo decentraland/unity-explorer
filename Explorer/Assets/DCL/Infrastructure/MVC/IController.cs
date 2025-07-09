@@ -7,7 +7,7 @@ namespace MVC
     {
         ControllerState State { get; }
 
-        bool CanBeClosedByEscape => Layer != CanvasOrdering.SortingLayer.Persistent;
+        bool CanBeClosedByEscape => Layer is not CanvasOrdering.SortingLayer.Persistent and not CanvasOrdering.SortingLayer.Overlay;
 
         CanvasOrdering.SortingLayer Layer { get; }
 
