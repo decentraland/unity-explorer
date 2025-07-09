@@ -308,7 +308,7 @@ namespace DCL.Communities.CommunitiesCard
         private void OnThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
             Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
             mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
-                false, PhotoDetailParameter.CallerContext.CommunityCard, reelDeleteIntention,
+                true, PhotoDetailParameter.CallerContext.CommunityCard, reelDeleteIntention,
                 reelListRefreshIntention, galleryEventBus)));
 
         private void OnSectionChanged(CommunityCardView.Sections section)
