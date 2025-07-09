@@ -5,14 +5,11 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
-using DCL.Communities;
-using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.StylizedSkybox.Scripts;
@@ -20,6 +17,7 @@ using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
@@ -62,7 +60,6 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
         private readonly IDecentralandUrlsSource decentralandUrls;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -89,8 +86,7 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IRealmData realmData,
             ISceneRestrictionBusController sceneRestrictionBusController,
-            IDecentralandUrlsSource decentralandUrls,
-            IProfileThumbnailCache profileThumbnailCache)
+            IDecentralandUrlsSource decentralandUrls)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -117,7 +113,6 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
             this.decentralandUrls = decentralandUrls;
-            this.profileThumbnailCache = profileThumbnailCache;
         }
 
         public void Dispose() { }
@@ -140,7 +135,7 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileThumbnailCache, profileRepository),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),

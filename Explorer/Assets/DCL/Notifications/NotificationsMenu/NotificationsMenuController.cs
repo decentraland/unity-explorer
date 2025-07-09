@@ -6,6 +6,7 @@ using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Utilities;
 using DCL.Utilities;
@@ -45,10 +46,9 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IProfileThumbnailCache profileThumbnailCache;
-        private readonly IProfileRepository profileRepository;
+        private readonly ProfileRepositoryWrapper profileRepository;
+        private readonly CancellationTokenSource notificationThumbnailCts;
 
-        private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new ();
         private int unreadNotifications;
         private Web3Address? previousWeb3Identity;
@@ -65,8 +65,7 @@ namespace DCL.Notifications.NotificationsMenu
             IWebRequestController webRequestController,
             NftTypeIconSO rarityBackgroundMapping,
             IWeb3IdentityCache web3IdentityCache,
-            IProfileThumbnailCache profileThumbnailCache,
-            IProfileRepository profileRepository)
+            ProfileRepositoryWrapper profileRepository)
         {
             notificationThumbnailCts = new CancellationTokenSource();
 
@@ -77,7 +76,6 @@ namespace DCL.Notifications.NotificationsMenu
             this.webRequestController = webRequestController;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
-            this.profileThumbnailCache = profileThumbnailCache;
             this.profileRepository = profileRepository;
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
@@ -314,10 +312,10 @@ namespace DCL.Notifications.NotificationsMenu
 
             async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
             {
-                Profile? profile = await profileRepository.GetAsync(user, ct);
+                Profile? profile = await profileRepository.GetProfileAsync(user, ct);
 
                 if (profile != null)
-                    return await profileThumbnailCache.GetThumbnailAsync(user, profile.Avatar.FaceSnapshotUrl, ct);
+                    return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);
 
                 return null;
             }
