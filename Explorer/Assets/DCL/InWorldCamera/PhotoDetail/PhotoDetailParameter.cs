@@ -13,7 +13,8 @@ namespace DCL.InWorldCamera.PhotoDetail
         {
             CameraReel,
             PlaceInfoPanel,
-            Passport
+            Passport,
+            CommunityCard
         }
         //Currently loaded reels
         public readonly List<CameraReelResponseCompact> AllReels;

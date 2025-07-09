@@ -40,7 +40,11 @@ using System.Linq;
 using System.Threading;
 using DCL.Chat.MessageBus;
 using DCL.Clipboard;
+using DCL.Communities;
+using DCL.Communities.CommunitiesBrowser;
+using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.InWorldCamera;
 using DCL.Navmap.ScriptableObjects;
@@ -116,6 +120,9 @@ namespace DCL.PluginSystem.Global
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly INftNamesProvider nftNamesProvider;
+
         private readonly bool includeCameraReel;
 
         private ExplorePanelInputHandler? inputHandler;
@@ -131,6 +138,7 @@ namespace DCL.PluginSystem.Global
         private EventInfoPanelController? eventInfoPanelController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
+        private CommunitiesBrowserController? communitiesBrowserController;
         private readonly GalleryEventBus galleryEventBus;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -184,6 +192,8 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
+            ICommunitiesDataProvider communitiesDataProvider,
+            INftNamesProvider nftNamesProvider,
             GalleryEventBus galleryEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -237,6 +247,8 @@ namespace DCL.PluginSystem.Global
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.profileRepositoryWrapper = profileDataProvider;
             this.upscalingController = upscalingController;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.nftNamesProvider = nftNamesProvider;
             this.galleryEventBus = galleryEventBus;
         }
 
@@ -248,6 +260,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             inputHandler?.Dispose();
             placeInfoPanelController?.Dispose();
+            communitiesBrowserController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -402,13 +415,28 @@ namespace DCL.PluginSystem.Global
                 cameraReelStorageService,
                 web3IdentityCache,
                 mvcManager,
+                cursor,
                 galleryEventBus,
                 settings.StorageProgressBarText);
+
+            CommunitiesBrowserView communitiesBrowserView = explorePanelView.GetComponentInChildren<CommunitiesBrowserView>();
+            communitiesBrowserController = new CommunitiesBrowserController(
+                communitiesBrowserView,
+                cursor,
+                communitiesDataProvider,
+                webRequestController,
+                inputBlock,
+                explorePanelView.WarningNotificationView,
+                mvcManager,
+                profileRepositoryWrapper,
+                selfProfile,
+                nftNamesProvider);
 
             ExplorePanelController explorePanelController = new
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
-                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper), inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
+                    communitiesBrowserController, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

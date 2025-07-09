@@ -49,6 +49,7 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
+  - rid: 1766526334245273896
   references:
     version: 2
     RefIds:
@@ -295,6 +296,27 @@ MonoBehaviour:
         <PlaceGridLayoutFixedColumnCount>k__BackingField: 1
         <PlaceThumbnailHeight>k__BackingField: 320
         <PlaceThumbnailWidth>k__BackingField: 404
+    - rid: 1766526334245273896
+      type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CommunityCardPrefab>k__BackingField:
+          m_AssetGUID: 4f900819503d2412194e6de3e5a95ba0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <CommunityCreationEditionPrefab>k__BackingField:
+          m_AssetGUID: 24aec0b5ead4ec44081cf47744a7a268
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        <EventInfoPrefab>k__BackingField:
+          m_AssetGUID: 112ec96d4c89d41d68b03e4ba73992e9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -815,8 +837,6 @@ MonoBehaviour:
         <ShareToXMessage>k__BackingField: Check out what I'm doing in @decentraland
           right now and join me!
         <PhotoSuccessfullyDownloadedMessage>k__BackingField: Photo successfully downloaded
-        <PhotoSuccessfullySetAsPublicMessage>k__BackingField: Photo successfully
-          updated
         <LinkCopiedMessage>k__BackingField: Link copied!
         <CategoryIconsMapping>k__BackingField:
           m_AssetGUID: 4a2a7b610414b45c1b576946ce094877

@@ -188,7 +188,7 @@ namespace DCL.Friends.UI.FriendPanel
         private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(web3Address);
+            chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
         }
 
         private void CloseFriendsPanel(InputAction.CallbackContext obj) =>

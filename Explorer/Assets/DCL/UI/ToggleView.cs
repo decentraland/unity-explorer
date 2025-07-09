@@ -65,6 +65,7 @@ namespace DCL.UI
             OffImage.SetActive(!toggle);
             OnBackgroundImage.gameObject.SetActive(toggle);
             OffBackgroundImage.gameObject.SetActive(!toggle);
+            Toggle.targetGraphic = toggle ? OnBackgroundImage : OffBackgroundImage;
         }
 
         public void SetInteractable(bool isInteractable)

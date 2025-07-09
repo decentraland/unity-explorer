@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI;
+using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
+using DCL.Profiles;
+using DCL.UI;
+using DCL.UI.Communities;
 using DCL.UI.ProfileElements;
 using DCL.Web3;
 using MVC;
@@ -17,6 +21,7 @@ namespace DCL.Chat
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
         public delegate void DeleteChatHistoryRequestedDelegate();
+        public delegate void ViewCommunityRequestedDelegate();
 
         public event Action? CloseChatButtonClicked;
         public event Action? CloseMemberListButtonClicked;
@@ -25,24 +30,28 @@ namespace DCL.Chat
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
+        public event ViewCommunityRequestedDelegate ViewCommunityRequested;
 
         [SerializeField] private Button closeChatButton;
-        [SerializeField] private Button closeMemberListButton;
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
+        [SerializeField] private TMP_Text communityMemberListTitleMemberListNumberText;
         [SerializeField] private TMP_Text chatChannelNameNameText;
         [SerializeField] private TMP_Text memberListChannelNameText;
 
         [SerializeField] private GameObject defaultChatTitlebar;
-        [SerializeField] private GameObject memberListTitlebar;
+        [SerializeField] private GameObject nearbyMemberListTitlebar;
+        [SerializeField] private GameObject communitiesMemberListTitlebar;
+        [SerializeField] private TMP_Text communitiesMemberListTitlebarText;
 
         [SerializeField] private GameObject memberCountObject;
         [SerializeField] private GameObject nearbyChannelContainer;
         [SerializeField] private SimpleProfileView profileView;
+        [SerializeField] private CommunityTitleView communityChannelContainer;
 
         [Header("Context Menu Data")]
         [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
@@ -59,10 +68,7 @@ namespace DCL.Chat
         {
             get
             {
-                if (closeChatButton.gameObject.activeInHierarchy)
-                    return closeChatButton;
-                else
-                    return closeMemberListButton;
+                return closeChatButton;
             }
         }
 
@@ -72,31 +78,65 @@ namespace DCL.Chat
                 return;
 
             closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
-            closeMemberListButton.onClick.AddListener(OnCloseMemberListButtonClicked);
             showMemberListButton.onClick.AddListener(OnShowMemberListButtonClicked);
             hideMemberListButton.onClick.AddListener(OnHideMemberListButtonClicked);
             openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
             profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
             profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
+            communityChannelContainer.ContextMenuOpened += OnProfileContextMenuOpened;
+            communityChannelContainer.ContextMenuClosed += OnProfileContextMenuClosed;
+            communityChannelContainer.ViewCommunityRequested += OnCommunityContextMenuViewCommunityRequested;
             isInitialized = true;
         }
 
-        public void ChangeTitleBarVisibility(bool isMemberListVisible)
+        public void ChangeTitleBarVisibility(bool isMemberListVisible, ChatChannel.ChatChannelType channelType)
         {
             defaultChatTitlebar.SetActive(!isMemberListVisible);
-            memberListTitlebar.SetActive(isMemberListVisible);
+            hideMemberListButton.gameObject.SetActive(isMemberListVisible);
+
+            if (channelType == ChatChannel.ChatChannelType.NEARBY)
+            {
+                nearbyMemberListTitlebar.SetActive(isMemberListVisible);
+            }
+            else if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
+            {
+                communitiesMemberListTitlebar.SetActive(isMemberListVisible);
+            }
+            else
+            {
+                nearbyMemberListTitlebar.SetActive(false);
+                communitiesMemberListTitlebar.SetActive(false);
+            }
         }
 
         public void SetMemberListNumberText(string userAmount)
         {
             chatTitleMemberListNumberText.text = userAmount;
-            memberListTitleMemberListNumberText.text = userAmount;
+
+            if (communityChannelContainer.gameObject.activeInHierarchy)
+            {
+                communityMemberListTitleMemberListNumberText.text = userAmount;
+            }
+            else if (nearbyMemberListTitlebar.gameObject.activeInHierarchy)
+            {
+                memberListTitleMemberListNumberText.text = userAmount;
+            }
         }
 
         public void SetChannelNameText(string channelName)
         {
-            chatChannelNameNameText.text = channelName;
-            memberListChannelNameText.text = channelName;
+            if (chatChannelNameNameText.gameObject.activeInHierarchy)
+            {
+                chatChannelNameNameText.text = channelName;
+            }
+            else if (memberListChannelNameText.gameObject.activeInHierarchy)
+            {
+                memberListChannelNameText.text = channelName;
+            }
+            else if (communitiesMemberListTitlebarText.gameObject.activeInHierarchy)
+            {
+                communitiesMemberListTitlebarText.text = channelName;
+            }
         }
 
         public void SetNearbyChannelImage()
@@ -104,6 +144,7 @@ namespace DCL.Chat
             nearbyChannelContainer.SetActive(true);
             memberCountObject.SetActive(true);
             profileView.gameObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(false);
         }
 
         public void SetupProfileView(Web3Address userId, ProfileRepositoryWrapper profileDataProvider)
@@ -113,6 +154,16 @@ namespace DCL.Chat
             profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(false);
+        }
+
+        public void SetupCommunityView(ISpriteCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CommunityTitleView.OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
+        {
+            nearbyChannelContainer.SetActive(false);
+            memberCountObject.SetActive(true);
+            profileView.gameObject.SetActive(false);
+            communityChannelContainer.gameObject.SetActive(true);
+            communityChannelContainer.SetupAsync(thumbnailCache, communityId, communityName, thumbnailUrl, openContextMenuAction, ct).Forget();
         }
 
         public void SetConnectionStatus(OnlineStatus status)
@@ -138,11 +189,6 @@ namespace DCL.Chat
         private void OnContextMenuClosed()
         {
             ContextMenuVisibilityChanged?.Invoke(false);
-        }
-
-        private void OnCloseMemberListButtonClicked()
-        {
-            CloseMemberListButtonClicked?.Invoke();
         }
 
         private void OnHideMemberListButtonClicked()
@@ -173,6 +219,11 @@ namespace DCL.Chat
         private void OnDisable()
         {
             contextMenuTask.TrySetResult();
+        }
+
+        private void OnCommunityContextMenuViewCommunityRequested()
+        {
+            ViewCommunityRequested?.Invoke();
         }
     }
 }
