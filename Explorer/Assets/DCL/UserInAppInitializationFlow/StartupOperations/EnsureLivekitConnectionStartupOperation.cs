@@ -1,31 +1,35 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.HealthChecks;
-using DCL.RealmNavigation;
+using System;
 using System.Threading;
 using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
-    public class EnsureLivekitConnectionStartupOperation : IStartupOperation
+    public class EnsureLivekitConnectionStartupOperation
     {
-        private readonly ILoadingStatus loadingStatus;
         private readonly IHealthCheck healthCheck;
+        private static readonly TimeSpan LIVEKIT_TIMEOUT = TimeSpan.FromSeconds(30);
 
-        public EnsureLivekitConnectionStartupOperation(ILoadingStatus loadingStatus, IHealthCheck healthCheck)
+        public EnsureLivekitConnectionStartupOperation(IHealthCheck healthCheck)
         {
-            this.loadingStatus = loadingStatus;
             this.healthCheck = healthCheck;
         }
 
-        public async UniTask<EnumResult<TaskError>> ExecuteAsync(IStartupOperation.Params report, CancellationToken ct)
+        public async UniTask<EnumResult<TaskError>> LaunchLivekitConnectionAsync(CancellationToken ct)
         {
-            float finalizationProgress = loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.LiveKitConnectionEnsuring);
-            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
-
-            if (result.Success)
-                report.Report.SetProgress(finalizationProgress);
-
-            return result.AsEnumResult(TaskError.MessageError);
+            try
+            {
+                var result = await healthCheck.IsRemoteAvailableAsync(ct).Timeout(LIVEKIT_TIMEOUT);
+                return result.AsEnumResult(TaskError.MessageError);
+            }
+            catch (TimeoutException)
+            {
+                ReportHub.Log(ReportCategory.LIVEKIT, $"Livekit handshake timed out");
+                return EnumResult<TaskError>.ErrorResult(TaskError.Timeout,"Multiplayer services are offline. Try again later");
+            }
         }
+
     }
 }
