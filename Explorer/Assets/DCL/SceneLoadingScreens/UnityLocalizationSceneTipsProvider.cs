@@ -93,7 +93,7 @@ namespace DCL.SceneLoadingScreens
                 tips[i] = new SceneTips.Tip(title, body, sprite, tipsConfiguration.GetColor(i));
             }
 
-            return new SceneTips(defaultDuration, true, tips);
+            return new SceneTips(defaultDuration, random: false, tips);
         }
     }
 }

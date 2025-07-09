@@ -8,6 +8,6 @@ namespace DCL.SceneLoadingScreens
         [SerializeField] private Color[] backgroundColors = null!;
 
         public Color GetColor(int index) =>
-            backgroundColors[index];
+            backgroundColors[index % backgroundColors.Length];
     }
 }
