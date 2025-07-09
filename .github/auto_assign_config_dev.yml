@@ -4,6 +4,7 @@ numberOfAssignees: 1
 addReviewers: true
 numberOfReviewers: 1
 useReviewGroups: true
+
 reviewGroups:
   techleads:
     - mikhail-dcl
@@ -19,12 +20,8 @@ reviewGroups:
     - lorenzo-ranciaffi
     - mihakrajnc
     - AnsisMalins
-  qa:
-    - Ludmilafantaniella
-    - anicalbano
-    - dafgreco
+    - daniele-dcl
 
 filterLabels:
   exclude:
     - "no review"
-    - "no QA needed"
