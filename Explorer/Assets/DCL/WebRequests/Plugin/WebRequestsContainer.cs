@@ -74,6 +74,7 @@ namespace DCL.WebRequests
 
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
             var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.Http2Settings.CacheLifetimeDays), cacheSize));
+            httpCache.LaunchFullMaintenance();
 
             if (container.WebRequestsMode != WebRequestsMode.UNITY)
             {
