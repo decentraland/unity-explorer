@@ -14,8 +14,43 @@ namespace DCL.DebugUtilities
             Builder = builder;
         }
 
-        public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog, bool isFullDebug)
+        public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog, bool isFullDebug, bool isLocalSceneDevelopment)
         {
+            ISet<string>? allowedCategories = null;
+
+            if (!isFullDebug)
+            {
+                if (isLocalSceneDevelopment)
+                {
+                    allowedCategories = new HashSet<string>
+                    {
+                        IDebugContainerBuilder.Categories.CURRENT_SCENE,
+                        IDebugContainerBuilder.Categories.PERFORMANCE,
+                        IDebugContainerBuilder.Categories.MEMORY,
+                        IDebugContainerBuilder.Categories.MEMORY_LIMITS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
+                    };
+                }
+                else
+                {
+                    allowedCategories = new HashSet<string>
+                    {
+                        IDebugContainerBuilder.Categories.CURRENT_SCENE,
+                        IDebugContainerBuilder.Categories.ROOM_INFO,
+                        IDebugContainerBuilder.Categories.ROOM_SCENE,
+                        IDebugContainerBuilder.Categories.ROOM_THROUGHPUT,
+                        IDebugContainerBuilder.Categories.ROOM_ISLAND,
+                        IDebugContainerBuilder.Categories.PERFORMANCE,
+                        IDebugContainerBuilder.Categories.MEMORY,
+                        IDebugContainerBuilder.Categories.REALM,
+                        IDebugContainerBuilder.Categories.ANALYTICS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS,
+                        IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
+                    };
+                }
+            }
+
             return new DebugUtilitiesContainer(
                 new DebugContainerBuilder(
                     () => viewsCatalog.Widget.InstantiateForElement<DebugWidget>(),
@@ -36,20 +71,7 @@ namespace DCL.DebugUtilities
                         { typeof(DebugToggleDef), new DebugElementBase<DebugToggleElement, DebugToggleDef>.Factory(viewsCatalog.Toggle) },
                         { typeof(DebugDropdownDef), new DebugElementBase<DebugDropdownElement, DebugDropdownDef>.Factory(viewsCatalog.DropdownField) },
                     },
-                    isFullDebug
-                        ? null
-                        : new HashSet<string>
-                        {
-                            IDebugContainerBuilder.Categories.CURRENT_SCENE,
-                            IDebugContainerBuilder.Categories.ROOM_INFO,
-                            IDebugContainerBuilder.Categories.ROOM_SCENE,
-                            IDebugContainerBuilder.Categories.ROOM_THROUGHPUT,
-                            IDebugContainerBuilder.Categories.ROOM_ISLAND,
-                            IDebugContainerBuilder.Categories.PERFORMANCE,
-                            IDebugContainerBuilder.Categories.MEMORY,
-                            IDebugContainerBuilder.Categories.REALM,
-                            IDebugContainerBuilder.Categories.ANALYTICS,
-                        }
+                    allowedCategories
                 )
             );
         }
