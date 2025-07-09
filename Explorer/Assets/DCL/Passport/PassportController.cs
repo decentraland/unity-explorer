@@ -134,6 +134,7 @@ namespace DCL.Passport
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
+        private GameObject badge3DPreviewCamera;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -181,7 +182,8 @@ namespace DCL.Passport
             bool isNameEditorEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
-            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
+            ProfileRepositoryWrapper profileDataProvider,
+            GameObject badge3DPreviewCamera) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -208,6 +210,7 @@ namespace DCL.Passport
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.badge3DPreviewCamera = badge3DPreviewCamera;
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -242,7 +245,7 @@ namespace DCL.Passport
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
 
-            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile);
+            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile, GameObject.Instantiate(badge3DPreviewCamera));
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService, cameraReelScreenshotsStorage, new ReelGalleryConfigParams(gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
