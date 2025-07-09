@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
+using DCL.Friends.UI.FriendPanel.Sections;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.Requests;
 using DCL.Input;
@@ -32,6 +33,7 @@ using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
@@ -282,7 +284,7 @@ namespace DCL.Passport
         private async UniTaskVoid OnOpenConversationAsync()
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(inputData.UserId);
+            chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
         }
 
         private void OnJumpToFriendButtonClicked()
@@ -610,9 +612,7 @@ namespace DCL.Passport
             contextMenuBlockUserButton.Enabled = friendshipStatus != FriendshipStatus.BLOCKED && includeUserBlocking;
             contextMenuSeparator.Enabled = contextMenuJumpInButton.Enabled || contextMenuBlockUserButton.Enabled;
 
-            userProfileContextMenuControlSettings.SetInitialData(targetProfile.Name, targetProfile.UserId, targetProfile.HasClaimedName,
-                targetProfile.UserNameColor, UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED,
-                targetProfile.Avatar.FaceSnapshotUrl);
+            userProfileContextMenuControlSettings.SetInitialData(targetProfile.ToUserData(), UserProfileContextMenuControlSettings.FriendshipStatus.DISABLED);
         }
 
         private void BlockUserClicked()

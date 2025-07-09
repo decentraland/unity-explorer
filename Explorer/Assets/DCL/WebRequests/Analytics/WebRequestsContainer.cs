@@ -79,17 +79,15 @@ namespace DCL.WebRequests.Analytics
 
             void CreateWebRequestsMetricsDebugUtility()
             {
-                debugContainerBuilder
-                   .TryAddWidget("Web Requests Debug Metrics")
- ?
-.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
-                        DebugLongMarkerDef.Unit.NoFormat)
-                   .AddMarker("Requests complete", requestCompleteDebugMetric,
-                        DebugLongMarkerDef.Unit.NoFormat)
-                   .AddMarker("Core budget", coreAvailableBudget,
-                        DebugLongMarkerDef.Unit.NoFormat)
-                   .AddMarker("Scene budget", sceneAvailableBudget,
-                        DebugLongMarkerDef.Unit.NoFormat);
+                debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS)
+                                     ?.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
+                                         DebugLongMarkerDef.Unit.NoFormat)
+                                     .AddMarker("Requests complete", requestCompleteDebugMetric,
+                                         DebugLongMarkerDef.Unit.NoFormat)
+                                     .AddMarker("Core budget", coreAvailableBudget,
+                                         DebugLongMarkerDef.Unit.NoFormat)
+                                     .AddMarker("Scene budget", sceneAvailableBudget,
+                                         DebugLongMarkerDef.Unit.NoFormat);
             }
 
             void CreateWebRequestDelayUtility()
@@ -114,9 +112,8 @@ namespace DCL.WebRequests.Analytics
                 var retriesCount = new ElementBinding<int>(3);
                 var delayBetweenRequests = new ElementBinding<float>(0);
 
-                debugContainerBuilder.TryAddWidget("Web Requests Stress Tress")
-               ?
-              .AddControlWithLabel("Count:", new DebugIntFieldDef(count))
+                debugContainerBuilder.TryAddWidget("Web Requests Stress Test")
+                                     ?.AddControlWithLabel("Count:", new DebugIntFieldDef(count))
                                      .AddControlWithLabel("Retries:", new DebugIntFieldDef(retriesCount))
                                      .AddControlWithLabel("Delay between requests (s):", new DebugFloatFieldDef(delayBetweenRequests))
                                      .AddControl(
