@@ -1,6 +1,6 @@
 namespace DCL.ApplicationGuards
 {
-    public static class GuardUtils
+    public static class ExitUtils
     {
         public static void Exit()
         {

@@ -12,13 +12,6 @@ namespace DCL.Multiplayer.HealthChecks
 
         class AlwaysFails : IHealthCheck
         {
-            private readonly string errorMessage;
-
-            public AlwaysFails(string errorMessage)
-            {
-                this.errorMessage = errorMessage;
-            }
-
             public UniTask<Result> IsRemoteAvailableAsync(CancellationToken ct) =>
                 UniTask.FromResult(Result.ErrorResult(nameof(AlwaysFails)))!;
         }

@@ -257,7 +257,7 @@ namespace Global.Dynamic
 
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
-                        GuardUtils.Exit();
+                        ExitUtils.Exit();
                         return;
                     }
 

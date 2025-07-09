@@ -70,7 +70,7 @@ namespace DCL.UI.SystemMenu
             base.OnViewInstantiated();
 
             viewInstance!.LogoutButton.onClick.AddListener(Logout);
-            viewInstance.ExitAppButton.onClick.AddListener(GuardUtils.Exit);
+            viewInstance.ExitAppButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
             viewInstance.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
             // viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);

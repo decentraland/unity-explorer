@@ -69,7 +69,7 @@ namespace DCL.ApplicationMinimumSpecsGuard
         private void OnExitClicked()
         {
             analytics.Track(AnalyticsEvents.UI.EXIT_APP_FROM_MINIMUM_REQUIREMENTS_SCREEN, null, true);
-            GuardUtils.Exit();
+            ExitUtils.Exit();
         }
 
         private void OnReadMoreClicked()

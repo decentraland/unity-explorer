@@ -27,13 +27,13 @@ namespace DCL.AuthenticationScreenFlow
         protected override void OnViewInstantiated()
         {
             viewInstance.SetVersions(current, latest);
-            viewInstance.CloseButton.onClick.AddListener(GuardUtils.Exit);
+            viewInstance.CloseButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.CloseWithLauncherButton.onClick.AddListener(HandleVersionUpdate);
         }
 
         public override void Dispose()
         {
-            viewInstance.CloseButton.onClick.RemoveListener(GuardUtils.Exit);
+            viewInstance.CloseButton.onClick.RemoveListener(ExitUtils.Exit);
             viewInstance.CloseWithLauncherButton.onClick.RemoveListener(HandleVersionUpdate);
         }
 

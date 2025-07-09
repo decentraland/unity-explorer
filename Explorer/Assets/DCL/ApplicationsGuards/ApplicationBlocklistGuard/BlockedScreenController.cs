@@ -21,7 +21,7 @@ namespace DCL.ApplicationBlocklistGuard
         {
             if (viewInstance != null)
             {
-                viewInstance.CloseButton.onClick.AddListener(GuardUtils.Exit);
+                viewInstance.CloseButton.onClick.AddListener(ExitUtils.Exit);
                 viewInstance.SupportButton.onClick.AddListener(OnSupportClicked);
             }
         }
@@ -31,7 +31,7 @@ namespace DCL.ApplicationBlocklistGuard
             if (viewInstance == null)
                 return;
 
-            viewInstance.CloseButton.onClick.RemoveListener(GuardUtils.Exit);
+            viewInstance.CloseButton.onClick.RemoveListener(ExitUtils.Exit);
             viewInstance.SupportButton.onClick.RemoveListener(OnSupportClicked);
         }
 

@@ -61,7 +61,7 @@ namespace DCL.ApplicationVersionGuard
             if (string.IsNullOrEmpty(launcherPath))
             {
                 DownloadLauncher();
-                GuardUtils.Exit();
+                ExitUtils.Exit();
             }
             else
             {
@@ -78,7 +78,7 @@ namespace DCL.ApplicationVersionGuard
                 finally
                 {
                     await UniTask.Delay(2000, cancellationToken: ct);
-                    GuardUtils.Exit();
+                    ExitUtils.Exit();
                 }
             }
         }

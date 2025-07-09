@@ -10,7 +10,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
     public class EnsureLivekitConnectionStartupOperation
     {
         private readonly IHealthCheck healthCheck;
-        private const int TIMEOUT_IN_SECONDS = 20;
+        private static readonly TimeSpan LIVEKIT_TIMEOUT = TimeSpan.FromSeconds(30);
 
         public EnsureLivekitConnectionStartupOperation(IHealthCheck healthCheck)
         {
@@ -21,7 +21,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         {
             try
             {
-                var result = await healthCheck.IsRemoteAvailableAsync(ct).Timeout(TimeSpan.FromSeconds(TIMEOUT_IN_SECONDS));
+                var result = await healthCheck.IsRemoteAvailableAsync(ct).Timeout(LIVEKIT_TIMEOUT);
                 return result.AsEnumResult(TaskError.MessageError);
             }
             catch (TimeoutException)

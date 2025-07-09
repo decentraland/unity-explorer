@@ -8,12 +8,11 @@ public class LivekitHealtGuardController : ControllerBase<LivekitHealthGuardView
 {
     public override CanvasOrdering.SortingLayer Layer { get; }
 
-    public LivekitHealtGuardController([NotNull] ViewFactoryMethod viewFactory) : base(viewFactory) { }
-
+    public LivekitHealtGuardController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
     protected override void OnViewInstantiated()
     {
-        viewInstance.ExitButton.onClick.AddListener(GuardUtils.Exit);
+        viewInstance.ExitButton.onClick.AddListener(ExitUtils.Exit);
     }
 
     protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
