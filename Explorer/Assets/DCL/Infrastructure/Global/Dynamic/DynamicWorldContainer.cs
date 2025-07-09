@@ -77,7 +77,6 @@ using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SkyBox;
 using DCL.SocialService;
-using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
