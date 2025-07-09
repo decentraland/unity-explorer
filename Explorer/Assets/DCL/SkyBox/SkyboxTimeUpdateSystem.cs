@@ -16,71 +16,48 @@ namespace DCL.SkyBox
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     public partial class SkyboxTimeUpdateSystem : BaseUnityLoopSystem
     {
-        private struct FeatureFlagSkyboxSettings
-        {
-            public int time;
-            public int speed;
-        }
-
-        private readonly FeatureFlagSkyboxSettings? ffSkyboxSettings;
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly SkyboxRenderController skyboxRenderController;
+        private readonly SkyboxStateMachine stateMachine;
 
         private float globalTimeOfDay;
         private float timeSinceLastUpdate;
-        private ISceneFacade scene;
+        private ISceneFacade? scene;
         private bool hasCheckedCurrentScene;
         private bool hasSceneOverride;
         private float skyboxSpeedMultiplier;
         private bool wasUIControlledLastFrame;
         private bool wasSDKControlledLastFrame;
 
-        private SkyboxTimeUpdateSystem([NotNull] World world,
+        private SkyboxTimeUpdateSystem(World world,
             SkyboxSettingsAsset skyboxSettings,
             IScenesCache scenesCache,
             ISceneRestrictionBusController sceneRestrictionController,
             SkyboxRenderController skyboxRenderController) : base(world)
         {
+            stateMachine = new SkyboxStateMachine(new ISkyboxState[]
+            {
+                new SDKComponentState(skyboxSettings),
+                new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController),
+                new UIOverrideState(skyboxSettings),
+                new GlobalTimeState(skyboxSettings)
+            }, new InterpolateTimeOfDayState(skyboxSettings));
+
             this.skyboxSettings = skyboxSettings;
             this.sceneRestrictionController = sceneRestrictionController;
             this.skyboxRenderController = skyboxRenderController;
             globalTimeOfDay = skyboxSettings.initialTimeOfDay;
             skyboxSpeedMultiplier = skyboxSettings.SpeedMultiplier;
 
-            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SKYBOX_SETTINGS))
-            {
-                FeatureFlagsConfiguration.Instance.TryGetJsonPayload(
-                    FeatureFlagsStrings.SKYBOX_SETTINGS,
-                    FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
-                    out ffSkyboxSettings);
-            }
-
-            scenesCache.OnCurrentSceneChanged += OnSceneChanged;
-        }
-
-        private void OnSceneChanged(ISceneFacade sceneFacade)
-        {
-            scene = sceneFacade;
-            hasSceneOverride = false;
-            hasCheckedCurrentScene = false;
-
-            if (sceneFacade == null && !ffSkyboxSettings.HasValue && !skyboxSettings.IsUIControlled)
-                TransitionToGlobalTime();
-        }
-
-        private void TransitionToGlobalTime()
-        {
-            skyboxSpeedMultiplier = skyboxSettings.SpeedMultiplier;
-            skyboxSettings.IsDayCycleEnabled = true;
-            skyboxSettings.TransitionMode = TransitionMode.FORWARD;
-            skyboxSettings.IsTransitioning = true;
-            skyboxSettings.TargetTransitionTimeOfDay = globalTimeOfDay;
+            // scenesCache.OnCurrentSceneChanged += OnSceneChanged;
         }
 
         protected override void Update(float deltaTime)
         {
-            UpdateGlobalTime(deltaTime);
+            // UpdateGlobalTime(deltaTime);
+
+            stateMachine.Update(deltaTime);
 
             if (skyboxSettings.ShouldUpdateSkybox)
             {
@@ -88,23 +65,14 @@ namespace DCL.SkyBox
                 skyboxSettings.ShouldUpdateSkybox = false;
             }
 
-            if (TryHandleTransition(deltaTime)) return;
-
             // Check hierarchy from highest to lowest priority
-            if (TryHandleSDKComponent()) return;
-            if (TryHandleSceneOverride()) return;
-            if (TryHandleUIOverride()) return;
-            if (TryHandleFeatureFlag()) return;
+            // if (TryHandleSDKComponent()) return;
+            // if (TryHandleSceneOverride()) return;
+            // if (TryHandleUIOverride()) return;
+            // if (TryHandleFeatureFlag()) return;
 
             // Fallback to global time progression
-            HandleGlobalTimeProgression(deltaTime);
-        }
-
-        private bool TryHandleTransition(float deltaTime)
-        {
-            if (!skyboxSettings.IsTransitioning) return false;
-            UpdateTransition(deltaTime);
-            return true;
+            // HandleGlobalTimeProgression(deltaTime);
         }
 
         private bool TryHandleSDKComponent()
@@ -128,55 +96,22 @@ namespace DCL.SkyBox
             return wasUIControlledLastFrame;
         }
 
-        private bool TryHandleFeatureFlag()
-        {
-            if (!ffSkyboxSettings.HasValue) return false;
-
-            skyboxSettings.CanUIControl = true;
-
-            int speed = ffSkyboxSettings.Value.speed;
-            skyboxSpeedMultiplier = Mathf.Abs(speed);
-
-            skyboxSettings.IsDayCycleEnabled = speed != 0;
-            skyboxSettings.TargetTransitionTimeOfDay = ffSkyboxSettings.Value.time;
-            skyboxSettings.IsTransitioning = true;
-            skyboxSettings.ShouldUpdateSkybox = true;
-
-            return true;
-        }
-
-        private void UpdateTransition(float deltaTime)
-        {
-            float current = skyboxSettings.TimeOfDayNormalized;
-            float target = skyboxSettings.TargetTransitionTimeOfDay;
-            float speed = skyboxSettings.TransitionSpeed;
-
-            if (Mathf.Approximately(current, target))
-            {
-                skyboxSettings.TimeOfDayNormalized = target;
-                skyboxSettings.IsTransitioning = false;
-                return;
-            }
-
-            float step = deltaTime * speed;
-
-            if (skyboxSettings.TransitionMode == TransitionMode.FORWARD)
-            {
-                float distance = (target - current + 1f) % 1f;
-
-                if (step >= distance) { skyboxSettings.TimeOfDayNormalized = target; }
-                else { skyboxSettings.TimeOfDayNormalized = (current + step) % 1f; }
-            }
-            else // TransitionMode.BACKWARD
-            {
-                float distance = (current - target + 1f) % 1f;
-
-                if (step >= distance) { skyboxSettings.TimeOfDayNormalized = target; }
-                else { skyboxSettings.TimeOfDayNormalized = (current - step + 1f) % 1f; }
-            }
-
-            skyboxSettings.ShouldUpdateSkybox = true;
-        }
+        // private bool TryHandleFeatureFlag()
+        // {
+        //     if (!ffSkyboxSettings.HasValue) return false;
+        //
+        //     skyboxSettings.CanUIControl = true;
+        //
+        //     int speed = ffSkyboxSettings.Value.speed;
+        //     skyboxSpeedMultiplier = Mathf.Abs(speed);
+        //
+        //     skyboxSettings.IsDayCycleEnabled = speed != 0;
+        //     skyboxSettings.TargetTransitionTimeOfDay = ffSkyboxSettings.Value.time;
+        //     skyboxSettings.IsTransitioning = true;
+        //     skyboxSettings.ShouldUpdateSkybox = true;
+        //
+        //     return true;
+        // }
 
         private void UpdateGlobalTime(float deltaTime)
         {
@@ -225,7 +160,7 @@ namespace DCL.SkyBox
             skyboxSettings.IsDayCycleEnabled = false;
 
             skyboxSettings.TransitionMode = TransitionMode.FORWARD;
-            skyboxSettings.IsTransitioning = true;
+            // skyboxSettings.IsTransitioning = true;
             skyboxSettings.TargetTransitionTimeOfDay = sceneTime;
 
             skyboxSettings.CanUIControl = false;
@@ -244,6 +179,25 @@ namespace DCL.SkyBox
                 skyboxSettings.ShouldUpdateSkybox = true;
                 timeSinceLastUpdate = 0f;
             }
+        }
+
+        private void OnSceneChanged(ISceneFacade? sceneFacade)
+        {
+            // scene = sceneFacade;
+            // hasSceneOverride = false;
+            // hasCheckedCurrentScene = false;
+            //
+            // if (sceneFacade == null && !ffSkyboxSettings.HasValue && !skyboxSettings.IsUIControlled)
+            //     TransitionToGlobalTime();
+        }
+
+        private void TransitionToGlobalTime()
+        {
+            skyboxSpeedMultiplier = skyboxSettings.SpeedMultiplier;
+            skyboxSettings.IsDayCycleEnabled = true;
+            skyboxSettings.TransitionMode = TransitionMode.FORWARD;
+            // skyboxSettings.IsTransitioning = true;
+            skyboxSettings.TargetTransitionTimeOfDay = globalTimeOfDay;
         }
     }
 }

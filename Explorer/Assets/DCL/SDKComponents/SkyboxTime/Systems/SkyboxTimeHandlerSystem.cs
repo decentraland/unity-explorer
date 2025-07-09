@@ -30,11 +30,29 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
             this.sceneRestrictionController = sceneRestrictionController;
         }
 
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            // TODO: move part/all of these into SDKComponentState?
+            if (value)
+            {
+                ref PBSkyboxTime sdkSkyboxTime = ref World.TryGetRef<PBSkyboxTime>(rootEntity, out bool hasComponent);
+
+                if (hasComponent)
+                    SetSDKsettings(ref sdkSkyboxTime);
+
+                return;
+            }
+
+            if (skyboxSettings.IsSDKControlled)
+                ResetSDKControlled();
+        }
+
         protected override void Update(float t)
         {
             if (sceneStateProvider.IsCurrent == false) return;
 
             ref PBSkyboxTime sdkSkyboxTime = ref World.TryGetRef<PBSkyboxTime>(rootEntity, out bool hasComponent);
+
             if (!hasComponent)
             {
                 if (skyboxSettings.IsSDKControlled)
@@ -46,43 +64,28 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
             if (!sdkSkyboxTime.IsDirty) return;
 
             SetSDKsettings(ref sdkSkyboxTime);
+
+            sdkSkyboxTime.IsDirty = false;
         }
 
         private void SetSDKsettings(ref PBSkyboxTime sdkSkyboxTime)
         {
             skyboxSettings.IsSDKControlled = true;
-
             skyboxSettings.IsDayCycleEnabled = false;
             skyboxSettings.TargetTransitionTimeOfDay = sdkSkyboxTime.FixedTime;
+
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
                 ? SkyBox.TransitionMode.FORWARD
                 : SkyBox.TransitionMode.BACKWARD;
-            skyboxSettings.IsTransitioning = true;
 
             sceneRestrictionController.PushSceneRestriction(
                 SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
-
-            sdkSkyboxTime.IsDirty = false;
-        }
-
-        public void OnSceneIsCurrentChanged(bool value)
-        {
-            if (value)
-            {
-                ref PBSkyboxTime sdkSkyboxTime = ref World.TryGetRef<PBSkyboxTime>(rootEntity, out bool hasComponent);
-
-                if (hasComponent)
-                    SetSDKsettings(ref sdkSkyboxTime);
-
-                return;
-            }
-            if(skyboxSettings.IsSDKControlled)
-                ResetSDKControlled();
         }
 
         private void ResetSDKControlled()
         {
             skyboxSettings.IsSDKControlled = false;
+
             sceneRestrictionController.PushSceneRestriction(
                 SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
         }

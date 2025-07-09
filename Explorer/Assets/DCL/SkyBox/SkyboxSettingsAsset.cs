@@ -15,6 +15,7 @@ namespace DCL.SkyBox
     public class SkyboxSettingsAsset : ScriptableObject
     {
         private const float DEFAULT_SPEED = 1 * 60f; // 1 minute per second
+
         // We need to subtract 1 minute to make the slider range is between 00:00 and 23:59
         public const int TOTAL_MINUTES_IN_DAY = 1439; // 23:59 in minutes
         public const int SECONDS_IN_DAY = 86400;
@@ -40,7 +41,6 @@ namespace DCL.SkyBox
         public bool IsSDKControlled { get; set; } // Set by SDK component system
         public bool IsDayCycleEnabled { get; set; } = true;
         public TransitionMode TransitionMode { get; set; }
-        public bool IsTransitioning { get; set; }
 
         public float SpeedMultiplier
         {
@@ -73,7 +73,8 @@ namespace DCL.SkyBox
                 value = NormalizeTimeIfNeeded(value);
 
                 timeOfDayNormalized = value;
-                if(!IsUIControlled)
+
+                if (!IsUIControlled)
                     TimeOfDayChanged?.Invoke(timeOfDayNormalized);
             }
         }
@@ -97,8 +98,7 @@ namespace DCL.SkyBox
         {
             TimeOfDayNormalized = initialTimeOfDay;
             IsDayCycleEnabled = true;
-            IsTransitioning = false;
-            ShouldUpdateSkybox =  true;
+            ShouldUpdateSkybox = true;
             SpeedMultiplier = DEFAULT_SPEED;
             TransitionMode = TransitionMode.FORWARD;
             CanUIControl = true;
