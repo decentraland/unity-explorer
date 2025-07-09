@@ -1,10 +1,10 @@
-using Cysharp.Threading.Tasks;
-using DCL.UI.Profiles.Helpers;
-using DCL.UI.ProfileElements;
-using DCL.Web3;
-using MVC;
 using System;
 using System.Threading;
+using Cysharp.Threading.Tasks;
+using DCL.UI.ProfileElements;
+using DCL.UI.Profiles.Helpers;
+using DCL.Web3;
+using MVC;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatTitleBarView : MonoBehaviour
+    public class ChatTitleBarView2 : MonoBehaviour, IChatTitlebarView
     {
         public delegate void VisibilityChangedDelegate(bool isVisible);
         public delegate void DeleteChatHistoryRequestedDelegate();
@@ -92,6 +92,16 @@ namespace DCL.Chat
         {
             chatTitleMemberListNumberText.text = userAmount;
             memberListTitleMemberListNumberText.text = userAmount;
+        }
+
+        public void Show()
+        {
+            gameObject.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            gameObject.SetActive(false);
         }
 
         public void SetChannelNameText(string channelName)

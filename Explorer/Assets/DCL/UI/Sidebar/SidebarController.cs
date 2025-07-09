@@ -40,7 +40,7 @@ namespace DCL.UI.Sidebar
         private readonly IWebBrowser webBrowser;
         private readonly bool includeCameraReel;
         private readonly bool includeFriends;
-        private readonly ChatView chatView;
+        private readonly ChatMainView chatView;
         private readonly IChatHistory chatHistory;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ISelfProfile selfProfile;
@@ -71,7 +71,7 @@ namespace DCL.UI.Sidebar
             bool includeCameraReel,
             bool includeFriends,
             bool includeMarketplaceCredits,
-            ChatView chatView,
+            ChatMainView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
             ISelfProfile selfProfile,
@@ -151,7 +151,7 @@ namespace DCL.UI.Sidebar
 
             chatHistory.ReadMessagesChanged += OnChatHistoryReadMessagesChanged;
             chatHistory.MessageAdded += OnChatHistoryMessageAdded;
-            chatView.FoldingChanged += OnChatViewFoldingChanged;
+            //chatView.FoldingChanged += OnChatViewFoldingChanged;
 
             mvcManager.RegisterController(skyboxMenuController);
             mvcManager.RegisterController(profileMenuController);
@@ -195,7 +195,7 @@ namespace DCL.UI.Sidebar
             else if (closedController is FriendsPanelController)
             {
                 viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-                OnChatViewFoldingChanged(chatView.IsUnfolded);
+                //OnChatViewFoldingChanged(chatView.IsUnfolded);
             }
         }
 

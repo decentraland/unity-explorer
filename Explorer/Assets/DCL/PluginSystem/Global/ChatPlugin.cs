@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.Global
 
         private ChatController chatController;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
-        private ChatPresenter chatPresenter;
+        private ChatMainPresenter chatMainPresenter;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
 
@@ -141,6 +141,15 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
+            var chatService = new ChatService(chatHistory,
+                friendsServiceProxy,
+                chatStorage,
+                chatUserStateUpdater);
+
+            var chatMemberService = new ChatMemberListService(roomHub,
+                profileCache,
+                friendsServiceProxy);
+            
             var presenterFactory = new ChatPresenterFactory(
                 chatHistory,
                 chatMessagesBus,
@@ -155,54 +164,61 @@ namespace DCL.PluginSystem.Global
                 friendsServiceProxy,
                 userBlockingCacheProxy,
                 profileRepositoryWrapper,
-                chatUserStateUpdater
+                privacySettings,
+                chatUserStateUpdater,
+                friendsEventBus,
+                friendsServiceProxy,
+                chatService,
+                chatMemberService
             );
 
-            chatPresenter = new ChatPresenter(
+            chatMainPresenter = new ChatMainPresenter(
                 () =>
                 {
-                    var view = mainUIView.ChatMainView;
+                    var view = mainUIView.ChatView2;
                     view.gameObject.SetActive(true);
                     return view;
                 },
                 presenterFactory,
                 chatHistory,
                 chatMessagesBus,
-                inputBlock
+                friendsServiceProxy,
+                chatService,
+                chatMemberService
             );
             
-            chatController = new ChatController(
-                () =>
-                {
-                    ChatView? view = mainUIView.ChatView;
-                    view.gameObject.SetActive(true);
-                    return view;
-                },
-                chatMessagesBus,
-                chatHistory,
-                entityParticipantTable,
-                nametagsData,
-                world,
-                playerEntity,
-                inputBlock,
-                roomHub,
-                chatSettingsAsset.Value,
-                hyperlinkTextFormatter,
-                profileCache,
-                chatEventBus,
-                web3IdentityCache,
-                loadingStatus,
-                userBlockingCacheProxy,
-                privacySettings,
-                friendsEventBus,
-                chatStorage,
-                friendsServiceProxy,
-                profileRepositoryWrapper
-            );
+            // chatController = new ChatController(
+            //     () =>
+            //     {
+            //         ChatView? view = mainUIView.ChatView;
+            //         view.gameObject.SetActive(false);
+            //         return view;
+            //     },
+            //     chatMessagesBus,
+            //     chatHistory,
+            //     entityParticipantTable,
+            //     nametagsData,
+            //     world,
+            //     playerEntity,
+            //     inputBlock,
+            //     roomHub,
+            //     chatSettingsAsset.Value,
+            //     hyperlinkTextFormatter,
+            //     profileCache,
+            //     chatEventBus,
+            //     web3IdentityCache,
+            //     loadingStatus,
+            //     userBlockingCacheProxy,
+            //     privacySettings,
+            //     friendsEventBus,
+            //     chatStorage,
+            //     friendsServiceProxy,
+            //     profileRepositoryWrapper
+            // );
 
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
-
-            mvcManager.RegisterController(chatController);
+            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainPresenter);
+            mvcManager.RegisterController(chatMainPresenter);
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
