@@ -50,6 +50,7 @@ MonoBehaviour:
   - rid: 8449516130764587014
   - rid: 8813103964372074592
   - rid: 1766526334245273896
+  - rid: 3511243270148325472
   references:
     version: 2
     RefIds:
@@ -243,6 +244,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <VoiceChatSettings>k__BackingField:
+          m_AssetGUID: 
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -486,6 +493,15 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 3511243270148325472
+      type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <VoiceChatConfigurations>k__BackingField:
+          m_AssetGUID: dc4b9a0eb614c2c45a09fa14de92fcd8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 3601421940623147010
       type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -666,7 +682,7 @@ MonoBehaviour:
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
         GenericContextMenuTextPrefab:
-          m_AssetGUID: 9c27490a499144f85bed4593943fe86a
+          m_AssetGUID: 
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
