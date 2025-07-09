@@ -262,11 +262,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectorButton: {fileID: 6430276237837877534}
   selectorButtonText: {fileID: 2191246548326702995}
-  selectorPanel: {fileID: 1494069765180602260}
+  selectorPanel: {fileID: 5196600299966827827}
+  selectorPanelContentContainer: {fileID: 4529298168230838044}
+  selectorPanelMaxHeight: 150
   selectorPanelScrollRect: {fileID: 8987135111240112651}
   selectorPanelParent: {fileID: 0}
   optionItemGameObject: {fileID: 1261629992894967956}
   backgroundCloseButton: {fileID: 7424665203201326611}
+  defaultPoolCapacity: 10
 --- !u!1 &568733401536827907
 GameObject:
   m_ObjectHideFlags: 0
