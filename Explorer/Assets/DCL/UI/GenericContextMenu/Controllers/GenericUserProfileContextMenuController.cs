@@ -279,7 +279,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private async UniTaskVoid StartCallAsync(string userId)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(userId);
+            chatEventBus.OpenPrivateConversationUsingUserId(userId);
             chatEventBus.StartCallInCurrentConversation();
         }
 

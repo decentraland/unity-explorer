@@ -298,7 +298,7 @@ namespace DCL.Passport
             {
                 //TODO FRAN & DAVIDE: Fix this xD not clean or pretty, works for now.
                 await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-                chatEventBus.OpenConversationUsingUserId(inputData.UserId);
+                chatEventBus.OpenPrivateConversationUsingUserId(inputData.UserId);
                 await UniTask.Delay(500);
                 chatEventBus.StartCallInCurrentConversation();
             }

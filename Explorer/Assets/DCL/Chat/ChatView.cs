@@ -291,7 +291,7 @@ namespace DCL.Chat
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
                         case ChatChannel.ChatChannelType.COMMUNITY:
-                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
                             communityTitleCts = communityTitleCts.SafeRestart();
                             chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : null, openContextMenuAction, communityTitleCts.Token);

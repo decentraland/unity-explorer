@@ -42,8 +42,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.InputSystem;
-using Utility;
-using Utility.Arch;
 using Utility.Types;
 
 namespace DCL.Chat
@@ -495,7 +493,7 @@ namespace DCL.Chat
             chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
             viewInstance!.CurrentChannelId = channelId;
 
-            viewInstance.SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+            SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
 
@@ -1004,9 +1002,6 @@ namespace DCL.Chat
             //We start processing messages once the view is ready
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
             callButtonController.StartCall += OnStartCall;
-
-            chatEventBus.InsertTextInChat += OnTextInserted;
-            chatEventBus.OpenConversation += OnOpenConversation;
 
             chatEventBus.InsertTextInChatRequested += OnTextInserted;
             chatEventBus.OpenPrivateConversationRequested += OnOpenPrivateConversationRequested;

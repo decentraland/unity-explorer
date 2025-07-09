@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             memoryPool,
             new MessageParser<Packet>(() =>
             {
-                Packet packet = receivingMultiPool.Get<Packet>();
+                var packet = receivingMultiPool.Get<Packet>();
                 packet.ClearProtobufComponent();
                 return packet;
             }),
@@ -92,12 +92,12 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             try
             {
-                (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict)? receiver = SubscribersListOrNull(name);
+                var receiver = SubscribersListOrNull(name);
 
                 if (receiver.HasValue == false)
                     return;
 
-                (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) r = receiver.Value;
+                var r = receiver.Value;
 
                 if (r.strict is IMessagePipe.ThreadStrict.MAIN_THREAD_ONLY)
                     await UniTask.SwitchToMainThread();
@@ -117,7 +117,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, IMessagePipe.ThreadStrict threadStrict) where T: class, IMessage, new()
         {
-            (List<Action<(Packet, Participant)>> list, IMessagePipe.ThreadStrict strict) item = SubscribersList(ofCase, threadStrict);
+            var item = SubscribersList(ofCase, threadStrict);
 
             if (item.list.Count > 0)
                 throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {ofCase}");
@@ -129,29 +129,29 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         Participant participant = tuple.Item2!;
                         string topic = tuple.Item3!;
 
-                         uint version = packet.ProtocolVersion;
+                        uint version = packet.ProtocolVersion;
 
-                         if (version != supportedVersion)
-                         {
-                             ReportHub.LogWarning(
-                                 ReportCategory.LIVEKIT,
-                                 $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
-                             );
+                        if (version != supportedVersion)
+                        {
+                            ReportHub.LogWarning(
+                                ReportCategory.LIVEKIT,
+                                $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
+                            );
 
-                             return;
-                         }
+                            return;
+                        }
 
-                         T? payload = Payload<T>(packet);
+                        var payload = Payload<T>(packet);
 
-                         if (payload == null)
-                         {
-                             ReportHub.LogError(
-                                 ReportCategory.LIVEKIT,
-                                 $"Received invalid message from {participant.Identity} with type {packet.MessageCase}"
-                             );
+                        if (payload == null)
+                        {
+                            ReportHub.LogError(
+                                ReportCategory.LIVEKIT,
+                                $"Received invalid message from {participant.Identity} with type {packet.MessageCase}"
+                            );
 
-                             return;
-                         }
+                            return;
+                        }
 
                         var receivedMessage = new ReceivedMessage<T>(
                             payload,
@@ -162,9 +162,9 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                             topic
                         );
 
-                         onMessageReceived(receivedMessage);
-                     }
-                 );
+                        onMessageReceived(receivedMessage);
+                    }
+                );
         }
 
         private (List<Action<(Packet, Participant, string)>> list, IMessagePipe.ThreadStrict strict) SubscribersList(Packet.MessageOneofCase typeName, IMessagePipe.ThreadStrict threadStrict)
