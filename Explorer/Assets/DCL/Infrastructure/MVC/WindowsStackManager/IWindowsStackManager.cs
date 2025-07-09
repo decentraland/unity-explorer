@@ -5,8 +5,7 @@ namespace MVC
 {
     public interface IWindowsStackManager : IDisposable
     {
-        UniTaskCompletionSource GetTopMostCloseTask(IController controller);
-        IController TopMostPopup { get; }
+        IController? TopMostPopup { get; }
 
         IController CurrentFullscreenController { get; }
 
