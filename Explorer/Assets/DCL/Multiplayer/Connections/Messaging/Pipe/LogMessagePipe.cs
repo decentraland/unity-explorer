@@ -18,10 +18,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             this.fromPipe = fromPipe;
         }
 
-        public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new()
+        public MessageWrap<T> NewMessage<T>(string topic) where T: class, IMessage, new()
         {
             ReportHub.Log(ReportCategory.LIVEKIT, LogForNewMessage<T>());
-            return origin.NewMessage<T>();
+            return origin.NewMessage<T>(topic);
         }
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived, IMessagePipe.ThreadStrict threadStrict) where T: class, IMessage, new()

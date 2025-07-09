@@ -267,7 +267,7 @@ namespace Global.Dynamic
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
-            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag();
+            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag() || appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
 
             return globalWorld;
         }
