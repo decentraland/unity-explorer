@@ -60,7 +60,7 @@ namespace DCL.Rendering.GPUInstancing.Utils
 
             foreach (Object asset in allAssets)
             {
-                if (asset is Mesh && asset.name.Split('_')[0] == combinedMesh.name.Split('_')[0])
+                if (asset is Mesh && asset.name == combinedMesh.name)
                 {
                     AssetDatabase.RemoveObjectFromAsset(asset);
                     Object.DestroyImmediate(asset, true);
