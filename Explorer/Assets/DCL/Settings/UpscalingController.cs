@@ -43,25 +43,23 @@ namespace DCL.Utilities
             mvcManager.OnViewShowed += OnUIOpened;
             mvcManager.OnViewClosed += OnUIClosed;
 
-            SetUpscalerFilter(UpscalingFilterSelection.FSR);
-
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
-                SetUpscalingValue(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER));
+                UpdateUpscaling(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER));
                 ignoreFirstResolutionChange = true;
             }
             else
-                SetUpscalingValue(INITIAL_UPSCALE_VALUE);
+                UpdateUpscaling(INITIAL_UPSCALE_VALUE);
         }
 
         //Should always get in decimal form
-        public void SetUpscalingValue(float newValue)
+        public void UpdateUpscaling(float newValue)
         {
             if (currentUIOpened > 0)
                 savedUpscalingDuringUIOpen = newValue;
             else
             {
-                SetUpscalingValue(newValue);
+                SetUpscaling(newValue, UpscalingFilterSelection.FSR);
                 DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, newValue);
             }
         }
@@ -75,10 +73,7 @@ namespace DCL.Utilities
             {
                 currentUIOpened--;
                 if (currentUIOpened == 0)
-                {
-                    SetUpscalingValue(savedUpscalingDuringUIOpen);
-                    SetUpscalerFilter(UpscalingFilterSelection.FSR);
-                }
+                    SetUpscaling(savedUpscalingDuringUIOpen, UpscalingFilterSelection.FSR);
             }
         }
 
@@ -90,23 +85,19 @@ namespace DCL.Utilities
                 if (currentUIOpened == 0)
                 {
                     savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-                    SetUpscaling(STP_VALUE_FOR_UI_OPEN);
-                    SetUpscalerFilter(UpscalingFilterSelection.Auto);
+                    SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
                 }
                 currentUIOpened++;
             }
         }
 
-        private void SetUpscalerFilter(UpscalingFilterSelection filterSelection)
-        {
-            foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).upscalingFilter = filterSelection;
-        }
-
-        private void SetUpscaling(float renderScale)
+        private void SetUpscaling(float renderScale, UpscalingFilterSelection filterSelection)
         {
             foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
                 ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = renderScale;
+
+            foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
+                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).upscalingFilter = filterSelection;
         }
 
         //This UIs should force an upscaling reset.
@@ -139,7 +130,7 @@ namespace DCL.Utilities
             else if (resolution.width > 2000 || resolution.height > 2000)
                 newSTPScale = midResolutionPreset;
 
-            SetUpscalingValue(newSTPScale);
+            UpdateUpscaling(newSTPScale);
         }
 
         public void Dispose()
