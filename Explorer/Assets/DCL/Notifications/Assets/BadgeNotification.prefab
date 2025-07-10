@@ -373,6 +373,7 @@ GameObject:
   - component: {fileID: 8796820644064159916}
   - component: {fileID: 4892434414598529079}
   - component: {fileID: 5622998451195135033}
+  - component: {fileID: 3502023567684331884}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -422,6 +423,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 5469965193453733915}
   <Image>k__BackingField: {fileID: 5622998451195135033}
+  <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 3502023567684331884}
+  rectTransform: {fileID: 2146118859290963525}
 --- !u!114 &5622998451195135033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -452,6 +456,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3502023567684331884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7481680332431707040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 0
+  m_AspectRatio: 1
 --- !u!1 &7800424800755079134
 GameObject:
   m_ObjectHideFlags: 0
