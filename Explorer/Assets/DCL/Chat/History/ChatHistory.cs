@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -46,13 +47,16 @@ namespace DCL.Chat.History
             }
         }
 
-        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type = ChatChannel.ChatChannelType.UNDEFINED)
+        public ChatChannel AddOrGetChannel(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType type)
         {
             if (channels.TryGetValue(channelId, out ChatChannel channel))
                 return channel;
 
             if (type == ChatChannel.ChatChannelType.UNDEFINED)
-                type = GetChannelTypeFromId(channelId);
+            {
+                ReportHub.LogError(ReportCategory.CHAT_MESSAGES, "Attempted to create a chat channel without specific type.");
+                return null;
+            }
 
             ChatChannel newChannel = new ChatChannel(type, channelId.Id);
             newChannel.MessageAdded += OnChannelMessageAdded;
@@ -77,12 +81,12 @@ namespace DCL.Chat.History
             if(channel.ReadMessages != channel.Messages.Count)
                 ReadMessagesChanged?.Invoke(channel);
 
-            ChannelRemoved?.Invoke(channelId);
+            ChannelRemoved?.Invoke(channelId, channel.ChannelType);
         }
 
-        public void AddMessage(ChatChannel.ChannelId channelId, ChatMessage newMessage)
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage newMessage)
         {
-            var channel = AddOrGetChannel(channelId);
+            var channel = AddOrGetChannel(channelId, channelType);
             channel.AddMessage(newMessage);
         }
 
@@ -133,11 +137,5 @@ namespace DCL.Chat.History
             channel.Cleared -= OnChannelCleared;
             channel.ReadMessagesChanged -= OnChannelReadMessagesChanged;
         }
-
-        private static ChatChannel.ChatChannelType GetChannelTypeFromId(ChatChannel.ChannelId channelId) =>
-            channelId.Equals(ChatChannel.NEARBY_CHANNEL_ID)
-                ? ChatChannel.ChatChannelType.NEARBY
-                : ChatChannel.ChatChannelType.USER;
-
     }
 }

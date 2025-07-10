@@ -21,6 +21,9 @@ namespace DCL.Settings.ModuleViews
         public override void SetInteractable(bool interactable) =>
             DropdownView.Dropdown.interactable = interactable;
 
+        public override void SetActive(bool isActive) =>
+            gameObject.SetActive(isActive);
+
         protected override void Configure(Config configuration)
         {
             DropdownView.Dropdown.interactable = configuration.IsEnabled;
