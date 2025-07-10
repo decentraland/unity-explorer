@@ -43,6 +43,8 @@ namespace DCL.Utilities
             mvcManager.OnViewShowed += OnUIOpened;
             mvcManager.OnViewClosed += OnUIClosed;
 
+            SetUpscalerFilter(UpscalingFilterSelection.FSR);
+
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
                 SetUpscalingValue(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER));
@@ -52,6 +54,21 @@ namespace DCL.Utilities
                 SetUpscalingValue(INITIAL_UPSCALE_VALUE);
         }
 
+        //Should always get in decimal form
+        public void SetUpscalingValue(float newValue)
+        {
+            if (currentUIOpened > 0)
+                savedUpscalingDuringUIOpen = newValue;
+            else
+            {
+                SetUpscalingValue(newValue);
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, newValue);
+            }
+        }
+
+        public float GetCurrentUpscale() =>
+            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
+
         private void OnUIClosed(IController controller)
         {
             if (currentUIOpened > 0 && ShouldTriggerUpscalerChange(controller))
@@ -60,8 +77,7 @@ namespace DCL.Utilities
                 if (currentUIOpened == 0)
                 {
                     SetUpscalingValue(savedUpscalingDuringUIOpen);
-                    foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                        ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).upscalingFilter = UpscalingFilterSelection.FSR;
+                    SetUpscalerFilter(UpscalingFilterSelection.FSR);
                 }
             }
         }
@@ -74,15 +90,23 @@ namespace DCL.Utilities
                 if (currentUIOpened == 0)
                 {
                     savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-
-                    foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                        ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = STP_VALUE_FOR_UI_OPEN;
-
-                    foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                        ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).upscalingFilter = UpscalingFilterSelection.Auto;
+                    SetUpscaling(STP_VALUE_FOR_UI_OPEN);
+                    SetUpscalerFilter(UpscalingFilterSelection.Auto);
                 }
                 currentUIOpened++;
             }
+        }
+
+        private void SetUpscalerFilter(UpscalingFilterSelection filterSelection)
+        {
+            foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
+                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).upscalingFilter = filterSelection;
+        }
+
+        private void SetUpscaling(float renderScale)
+        {
+            foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
+                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = renderScale;
         }
 
         //This UIs should force an upscaling reset.
@@ -92,20 +116,6 @@ namespace DCL.Utilities
              return controllerTypeName.Contains("AuthenticationScreenController") ||
                     controllerTypeName.Contains("ExplorePanelController") ||
                     controllerTypeName.Contains("PassportController");
-        }
-
-        //Should always get in decimal form
-        public void SetUpscalingValue(float sliderValue)
-        {
-            if (currentUIOpened > 0)
-                savedUpscalingDuringUIOpen = sliderValue;
-            else
-            {
-                foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                    ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = sliderValue;
-
-                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
-            }
         }
 
         public void ResolutionChanged(Resolution resolution)
@@ -131,9 +141,6 @@ namespace DCL.Utilities
 
             SetUpscalingValue(newSTPScale);
         }
-
-        public float GetCurrentUpscale() =>
-            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
 
         public void Dispose()
         {
