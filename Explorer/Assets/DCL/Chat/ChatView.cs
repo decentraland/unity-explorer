@@ -90,8 +90,8 @@ namespace DCL.Chat
 
         [Header("Title bar")]
 
-        [SerializeField]
-        private ChatTitleBarView chatTitleBar;
+        [field: SerializeField]
+        public ChatTitleBarView chatTitleBar { get; private set; }
 
         [SerializeField]
         private CanvasGroup titlebarCanvasGroup;
@@ -284,14 +284,14 @@ namespace DCL.Chat
                     switch (currentChannel.ChannelType)
                     {
                         case ChatChannel.ChatChannelType.NEARBY:
-                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             chatTitleBar.SetNearbyChannelImage();
                             break;
                         case ChatChannel.ChatChannelType.USER:
                             chatTitleBar.SetupProfileView(new Web3Address(currentChannel.Id.Id), profileRepositoryWrapper);
                             break;
                         case ChatChannel.ChatChannelType.COMMUNITY:
-                            SetInputWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
+                            SetupViewWithUserState(ChatUserStateUpdater.ChatUserState.CONNECTED);
                             GetUserCommunitiesData.CommunityData communityData = communitiesData[currentChannel.Id];
                             communityTitleCts = communityTitleCts.SafeRestart();
                             chatTitleBar.SetupCommunityView(thumbnailCache, currentChannel.Id.Id, communityData.name, communityData.thumbnails != null ? communityData.thumbnails.Value.raw : null, openContextMenuAction, communityTitleCts.Token);
@@ -834,17 +834,17 @@ namespace DCL.Chat
 
 #endregion
 
-        public void SetInputWithUserState(ChatUserStateUpdater.ChatUserState userState)
+        /// <summary>
+        /// Must be called from MainThread or will fail.
+        /// </summary>
+        /// <param name="userState"></param>
+        public void SetupViewWithUserState(ChatUserStateUpdater.ChatUserState userState)
         {
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
-            SetInputWithUserStateAsync(userState, isOtherUserConnected).Forget();
-        }
 
-        private async UniTaskVoid SetInputWithUserStateAsync(ChatUserStateUpdater.ChatUserState userState, bool isOtherUserConnected)
-        {
-            await UniTask.SwitchToMainThread();
-
+            //TODO: re-enable this
+            //chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
             chatInputBoxGameObject.SetActive(isOtherUserConnected);
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 

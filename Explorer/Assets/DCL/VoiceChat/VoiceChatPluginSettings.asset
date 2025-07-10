@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f94b6aa1de563984b98e8b94d8c81982, type: 3}
+  m_Name: VoiceChatPluginSettings
+  m_EditorClassIdentifier: 
+  <VoiceChatSettings>k__BackingField:
+    m_AssetGUID: 88538076b054b4504b11b87773e7393f
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 1
+  <MicrophoneAudioFilter>k__BackingField:
+    m_AssetGUID: fa9a67059d8a204408ce435cc8827612
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  <CombinedAudioSource>k__BackingField:
+    m_AssetGUID: 13e534245f7a87d498ae850d58b9115f
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  <VoiceChatConfiguration>k__BackingField:
+    m_AssetGUID: 96f7b8dc6c27e3047a1b56bcf3779c47
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0

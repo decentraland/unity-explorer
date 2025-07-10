@@ -68,7 +68,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             return current.StopAsync();
         }
 
-        public AttemptToConnectState AttemptToConnectState => current?.AttemptToConnectState ?? AttemptToConnectState.None;
+        public AttemptToConnectState AttemptToConnectState => current?.AttemptToConnectState ?? AttemptToConnectState.NONE;
 
         public virtual IConnectiveRoom.State CurrentState() =>
             current?.CurrentState() ?? IConnectiveRoom.State.Stopped;

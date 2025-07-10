@@ -1,4 +1,3 @@
-
 namespace DCL.Chat.EventBus
 {
     public class ChatEventBus : IChatEventBus
@@ -6,6 +5,7 @@ namespace DCL.Chat.EventBus
         public event IChatEventBus.InsertTextInChatRequestedDelegate? InsertTextInChatRequested;
         public event IChatEventBus.OpenPrivateConversationRequestedDelegate? OpenPrivateConversationRequested;
         public event IChatEventBus.OpenCommunityConversationRequestedDelegate? OpenCommunityConversationRequested;
+        public event IChatEventBus.StartCallDelegate? StartCall;
 
         public void InsertText(string text)
         {
@@ -20,6 +20,11 @@ namespace DCL.Chat.EventBus
         public void OpenCommunityConversationUsingUserId(string communityId)
         {
             OpenCommunityConversationRequested?.Invoke(communityId);
+        }
+
+        public void StartCallInCurrentConversation()
+        {
+            StartCall?.Invoke();
         }
     }
 }

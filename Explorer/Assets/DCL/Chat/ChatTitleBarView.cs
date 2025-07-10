@@ -6,7 +6,9 @@ using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Communities;
 using DCL.UI.ProfileElements;
+using DCL.VoiceChat;
 using DCL.Web3;
+using DCL.Utilities;
 using MVC;
 using System;
 using System.Threading;
@@ -36,6 +38,8 @@ namespace DCL.Chat
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
+        [field: SerializeField]
+        public CallButtonView CallButton { get; private set; }
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
@@ -137,6 +141,13 @@ namespace DCL.Chat
             {
                 communitiesMemberListTitlebarText.text = channelName;
             }
+        }
+
+        public void SetCallButtonStatus(bool isActive)
+        {
+            // We need this as this method can be called from a background thread
+            // specially when coming from a Livekit Participant Update
+            CallButton.SetActiveOnMainThread(isActive);
         }
 
         public void SetNearbyChannelImage()
