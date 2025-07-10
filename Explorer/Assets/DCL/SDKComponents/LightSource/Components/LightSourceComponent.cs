@@ -7,20 +7,29 @@ namespace DCL.SDKComponents.LightSource
     {
         public readonly Light LightSourceInstance;
 
-        public float MaxIntensity;
+        public readonly float MaxIntensity;
 
         public float CurrentIntensity;
 
         public float TargetIntensity;
+
+        public int Index;
+
+        public int Rank;
+
+        public bool IsCulled;
 
         public Promise? TextureMaskPromise;
 
         public LightSourceComponent(Light lightSourceInstance, float maxIntensity, float initialIntensity = 0)
         {
             LightSourceInstance = lightSourceInstance;
-            TextureMaskPromise = null;
             MaxIntensity = maxIntensity;
             CurrentIntensity = TargetIntensity = initialIntensity;
+            Index = -1;
+            Rank = -1;
+            IsCulled = false;
+            TextureMaskPromise = null;
         }
     }
 }

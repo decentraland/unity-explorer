@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components.Conversion;
+using DCL.Character;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -18,40 +19,52 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Pool;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.SDKComponents.LightSource.Systems
 {
+    [BurstCompile]
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
     public partial class LightSourceSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private const int ATTEMPTS_COUNT = 6;
+        private const int SCENE_MAX_LIGHT_COUNT = 3;
+        private const float FADE_SPEED = 1;
+        private const int GET_TEXTURE_MAX_ATTEMPT_COUNT = 6;
 
+        private readonly ISceneData sceneData;
+        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPartitionComponent partitionComponent;
         private readonly IComponentPool<Light> poolRegistry;
-        private readonly ISceneStateProvider sceneStateProvider;
-        private readonly ISceneData sceneData;
+        private readonly ICharacterObject characterObject;
 
         public LightSourceSystem(World world,
             ISceneData sceneData,
             ISceneStateProvider sceneStateProvider,
             IPartitionComponent partitionComponent,
-            IComponentPool<Light> poolRegistry
+            IComponentPool<Light> poolRegistry,
+            ICharacterObject characterObject
         ) : base(world)
         {
             this.partitionComponent = partitionComponent;
             this.sceneData = sceneData;
             this.poolRegistry = poolRegistry;
             this.sceneStateProvider = sceneStateProvider;
+            this.characterObject = characterObject;
         }
 
         protected override void Update(float t)
         {
             CreateLightSourceComponentQuery(World);
             UpdateLightSourceQuery(World);
+            SortAndCullLightSources();
             AnimateLightSourceIntensityQuery(World, Time.unscaledDeltaTime);
             ResolveTexturePromiseQuery(World);
         }
@@ -82,23 +95,24 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void UpdateLightSource(ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
+        private void UpdateLightSource(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!pbLightSource.IsDirty) return;
 
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            if (!IsPBLightSourceActive(pbLightSource))
-            {
-                lightSourceInstance.enabled = false;
-                return;
-            }
+            lightSourceInstance.enabled = IsPBLightSourceActive(pbLightSource);
+            if (!lightSourceInstance.enabled) return;
 
-            if (!pbLightSource.IsDirty) return;
+            if (pbLightSource.IsDirty) ApplyPBLightSource(pbLightSource, ref lightSourceComponent);
+        }
 
-            bool isSpot = pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot;
+        private void ApplyPBLightSource(PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        {
+            var lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            lightSourceInstance.type = isSpot ? LightType.Spot : LightType.Point;
+            bool isSpotLight = pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot;
+            lightSourceInstance.type = isSpotLight ? LightType.Spot : LightType.Point;
 
             lightSourceInstance.color = pbLightSource.Color.ToUnityColor();
 
@@ -108,7 +122,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             if (pbLightSource.HasRange)
                 lightSourceInstance.range = pbLightSource.Range;
 
-            if (isSpot)
+            if (isSpotLight)
             {
                 if (pbLightSource.Spot.HasShadow)
                     lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Spot.Shadow);
@@ -129,38 +143,83 @@ namespace DCL.SDKComponents.LightSource.Systems
                 else
                 {
                     lightSourceInstance.cookie = null;
-                }
-            }
+                }            }
             else
             {
                 lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow);
             }
+        }
 
-            lightSourceInstance.enabled = true;
+        private void SortAndCullLightSources()
+        {
+            _ = ListPool<LightSourceComponent>.Get(out var lights);
+            CollectLightSourcesQuery(World, lights);
+
+            if (lights.Count <= SCENE_MAX_LIGHT_COUNT) return;
+
+            var positions = new NativeArray<float3>(lights.Count, Allocator.Temp);
+            for (var i = 0; i < positions.Length; i++) positions[i] = lights[i].LightSourceInstance.transform.position;
+
+            SortByDistanceToPlayer(characterObject.Position, positions, out var ranks);
+
+            CullLightSourcesQuery(World, ranks);
+        }
+
+        [Query]
+        private void CollectLightSources([Data] List<LightSourceComponent> lights, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        {
+            if (!IsPBLightSourceActive(pbLightSource)) return;
+
+            lightSourceComponent.Index = lights.Count;
+            lights.Add(lightSourceComponent);
+        }
+
+        [BurstCompile]
+        private static void SortByDistanceToPlayer(in float3 playerPosition, in NativeArray<float3> lightPositions, out NativeArray<int> ranks)
+        {
+            int lightCount = lightPositions.Length;
+
+            var sortedIndices = new NativeArray<int>(lightCount,  Allocator.Temp);
+            for (var i = 0; i < lightCount; i++) sortedIndices[i] = i;
+
+            sortedIndices.Sort(new DistanceToPlayerComparer(playerPosition, lightPositions));
+
+            ranks = new NativeArray<int>(lightCount, Allocator.Temp);
+            for (var i = 0; i < lightCount; i++)
+            {
+                ranks[sortedIndices[i]] = i;
+            }
+        }
+
+        [Query]
+        private void CullLightSources([Data] NativeArray<int> ranks, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        {
+            if (!IsPBLightSourceActive(pbLightSource)) return;
+
+            lightSourceComponent.Rank = ranks[lightSourceComponent.Index];
+            lightSourceComponent.IsCulled = lightSourceComponent.Rank >= SCENE_MAX_LIGHT_COUNT;
         }
 
         [Query]
         private void AnimateLightSourceIntensity([Data] float dt, ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
         {
-            Light LightSourceInstance = lightSourceComponent.LightSourceInstance;
+            Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
             if (!IsPBLightSourceActive(pbLightSource))
             {
-                LightSourceInstance.intensity = 0;
+                lightSourceInstance.intensity = 0;
                 return;
             }
 
-            bool isLightOn = sceneStateProvider.IsCurrent;
+            bool isLightOn = sceneStateProvider.IsCurrent && !lightSourceComponent.IsCulled;
             lightSourceComponent.TargetIntensity = isLightOn ? lightSourceComponent.MaxIntensity : 0;
 
-            // TODO move to settings
-            const float fadeSpeed = 1;
-            float delta = dt * lightSourceComponent.MaxIntensity * fadeSpeed;
+            float delta = dt * lightSourceComponent.MaxIntensity * FADE_SPEED;
             lightSourceComponent.CurrentIntensity = Mathf.MoveTowards(lightSourceComponent.CurrentIntensity, lightSourceComponent.TargetIntensity, delta);
 
-            LightSourceInstance.intensity = lightSourceComponent.CurrentIntensity;
+            lightSourceInstance.intensity = lightSourceComponent.CurrentIntensity;
 
-            LightSourceInstance.enabled = lightSourceComponent.CurrentIntensity > 0;
+            lightSourceInstance.enabled = lightSourceComponent.CurrentIntensity > 0;
         }
 
         private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
@@ -183,7 +242,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     textureComponentValue.WrapMode,
                     textureComponentValue.FilterMode,
                     textureComponentValue.TextureType,
-                    attemptsCount: ATTEMPTS_COUNT
+                    attemptsCount: GET_TEXTURE_MAX_ATTEMPT_COUNT
                 ),
                 partitionComponent
             );
@@ -228,5 +287,33 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             return !pbLightSource.HasActive || pbLightSource.Active;
         }
+
+        #region DistanceToPlayerComparer
+
+        /// <summary>
+        /// Sorts lights from closest to more distant to the player position.
+        /// It actually sorts an array of indices. Each index IDs a light in the positions array.
+        /// </summary>
+        private struct DistanceToPlayerComparer : IComparer<int>
+        {
+            public float3 PlayerPosition;
+
+            public NativeArray<float3> LightPositions;
+
+            public DistanceToPlayerComparer(float3 playerPosition, NativeArray<float3> lightPositions)
+            {
+                PlayerPosition = playerPosition;
+                LightPositions = lightPositions;
+            }
+
+            public int Compare(int lhs, int rhs)
+            {
+                float lhsDistanceSq = math.distancesq(LightPositions[lhs], PlayerPosition);
+                float rhsDistanceSq = math.distancesq(LightPositions[rhs], PlayerPosition);
+                return lhsDistanceSq.CompareTo(rhsDistanceSq);
+            }
+        }
+
+        #endregion
     }
 }
