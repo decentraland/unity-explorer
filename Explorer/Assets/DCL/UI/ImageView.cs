@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    [RequireComponent(typeof(Image), typeof(AspectRatioFitter))]
+    [RequireComponent(typeof(Image))]
     public class ImageView : MonoBehaviour
     {
         [field: SerializeField]
