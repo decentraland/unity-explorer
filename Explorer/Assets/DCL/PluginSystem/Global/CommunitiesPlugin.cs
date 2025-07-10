@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Chat.EventBus;
+using DCL.InWorldCamera;
 using DCL.Input;
 using DCL.Clipboard;
 using DCL.Communities;
@@ -48,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly GalleryEventBus galleryEventBus;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -72,6 +74,7 @@ namespace DCL.PluginSystem.Global
             IEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
+            GalleryEventBus galleryEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices)
         {
@@ -92,6 +95,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.galleryEventBus = galleryEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
         }
 
@@ -111,7 +115,8 @@ namespace DCL.PluginSystem.Global
             CommunityCardView communityCardViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.CommunityCardPrefab, ct: ct)).GetComponent<CommunityCardView>();
             ControllerBase<CommunityCardView, CommunityCardParameter>.ViewFactoryMethod viewFactoryMethod = CommunityCardController.Preallocate(communityCardViewAsset, null, out CommunityCardView communityCardView);
 
-            communityCardController = new CommunityCardController(viewFactoryMethod,
+            communityCardController = new CommunityCardController(
+                viewFactoryMethod,
                 mvcManager,
                 cameraReelStorageService,
                 cameraReelScreenshotsStorage,
@@ -125,7 +130,8 @@ namespace DCL.PluginSystem.Global
                 webBrowser,
                 eventsApiService,
                 sharedSpaceManager,
-                chatEventBus);
+                chatEventBus,
+                galleryEventBus);
 
             mvcManager.RegisterController(communityCardController);
 
