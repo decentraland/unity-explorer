@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.ECSComponents;
-using DCL.SceneRestrictionBusController.SceneRestriction;
-using DCL.SceneRestrictionBusController.SceneRestrictionBus;
 using DCL.SkyBox;
 using ECS.Abstract;
 using ECS.Groups;
