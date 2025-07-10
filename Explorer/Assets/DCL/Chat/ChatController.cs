@@ -71,6 +71,7 @@ namespace DCL.Chat
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly VoiceChatEventBus voiceChatEventBus;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
@@ -142,7 +143,7 @@ namespace DCL.Chat
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled) : base(viewFactory)
+            bool isCallEnabled, VoiceChatEventBus voiceChatEventBus) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -167,6 +168,7 @@ namespace DCL.Chat
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
             this.isCallEnabled = isCallEnabled;
+            this.voiceChatEventBus = voiceChatEventBus;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -503,13 +505,12 @@ namespace DCL.Chat
 
             viewInstance.Focus();
         }
-        
+
         private void OnStartCall(string userId)
         {
-            voiceChatCallStatusService.StartCall(new Web3Address(userId));
-            
+            voiceChatEventBus.RequestStartPrivateVoiceChat(new Web3Address(userId));
         }
-        
+
         private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
         {
             ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);

@@ -545,7 +545,8 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
-            IVoiceService voiceService = new RPCVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
+            VoiceChatEventBus voiceChatEventBus = new VoiceChatEventBus();
+            IVoiceService voiceService = new RPCPrivateVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
             IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
@@ -726,7 +727,9 @@ namespace Global.Dynamic
                     mainUIView.WarningNotification,
                     communitiesEventBus,
                     voiceChatCallStatusService,
-                    includeVoiceChat),
+                    includeVoiceChat,
+                    voiceChatEventBus
+                    ),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -879,7 +882,8 @@ namespace Global.Dynamic
                         profileRepositoryWrapper,
                         entityParticipantTable,
                         globalWorld,
-                        playerEntity));
+                        playerEntity,
+                        voiceChatEventBus));
 
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

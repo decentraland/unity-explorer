@@ -26,6 +26,7 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly VoiceChatEventBus voiceChatEventBus;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
@@ -34,9 +35,11 @@ namespace DCL.PluginSystem.Global
         private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
-        private VoiceChatController? controller;
+        private PrivateVoiceChatController? privateVoiceChatController;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
+        private CommunitiesVoiceChatController? communitiesVoiceChatController;
+        private VoiceChatOrchestrator voiceChatOrchestrator;
 
         public VoiceChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -46,7 +49,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world,
-            Entity playerEntity)
+            Entity playerEntity, VoiceChatEventBus voiceChatEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
@@ -56,6 +59,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.voiceChatEventBus = voiceChatEventBus;
         }
 
         public void Dispose()
@@ -76,7 +80,9 @@ namespace DCL.PluginSystem.Global
             voiceChatSettingsAsset.Dispose();
             microphoneAudioFilter.Dispose();
             voiceChatConfigurations.Dispose();
-            controller?.Dispose();
+            privateVoiceChatController?.Dispose();
+            communitiesVoiceChatController?.Dispose();
+            voiceChatOrchestrator?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -114,7 +120,10 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
-            controller = new VoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            communitiesVoiceChatController = new CommunitiesVoiceChatController();
+
+            voiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatController, communitiesVoiceChatController, voiceChatEventBus, voiceChatCallStatusService);
 
         }
 

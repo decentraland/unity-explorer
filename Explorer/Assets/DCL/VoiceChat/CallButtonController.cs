@@ -18,6 +18,8 @@ namespace DCL.VoiceChat
         private const float ANIMATION_DURATION = 0.5f;
         private const int WAIT_TIME_BEFORE_TOOLTIP_CLOSES_MS = 4000;
 
+        private readonly IDisposable statusSubscription;
+
         public event Action<string> StartCall;
         public string CurrentUserId { get; private set; }
 
@@ -27,7 +29,6 @@ namespace DCL.VoiceChat
         private bool isClickedOnce = false;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
-        private IDisposable? statusSubscription;
 
         public CallButtonController(CallButtonView view, IVoiceChatCallStatusService voiceChatCallStatusService, IChatEventBus chatEventBus)
         {

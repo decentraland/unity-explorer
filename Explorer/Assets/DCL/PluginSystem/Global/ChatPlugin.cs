@@ -69,6 +69,8 @@ namespace DCL.PluginSystem.Global
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
+        private readonly VoiceChatEventBus voiceChatEventBus;
+
         private ChatController chatController;
 
         public ChatPlugin(
@@ -100,7 +102,7 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled)
+            bool isCallEnabled, VoiceChatEventBus voiceChatEventBus)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -124,6 +126,7 @@ namespace DCL.PluginSystem.Global
             this.friendsServiceProxy = friendsServiceProxy;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.isCallEnabled = isCallEnabled;
+            this.voiceChatEventBus = voiceChatEventBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -185,7 +188,8 @@ namespace DCL.PluginSystem.Global
                 warningNotificationView,
                 communitiesEventBus,
                 voiceChatCallStatusService,
-                isCallEnabled
+                isCallEnabled,
+                voiceChatEventBus
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
