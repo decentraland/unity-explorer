@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.HealthChecks;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
@@ -21,7 +22,9 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
         {
             try
             {
+                Debug.Log("JUANI LIVEKIT START");
                 var result = await healthCheck.IsRemoteAvailableAsync(ct).Timeout(LIVEKIT_TIMEOUT);
+                Debug.Log("JUANI LIVEKIT END");
                 return result.AsEnumResult(TaskError.MessageError);
             }
             catch (TimeoutException)

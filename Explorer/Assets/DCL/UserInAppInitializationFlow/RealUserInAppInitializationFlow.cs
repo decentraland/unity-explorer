@@ -20,6 +20,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
+using UnityEngine;
 using Utility;
 using Utility.Types;
 
@@ -47,6 +48,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
 
         private readonly ICharacterObject characterObject;
+        private readonly ExposedTransform characterExposedTransform;
         private readonly StartParcel startParcel;
 
         public RealUserInAppInitializationFlow(
@@ -66,6 +68,7 @@ namespace DCL.UserInAppInitializationFlow
             EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
             IAppArgs appArgs,
             ICharacterObject characterObject,
+            ExposedTransform characterExposedTransform,
             StartParcel startParcel)
         {
             this.initOps = initOps;
@@ -76,6 +79,7 @@ namespace DCL.UserInAppInitializationFlow
             this.appArgs = appArgs;
             this.characterObject = characterObject;
             this.startParcel = startParcel;
+            this.characterExposedTransform = characterExposedTransform;
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -142,20 +146,29 @@ namespace DCL.UserInAppInitializationFlow
 
                 //Set initial position and start async livekit connection
                 characterObject.Controller.transform.position = startParcel.Peek().ParcelToPositionFlat();
-                var livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+                characterExposedTransform.Position.Value = characterObject.Controller.transform.position;
+                UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
                             EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(parentLoadReport, parameters), ct);
-                            if (operationResult.Success)
-                                parentLoadReport.SetProgress(
-                                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
 
                             // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
                             if (operationResult.Error is { Exception: UserBlockedException })
                                 mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                            else
+                            {
+                                Debug.Log("JUANI HERE WE SHOULD AWAIT");
+
+                                //Wait for livekit to end handshake
+                                operationResult = await livekitHandshake;
+
+                                if (operationResult.Success)
+                                    parentLoadReport.SetProgress(
+                                        loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                            }
 
                             return operationResult;
                         },
@@ -168,11 +181,6 @@ namespace DCL.UserInAppInitializationFlow
                     //Fail straight away
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
-                }
-                else
-                {
-                    //Wait for livekit to end handshake
-                    result = await livekitHandshake;
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
