@@ -1,11 +1,10 @@
-﻿using Cysharp.Threading.Tasks;
-using System;
+﻿using System;
 
 namespace MVC
 {
     public interface IWindowsStackManager : IDisposable
     {
-        IController? TopMostPopup { get; }
+        (IController controller, int orderInLayer) TopMostPopup { get; }
 
         IController CurrentFullscreenController { get; }
 
