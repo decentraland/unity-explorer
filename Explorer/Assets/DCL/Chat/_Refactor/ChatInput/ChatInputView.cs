@@ -10,7 +10,7 @@ namespace DCL.Chat
         [SerializeField] private TMP_InputField inputField;
         [SerializeField] private GameObject inputFieldContainer;
         [SerializeField] private Button maskButton;
-        [SerializeField] private GameObject maskObject;
+        [SerializeField] private GameObject maskContainer;
         [SerializeField] private TMP_Text maskText;
         
         [Header("Focus Visuals")]
@@ -21,18 +21,20 @@ namespace DCL.Chat
         [SerializeField] private Color focusedBackgroundColor;
         [SerializeField] private Color unfocusedBackgroundColor;
         
-        public event Action<string>? OnMessageSubmitted;
+        public event Action<string>? OnMessageSubmit;
         public event Action<string>? OnInputChanged;
         public event Action? OnFocusRequested;
 
         void Awake()
         {
             inputField.onValueChanged.AddListener((text) => OnInputChanged?.Invoke(text));
-            inputField.onSubmit.AddListener((text) => OnMessageSubmitted?.Invoke(text));
+            inputField.onSubmit.AddListener((text) => OnMessageSubmit?.Invoke(text));
+            inputField.onDeselect.AddListener(_ => ApplyUnfocusStyle());
             inputField.onSelect.AddListener((_) =>
             {
                 if (inputFieldContainer.activeSelf)
                 {
+                    ApplyFocusStyle();
                     OnFocusRequested?.Invoke();
                 }
             });
@@ -40,18 +42,23 @@ namespace DCL.Chat
             maskButton.onClick.AddListener(() => OnFocusRequested?.Invoke());
         }
         
-        private void SetFocusVisuals(bool isFocused)
+        private void ApplyFocusStyle()
         {
-            outlineObject.SetActive(isFocused);
-            characterCounterObject.SetActive(isFocused);
-            emojiButtonObject.SetActive(isFocused);
+            outlineObject.SetActive(true);
+            characterCounterObject.SetActive(true);
+            emojiButtonObject.SetActive(true);
+        }
 
-            if (backgroundImage != null) backgroundImage.color = isFocused ? focusedBackgroundColor : unfocusedBackgroundColor;
+        private void ApplyUnfocusStyle()
+        {
+            outlineObject.SetActive(false);
+            characterCounterObject.SetActive(false);
+            emojiButtonObject.SetActive(false);
         }
         
         public void Blur()
         {
-            SetMode(IChatInputView.Mode.InactiveAsButton);
+            //SetMode(IChatInputView.Mode.InactiveAsButton);
             inputField.DeactivateInputField();
         }
         
@@ -61,12 +68,12 @@ namespace DCL.Chat
             {
                 case IChatInputView.Mode.Active:
                     inputFieldContainer.SetActive(true);
-                    SetFocusVisuals(true);
-                    maskObject.SetActive(false);
+                    ApplyFocusStyle();
+                    maskContainer.SetActive(false);
                     break;
                 case IChatInputView.Mode.InactiveAsButton:
                     inputFieldContainer.SetActive(false);
-                    maskObject.SetActive(true);
+                    maskContainer.SetActive(true);
                     maskText.text = buttonMessage;
                     break;
             }

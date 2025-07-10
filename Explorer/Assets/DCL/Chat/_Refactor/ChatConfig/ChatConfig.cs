@@ -7,7 +7,7 @@ namespace DCL.Chat
     public class ChatConfig : ScriptableObject
     {
         [SerializeField] private string DCL_SYSTEM_SENDER = "DCL System";
-        
+
         [field: Header("Prefabs")]
         [field: SerializeField]
         public ChatConversationsToolbarViewItem ItemPrefab { get; private set; }
@@ -15,10 +15,10 @@ namespace DCL.Chat
         [field: Header("Nearby Channel Specifics")]
         [field: SerializeField]
         public Sprite NearbyConversationIcon { get; private set; }
-    
+
         [field: SerializeField]
         public string NearbyConversationName { get; private set; } = "Nearby";
-        
+
         [field: Header("Animations")]
         [field: Tooltip("The time in seconds it takes for the main panels to fade in/out.")]
         [field: SerializeField]
@@ -27,5 +27,18 @@ namespace DCL.Chat
         [field: Tooltip("The easing function to use for the panel fade animation.")]
         [field: SerializeField]
         public Ease PanelsFadeEase { get; private set; } = Ease.OutQuad;
+
+        [Header("Mask Messages")]
+        [Tooltip("Message shown when the other user is offline.")]
+        public string UserOfflineMessage = "The user you are trying to message is offline.";
+
+        [Tooltip("Message shown when the other user only accepts DMs from friends.")]
+        public string OnlyFriendsMessage = "The user you are trying to message only accepts DMs from friends.";
+
+        [Tooltip("Message shown when you have blocked the other user.")]
+        public string BlockedByOwnUserMessage = "To message this user you must first unblock them.";
+
+        [Tooltip("Message shown when your own settings prevent you from sending a DM.")]
+        public string OnlyFriendsOwnUserMessage = "Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.";
     }
 }

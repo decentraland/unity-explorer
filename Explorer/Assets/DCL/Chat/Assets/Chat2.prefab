@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2785768706577534068}
   - component: {fileID: 1165119267609351116}
   m_Layer: 5
-  m_Name: InputBox Mask
+  m_Name: ChatnputBoxMask
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -232,8 +232,10 @@ GameObject:
   - component: {fileID: 8837004167864387708}
   - component: {fileID: 8243715949018923499}
   - component: {fileID: 4691136467746870999}
+  - component: {fileID: 7389909889610350216}
+  - component: {fileID: 4418677951884833455}
   m_Layer: 5
-  m_Name: MessagesAndInputBox
+  m_Name: '[Views] Messages and Input'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -308,6 +310,42 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &7389909889610350216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 581056649289964467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3c4e7208792420abc59acba4eb77b2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scrollbarCanvasGroup: {fileID: 3021285027555005319}
+--- !u!114 &4418677951884833455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 581056649289964467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7750367aec7848feb11fdee6aed880f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inputField: {fileID: 4475809639458555157}
+  inputFieldContainer: {fileID: 6555613450064892944}
+  maskButton: {fileID: 1165119267609351116}
+  maskContainer: {fileID: 83718467110456171}
+  maskText: {fileID: 550450798728010012}
+  outlineObject: {fileID: 3879034518569078182}
+  characterCounterObject: {fileID: 7902678097308919251}
+  emojiButtonObject: {fileID: 672841032480400079}
+  backgroundImage: {fileID: 4097775063419158369}
+  focusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.8784314}
+  unfocusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.57254905}
 --- !u!1 &1185019682272300986
 GameObject:
   m_ObjectHideFlags: 0
@@ -513,7 +551,7 @@ GameObject:
   - component: {fileID: 4789788605768835519}
   - component: {fileID: 642172947305426724}
   m_Layer: 5
-  m_Name: Container
+  m_Name: '[Group] Messages'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -771,7 +809,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.69803923}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.68235296}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1088,7 +1126,7 @@ GameObject:
   - component: {fileID: 4808556125557369804}
   - component: {fileID: 2971127394718722674}
   m_Layer: 5
-  m_Name: ChatAndConversations
+  m_Name: '[Group] Chat and Conversations'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1237,8 +1275,8 @@ MonoBehaviour:
   <Config>k__BackingField: {fileID: 11400000, guid: 4359e32789e7f914c8e7e12d16286b76, type: 2}
   sharedBackgroundCanvasGroup: {fileID: 754136446368913457}
   <ConversationToolbarView2>k__BackingField: {fileID: 6432947855054662703}
-  <MessageFeedView>k__BackingField: {fileID: 1291319178895845411}
-  <InputView>k__BackingField: {fileID: 2641761086990692231}
+  <MessageFeedView>k__BackingField: {fileID: 7389909889610350216}
+  <InputView>k__BackingField: {fileID: 4418677951884833455}
   <TitlebarView>k__BackingField: {fileID: 217021846241032117}
   <MemberListView>k__BackingField: {fileID: 5477856504989055548}
 --- !u!1 &8497045765581201273
@@ -1760,24 +1798,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6563487890893190376, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
       propertyPath: m_Name
-      value: ChatMessageViewerElement2
+      value: ChatMessages
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3744447422975168905, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
---- !u!114 &1291319178895845411 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3744447422975168905, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+--- !u!225 &3021285027555005319 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 860361653977147949, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
   m_PrefabInstance: {fileID: 2458223106124396970}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3c4e7208792420abc59acba4eb77b2f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &7075347246372325821 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
@@ -2585,10 +2618,26 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3490405566641370256, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
       propertyPath: m_Name
-      value: ChatInputBox2
+      value: ChatInputBox
       objectReference: {fileID: 0}
     - target: {fileID: 3490405566641370256, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3961651221683857127, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+      propertyPath: m_IsTextObjectScaleStatic
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5443551243198898368, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+      propertyPath: m_fontStyle
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5443551243198898368, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+      propertyPath: m_IsTextObjectScaleStatic
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5526293595197114151, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+      propertyPath: m_IgnoreLayout
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5932479138351620065, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
@@ -2690,17 +2739,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8517794174848120442, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
   m_PrefabInstance: {fileID: 7677052889731195008}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2641761086990692231 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: -3592969408762884345, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
-  m_PrefabInstance: {fileID: 7677052889731195008}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6555613450064892944}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7750367aec7848feb11fdee6aed880f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &3879034518569078182 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6872290420992879910, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
@@ -2715,6 +2753,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4475809639458555157 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6095371177556059541, guid: b1552137c9452f848822dd5cfec09acc, type: 3}
+  m_PrefabInstance: {fileID: 7677052889731195008}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 540d6cb25a7124d428c68ac42b3e7de4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &6555613450064892944 stripped

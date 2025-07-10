@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DCL.Input;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -14,16 +15,23 @@ public class ChatClickDetectionService : IDisposable
 
     private readonly RectTransform targetArea;
     private readonly DCLInput dclInput;
-
+    private HashSet<Transform> ignoredElementsSet;
+    
     public ChatClickDetectionService(RectTransform targetArea)
     {
         this.targetArea = targetArea;
-        this.dclInput = DCLInput.Instance;
+        dclInput = DCLInput.Instance;
+        ignoredElementsSet = new HashSet<Transform>();
     }
 
-    public void Initialize()
+    public void Initialize(IReadOnlyList<Transform> elementsToIgnore)
     {
-        dclInput.UI.Click.performed += HandleGlobalClick;
+        ignoredElementsSet = new HashSet<Transform>(elementsToIgnore);
+        if (dclInput != null)
+            dclInput.UI.Click.performed -= HandleGlobalClick;
+        
+        if (dclInput != null) 
+            dclInput.UI.Click.performed += HandleGlobalClick;
     }
 
     public void Dispose()
@@ -40,6 +48,9 @@ public class ChatClickDetectionService : IDisposable
         var results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
 
+        if (results.Count > 0 && IsIgnored(results[0].gameObject))
+            return;
+        
         bool clickedInside = false;
         foreach (var result in results)
         {
@@ -58,5 +69,24 @@ public class ChatClickDetectionService : IDisposable
         {
             OnClickOutside?.Invoke();
         }
+    }
+    
+    private bool IsIgnored(GameObject clickedObject)
+    {
+        if (clickedObject == null) return false;
+        
+        Transform current = clickedObject.transform;
+        while (current != null)
+        {
+            if (ignoredElementsSet.Contains(current))
+                return true;
+
+            if (current == targetArea)
+                return false;
+
+            current = current.parent;
+        }
+
+        return false;
     }
 }

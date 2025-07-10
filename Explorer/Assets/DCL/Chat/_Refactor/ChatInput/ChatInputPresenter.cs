@@ -31,7 +31,7 @@ public class ChatInputPresenter : IDisposable
 
     public void Activate()
     {
-        view.OnMessageSubmitted += HandleMessageSubmitted;
+        view.OnMessageSubmit += HandleMessageSubmitted;
         view.OnFocusRequested += HandleFocusRequested;
         view.OnInputChanged += OnInputChanged;
         chatEventBus.InsertTextInChat += HandleExternalTextInsert;
@@ -54,7 +54,7 @@ public class ChatInputPresenter : IDisposable
 
     public void Dispose()
     {
-        view.OnMessageSubmitted -= HandleMessageSubmitted;
+        view.OnMessageSubmit -= HandleMessageSubmitted;
         view.OnFocusRequested -= HandleFocusRequested;
         view.OnInputChanged -= OnInputChanged;
         chatEventBus.InsertTextInChat -= HandleExternalTextInsert;
@@ -68,7 +68,7 @@ public class ChatInputPresenter : IDisposable
     
     public void SetInactiveMode()
     {
-        view.SetMode(IChatInputView.Mode.InactiveAsButton, "Type a message...");
+        //view.SetMode(IChatInputView.Mode.InactiveAsButton, "Type a message...");
         view.Blur();
     }
     

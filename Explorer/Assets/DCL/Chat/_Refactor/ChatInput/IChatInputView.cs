@@ -6,7 +6,7 @@ namespace DCL.Chat
     public interface IChatInputView
     {
         enum Mode { Active, InactiveAsButton }
-        event Action<string> OnMessageSubmitted;
+        event Action<string> OnMessageSubmit;
         event Action<string> OnInputChanged;
         event Action OnFocusRequested;
 

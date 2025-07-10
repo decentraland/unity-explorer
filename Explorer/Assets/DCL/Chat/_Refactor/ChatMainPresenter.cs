@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatStates;
@@ -84,8 +85,12 @@ namespace DCL.Chat
         protected override void OnViewShow()
         {
             base.OnViewShow();
+
+            chatClickDetectionService.Initialize(elementsToIgnore:new List<Transform>
+            {
+                viewInstance.TitlebarView.CurrentTitleBarCloseButton.transform
+            });
             
-            chatClickDetectionService.Initialize();
             chatInputBlockingService.Initialize();
             
             SubscribeToGlobalEvents();

@@ -180,7 +180,6 @@ GameObject:
   - component: {fileID: 1936038111498086452}
   - component: {fileID: 4572849772150411585}
   - component: {fileID: 7257086224562224593}
-  - component: {fileID: -3592969408762884345}
   m_Layer: 5
   m_Name: ChatInputBox2
   m_TagString: Untagged
@@ -265,21 +264,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &-3592969408762884345
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3490405566641370256}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7750367aec7848feb11fdee6aed880f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  inputField: {fileID: 6095371177556059541}
-  maskObject: {fileID: 0}
-  maskText: {fileID: 0}
 --- !u!1 &4371769212360349093
 GameObject:
   m_ObjectHideFlags: 0
