@@ -5,13 +5,22 @@ namespace DCL.SDKComponents.LightSource
 {
     public struct LightSourceComponent
     {
-        public readonly Light lightSourceInstance;
+        public readonly Light LightSourceInstance;
+
+        public float MaxIntensity;
+
+        public float CurrentIntensity;
+
+        public float TargetIntensity;
+
         public Promise? TextureMaskPromise;
 
-        public LightSourceComponent(Light lightSourceInstance)
+        public LightSourceComponent(Light lightSourceInstance, float maxIntensity, float initialIntensity = 0)
         {
-            this.lightSourceInstance = lightSourceInstance;
+            LightSourceInstance = lightSourceInstance;
             TextureMaskPromise = null;
+            MaxIntensity = maxIntensity;
+            CurrentIntensity = TargetIntensity = initialIntensity;
         }
     }
 }

@@ -18,6 +18,7 @@ using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -51,45 +52,49 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             CreateLightSourceComponentQuery(World);
             UpdateLightSourceQuery(World);
+            AnimateLightSourceIntensityQuery(World, Time.unscaledDeltaTime);
             ResolveTexturePromiseQuery(World);
         }
 
         [Query]
-        [All(typeof(PBLightSource))]
         [None(typeof(LightSourceComponent))]
         private void CreateLightSourceComponent(in Entity entity, ref PBLightSource pbLightSource, in TransformComponent transform)
         {
             if (!sceneStateProvider.IsCurrent) return;
-            if (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.None) return;
+
+            if (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.None)
+            {
+                ReportHub.LogWarning(GetReportCategory(), "Scene attempted to create a light source with type None");
+                return;
+            }
 
             Light lightSourceInstance = poolRegistry.Get();
+            lightSourceInstance.intensity = 0;
 
-            lightSourceInstance.transform.SetParent(transform.Transform, false);
-            lightSourceInstance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             lightSourceInstance.transform.localScale = Vector3.one;
+            lightSourceInstance.transform.SetParent(transform.Transform, false);
 
-            var lightSourceComponent = new LightSourceComponent(lightSourceInstance);
-            pbLightSource.IsDirty = true;
+            float intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(pbLightSource.Brightness);
+            var lightSourceComponent = new LightSourceComponent(lightSourceInstance, intensity);
             World.Add(entity, lightSourceComponent);
+
+            pbLightSource.IsDirty = true;
         }
 
         [Query]
         private void UpdateLightSource(ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
         {
-            if (!sceneStateProvider.IsCurrent) return;
             if (!pbLightSource.IsDirty) return;
-            if (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.None) return;
 
-            Light lightSourceInstance = lightSourceComponent.lightSourceInstance;
+            Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            bool isActive = !pbLightSource.HasActive || pbLightSource.Active;
-
-            // No need to set anything if the component is not active
-            if (!isActive)
+            if (!IsPBLightSourceActive(pbLightSource))
             {
                 lightSourceInstance.enabled = false;
                 return;
             }
+
+            if (!pbLightSource.IsDirty) return;
 
             bool isSpot = pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot;
 
@@ -126,9 +131,36 @@ namespace DCL.SDKComponents.LightSource.Systems
                     lightSourceInstance.cookie = null;
                 }
             }
-            else { lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow); }
+            else
+            {
+                lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow);
+            }
 
             lightSourceInstance.enabled = true;
+        }
+
+        [Query]
+        private void AnimateLightSourceIntensity([Data] float dt, ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
+        {
+            Light LightSourceInstance = lightSourceComponent.LightSourceInstance;
+
+            if (!IsPBLightSourceActive(pbLightSource))
+            {
+                LightSourceInstance.intensity = 0;
+                return;
+            }
+
+            bool isLightOn = sceneStateProvider.IsCurrent;
+            lightSourceComponent.TargetIntensity = isLightOn ? lightSourceComponent.MaxIntensity : 0;
+
+            // TODO move to settings
+            const float fadeSpeed = 1;
+            float delta = dt * lightSourceComponent.MaxIntensity * fadeSpeed;
+            lightSourceComponent.CurrentIntensity = Mathf.MoveTowards(lightSourceComponent.CurrentIntensity, lightSourceComponent.TargetIntensity, delta);
+
+            LightSourceInstance.intensity = lightSourceComponent.CurrentIntensity;
+
+            LightSourceInstance.enabled = lightSourceComponent.CurrentIntensity > 0;
         }
 
         private bool TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
@@ -167,7 +199,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             if (lightSourceComponent.TextureMaskPromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2DData> texture))
             {
                 lightSourceComponent.TextureMaskPromise = null;
-                lightSourceComponent.lightSourceInstance.cookie = texture.Asset;
+                lightSourceComponent.LightSourceInstance.cookie = texture.Asset;
             }
         }
 
@@ -181,14 +213,20 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void FinalizeLightSourceComponents(in LightSourceComponent lightSourceComponent)
+        private void ReleaseLightSources(in LightSourceComponent lightSourceComponent)
         {
-            poolRegistry.Release(lightSourceComponent.lightSourceInstance);
+            poolRegistry.Release(lightSourceComponent.LightSourceInstance);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            FinalizeLightSourceComponentsQuery(World);
+            ReleaseLightSourcesQuery(World);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsPBLightSourceActive(in PBLightSource pbLightSource)
+        {
+            return !pbLightSource.HasActive || pbLightSource.Active;
         }
     }
 }
