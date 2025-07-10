@@ -26,7 +26,7 @@ namespace DCL.SkyBox
             {
                 new SDKComponentState(skyboxSettings, sceneRestrictionController, transition),
                 new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController, transition),
-                new UIOverrideState(skyboxSettings, transition),
+                new UIOverrideState(skyboxSettings),
                 new GlobalTimeState(skyboxSettings, transition),
             });
 

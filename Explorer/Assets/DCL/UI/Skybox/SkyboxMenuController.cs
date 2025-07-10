@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.SkyBox;
 using DCL.UI.SharedSpaceManager;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -40,6 +41,7 @@ namespace DCL.UI.Skybox
             base.OnViewInstantiated();
 
             skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
+            skyboxSettings.DayCycleChanged += ToggleDayCycleEnabled;
 
             viewInstance!.CloseButton.onClick.AddListener(OnClose);
 
@@ -104,6 +106,7 @@ namespace DCL.UI.Skybox
             skyboxMenuCts.SafeCancelAndDispose();
 
             skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
+            skyboxSettings.DayCycleChanged -= ToggleDayCycleEnabled;
 
             if (!viewInstance) return;
             viewInstance.CloseButton.onClick.RemoveAllListeners();

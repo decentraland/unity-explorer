@@ -60,7 +60,6 @@ namespace DCL.SkyBox
 
         private void ApplyFixedTime(float time)
         {
-            settings.IsDayCycleEnabled = false;
             settings.TransitionMode = TransitionMode.FORWARD;
             settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time);
             settings.CanUIControl = false;

@@ -26,8 +26,10 @@ namespace DCL.SkyBox
         [SerializeField] private float transitionSpeed = 1f;
 
         private float timeOfDayNormalized;
+        private bool isDayCycleEnabled;
 
         public event Action<float>? TimeOfDayChanged;
+        public event Action<bool>? DayCycleChanged;
 
         public SkyboxRenderControllerRef SkyboxRenderControllerPrefab = null!;
         public Material SkyboxMaterial = null!;
@@ -36,7 +38,18 @@ namespace DCL.SkyBox
         public bool ShouldUpdateSkybox { get; set; }
         public bool IsUIControlled { get; set; } // Set by UI global system
         public bool IsSDKControlled { get; set; } // Set by SDK component system
-        public bool IsDayCycleEnabled { get; set; }
+        public bool IsDayCycleEnabled
+        {
+            get => isDayCycleEnabled;
+
+            set
+            {
+                if (isDayCycleEnabled == value) return;
+                isDayCycleEnabled = value;
+                DayCycleChanged?.Invoke(value);
+            }
+
+        }
         public TransitionMode TransitionMode { get; set; }
 
         public float SpeedMultiplier

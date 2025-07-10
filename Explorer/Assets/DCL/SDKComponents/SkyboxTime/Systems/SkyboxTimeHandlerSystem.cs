@@ -68,7 +68,6 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         private void SetSDKsettings(ref PBSkyboxTime sdkSkyboxTime)
         {
             skyboxSettings.IsSDKControlled = true;
-            skyboxSettings.IsDayCycleEnabled = false;
             skyboxSettings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(sdkSkyboxTime.FixedTime);
 
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
