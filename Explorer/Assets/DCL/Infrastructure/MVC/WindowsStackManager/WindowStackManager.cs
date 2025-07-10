@@ -6,6 +6,8 @@ namespace MVC
     public class WindowStackManager : IWindowsStackManager
     {
         private const int POPUP_ORDER_IN_LAYER_INCREMENT = 2;
+        // Calculated from the old equation when Count == 0: ((popupStack.Count - 1) * 2) - 1
+        private const int MINIMUM_POPUP_CLOSER_ODER_IN_LAYER = -3;
 
         internal List<IController> popupStack { get; } = new ();
         internal List<IController> persistentStack { get; } = new ();
@@ -15,8 +17,8 @@ namespace MVC
         public IController? TopMostPopup => popupStack.LastOrDefault();
         public IController CurrentFullscreenController => fullscreenController;
 
-        private int currentMaxOrderInLayer = POPUP_ORDER_IN_LAYER_INCREMENT;
-        private readonly Stack<int> popupOrders = new ();
+        private int currentMaxOrderInLayer;
+        private readonly Dictionary<IController, int> popupOrders = new ();
 
         public PopupPushInfo PushPopup(IController controller)
         {
@@ -28,7 +30,7 @@ namespace MVC
                     persistant.Blur();
 
             // Keep track of every popup canvass order
-            popupOrders.Push(currentMaxOrderInLayer);
+            popupOrders.Add(controller, currentMaxOrderInLayer);
 
             return new PopupPushInfo(
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer),
@@ -80,27 +82,22 @@ namespace MVC
         public PopupPopInfo PopPopup(IController controller)
         {
             popupStack.Remove(controller);
+            popupOrders.Remove(controller);
 
             if (popupStack.Count == 0)
             {
                 // If there are no popups left, we reset the current max order in layer
-                currentMaxOrderInLayer = POPUP_ORDER_IN_LAYER_INCREMENT;
+                currentMaxOrderInLayer = 0;
                 foreach (var persistant in persistentStack)
                     if (persistant.State == ControllerState.ViewBlurred)
                         persistant.Focus();
             }
 
-            // Pop current closing popup order
-            popupOrders.Pop();
-
-            // If we are closing the last popup, we use the base value. We use the previous popup order otherwise.
-            int previousPopupOrder = POPUP_ORDER_IN_LAYER_INCREMENT;
-            if (popupOrders.Count > 0)
-                previousPopupOrder = popupOrders.Pop();
+            IController? topMostPopup = TopMostPopup;
 
             return new PopupPopInfo(
-                new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, previousPopupOrder - 1),
-                TopMostPopup);
+                new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, topMostPopup == null ? MINIMUM_POPUP_CLOSER_ODER_IN_LAYER : popupOrders[topMostPopup] - 1),
+                topMostPopup);
         }
     }
 
