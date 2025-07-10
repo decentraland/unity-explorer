@@ -290,6 +290,7 @@ namespace DCL.Communities.CommunitiesBrowser
             // Setup card data
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
+            cardView.SetOwner(communityData.ownerName);
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
