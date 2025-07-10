@@ -270,7 +270,7 @@ namespace DCL.Communities
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
                     membersCount = UnityEngine.Random.Range(1, 101),
-                    isLive = UnityEngine.Random.Range(0, 5) == 0,
+                    isHostingLiveEvent = UnityEngine.Random.Range(0, 5) == 0,
                     friends = mutualFriends.ToArray(),
                 });
             }

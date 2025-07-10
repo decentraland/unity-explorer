@@ -22,7 +22,7 @@ namespace DCL.Communities
             public string ownerAddress;
             public string ownerName;
             public int membersCount;
-            public bool isLive;
+            public bool isHostingLiveEvent;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
