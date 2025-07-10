@@ -36,7 +36,7 @@ namespace DCL.UI.ProfileElements
         {
             this.profileRepositoryWrapper = profileDataProvider;
             currentWalledId = new Web3Address("");
-            Profile profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct);
+            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct);
 
             connectionStatusIndicatorContainer.gameObject.SetActive(profile != null);
             

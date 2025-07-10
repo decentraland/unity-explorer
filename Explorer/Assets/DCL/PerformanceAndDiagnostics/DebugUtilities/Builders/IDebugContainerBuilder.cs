@@ -24,6 +24,7 @@ namespace DCL.DebugUtilities
         {
             public const string ROOM_INFO = "Room: Info";
             public const string ROOM_CHAT = "Room: Chat";
+            public const string ROOM_VOICE_CHAT = "Room: VoiceChat";
             public const string ROOM_ISLAND = "Room: Island";
             public const string ROOM_SCENE = "Room: Scene";
             public const string ROOM_THROUGHPUT = "Room: Throughput";

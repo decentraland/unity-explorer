@@ -14,6 +14,7 @@ using LiveKit.Proto;
 using System;
 using System.Threading;
 using Utility;
+using ChatMessage = DCL.Chat.History.ChatMessage;
 
 namespace DCL.Chat.MessageBus
 {
