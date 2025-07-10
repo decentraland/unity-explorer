@@ -312,7 +312,6 @@ MonoBehaviour:
   communityThumbnail: {fileID: 5359017888257299776}
   communityLiveMark: {fileID: 4697007145502245620}
   mainButton: {fileID: 322440660326183502}
-  defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
 --- !u!1 &3958030276339269872
 GameObject:
   m_ObjectHideFlags: 0
@@ -462,6 +461,7 @@ GameObject:
   - component: {fileID: 6947991565692504103}
   - component: {fileID: 5359017888257299776}
   - component: {fileID: 5164472140185341678}
+  - component: {fileID: 5877476206968028999}
   m_Layer: 5
   m_Name: Thumbnail
   m_TagString: Untagged
@@ -541,6 +541,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 5413334829271910021}
   <Image>k__BackingField: {fileID: 6947991565692504103}
+  <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 5877476206968028999}
+  rectTransform: {fileID: 4136626364528111067}
 --- !u!114 &5164472140185341678
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -553,6 +556,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &5877476206968028999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4065170620548812537}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 0
+  m_AspectRatio: 1
 --- !u!1 &4697007145502245620
 GameObject:
   m_ObjectHideFlags: 0
