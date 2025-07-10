@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
@@ -39,13 +40,17 @@ namespace DCL.Multiplayer.Movement.Systems
 
         [Query]
         [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim,
+        private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim, ref CharacterEmoteComponent emote,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
             // When we finally pass the message, we set all Animator parameters from this snapshot
             if (remotePlayerMovement.WasPassedThisFrame)
             {
                 remotePlayerMovement.WasPassedThisFrame = false;
+
+                if (emote.IsPlayingEmote && !remotePlayerMovement.PastMessage.isEmoting)
+                    emote.StopEmote = true;
+
                 UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);
             }
 

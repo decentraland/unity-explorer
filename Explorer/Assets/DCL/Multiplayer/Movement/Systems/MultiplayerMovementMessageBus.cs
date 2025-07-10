@@ -133,6 +133,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 },
                 isStunned = proto.IsStunned,
                 isInstant = proto.IsInstant,
+                isEmoting = proto.IsEmoting,
             };
         }
 
@@ -186,6 +187,7 @@ namespace DCL.Multiplayer.Movement.Systems
             movement.IsLongFall = message.animState.IsLongFall;
             movement.IsStunned = message.isStunned;
             movement.IsInstant = message.isInstant;
+            movement.IsEmoting = message.isEmoting;
         }
 
         private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)

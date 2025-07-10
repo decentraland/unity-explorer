@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
@@ -50,7 +51,8 @@ namespace DCL.Multiplayer.Movement.Systems
             ref CharacterAnimationComponent anim,
             ref StunComponent stun,
             ref MovementInputComponent move,
-            ref JumpInputComponent jump
+            in JumpInputComponent jump,
+            in CharacterEmoteComponent emote
         )
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
@@ -59,7 +61,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, true);
+                SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, isInstant: true);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -71,7 +73,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (playerMovement.LastSentMessage.animState.IsGrounded != anim.States.IsGrounded
                 || playerMovement.LastSentMessage.animState.IsJumping != anim.States.IsJumping)
             {
-                SendMessage(ref playerMovement, in anim, in stun, in move, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, justTeleported);
                 return;
             }
 
@@ -85,7 +87,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (!isMoving && sendRate < settings.StandSendRate)
                     sendRate = Mathf.Min(2 * sendRate, settings.StandSendRate);
 
-                SendMessage(ref playerMovement, in anim, in stun, in move, justTeleported);
+                SendMessage(ref playerMovement, in anim, in stun, in move, emote.IsPlayingEmote, justTeleported);
             }
 
             return;
@@ -111,6 +113,7 @@ namespace DCL.Multiplayer.Movement.Systems
             in CharacterAnimationComponent animation,
             in StunComponent playerStunComponent,
             in MovementInputComponent input,
+            bool isEmoting,
             bool isInstant)
         {
             playerMovement.MessagesSentInSec++;
@@ -134,6 +137,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = playerStunComponent.IsStunned,
                 isSliding = animation.IsSliding,
                 isInstant = isInstant,
+                isEmoting = isEmoting,
 
                 animState = new AnimationStates
                 {
