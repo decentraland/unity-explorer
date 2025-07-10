@@ -127,6 +127,10 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6774257635683130148, guid: b628e45d7dcda244bbddc6afc7666617, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
     - target: {fileID: 919132149155446097, guid: b628e45d7dcda244bbddc6afc7666617, type: 3}
       propertyPath: m_Name
       value: HedgeMiddleLarge
@@ -139,6 +143,10 @@ PrefabInstance:
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3451207665426321158, guid: b628e45d7dcda244bbddc6afc7666617, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
     - target: {fileID: 4742473837712756890, guid: b628e45d7dcda244bbddc6afc7666617, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -199,10 +207,18 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5124223214427086758, guid: b628e45d7dcda244bbddc6afc7666617, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
     - target: {fileID: 7122839378548314453, guid: b628e45d7dcda244bbddc6afc7666617, type: 3}
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7122839378548314453, guid: b628e45d7dcda244bbddc6afc7666617, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
