@@ -14,13 +14,6 @@ namespace DCL.Platforms
                 _ => throw new ArgumentException($"Platform {Application.platform} is not supported")
             };
 
-        public void Quit()
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
-        }
+
     }
 }

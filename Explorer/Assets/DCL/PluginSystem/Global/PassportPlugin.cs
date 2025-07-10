@@ -23,6 +23,7 @@ using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -68,9 +69,11 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
+        private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly GalleryEventBus galleryEventBus;
 
         private PassportController? passportController;
@@ -106,10 +109,12 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
-            bool isNameEditorEnabled, 
-            IChatEventBus chatEventBus, 
-            ISharedSpaceManager sharedSpaceManager, 
+            bool isNameEditorEnabled,
+            bool isCallEnabled,
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService,
             GalleryEventBus galleryEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -143,9 +148,11 @@ namespace DCL.PluginSystem.Global
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
+            this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.galleryEventBus = galleryEventBus;
         }
 
@@ -204,9 +211,11 @@ namespace DCL.PluginSystem.Global
                 enableFriends,
                 includeUserBlocking,
                 isNameEditorEnabled,
+                isCallEnabled,
                 chatEventBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
+                voiceChatCallStatusService,
                 galleryEventBus
             );
 
