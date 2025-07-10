@@ -21,14 +21,26 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6cf70c56a9a074f4c878820fe92c9adb
-    m_Address: DAO
+  - m_GUID: 70bdbdf1913a730428a9a7301e1b4845
+    m_Address: Wearables1
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 70bdbdf1913a730428a9a7301e1b4845
-    m_Address: Wearables1
+  - m_GUID: 7ea30c03552cb4a01b3d79db84bd812f
+    m_Address: Events
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1126b9fcc6324d31ad4c40328649bf8
+    m_Address: GenesisCity
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bc9bddc06da3a4b72ba1b3c950a136fc
+    m_Address: Communities
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
@@ -39,8 +51,20 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e0d2ede5cf0998246b71f6bfb7880af9
-    m_Address: MANA
+  - m_GUID: cab127bf632384449be1ce1e91be26db
+    m_Address: Builder
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e818c720eea4d4795938e38570ddb5fa
+    m_Address: Worlds
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ef85de092088847a78bcd37f5e2bbb4a
+    m_Address: MarketplaceCredits
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en

@@ -27,12 +27,16 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SoftMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _Amplitude: 30
     - _BlurSize: 0.001
     - _ColorMask: 15
-    - _Frequency: 5
+    - _Frequency: 2
     - _Samples: 30
     - _Speed: 1
     - _Stencil: 0
@@ -43,9 +47,9 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color1: {r: 0.0102349585, g: 0.20316826, b: 0.4339623, a: 1}
-    - _Color2: {r: 0.24278666, g: 0.046724804, b: 0.3962264, a: 1}
-    - _Color3: {r: 0.09019608, g: 0, b: 0.16078432, a: 1}
-    - _Color4: {r: 0.18410043, g: 0.017354928, b: 0.24528301, a: 1}
+    - _Color1: {r: 0.9716981, g: 0.81526387, b: 0.45376468, a: 1}
+    - _Color2: {r: 0.99607843, g: 0.43529412, b: 0, a: 1}
+    - _Color3: {r: 0.9647059, g: 0.5019608, b: 0.007843138, a: 1}
+    - _Color4: {r: 0.92941177, g: 0.71549773, b: 0.007843144, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

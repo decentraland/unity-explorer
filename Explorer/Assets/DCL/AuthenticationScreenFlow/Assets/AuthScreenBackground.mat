@@ -69,7 +69,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Pattern:
-        m_Texture: {fileID: 2800000, guid: 9172ee976c1dd6d42b7858b763f87f2c, type: 3}
+        m_Texture: {fileID: 2800000, guid: dd6a778d3c33d4eee949946bc3f586c9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -99,7 +99,7 @@ Material:
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _ColorMask: 15
-    - _Color_2_Opacity: 0.2
+    - _Color_2_Opacity: 0
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
@@ -110,25 +110,28 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _Glow_Offset_X: 0.14
+    - _Glow_Offset_X: -0.76
     - _Glow_Offset_Y: 0.23
-    - _Glow_Opactiy: 2.8
-    - _Glow_Tile_X: 1.2
+    - _Glow_Opactiy: 1
+    - _Glow_Tile_X: 1.87
     - _Glow_Tile_Y: 0.96
-    - _Gradient_Speed: 0.1
+    - _Gradient_Speed: 0.3
+    - _Hardness: 0.1
     - _Metallic: 0
     - _OcclusionStrength: 1
+    - _Opacity_Vignette: 0
     - _Parallax: 0.005
-    - _PatternSpeed: 0.1
-    - _Pattern_Opactiy: 0.118
-    - _Pattern_Tiling: 2.5
+    - _PatternSpeed: 0.06
+    - _Pattern_Opactiy: 0.727
+    - _Pattern_Tiling: 2.65
     - _QueueControl: 0
     - _QueueOffset: 0
+    - _Radius: 0.08
     - _ReceiveShadows: 1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _Speed: 0.1
+    - _Speed: 5
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Stencil: 0
@@ -139,18 +142,26 @@ Material:
     - _Surface: 0
     - _UIMaskSoftnessX: 1
     - _UIMaskSoftnessY: 1
+    - _Wave_Scale: 2.4
+    - _Wave_Strenght: 27.08
+    - _Wave_Tiling: 5.3
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Center: {r: 0.5, g: 0.5, b: 0, a: 0}
     - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color1: {r: 0.34411773, g: 0.09019608, b: 0.5019608, a: 0}
-    - _Color2: {r: 0.5019608, g: 0.15294118, b: 0.72156864, a: 0}
+    - _Color1: {r: 0.98175126, g: 0.2688679, b: 1, a: 0}
+    - _Color2: {r: 1, g: 0.38317707, b: 0.15566039, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Glow_Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Pattern_Color: {r: 1, g: 1, b: 1, a: 0}
+    - _Glow_Color: {r: 0.6886792, g: 0.25013348, b: 0.36319312, a: 1}
+    - _Inner_Color: {r: 0.5587128, g: 0, b: 1.0900373, a: 0}
+    - _Offset: {r: 0, g: 0, b: 0, a: 0}
+    - _Outer_Color: {r: 0.04973301, g: 0.00244749, b: 0.103773594, a: 0}
+    - _Pattern_Color: {r: 0.4433962, g: 0.4433962, b: 0.4433962, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _Tiling: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3557138097403250230
