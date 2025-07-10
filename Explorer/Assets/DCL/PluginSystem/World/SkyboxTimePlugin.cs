@@ -18,13 +18,11 @@ namespace DCL.SDKComponents.SkyboxTime
 {
     public class SkyboxTimePlugin : IDCLWorldPlugin<SkyboxTimePlugin.SkyboxTimeSettings>
     {
-        private readonly ISceneRestrictionBusController sceneRestrictionController;
         private readonly IAssetsProvisioner assetsProvisioner;
-        private SkyboxSettingsAsset skyboxSettings;
+        private SkyboxSettingsAsset? skyboxSettings;
 
-        public SkyboxTimePlugin(ISceneRestrictionBusController sceneRestrictionController, IAssetsProvisioner assetsProvisioner)
+        public SkyboxTimePlugin(IAssetsProvisioner assetsProvisioner)
         {
-            this.sceneRestrictionController = sceneRestrictionController;
             this.assetsProvisioner = assetsProvisioner;
         }
 
@@ -32,13 +30,11 @@ namespace DCL.SDKComponents.SkyboxTime
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-
             var system = SkyboxTimeHandlerSystem.InjectToWorld(
                 ref builder,
                 skyboxSettings,
                 persistentEntities.SceneRoot,
-                sharedDependencies.SceneStateProvider,
-                sceneRestrictionController);
+                sharedDependencies.SceneStateProvider);
 
             sceneIsCurrentListeners.Add(system);
         }
@@ -46,7 +42,7 @@ namespace DCL.SDKComponents.SkyboxTime
         public async UniTask InitializeAsync(SkyboxTimeSettings pluginSettings, CancellationToken ct)
         {
             ProvidedAsset<SkyboxSettingsAsset> skyboxSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.Settings, ct);
-            this.skyboxSettings = skyboxSettingsAsset.Value;
+            skyboxSettings = skyboxSettingsAsset.Value;
         }
 
         public class SkyboxTimeSettings : IDCLPluginSettings

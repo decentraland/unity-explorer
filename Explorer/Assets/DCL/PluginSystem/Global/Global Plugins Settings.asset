@@ -733,7 +733,7 @@ MonoBehaviour:
     - rid: 6144113899072913496
       type: {class: SkyboxPlugin/SkyboxTimeSettings, ns: DCL.SkyBox, asm: DCL.Plugins}
       data:
-        <Settings>k__BackingField:
+        <SettingsRef>k__BackingField:
           m_AssetGUID: 9891b090dc6dc574d9415313003375f0
           m_SubObjectName: 
           m_SubObjectType: 

@@ -18,16 +18,13 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         private readonly SkyboxSettingsAsset skyboxSettings;
         private readonly Entity rootEntity;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly ISceneRestrictionBusController sceneRestrictionController;
 
         private SkyboxTimeHandlerSystem(World world, SkyboxSettingsAsset skyboxSettings, Entity rootEntity,
-            ISceneStateProvider sceneStateProvider,
-            ISceneRestrictionBusController sceneRestrictionController) : base(world)
+            ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.skyboxSettings = skyboxSettings;
             this.rootEntity = rootEntity;
             this.sceneStateProvider = sceneStateProvider;
-            this.sceneRestrictionController = sceneRestrictionController;
         }
 
         public void OnSceneIsCurrentChanged(bool value)
@@ -72,22 +69,16 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
         {
             skyboxSettings.IsSDKControlled = true;
             skyboxSettings.IsDayCycleEnabled = false;
-            skyboxSettings.TargetTransitionTimeOfDay = sdkSkyboxTime.FixedTime;
+            skyboxSettings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(sdkSkyboxTime.FixedTime);
 
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
                 ? SkyBox.TransitionMode.FORWARD
                 : SkyBox.TransitionMode.BACKWARD;
-
-            sceneRestrictionController.PushSceneRestriction(
-                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
         }
 
         private void ResetSDKControlled()
         {
             skyboxSettings.IsSDKControlled = false;
-
-            sceneRestrictionController.PushSceneRestriction(
-                SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
         }
     }
 }

@@ -14,8 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speedMultiplier: 60
   transitionSpeed: 0.25
-  initialTimeOfDay: 0.5
-  refreshInterval: 5
   SkyboxRenderControllerPrefab:
     m_AssetGUID: 1dbd1decb60282248bd089c32bec5d02
     m_SubObjectName: 
@@ -29,5 +27,3 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  targetTransitionTimeOfDay: 0.5401826
-  canUIControl: 0

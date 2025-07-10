@@ -19,27 +19,24 @@ namespace DCL.SkyBox
         // We need to subtract 1 minute to make the slider range is between 00:00 and 23:59
         public const int TOTAL_MINUTES_IN_DAY = 1439; // 23:59 in minutes
         public const int SECONDS_IN_DAY = 86400;
+        public const float INITIAL_TIME_OF_DAY = 0.5f; // Midday
+        public const float REFRESH_INTERVAL = 5f;
 
         [SerializeField] private float speedMultiplier = DEFAULT_SPEED;
         [SerializeField] private float transitionSpeed = 1f;
 
-        private float targetTransitionTimeOfDay;
-        private bool canUIControl;
         private float timeOfDayNormalized;
 
-        // For UI display synchronization
-        public event Action<float> TimeOfDayChanged;
+        public event Action<float>? TimeOfDayChanged;
 
         public SkyboxRenderControllerRef SkyboxRenderControllerPrefab = null!;
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
-        public float initialTimeOfDay = 0.5f; // Midday
-        public float refreshInterval = 5f;
         public bool ShouldUpdateSkybox { get; set; }
         public bool IsUIControlled { get; set; } // Set by UI global system
         public bool IsSDKControlled { get; set; } // Set by SDK component system
-        public bool IsDayCycleEnabled { get; set; } = true;
+        public bool IsDayCycleEnabled { get; set; }
         public TransitionMode TransitionMode { get; set; }
 
         public float SpeedMultiplier
@@ -56,11 +53,7 @@ namespace DCL.SkyBox
             set => transitionSpeed = value;
         }
 
-        public bool CanUIControl
-        {
-            get => canUIControl;
-            set => canUIControl = value;
-        }
+        public bool CanUIControl { get; set; } = true;
 
         public float TimeOfDayNormalized
         {
@@ -70,8 +63,6 @@ namespace DCL.SkyBox
             {
                 if (Mathf.Approximately(timeOfDayNormalized, value)) return;
 
-                value = NormalizeTimeIfNeeded(value);
-
                 timeOfDayNormalized = value;
 
                 if (!IsUIControlled)
@@ -79,40 +70,24 @@ namespace DCL.SkyBox
             }
         }
 
-        /// <summary>
-        /// Target time of day for the transition, normalized between 0 and 1.
-        /// Values greater than 1 are interpreted as seconds in a day and automatically normalized.
-        /// </summary>
-        public float TargetTransitionTimeOfDay
-        {
-            get => targetTransitionTimeOfDay;
-
-            set
-            {
-                if (Mathf.Approximately(targetTransitionTimeOfDay, value)) return;
-                targetTransitionTimeOfDay = NormalizeTimeIfNeeded(value);
-            }
-        }
+        public float TargetTimeOfDayNormalized { get; set; }
 
         public void Reset()
         {
-            TimeOfDayNormalized = initialTimeOfDay;
+            timeOfDayNormalized = INITIAL_TIME_OF_DAY;
+            TargetTimeOfDayNormalized = INITIAL_TIME_OF_DAY;
             IsDayCycleEnabled = true;
             ShouldUpdateSkybox = true;
-            SpeedMultiplier = DEFAULT_SPEED;
             TransitionMode = TransitionMode.FORWARD;
             CanUIControl = true;
             IsUIControlled = false;
             IsSDKControlled = false;
         }
 
-        private float NormalizeTimeIfNeeded(float time)
+        public static float NormalizeTime(float time)
         {
             if (time < 0)
                 return 0;
-
-            if (time <= 1)
-                return time;
 
             time %= SECONDS_IN_DAY;
             return time / SECONDS_IN_DAY;

@@ -10,14 +10,17 @@ namespace DCL.SkyBox
         private readonly IScenesCache scenes;
         private readonly SkyboxSettingsAsset settings;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
+        private readonly InterpolateTimeOfDayState transition;
 
         public SceneMetadataState(IScenesCache scenes,
             SkyboxSettingsAsset settings,
-            ISceneRestrictionBusController sceneRestrictionController)
+            ISceneRestrictionBusController sceneRestrictionController,
+            InterpolateTimeOfDayState transition)
         {
             this.scenes = scenes;
             this.settings = settings;
             this.sceneRestrictionController = sceneRestrictionController;
+            this.transition = transition;
         }
 
         public bool Applies()
@@ -26,12 +29,13 @@ namespace DCL.SkyBox
 
             if (metadata == null) return false;
 
-            return metadata.worldConfiguration != null || metadata.skyboxConfig != null;
+            return metadata.skyboxConfig != null || metadata.worldConfiguration?.SkyboxConfig != null;
         }
 
         public void Enter()
         {
-            // TODO: should be called in the update? Are we safe on just calling it here?
+            transition.Enter();
+
             SceneMetadata? sceneMetadata = scenes.CurrentScene?.SceneData.SceneEntityDefinition.metadata;
 
             if (sceneMetadata is { worldConfiguration: { SkyboxConfig: { fixedTime: var worldTime } } })
@@ -39,20 +43,27 @@ namespace DCL.SkyBox
 
             if (sceneMetadata is { skyboxConfig: { fixedTime: var sceneTime } })
                 ApplyFixedTime(sceneTime);
+
+            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
         }
 
-        public void Update(float dt) { }
+        public void Exit()
+        {
+            transition.Exit();
+            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.REMOVED));
+        }
 
-        public void Exit() { }
+        public void Update(float dt)
+        {
+            transition.Update(dt);
+        }
 
         private void ApplyFixedTime(float time)
         {
             settings.IsDayCycleEnabled = false;
             settings.TransitionMode = TransitionMode.FORWARD;
-            settings.TargetTransitionTimeOfDay = time;
+            settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time);
             settings.CanUIControl = false;
-
-            sceneRestrictionController.PushSceneRestriction(SceneRestriction.CreateSkyboxTimeUILocked(SceneRestrictionsAction.APPLIED));
         }
     }
 }

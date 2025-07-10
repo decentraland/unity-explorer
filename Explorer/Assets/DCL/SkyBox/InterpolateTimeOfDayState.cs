@@ -14,7 +14,7 @@ namespace DCL.SkyBox
         public bool Applies()
         {
             float current = settings.TimeOfDayNormalized;
-            float target = settings.TargetTransitionTimeOfDay;
+            float target = settings.TargetTimeOfDayNormalized;
 
             return !Mathf.Approximately(current, target);
         }
@@ -26,14 +26,10 @@ namespace DCL.SkyBox
         public void Update(float dt)
         {
             float current = settings.TimeOfDayNormalized;
-            float target = settings.TargetTransitionTimeOfDay;
+            float target = settings.TargetTimeOfDayNormalized;
             float speed = settings.TransitionSpeed;
 
-            if (Mathf.Approximately(current, target))
-            {
-                settings.TimeOfDayNormalized = target;
-                return;
-            }
+            if (Mathf.Approximately(current, target)) return;
 
             float step = dt * speed;
 
@@ -41,7 +37,12 @@ namespace DCL.SkyBox
             {
                 case TransitionMode.FORWARD:
                 {
-                    float distance = (target - current + 1f) % 1f;
+                    float distance;
+
+                    if (target >= current)
+                        distance = target - current;
+                    else
+                        distance = target + 1f - current;
 
                     if (step >= distance)
                         settings.TimeOfDayNormalized = target;

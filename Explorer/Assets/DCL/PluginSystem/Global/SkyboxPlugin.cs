@@ -17,13 +17,13 @@ namespace DCL.SkyBox
 {
     public class SkyboxPlugin : IDCLGlobalPlugin<SkyboxPlugin.SkyboxTimeSettings>
     {
-        private SkyboxSettingsAsset skyboxSettings;
-        private SkyboxRenderController skyboxRenderController;
-
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly Light directionalLight;
         private readonly IScenesCache scenesCache;
         private readonly ISceneRestrictionBusController sceneRestrictionController;
+
+        private SkyboxSettingsAsset? skyboxSettings;
+        private SkyboxRenderController? skyboxRenderController;
 
         public SkyboxPlugin(IAssetsProvisioner assetsProvisioner,
             Light directionalLight,
@@ -47,7 +47,7 @@ namespace DCL.SkyBox
         {
             try
             {
-                skyboxSettings = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.Settings, ct)).Value;
+                skyboxSettings = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.SettingsRef, ct)).Value;
                 skyboxSettings.Reset();
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
@@ -57,7 +57,7 @@ namespace DCL.SkyBox
                     skyboxSettings.SkyboxMaterial,
                     directionalLight,
                     skyboxAnimation,
-                    skyboxSettings.initialTimeOfDay
+                    skyboxSettings.TimeOfDayNormalized
                 );
             }
             catch (OperationCanceledException)
@@ -74,7 +74,15 @@ namespace DCL.SkyBox
         public class SkyboxTimeSettings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public AssetReferenceT<SkyboxSettingsAsset> Settings { get; private set; }
+            public SkyboxSettingsAssetRef SettingsRef { get; private set; }
+        }
+
+        [Serializable]
+        public class SkyboxSettingsAssetRef : AssetReferenceT<SkyboxSettingsAsset>
+        {
+            public SkyboxSettingsAssetRef(string guid) : base(guid)
+            {
+            }
         }
     }
 }
