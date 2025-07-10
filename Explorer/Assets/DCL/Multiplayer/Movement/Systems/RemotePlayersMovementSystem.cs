@@ -265,7 +265,7 @@ namespace DCL.Multiplayer.Movement.Systems
             intComp.UseMessageRotation = false;
 
             intComp.Start.movementKind = movementKind;
-            intComp.Start.animState.MovementBlendValue = (int)movementKind;
+            intComp.Start.animState.MovementBlendValue = (uint)movementKind;
 
             intComp.End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(intComp.TotalDuration, intComp.Start.animState.MovementBlendValue,
                 intComp.End.movementKind, intComp.End.velocitySqrMagnitude, characterControllerSettings);

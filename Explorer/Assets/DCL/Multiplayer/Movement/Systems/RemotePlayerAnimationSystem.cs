@@ -58,6 +58,9 @@ namespace DCL.Multiplayer.Movement.Systems
                 anim.States.MovementBlendValue -= movementSettings.IdleSlowDownSpeed * UnityEngine.Time.deltaTime;
                 anim.States.SlideBlendValue -= movementSettings.IdleSlowDownSpeed * UnityEngine.Time.deltaTime;
 
+                anim.States.MovementBlendValue = Mathf.Max(0, anim.States.MovementBlendValue);
+                anim.States.SlideBlendValue = Mathf.Max(0, anim.States.SlideBlendValue);
+
                 view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, anim.States.MovementBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
                 view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, anim.States.SlideBlendValue.ClampSmallValuesToZero(BLEND_EPSILON));
             }
@@ -102,6 +105,9 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 anim.States.MovementBlendValue = Mathf.Lerp(startAnimStates.MovementBlendValue, endAnimStates.MovementBlendValue, intComp.Time / intComp.TotalDuration);
                 anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.SlideBlendValue, endAnimStates.SlideBlendValue, intComp.Time / intComp.TotalDuration);
+
+                anim.States.MovementBlendValue = Mathf.Clamp(anim.States.MovementBlendValue, (uint)MovementKind.IDLE, (uint)MovementKind.RUN);
+                anim.States.SlideBlendValue = Mathf.Max(0, anim.States.SlideBlendValue);
             }
 
             UpdateLocalBlends(view, anim.States);
@@ -130,8 +136,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 float dampDuration = totalMoveDuration - linearTime;
                 float dampTime = time - linearTime;
 
-                anim.States.MovementBlendValue = Mathf.Lerp(anim.States.MovementBlendValue, 0f, dampTime / dampDuration);
-                anim.States.SlideBlendValue = Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration);
+                anim.States.MovementBlendValue = Mathf.Max(0, Mathf.Lerp(anim.States.MovementBlendValue, 0f, dampTime / dampDuration));
+                anim.States.SlideBlendValue = Mathf.Max(0, Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration));
             }
 
             UpdateLocalBlends(view, anim.States);
