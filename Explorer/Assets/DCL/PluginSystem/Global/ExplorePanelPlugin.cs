@@ -119,7 +119,7 @@ namespace DCL.PluginSystem.Global
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
 
         private readonly bool includeCameraReel;
@@ -189,7 +189,7 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
