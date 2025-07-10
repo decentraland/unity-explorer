@@ -19,28 +19,24 @@ namespace DCL.Settings.ModuleControllers
         {
             this.viewInstance = viewInstance;
             this.upscalingController = upscalingController;
-            upscalingController.OnUpscalingChanged += UpdateSliderView;
             viewInstance.SliderView.Slider.onValueChanged.AddListener(UpdateUpscalingValue);
 
-            UpdateSliderView(upscalingController.GetCurrentUpscale());
+            UpdateUpscalingValue(upscalingController.GetCurrentUpscale());
         }
 
         private void UpdateUpscalingValue(float value)
         {
             //Sent in decimal form
             upscalingController.SetUpscalingValue(value / STEP_MULTIPLIER);
+            viewInstance.RevaluateButtonLimits(value * STEP_MULTIPLIER);
+            viewInstance.SliderValueText.text = $"{value * STEP_MULTIPLIER_DISPLAY}%";
+            viewInstance.SliderView.Slider.SetValueWithoutNotify(value * STEP_MULTIPLIER);
         }
 
-        private void UpdateSliderView(float value)
-        {
-            //Comes in decimal form
-            viewInstance.SliderView.Slider.SetValueWithoutNotify(value * STEP_MULTIPLIER);
-            viewInstance.SliderValueText.text = $"{value * STEP_MULTIPLIER_DISPLAY}%";
-            viewInstance.RevaluateButtonLimits(value * STEP_MULTIPLIER);
-        }
 
         public override void Dispose()
         {
+            viewInstance.SliderView.Slider.onValueChanged.RemoveListener(UpdateUpscalingValue);
         }
     }
 }

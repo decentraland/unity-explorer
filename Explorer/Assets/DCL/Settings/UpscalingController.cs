@@ -25,8 +25,6 @@ namespace DCL.Utilities
         private bool ignoreFirstResolutionChange;
         private int currentUIOpened;
 
-        public Action<float> OnUpscalingChanged;
-
         public UpscalingController(IMVCManager mvcManager)
         {
             this.mvcManager = mvcManager;
@@ -44,7 +42,6 @@ namespace DCL.Utilities
 
             mvcManager.OnViewShowed += OnUIOpened;
             mvcManager.OnViewClosed += OnUIClosed;
-            savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
@@ -88,6 +85,7 @@ namespace DCL.Utilities
             }
         }
 
+        //This UIs should force an upscaling reset.
         private bool ShouldTriggerUpscalerChange(IController controller)
         {
              string controllerTypeName = controller.GetType().Name;
@@ -108,7 +106,6 @@ namespace DCL.Utilities
 
                 DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
             }
-            OnUpscalingChanged?.Invoke(sliderValue);
         }
 
         public void ResolutionChanged(Resolution resolution)
