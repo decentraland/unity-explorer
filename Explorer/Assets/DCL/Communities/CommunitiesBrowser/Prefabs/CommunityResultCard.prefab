@@ -1416,6 +1416,8 @@ MonoBehaviour:
   <LoadingObject>k__BackingField: {fileID: 2987537105166981742}
   <Image>k__BackingField: {fileID: 9127482766625081763}
   <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 896835535265753280}
+  rectTransform: {fileID: 4353527291144015897}
 --- !u!114 &9212648285223425415
 MonoBehaviour:
   m_ObjectHideFlags: 0

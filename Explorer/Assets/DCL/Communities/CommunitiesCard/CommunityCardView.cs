@@ -258,7 +258,7 @@ namespace DCL.Communities.CommunitiesCard
 
         public void SetDefaults()
         {
-            CommunityThumbnail.SetImage(defaultCommunityImage);
+            CommunityThumbnail.SetImage(defaultCommunityImage, true);
             communityName.text = string.Empty;
             communityMembersNumber.text = string.Empty;
             communityDescription.text = string.Empty;
