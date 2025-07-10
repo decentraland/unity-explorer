@@ -9,6 +9,7 @@ using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.VoiceChat;
+using DCL.VoiceChat.Services;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -27,6 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly VoiceChatEventBus voiceChatEventBus;
+        private readonly IVoiceService voiceChatService;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
@@ -49,7 +51,9 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world,
-            Entity playerEntity, VoiceChatEventBus voiceChatEventBus)
+            Entity playerEntity,
+            VoiceChatEventBus voiceChatEventBus,
+            IVoiceService voiceChatService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
@@ -60,6 +64,7 @@ namespace DCL.PluginSystem.Global
             this.world = world;
             this.playerEntity = playerEntity;
             this.voiceChatEventBus = voiceChatEventBus;
+            this.voiceChatService = voiceChatService;
         }
 
         public void Dispose()
@@ -123,7 +128,7 @@ namespace DCL.PluginSystem.Global
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunitiesVoiceChatController();
 
-            voiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatController, communitiesVoiceChatController, voiceChatEventBus, voiceChatCallStatusService);
+            voiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatController, communitiesVoiceChatController, voiceChatEventBus, voiceChatCallStatusService, voiceChatService);
 
         }
 

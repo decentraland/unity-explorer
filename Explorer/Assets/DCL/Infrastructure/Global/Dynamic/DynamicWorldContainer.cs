@@ -883,7 +883,8 @@ namespace Global.Dynamic
                         entityParticipantTable,
                         globalWorld,
                         playerEntity,
-                        voiceChatEventBus));
+                        voiceChatEventBus,
+                        voiceService));
 
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

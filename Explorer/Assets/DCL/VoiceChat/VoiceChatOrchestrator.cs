@@ -1,6 +1,8 @@
 using DCL.Diagnostics;
 using DCL.Utilities;
+using DCL.VoiceChat.Services;
 using DCL.Web3;
+using Decentraland.SocialService.V2;
 using System;
 
 namespace DCL.VoiceChat
@@ -12,13 +14,13 @@ namespace DCL.VoiceChat
         COMMUNITY
     }
 
-
     public class VoiceChatOrchestrator : IDisposable
     {
         private readonly PrivateVoiceChatController privateVoiceChatController;
         private readonly CommunitiesVoiceChatController communitiesVoiceChatController;
         private readonly VoiceChatEventBus voiceChatEventBus;
         private readonly IVoiceChatCallStatusService privateVoiceChatCallStatusService;
+        private readonly IVoiceService rpcPrivateVoiceChatService;
 
         private readonly IDisposable statusSubscription;
 
@@ -33,16 +35,26 @@ namespace DCL.VoiceChat
             PrivateVoiceChatController privateVoiceChatController,
             CommunitiesVoiceChatController communitiesVoiceChatController,
             VoiceChatEventBus voiceChatEventBus,
-            IVoiceChatCallStatusService privateVoiceChatCallStatusService)
+            IVoiceChatCallStatusService privateVoiceChatCallStatusService,
+            IVoiceService rpcPrivateVoiceChatService)
         {
             this.privateVoiceChatController = privateVoiceChatController;
             this.communitiesVoiceChatController = communitiesVoiceChatController;
             this.voiceChatEventBus = voiceChatEventBus;
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
-
+            this.rpcPrivateVoiceChatService = rpcPrivateVoiceChatService;
 
             voiceChatEventBus.StartPrivateVoiceChatRequested += OnStartVoiceChatRequested;
+            rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             statusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
+        }
+
+        private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
+        {
+            if (currentVoiceChatType != CurrentVoiceChatType.COMMUNITY)
+            {
+                privateVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
+            }
         }
 
         private void OnPrivateVoiceChatStatusChanged(VoiceChatStatus status)
