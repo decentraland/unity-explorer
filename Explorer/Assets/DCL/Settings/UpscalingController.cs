@@ -69,7 +69,7 @@ namespace DCL.Utilities
 
         private void OnUIClosed(IController controller)
         {
-            if (currentUIOpened > 0 && ShouldTriggerUpscalerChange(controller))
+            if (ShouldTriggerUpscalerChange(controller))
             {
                 currentUIOpened--;
                 if (currentUIOpened == 0)
@@ -82,11 +82,8 @@ namespace DCL.Utilities
             // Only trigger upscaler change for certain types of controllers
             if (ShouldTriggerUpscalerChange(controller))
             {
-                if (currentUIOpened == 0)
-                {
-                    savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-                    SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
-                }
+                savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+                SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
                 currentUIOpened++;
             }
         }
