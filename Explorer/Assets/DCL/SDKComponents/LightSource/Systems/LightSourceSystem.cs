@@ -35,8 +35,9 @@ namespace DCL.SDKComponents.LightSource.Systems
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
     public partial class LightSourceSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private const int SCENE_MAX_LIGHT_COUNT = 3;
-        private const float FADE_SPEED = 1;
+        private const float LIGHTS_PER_PARCEL = 1;
+        private const int SCENE_MAX_LIGHT_COUNT = 10;
+        private const float FADE_SPEED = 4;
         private const int GET_TEXTURE_MAX_ATTEMPT_COUNT = 6;
 
         private readonly ISceneData sceneData;
@@ -53,10 +54,10 @@ namespace DCL.SDKComponents.LightSource.Systems
             ICharacterObject characterObject
         ) : base(world)
         {
-            this.partitionComponent = partitionComponent;
             this.sceneData = sceneData;
-            this.poolRegistry = poolRegistry;
             this.sceneStateProvider = sceneStateProvider;
+            this.partitionComponent = partitionComponent;
+            this.poolRegistry = poolRegistry;
             this.characterObject = characterObject;
         }
 
@@ -143,7 +144,8 @@ namespace DCL.SDKComponents.LightSource.Systems
                 else
                 {
                     lightSourceInstance.cookie = null;
-                }            }
+                }
+            }
             else
             {
                 lightSourceInstance.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow);
@@ -152,21 +154,27 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         private void SortAndCullLightSources()
         {
-            _ = ListPool<LightSourceComponent>.Get(out var lights);
-            CollectLightSourcesQuery(World, lights);
+            _ = ListPool<LightSourceComponent>.Get(out var activeLights);
+            CollectActiveLightSourcesQuery(World, activeLights);
 
-            if (lights.Count <= SCENE_MAX_LIGHT_COUNT) return;
+            int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * LIGHTS_PER_PARCEL), SCENE_MAX_LIGHT_COUNT);
 
-            var positions = new NativeArray<float3>(lights.Count, Allocator.Temp);
-            for (var i = 0; i < positions.Length; i++) positions[i] = lights[i].LightSourceInstance.transform.position;
+            if (activeLights.Count <= maxLightCount)
+            {
+                ClearLightSourceCullingQuery(World);
+                return;
+            }
+
+            var positions = new NativeArray<float3>(activeLights.Count, Allocator.Temp);
+            for (var i = 0; i < positions.Length; i++) positions[i] = activeLights[i].LightSourceInstance.transform.position;
 
             SortByDistanceToPlayer(characterObject.Position, positions, out var ranks);
 
-            CullLightSourcesQuery(World, ranks);
+            CullLightSourcesQuery(World, ranks, maxLightCount);
         }
 
         [Query]
-        private void CollectLightSources([Data] List<LightSourceComponent> lights, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        private void CollectActiveLightSources([Data] List<LightSourceComponent> lights, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!IsPBLightSourceActive(pbLightSource)) return;
 
@@ -192,12 +200,19 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void CullLightSources([Data] NativeArray<int> ranks, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        private void CullLightSources([Data] NativeArray<int> ranks, [Data] int maxLightCount, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!IsPBLightSourceActive(pbLightSource)) return;
 
             lightSourceComponent.Rank = ranks[lightSourceComponent.Index];
-            lightSourceComponent.IsCulled = lightSourceComponent.Rank >= SCENE_MAX_LIGHT_COUNT;
+            lightSourceComponent.IsCulled = lightSourceComponent.Rank >= maxLightCount;
+        }
+
+        [Query]
+        private void ClearLightSourceCulling(ref LightSourceComponent lightSourceComponent)
+        {
+            lightSourceComponent.Rank = -1;
+            lightSourceComponent.IsCulled = false;
         }
 
         [Query]

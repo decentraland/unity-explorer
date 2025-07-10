@@ -33,7 +33,6 @@ namespace DCL.PluginSystem.World
 
         private IComponentPool<Light>? lightPoolRegistry;
 
-
         public LightSourcePlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
