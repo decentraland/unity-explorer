@@ -155,6 +155,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     animState = extComp.Start.animState,
                     isStunned = extComp.Start.isStunned,
                     isInstant = extComp.Start.isInstant,
+                    isEmoting = extComp.Start.isEmoting,
                 };
 
                 remotePlayerMovement.AddPassed(local, characterControllerSettings);

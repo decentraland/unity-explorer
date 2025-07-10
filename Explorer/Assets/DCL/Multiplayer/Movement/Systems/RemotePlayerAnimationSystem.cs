@@ -103,10 +103,10 @@ namespace DCL.Multiplayer.Movement.Systems
             AnimationStates startAnimStates = intComp.Start.animState;
             AnimationStates endAnimStates = intComp.End.animState;
 
-            bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
-                        && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON;
+            bool bothPointBlendsAreNotZero = !(startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
+                                                                                                  && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON);
 
-            if (!bothPointBlendsAreZero)
+            if (bothPointBlendsAreNotZero)
             {
                 anim.States.MovementBlendValue = Mathf.Lerp(startAnimStates.MovementBlendValue, endAnimStates.MovementBlendValue, intComp.Time / intComp.TotalDuration);
                 anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.SlideBlendValue, endAnimStates.SlideBlendValue, intComp.Time / intComp.TotalDuration);
@@ -114,8 +114,32 @@ namespace DCL.Multiplayer.Movement.Systems
                 anim.States.MovementBlendValue = Mathf.Clamp(anim.States.MovementBlendValue, (uint)MovementKind.IDLE, (uint)MovementKind.RUN);
                 anim.States.SlideBlendValue = Mathf.Max(0, anim.States.SlideBlendValue);
             }
+            else if (Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > RemotePlayerUtils.MOVEMENT_EPSILON &&
+                     intComp.End.timestamp - intComp.Start.timestamp > RemotePlayerUtils.TIME_EPSILON)
+                BlendBetweenTwoZeroMovementPoints(ref anim, intComp);
 
             UpdateLocalBlends(view, anim.States);
+        }
+
+        private static void BlendBetweenTwoZeroMovementPoints(ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
+        {
+            float speed = Vector3.Distance(intComp.Start.position, intComp.End.position) / intComp.TotalDuration;
+
+            // 3 - run, 2 - jog, 1 - walk.
+            float midPointBlendValue = RemotePlayerUtils.GetBlendValueFromSpeed(speed);
+
+            float lerpValue = intComp.Time / intComp.TotalDuration;
+
+            if (intComp.Time < intComp.TotalDuration / 2)
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(intComp.Start.animState.MovementBlendValue, midPointBlendValue, lerpValue);
+                anim.States.SlideBlendValue = Mathf.Lerp(intComp.Start.animState.SlideBlendValue, midPointBlendValue, lerpValue);
+            }
+            else
+            {
+                anim.States.MovementBlendValue = Mathf.Lerp(midPointBlendValue, intComp.End.animState.MovementBlendValue, lerpValue);
+                anim.States.SlideBlendValue = Mathf.Lerp(midPointBlendValue, intComp.End.animState.SlideBlendValue, lerpValue);
+            }
         }
 
         private static void AnimateFutureJump(IAvatarView view, ref CharacterAnimationComponent anim, in AnimationStates animState)
