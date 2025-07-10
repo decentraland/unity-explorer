@@ -1415,6 +1415,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 2987537105166981742}
   <Image>k__BackingField: {fileID: 9127482766625081763}
+  <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 896835535265753280}
+  rectTransform: {fileID: 4353527291144015897}
 --- !u!114 &9212648285223425415
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1771,6 +1774,7 @@ MonoBehaviour:
   publicPrivacySprite: {fileID: 21300000, guid: ce952777a378746d48f3cb3b51815ed9, type: 3}
   privatePrivacySprite: {fileID: 21300000, guid: cee9a3dbf9f6544da96abe48bb2550af, type: 3}
   communityPrivacyText: {fileID: 1598583829820689214}
+  communityMembersSeparator: {fileID: 5717000641063294861}
   communityMembersCountText: {fileID: 5759947373287357163}
   communityLiveMark: {fileID: 7783451404242258191}
   mainButton: {fileID: 7446897494615956440}
@@ -1786,7 +1790,6 @@ MonoBehaviour:
       picture: {fileID: 2573895094594536804}
     - root: {fileID: 4816826890462254729}
       picture: {fileID: 873994822332494481}
-  defaultThumbnailSprite: {fileID: 21300000, guid: 3b627b525f70e419bb278c5d44830db2, type: 3}
 --- !u!1 &8345438408242346082
 GameObject:
   m_ObjectHideFlags: 0

@@ -50,6 +50,7 @@ MonoBehaviour:
   - rid: 8449516130764587014
   - rid: 8813103964372074592
   - rid: 1766526334245273896
+  - rid: 3511243270148325472
   references:
     version: 2
     RefIds:
@@ -243,6 +244,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <VoiceChatSettings>k__BackingField:
+          m_AssetGUID: 88538076b054b4504b11b87773e7393f
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
@@ -482,6 +489,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         parsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 3511243270148325472
+      type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <VoiceChatConfigurations>k__BackingField:
+          m_AssetGUID: dc4b9a0eb614c2c45a09fa14de92fcd8
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

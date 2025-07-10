@@ -33,7 +33,7 @@ namespace DCL.UI.Communities
 
         public void SetDefaultThumbnail()
         {
-            thumbnailImageView.SetImage(defaultEmptyThumbnail);
+            thumbnailImageView.SetImage(defaultEmptyThumbnail, true);
             currentCommunityUrl = null;
         }
 
@@ -52,7 +52,7 @@ namespace DCL.UI.Communities
 
                 if (sprite != null)
                 {
-                    thumbnailImageView.SetImage(sprite);
+                    thumbnailImageView.SetImage(sprite, true);
                     SetLoadingState(false);
                     thumbnailImageView.Alpha = 1f;
                     return;
@@ -81,7 +81,7 @@ namespace DCL.UI.Communities
 
         private async UniTask SetThumbnailImageWithAnimationAsync(Sprite sprite, CancellationToken ct)
         {
-            thumbnailImageView.SetImage(sprite);
+            thumbnailImageView.SetImage(sprite, true);
             thumbnailImageView.ImageEnabled = true;
             await thumbnailImageView.FadeInAsync(fadingDuration, ct);
         }

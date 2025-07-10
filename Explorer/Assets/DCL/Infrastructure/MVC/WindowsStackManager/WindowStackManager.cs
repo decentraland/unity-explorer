@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.InputSystem;
 
 namespace MVC
 {
@@ -7,38 +9,62 @@ namespace MVC
     {
         internal List<IController> popupStack { get; } = new ();
         internal List<IController> persistentStack { get; } = new ();
-        internal IController fullscreenController { get; private set; }
-        internal IController topController { get; private set; }
+        internal IController? fullscreenController { get; private set; }
+        internal IController? topController { get; private set; }
 
         public IController? TopMostPopup => popupStack.LastOrDefault();
         public IController CurrentFullscreenController => fullscreenController;
+
+        private readonly List<(IController controller, UniTaskCompletionSource? onClose)> closeableStack = new ();
+
+        public WindowStackManager()
+        {
+            DCLInput.Instance.UI.Close.performed += CloseNextUI;
+        }
+
+        public void Dispose() =>
+            DCLInput.Instance.UI.Close.performed -= CloseNextUI;
+
+        private void CloseNextUI(InputAction.CallbackContext obj)
+        {
+            closeableStack.LastOrDefault().onClose?.TrySetResult();
+        }
 
         public PopupPushInfo PushPopup(IController controller)
         {
             int orderInLayer = popupStack.Count * 2;
             popupStack.Add(controller);
-            
+
+            UniTaskCompletionSource? onClose = null;
+
+            if (controller.CanBeClosedByEscape)
+                closeableStack.Add((controller, onClose = new UniTaskCompletionSource()));
+
             foreach (var persistant in persistentStack)
                 if (persistant.State == ControllerState.ViewFocused)
                     persistant.Blur();
-            
+
             return new PopupPushInfo(
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer),
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer - 1),
-                    popupStack.Count >= 2 ? popupStack[^2] : null);
+                    popupStack.Count >= 2 ? popupStack[^2] : null,
+                    onClose);
         }
-
-
 
         public FullscreenPushInfo PushFullscreen(IController controller)
         {
             fullscreenController = controller;
 
+            UniTaskCompletionSource? onClose = null;
+
+            if (controller.CanBeClosedByEscape)
+                closeableStack.Add((controller, onClose = new UniTaskCompletionSource()));
+
             foreach (IController persistentController in persistentStack)
                 if(persistentController.State == ControllerState.ViewFocused)
                     persistentController.Blur();
 
-            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0));
+            return new FullscreenPushInfo(popupStack, new CanvasOrdering(CanvasOrdering.SortingLayer.Fullscreen, 0), onClose);
         }
 
         public void PopFullscreen(IController controller)
@@ -47,6 +73,10 @@ namespace MVC
                 persistentController.Focus();
 
             fullscreenController = null;
+
+            if (!controller.CanBeClosedByEscape) return;
+
+            TryPopCloseable(controller);
         }
 
         public PersistentPushInfo PushPersistent(IController controller)
@@ -79,11 +109,27 @@ namespace MVC
                     if (persistant.State == ControllerState.ViewBlurred)
                         persistant.Focus();
             }
-            
-            
+
+            TryPopCloseable(controller);
+
             return new PopupPopInfo(
                 new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, ((popupStack.Count - 1) * 2) - 1),
                 TopMostPopup);
+        }
+
+        private void TryPopCloseable(IController controller)
+        {
+            if (controller.CanBeClosedByEscape)
+            {
+                for (var i = 0; i < closeableStack.Count; i++)
+                {
+                    if (closeableStack[i].controller == controller)
+                    {
+                        closeableStack.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -92,12 +138,14 @@ namespace MVC
         public readonly CanvasOrdering ControllerOrdering;
         public readonly CanvasOrdering PopupCloserOrdering;
         public readonly IController? PreviousController;
+        public readonly UniTaskCompletionSource? OnClose;
 
-        public PopupPushInfo(CanvasOrdering controllerOrdering, CanvasOrdering popupCloserOrdering, IController? previousController)
+        public PopupPushInfo(CanvasOrdering controllerOrdering, CanvasOrdering popupCloserOrdering, IController? previousController, UniTaskCompletionSource? onClose)
         {
             this.ControllerOrdering = controllerOrdering;
             this.PopupCloserOrdering = popupCloserOrdering;
             this.PreviousController = previousController;
+            OnClose = onClose;
         }
     }
 
@@ -117,11 +165,13 @@ namespace MVC
     {
         public readonly List<IController> PopupControllers;
         public readonly CanvasOrdering ControllerOrdering;
+        public readonly UniTaskCompletionSource? OnClose;
 
-        public FullscreenPushInfo(List<IController> popupControllers, CanvasOrdering controllerOrdering)
+        public FullscreenPushInfo(List<IController> popupControllers, CanvasOrdering controllerOrdering, UniTaskCompletionSource? onClose)
         {
             this.PopupControllers = popupControllers;
             ControllerOrdering = controllerOrdering;
+            OnClose = onClose;
         }
     }
 

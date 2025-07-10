@@ -65,5 +65,7 @@ Explorer/UserSettings
 .DS_Store
 .DS_Store?
 
-# Cursor.AI
+# Cursor Rules
+**/.cursor/
+Explorer/.cursorignore
 .cursorignore

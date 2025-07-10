@@ -2104,7 +2104,7 @@
                     "name": "Backpack",
                     "type": "Button",
                     "id": "22261e3d-8587-4a52-bd3c-378cbe477a19",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2194,7 +2194,7 @@
                     "name": "OpenChat",
                     "type": "Button",
                     "id": "430e31be-9d28-4c75-a904-851e595a70c1",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -2383,7 +2383,7 @@
                 {
                     "name": "",
                     "id": "936aa25d-52b8-4067-ab14-76c9c847d3f5",
-                    "path": "<Keyboard>/t",
+                    "path": "<Keyboard>/o",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -3695,6 +3695,34 @@
                     "processors": "",
                     "groups": "",
                     "action": "ToggleNametags",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "VoiceChat",
+            "id": "5eeff51b-88c9-467f-bc3c-c27cbfc35f3c",
+            "actions": [
+                {
+                    "name": "Talk",
+                    "type": "Button",
+                    "id": "ac43f17c-f5a8-4949-8602-3b5b32184e64",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "bafd4790-6aa0-468e-9fe0-169c595ad93e",
+                    "path": "<Keyboard>/t",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Talk",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
