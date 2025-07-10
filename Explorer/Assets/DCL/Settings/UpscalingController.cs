@@ -73,7 +73,7 @@ namespace DCL.Utilities
             {
                 currentUIOpened--;
                 if (currentUIOpened == 0)
-                    SetUpscaling(savedUpscalingDuringUIOpen, UpscalingFilterSelection.FSR);
+                    UpdateUpscaling(savedUpscalingDuringUIOpen);
             }
         }
 
