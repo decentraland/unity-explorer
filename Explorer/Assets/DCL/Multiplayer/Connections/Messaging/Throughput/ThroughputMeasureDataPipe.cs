@@ -22,10 +22,10 @@ namespace DCL.Multiplayer.Connections.Systems.Throughput
             this.origin.DataReceived += OriginOnDataReceived;
         }
 
-        private void OriginOnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
+        private void OriginOnDataReceived(ReadOnlySpan<byte> data, Participant participant, string topic, DataPacketKind kind)
         {
             incomingThroughputBuffer.Register((ulong)data.Length);
-            DataReceived?.Invoke(data, participant, kind);
+            DataReceived?.Invoke(data, participant, topic, kind);
         }
 
         public void PublishData(Span<byte> data, string topic, IReadOnlyCollection<string> destinationSids, DataPacketKind kind)

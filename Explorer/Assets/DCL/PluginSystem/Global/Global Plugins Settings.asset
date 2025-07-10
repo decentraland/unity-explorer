@@ -49,6 +49,8 @@ MonoBehaviour:
   - rid: 7621844642437005315
   - rid: 8449516130764587014
   - rid: 8813103964372074592
+  - rid: 1766526334245273896
+  - rid: 3511243270148325472
   references:
     version: 2
     RefIds:
@@ -246,6 +248,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <VoiceChatSettings>k__BackingField:
+          m_AssetGUID: 88538076b054b4504b11b87773e7393f
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <VideoPrioritizationSettings>k__BackingField:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
           m_SubObjectName: 
@@ -295,6 +303,27 @@ MonoBehaviour:
         <PlaceGridLayoutFixedColumnCount>k__BackingField: 1
         <PlaceThumbnailHeight>k__BackingField: 320
         <PlaceThumbnailWidth>k__BackingField: 404
+    - rid: 1766526334245273896
+      type: {class: CommunitiesPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <CommunityCardPrefab>k__BackingField:
+          m_AssetGUID: 4f900819503d2412194e6de3e5a95ba0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        <CommunityCreationEditionPrefab>k__BackingField:
+          m_AssetGUID: 24aec0b5ead4ec44081cf47744a7a268
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 1
+        <EventInfoPrefab>k__BackingField:
+          m_AssetGUID: 112ec96d4c89d41d68b03e4ba73992e9
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -460,6 +489,15 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         parsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 3511243270148325472
+      type: {class: VoiceChatPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <VoiceChatConfigurations>k__BackingField:
+          m_AssetGUID: dc4b9a0eb614c2c45a09fa14de92fcd8
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -66,9 +67,11 @@ namespace DCL.Friends.UI.FriendPanel
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
             bool includeUserBlocking,
+            bool includeCall,
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
-            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             dclInput = DCLInput.Instance;
@@ -101,7 +104,9 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     chatEventBus,
-                    sharedSpaceManager);
+                    sharedSpaceManager,
+                    includeCall,
+                    voiceChatCallStatusService);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
@@ -188,7 +193,7 @@ namespace DCL.Friends.UI.FriendPanel
         private async UniTaskVoid OpenChatConversationAsync(Web3Address web3Address)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(web3Address);
+            chatEventBus.OpenPrivateConversationUsingUserId(web3Address);
         }
 
         private void CloseFriendsPanel(InputAction.CallbackContext obj) =>

@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public IConnectiveRoom.ConnectionLoopHealth CurrentConnectionLoopHealth => Activated ? origin.CurrentConnectionLoopHealth : IConnectiveRoom.ConnectionLoopHealth.Stopped;
 
-        public AttemptToConnectState AttemptToConnectState => Activated ? origin.AttemptToConnectState : AttemptToConnectState.None;
+        public AttemptToConnectState AttemptToConnectState => Activated ? origin.AttemptToConnectState : AttemptToConnectState.NONE;
 
         public ActivatableConnectiveRoom(IConnectiveRoom origin, bool initialState = true)
         {
