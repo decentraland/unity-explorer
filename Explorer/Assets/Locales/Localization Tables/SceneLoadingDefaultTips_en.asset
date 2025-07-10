@@ -81,8 +81,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 197098653933887488
-    m_Localized: Get a NAME, unlock a whole World! Separate from Genesis City, use
-      your World to hang out, host events, or experiment with scene building.
+    m_Localized: Get a <b>NAME</b>, unlock a whole World! Separate from Genesis City,
+      use your World to hang out, host events, or experiment with scene building.
     m_Metadata:
       m_Items: []
   - m_Id: 197098893369925632
