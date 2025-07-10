@@ -93,6 +93,8 @@ namespace MVC
                         persistant.Focus();
             }
 
+            // We get the topmost popup after removing the current one so that we can calculate the new popup closer ordering
+            // and configure the new top most, if exists
             IController? topMostPopup = TopMostPopup;
 
             return new PopupPopInfo(
