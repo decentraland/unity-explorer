@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
+using DCL.Character;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -19,6 +20,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
+using Utility;
 using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
@@ -33,7 +35,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
-        private readonly IChatHistory chatHistory;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> initOps;
         private readonly SequentialLoadingOperation<IStartupOperation.Params> reloginOps;
 
@@ -43,6 +44,10 @@ namespace DCL.UserInAppInitializationFlow
         private readonly CheckOnboardingStartupOperation checkOnboardingStartupOperation;
         private readonly IWeb3IdentityCache identityCache;
         private readonly IAppArgs appArgs;
+        private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
+
+        private readonly ICharacterObject characterObject;
+        private readonly StartParcel startParcel;
 
         public RealUserInAppInitializationFlow(
             ILoadingStatus loadingStatus,
@@ -54,18 +59,23 @@ namespace DCL.UserInAppInitializationFlow
             IRealmController realmController,
             IPortableExperiencesController portableExperiencesController,
             IRoomHub roomHub,
-            IChatHistory chatHistory,
             SequentialLoadingOperation<IStartupOperation.Params> initOps,
             SequentialLoadingOperation<IStartupOperation.Params> reloginOps,
             CheckOnboardingStartupOperation checkOnboardingStartupOperation,
             IWeb3IdentityCache identityCache,
-            IAppArgs appArgs)
+            EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
+            IAppArgs appArgs,
+            ICharacterObject characterObject,
+            StartParcel startParcel)
         {
             this.initOps = initOps;
             this.reloginOps = reloginOps;
             this.checkOnboardingStartupOperation = checkOnboardingStartupOperation;
             this.identityCache = identityCache;
+            this.ensureLivekitConnectionStartupOperation = ensureLivekitConnectionStartupOperation;
             this.appArgs = appArgs;
+            this.characterObject = characterObject;
+            this.startParcel = startParcel;
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -75,7 +85,6 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingScreen = loadingScreen;
             this.realmController = realmController;
             this.portableExperiencesController = portableExperiencesController;
-            this.chatHistory = chatHistory;
             this.roomHub = roomHub;
         }
 
@@ -131,6 +140,10 @@ namespace DCL.UserInAppInitializationFlow
                     ? reloginOps
                     : initOps;
 
+                //Set initial position and start async livekit connection
+                characterObject.Controller.transform.position = startParcel.Peek().ParcelToPositionFlat();
+                var livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
@@ -150,11 +163,16 @@ namespace DCL.UserInAppInitializationFlow
                     );
 
                 result = loadingResult;
-
                 if (result.Success == false)
                 {
+                    //Fail straight away
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
+                }
+                else
+                {
+                    //Wait for livekit to end handshake
+                    result = await livekitHandshake;
                 }
             }
             while (result.Success == false && parameters.ShowAuthentication);
@@ -188,9 +206,7 @@ namespace DCL.UserInAppInitializationFlow
                 return UniTask.CompletedTask;
 
             if (result.Error is { Exception: UserBlockedException })
-            {
                 return mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
-            }
 
             var message = $"{ToMessage(result)}\nPlease try again";
             return mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.FromDescription(message)), ct);

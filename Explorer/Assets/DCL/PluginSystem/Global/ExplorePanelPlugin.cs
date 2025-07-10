@@ -302,6 +302,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
             ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
             ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+            ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VoiceChatSettings, ct);
             ProvidedAsset<VideoPrioritizationSettings> videoPrioritizationSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.VideoPrioritizationSettings, ct);
 
             ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
@@ -367,8 +368,10 @@ namespace DCL.PluginSystem.Global
                 chatSettingsAsset.Value,
                 userBlockingCacheProxy,
                 sceneLoadingLimit,
+                voiceChatSettings.Value,
                 worldVolumeMacBus,
                 upscalingController);
+
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
                 mapRendererContainer.MapRenderer,
@@ -516,6 +519,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
+
+            [field: SerializeField]
+            public StaticSettings.VoiceChatSettingsRef VoiceChatSettings { get; private set; }
 
             [field: SerializeField]
             public StaticSettings.VideoPrioritizationSettingsRef VideoPrioritizationSettings { get; private set; }

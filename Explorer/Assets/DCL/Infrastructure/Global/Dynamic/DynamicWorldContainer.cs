@@ -87,6 +87,8 @@ using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
+using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
@@ -372,10 +374,13 @@ namespace Global.Dynamic
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
 
+            var voiceChatRoom = new VoiceChatActivatableConnectiveRoom();
+
             IRoomHub roomHub = new RoomHub(
                 localSceneDevelopment ? IConnectiveRoom.Null.INSTANCE : archipelagoIslandRoom,
                 gateKeeperSceneRoom,
-                chatRoom
+                chatRoom,
+                voiceChatRoom
             );
 
             var islandThroughputBunch = new ThroughputBufferBunch(new ThroughputBuffer(), new ThroughputBuffer());
@@ -414,26 +419,19 @@ namespace Global.Dynamic
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
-                ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
-                : new SequentialHealthCheck(
-                    new MultipleURLHealthCheck(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource,
-                        DecentralandUrl.ArchipelagoStatus,
-                        DecentralandUrl.GatekeeperStatus
-                    ),
-                    new StartLiveKitRooms(roomHub)
-                );
+                ? new IHealthCheck.AlwaysFails() :
+                  new StartLiveKitRooms(roomHub);
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
                 : livekitHealthCheck;
-
-            livekitHealthCheck.WithRetries();
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
 
             bool includeCameraReel = featureFlags.IsEnabled(FeatureFlagsStrings.CAMERA_REEL) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.CAMERA_REEL)) || Application.isEditor;
             bool includeFriends = (featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS)) || Application.isEditor) && !localSceneDevelopment;
             bool includeUserBlocking = featureFlags.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.FRIENDS_USER_BLOCKING));
+            bool includeVoiceChat = includeFriends && includeUserBlocking && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT)));
             bool isNameEditorEnabled = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor;
             bool includeMarketplaceCredits = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
 
@@ -457,8 +455,8 @@ namespace Global.Dynamic
                 appArgs,
                 backgroundMusic,
                 roomHub,
-                chatHistory,
-                localSceneDevelopment);
+                localSceneDevelopment,
+                staticContainer.CharacterContainer.CharacterObject);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(initializationFlowContainer.InitializationFlow, playerEntity, globalWorld);
 
@@ -547,6 +545,9 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
+            IVoiceService voiceService = new RPCVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
+            IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService);
+
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
@@ -615,7 +616,8 @@ namespace Global.Dynamic
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
                 profileRepository,
-                sharedSpaceManager);
+                sharedSpaceManager,
+                includeVoiceChat);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -652,7 +654,8 @@ namespace Global.Dynamic
                     characterDataPropagationUtility,
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
                     islandThroughputBunch,
-                    sceneThroughputBunch
+                    sceneThroughputBunch,
+                    voiceChatRoom
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.SceneReadinessReportQueue),
@@ -721,7 +724,9 @@ namespace Global.Dynamic
                     communitiesDataProvider,
                     thumbnailCache,
                     mainUIView.WarningNotification,
-                    communitiesEventBus),
+                    communitiesEventBus,
+                    voiceChatCallStatusService,
+                    includeVoiceChat),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -852,15 +857,30 @@ namespace Global.Dynamic
                     includeFriends,
                     includeUserBlocking,
                     isNameEditorEnabled,
+                    includeVoiceChat,
                     chatEventBus,
                     sharedSpaceManager,
-                    profileRepositoryWrapper
+                    profileRepositoryWrapper,
+                    voiceChatCallStatusService
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
             };
+
+            if (includeVoiceChat)
+                globalPlugins.Add(
+                    new VoiceChatPlugin(
+                        assetsProvisioner,
+                        roomHub,
+                        mainUIView,
+                        voiceChatCallStatusService,
+                        profileRepositoryWrapper,
+                        entityParticipantTable,
+                        globalWorld,
+                        playerEntity));
+
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
@@ -895,6 +915,7 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking,
+                    includeVoiceChat,
                     appArgs,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
@@ -907,7 +928,8 @@ namespace Global.Dynamic
                     friendOnlineStatusCacheProxy,
                     friendsCacheProxy,
                     userBlockingCacheProxy,
-                    profileRepositoryWrapper
+                    profileRepositoryWrapper,
+                    voiceChatCallStatusService
                 );
 
                 globalPlugins.Add(friendsContainer);
