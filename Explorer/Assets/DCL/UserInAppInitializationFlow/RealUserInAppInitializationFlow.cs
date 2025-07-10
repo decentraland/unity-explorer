@@ -161,7 +161,6 @@ namespace DCL.UserInAppInitializationFlow
                             else
                             {
                                 Debug.Log("JUANI HERE WE SHOULD AWAIT");
-
                                 //Wait for livekit to end handshake
                                 operationResult = await livekitHandshake;
 
