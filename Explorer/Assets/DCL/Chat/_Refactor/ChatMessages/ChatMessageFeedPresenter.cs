@@ -4,6 +4,8 @@ using DCL.Profiles;
 using DCL.UI.InputFieldFormatting;
 using DCL.Web3.Identities;
 using DCL.Chat;
+using Decentraland.Realm;
+using DG.Tweening;
 
 public class ChatMessageFeedPresenter : IDisposable
 {
@@ -53,5 +55,10 @@ public class ChatMessageFeedPresenter : IDisposable
     public void Hide()
     {
         view.Hide();
+    }
+
+    public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
+    {
+        view.SetFocusedState(isFocused, animate, duration,easing);
     }
 }

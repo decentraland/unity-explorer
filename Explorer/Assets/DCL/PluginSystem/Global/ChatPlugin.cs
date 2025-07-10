@@ -184,7 +184,8 @@ namespace DCL.PluginSystem.Global
                 chatMessagesBus,
                 friendsServiceProxy,
                 chatService,
-                chatMemberService
+                chatMemberService, 
+                new ChatInputBlockingService(inputBlock, world)
             );
             
             // chatController = new ChatController(

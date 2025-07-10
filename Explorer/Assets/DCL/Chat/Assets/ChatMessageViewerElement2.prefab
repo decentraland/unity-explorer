@@ -613,3 +613,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3c4e7208792420abc59acba4eb77b2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scrollbarCanvasGroup: {fileID: 860361653977147949}
+  messagesPanelBackgroundCanvasGroup: {fileID: 0}

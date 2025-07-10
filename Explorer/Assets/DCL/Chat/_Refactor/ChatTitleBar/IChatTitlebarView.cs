@@ -1,6 +1,7 @@
 ﻿using System;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
+using DG.Tweening;
 
 namespace DCL.Chat
 {
@@ -43,5 +44,7 @@ namespace DCL.Chat
         /// Switches the title bar into “nearby channel” mode (icon + count, no profile).
         /// </summary>
         void SetNearbyChannelImage();
+
+        void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing);
     }
 }

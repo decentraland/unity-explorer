@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using MVC;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -13,6 +14,9 @@ namespace DCL.Chat
      
         [field: SerializeField]
         public ChatConfig Config { get; private set; }
+        
+        [SerializeField]
+        private CanvasGroup sharedBackgroundCanvasGroup;
         
         [field: SerializeField]
         public ChatChannelsView ConversationToolbarView2 { get; private set; }
@@ -41,6 +45,28 @@ namespace DCL.Chat
         public void OnPointerExit(PointerEventData eventData)
         {
             OnPointerExitEvent?.Invoke();
+        }
+        
+        public void SetSharedBackgroundFocusState(bool isFocused, bool animate, float duration, Ease easing)
+        {
+            // This is the logic that was previously in ChatMessageFeedView, now in its correct home.
+            sharedBackgroundCanvasGroup.DOKill();
+
+            float targetAlpha = isFocused ? 1.0f : 0.0f;
+            float fadeDuration = animate ? duration : 0f;
+
+            if (isFocused && !sharedBackgroundCanvasGroup.gameObject.activeSelf)
+                sharedBackgroundCanvasGroup.gameObject.SetActive(true);
+
+            sharedBackgroundCanvasGroup.DOFade(targetAlpha, fadeDuration)
+                .SetEase(easing)
+                .OnComplete(() =>
+                {
+                    if (!isFocused)
+                    {
+                        sharedBackgroundCanvasGroup.gameObject.SetActive(false);
+                    }
+                });
         }
     }
 }

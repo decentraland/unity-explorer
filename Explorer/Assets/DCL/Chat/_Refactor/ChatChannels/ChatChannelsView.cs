@@ -23,6 +23,9 @@ namespace DCL.Chat
         public RectTransform ItemsContainer => itemsContainer;
 
         [SerializeField]
+        private CanvasGroup conversationsToolbarCanvasGroup;
+        
+        [SerializeField]
         private ChatConversationsToolbarViewItem itemPrefab;
 
         [SerializeField]
@@ -320,6 +323,32 @@ namespace DCL.Chat
         public void Hide()
         {
             gameObject.SetActive(false);
+        }
+        
+        /// <summary>
+        /// Sets the visual focus state for the conversations toolbar.
+        /// </summary>
+        public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
+        {
+            conversationsToolbarCanvasGroup.DOKill();
+
+            float targetAlpha = isFocused ? 1.0f : 0.0f;
+            float fadeDuration = animate ? duration : 0f;
+
+            if (isFocused && !conversationsToolbarCanvasGroup.gameObject.activeSelf)
+            {
+                conversationsToolbarCanvasGroup.gameObject.SetActive(true);
+            }
+
+            conversationsToolbarCanvasGroup.DOFade(targetAlpha, fadeDuration)
+                .SetEase(easing)
+                .OnComplete(() =>
+                {
+                    if (!isFocused)
+                    {
+                        conversationsToolbarCanvasGroup.gameObject.SetActive(false);
+                    }
+                });
         }
     }
 }

@@ -5,31 +5,26 @@ using DCL.Chat;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.Settings.Settings;
 using DCL.Utilities.Extensions;
 using Utility;
 
 public class ChatInputPresenter : IDisposable
 {
     private readonly IChatInputView view;
-    private readonly ChatSettingsAsset chatSettings;
-    private readonly DCLInput dclInput;
     private readonly ChatUserStateUpdater userStateUpdater;
     private readonly IChatEventBus chatEventBus;
 
     public event Action<string>? OnMessageSubmitted;
-    public event Action<bool>? OnFocusChanged;
+    public event Action? OnFocusRequested;
 
     private CancellationTokenSource cts = new ();
 
     public ChatInputPresenter(
         IChatInputView view,
-        ChatSettingsAsset chatSettings,
         IChatEventBus chatEventBus,
         ChatUserStateUpdater userStateUpdater)
     {
         this.view = view;
-        this.chatSettings = chatSettings;
         this.chatEventBus = chatEventBus;
         this.userStateUpdater = userStateUpdater;
     }
@@ -37,7 +32,7 @@ public class ChatInputPresenter : IDisposable
     public void Activate()
     {
         view.OnMessageSubmitted += HandleMessageSubmitted;
-        view.OnFocusChanged += HandleFocusChanged;
+        view.OnFocusRequested += HandleFocusRequested;
         view.OnInputChanged += OnInputChanged;
         chatEventBus.InsertTextInChat += HandleExternalTextInsert;
     }
@@ -52,19 +47,31 @@ public class ChatInputPresenter : IDisposable
         view.SetText("");
     }
 
-    private void HandleFocusChanged(bool isFocused)
+    private void HandleFocusRequested()
     {
-        OnFocusChanged?.Invoke(isFocused);
+        OnFocusRequested?.Invoke();
     }
 
     public void Dispose()
     {
         view.OnMessageSubmitted -= HandleMessageSubmitted;
-        view.OnFocusChanged -= HandleFocusChanged;
+        view.OnFocusRequested -= HandleFocusRequested;
         view.OnInputChanged -= OnInputChanged;
         chatEventBus.InsertTextInChat -= HandleExternalTextInsert;
     }
 
+    public void SetActiveMode()
+    {
+        view.SetMode(IChatInputView.Mode.Active);
+        view.Focus();
+    }
+    
+    public void SetInactiveMode()
+    {
+        view.SetMode(IChatInputView.Mode.InactiveAsButton, "Type a message...");
+        view.Blur();
+    }
+    
     public void UpdateStateForChannel(ChatChannel channel)
     {
         // Cancel any previous async operations for the old channel

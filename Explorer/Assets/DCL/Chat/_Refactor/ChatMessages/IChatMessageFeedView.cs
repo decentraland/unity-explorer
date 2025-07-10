@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using DG.Tweening;
 
 namespace DCL.Chat
 {
@@ -11,6 +12,7 @@ namespace DCL.Chat
         
         void Show();
         void Hide();
+        void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing);
     }
 
     public struct MessageData

@@ -60,6 +60,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa423cacd93c0f244bef7ff47353248a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  titlebarCanvasGroup: {fileID: 9111567310657758593}
   closeChatButton: {fileID: 6222006478207707182}
   closeMemberListButton: {fileID: 4711251327527979724}
   showMemberListButton: {fileID: 5260009288981094937}

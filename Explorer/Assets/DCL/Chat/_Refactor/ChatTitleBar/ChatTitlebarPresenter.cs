@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
+using DG.Tweening;
 using UnityEngine;
 
 public class ChatTitlebarPresenter : IDisposable
@@ -72,5 +73,10 @@ public class ChatTitlebarPresenter : IDisposable
     {
         view.OnCloseClicked -= OnCloseButtonClicked;
         view.OnMemberListToggled -= OnMemberListToggled;
+    }
+
+    public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
+    {
+        view.SetFocusedState(isFocused, animate, duration, easing);
     }
 }

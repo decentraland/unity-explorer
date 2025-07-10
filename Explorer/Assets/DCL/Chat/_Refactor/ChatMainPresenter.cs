@@ -9,9 +9,9 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
-using DG.Tweening.Core.Easing;
 using MVC;
 using Prime31.StateKit;
+using UnityEngine;
 
 namespace DCL.Chat
 {
@@ -20,6 +20,8 @@ namespace DCL.Chat
     {
         public event Action OnPointerEnter;
         public event Action OnPointerExit;
+        public event Action OnClickInside;
+        public event Action OnClickOutside;
         
         private readonly IChatHistory chatHistory;
         private readonly IChatMessagesBus chatMessagesBus;
@@ -27,15 +29,19 @@ namespace DCL.Chat
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ChatService chatService;
         private readonly ChatMemberListService chatMemberListService;
-            
+        private ChatClickDetectionService chatClickDetectionService;
+        private ChatInputBlockingService chatInputBlockingService;
+        
         private readonly IChatPresenterFactory presenterFactory;
         public ChatTitlebarPresenter? titleBarPresenter;
         public ChatChannelsPresenter? chatChannelsPresenter;
         public ChatMemberListPresenter? memberListPresenter;
         public ChatMessageFeedPresenter? messageViewerPresenter;
         public ChatInputPresenter? chatInputPresenter;
-
+        
+        private ChatConfig config;
         private SKStateMachine<ChatMainPresenter> fsm;
+        
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
         public ChatChannel.ChannelId CurrentChannelId { get; set; }
         
@@ -49,7 +55,8 @@ namespace DCL.Chat
             IChatMessagesBus chatMessagesBus,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             ChatService chatService,
-            ChatMemberListService chatMemberListService) : base(viewFactory)
+            ChatMemberListService chatMemberListService,
+            ChatInputBlockingService chatInputBlockingService) : base(viewFactory)
         {
             this.presenterFactory = presenterFactory;
             this.chatHistory = chatHistory;
@@ -57,11 +64,15 @@ namespace DCL.Chat
             this.friendsServiceProxy = friendsServiceProxy;
             this.chatService = chatService;
             this.chatMemberListService = chatMemberListService;
+            this.chatInputBlockingService = chatInputBlockingService;
         }
 
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
+            
+            config = viewInstance?.Config;
+            chatClickDetectionService = new ChatClickDetectionService(viewInstance.transform as RectTransform);
             
             chatChannelsPresenter = presenterFactory.CreateConversationList(viewInstance.ConversationToolbarView2,viewInstance.Config);
             memberListPresenter = presenterFactory.CreateMemberList(viewInstance.MemberListView);
@@ -74,6 +85,9 @@ namespace DCL.Chat
         {
             base.OnViewShow();
             
+            chatClickDetectionService.Initialize();
+            chatInputBlockingService.Initialize();
+            
             SubscribeToGlobalEvents();
             EnableChildPresenters();
             SetupFiniteStateMachine();
@@ -84,6 +98,7 @@ namespace DCL.Chat
 
         protected override void OnViewClose()
         {
+            chatClickDetectionService.Dispose();
             UnsubscribeFromGlobalEvents();
             Dispose();
         }
@@ -115,6 +130,9 @@ namespace DCL.Chat
             return fsm.currentState is MinimizedChatState;
         }
 
+        public void BlockPlayerInput() => chatInputBlockingService.Block();
+        public void UnblockPlayerInput() => chatInputBlockingService.Unblock();
+        
         private void OnHistoryReadMessagesChanged(ChatChannel changedChannel)
         {
             
@@ -169,10 +187,6 @@ namespace DCL.Chat
             fsm.changeState<MinimizedChatState>();
         }
 
-        private void HandleInputFocusChanged(bool isFocused)
-        {
-        }
-
         private void HandleMessageSubmitted(string message)
         {
         }
@@ -188,11 +202,10 @@ namespace DCL.Chat
         {
             if (State != ControllerState.ViewHidden)
             {
-                if (showParams.Unfold)
-                    fsm.changeState<DefaultChatState>();
-                
                 if (showParams.Focus)
                     fsm.changeState<FocusedChatState>();
+                else
+                    fsm.changeState<DefaultChatState>();
 
                 ViewShowingComplete?.Invoke(this);
             }
@@ -214,6 +227,9 @@ namespace DCL.Chat
             viewInstance.OnPointerEnterEvent += () => OnPointerEnter?.Invoke();
             viewInstance.OnPointerExitEvent += () => OnPointerExit?.Invoke();
             
+            chatClickDetectionService.OnClickInside += () => OnClickInside?.Invoke();
+            chatClickDetectionService.OnClickOutside += () => OnClickOutside?.Invoke();
+            
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
             chatHistory.MessageAdded += HandleBusMessageAdded;
             chatHistory.ChannelAdded += OnHistoryChannelAdded;
@@ -222,7 +238,6 @@ namespace DCL.Chat
             
             if (chatInputPresenter != null)
             {
-                chatInputPresenter.OnFocusChanged += HandleInputFocusChanged;
                 chatInputPresenter!.OnMessageSubmitted += HandleMessageSubmitted;
             }
             
@@ -238,6 +253,9 @@ namespace DCL.Chat
         
         private void UnsubscribeFromGlobalEvents()
         {
+            chatClickDetectionService.OnClickInside -= () => OnClickInside?.Invoke();
+            chatClickDetectionService.OnClickOutside -= () => OnClickOutside?.Invoke();
+            
             if (viewInstance != null)
             {
                 viewInstance.OnPointerEnterEvent -= () => OnPointerEnter?.Invoke();
@@ -257,7 +275,6 @@ namespace DCL.Chat
 
             if (chatInputPresenter != null)
             {
-                chatInputPresenter.OnFocusChanged -= HandleInputFocusChanged;
                 chatInputPresenter!.OnMessageSubmitted -= HandleMessageSubmitted;
             }
             
@@ -272,5 +289,13 @@ namespace DCL.Chat
         }
         
         #endregion
+        
+        public void SetPanelsFocusState(bool isFocused, bool animate)
+        {
+            viewInstance.SetSharedBackgroundFocusState(isFocused, animate, config.PanelsFadeDuration, config.PanelsFadeEase);
+            messageViewerPresenter?.SetFocusState(isFocused, animate, config.PanelsFadeDuration,config.PanelsFadeEase);
+            chatChannelsPresenter?.SetFocusState(isFocused, animate, config.PanelsFadeDuration,config.PanelsFadeEase);
+            titleBarPresenter?.SetFocusState(isFocused, animate, config.PanelsFadeDuration,config.PanelsFadeEase);
+        }
     }
 }

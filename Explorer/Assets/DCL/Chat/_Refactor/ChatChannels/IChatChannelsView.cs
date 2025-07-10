@@ -1,6 +1,7 @@
 using System;
 using DCL.Chat;
 using DCL.Chat.History;
+using DG.Tweening;
 using UnityEngine;
 
 public interface IChatChannelsView
@@ -18,6 +19,7 @@ public interface IChatChannelsView
     void Clear();
     void Show();
     void Hide();
+    void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing);
 }
 
 public struct ChannelData

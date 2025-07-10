@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
+using DG.Tweening;
 using MVC;
 using TMPro;
 using UnityEngine;
@@ -23,6 +24,9 @@ namespace DCL.Chat
         public event Action? ShowMemberListButtonClicked;
         public event Action? OnCloseClicked;
         public event Action<bool>? OnMemberListToggled;
+        
+        [SerializeField]
+        private CanvasGroup titlebarCanvasGroup;
 
         public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
@@ -181,6 +185,27 @@ namespace DCL.Chat
             contextMenuTask.TrySetResult();
         }
 
+        public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
+        {
+            titlebarCanvasGroup.DOKill();
 
+            float targetAlpha = isFocused ? 1.0f : 0.0f;
+            float fadeDuration = animate ? duration : 0f;
+
+            if (isFocused && !titlebarCanvasGroup.gameObject.activeSelf)
+            {
+                titlebarCanvasGroup.gameObject.SetActive(true);
+            }
+
+            titlebarCanvasGroup.DOFade(targetAlpha, fadeDuration)
+                .SetEase(easing)
+                .OnComplete(() =>
+                {
+                    if (!isFocused)
+                    {
+                        titlebarCanvasGroup.gameObject.SetActive(false);
+                    }
+                });
+        }
     }
 }

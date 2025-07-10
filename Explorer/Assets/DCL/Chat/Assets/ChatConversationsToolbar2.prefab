@@ -211,6 +211,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemsContainer: {fileID: 7875868355308157262}
+  conversationsToolbarCanvasGroup: {fileID: 4025732971463603902}
   itemPrefab: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
   scrollButtons: {fileID: 2068074894267333311}
   scrollView: {fileID: 1871078318757654258}

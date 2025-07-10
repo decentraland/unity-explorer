@@ -5,6 +5,7 @@ using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
+using DG.Tweening;
 
 public class ChatChannelsPresenter : IDisposable
 {
@@ -105,5 +106,10 @@ public class ChatChannelsPresenter : IDisposable
     public void Hide()
     {
         view.Hide();
+    }
+
+    public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
+    {
+        view.SetFocusedState(isFocused, animate, duration,easing);
     }
 }

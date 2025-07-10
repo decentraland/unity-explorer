@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 
 namespace DCL.Chat
@@ -17,5 +18,14 @@ namespace DCL.Chat
     
         [field: SerializeField]
         public string NearbyConversationName { get; private set; } = "Nearby";
+        
+        [field: Header("Animations")]
+        [field: Tooltip("The time in seconds it takes for the main panels to fade in/out.")]
+        [field: SerializeField]
+        public float PanelsFadeDuration { get; private set; } = 0.2f;
+
+        [field: Tooltip("The easing function to use for the panel fade animation.")]
+        [field: SerializeField]
+        public Ease PanelsFadeEase { get; private set; } = Ease.OutQuad;
     }
 }

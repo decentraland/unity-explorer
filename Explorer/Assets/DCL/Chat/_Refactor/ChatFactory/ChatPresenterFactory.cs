@@ -121,7 +121,7 @@ public class ChatPresenterFactory : IChatPresenterFactory
 
     public ChatInputPresenter CreateChatInput(IChatInputView view)
     {
-        return new ChatInputPresenter(view, chatSettings, chatEventBus,chatUserStateUpdater);
+        return new ChatInputPresenter(view, chatEventBus,chatUserStateUpdater);
     }
 
     public ChatTitlebarPresenter CreateTitlebar(IChatTitlebarView view)

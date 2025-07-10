@@ -2,39 +2,34 @@
 
 namespace DCL.Chat.ChatStates
 {
-    /// <summary>
-    /// Purpose: User is actively typing. The panel is fully visible and player input is blocked.
-    /// begin() (Entry Actions):
-    ///     Input: Block player movement. _context.inputBlock.Disable(...)
-    ///     UI: Ensure the view is fully "unblurred". view.SetBlurred(false, isInstant: true);
-    ///     UI: Tell the input presenter to focus itself. _context.chatInputPresenter.Focus();
-    ///     Subscribe:
-    ///         _context.viewInstance.ClickedOutside += GoToDefaultState;
-    ///         DCLInput.Instance.UI.Close.performed += OnEscapePressed;
-    /// end() (Exit Actions):
-    ///     Input: Re-enable player movement. _context.inputBlock.Enable(...)
-    ///     Unsubscribe: from all events subscribed in begin().
-    /// Event Handlers:
-    ///     GoToDefaultState() -> _machine.changeState<DefaultChatState>();
-    ///     OnEscapePressed(...) -> _machine.changeState<DefaultChatState>();
-    /// </summary>
     public class FocusedChatState : ChatState
     {
         public override void begin()
         {
-            // block player movement
             _context.memberListPresenter?.Deactivate();
             _context.titleBarPresenter?.Show();
             _context.chatChannelsPresenter?.Show();
             _context.messageViewerPresenter?.Show();
             _context.chatInputPresenter?.Show();
+            _context.chatInputPresenter.SetActiveMode();
             
-            // clicked outside goes into default state
+            _context.SetPanelsFocusState(isFocused: true, animate: false);
+            _context.BlockPlayerInput();
+            _context.OnClickOutside += GoToDefaultState;
         }
 
         public override void end()
         {
-            ReportHub.Log(ReportCategory.UNSPECIFIED, "[ChatState] FocusedChatState: begin");
+            _context.UnblockPlayerInput();
+            _context.OnClickOutside -= GoToDefaultState;
+        }
+
+        private void GoToDefaultState()
+        {
+            // TODO: check if any of the popups are open, if so, don't change state
+            // TODO: this applies to context menu, emoji panel, etc.
+            // TODO: any popup should handle it's own closing when clicking outside of it
+            _machine.changeState<DefaultChatState>();
         }
     }
 }
