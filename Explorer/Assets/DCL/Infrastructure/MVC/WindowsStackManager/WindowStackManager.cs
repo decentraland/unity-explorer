@@ -17,20 +17,24 @@ namespace MVC
         public IController? TopMostPopup => popupStack.LastOrDefault();
         public IController CurrentFullscreenController => fullscreenController;
 
-        private int currentMaxOrderInLayer;
         private readonly Dictionary<IController, int> popupOrders = new ();
 
         public PopupPushInfo PushPopup(IController controller)
         {
-            currentMaxOrderInLayer += POPUP_ORDER_IN_LAYER_INCREMENT;
+            int currentMaxOrderInLayer = POPUP_ORDER_IN_LAYER_INCREMENT;
+            IController? topMostPopup = TopMostPopup;
+            if (topMostPopup != null && popupOrders.TryGetValue(topMostPopup, out int topMostPopupOrder))
+                // We increment the order in layer by 2 to keep the popup closer ordering odd
+                currentMaxOrderInLayer = topMostPopupOrder + POPUP_ORDER_IN_LAYER_INCREMENT;
+
             popupStack.Add(controller);
+
+            // Keep track of every popup canvass order
+            popupOrders.Add(controller, currentMaxOrderInLayer);
 
             foreach (var persistant in persistentStack)
                 if (persistant.State == ControllerState.ViewFocused)
                     persistant.Blur();
-
-            // Keep track of every popup canvass order
-            popupOrders.Add(controller, currentMaxOrderInLayer);
 
             return new PopupPushInfo(
                     new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer),
@@ -86,8 +90,6 @@ namespace MVC
 
             if (popupStack.Count == 0)
             {
-                // If there are no popups left, we reset the current max order in layer
-                currentMaxOrderInLayer = 0;
                 foreach (var persistant in persistentStack)
                     if (persistant.State == ControllerState.ViewBlurred)
                         persistant.Focus();
