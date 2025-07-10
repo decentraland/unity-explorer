@@ -52,21 +52,9 @@ namespace DCL.SkyBox
         }
         public TransitionMode TransitionMode { get; set; }
 
-        public float SpeedMultiplier
-        {
-            get => speedMultiplier;
+        public float SpeedMultiplier => speedMultiplier;
 
-            set => speedMultiplier = value;
-        }
-
-        public float TransitionSpeed
-        {
-            get => transitionSpeed;
-
-            set => transitionSpeed = value;
-        }
-
-        public bool CanUIControl { get; set; } = true;
+        public float TransitionSpeed => transitionSpeed;
 
         public float TimeOfDayNormalized
         {
@@ -92,7 +80,6 @@ namespace DCL.SkyBox
             IsDayCycleEnabled = true;
             ShouldUpdateSkybox = true;
             TransitionMode = TransitionMode.FORWARD;
-            CanUIControl = true;
             IsUIControlled = false;
             IsSDKControlled = false;
         }

@@ -62,7 +62,6 @@ namespace DCL.SkyBox
         {
             settings.TransitionMode = TransitionMode.FORWARD;
             settings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(time);
-            settings.CanUIControl = false;
         }
     }
 }

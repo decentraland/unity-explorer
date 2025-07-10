@@ -23,7 +23,6 @@ namespace DCL.SkyBox
         public void Enter()
         {
             refreshAccumulatedTime = 0f;
-            settings.CanUIControl = true;
             settings.TargetTimeOfDayNormalized = globalTimeOfDay;
             settings.IsDayCycleEnabled = true;
             isTransitioning = true;

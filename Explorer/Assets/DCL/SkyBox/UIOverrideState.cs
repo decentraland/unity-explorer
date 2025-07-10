@@ -11,12 +11,15 @@ namespace DCL.SkyBox
 
         // The logic of this behavior is processed at SkyboxMenuController
         public bool Applies() =>
-            skyboxSettings is { IsUIControlled: true, CanUIControl: true };
+            skyboxSettings is { IsUIControlled: true };
 
         public void Enter() { }
 
         public void Update(float dt) { }
 
-        public void Exit() { }
+        public void Exit()
+        {
+            skyboxSettings.IsUIControlled = false;
+        }
     }
 }
