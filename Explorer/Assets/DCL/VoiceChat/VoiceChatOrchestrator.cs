@@ -5,38 +5,44 @@ using System;
 
 namespace DCL.VoiceChat
 {
+    public enum CurrentVoiceChatType
+    {
+        NONE,
+        PRIVATE,
+        COMMUNITY
+    }
+
+
     public class VoiceChatOrchestrator : IDisposable
     {
         private readonly PrivateVoiceChatController privateVoiceChatController;
         private readonly CommunitiesVoiceChatController communitiesVoiceChatController;
         private readonly VoiceChatEventBus voiceChatEventBus;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatCallStatusService privateVoiceChatCallStatusService;
 
         private readonly IDisposable statusSubscription;
 
-        private enum CurrentVoiceChat
-        {
-            NONE,
-            PRIVATE,
-            COMMUNITY
-        }
+        //Public access properties for UI that doesnt subscribe to updates.
+        public CurrentVoiceChatType CurrentVoiceChatType => currentVoiceChatType;
+        public VoiceChatStatus CurrentPrivateVoiceChatStatus => privateVoiceChatCallStatusService.Status.Value;
 
-        private CurrentVoiceChat currentVoiceChat = CurrentVoiceChat.NONE;
+
+        private CurrentVoiceChatType currentVoiceChatType = CurrentVoiceChatType.NONE;
 
         public VoiceChatOrchestrator(
             PrivateVoiceChatController privateVoiceChatController,
             CommunitiesVoiceChatController communitiesVoiceChatController,
             VoiceChatEventBus voiceChatEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatCallStatusService privateVoiceChatCallStatusService)
         {
             this.privateVoiceChatController = privateVoiceChatController;
             this.communitiesVoiceChatController = communitiesVoiceChatController;
             this.voiceChatEventBus = voiceChatEventBus;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
 
 
             voiceChatEventBus.StartPrivateVoiceChatRequested += OnStartVoiceChatRequested;
-            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
+            statusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
         }
 
         private void OnPrivateVoiceChatStatusChanged(VoiceChatStatus status)
@@ -44,20 +50,24 @@ namespace DCL.VoiceChat
             //This logic needs to be improved.
             if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
             {
-                currentVoiceChat = CurrentVoiceChat.NONE;
+                currentVoiceChatType = CurrentVoiceChatType.NONE;
             }
             else
             {
-                currentVoiceChat = CurrentVoiceChat.PRIVATE;
+                currentVoiceChatType = CurrentVoiceChatType.PRIVATE;
             }
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChat}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType}");
         }
 
         private void OnStartVoiceChatRequested(Web3Address walletId)
         {
-            if (currentVoiceChat != CurrentVoiceChat.COMMUNITY)
+            if (currentVoiceChatType != CurrentVoiceChatType.COMMUNITY)
             {
-                voiceChatCallStatusService.StartCall(walletId);
+                privateVoiceChatCallStatusService.StartCall(walletId);
+            }
+            else
+            {
+                //Cant start a call as we are already in a community call. Show proper message?
             }
         }
 
