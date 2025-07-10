@@ -1,6 +1,5 @@
 using DCL.Platforms;
 using DCL.Prefs;
-using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
