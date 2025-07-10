@@ -91,7 +91,7 @@ namespace ECS.StreamableLoading.AssetBundles
             if (AssetBundle)
                 AssetBundle.UnloadAsync(false);
 
-            underlyingStream.Dispose();
+            underlyingStream.DisposeAsync();
         }
 
         protected override void DestroyObject()

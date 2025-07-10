@@ -37,6 +37,8 @@ namespace DCL.WebRequests
 
         public WebRequestsAnalyticsContainer AnalyticsContainer { get; private set; } = null!;
 
+        internal HTTPCache HttpCache { get; private set; } = null!;
+
         public static async UniTask<WebRequestsContainer> CreateAsync(
             IAppArgs appArgs,
             IPluginSettingsContainer settingsContainer,
@@ -73,8 +75,8 @@ namespace DCL.WebRequests
             var cacheSize = (ulong)((double)container.settings.Http2Settings.CacheSizeGB * 1024UL * 1024UL * 1024UL);
 
             // initialize 2 gb cache that will be used for all HTTP2 requests including the special logic for partial ones
-            var httpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.Http2Settings.CacheLifetimeDays), cacheSize));
-            httpCache.LaunchFullMaintenance();
+            container.HttpCache = new HTTPCache(new HTTPCacheOptions(TimeSpan.FromDays(container.settings.Http2Settings.CacheLifetimeDays), cacheSize));
+            container.HttpCache.LaunchFullMaintenance();
 
             if (container.WebRequestsMode != WebRequestsMode.UNITY)
             {
@@ -99,7 +101,7 @@ namespace DCL.WebRequests
 
             int partialChunkSize = container.settings.Http2Settings.PartialChunkSizeMB * 1024 * 1024;
 
-            var requestHub = new RequestHub(urlsSource, httpCache, container.EnablePartialDownloading, partialChunkSize, container.settings.Http2Settings.PartialChunksMaxCount, ktxEnabled, container.WebRequestsMode);
+            var requestHub = new RequestHub(urlsSource, container.HttpCache, container.EnablePartialDownloading, partialChunkSize, container.settings.Http2Settings.PartialChunksMaxCount, ktxEnabled, container.WebRequestsMode);
             container.requestHub = requestHub;
 
             IWebRequestController baseWebRequestController = new RedirectWebRequestController(container.WebRequestsMode,

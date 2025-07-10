@@ -17,7 +17,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using static DCL.WebRequests.WebRequestHeaders;
 
@@ -64,6 +63,12 @@ namespace DCL.WebRequests.HTTP2
             ///     BESTHttp does not provide a file stream directly so it loads it into the memory chunks
             /// </summary>
             EMBEDDED_FILE_STREAM = 6,
+
+            /// <summary>
+            ///     The stream was disposed and no further operations are allowed.
+            ///     It will contain residual data identifying its origin
+            /// </summary>
+            DISPOSED = 7,
         }
 
         internal const string PARTIAL_CONTENT_LENGTH_CUSTOM_HEADER = "Partial-Content-Length";
@@ -439,6 +444,9 @@ namespace DCL.WebRequests.HTTP2
 
                         return;
                     }
+                case Mode.DISPOSED:
+                    headersResult.Dispose();
+                    throw new ObjectDisposedException(nameof(Http2PartialDownloadDataStream), $"Can't initialize {nameof(Http2PartialDownloadDataStream)} as it was already disposed");
 
                 default:
                     headersResult.Dispose();
@@ -613,7 +621,7 @@ namespace DCL.WebRequests.HTTP2
             cachedPartialData = default(CachedPartialData);
             memoryStreamPartialData = default(MemoryStreamPartialData);
             fileStreamData = default(FileStreamData);
-            OpMode = Mode.UNITIALIZED;
+            OpMode = Mode.DISPOSED;
         }
 
         /// <summary>

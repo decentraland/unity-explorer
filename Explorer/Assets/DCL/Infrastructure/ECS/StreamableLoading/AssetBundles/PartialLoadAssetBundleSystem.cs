@@ -158,9 +158,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
 
-            var assetBundleData = new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
-                version: version,
-                source: source);
+            var assetBundleData = new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies, version, source, stream);
 
             // After this point it's no longer possible to load other assets from the asset bundle
 

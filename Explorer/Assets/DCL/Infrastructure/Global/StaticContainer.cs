@@ -248,7 +248,7 @@ namespace Global
 
             container.LoadingStatus = enableAnalytics ? new LoadingStatusAnalyticsDecorator(new LoadingStatus(), analyticsController) : new LoadingStatus();
 
-            var webRequestsPlugin = new WebRequestsPlugin(container.WebRequestsContainer.AnalyticsContainer, container.DebugContainerBuilder);
+            var webRequestsPlugin = new WebRequestsPlugin(container.WebRequestsContainer.AnalyticsContainer, container.WebRequestsContainer.HttpCache, container.DebugContainerBuilder);
 
             var promisesAnalyticsPlugin = new PromisesAnalyticsPlugin(debugContainerBuilder);
 

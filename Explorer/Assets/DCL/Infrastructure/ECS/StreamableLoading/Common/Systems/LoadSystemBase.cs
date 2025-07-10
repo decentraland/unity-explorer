@@ -222,7 +222,7 @@ namespace ECS.StreamableLoading.Common.Systems
             state.DisposeBudgetIfExists();
 
             // Special path for partial downloading
-            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: false } } && !cache.IrrecoverableFailures.SyncTryGetValue(intentionId, out _))
+            if (state.PartialDownloadingData is { PartialDownloadStream: { IsFullyDownloaded: false }, ownershipTransferred: false } && !cache.IrrecoverableFailures.SyncTryGetValue(intentionId, out _))
             {
                 // Return the promise for re-evaluation
                 state.RequestReevaluate();

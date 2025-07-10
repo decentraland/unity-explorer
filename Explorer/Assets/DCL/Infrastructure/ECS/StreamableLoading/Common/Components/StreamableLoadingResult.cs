@@ -67,6 +67,8 @@ namespace ECS.StreamableLoading.Common.Components
                             break;
                     }
                 }
+                else
+                    ReportHub.LogException(exception, reportData);
             }
 
 

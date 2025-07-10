@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using Best.HTTP.Caching;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.PluginSystem.Global;
@@ -9,7 +10,6 @@ using DCL.WebRequests.Analytics;
 using DCL.WebRequests.HTTP2;
 using ECS.LifeCycle;
 using System.Collections.Generic;
-using System.Linq;
 using Utility;
 
 namespace DCL.WebRequests
@@ -17,22 +17,28 @@ namespace DCL.WebRequests
     public class WebRequestsPlugin : IDCLGlobalPlugin, IDCLWorldPlugin
     {
         private readonly WebRequestsAnalyticsContainer analyticsContainer;
+        private readonly HTTPCache httpCache;
+
+        private readonly ElementBinding<ulong> cacheSizeBinding = new (0);
 
         private readonly DebugWidgetVisibilityBinding? visibilityBinding;
         private readonly Dictionary<Http2PartialDownloadDataStream.Mode, ElementBinding<ulong>>? debugBindings;
 
-        public WebRequestsPlugin(WebRequestsAnalyticsContainer analyticsContainer, IDebugContainerBuilder debugContainerBuilder)
+        public WebRequestsPlugin(WebRequestsAnalyticsContainer analyticsContainer, HTTPCache httpCache, IDebugContainerBuilder debugContainerBuilder)
         {
             this.analyticsContainer = analyticsContainer;
+            this.httpCache = httpCache;
 
             DebugWidgetBuilder? widget = debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.PARTIAL_DOWNLOAD);
 
             if (widget == null)
                 return;
 
-            debugBindings = new Dictionary<Http2PartialDownloadDataStream.Mode, ElementBinding<ulong>>();
-
             widget.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
+
+            widget.AddMarker("Cache Size", cacheSizeBinding, DebugLongMarkerDef.Unit.Bytes);
+
+            debugBindings = new Dictionary<Http2PartialDownloadDataStream.Mode, ElementBinding<ulong>>();
 
             foreach (Http2PartialDownloadDataStream.Mode value in EnumUtils.Values<Http2PartialDownloadDataStream.Mode>())
             {
@@ -57,7 +63,7 @@ namespace DCL.WebRequests
             ShowWebRequestsAnalyticsSystem.InjectToWorld(ref builder, analyticsContainer, analyticsContainer.Widget);
 
             if (debugBindings != null)
-                GlobalShowPartialDownloadStreamsDebugSystem.InjectToWorld(ref builder, debugBindings, visibilityBinding);
+                GlobalShowPartialDownloadStreamsDebugSystem.InjectToWorld(ref builder, debugBindings, visibilityBinding, httpCache, cacheSizeBinding);
         }
     }
 }
