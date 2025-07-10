@@ -1774,6 +1774,7 @@ MonoBehaviour:
   publicPrivacySprite: {fileID: 21300000, guid: ce952777a378746d48f3cb3b51815ed9, type: 3}
   privatePrivacySprite: {fileID: 21300000, guid: cee9a3dbf9f6544da96abe48bb2550af, type: 3}
   communityPrivacyText: {fileID: 1598583829820689214}
+  communityMembersSeparator: {fileID: 5717000641063294861}
   communityMembersCountText: {fileID: 5759947373287357163}
   communityLiveMark: {fileID: 7783451404242258191}
   mainButton: {fileID: 7446897494615956440}

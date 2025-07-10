@@ -38,7 +38,6 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendSectionController? friendSectionController;
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
-        private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -74,7 +73,6 @@ namespace DCL.Friends.UI.FriendPanel
             IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-            dclInput = DCLInput.Instance;
             this.chatEventBus = chatEventBus;
             this.includeUserBlocking = includeUserBlocking;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -146,7 +144,6 @@ namespace DCL.Friends.UI.FriendPanel
             friendSectionController?.Dispose();
             friendSectionControllerConnectivity?.Dispose();
             requestsSectionController.Dispose();
-            UnregisterCloseHotkey();
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
@@ -175,16 +172,6 @@ namespace DCL.Friends.UI.FriendPanel
             blockedSectionController.Reset();
         }
 
-        private void RegisterCloseHotkey()
-        {
-            dclInput.UI.Close.performed += CloseFriendsPanel;
-        }
-
-        private void UnregisterCloseHotkey()
-        {
-            dclInput.UI.Close.performed -= CloseFriendsPanel;
-        }
-
         private void OnOpenConversationClicked(Web3Address web3Address)
         {
             OpenChatConversationAsync(web3Address).Forget();
@@ -201,7 +188,6 @@ namespace DCL.Friends.UI.FriendPanel
 
         protected override void OnViewShow()
         {
-            RegisterCloseHotkey();
             FriendsPanelOpened?.Invoke();
         }
 
@@ -212,13 +198,6 @@ namespace DCL.Friends.UI.FriendPanel
             closeTaskCompletionSource = new UniTaskCompletionSource();
 
             ToggleTabs(inputData.TabToShow);
-        }
-
-        protected override void OnViewClose()
-        {
-            base.OnViewClose();
-
-            UnregisterCloseHotkey();
         }
 
         protected override void OnViewInstantiated()
