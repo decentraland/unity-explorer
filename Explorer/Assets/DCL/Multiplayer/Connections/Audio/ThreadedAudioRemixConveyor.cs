@@ -2,12 +2,18 @@
 using LiveKit.Internal;
 using LiveKit.Rooms.Streaming.Audio;
 using Livekit.Utils;
+using System;
 
 namespace DCL.Multiplayer.Connections.Audio
 {
     public class ThreadedAudioRemixConveyor : IAudioRemixConveyor
     {
         private readonly AudioResampler.ThreadSafe resampler = new ();
+
+        public void Dispose()
+        {
+            resampler.Dispose();
+        }
 
         public void Process(
             OwnedAudioFrame ownedAudioFrame,
@@ -27,20 +33,15 @@ namespace DCL.Multiplayer.Connections.Audio
         )
         {
             await UniTask.SwitchToThreadPool();
-            using var uFrame = resampler.RemixAndResample(ownedAudioFrame, numChannels, sampleRate);
+            using OwnedAudioFrame uFrame = resampler.RemixAndResample(ownedAudioFrame, numChannels, sampleRate);
             Write(uFrame, outputBuffer);
         }
 
         private static void Write(OwnedAudioFrame frame, Mutex<RingBuffer> buffer)
         {
-            var data = frame.AsSpan();
-            using var guard = buffer.Lock();
+            Span<byte> data = frame.AsSpan();
+            using Mutex<RingBuffer>.Guard guard = buffer.Lock();
             guard.Value.Write(data);
-        }
-
-        public void Dispose()
-        {
-            resampler.Dispose();
         }
     }
 }
