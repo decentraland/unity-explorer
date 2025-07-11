@@ -25,20 +25,17 @@ namespace DCL.SDKComponents.LightSource.Systems
     /// Updates the properties of existing light sources.
     /// </summary>
     [UpdateInGroup(typeof(LightSourcesGroup))]
-    [UpdateAfter(typeof(LightSourceCullingSystem))]
+    [UpdateAfter(typeof(LightSourceLifecycleSystem))]
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
-    public partial class LightSourceUpdateSystem : BaseUnityLoopSystem
+    public partial class LightSourcePreCullingUpdateSystem : BaseUnityLoopSystem
     {
-        private const float FADE_SPEED = 4;
         private const int GET_TEXTURE_MAX_ATTEMPT_COUNT = 6;
 
-        private readonly ISceneStateProvider sceneStateProvider;
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent partitionComponent;
 
-        public LightSourceUpdateSystem(World world, ISceneStateProvider sceneStateProvider, ISceneData sceneData, IPartitionComponent partitionComponent) : base(world)
+        public LightSourcePreCullingUpdateSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent) : base(world)
         {
-            this.sceneStateProvider = sceneStateProvider;
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
         }
@@ -47,7 +44,6 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             UpdateLightSourceQuery(World);
             ResolveTexturePromiseQuery(World);
-            AnimateLightSourceIntensityQuery(World, Time.unscaledDeltaTime);
         }
 
         [Query]
@@ -79,7 +75,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             {
                 case PBLightSource.TypeOneofCase.Spot:
                     ApplySpotLight(pbLightSource, lightSourceInstance);
-                    ApplyCookie(lightSourceComponent, pbLightSource.Spot.ShadowMaskTexture);
+                    ApplyCookie(ref lightSourceComponent, pbLightSource.Spot.ShadowMaskTexture);
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
@@ -110,7 +106,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 light.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow);
         }
 
-        private void ApplyCookie(LightSourceComponent component, TextureUnion cookie)
+        private void ApplyCookie(ref LightSourceComponent component, TextureUnion cookie)
         {
             bool usesShadowMask = cookie is { Texture: { Src: var s } } && !string.IsNullOrWhiteSpace(s);
 
@@ -166,28 +162,6 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             TexturePromise promiseValue = promise.Value;
             promiseValue.TryDereference(World);
-        }
-
-        [Query]
-        private void AnimateLightSourceIntensity([Data] float dt, ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
-        {
-            Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
-
-            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource))
-            {
-                lightSourceInstance.intensity = 0;
-                return;
-            }
-
-            bool isLightOn = sceneStateProvider.IsCurrent && !lightSourceComponent.IsCulled;
-            lightSourceComponent.TargetIntensity = isLightOn ? lightSourceComponent.MaxIntensity : 0;
-
-            float delta = dt * lightSourceComponent.MaxIntensity * FADE_SPEED;
-            lightSourceComponent.CurrentIntensity = Mathf.MoveTowards(lightSourceComponent.CurrentIntensity, lightSourceComponent.TargetIntensity, delta);
-
-            lightSourceInstance.intensity = lightSourceComponent.CurrentIntensity;
-
-            lightSourceInstance.enabled = lightSourceComponent.CurrentIntensity > 0;
         }
     }
 }

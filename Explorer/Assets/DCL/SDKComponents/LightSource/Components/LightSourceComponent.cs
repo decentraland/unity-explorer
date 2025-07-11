@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -13,23 +14,41 @@ namespace DCL.SDKComponents.LightSource
 
         public float TargetIntensity;
 
+        public float DistanceToPlayer;
+
         public int Index;
 
         public int Rank;
 
-        public bool IsCulled;
+        public int LOD;
+
+        public CullingFlags Culling;
 
         public Promise? TextureMaskPromise;
+
+        public bool IsCulled => Culling != CullingFlags.None;
 
         public LightSourceComponent(Light lightSourceInstance, float maxIntensity, float initialIntensity = 0)
         {
             LightSourceInstance = lightSourceInstance;
             MaxIntensity = maxIntensity;
             CurrentIntensity = TargetIntensity = initialIntensity;
+            DistanceToPlayer = 0;
             Index = -1;
             Rank = -1;
-            IsCulled = false;
+            LOD = -1;
+            Culling = CullingFlags.None;
             TextureMaskPromise = null;
+        }
+
+        [Flags]
+        public enum CullingFlags
+        {
+            None = 0,
+
+            TooManyLightSources = 1,
+
+            CulledByLOD = 1 << 1
         }
     }
 }

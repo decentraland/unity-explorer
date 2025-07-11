@@ -68,8 +68,6 @@ MonoBehaviour:
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
-        <MaxSizeOfNftForDownload>k__BackingField:
-          maxSizeInBytes: 2097152
     - rid: 892605770607624196
       type: {class: DynamicWorldSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data: 
@@ -197,6 +195,53 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        SpotLightsLods:
+        - Distance: 0
+          IsCulled: 0
+          Shadows: 2
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 10
+          IsCulled: 0
+          Shadows: 2
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 20
+          IsCulled: 0
+          Shadows: 1
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 30
+          IsCulled: 0
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 40
+          IsCulled: 1
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        PointLightsLods:
+        - Distance: 0
+          IsCulled: 0
+          Shadows: 2
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 10
+          IsCulled: 0
+          Shadows: 1
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 20
+          IsCulled: 0
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
+        - Distance: 40
+          IsCulled: 1
+          Shadows: 0
+          OverrideShadowMapResolution: 0
+          ShadowMapResolution: 128
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -234,5 +279,3 @@ MonoBehaviour:
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
-        <MaxSizeOfNftForDownload>k__BackingField:
-          maxSizeInBytes: 8388608

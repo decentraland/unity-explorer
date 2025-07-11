@@ -24,6 +24,7 @@ namespace DCL.PluginSystem.World
 {
     public class LightSourcePlugin : IDCLWorldPlugin<LightSourcePlugin.LightSourceSettings>
     {
+        private LightSourcePlugin.LightSourceSettings pluginSettings;
         private static LightSourceDefaults? lightSourceDefaults;
 
         private readonly IComponentPoolsRegistry poolsRegistry;
@@ -49,19 +50,28 @@ namespace DCL.PluginSystem.World
         {
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
+        public void InjectToWorld(
+            ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
+            in ECSWorldInstanceSharedDependencies sharedDependencies,
+            in PersistentEntities persistentEntities,
+            List<IFinalizeWorldSystem> finalizeWorldSystems,
+            List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
 
             var lifecycleSystem = LightSourceLifecycleSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightPoolRegistry);
+            LightSourcePreCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            LightSourceLodSystem.InjectToWorld(ref builder, pluginSettings.SpotLightsLods, pluginSettings.PointLightsLods);
             LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject);
-            LightSourceUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            LightSourcePostCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider);
 
             finalizeWorldSystems.Add(lifecycleSystem);
         }
 
         public async UniTask InitializeAsync(LightSourceSettings settings, CancellationToken ct)
         {
+            this.pluginSettings = settings;
+
             await CreateLightSourcePoolAsync(settings, ct);
         }
 
@@ -75,13 +85,15 @@ namespace DCL.PluginSystem.World
             cacheCleaner.Register(lightPoolRegistry);
         }
 
-        private static void OnPoolRelease(Light light)
+        private void OnPoolRelease(Light light)
         {
             light.enabled = false;
         }
 
-        private static void OnPoolGet(Light light)
+        private void OnPoolGet(Light light)
         {
+            var def = this.pluginSettings.LightSourceDefaultValues;
+
             light.enabled = lightSourceDefaults!.active;
             light.transform.SetParent(null);
             light.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -95,21 +107,15 @@ namespace DCL.PluginSystem.World
             light.cookie = null;
         }
 
-        public struct LightSourceSettings : IDCLPluginSettings
+        public class LightSourceSettings : IDCLPluginSettings
         {
-            [field: SerializeField]
             public AssetReferenceGameObject LightSourcePrefab;
 
-            [field: SerializeField]
-            public LightDefaultsRef LightSourceDefaultValues;
+            public AssetReferenceT<LightSourceDefaults> LightSourceDefaultValues;
 
-            [Serializable]
-            public class LightDefaultsRef : AssetReferenceT<LightSourceDefaults>
-            {
-                public LightDefaultsRef(string guid) : base(guid)
-                {
-                }
-            }
+            public List<LightSourceLodSystem.LodSettings> SpotLightsLods;
+
+            public List<LightSourceLodSystem.LodSettings> PointLightsLods;
         }
     }
 }
