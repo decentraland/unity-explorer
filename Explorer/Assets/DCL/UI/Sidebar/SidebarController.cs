@@ -109,7 +109,7 @@ namespace DCL.UI.Sidebar
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
 
-            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            sceneRestrictionBusController?.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
 

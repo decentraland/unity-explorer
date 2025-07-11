@@ -36,6 +36,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Sprite publicPrivacySprite = null!;
         [SerializeField] private Sprite privatePrivacySprite = null!;
         [SerializeField] private TMP_Text communityPrivacyText = null!;
+        [SerializeField] private GameObject communityMembersSeparator = null!;
         [SerializeField] private TMP_Text communityMembersCountText = null!;
         [SerializeField] private GameObject communityLiveMark = null!;
         [SerializeField] private Button mainButton = null!;
@@ -115,7 +116,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMembersCount(int memberCount)
         {
-            communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
+            bool showMembers = CommunitiesFeatureAccess.Instance.CanMembersCounterBeDisplayer();
+            communityMembersSeparator.SetActive(showMembers);
+            communityMembersCountText.gameObject.SetActive(showMembers);
+            if (showMembers)
+                communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
 
         public void SetOwnership(bool isMember)

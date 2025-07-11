@@ -28,6 +28,7 @@ namespace DCL.FeatureFlags
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
         public const string VOICE_CHAT = "alfa-voice-chat";
+        public const string COMMUNITY_VOICE_CHAT = "alfa-community-voice-chat";
 
         public const string CAMERA_REEL = "alfa-camera-reel";
         public const string FRIENDS = "alfa-friends";
@@ -40,6 +41,7 @@ namespace DCL.FeatureFlags
         public const string MARKETPLACE_CREDITS_WALLETS_VARIANT = "wallets";
         public const string COMMUNITIES = "alfa-communities";
         public const string COMMUNITIES_WALLETS_VARIANT = "wallets";
+        public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
 
         public const string AUTH_CODE_VALIDATION = "number-validation";
 
@@ -71,6 +73,7 @@ namespace DCL.FeatureFlags
         AssetBundleFallback,
         ChatHistoryLocalStorage,
         VoiceChat,
+        CommunityVoiceChat,
         CameraReel,
         Friends,
         FriendsUserBlocking,
@@ -112,6 +115,7 @@ namespace DCL.FeatureFlags
                 FeatureFlag.AssetBundleFallback => FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK,
                 FeatureFlag.ChatHistoryLocalStorage => FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE,
                 FeatureFlag.VoiceChat => FeatureFlagsStrings.VOICE_CHAT,
+                FeatureFlag.CommunityVoiceChat => FeatureFlagsStrings.COMMUNITY_VOICE_CHAT,
                 FeatureFlag.CameraReel => FeatureFlagsStrings.CAMERA_REEL,
                 FeatureFlag.Friends => FeatureFlagsStrings.FRIENDS,
                 FeatureFlag.FriendsUserBlocking => FeatureFlagsStrings.FRIENDS_USER_BLOCKING,

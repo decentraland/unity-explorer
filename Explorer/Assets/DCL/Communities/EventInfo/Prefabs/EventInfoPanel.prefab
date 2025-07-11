@@ -3330,6 +3330,7 @@ GameObject:
   - component: {fileID: 3308977642820134479}
   - component: {fileID: 3359119879014265997}
   - component: {fileID: 6170562959595291956}
+  - component: {fileID: 700563417702908013}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -3379,6 +3380,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &700563417702908013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6080448266192037001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding: {x: -10, y: 0, z: -10, w: -10}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &6182184191488217696
 GameObject:
   m_ObjectHideFlags: 0
@@ -4559,7 +4574,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 6952247620005373462}
   m_HandleRect: {fileID: 175607292521401437}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0.9999995
   m_Size: 0.8660478
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -5893,6 +5908,10 @@ PrefabInstance:
     - target: {fileID: 7225474628005434785, guid: 5cb461b6b67354eceb5bf8f479321f2e, type: 3}
       propertyPath: m_Name
       value: Image
+      objectReference: {fileID: 0}
+    - target: {fileID: 8065453842109856211, guid: 5cb461b6b67354eceb5bf8f479321f2e, type: 3}
+      propertyPath: m_AspectRatio
+      value: 1.9555556
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
