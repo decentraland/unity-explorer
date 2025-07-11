@@ -19,7 +19,7 @@ namespace MVC.Tests
         public void Setup()
         {
             windowsStackManager = Substitute.For<IWindowsStackManager>();
-            windowsStackManager.PushFullscreen(Arg.Any<IController>()).Returns(new FullscreenPushInfo(new List<IController>(), new CanvasOrdering(), new UniTaskCompletionSource()));
+            windowsStackManager.PushFullscreen(Arg.Any<IController>()).Returns(new FullscreenPushInfo(new List<(IController, int)>(), new CanvasOrdering(), new UniTaskCompletionSource()));
             popupCloserView = Substitute.For<IPopupCloserView>();
             mvcManager = new MVCManager(windowsStackManager, new CancellationTokenSource(), popupCloserView);
         }
