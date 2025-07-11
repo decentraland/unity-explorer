@@ -429,11 +429,15 @@
       }
     },
     "decentraland.grassshader": {
-      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/grassindirect",
       "depth": 0,
       "source": "git",
-      "dependencies": {},
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+      "dependencies": {
+        "com.unity.modules.imageconversion": "1.0.0",
+        "com.unity.modules.particlesystem": "1.0.0",
+        "com.unity.modules.wind": "1.0.0"
+      },
+      "hash": "60d9da034722754ad42e067f92a57b67ce4ba367"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
