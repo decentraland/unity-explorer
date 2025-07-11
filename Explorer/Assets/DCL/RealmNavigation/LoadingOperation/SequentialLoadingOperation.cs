@@ -81,6 +81,9 @@ namespace DCL.RealmNavigation.LoadingOperation
                 }
             }
 
+            if (lastOpResult.Success)
+                args.Report.SetProgress(1);
+
             return lastOpResult;
         }
     }

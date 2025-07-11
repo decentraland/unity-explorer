@@ -6,7 +6,6 @@ using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Character;
-using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -15,12 +14,12 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
-using UnityEngine;
 using Utility;
 using Utility.Types;
 
@@ -154,7 +153,9 @@ namespace DCL.UserInAppInitializationFlow
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(parentLoadReport, parameters), ct);
+                            //Create a child report to be able to hold the parallel livekit operation
+                            AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
+                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);
 
                             // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
                             if (operationResult.Error is { Exception: UserBlockedException })
