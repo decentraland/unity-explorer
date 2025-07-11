@@ -7,6 +7,12 @@ namespace MVC
     {
         ControllerState State { get; }
 
+        /// <summary>
+        ///     Overridable flag indicating whether the view can be closed by Escape key
+        ///     Default: true for Popup and Fullscreen layers, false for Persistent and Overlay layers as they shouldn't be able to be closed at all
+        /// </summary>
+        bool CanBeClosedByEscape => Layer is not CanvasOrdering.SortingLayer.Persistent and not CanvasOrdering.SortingLayer.Overlay;
+
         CanvasOrdering.SortingLayer Layer { get; }
 
         /// <summary>

@@ -184,7 +184,7 @@ namespace DCL.Communities.CommunityCreation
             }
             else
             {
-                creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage);
+                creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage, true);
             }
         }
 

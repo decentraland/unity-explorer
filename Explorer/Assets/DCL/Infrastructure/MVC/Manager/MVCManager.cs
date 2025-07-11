@@ -36,6 +36,7 @@ namespace MVC
                 controllersValue.Dispose();
 
             destructionCancellationTokenSource?.Dispose();
+            windowsStackManager.Dispose();
         }
 
         /// <summary>
@@ -175,7 +176,8 @@ namespace MVC
                 // Hide the popup closer
                 popupCloser.HideAsync(ct).Forget();
 
-                await command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct);
+                await UniTask.WhenAny(command.Execute(controller, fullscreenPushInfo.ControllerOrdering, ct),
+                    fullscreenPushInfo.OnClose?.Task ?? UniTask.Never(ct));
 
                 await controller.HideViewAsync(ct);
             }
@@ -195,7 +197,8 @@ namespace MVC
 
                 await UniTask.WhenAny(
                     UniTask.WhenAll(command.Execute(controller, pushPopupPush.ControllerOrdering, ct), popupCloser.ShowAsync(ct)),
-                    WaitForPopupCloserClickAsync(controller, ct));
+                    WaitForPopupCloserClickAsync(controller, ct),
+                    pushPopupPush.OnClose?.Task ?? UniTask.Never(ct));
 
                 // "Close" command has been received
                 await controller.HideViewAsync(ct);
