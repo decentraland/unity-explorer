@@ -72,7 +72,7 @@ namespace ECS.StreamableLoading.Textures
             HashCode.Combine((int)WrapMode, (int)FilterMode, cacheKey, IsVideoTexture, VideoPlayerEntity);
 
         public readonly override string ToString() =>
-            $"Get Texture by {ReportSource}: {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
+            $"Get Texture by {ReportSource}, {(IsAvatarTexture ? "isAvatarTexture" : string.Empty)} : {(IsVideoTexture ? $"Video {VideoPlayerEntity}" : CommonArguments.URL)}";
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetTextureIntention>
         {
