@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7458790632093290584}
   - component: {fileID: 5578179571941913783}
   - component: {fileID: 6203335117104056998}
+  - component: {fileID: 8807823191896128097}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -61,6 +62,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 1389571373586625122}
   <Image>k__BackingField: {fileID: 6203335117104056998}
+  <imageLoadingFadeDuration>k__BackingField: 0.3
+  aspectRatioFitter: {fileID: 8807823191896128097}
+  rectTransform: {fileID: 8340709114752244525}
 --- !u!114 &6203335117104056998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91,6 +95,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8807823191896128097
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 867943833372402285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_AspectMode: 0
+  m_AspectRatio: 1
 --- !u!1 &2703016174658914972
 GameObject:
   m_ObjectHideFlags: 0
@@ -571,7 +589,7 @@ MonoBehaviour:
   <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!95 &4429735033601064594
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -585,6 +603,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1

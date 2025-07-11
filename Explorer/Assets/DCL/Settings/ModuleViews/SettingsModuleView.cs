@@ -20,6 +20,8 @@ namespace DCL.Settings.ModuleViews
 
         public abstract void SetInteractable(bool interactable);
 
+        public abstract void SetActive(bool isActive);
+
         protected abstract void Configure(TConfig configuration);
     }
 

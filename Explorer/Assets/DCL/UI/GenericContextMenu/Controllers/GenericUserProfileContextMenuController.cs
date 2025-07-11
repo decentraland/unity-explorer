@@ -46,6 +46,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly IAnalyticsController analytics;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly bool includeVoiceChat;
 
         private readonly string[] getUserPositionBuffer = new string[1];
 
@@ -56,8 +57,10 @@ namespace DCL.UI.GenericContextMenu.Controllers
         private readonly ButtonWithDelegateContextMenuControlSettings<string> jumpInButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> blockButtonControlSettings;
         private readonly ButtonWithDelegateContextMenuControlSettings<string> openConversationControlSettings;
+        private readonly ButtonWithDelegateContextMenuControlSettings<string> startCallButtonControlSettings;
         private readonly GenericContextMenuElement contextMenuJumpInButton;
         private readonly GenericContextMenuElement contextMenuBlockUserButton;
+        private readonly GenericContextMenuElement contextMenuCallButton;
         private readonly ISharedSpaceManager sharedSpaceManager;
 
         private CancellationTokenSource cancellationTokenSource;
@@ -74,7 +77,8 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            bool includeVoiceChat)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
@@ -85,6 +89,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.includeVoiceChat = includeVoiceChat;
             this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
@@ -95,9 +100,11 @@ namespace DCL.UI.GenericContextMenu.Controllers
             jumpInButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.JumpInButtonConfig.Text, contextMenuSettings.JumpInButtonConfig.Sprite, new StringDelegate(OnJumpInClicked));
             blockButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.BlockButtonConfig.Text, contextMenuSettings.BlockButtonConfig.Sprite, new StringDelegate(OnBlockUserClicked));
             openConversationControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenConversationButtonConfig.Text, contextMenuSettings.OpenConversationButtonConfig.Sprite, new StringDelegate(OnOpenConversationButtonClicked));
+            startCallButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.StartCallButtonConfig.Text, contextMenuSettings.StartCallButtonConfig.Sprite, new StringDelegate(OnStartCallButtonClicked));
 
             contextMenuJumpInButton = new GenericContextMenuElement(jumpInButtonControlSettings, false);
             contextMenuBlockUserButton = new GenericContextMenuElement(blockButtonControlSettings, false);
+            contextMenuCallButton = new GenericContextMenuElement(startCallButtonControlSettings, false);
 
             contextMenu = new UI.GenericContextMenuParameter.GenericContextMenu(CONTEXT_MENU_WIDTH, CONTEXT_MENU_OFFSET, CONTEXT_MENU_VERTICAL_LAYOUT_PADDING, CONTEXT_MENU_ELEMENTS_SPACING, anchorPoint: ContextMenuOpenDirection.BOTTOM_RIGHT)
                          .AddControl(userProfileControlSettings)
@@ -105,6 +112,7 @@ namespace DCL.UI.GenericContextMenu.Controllers
                          .AddControl(mentionUserButtonControlSettings)
                          .AddControl(openUserProfileButtonControlSettings)
                          .AddControl(openConversationControlSettings)
+                         .AddControl(contextMenuCallButton)
                          .AddControl(contextMenuJumpInButton)
                          .AddControl(contextMenuBlockUserButton);
         }
@@ -136,6 +144,12 @@ namespace DCL.UI.GenericContextMenu.Controllers
             mentionUserButtonControlSettings.SetData(profile.MentionName);
             openUserProfileButtonControlSettings.SetData(profile.UserId);
             openConversationControlSettings.SetData(profile.UserId);
+
+            if (includeVoiceChat)
+            {
+                contextMenuCallButton.Enabled = includeVoiceChat;
+                startCallButtonControlSettings.SetData(profile.UserId);
+            }
 
             contextMenu.ChangeAnchorPoint(anchorPoint);
 
@@ -264,6 +278,19 @@ namespace DCL.UI.GenericContextMenu.Controllers
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
             onChatShown?.Invoke();
+        }
+
+        private void OnStartCallButtonClicked(string userId)
+        {
+            closeContextMenuTask.TrySetResult();
+            StartCallAsync(userId).Forget();
+        }
+
+        private async UniTaskVoid StartCallAsync(string userId)
+        {
+            await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+            chatEventBus.OpenPrivateConversationUsingUserId(userId);
+            chatEventBus.StartCallInCurrentConversation();
         }
 
         private void OnBlockUserClicked(string userId)

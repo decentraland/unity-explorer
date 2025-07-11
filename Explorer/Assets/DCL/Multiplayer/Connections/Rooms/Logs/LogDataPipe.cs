@@ -34,6 +34,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} publish data {data.Length} bytes to {topic} - {string.Join(", ", destinationSids)} - {kind}");
+
             origin.PublishData(data, topic, destinationSids, kind);
         }
     }

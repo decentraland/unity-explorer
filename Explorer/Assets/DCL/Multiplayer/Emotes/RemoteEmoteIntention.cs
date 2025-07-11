@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using System;
+using UnityEngine;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -10,20 +11,22 @@ namespace DCL.Multiplayer.Emotes
     {
         public readonly URN EmoteId;
         public readonly string WalletId;
+        public readonly float Timestamp;
 
-        public RemoteEmoteIntention(URN emoteId, string walletId)
+        public RemoteEmoteIntention(URN emoteId, string walletId, float timestamp)
         {
             EmoteId = emoteId;
             WalletId = walletId;
+            Timestamp = timestamp;
         }
 
         public bool Equals(RemoteEmoteIntention other) =>
-            EmoteId.Equals(other.EmoteId) && WalletId == other.WalletId;
+            EmoteId.Equals(other.EmoteId) && WalletId == other.WalletId && Mathf.Approximately(Timestamp, other.Timestamp);
 
         public override bool Equals(object? obj) =>
             obj is RemoteEmoteIntention other && Equals(other);
 
         public override int GetHashCode() =>
-            HashCode.Combine(EmoteId, WalletId);
+            HashCode.Combine(EmoteId, WalletId, Timestamp);
     }
 }
