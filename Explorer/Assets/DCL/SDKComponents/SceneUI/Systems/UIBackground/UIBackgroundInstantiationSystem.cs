@@ -153,7 +153,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                     textureComponentValue.FilterMode,
                     textureComponentValue.TextureType,
                     attemptsCount: ATTEMPTS_COUNT,
-                    isAvatarTexture: textureComponentValue.IsAvatarTexture),
+                    isAvatarTexture: textureComponentValue.IsAvatarTexture,
+                    reportSource: nameof(UIBackgroundInstantiationSystem)),
                 partitionComponent);
         }
 

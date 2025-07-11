@@ -24,6 +24,7 @@ namespace DCL.Profiles.Helpers
                 new GetTextureIntention
                 {
                     CommonArguments = new CommonLoadingArguments(profile.Avatar.FaceSnapshotUrl, attempts: 5),
+                    ReportSource = nameof(ProfileUtils),
                 },
                 partitionComponent);
 
