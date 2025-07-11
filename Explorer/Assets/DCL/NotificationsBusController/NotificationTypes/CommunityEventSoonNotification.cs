@@ -34,6 +34,9 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("world")]
         public bool World { get; set; }
 
+        [JsonProperty("world_name")]
+        public string WorldName { get; set; }
+
         [JsonProperty("x")]
         public int X { get; set; }
 

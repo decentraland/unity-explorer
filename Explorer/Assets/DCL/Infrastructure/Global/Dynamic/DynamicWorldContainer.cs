@@ -1001,7 +1001,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     chatEventBus,
                     communitiesEventBus,
-                    socialServiceContainer.socialServicesRPC));
+                    socialServiceContainer.socialServicesRPC,
+                    notificationsBusController));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

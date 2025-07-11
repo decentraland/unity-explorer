@@ -12,6 +12,7 @@ using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles.Self;
 using DCL.SocialService;
@@ -48,11 +49,12 @@ namespace DCL.PluginSystem.Global
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IRPCCommunitiesService rpcCommunitiesService;
+        private readonly NotificationHandler notificationHandler;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
         private EventInfoController? eventInfoController;
-        private IRPCCommunitiesService rpcCommunitiesService;
 
         public CommunitiesPlugin(
             IMVCManager mvcManager,
@@ -73,7 +75,8 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             CommunitiesEventBus communitiesEventBus,
-            IRPCSocialServices rpcSocialServices)
+            IRPCSocialServices rpcSocialServices,
+            INotificationsBusController notificationsBusController)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -93,6 +96,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
+            notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
         }
 
         public void Dispose()
@@ -100,6 +104,7 @@ namespace DCL.PluginSystem.Global
             communityCardController?.Dispose();
             communityCreationEditionController?.Dispose();
             eventInfoController?.Dispose();
+            notificationHandler.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
