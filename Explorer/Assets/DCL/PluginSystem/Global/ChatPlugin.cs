@@ -63,13 +63,12 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly bool isCallEnabled;
         private readonly ICommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
-        private readonly VoiceChatEventBus voiceChatEventBus;
 
         private ChatController chatController;
 
@@ -101,8 +100,9 @@ namespace DCL.PluginSystem.Global
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled, VoiceChatEventBus voiceChatEventBus)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            bool isCallEnabled
+            )
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -124,9 +124,8 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
             this.friendsServiceProxy = friendsServiceProxy;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.isCallEnabled = isCallEnabled;
-            this.voiceChatEventBus = voiceChatEventBus;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -187,9 +186,8 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 warningNotificationView,
                 communitiesEventBus,
-                voiceChatCallStatusService,
-                isCallEnabled,
-                voiceChatEventBus
+                voiceChatOrchestrator,
+                isCallEnabled
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);

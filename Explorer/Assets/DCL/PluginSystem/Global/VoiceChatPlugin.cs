@@ -7,7 +7,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
-using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.Services;
 using System;
@@ -27,7 +26,6 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly VoiceChatEventBus voiceChatEventBus;
         private readonly IVoiceService voiceChatService;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
@@ -52,8 +50,8 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world,
             Entity playerEntity,
-            VoiceChatEventBus voiceChatEventBus,
-            IVoiceService voiceChatService)
+            IVoiceService voiceChatService,
+            VoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
@@ -63,8 +61,8 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.voiceChatEventBus = voiceChatEventBus;
             this.voiceChatService = voiceChatService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public void Dispose()
@@ -127,9 +125,6 @@ namespace DCL.PluginSystem.Global
 
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunitiesVoiceChatController();
-
-            voiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatController, communitiesVoiceChatController, voiceChatEventBus, voiceChatCallStatusService, voiceChatService);
-
         }
 
         [Serializable]
