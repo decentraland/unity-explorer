@@ -19,7 +19,7 @@ namespace DCL.Rendering.GPUInstancing.Systems
         private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings;
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
-        private readonly ElementBinding<float> scaleFactor;
+        private readonly ElementBinding<float> renderDistance;
         private readonly float settingsScaleFactor;
 
         public DebugGPUInstancingSystem(World world, IDebugContainerBuilder debugBuilder, GPUInstancingService service) : base(world)
@@ -27,20 +27,20 @@ namespace DCL.Rendering.GPUInstancing.Systems
             this.service = service;
             settings = this.service.Settings;
 
-            settingsScaleFactor = settings.RenderDistScaleFactor;
+            settingsScaleFactor = settings.RenderDistanceInParcels;
 
             visibilityBinding = new DebugWidgetVisibilityBinding(true);
-            scaleFactor = new ElementBinding<float>(settings.RenderDistScaleFactor);
+            renderDistance = new ElementBinding<float>(settings.RenderDistanceInParcels);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.GPU_INSTANCING)?
                         .SetVisibilityBinding(visibilityBinding)
                         .AddToggleField("Is Enabled", OnIsEnableToggled, service.IsEnabled)
-                        .AddFloatSliderField("EnvDist ScaleFactor", scaleFactor, 0, 1);
+                        .AddFloatSliderField("Render distance [parcels] ", renderDistance, GPUInstancingSettings.SCENE_DIST_MIN, GPUInstancingSettings.SCENE_DIST_MAX);
         }
 
         protected override void OnDispose()
         {
-            settings.RenderDistScaleFactor = settingsScaleFactor;
+            settings.RenderDistanceInParcels = settingsScaleFactor;
         }
 
         private void OnIsEnableToggled(ChangeEvent<bool> evt)
@@ -51,7 +51,7 @@ namespace DCL.Rendering.GPUInstancing.Systems
         protected override void Update(float _)
         {
             if (visibilityBinding.IsConnectedAndExpanded)
-                settings.RenderDistScaleFactor = scaleFactor.Value;
+                settings.RenderDistanceInParcels = renderDistance.Value;
         }
     }
 }

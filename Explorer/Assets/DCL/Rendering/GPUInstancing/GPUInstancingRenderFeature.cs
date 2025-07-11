@@ -51,14 +51,14 @@ namespace DCL.Rendering.GPUInstancing
             public ComputeShader IndirectBufferGenerationComputeShader => settings.IndirectBufferGenerationComputeShader;
             public ComputeShader DrawArgsInstanceCountTransferComputeShader => settings.DrawArgsInstanceCountTransferComputeShader;
 
-            public float RenderDistScaleFactor
+            public float RenderDistanceInParcels
             {
                 get => settings.RenderDistanceInParcels;
                 set => settings.RenderDistanceInParcels = value;
             }
 
-            public float RoadsSceneDistance(float envDistance) =>
-                settings.RoadsSceneDistance(envDistance);
+            public float RoadsSceneDistance() =>
+                settings.RoadsSceneDistance();
         }
     }
 }
