@@ -57,6 +57,7 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public ProfileNameTooltipView profileNameTooltip;
             }
         }
 
@@ -150,7 +151,19 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
-                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
+                var nameColor = ProfileNameColorHelper.GetNameColor(mutualFriend.name);
+                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, nameColor, mutualFriend.profilePictureUrl);
+                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, nameColor, mutualFriend.isVerified);
+
+                int thumbnailIndex = i;
+                Action pointerEnterAction = () => mutualFriends.thumbnails[thumbnailIndex].profileNameTooltip.gameObject.SetActive(true);
+                mutualFriends.thumbnails[i].picture.PointerEnter -= pointerEnterAction;
+                mutualFriends.thumbnails[i].picture.PointerEnter += pointerEnterAction;
+
+                Action pointerExitAction = () => mutualFriends.thumbnails[thumbnailIndex].profileNameTooltip.gameObject.SetActive(false);
+                mutualFriends.thumbnails[i].picture.PointerExit -= pointerExitAction;
+                mutualFriends.thumbnails[i].picture.PointerExit += pointerExitAction;
+
             }
         }
 
