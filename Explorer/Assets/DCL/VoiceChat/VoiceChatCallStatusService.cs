@@ -34,7 +34,6 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
             this.statusProperty = new ReactiveProperty<VoiceChatStatus>(VoiceChatStatus.DISCONNECTED);
 
-            this.voiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
             this.voiceChatService.Reconnected += OnReconnected;
             this.voiceChatService.Disconnected += OnRCPDisconnected;
             cts = new CancellationTokenSource();
@@ -44,7 +43,6 @@ namespace DCL.VoiceChat
         {
             if (voiceChatService != null)
             {
-                voiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
                 voiceChatService.Reconnected -= OnReconnected;
                 voiceChatService.Disconnected -= OnRCPDisconnected;
                 voiceChatService.Dispose();
@@ -54,7 +52,7 @@ namespace DCL.VoiceChat
             cts.SafeCancelAndDispose();
         }
 
-        private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
+        public void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
         {
             switch (update.Status)
             {
