@@ -27,7 +27,6 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         public void OnSceneIsCurrentChanged(bool value)
         {
-            // TODO: move part/all of these into SDKComponentState?
             if (value)
             {
                 ref PBSkyboxTime sdkSkyboxTime = ref World.TryGetRef<PBSkyboxTime>(rootEntity, out bool hasComponent);
