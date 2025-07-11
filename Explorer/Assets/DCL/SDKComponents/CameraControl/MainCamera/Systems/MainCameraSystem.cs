@@ -199,7 +199,6 @@ namespace DCL.SDKComponents.CameraControl.MainCamera.Systems
         private void DisableActiveVirtualCamera(in MainCameraComponent mainCameraComponent)
         {
             if (mainCameraComponent.virtualCameraInstance == null
-                || !mainCameraComponent.virtualCameraInstance.enabled
                 || !VirtualCameraUtils.VirtualCameraExistsInEntitiesMap(entitiesMap, mainCameraComponent.virtualCameraCRDTEntity))
                 return;
 
