@@ -49,7 +49,6 @@ namespace DCL.VoiceChat
 
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
-        private readonly VoiceChatEventBus voiceChatEventBus;
         private readonly IVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly IVoiceService rpcPrivateVoiceChatService;
 
@@ -76,7 +75,6 @@ namespace DCL.VoiceChat
 
         public void Dispose()
         {
-            voiceChatEventBus.StartPrivateVoiceChatRequested -= OnStartVoiceChatRequested;
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
             statusSubscription?.Dispose();
 
@@ -129,12 +127,7 @@ namespace DCL.VoiceChat
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatProperty.Value}");
         }
-
-        private void OnStartVoiceChatRequested(Web3Address walletId)
-        {
-            StartPrivateCall(walletId);
-        }
-
+        
         private void SetVoiceChatType(CurrentVoiceChatType newType)
         {
             if (currentVoiceChatProperty.Value != newType)
