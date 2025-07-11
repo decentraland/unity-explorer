@@ -14,7 +14,7 @@ namespace DCL.Multiplayer.Movement
 
             intComp.Time += deltaTime;
 
-            bool isInstant = intComp.Time >= intComp.TotalDuration;
+            bool isInstant = intComp.End.isInstant || intComp.Time >= intComp.TotalDuration;
 
             if (!isInstant)
             {

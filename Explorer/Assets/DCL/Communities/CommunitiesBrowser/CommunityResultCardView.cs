@@ -29,6 +29,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
+        [SerializeField] private TMP_Text communityOwner = null!;
         [SerializeField] private TMP_Text communityDescription = null!;
         [SerializeField] private CanvasGroup communityDescriptionCanvasGroup = null!;
         [field: SerializeField] public ImageView communityThumbnail = null!;
@@ -36,6 +37,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private Sprite publicPrivacySprite = null!;
         [SerializeField] private Sprite privatePrivacySprite = null!;
         [SerializeField] private TMP_Text communityPrivacyText = null!;
+        [SerializeField] private GameObject communityMembersSeparator = null!;
         [SerializeField] private TMP_Text communityMembersCountText = null!;
         [SerializeField] private GameObject communityLiveMark = null!;
         [SerializeField] private Button mainButton = null!;
@@ -104,6 +106,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetTitle(string title) =>
             communityTitle.text = title;
 
+        public void SetOwner(string owner) =>
+            communityOwner.text = owner;
+
         public void SetDescription(string description) =>
             communityDescription.text = description;
 
@@ -115,7 +120,11 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMembersCount(int memberCount)
         {
-            communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
+            bool showMembers = CommunitiesFeatureAccess.Instance.CanMembersCounterBeDisplayer();
+            communityMembersSeparator.SetActive(showMembers);
+            communityMembersCountText.gameObject.SetActive(showMembers);
+            if (showMembers)
+                communityMembersCountText.text = string.Format(MEMBERS_COUNTER_FORMAT, CommunitiesUtility.NumberToCompactString(memberCount));
         }
 
         public void SetOwnership(bool isMember)

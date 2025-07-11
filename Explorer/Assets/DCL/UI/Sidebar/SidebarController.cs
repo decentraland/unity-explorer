@@ -98,8 +98,9 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
 
-            sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            this.sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
         }
 
         public override void Dispose()
@@ -109,7 +110,7 @@ namespace DCL.UI.Sidebar
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
 
-            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            sceneRestrictionBusController?.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
 
