@@ -1,0 +1,48 @@
+.scene-debug-console {
+    flex-grow: 1;
+    max-height: 70%;
+    max-width: 80%;
+    top: 1%;
+    right: -17%;
+    position: relative;
+}
+
+.header {
+    height: 10%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    background-color: rgb(0, 0, 0);
+    flex-grow: 1;
+    width: 100%;
+}
+
+.header__item {
+    flex-grow: 1;
+    height: 90%;
+    align-self: center;
+    align-content: center;
+    flex-basis: 0;
+    color: rgb(255, 255, 255);
+    -unity-text-align: middle-center;
+}
+
+.header__button {
+    background-color: rgba(255, 255, 255, 0);
+}
+
+.header__text-field {
+}
+
+.header__toggle {
+}
+
+.header__toggle > .unity-label {
+    max-width: 50px;
+    min-width: 80px;
+    -unity-text-align: middle-center;
+}
+
+.console {
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.75);
+}

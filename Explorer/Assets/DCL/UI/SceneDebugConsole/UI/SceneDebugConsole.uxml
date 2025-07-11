@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/UI/SceneDebugConsole/UI/SceneDebugConsole.uss?fileID=7433441132597879392&amp;guid=a5a1f1d60c81f4e8682ffccca6ea7ac9&amp;type=3#SceneDebugConsole" />
+    <ui:VisualElement name="scene-debug-console" class="scene-debug-console">
+        <ui:VisualElement name="header" class="header">
+            <ui:Label text="CONSOLE" name="TitleLabel" class="header__item" />
+            <ui:Button text="CLEAR" name="ClearButton" class="header__item header__button" />
+            <ui:Button text="| |" name="PauseButton" class="header__item header__button" />
+            <ui:TextField label="Filter" placeholder-text="filler text" name="FilterTextField" class="header__item header__textField" />
+            <ui:Toggle label="LOGS" name="LogsToggle" class="header__item header__toggle" />
+            <ui:Toggle label="WARNINGS" name="WarningsToggle" class="header__item header__toggle" />
+            <ui:Toggle label="ERRORS" name="ErrorsToggle" class="header__item header__toggle" />
+            <ui:Button text="X" name="CloseButton" class="header__item header__button" />
+        </ui:VisualElement>
+        <ui:ListView name="console" class="console" />
+    </ui:VisualElement>
+</ui:UXML>
