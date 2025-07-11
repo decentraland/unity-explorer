@@ -19,7 +19,6 @@ using System;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
-using TerrainData = DCL.Landscape.TerrainData;
 
 namespace DCL.PluginSystem.Global
 {
@@ -136,7 +135,9 @@ namespace DCL.PluginSystem.Global
                 landscapeData.Value.terrainData);
 
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            RenderTerrainSystem.InjectToWorld(ref builder, landscapeData.Value.terrainData);
+
+            RenderTerrainSystem.InjectToWorld(ref builder, landscapeData.Value.terrainData,
+                landscapeData.Value.grassIndirectRenderer);
 
             Transform terrainParent;
 #if UNITY_EDITOR

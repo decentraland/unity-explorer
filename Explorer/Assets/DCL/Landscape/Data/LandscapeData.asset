@@ -17,4 +17,5 @@ MonoBehaviour:
   genesisCityData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
   worldData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
   terrainData: {fileID: 11400000, guid: 11ce4e9f83b596341a5883081f7d710d, type: 2}
+  grassIndirectRenderer: {fileID: 11400000, guid: 51ed7407a6860654abeb8b674826f3d0, type: 2}
   environmentDistance: 200

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Decentraland.Terrain;
+using System;
 using UnityEngine;
-using TerrainData = Decentraland.Terrain.TerrainData;
 
 namespace DCL.Landscape.Settings
 {
@@ -13,6 +13,7 @@ namespace DCL.Landscape.Settings
         public TerrainGenerationData genesisCityData;
         public TerrainGenerationData worldData;
         public TerrainData terrainData;
+        public GrassIndirectRenderer grassIndirectRenderer;
 
         // This is the source of truth for the "environment distance" slider in the graphics settings of
         // the game. This controls the distance up to which grass, streets, cliffs, and water are

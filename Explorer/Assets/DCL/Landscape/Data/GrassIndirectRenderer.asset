@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07879479ffaf4ff4b77cd64f47113fb6, type: 3}
+  m_Name: GrassIndirectRenderer
+  m_EditorClassIdentifier: 
+  <QuadTreeCullingShader>k__BackingField: {fileID: 7200000, guid: 1ffe6570cfbb43f78f6b2beb126b69bc, type: 3}
+  <ScatterGrassShader>k__BackingField: {fileID: 7200000, guid: a08d70e37ff645da89433c194594339a, type: 3}
+  <HeightMapTexture>k__BackingField: {fileID: 2800000, guid: b15e509b80445d94b92a2d38a4c493a6, type: 3}

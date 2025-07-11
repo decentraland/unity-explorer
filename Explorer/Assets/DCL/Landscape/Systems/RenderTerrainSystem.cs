@@ -7,6 +7,7 @@ using DCL.CharacterCamera.Components;
 using DCL.Diagnostics;
 using Decentraland.Terrain;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace DCL.Landscape.Systems
 {
@@ -15,11 +16,13 @@ namespace DCL.Landscape.Systems
     [UpdateAfter(typeof(UpdateCinemachineBrainSystem))]
     public sealed partial class RenderTerrainSystem : BaseUnityLoopSystem
     {
+        private readonly GrassIndirectRenderer grassIndirectRenderer;
         private readonly TerrainData terrainData;
 
-        private RenderTerrainSystem(World world, TerrainData terrainData)
-            : base(world)
+        private RenderTerrainSystem(World world, TerrainData terrainData,
+            GrassIndirectRenderer grassIndirectRenderer) : base(world)
         {
+            this.grassIndirectRenderer = grassIndirectRenderer;
             this.terrainData = terrainData;
         }
 
@@ -29,13 +32,16 @@ namespace DCL.Landscape.Systems
         [Query]
         private void RenderTerrain(ICinemachinePreset cinemachinePreset)
         {
-            TerrainRenderer.Render(terrainData, cinemachinePreset.Brain.OutputCamera,
+            Camera camera = cinemachinePreset.Brain.OutputCamera;
+
 #if UNITY_EDITOR
-                true
+            bool renderToAllCameras = true;
 #else
-                false
+            bool renderToAllCameras = false;
 #endif
-            );
+
+            grassIndirectRenderer.Render(terrainData, camera, renderToAllCameras);
+            TerrainRenderer.Render(terrainData, camera, renderToAllCameras, true);
         }
     }
 }

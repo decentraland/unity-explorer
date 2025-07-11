@@ -1,0 +1,58 @@
+﻿#include "QuadTreeHelpers.cginc"
+
+#pragma enable_d3d11_debug_symbols
+
+// Hierarchical Quadtree Frustum Culling Compute Shader
+#pragma kernel HierarchicalQuadTreeCulling
+
+// Camera parameters
+cbuffer ConstBuffer : register(b0)
+{
+    float4x4 viewProjMatrix;
+    float4 TerrainBounds;
+}
+
+// Quadtree node structure - matches your Unity.Mathematics version
+struct QuadTreeNode
+{
+    uint Depth8CornerIndexStart24;
+};
+
+// Input/Output buffers
+StructuredBuffer<QuadTreeNode> quadTreeNodes : register(t0);
+Texture2D<float4> OccupancyTexture : register(t1);
+SamplerState OccupancyPointClampSampler : register(s0);
+RWStructuredBuffer<int2> visibleParcels : register(u0);
+RWStructuredBuffer<uint> visibleParcelCount : register(u1);
+
+inline float GetOccupancy(float2 UV_Coord, float4 TerrainBounds, int ParcelSize)
+{
+    return OccupancyTexture.SampleLevel(OccupancyPointClampSampler, UV_Coord, 0.0).r;
+}
+
+[numthreads(256, 1, 1)]
+void HierarchicalQuadTreeCulling(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint3 localId : SV_GroupThreadID)
+{
+    uint baseArrayStart = 87381;
+    uint Depth8CornerIndexStart24 = quadTreeNodes[id.x + baseArrayStart].Depth8CornerIndexStart24;
+    uint cornerIndexStart = GetBottom24Bits(Depth8CornerIndexStart24);
+    int2 plot = CalculateWorldPlotFromQuadtreeNode(cornerIndexStart);
+    const float3 boundingBoxExtents = uint3(8.0f, 8.0f, 8.0f);
+    const float3 boundingBoxCentre = uint3(8, 8, 8);
+    float4 BoundingBox[8];
+    float4x4 objectTranslation = CreateTranslationMatrix(float3(plot.x * 16, 0, plot.y * 16));
+    CalculateBoundingBox(objectTranslation, viewProjMatrix, boundingBoxCentre, boundingBoxExtents, BoundingBox );
+
+    if (IsFrustumCulled(BoundingBox) == false)
+    {
+        float2 UV_Coords = (float2(plot.x * 16, plot.y * 16) + 4096) / 8192;
+        float fOccupancy = GetOccupancy(UV_Coords, TerrainBounds, 16);
+        if (fOccupancy < 0.5f)
+        {
+            uint outputIndex;
+            InterlockedAdd(visibleParcelCount[0], 1, outputIndex);
+            visibleParcels[outputIndex] = plot;
+        }
+    }
+}
+
