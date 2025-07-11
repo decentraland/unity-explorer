@@ -58,6 +58,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 public GameObject root;
                 public ProfilePictureView picture;
                 public ProfileNameTooltipView profileNameTooltip;
+
+                internal bool isPointerEventsSubscribed;
             }
         }
 
@@ -154,6 +156,9 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
                 mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.isVerified);
 
+                if (mutualFriends.thumbnails[i].isPointerEventsSubscribed)
+                    continue;
+
                 int thumbnailIndex = i;
                 Action pointerEnterAction = () => mutualFriends.thumbnails[thumbnailIndex].profileNameTooltip.gameObject.SetActive(true);
                 mutualFriends.thumbnails[i].picture.PointerEnter -= pointerEnterAction;
@@ -163,6 +168,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].picture.PointerExit -= pointerExitAction;
                 mutualFriends.thumbnails[i].picture.PointerExit += pointerExitAction;
 
+                mutualFriends.thumbnails[i].isPointerEventsSubscribed = true;
             }
         }
 
