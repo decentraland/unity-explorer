@@ -115,8 +115,8 @@ namespace MVC
             // Hide all popups in the stack and clear it
             if (overlayPushInfo.PopupControllers != null)
             {
-                foreach (IController popupController in overlayPushInfo.PopupControllers)
-                    popupController.HideViewAsync(ct).Forget();
+                foreach ((IController controller, int orderInLayer) popupController in overlayPushInfo.PopupControllers)
+                    popupController.controller.HideViewAsync(ct).Forget();
 
                 overlayPushInfo.PopupControllers.Clear();
             }
@@ -168,8 +168,8 @@ namespace MVC
             {
                 // Hide all popups in the stack and clear it
 
-                foreach (IController popupController in fullscreenPushInfo.PopupControllers)
-                    popupController.HideViewAsync(ct).Forget();
+                foreach ((IController controller, int orderInLayer) popupController in fullscreenPushInfo.PopupControllers)
+                    popupController.controller.HideViewAsync(ct).Forget();
 
                 fullscreenPushInfo.PopupControllers.Clear();
 
@@ -224,7 +224,7 @@ namespace MVC
                 await UniTask.WhenAll(popupCloser.CloseButton.OnClickAsync(ct),
                     UniTask.WaitUntil(() => currentController.State == ControllerState.ViewFocused));
             }
-            while (currentController != windowsStackManager.TopMostPopup);
+            while (currentController != windowsStackManager.TopMostPopup.controller);
         }
     }
 }
