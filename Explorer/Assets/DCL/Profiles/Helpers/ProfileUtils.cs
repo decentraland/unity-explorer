@@ -23,7 +23,8 @@ namespace DCL.Profiles.Helpers
             var promise = Promise.Create(world,
                 new GetTextureIntention
                 {
-                    CommonArguments = new CommonLoadingArguments(profile.Avatar.FaceSnapshotUrl, attempts: 5),
+                    CommonArguments = new CommonLoadingArguments(profile.Avatar.FaceSnapshotUrl),
+                    IsAvatarTexture = true,
                     ReportSource = nameof(ProfileUtils),
                 },
                 partitionComponent);

@@ -12,6 +12,7 @@ namespace ECS.StreamableLoading.Textures
     {
         public CommonLoadingArguments CommonArguments { get; set; }
         public string ReportSource;
+        public bool IsAvatarTexture;
 
         public readonly TextureWrapMode WrapMode;
         public readonly FilterMode FilterMode;
@@ -19,7 +20,6 @@ namespace ECS.StreamableLoading.Textures
 
         // OR
         public readonly bool IsVideoTexture;
-        public readonly bool IsAvatarTexture;
         public readonly CRDTEntity VideoPlayerEntity;
         public readonly string FileHash;
         public readonly string Src => CommonArguments.URL.Value;
