@@ -2,6 +2,7 @@
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -32,6 +33,7 @@ namespace DCL.Settings.Configuration
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings _,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,

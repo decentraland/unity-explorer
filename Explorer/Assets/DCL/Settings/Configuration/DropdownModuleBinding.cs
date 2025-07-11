@@ -2,6 +2,7 @@
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
@@ -36,11 +37,11 @@ namespace DCL.Settings.Configuration
             // add other features...
         }
 
-        public override SettingsFeatureController CreateModule(
-            Transform parent,
+        public override SettingsFeatureController CreateModule(Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings _,
             AudioMixer generalAudioMixer,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
@@ -50,7 +51,7 @@ namespace DCL.Settings.Configuration
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus = null)
+            WorldVolumeMacBus worldVolumeMacBus)
         {
             var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);

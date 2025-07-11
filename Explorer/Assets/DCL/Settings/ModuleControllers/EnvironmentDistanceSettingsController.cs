@@ -1,9 +1,37 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.Prefs;
+using DCL.Rendering.GPUInstancing;
 using DCL.Settings.ModuleViews;
 
 namespace DCL.Settings.ModuleControllers
 {
+    public class RoadsDistanceSettingsController : SettingsFeatureController
+    {
+        private readonly SettingsSliderModuleView view;
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings;
+
+        public RoadsDistanceSettingsController(SettingsSliderModuleView view, GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings)
+        {
+            this.view = view;
+            this.roadsSettings = roadsSettings;
+
+            if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_ROADS_DISTANCE))
+                view.SliderView.Slider.value = DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_ROADS_DISTANCE);
+
+            view.SliderView.Slider.onValueChanged.AddListener(SetEnvironmentDistanceSettings);
+            SetEnvironmentDistanceSettings(view.SliderView.Slider.value);
+        }
+
+        private void SetEnvironmentDistanceSettings(float distance) =>
+            roadsSettings.RenderDistanceInParcels = distance;
+
+        public override void Dispose()
+        {
+            view.SliderView.Slider.onValueChanged.RemoveListener(SetEnvironmentDistanceSettings);
+        }
+    }
+
+
     public class EnvironmentDistanceSettingsController : SettingsFeatureController
     {
         private readonly SettingsSliderModuleView view;

@@ -51,6 +51,7 @@ using DCL.InWorldCamera.CameraReelGallery;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Rendering.GPUInstancing;
 using DCL.UI.Profiles.Helpers;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Settings;
@@ -121,6 +122,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileChangesBus profileChangesBus;
         private readonly ICommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings;
 
         private readonly bool includeCameraReel;
 
@@ -191,7 +193,8 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
             ICommunitiesDataProvider communitiesDataProvider,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -246,6 +249,7 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
+            this.roadsSettings = roadsSettings;
         }
 
         public void Dispose()
@@ -361,6 +365,7 @@ namespace DCL.PluginSystem.Global
                 realmPartitionSettings.Value,
                 videoPrioritizationSettings.Value,
                 landscapeData.Value,
+                roadsSettings,
                 qualitySettingsAsset.Value,
                 controlsSettingsAsset.Value,
                 systemMemoryCap,

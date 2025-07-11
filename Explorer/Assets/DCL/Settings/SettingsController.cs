@@ -3,6 +3,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
@@ -36,6 +37,7 @@ namespace DCL.Settings
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings;
         private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
@@ -56,6 +58,7 @@ namespace DCL.Settings
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
@@ -71,6 +74,7 @@ namespace DCL.Settings
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
+            this.roadsSettings = roadsSettings;
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
@@ -157,7 +161,7 @@ namespace DCL.Settings
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
                 {
-                    var controller = module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, upscalingController, worldVolumeMacBus);
+                    SettingsFeatureController controller = module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, roadsSettings, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, upscalingController, worldVolumeMacBus);
                     controllers.Add(controller);
                 }
             }

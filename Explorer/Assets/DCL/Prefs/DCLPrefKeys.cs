@@ -34,6 +34,7 @@ namespace DCL.Prefs
         public const string SETTINGS_CHAT_BUBBLES_VISIBILITY = "Settings_ChatBubblesVisibility";
         public const string SETTINGS_CHAT_SOUNDS = "Settings_ChatSounds";
         public const string SETTINGS_ENVIRONMENT_DISTANCE = "Settings_EnvironmentDistance";
+        public const string SETTINGS_ROADS_DISTANCE = "Settings_RoadsDistance";
         public const string SETTINGS_FPS_LIMIT = "Settings_FpsLimit";
         public const string SETTINGS_GRAPHICS_QUALITY = "Settings_GraphicsQuality";
         public const string SETTINGS_MASTER_VOLUME = "Settings_MasterVolume";
