@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.ApplicationGuards;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -145,7 +146,7 @@ namespace DCL.AuthenticationScreenFlow
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, emotesSettings, characterPreviewFactory, world, characterPreviewEventBus);
 
             viewInstance.ErrorPopupCloseButton.onClick.AddListener(CloseErrorPopup);
-            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitApp);
+            viewInstance.ErrorPopupExitButton.onClick.AddListener(ExitUtils.Exit);
             viewInstance.ErrorPopupRetryButton.onClick.AddListener(StartLoginFlowUntilEnd);
         }
 
@@ -463,14 +464,6 @@ namespace DCL.AuthenticationScreenFlow
         private void RequestAlphaAccess() =>
             webBrowser.OpenUrl((Uri)REQUEST_BETA_ACCESS_LINK);
 
-        private void ExitApp()
-        {
-#if UNITY_EDITOR
-            EditorApplication.isPlaying = false;
-            return;
-#endif
-            Application.Quit();
-        }
 
         private void CloseErrorPopup() =>
             viewInstance!.ErrorPopupRoot.SetActive(false);

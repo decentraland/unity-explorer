@@ -15,19 +15,6 @@ namespace DCL.Chat
 {
     public class ChatMemberListView : MonoBehaviour
     {
-        /// <summary>
-        /// A subset of a Profile, stores only the necessary data to be presented by the view.
-        /// </summary>
-        public struct MemberData
-        {
-            public string Id;
-            public string Name;
-            public Uri? FaceSnapshotUrl;
-            public string WalletId;
-            public ChatMemberConnectionStatus ConnectionStatus;
-            public Color ProfileColor;
-        }
-
         public delegate void VisibilityChangedDelegate(bool isVisible);
 
         /// <summary>
@@ -38,7 +25,7 @@ namespace DCL.Chat
         [SerializeField]
         private LoopListView2 loopListView;
 
-        private List<MemberData> members = new ();
+        private List<ChatUserData> members = new ();
 
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private bool isInitialized;
@@ -56,6 +43,12 @@ namespace DCL.Chat
                 {
                     isVisible = value;
                     gameObject.SetActive(value);
+
+                    if (!IsVisible)
+                    {
+                        loopListView.SetListItemCount(0);
+                    }
+
                     VisibilityChanged?.Invoke(value);
                 }
             }
@@ -80,7 +73,7 @@ namespace DCL.Chat
         /// Replaces the data to be represented by the view.
         /// </summary>
         /// <param name="memberData">The data related to the members of the list.</param>
-        public void SetData(List<MemberData> memberData)
+        public void SetData(List<ChatUserData> memberData)
         {
             members = memberData;
 
@@ -101,9 +94,9 @@ namespace DCL.Chat
 
             LoopListViewItem2 newItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             ChatMemberListViewItem memberItem = newItem.GetComponent<ChatMemberListViewItem>();
-            memberItem.Id = members[index].Id;
+            memberItem.Id = members[index].WalletAddress;
             memberItem.Name = members[index].Name;
-            memberItem.SetupProfilePicture(profileRepositoryWrapper, members[index].ProfileColor, members[index].FaceSnapshotUrl, members[index].Id);
+            memberItem.SetupProfilePicture(profileRepositoryWrapper, members[index].ProfileColor, members[index].FaceSnapshotUrl);
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
             memberItem.NameTextColor = members[index].ProfileColor;

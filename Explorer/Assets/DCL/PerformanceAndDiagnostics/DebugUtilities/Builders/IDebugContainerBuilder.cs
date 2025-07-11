@@ -24,6 +24,7 @@ namespace DCL.DebugUtilities
         {
             public const string ROOM_INFO = "Room: Info";
             public const string ROOM_CHAT = "Room: Chat";
+            public const string ROOM_VOICE_CHAT = "Room: VoiceChat";
             public const string ROOM_ISLAND = "Room: Island";
             public const string ROOM_SCENE = "Room: Scene";
             public const string ROOM_THROUGHPUT = "Room: Throughput";
@@ -35,6 +36,8 @@ namespace DCL.DebugUtilities
             public const string ANALYTICS = "Analytics";
             public const string GPU_INSTANCING = "GPU Instancing";
             public const string MEMORY_LIMITS = "Memory Limits";
+            public const string WEB_REQUESTS = "Web Requests";
+            public const string WEB_REQUESTS_DEBUG_METRICS = "Web Requests Debug Metrics";
             public const string PARTIAL_DOWNLOAD = "Partial Download";
         }
     }

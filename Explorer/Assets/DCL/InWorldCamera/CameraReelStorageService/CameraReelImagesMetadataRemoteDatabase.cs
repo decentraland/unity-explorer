@@ -6,6 +6,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -20,6 +21,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
         private readonly URLDomain imageDomain;
         private readonly URLDomain userDomain;
         private readonly URLDomain placesDomain;
+
+        private readonly StringBuilder placesImagesJsonBuilder = new ();
 
         public CameraReelImagesMetadataRemoteDatabase(IWebRequestController webRequestController, IDecentralandUrlsSource decentralandUrlsSource)
         {
@@ -120,6 +123,41 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             CameraReelResponsesCompact responseData = await webRequestController
                                                            .SignedFetchGetAsync(url, string.Empty, ReportCategory.CAMERA_REEL)
                                                            .CreateFromJsonAsync<CameraReelResponsesCompact>(WRJsonParser.Unity, ct);
+
+            return responseData;
+        }
+
+        public async UniTask<CameraReelResponsesCompact> GetCompactCommunityScreenshotsAsync(string[] placeIds, int limit, int offset, CancellationToken ct)
+        {
+            if (placeIds.Length == 0)
+                return new CameraReelResponsesCompact()
+                {
+                    images = new List<CameraReelResponseCompact>(),
+                    currentImages = 0,
+                    maxImages = 0
+                };
+
+            URLAddress url = urlBuilder.AppendDomain(placesDomain)
+                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
+                                       .Build();
+
+            urlBuilder.Clear();
+
+            placesImagesJsonBuilder.Append("{\"placesIds\": [");
+            for (int i = 0; i < placeIds.Length; i++)
+            {
+                placesImagesJsonBuilder.Append($"\"{placeIds[i]}\"");
+                if (i < placeIds.Length - 1)
+                    placesImagesJsonBuilder.Append(",");
+            }
+            placesImagesJsonBuilder.Append("]}");
+
+            string jsonBody = placesImagesJsonBuilder.ToString();
+            placesImagesJsonBuilder.Clear();
+
+            CameraReelResponsesCompact responseData = await webRequestController
+                                                           .SignedFetchPostAsync(url,  GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
+                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
 
             return responseData;
         }

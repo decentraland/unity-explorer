@@ -151,6 +151,10 @@ namespace DCL.PlacesAPIService
                     string[] split = positions[i].Split(',');
                     Positions[i] = new Vector2Int(int.Parse(split[0]), int.Parse(split[1]));
                 }
+
+                if (string.IsNullOrEmpty(base_position))
+                    return;
+
                 string[] splitBasePosition = base_position.Split(',');
                 base_position_processed = new Vector2Int(int.Parse(splitBasePosition[0]), int.Parse(splitBasePosition[1]));
             }

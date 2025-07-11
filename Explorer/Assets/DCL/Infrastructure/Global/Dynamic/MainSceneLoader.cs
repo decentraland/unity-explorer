@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationGuards;
 using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
@@ -16,6 +17,8 @@ using DCL.FeatureFlags;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.HealthChecks;
+using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -39,6 +42,7 @@ using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using TMPro;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -47,6 +51,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
+using Utility.Types;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
 namespace Global.Dynamic
@@ -164,7 +169,7 @@ namespace Global.Dynamic
 
             var web3AccountFactory = new Web3AccountFactory();
             var identityCache = new IWeb3IdentityCache.Default(web3AccountFactory);
-            var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag()).Builder;
+            var debugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog, applicationParametersParser.HasDebugFlag(), applicationParametersParser.HasFlag(AppArgsFlags.LOCAL_SCENE)).Builder;
             WebRequestsContainer webRequestsContainer = await WebRequestsContainer.CreateAsync(applicationParametersParser, globalPluginSettingsContainer, identityCache, decentralandUrlsSource, debugContainerBuilder, KTX_ENABLED, ct);
             var realmUrls = new RealmUrls(launchSettings, new RealmNamesMap(webRequestsContainer.WebRequestController), decentralandUrlsSource);
 
@@ -235,12 +240,10 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
+                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
+                    return;
 
-                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, ct);
-
-                if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
-                    return; // stop bootstrapping;
+                await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
@@ -248,12 +251,7 @@ namespace Global.Dynamic
 
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
-#if UNITY_EDITOR
-                        EditorApplication.isPlaying = false;
-#else
-                        Application.Quit();
-#endif
-
+                        ExitUtils.Exit();
                         return;
                     }
 
@@ -304,21 +302,76 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(launcherRedirectionScreenController);
         }
 
-        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, CancellationToken ct)
+        private async UniTask VerifyMinimumHardwareRequirementMetAsync(IAppArgs applicationParametersParser, IWebBrowser webBrowser, IAnalyticsController analytics, CancellationToken ct)
         {
-            MinimumSpecsGuard minimumSpecsGuard = new MinimumSpecsGuard();
-            if (DCLPlayerPrefs.GetInt(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN) == 1 || (minimumSpecsGuard.HasMinimumSpecs() && !applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN)))
+            var minimumSpecsGuard = new MinimumSpecsGuard(new DefaultSpecProfileProvider());
+
+            bool hasMinimumSpecs = minimumSpecsGuard.HasMinimumSpecs();
+            bool userWantsToSkip = DCLPlayerPrefs.GetBool(DCLPrefKeys.DONT_SHOW_MIN_SPECS_SCREEN);
+            bool forceShow = applicationParametersParser.HasFlag(AppArgsFlags.FORCE_MINIMUM_SPECS_SCREEN);
+
+            bootstrapContainer.DiagnosticsContainer.AddSentryScopeConfigurator(scope =>
+            {
+                bootstrapContainer.DiagnosticsContainer.Sentry!.AddMeetMinimumRequirements(scope, hasMinimumSpecs);
+            });
+
+
+            bool shouldShowScreen = forceShow || (!userWantsToSkip && !hasMinimumSpecs);
+
+            if (!shouldShowScreen)
                 return;
 
-            var minimumRequirementsPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
+            var minimumRequirementsPrefab = await bootstrapContainer!
+                .AssetsProvisioner!
+                .ProvideMainAssetAsync(dynamicSettings.MinimumSpecsScreenPrefab, ct);
 
-            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory =
-                MinimumSpecsScreenController.CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
+            ControllerBase<MinimumSpecsScreenView, ControllerNoData>.ViewFactoryMethod viewFactory = MinimumSpecsScreenController
+                .CreateLazily(minimumRequirementsPrefab.Value.GetComponent<MinimumSpecsScreenView>(), null);
 
-            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser);
+            var minimumSpecsResults = minimumSpecsGuard.Results;
+            var minimumSpecsScreenController = new MinimumSpecsScreenController(viewFactory, webBrowser, analytics, minimumSpecsResults);
             dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
             dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
             await minimumSpecsScreenController.HoldingTask.Task;
+        }
+
+        private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
+            CancellationToken ct)
+        {
+            //If Livekit is down, stop bootstrapping
+            if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
+                return false;
+
+            //If application requires version update, stop bootstrapping
+            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+                return false;
+
+            //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
+            await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
+
+            return true;
+        }
+
+        private async UniTask<bool> IsLIvekitDeadAsync(IWebRequestController webRequestController, DecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        {
+            SequentialHealthCheck healthCheck = new SequentialHealthCheck(
+                new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
+                    DecentralandUrl.ArchipelagoStatus,
+                    DecentralandUrl.GatekeeperStatus
+                ).WithRetries(3));
+
+            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
+
+            if (result.Success) return false;
+
+            var livekitDownPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.LivekitDownPrefab, ct);
+
+            ControllerBase<LivekitHealthGuardView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
+
+            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand());
+            return true;
         }
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)

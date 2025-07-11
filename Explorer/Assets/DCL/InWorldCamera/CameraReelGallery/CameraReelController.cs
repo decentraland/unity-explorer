@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Input;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
 using DCL.InWorldCamera.PhotoDetail;
@@ -24,6 +25,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IMVCManager mvcManager;
+        private readonly ICursor cursor;
 
         private CancellationTokenSource showCancellationTokenSource;
 
@@ -33,6 +35,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ICameraReelStorageService cameraReelStorageService,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
+            ICursor cursor,
             string storageProgressBarLabelText)
         {
             this.view = view;
@@ -40,6 +43,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.web3IdentityCache = web3IdentityCache;
             this.CameraReelGalleryController = cameraReelGalleryController;
             this.mvcManager = mvcManager;
+            this.cursor = cursor;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -91,6 +95,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             showCancellationTokenSource = showCancellationTokenSource.SafeRestart();
             view.gameObject.SetActive(true);
+            cursor.Unlock();
             ShowAsync(showCancellationTokenSource.Token).SuppressCancellationThrow().Forget();
 
             Activated?.Invoke();

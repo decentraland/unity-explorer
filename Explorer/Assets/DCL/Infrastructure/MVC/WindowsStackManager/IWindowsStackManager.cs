@@ -1,8 +1,11 @@
-﻿namespace MVC
+﻿using Cysharp.Threading.Tasks;
+using System;
+
+namespace MVC
 {
-    public interface IWindowsStackManager
+    public interface IWindowsStackManager : IDisposable
     {
-        IController TopMostPopup { get; }
+        IController? TopMostPopup { get; }
 
         IController CurrentFullscreenController { get; }
 
