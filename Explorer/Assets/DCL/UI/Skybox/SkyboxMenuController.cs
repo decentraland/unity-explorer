@@ -40,7 +40,6 @@ namespace DCL.UI.Skybox
         {
             base.OnViewInstantiated();
 
-            skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
             skyboxSettings.DayCycleChanged += ToggleDayCycleEnabled;
 
             viewInstance!.CloseButton.onClick.AddListener(OnClose);
@@ -70,6 +69,11 @@ namespace DCL.UI.Skybox
             skyboxSettings.IsUIControlled = !isOn;
 
             ToggleDayCycleEnabled(isOn);
+
+            if (skyboxSettings.IsUIControlled)
+                skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
+            else
+                skyboxSettings.TimeOfDayChanged += OnTimeOfDayChanged;
         }
 
         protected override void OnBeforeViewShow()

@@ -62,11 +62,8 @@ namespace DCL.SkyBox
             set
             {
                 if (Mathf.Approximately(timeOfDayNormalized, value)) return;
-
                 timeOfDayNormalized = value;
-
-                if (!IsUIControlled)
-                    TimeOfDayChanged?.Invoke(timeOfDayNormalized);
+                TimeOfDayChanged?.Invoke(timeOfDayNormalized);
             }
         }
 

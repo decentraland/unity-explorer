@@ -37,7 +37,6 @@ namespace DCL.SkyBox
         protected override void Update(float deltaTime)
         {
             stateMachine.Update(deltaTime);
-
             skyboxRenderController.UpdateSkybox(skyboxSettings.TimeOfDayNormalized);
         }
     }
