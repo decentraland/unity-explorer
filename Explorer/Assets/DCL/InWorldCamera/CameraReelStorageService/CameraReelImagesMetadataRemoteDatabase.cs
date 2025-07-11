@@ -137,9 +137,9 @@ namespace DCL.InWorldCamera.CameraReelStorageService
                     maxImages = 0
                 };
 
-            URLAddress url = urlBuilder.AppendDomain(placesDomain)
-                                       .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
-                                       .Build();
+            var url = urlBuilder.AppendDomain(placesDomain)
+                                .AppendSubDirectory(URLSubdirectory.FromString($"images?limit={limit}&offset={offset}"))
+                                .Build();
 
             urlBuilder.Clear();
 
@@ -156,8 +156,8 @@ namespace DCL.InWorldCamera.CameraReelStorageService
             placesImagesJsonBuilder.Clear();
 
             CameraReelResponsesCompact responseData = await webRequestController
-                                                           .SignedFetchPostAsync(url,  GenericPostArguments.CreateJson(jsonBody), string.Empty, ct)
-                                                           .CreateFromJson<CameraReelResponsesCompact>(WRJsonParser.Unity);
+                                                           .SignedFetchPostAsync(url, GenericUploadArguments.CreateJson(jsonBody), string.Empty, ReportCategory.CAMERA_REEL)
+                                                           .CreateFromJsonAsync<CameraReelResponsesCompact>(WRJsonParser.Unity, ct);
 
             return responseData;
         }

@@ -1,3 +1,6 @@
+using JetBrains.Annotations;
+using System;
+
 namespace DCL.NotificationsBusController.NotificationTypes
 {
     public interface INotification
@@ -10,6 +13,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
 
         public string GetHeader();
         public string GetTitle();
-        public string GetThumbnail();
+
+        [CanBeNull] public Uri GetThumbnail();
     }
 }

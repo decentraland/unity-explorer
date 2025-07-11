@@ -207,7 +207,8 @@ namespace DCL.Communities.CommunitiesCard
 
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryConfigs.PhotosView.GalleryView, cameraReelStorageService, cameraReelScreenshotsStorage,
                 new ReelGalleryConfigParams(viewInstance.CameraReelGalleryConfigs.GridLayoutFixedColumnCount, viewInstance.CameraReelGalleryConfigs.ThumbnailHeight,
-                    viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false);
+                    viewInstance.CameraReelGalleryConfigs.ThumbnailWidth, false, false), false, webRequestController);
+
             cameraReelGalleryController.ThumbnailClicked += OnThumbnailClicked;
 
             membersListController = new MembersListController(viewInstance.MembersListView,

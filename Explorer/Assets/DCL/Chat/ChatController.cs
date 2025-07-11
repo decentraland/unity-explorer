@@ -503,13 +503,13 @@ namespace DCL.Chat
 
             viewInstance.Focus();
         }
-        
+
         private void OnStartCall(string userId)
         {
             voiceChatCallStatusService.StartCall(new Web3Address(userId));
-            
+
         }
-        
+
         private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
         {
             ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);
@@ -958,7 +958,7 @@ namespace DCL.Chat
 
                     // TODO: Use new endpoint to get a bunch of profile info
                     if (profileCache.TryGet(identity, out var profile))
-                        outMembers.Add(new ChatUserData()
+                        outMembers.Add(new ChatUserData
                         {
                             WalletAddress = profile.UserId,
                             FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl,
@@ -989,7 +989,7 @@ namespace DCL.Chat
                         outMembers.Add(new ChatUserData()
                             {
                                 WalletAddress = memberData.memberAddress,
-                                FaceSnapshotUrl = memberData.profilePictureUrl,
+                                FaceSnapshotUrl = new Uri(memberData.profilePictureUrl),
                                 Name = memberData.name,
                                 ConnectionStatus = ChatMemberConnectionStatus.Online,
                                 ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name),

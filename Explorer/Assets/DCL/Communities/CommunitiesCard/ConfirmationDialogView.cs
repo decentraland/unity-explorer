@@ -3,6 +3,7 @@ using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
+using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -17,10 +18,10 @@ namespace DCL.Communities.CommunitiesCard
             public struct UserData
             {
                 public readonly string Address;
-                public readonly string ThumbnailUrl;
+                public readonly Uri ThumbnailUrl;
                 public readonly Color Color;
 
-                public UserData(string address, string thumbnailUrl, Color color)
+                public UserData(string address, Uri thumbnailUrl, Color color)
                 {
                     Address = address;
                     ThumbnailUrl = thumbnailUrl;

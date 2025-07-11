@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using System;
@@ -44,23 +45,23 @@ namespace DCL.UI
         private const int PIXELS_PER_UNIT = 50;
 
         private readonly IWebRequestController webRequestController;
-        private readonly Dictionary<string, Sprite> cachedSprites = new ();
-        private readonly Dictionary<string, RequestAttempts> failedSprites = new ();
-        private readonly Dictionary<string, UniTaskCompletionSource<Sprite?>> currentSpriteTasks = new ();
-        private readonly HashSet<string> unsolvableSprites = new ();
+        private readonly Dictionary<Uri, Sprite> cachedSprites = new (OriginalStringURLComparer.Instance);
+        private readonly Dictionary<Uri, RequestAttempts> failedSprites = new (OriginalStringURLComparer.Instance);
+        private readonly Dictionary<Uri, UniTaskCompletionSource<Sprite?>> currentSpriteTasks = new (OriginalStringURLComparer.Instance);
+        private readonly HashSet<Uri> unsolvableSprites = new (OriginalStringURLComparer.Instance);
 
         public SpriteCache(IWebRequestController webRequestController)
         {
             this.webRequestController = webRequestController;
         }
 
-        public Sprite? GetCachedSprite(string imageUrl) =>
+        public Sprite? GetCachedSprite(Uri imageUrl) =>
             cachedSprites.GetValueOrDefault(imageUrl);
 
-        public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, CancellationToken ct) =>
+        public async UniTask<Sprite?> GetSpriteAsync(Uri imageUrl, CancellationToken ct) =>
             await GetSpriteAsync(imageUrl, false, ct);
 
-        public async UniTask<Sprite?> GetSpriteAsync(string imageUrl, bool useKtx, CancellationToken ct)
+        public async UniTask<Sprite?> GetSpriteAsync(Uri imageUrl, bool useKtx, CancellationToken ct)
         {
             Sprite? sprite = GetCachedSprite(imageUrl);
             if (sprite != null)
@@ -77,7 +78,7 @@ namespace DCL.UI
             return await spriteTaskCompletionSource.Task;
         }
 
-        public void AddOrReplaceCachedSprite(string? imageUrl, Sprite imageContent)
+        public void AddOrReplaceCachedSprite(Uri? imageUrl, Sprite imageContent)
         {
             if (imageUrl == null)
                 return;
@@ -92,7 +93,7 @@ namespace DCL.UI
 
         public void Clear()
         {
-            foreach (KeyValuePair<string, Sprite> row in cachedSprites)
+            foreach (KeyValuePair<Uri, Sprite> row in cachedSprites)
                 GameObject.Destroy(row.Value);
 
             cachedSprites.Clear();
@@ -104,11 +105,11 @@ namespace DCL.UI
             currentSpriteTasks.Clear();
         }
 
-        private async UniTaskVoid DownloadSpriteAsync(string imageUrl, bool useKtx, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
+        private async UniTaskVoid DownloadSpriteAsync(Uri? imageUrl, bool useKtx, UniTaskCompletionSource<Sprite?> tcs, CancellationToken ct)
         {
             Sprite? result = null;
 
-            if (URLAddress.EMPTY.Equals(imageUrl))
+            if (imageUrl == null)
             {
                 FinalizeTask(tcs, result, imageUrl);
                 return;
@@ -123,13 +124,12 @@ namespace DCL.UI
             try
             {
                 IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                    new CommonArguments(URLAddress.FromString(imageUrl)),
+                    new CommonArguments(imageUrl),
                     new GetTextureArguments(TextureType.Albedo, useKtx),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
-                    ct,
                     ReportCategory.UI,
                     suppressErrors: true
-                );
+                                                                          )
+                                                                         .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);
 
                 Texture2D texture = ownedTexture.Texture;
                 texture.filterMode = FilterMode.Bilinear;
@@ -151,13 +151,14 @@ namespace DCL.UI
             }
         }
 
-        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, string imageUrl)
+        private void FinalizeTask(UniTaskCompletionSource<Sprite?> tcs, Sprite? result, Uri? imageUrl)
         {
-            currentSpriteTasks.Remove(imageUrl);
+            if (imageUrl != null)
+                currentSpriteTasks.Remove(imageUrl);
             tcs.TrySetResult(result);
         }
 
-        private void HandleCooldownOnException(string imageUrl, Exception e)
+        private void HandleCooldownOnException(Uri imageUrl, Exception e)
         {
             if (failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts))
                 if (requestAttempts.CanIncreaseCooldown())
@@ -178,10 +179,10 @@ namespace DCL.UI
                 failedSprites[imageUrl] = RequestAttempts.FirstAttempt();
         }
 
-        private bool TestCooldownCondition(string imageUrl) =>
+        private bool TestCooldownCondition(Uri imageUrl) =>
             !failedSprites.TryGetValue(imageUrl, out RequestAttempts requestAttempts) || requestAttempts.CanRetry();
 
-        private void SetSpriteIntoCache(string imageUrl, Sprite sprite) =>
+        private void SetSpriteIntoCache(Uri imageUrl, Sprite sprite) =>
             cachedSprites[imageUrl] = sprite;
     }
 }

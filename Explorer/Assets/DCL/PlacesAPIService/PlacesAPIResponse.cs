@@ -26,7 +26,10 @@ namespace DCL.PlacesAPIService
             public string id;
             public string title;
             public string description;
-            public string image;
+
+            [SerializeField]
+            private string image;
+
             public string owner;
             public string[] tags;
             public string world_name;
@@ -59,6 +62,8 @@ namespace DCL.PlacesAPIService
             public Realm[] realms_detail;
             public string like_rate;
 
+            public Uri? ImageUri { get; private set; }
+
             [SerializeField] private string[] positions;
 
             public PlaceInfo(Vector2Int position)
@@ -67,6 +72,7 @@ namespace DCL.PlacesAPIService
                 title = "Empty place";
                 description = "No description";
                 image = "https://peer.decentraland.org/content/contents/bafkreidj26s7aenyxfthfdibnqonzqm5ptc4iamml744gmcyuokewkr76y";
+                ImageUri = new Uri(image);
                 owner = "no owner";
                 tags = Array.Empty<string>();
                 world_name = "";
@@ -157,6 +163,8 @@ namespace DCL.PlacesAPIService
 
                 string[] splitBasePosition = base_position.Split(',');
                 base_position_processed = new Vector2Int(int.Parse(splitBasePosition[0]), int.Parse(splitBasePosition[1]));
+
+                ImageUri = Uri.TryCreate(image, UriKind.Absolute, out Uri? imageUri) ? imageUri : null;
             }
 
             [Serializable]

@@ -1,7 +1,4 @@
 using Best.HTTP.Caching;
-using Best.HTTP.HostSetting;
-using Best.HTTP.Proxies.Autodetect;
-using Best.HTTP.Proxies;
 using Best.HTTP.Shared;
 using Best.HTTP.Shared.Logger;
 using Cysharp.Threading.Tasks;
@@ -16,9 +13,7 @@ using DCL.WebRequests.HTTP2;
 using DCL.WebRequests.RequestsHub;
 using Global.AppArgs;
 using System;
-using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DCL.WebRequests
@@ -91,7 +86,7 @@ namespace DCL.WebRequests
 
             var options = new ArtificialDelayOptions.ElementBindingOptions();
 
-            var analyticsContainer = WebRequestsAnalyticsContainer.Create(debugContainerBuilder.TryAddWidget("Web Requests"));
+            var analyticsContainer = WebRequestsAnalyticsContainer.Create(debugContainerBuilder.TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS));
 
             var requestCompleteDebugMetric = new ElementBinding<ulong>(0);
 
@@ -127,7 +122,7 @@ namespace DCL.WebRequests
             void CreateWebRequestsMetricsDebugUtility()
             {
                 debugContainerBuilder
-                   .TryAddWidget("Web Requests Debug Metrics")
+                   .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS)
                   ?.AddMarker("Requests cannot connect", cannotConnectToHostExceptionDebugMetric,
                         DebugLongMarkerDef.Unit.NoFormat)
                    .AddMarker("Requests complete", requestCompleteDebugMetric,

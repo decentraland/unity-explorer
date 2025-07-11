@@ -99,7 +99,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
-            clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event));
+            clipboard.Set(EventUtilities.GetEventCopyLink(eventData.Event).OriginalString);
 
             inWorldSuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, cancellationToken)
                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES)

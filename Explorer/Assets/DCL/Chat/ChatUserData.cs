@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DCL.Chat
@@ -9,7 +10,7 @@ namespace DCL.Chat
     {
         public string WalletAddress;
         public string Name;
-        public string FaceSnapshotUrl;
+        public Uri FaceSnapshotUrl;
         public string WalletId;
         public ChatMemberConnectionStatus ConnectionStatus;
         public Color ProfileColor;

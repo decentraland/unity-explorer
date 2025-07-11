@@ -31,7 +31,7 @@ namespace DCL.UI
             this.webRequestController = webRequestController;
         }
 
-        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false, bool fitAndCenterImage = false)
+        public void RequestImage(Uri uri, bool removePrevious = false, bool hideImageWhileLoading = false, bool useKtx = false, bool fitAndCenterImage = false)
         {
             if (removePrevious)
                 view.Image.sprite = null;
@@ -48,7 +48,7 @@ namespace DCL.UI
             view.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask RequestImageAsync(string uri, bool useKtx, CancellationToken ct, bool fitAndCenterImage = false)
+        public async UniTask RequestImageAsync(Uri uri, bool useKtx, CancellationToken ct, bool fitAndCenterImage = false)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace DCL.UI
                 {
                     //TODO potential memory leak, due no CacheCleaner
                     IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                        new CommonArguments(URLAddress.FromString(uri)),
+                        new CommonArguments(uri),
                         new GetTextureArguments(TextureType.Albedo, useKtx),
                         ReportCategory.UI
                     ).CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);

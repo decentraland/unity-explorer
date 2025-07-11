@@ -42,7 +42,8 @@ namespace DCL.UI.Communities
         private UniTaskCompletionSource contextMenuTask = new ();
         private GenericContextMenuParameter.GenericContextMenu contextMenuConfig;
 
-        public async UniTaskVoid SetupAsync(ISpriteCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
+        public async UniTaskVoid SetupAsync(ISpriteCache thumbnailCache, string communityId, string communityName, Uri thumbnailUrl, OpenContextMenuDelegate openContextMenuAction,
+            CancellationToken ct)
         {
             contextMenuConfig = new GenericContextMenuParameter.GenericContextMenu(contextMenuSettings.Width, contextMenuSettings.Offset, contextMenuSettings.VerticalLayoutPadding, contextMenuSettings.ElementsSpacing, ContextMenuOpenDirection.TOP_LEFT)
                                         .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewCommunityText, contextMenuSettings.ViewCommunitySprite, () => ViewCommunityRequested?.Invoke()));

@@ -146,7 +146,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                                                       KICK_MEMBER_CONFIRM_TEXT,
                                                                                                                       kickSprite,
                                                                                                                       false, false,
-                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, new Uri(profile.profilePictureUrl), profile.GetUserNameColor())),
                                                                                                                   ct)
                                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
@@ -170,7 +170,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                                                                                                                       BAN_MEMBER_CONFIRM_TEXT,
                                                                                                                       banSprite,
                                                                                                                       false, false,
-                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, new Uri(profile.profilePictureUrl), profile.GetUserNameColor())),
                                                                                                                   ct)
                                                                                                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

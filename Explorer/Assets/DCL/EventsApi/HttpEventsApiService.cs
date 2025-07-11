@@ -89,11 +89,11 @@ namespace DCL.EventsApi
             }
             placeIdsBuilder.Append("]");
 
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
 
             EventWithPlaceIdDTOListResponse responseData = await webRequestController
-                                                                .SignedFetchPostAsync(url,  GenericPostArguments.CreateJson(placeIdsBuilder.ToString()), string.Empty, ct)
-                                                                .CreateFromJson<EventWithPlaceIdDTOListResponse>(WRJsonParser.Unity);
+                                                                .SignedFetchPostAsync(url, GenericUploadArguments.CreateJson(placeIdsBuilder.ToString()), string.Empty, ReportCategory.EVENTS)
+                                                                .CreateFromJsonAsync<EventWithPlaceIdDTOListResponse>(WRJsonParser.Unity, ct);
 
             return responseData;
         }

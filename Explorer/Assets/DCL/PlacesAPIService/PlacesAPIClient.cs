@@ -154,21 +154,21 @@ namespace DCL.PlacesAPIService
             if (!string.IsNullOrEmpty(ownerAddress))
                 urlBuilder.AppendParameter(new URLParameter("owner", ownerAddress));
 
-            URLAddress url = urlBuilder.Build();
+            Uri url = urlBuilder.Build();
 
             ulong timestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> result = webRequestController.GetAsync(
-                url, ct,
+            var result = webRequestController.GetAsync(
+                url,
                 ReportCategory.UI,
                 signInfo: WebRequestSignInfo.NewFromUrl(url, timestamp, "get"),
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, timestamp));
 
             PlacesData.PlacesAPIResponse response = PlacesData.PLACES_API_RESPONSE_POOL.Get();
 
-            await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity,
-                             createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
-                        .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
+            response = await result.OverwriteFromJsonAsync(response, WRJsonParser.Unity, ct,
+                                        createCustomExceptionOnFailure: static (_, text) => new PlacesAPIException("Error parsing search places info:", text))
+                                   .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching search places info:"));
 
             if (response.data == null)
                 throw new PlacesAPIException($"No world info retrieved:\n{searchString}");
@@ -228,8 +228,8 @@ namespace DCL.PlacesAPIService
             if (placeIdsList.Count == 0)
                 jsonBody.Clear();
 
-            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(basePlacesURL, GenericPostArguments.CreateJson(jsonBody.ToString()), string.Empty, ct)
-                                                                              .CreateFromJson<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity);
+            PlacesData.PlacesAPIResponse response = await webRequestController.SignedFetchPostAsync(basePlacesURL, GenericUploadArguments.CreateJson(jsonBody.ToString()), string.Empty, ReportCategory.UI)
+                                                                              .CreateFromJsonAsync<PlacesData.PlacesAPIResponse>(WRJsonParser.Unity, ct);
 
             return response;
         }

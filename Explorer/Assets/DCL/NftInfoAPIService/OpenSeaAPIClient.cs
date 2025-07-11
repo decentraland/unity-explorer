@@ -41,7 +41,7 @@ namespace DCL.NftInfoAPIService
                 marketName = MARKET_NAME,
                 name = nft.name,
                 description = nft.description,
-                imageUrl = nft.image_url,
+                imageUrl = new Uri(nft.image_url),
                 assetLink = nft.opensea_url,
                 marketLink = nft.opensea_url,
                 tokenId = nft.identifier,

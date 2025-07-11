@@ -1,6 +1,7 @@
 using DCL.BadgesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -161,7 +162,7 @@ namespace DCL.Passport.Fields.Badges
                 badgeInfo.data.assets is { textures2d: not null } ? badgeInfo.data.assets.textures2d.normal : "";
 
             if (!string.IsNullOrEmpty(imageToLoad))
-                imageController?.RequestImage(imageToLoad, hideImageWhileLoading: true);
+                imageController?.RequestImage(new Uri(imageToLoad), hideImageWhileLoading: true);
         }
     }
 }

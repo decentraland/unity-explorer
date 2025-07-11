@@ -85,7 +85,7 @@ namespace DCL.Communities.EventInfo
 
             ResetScrollPosition();
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(eventData.Image, eventImage, null, cancellationToken).Forget();
+            thumbnailLoader.LoadCommunityThumbnailAsync(new Uri(eventData.Image), eventImage, null, cancellationToken).Forget();
             eventDate.text = EventUtilities.GetEventTimeText(eventData);
             eventName.text = eventData.Name;
             hostName.text = string.Format(HOST_FORMAT, eventData.User_name);

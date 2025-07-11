@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.WebRequests;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -50,7 +51,7 @@ namespace DCL.MarketplaceCredits.Fields
         [field: SerializeField]
         public float AlphaValueForClaimedCredits { get; private set; }
 
-        private ImageController imageController;
+        private ImageController? imageController;
 
         public void ConfigureImageController(IWebRequestController webRequestController)
         {
@@ -63,11 +64,11 @@ namespace DCL.MarketplaceCredits.Fields
         public void StopLoadingImage() =>
             imageController?.StopLoading();
 
-        public void SetupGoalImage(string imageUrl)
+        public void SetupGoalImage(Uri? imageUrl)
         {
             imageController?.SetImage(DefaultGoalSprite);
 
-            if (!string.IsNullOrEmpty(imageUrl))
+            if (imageUrl != null)
                 imageController?.RequestImage(imageUrl, hideImageWhileLoading: true);
         }
 

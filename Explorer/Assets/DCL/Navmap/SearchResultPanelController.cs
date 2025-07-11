@@ -97,7 +97,7 @@ namespace DCL.Navmap
                 placeElementView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
                 placeElementView.playersCount.text = placeInfo.user_count.ToString();
                 placeElementView.resultAnimator.SetTrigger(UIAnimationHashes.LOADED);
-                placeElementView.SetPlaceImage(placeInfo.image);
+                placeElementView.SetPlaceImage(placeInfo.ImageUri);
                 placeElementView.resultButton.onClick.RemoveAllListeners();
                 placeElementView.resultButton.onClick.AddListener(() =>
                 {

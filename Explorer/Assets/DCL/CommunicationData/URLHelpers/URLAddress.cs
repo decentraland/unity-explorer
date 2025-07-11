@@ -11,7 +11,7 @@ namespace CommunicationData.URLHelpers
 
         public readonly Uri? Value;
 
-        internal URLAddress(Uri? value)
+        public URLAddress(Uri? value)
         {
             Value = value;
         }

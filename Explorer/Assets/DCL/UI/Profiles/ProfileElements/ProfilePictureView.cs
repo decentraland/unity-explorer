@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -17,7 +18,7 @@ namespace DCL.UI.ProfileElements
 
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private CancellationTokenSource? cts;
-        private string? currentUrl;
+        private Uri? currentUrl;
 
         public void Dispose()
         {
@@ -64,9 +65,9 @@ namespace DCL.UI.ProfileElements
 
         private async UniTask LoadThumbnailAsync(Uri faceSnapshotUrl, CancellationToken ct = default)
         {
-            if (faceSnapshotUrl.Equals(currentUrl)) return;
+            if (OriginalStringURLComparer.Instance.Equals(faceSnapshotUrl, currentUrl)) return;
 
-            cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+            cts = ct != CancellationToken.None ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
             currentUrl = faceSnapshotUrl;
 
             try

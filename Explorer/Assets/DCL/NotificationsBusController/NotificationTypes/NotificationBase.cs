@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 
 namespace DCL.NotificationsBusController.NotificationTypes
@@ -17,7 +18,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         public virtual string GetTitle() =>
             string.Empty;
 
-        public virtual string GetThumbnail() =>
-            string.Empty;
+        public virtual Uri GetThumbnail() =>
+            null;
     }
 }

@@ -23,7 +23,7 @@ namespace DCL.Browser
             OpenUrl(decentralandUrlsSource.Url(url));
         }
 
-        public string GetUrl(DecentralandUrl url) =>
+        public Uri GetUrl(DecentralandUrl url) =>
             decentralandUrlsSource.Url(url);
     }
 }

@@ -270,7 +270,7 @@ namespace DCL.Notifications.NotificationsMenu
             CancellationToken ct)
         {
             IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
-                new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
+                                                                          new CommonArguments(notificationData.GetThumbnail()),
                 new GetTextureArguments(TextureType.Albedo),
                 ReportCategory.UI)
                                                                      .CreateTextureAsync(TextureWrapMode.Clamp, ct: ct);

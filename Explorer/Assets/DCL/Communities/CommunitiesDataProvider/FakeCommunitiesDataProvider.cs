@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Utility;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities
 {
@@ -28,7 +29,7 @@ namespace DCL.Communities
 
         public async UniTask<GetCommunityResponse> GetCommunityAsync(string communityId, CancellationToken ct)
         {
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
 
             GetUserCommunitiesData.CommunityData communityData = currentCommunities.Find(community => community.id == communityId);
 
@@ -75,7 +76,7 @@ namespace DCL.Communities
                 },
             };
 
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
 
             return result;
         }
@@ -178,9 +179,9 @@ namespace DCL.Communities
 
         public async UniTask<List<string>> GetCommunityPlacesAsync(string communityId, CancellationToken ct)
         {
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
 
-            int totalPlaces = UnityEngine.Random.Range(0, 10);
+            int totalPlaces = Random.Range(0, 10);
 
             List<string> places = new List<string>(totalPlaces);
             for (int i = 0; i < totalPlaces; i++)
@@ -201,7 +202,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> LeaveCommunityAsync(string communityId, CancellationToken ct)
         {
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
 
             foreach (GetUserCommunitiesData.CommunityData community in currentCommunities)
             {
@@ -217,7 +218,7 @@ namespace DCL.Communities
 
         public async UniTask<bool> JoinCommunityAsync(string communityId, CancellationToken ct)
         {
-            await UniTask.Delay(UnityEngine.Random.Range(1000, 2000), cancellationToken: ct);
+            await UniTask.Delay(Random.Range(1000, 2000), cancellationToken: ct);
 
             foreach (GetUserCommunitiesData.CommunityData community in currentCommunities)
             {
@@ -247,7 +248,7 @@ namespace DCL.Communities
             for (var i = 0; i < 100; i++)
             {
                 List<GetUserCommunitiesData.FriendInCommunity> mutualFriends = new ();
-                int amountMutualFriends = UnityEngine.Random.Range(0, 4);
+                int amountMutualFriends = Random.Range(0, 4);
                 for (var j = 0; j < amountMutualFriends; j++)
                 {
                     mutualFriends.Add(new GetUserCommunitiesData.FriendInCommunity
@@ -261,7 +262,7 @@ namespace DCL.Communities
                 communities.Add(new GetUserCommunitiesData.CommunityData
                 {
                     id = (i + 1).ToString(),
-                    thumbnails = new CommunityThumbnails { raw = "https://picsum.photos/280/280" },
+                    thumbnails = new CommunityThumbnails { raw = "https://picsum.photos/280/280", rawUri = new Uri("https://picsum.photos/280/280") },
                     name = $"Community {i + 1}",
                     description = $"Test description for Community {i + 1}. This is only a fake text to test this awesome feature!! This is the card that represent a community in Decentraland.",
                     ownerAddress = string.Empty,
@@ -269,8 +270,8 @@ namespace DCL.Communities
                     role = i < communitiesAsOwner ? CommunityMemberRole.owner :
                         i < communitiesAsOwner + communitiesAsModerator ? CommunityMemberRole.moderator :
                         i < communitiesAsOwner + communitiesAsModerator + communitiesAsMember ? CommunityMemberRole.member : CommunityMemberRole.none,
-                    membersCount = UnityEngine.Random.Range(1, 101),
-                    isLive = UnityEngine.Random.Range(0, 5) == 0,
+                    membersCount = Random.Range(1, 101),
+                    isLive = Random.Range(0, 5) == 0,
                     friends = mutualFriends.ToArray(),
                 });
             }
@@ -299,15 +300,15 @@ namespace DCL.Communities
             var sb = new StringBuilder("0x");
 
             for (int i = 0; i < 40; i++)
-                sb.Append(HEX_CHARS[UnityEngine.Random.Range(0, HEX_CHARS.Length)]);
+                sb.Append(HEX_CHARS[Random.Range(0, HEX_CHARS.Length)]);
 
             return new GetCommunityMembersResponse.MemberData()
             {
                 memberAddress = sb.ToString(),
-                name = $"{ADJECTIVES[UnityEngine.Random.Range(0, ADJECTIVES.Length)]}{NOUNS[UnityEngine.Random.Range(0, NOUNS.Length)]}",
-                hasClaimedName = UnityEngine.Random.Range(0, 100) > 50,
-                role = ROLES[UnityEngine.Random.Range(0, ROLES.Length)],
-                friendshipStatus = FRIENDSHIP_STATUSES[UnityEngine.Random.Range(0, FRIENDSHIP_STATUSES.Length)]
+                name = $"{ADJECTIVES[Random.Range(0, ADJECTIVES.Length)]}{NOUNS[Random.Range(0, NOUNS.Length)]}",
+                hasClaimedName = Random.Range(0, 100) > 50,
+                role = ROLES[Random.Range(0, ROLES.Length)],
+                friendshipStatus = FRIENDSHIP_STATUSES[Random.Range(0, FRIENDSHIP_STATUSES.Length)]
             };
         }
     }

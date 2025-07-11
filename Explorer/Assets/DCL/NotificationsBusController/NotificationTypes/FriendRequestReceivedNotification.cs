@@ -18,7 +18,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         public override string GetTitle() =>
             NOTIFICATION_TITLE;
 
-        public override string GetThumbnail() =>
+        public override Uri GetThumbnail() =>
             Metadata.Sender.ProfileImageUrl;
     }
 

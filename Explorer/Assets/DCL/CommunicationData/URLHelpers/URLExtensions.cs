@@ -13,6 +13,10 @@ namespace CommunicationData.URLHelpers
         public static URLDomain Append(in this URLDomain address, in URLSubdirectory subdirectory) =>
             URLBuilder.Combine(address, subdirectory);
 
+        public static Uri? ToURL(this string? url) =>
+            url == null ? null :
+            Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri uri) ? uri : null;
+
         /// <summary>
         ///     This method allocates heavily so the result must be cached
         /// </summary>

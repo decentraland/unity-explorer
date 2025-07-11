@@ -164,7 +164,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private void OnElementShareButtonClicked(PlaceInfo place)
         {
             string description = string.Format(TWITTER_PLACE_DESCRIPTION, place.title);
-            string twitterLink = string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", GetPlaceCopyLink(place));
+            var twitterLink = new Uri(string.Format(TWITTER_NEW_POST_LINK, description, "DCLPlace", GetPlaceCopyLink(place)));
 
             webBrowser.OpenUrl(twitterLink);
         }
