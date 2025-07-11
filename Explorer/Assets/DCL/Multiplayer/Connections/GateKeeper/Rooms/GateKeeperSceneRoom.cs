@@ -7,10 +7,38 @@ using DCL.WebRequests;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Threading;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 {
+    public class StopwatchSampler
+    {
+        private readonly string measurementName;
+        private readonly List<long> samples = new ();
+        private const int MAX_SAMPLES = 100;
+
+        public StopwatchSampler(string measurementName)
+        {
+            this.measurementName = measurementName;
+        }
+
+        public void AddSample(long milliseconds)
+        {
+            samples.Add(milliseconds);
+
+            if (samples.Count >= MAX_SAMPLES)
+            {
+                double average = samples.Average();
+                Debug.Log($"{measurementName}: {average:F2} ms (based on {samples.Count} samples)");
+                samples.Clear();
+            }
+        }
+    }
+
     public class GateKeeperSceneRoom : ConnectiveRoom
     {
         private class Activatable : ActivatableConnectiveRoom, IGateKeeperSceneRoom
@@ -31,6 +59,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private readonly IWebRequestController webRequests;
         private readonly IScenesCache scenesCache;
         private readonly GateKeeperSceneRoomOptions options;
+
+        // Stopwatch samplers for collecting 100 samples and calculating averages
+        private static readonly StopwatchSampler connectionStringSampler = new ("CONNECTION STRING");
+        private static readonly StopwatchSampler roomConnectionSampler = new ("ROOM CONNECTION");
+        private static readonly StopwatchSampler globalActionSampler = new ("GLOBAL ACTION");
 
         /// <summary>
         ///     The scene the current LiveKit room corresponds to
@@ -110,13 +143,29 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
                 {
                     if (!meta.Equals(previousMetaData))
                     {
+                        Debug.Log("JUANI STARTING CONNECTION TO NEW ROOM");
+                        var globalStopwatch = Stopwatch.StartNew();
+                        var stopwatch = Stopwatch.StartNew();
                         string connectionString = await ConnectionStringAsync(meta, token);
+                        stopwatch.Stop();
+                        Debug.Log($"JUANI GETTING CONNECTION STRING TOOK {stopwatch.ElapsedMilliseconds} ms");
+                        connectionStringSampler.AddSample(stopwatch.ElapsedMilliseconds);
 
                         // if the player returns to the previous scene but the new room has been connected, the previous connection should be preserved
                         // and the new connection should be discarded
+
+                        stopwatch.Restart();
                         RoomSelection roomSelection = await TryConnectToRoomAsync(
                             connectionString,
                             token);
+
+                        stopwatch.Stop();
+                        Debug.Log($"JUANI CONNECTING TO ROOM TOOK {meta.sceneId} TOOK {stopwatch.ElapsedMilliseconds} ms");
+                        roomConnectionSampler.AddSample(stopwatch.ElapsedMilliseconds);
+
+                        globalStopwatch.Stop();
+                        Debug.Log($"JUANI GLOBAL ACTION TOOK {globalStopwatch.ElapsedMilliseconds} ms");
+                        globalActionSampler.AddSample(globalStopwatch.ElapsedMilliseconds);
 
                         if (roomSelection == RoomSelection.NEW)
                         {

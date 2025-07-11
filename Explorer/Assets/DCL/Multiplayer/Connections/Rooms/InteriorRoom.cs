@@ -14,9 +14,11 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine.Pool;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.Multiplayer.Connections.Rooms
 {
@@ -102,7 +104,14 @@ namespace DCL.Multiplayer.Connections.Rooms
             {
                 case RoomSelection.NEW:
                     // Disconnect the previous room, but make its callbacks pass through
-                    try { await previous.DisconnectAsync(ct); }
+                    try
+                    {
+                        var stopWatch = Stopwatch.StartNew();
+                        Debug.Log("JUANI DISCONNECTING FROM ROOM");
+                        await previous.DisconnectAsync(ct);
+                        stopWatch.Stop();
+                        Debug.Log($"JUANI DISCONNECTING FROM ROOM FINISH {stopWatch.ElapsedMilliseconds} ms");
+                    }
                     finally
                     {
                         Unsubscribe(previous);

@@ -16,8 +16,10 @@ using ECS;
 using ECS.SceneLifeCycle;
 using Global.Dynamic.LaunchModes;
 using LiveKit.Internal.FFIClients;
+using System.Diagnostics;
 using UnityEngine;
 using Utility;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.Multiplayer.Connections.Demo
 {
@@ -33,7 +35,7 @@ namespace DCL.Multiplayer.Connections.Demo
             IFFIClient.Default.EnsureInitialize();
 
             var world = World.Create();
-            world.Create(new CharacterTransform(new GameObject("Player").transform));
+            Entity e = world.Create(new CharacterTransform(new GameObject("Player").transform));
 
             var launchMode = ILaunchMode.PLAY;
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone, launchMode);
@@ -46,12 +48,14 @@ namespace DCL.Multiplayer.Connections.Demo
             var metaDataSource = new SceneRoomLogMetaDataSource(new SceneRoomMetaDataSource(realmData, character, world, false));
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource);
 
-            new GateKeeperSceneRoom(
+            GateKeeperSceneRoom gateKeeperSceneRoom =
+                new GateKeeperSceneRoom(
                     webRequests,
                     new ScenesCache(),
                     options
-                ).StartAsync()
-                 .Forget();
+                );
+
+            gateKeeperSceneRoom.StartAsync().Forget();
         }
     }
 }

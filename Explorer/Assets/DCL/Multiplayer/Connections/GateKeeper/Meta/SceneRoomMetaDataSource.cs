@@ -7,12 +7,14 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Types;
+using Random = System.Random;
 
 namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 {
@@ -53,6 +55,9 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
             pointersList.Add(input.Parcel.ToInt2());
 
+            //return Result<MetaData>.SuccessResult(new MetaData(RandomString(5), input));
+
+
             // TODO: instead of making a new request, Room Change request should be initiated when the scene definition is loaded by ECS,
             // currently these processes are completely separated
             var promise = AssetPromise<SceneDefinitions, GetSceneDefinitionList>.Create(world,
@@ -70,6 +75,18 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             );
         }
 
+        private string RandomString(int length)
+        {
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+
+            return new string(Enumerable.Repeat(chars, length)
+                                        .Select(s => s[random.Next(s.Length)])
+                                        .ToArray());
+        }
+
         public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;
+
+
     }
 }
