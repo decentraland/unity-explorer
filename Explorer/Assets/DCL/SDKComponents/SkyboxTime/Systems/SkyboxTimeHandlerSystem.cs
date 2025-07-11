@@ -33,11 +33,10 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
                 if (hasComponent)
                     SetSDKsettings(ref sdkSkyboxTime);
-
-                return;
+                else
+                    ResetSDKControlled();
             }
-
-            if (skyboxSettings.IsSDKControlled)
+            else
                 ResetSDKControlled();
         }
 
@@ -49,9 +48,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
             if (!hasComponent)
             {
-                if (skyboxSettings.IsSDKControlled)
-                    ResetSDKControlled();
-
+                ResetSDKControlled();
                 return;
             }
 
@@ -64,7 +61,7 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         private void SetSDKsettings(ref PBSkyboxTime sdkSkyboxTime)
         {
-            skyboxSettings.IsSDKControlled = true;
+            skyboxSettings.CurrentSDKControlledScene = sceneInfo.BaseParcel;
             skyboxSettings.TargetTimeOfDayNormalized = SkyboxSettingsAsset.NormalizeTime(sdkSkyboxTime.FixedTime);
 
             skyboxSettings.TransitionMode = sdkSkyboxTime.TransitionMode == TransitionMode.TmForward
@@ -74,7 +71,8 @@ namespace DCL.SDKComponents.SkyboxTime.Systems
 
         private void ResetSDKControlled()
         {
-            skyboxSettings.IsSDKControlled = false;
+            if (skyboxSettings.CurrentSDKControlledScene == sceneInfo.BaseParcel)
+                skyboxSettings.CurrentSDKControlledScene = null;
         }
     }
 }

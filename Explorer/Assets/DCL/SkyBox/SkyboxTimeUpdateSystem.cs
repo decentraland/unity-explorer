@@ -24,7 +24,7 @@ namespace DCL.SkyBox
 
             stateMachine = new SkyboxStateMachine(new ISkyboxState[]
             {
-                new SDKComponentState(skyboxSettings, sceneRestrictionController, transition),
+                new SDKComponentState(skyboxSettings, sceneRestrictionController, transition, scenesCache),
                 new SceneMetadataState(scenesCache, skyboxSettings, sceneRestrictionController, transition),
                 new UIOverrideState(skyboxSettings),
                 new GlobalTimeState(skyboxSettings, transition),
