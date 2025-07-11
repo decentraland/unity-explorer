@@ -1,0 +1,36 @@
+using Newtonsoft.Json;
+using System;
+
+namespace DCL.NotificationsBusController.NotificationTypes
+{
+    public class CommunityRenamedNotification : NotificationBase
+    {
+        private const string NOTIFICATION_HEADER = "{0}";
+        private const string NOTIFICATION_TITLE = "[{0}] Community is now [{1}]";
+
+        [JsonProperty("metadata")]
+        public CommunityRenamedNotificationMetadata Metadata { get; set; }
+
+        public override string GetHeader() =>
+            string.Format(NOTIFICATION_HEADER, Metadata.OldCommunityName);
+
+        public override string GetTitle() =>
+            string.Format(NOTIFICATION_TITLE, Metadata.OldCommunityName, Metadata.NewCommunityName);
+
+        public override string GetThumbnail() =>
+            Metadata.ThumbnailUrl;
+    }
+
+    [Serializable]
+    public struct CommunityRenamedNotificationMetadata
+    {
+        [JsonProperty("old_community_name")]
+        public string OldCommunityName { get; set; }
+
+        [JsonProperty("new_community_name")]
+        public string NewCommunityName { get; set; }
+
+        [JsonProperty("thumbnail_url")]
+        public string ThumbnailUrl { get; set; }
+    }
+}
