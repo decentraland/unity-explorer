@@ -151,9 +151,8 @@ namespace DCL.Communities.CommunitiesBrowser
                 mutualFriends.thumbnails[i].root.SetActive(friendExists);
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
-                var nameColor = ProfileNameColorHelper.GetNameColor(mutualFriend.name);
-                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, nameColor, mutualFriend.profilePictureUrl);
-                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, nameColor, mutualFriend.isVerified);
+                mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
+                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.isVerified);
 
                 int thumbnailIndex = i;
                 Action pointerEnterAction = () => mutualFriends.thumbnails[thumbnailIndex].profileNameTooltip.gameObject.SetActive(true);
