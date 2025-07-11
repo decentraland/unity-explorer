@@ -38,7 +38,7 @@ namespace DCL.Communities.CommunityCreation
 
         private readonly IWebBrowser webBrowser;
         private readonly IInputBlock inputBlock;
-        private readonly ICommunitiesDataProvider dataProvider;
+        private readonly CommunitiesDataProvider dataProvider;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
@@ -72,7 +72,7 @@ namespace DCL.Communities.CommunityCreation
             ViewFactoryMethod viewFactory,
             IWebBrowser webBrowser,
             IInputBlock inputBlock,
-            ICommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider dataProvider,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
             IMVCManager mvcManager) : base(viewFactory)
