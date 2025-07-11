@@ -24,13 +24,13 @@ namespace DCL.PluginSystem.World
 {
     public class LightSourcePlugin : IDCLWorldPlugin<LightSourcePlugin.LightSourceSettings>
     {
-        private LightSourcePlugin.LightSourceSettings pluginSettings;
-        private static LightSourceDefaults? lightSourceDefaults;
-
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly ICharacterObject characterObject;
+
+        private LightSourceSettings? pluginSettings;
+        private static LightSourceDefaults? lightSourceDefaults;
 
         private IComponentPool<Light>? lightPoolRegistry;
 
@@ -61,25 +61,25 @@ namespace DCL.PluginSystem.World
 
             var lifecycleSystem = LightSourceLifecycleSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightPoolRegistry);
             LightSourcePreCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, pluginSettings.LightsPerParcel, pluginSettings.HardMaxLightCount);
             LightSourceLodSystem.InjectToWorld(ref builder, pluginSettings.SpotLightsLods, pluginSettings.PointLightsLods);
-            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject);
-            LightSourcePostCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider);
+            LightSourcePostCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, pluginSettings.fadeDuration);
 
             finalizeWorldSystems.Add(lifecycleSystem);
         }
 
         public async UniTask InitializeAsync(LightSourceSettings settings, CancellationToken ct)
         {
-            this.pluginSettings = settings;
+            pluginSettings = settings;
 
-            await CreateLightSourcePoolAsync(settings, ct);
+            await CreateLightSourcePoolAsync(ct);
         }
 
-        private async UniTask CreateLightSourcePoolAsync(LightSourceSettings settings, CancellationToken ct)
+        private async UniTask CreateLightSourcePoolAsync(CancellationToken ct)
         {
-            lightSourceDefaults = (await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceDefaultValues, ct: ct)).Value;
+            lightSourceDefaults = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.LightSourceDefaultValues, ct: ct)).Value;
 
-            Light lightPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourcePrefab, ct: ct)).Value.GetComponent<Light>();
+            Light lightPrefab = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.LightSourcePrefab, ct: ct)).Value.GetComponent<Light>();
             lightPoolRegistry = poolsRegistry.AddGameObjectPool(() => Object.Instantiate(lightPrefab, Vector3.zero, quaternion.identity), onRelease: OnPoolRelease, onGet: OnPoolGet);
 
             cacheCleaner.Register(lightPoolRegistry);
@@ -92,8 +92,6 @@ namespace DCL.PluginSystem.World
 
         private void OnPoolGet(Light light)
         {
-            var def = this.pluginSettings.LightSourceDefaultValues;
-
             light.enabled = lightSourceDefaults!.active;
             light.transform.SetParent(null);
             light.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
@@ -109,6 +107,12 @@ namespace DCL.PluginSystem.World
 
         public class LightSourceSettings : IDCLPluginSettings
         {
+            public float LightsPerParcel = 1;
+
+            public int HardMaxLightCount = 10;
+
+            public float fadeDuration = 0.25f;
+
             public AssetReferenceGameObject LightSourcePrefab;
 
             public AssetReferenceT<LightSourceDefaults> LightSourceDefaultValues;

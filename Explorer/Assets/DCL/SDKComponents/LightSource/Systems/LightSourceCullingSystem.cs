@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using Unity.Burst;
@@ -24,16 +25,22 @@ namespace DCL.SDKComponents.LightSource.Systems
     [BurstCompile]
     public partial class LightSourceCullingSystem : BaseUnityLoopSystem
     {
-        private const float LIGHTS_PER_PARCEL = 1;
-        private const int SCENE_MAX_LIGHT_COUNT = 10;
-
         private readonly ISceneData sceneData;
         private readonly ICharacterObject characterObject;
+        private readonly float lightsPerParcel;
+        private readonly int hardMaxLightCount;
 
-        public LightSourceCullingSystem(World world, ISceneData sceneData, ICharacterObject characterObject) : base(world)
+        public LightSourceCullingSystem(
+            World world,
+            ISceneData sceneData,
+            ICharacterObject characterObject,
+            float lightsPerParcel,
+            int hardMaxLightCount) : base(world)
         {
             this.sceneData = sceneData;
             this.characterObject = characterObject;
+            this.lightsPerParcel = lightsPerParcel;
+            this.hardMaxLightCount = hardMaxLightCount;
         }
 
         protected override void Update(float t)
@@ -64,7 +71,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             _ = ListPool<LightSourceComponent>.Get(out var activeLights);
             CollectActiveLightSourcesQuery(World, activeLights);
 
-            int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * LIGHTS_PER_PARCEL), SCENE_MAX_LIGHT_COUNT);
+            int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * lightsPerParcel), hardMaxLightCount);
 
             if (activeLights.Count <= maxLightCount) return;
 

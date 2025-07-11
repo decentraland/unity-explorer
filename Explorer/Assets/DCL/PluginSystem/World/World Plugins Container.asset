@@ -183,6 +183,9 @@ MonoBehaviour:
     - rid: 3414978285727645699
       type: {class: LightSourcePlugin/LightSourceSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
+        LightsPerParcel: 1
+        HardMaxLightCount: 10
+        fadeDuration: 0.25
         LightSourcePrefab:
           m_AssetGUID: 7f09a2d0d9adc4e43b67879ab9cdf360
           m_SubObjectName: 
