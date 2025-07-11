@@ -51,17 +51,13 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            var lightSourceSystem = LightSourceSystem.InjectToWorld(
-                ref builder,
-                sharedDependencies.SceneData,
-                sharedDependencies.SceneStateProvider,
-                sharedDependencies.ScenePartition,
-                lightPoolRegistry,
-                characterObject);
-
-            finalizeWorldSystems.Add(lightSourceSystem);
-
             ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
+
+            var lifecycleSystem = LightSourceLifecycleSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightPoolRegistry);
+            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject);
+            LightSourceUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+
+            finalizeWorldSystems.Add(lifecycleSystem);
         }
 
         public async UniTask InitializeAsync(LightSourceSettings settings, CancellationToken ct)
