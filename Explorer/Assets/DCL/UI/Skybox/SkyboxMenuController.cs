@@ -70,6 +70,9 @@ namespace DCL.UI.Skybox
 
             ToggleDayCycleEnabled(isOn);
 
+            // We only subscribe to time changes when it is not controller by the ui
+            // otherwise, the slider will change the time, and immediately after we will receive the time change event
+            // provoking a duplicate update in the slider
             if (skyboxSettings.IsUIControlled)
                 skyboxSettings.TimeOfDayChanged -= OnTimeOfDayChanged;
             else
