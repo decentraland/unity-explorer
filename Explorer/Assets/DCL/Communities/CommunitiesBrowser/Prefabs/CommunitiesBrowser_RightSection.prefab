@@ -1088,7 +1088,7 @@ MonoBehaviour:
     m_Top: 20
     m_Bottom: 50
   mItemPadding: {x: 15, y: 15}
-  mItemSize: {x: 280, y: 404}
+  mItemSize: {x: 280, y: 398}
   mItemRecycleDistance: {x: 50, y: 50}
   mItemSnapEnable: 0
   mGridFixedType: 0
@@ -1602,7 +1602,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 642764471525080873, guid: 7ed908ab51fa48948bfa61f87229bfbf, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 404
+      value: 398
       objectReference: {fileID: 0}
     - target: {fileID: 642764471525080873, guid: 7ed908ab51fa48948bfa61f87229bfbf, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1738,6 +1738,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4353527291144015897, guid: 7ed908ab51fa48948bfa61f87229bfbf, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4353527291144015897, guid: 7ed908ab51fa48948bfa61f87229bfbf, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4955784416368674590, guid: 7ed908ab51fa48948bfa61f87229bfbf, type: 3}

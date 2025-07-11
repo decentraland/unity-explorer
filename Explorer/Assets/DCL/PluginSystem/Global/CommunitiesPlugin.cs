@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
@@ -62,7 +62,7 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,

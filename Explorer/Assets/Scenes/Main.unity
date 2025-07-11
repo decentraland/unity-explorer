@@ -560,6 +560,12 @@ MonoBehaviour:
       m_SubObjectType: 
       m_SubObjectGUID: 
       m_EditorAssetChanged: 0
+    <LivekitDownPrefab>k__BackingField:
+      m_AssetGUID: 022077403db6945e58f0023757b0155f
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_SubObjectGUID: 
+      m_EditorAssetChanged: 0
     <UserNameColors>k__BackingField:
     - {r: 0.67138505, g: 0.38714847, b: 0.9433962, a: 1}
     - {r: 0.8324557, g: 0.6273585, b: 1, a: 1}
