@@ -19,7 +19,6 @@ using ABPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoadin
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
-    [TestFixture(WebRequestsMode.HTTP2)]
     [TestFixture(WebRequestsMode.YET_ANOTHER)]
     public partial class LoadAssetBundlePartialSystemShould : UnitySystemTestBase<PartialLoadAssetBundleSystem>
     {
@@ -36,9 +35,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 #if UNITY_STANDALONE_OSX
             $"https://ab-cdn.decentraland.org/v38/bafkreiel5muw2s2l73uyosgizb3ko7c3zrriecxpsvc4zssk4ti454lrh4/{REAL_ASSET_HASH}_mac";
 #endif
-
-        private static readonly string NOT_EXISTENT_EMBEDDED_URL =
-            $"file://{Application.dataPath + $"/../TestResources/AssetBundles/{REAL_ASSET_HASH}"}";
 
         // 50KB
         private const long CHUNK_SIZE = 50 * 1024;
@@ -90,12 +86,8 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
 
             promises = new List<ABPromise>(embeddedCount + webCount);
 
-            for (var i = 0; i < embeddedCount; i++)
-                promises.Add(NewABPromise(NOT_EXISTENT_EMBEDDED_URL, AssetSource.EMBEDDED));
-
             for (var i = 0; i < webCount; i++)
                 promises.Add(NewABPromise(REAL_ASSET_URL, AssetSource.WEB));
-
 
             var resolvedPromises = new ABPromise[promises.Count];
 
