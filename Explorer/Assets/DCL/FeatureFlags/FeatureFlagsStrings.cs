@@ -22,8 +22,6 @@ namespace DCL.FeatureFlags
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
         public const string ONBOARDING_GREETINGS_VARIANT = "greetings";
         public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
-        public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
-        public const string SKYBOX_SETTINGS_VARIANT = "settings";
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
@@ -67,8 +65,6 @@ namespace DCL.FeatureFlags
         OnboardingEnabledVariant,
         OnboardingGreetingsVariant,
         GenesisStartingParcel,
-        SkyboxSettings,
-        SkyboxSettingsVariant,
         VideoPrioritization,
         AssetBundleFallback,
         ChatHistoryLocalStorage,
@@ -109,8 +105,6 @@ namespace DCL.FeatureFlags
                 FeatureFlag.OnboardingEnabledVariant => FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT,
                 FeatureFlag.OnboardingGreetingsVariant => FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT,
                 FeatureFlag.GenesisStartingParcel => FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
-                FeatureFlag.SkyboxSettings => FeatureFlagsStrings.SKYBOX_SETTINGS,
-                FeatureFlag.SkyboxSettingsVariant => FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
                 FeatureFlag.VideoPrioritization => FeatureFlagsStrings.VIDEO_PRIORITIZATION,
                 FeatureFlag.AssetBundleFallback => FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK,
                 FeatureFlag.ChatHistoryLocalStorage => FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE,

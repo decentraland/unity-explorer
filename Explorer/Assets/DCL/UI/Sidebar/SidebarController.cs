@@ -8,7 +8,6 @@ using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
-using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -28,6 +27,7 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -192,11 +192,16 @@ namespace DCL.UI.Sidebar
 
         private void OnSceneRestrictionChanged(SceneRestriction restriction)
         {
-            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_BLOCKED)
+            if (restriction.Type == SceneRestrictions.SKYBOX_TIME_UI_BLOCKED)
             {
                 bool isRestricted = restriction.Action == SceneRestrictionsAction.APPLIED;
                 if (viewInstance)
+                {
+                    if (isRestricted)
+                        skyboxMenuController.HideViewAsync(CancellationToken.None).Forget();
+
                     viewInstance.skyboxButton.interactable = !isRestricted;
+                }
                 else
                     pendingSkyboxInteractableState = !isRestricted;
             }
@@ -231,10 +236,11 @@ namespace DCL.UI.Sidebar
         private void OnMvcManagerViewClosed(IController closedController)
         {
             // Panels that are controllers and can be opened using shortcuts
-            if (closedController is EmotesWheelController) { viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR); }
+            if (closedController is EmotesWheelController)
+                viewInstance.emotesWheelButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
             else if (closedController is FriendsPanelController)
             {
-                viewInstance.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+                viewInstance?.friendsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
                 OnChatViewFoldingChanged(chatView.IsUnfolded);
             }
         }
@@ -242,10 +248,11 @@ namespace DCL.UI.Sidebar
         private void OnMvcManagerViewShowed(IController showedController)
         {
             // Panels that are controllers and can be opened using shortcuts
-            if (showedController is EmotesWheelController) { viewInstance.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR); }
+            if (showedController is EmotesWheelController)
+                viewInstance?.emotesWheelButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             else if (showedController is FriendsPanelController)
             {
-                viewInstance.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+                viewInstance?.friendsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
                 OnChatViewFoldingChanged(false);
             }
         }
@@ -257,8 +264,8 @@ namespace DCL.UI.Sidebar
 
         private void OnChatViewFoldingChanged(bool isUnfolded)
         {
-            viewInstance.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
-            viewInstance.unreadMessagesButton.animator.SetTrigger(isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+            viewInstance?.unreadMessagesButton.animator.ResetTrigger(!isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
+            viewInstance?.unreadMessagesButton.animator.SetTrigger(isUnfolded ? HIGHLIGHTED_ICON_ANIMATOR : IDLE_ICON_ANIMATOR);
         }
 
         private void OnChatHistoryReadMessagesChanged(ChatChannel changedChannel)
@@ -268,7 +275,7 @@ namespace DCL.UI.Sidebar
 
         private void OnAutoHideToggleChanged(bool value)
         {
-            viewInstance.SetAutoHideSidebarStatus(value);
+            viewInstance?.SetAutoHideSidebarStatus(value);
         }
 
         private void OnRewardNotificationClicked(object[] parameters)
@@ -360,9 +367,9 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSidebarSettingsAsync()
         {
-            viewInstance.BlockSidebar();
+            viewInstance?.BlockSidebar();
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.SidebarSettings);
-            viewInstance.UnblockSidebar();
+            viewInstance?.UnblockSidebar();
 
             viewInstance!.sidebarSettingsButton.OnDeselect(null);
         }
@@ -383,20 +390,20 @@ namespace DCL.UI.Sidebar
 
         private async void OpenSkyboxSettingsAsync()
         {
-            viewInstance.BlockSidebar();
-            viewInstance.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance?.BlockSidebar();
+            viewInstance?.skyboxButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Skybox);
-            viewInstance.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-            viewInstance.UnblockSidebar();
+            viewInstance?.skyboxButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance?.UnblockSidebar();
         }
 
         private async void OpenNotificationsPanelAsync()
         {
-            viewInstance.BlockSidebar();
-            viewInstance.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
+            viewInstance?.BlockSidebar();
+            viewInstance?.notificationsButton.animator.SetTrigger(HIGHLIGHTED_ICON_ANIMATOR);
             await sharedSpaceManager.ToggleVisibilityAsync(PanelsSharingSpace.Notifications);
-            viewInstance.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
-            viewInstance.UnblockSidebar();
+            viewInstance?.notificationsButton.animator.SetTrigger(IDLE_ICON_ANIMATOR);
+            viewInstance?.UnblockSidebar();
         }
 
         private async UniTaskVoid OpenExplorePanelInSectionAsync(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
