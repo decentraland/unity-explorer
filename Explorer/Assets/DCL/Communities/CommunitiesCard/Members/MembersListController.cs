@@ -38,7 +38,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         private readonly ConfirmationDialogView confirmationDialogView;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
@@ -58,7 +58,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             ProfileRepositoryWrapper profileDataProvider,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             WarningNotificationView inWorldWarningNotificationView,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus) : base(view, PAGE_SIZE)

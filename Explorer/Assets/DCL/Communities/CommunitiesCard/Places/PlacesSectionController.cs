@@ -38,7 +38,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         private const string TWITTER_PLACE_DESCRIPTION = "Check out {0}, a cool place I found in Decentraland!";
 
         private readonly PlacesSectionView view;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly SectionFetchData<PlaceInfo> placesFetchData = new (PAGE_SIZE);
         private readonly IPlacesAPIService placesAPIService;
         private readonly WarningNotificationView inWorldWarningNotificationView;
@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesCard.Places
 
         public PlacesSectionController(PlacesSectionView view,
             ThumbnailLoader thumbnailLoader,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             IPlacesAPIService placesAPIService,
             WarningNotificationView inWorldWarningNotificationView,
             WarningNotificationView inWorldSuccessNotificationView,
