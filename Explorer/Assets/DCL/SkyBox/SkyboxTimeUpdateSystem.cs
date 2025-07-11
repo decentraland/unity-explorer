@@ -38,11 +38,7 @@ namespace DCL.SkyBox
         {
             stateMachine.Update(deltaTime);
 
-            if (skyboxSettings.ShouldUpdateSkybox)
-            {
-                skyboxRenderController.UpdateSkybox(skyboxSettings.TimeOfDayNormalized);
-                skyboxSettings.ShouldUpdateSkybox = false;
-            }
+            skyboxRenderController.UpdateSkybox(skyboxSettings.TimeOfDayNormalized);
         }
     }
 }

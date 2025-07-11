@@ -63,8 +63,6 @@ namespace DCL.SkyBox
                     break;
                 }
             }
-
-            settings.ShouldUpdateSkybox = true;
         }
     }
 }

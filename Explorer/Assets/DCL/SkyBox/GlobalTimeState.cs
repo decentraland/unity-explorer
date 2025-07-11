@@ -53,7 +53,6 @@ namespace DCL.SkyBox
             if (refreshAccumulatedTime >= SkyboxSettingsAsset.REFRESH_INTERVAL)
             {
                 settings.TimeOfDayNormalized = globalTimeOfDay;
-                settings.ShouldUpdateSkybox = true;
                 refreshAccumulatedTime = 0f;
             }
         }

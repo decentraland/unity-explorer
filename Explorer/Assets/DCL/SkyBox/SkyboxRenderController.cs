@@ -56,6 +56,8 @@ public class SkyboxRenderController : MonoBehaviour
     [InspectorName("Enabled")] [SerializeField] private bool fog = true;
     [GradientUsage(true)] [SerializeField] private Gradient fogColorRamp;
 
+    private float currentTimeOfDay = float.MinValue;
+
     public void Initialize(Material skyboxMat, Light dirLight, AnimationClip skyboxAnimationClip, float initialTimeOfDay)
     {
         if (skyboxMat)
@@ -117,6 +119,9 @@ public class SkyboxRenderController : MonoBehaviour
     /// </summary>
     public void UpdateSkybox(float timeOfDay)
     {
+        if (Mathf.Approximately(currentTimeOfDay, timeOfDay)) return;
+        currentTimeOfDay = timeOfDay;
+
         UpdateIndirectLight(timeOfDay);
         UpdateDirectionalLight(timeOfDay);
         UpdateSkyboxColor(timeOfDay);

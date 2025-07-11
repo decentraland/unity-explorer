@@ -62,7 +62,6 @@ namespace DCL.UI.Skybox
         private void OnTimeSliderValueChanged(float sliderValue)
         {
             skyboxSettings.TimeOfDayNormalized = sliderValue;
-            skyboxSettings.ShouldUpdateSkybox = true;
             viewInstance!.TimeText.text = GetFormatedTime(sliderValue);
         }
 

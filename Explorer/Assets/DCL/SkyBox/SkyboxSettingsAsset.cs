@@ -35,7 +35,6 @@ namespace DCL.SkyBox
         public Material SkyboxMaterial = null!;
         public AssetReferenceT<AnimationClip> SkyboxAnimationCycle = null!;
 
-        public bool ShouldUpdateSkybox { get; set; }
         public bool IsUIControlled { get; set; } // Set by UI global system
         public bool IsSDKControlled { get; set; } // Set by SDK component system
         public bool IsDayCycleEnabled
@@ -78,7 +77,6 @@ namespace DCL.SkyBox
             timeOfDayNormalized = INITIAL_TIME_OF_DAY;
             TargetTimeOfDayNormalized = INITIAL_TIME_OF_DAY;
             IsDayCycleEnabled = true;
-            ShouldUpdateSkybox = true;
             TransitionMode = TransitionMode.FORWARD;
             IsUIControlled = false;
             IsSDKControlled = false;
