@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.Movement
         public MovementKind movementKind;
         public bool isSliding;
         public bool isStunned;
+        public bool isInstant;
+        public bool isEmoting;
 
         public AnimationStates animState;
 
@@ -38,6 +40,8 @@ namespace DCL.Multiplayer.Movement
             hashCode.Add(isStunned);
             hashCode.Add(animState);
             hashCode.Add(velocityTier);
+            hashCode.Add(isInstant);
+            hashCode.Add(isEmoting);
             return hashCode.ToHashCode();
         }
 
@@ -51,7 +55,9 @@ namespace DCL.Multiplayer.Movement
             && isSliding == other.isSliding
             && isStunned == other.isStunned
             && animState.Equals(other.animState)
-            && velocityTier == other.velocityTier;
+            && velocityTier == other.velocityTier
+            && isInstant == other.isInstant
+            && isEmoting == other.isEmoting;
 
         public override bool Equals(object obj) =>
             obj is NetworkMovementMessage other && Equals(other);
