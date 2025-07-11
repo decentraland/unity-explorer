@@ -6,7 +6,6 @@ using DCL.ApplicationBlocklistGuard;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Character;
-using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -15,6 +14,7 @@ using DCL.RealmNavigation.LoadingOperation;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -47,6 +47,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation;
 
         private readonly ICharacterObject characterObject;
+        private readonly ExposedTransform characterExposedTransform;
         private readonly StartParcel startParcel;
 
         public RealUserInAppInitializationFlow(
@@ -66,6 +67,7 @@ namespace DCL.UserInAppInitializationFlow
             EnsureLivekitConnectionStartupOperation ensureLivekitConnectionStartupOperation,
             IAppArgs appArgs,
             ICharacterObject characterObject,
+            ExposedTransform characterExposedTransform,
             StartParcel startParcel)
         {
             this.initOps = initOps;
@@ -76,6 +78,7 @@ namespace DCL.UserInAppInitializationFlow
             this.appArgs = appArgs;
             this.characterObject = characterObject;
             this.startParcel = startParcel;
+            this.characterExposedTransform = characterExposedTransform;
 
             this.loadingStatus = loadingStatus;
             this.decentralandUrlsSource = decentralandUrlsSource;
@@ -141,21 +144,31 @@ namespace DCL.UserInAppInitializationFlow
                     : initOps;
 
                 //Set initial position and start async livekit connection
-                characterObject.Controller.transform.position = startParcel.Peek().ParcelToPositionFlat();
-                var livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
+                characterExposedTransform.Position.Value
+                    = characterObject.Controller.transform.position
+                        = startParcel.Peek().ParcelToPositionFlat();
+                UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(parentLoadReport, parameters), ct);
-                            if (operationResult.Success)
-                                parentLoadReport.SetProgress(
-                                    loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                            //Create a child report to be able to hold the parallel livekit operation
+                            AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
+                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);
 
                             // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
                             if (operationResult.Error is { Exception: UserBlockedException })
                                 mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                            else
+                            {
+                                //Wait for livekit to end handshake
+                                operationResult = await livekitHandshake;
+
+                                if (operationResult.Success)
+                                    parentLoadReport.SetProgress(
+                                        loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                            }
 
                             return operationResult;
                         },
@@ -169,16 +182,10 @@ namespace DCL.UserInAppInitializationFlow
                     string message = result.Error.AsMessage();
                     ReportHub.LogError(ReportCategory.AUTHENTICATION, message);
                 }
-                else
-                {
-                    //Wait for livekit to end handshake
-                    result = await livekitHandshake;
-                }
             }
             while (result.Success == false && parameters.ShowAuthentication);
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
-            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
         // TODO should be an operation

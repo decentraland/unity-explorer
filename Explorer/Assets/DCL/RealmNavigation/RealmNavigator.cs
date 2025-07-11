@@ -122,6 +122,9 @@ namespace DCL.RealmNavigation
             ReportHub.LogProductionInfo($"Trying to teleport to {teleportParams.CurrentDestinationParcel}. Attempt #{attemptsCount}");
             EnumResult<TaskError> lastOpResult = await ops.ExecuteAsync(logOpName, attemptsCount, teleportParams, ct);
 
+            if (lastOpResult.Success)
+                teleportParams.Report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+
             if (lastOpResult.Success == false)
                 analyticsController.Track(
                     AnalyticsEvents.General.LOADING_ERROR,
