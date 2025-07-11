@@ -29,6 +29,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
+        [SerializeField] private TMP_Text communityOwner = null!;
         [SerializeField] private TMP_Text communityDescription = null!;
         [SerializeField] private CanvasGroup communityDescriptionCanvasGroup = null!;
         [field: SerializeField] public ImageView communityThumbnail = null!;
@@ -104,6 +105,9 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetTitle(string title) =>
             communityTitle.text = title;
+
+        public void SetOwner(string owner) =>
+            communityOwner.text = owner;
 
         public void SetDescription(string description) =>
             communityDescription.text = description;
