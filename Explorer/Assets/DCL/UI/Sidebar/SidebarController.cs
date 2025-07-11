@@ -105,7 +105,8 @@ namespace DCL.UI.Sidebar
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
-            sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.sceneRestrictionBusController.SubscribeToSceneRestriction(OnSceneRestrictionChanged);
             this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
@@ -115,7 +116,7 @@ namespace DCL.UI.Sidebar
 
             notificationsMenuController.Dispose(); // TODO: Does it make sense to call this here?
             checkForMarketplaceCreditsFeatureCts.SafeCancelAndDispose();
-            sceneRestrictionBusController.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
+            sceneRestrictionBusController?.UnsubscribeToSceneRestriction(OnSceneRestrictionChanged);
             referralNotificationCts.SafeCancelAndDispose();
             checkForCommunitiesFeatureCts.SafeCancelAndDispose();
         }
