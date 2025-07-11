@@ -91,17 +91,24 @@ namespace DCL.Chat
         
         public void Show() => gameObject.SetActive(true);
         public void Hide() => gameObject.SetActive(false);
-        
-        public void SetInputEnabled(bool activate, string? maskMessage = null)
-        {
-        }
 
-        public void ShowMask(string message)
+        /// <summary>
+        /// Sets the interactable state of the input view.
+        /// </summary>
+        /// <param name="isInteractable">If true, the input field is shown. If false, the mask is shown.</param>
+        /// <param name="maskMessage">The message to display on the mask when not interactable. Can be null if interactable.</param>
+        public void SetInteractable(bool isInteractable, string? maskMessage = null)
         {
-        }
-
-        public void HideMask()
-        {
+            if (isInteractable)
+            {
+                Focus();
+            }
+            else
+            {
+                inputFieldContainer.SetActive(false);
+                maskContainer.SetActive(true);
+                maskText.text = maskMessage ?? "Input is disabled.";
+            }
         }
     }
 }

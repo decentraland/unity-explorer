@@ -293,7 +293,10 @@ namespace DCL.Chat
 
         public void SetOnlineStatus(string channelId, bool isOnline)
         {
-            
+            if (items.TryGetValue(new ChatChannel.ChannelId(channelId), out var item))
+            {
+                item.SetConnectionStatus(isOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+            }
         }
 
         public void AddItem(ChatConversationsToolbarViewItem newItem)

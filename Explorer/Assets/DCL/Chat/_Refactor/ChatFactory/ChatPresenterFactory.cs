@@ -10,6 +10,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.Profiles;
 using DCL.Settings.Settings;
+using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using DCL.Web3.Identities;
@@ -49,9 +50,12 @@ public class ChatPresenterFactory : IChatPresenterFactory
     private readonly ObjectProxy<IFriendsService> friendsService;
     private readonly ChatService chatService;
     private readonly ChatMemberListService chatMemberListService;
-
+    private readonly ITextFormatter hyperlinkTextFormatter;
+    private readonly ChatHistoryStorage chatHistoryStorage;
+    
     public ChatPresenterFactory(
         IChatHistory chatHistory,
+        ChatHistoryStorage chatHistoryStorage,
         IChatMessagesBus chatMessagesBus,
         IChatEventBus chatEventBus,
         IProfileCache profileCache,
@@ -69,9 +73,11 @@ public class ChatPresenterFactory : IChatPresenterFactory
         IFriendsEventBus friendsEventBus,
         ObjectProxy<IFriendsService> friendsService,
         ChatService chatService,
-        ChatMemberListService chatMemberListService)
+        ChatMemberListService chatMemberListService,
+        ITextFormatter hyperlinkTextFormatter)
     {
         this.chatHistory = chatHistory;
+        this.chatHistoryStorage = chatHistoryStorage;
         this.chatMessagesBus = chatMessagesBus;
         this.chatEventBus = chatEventBus;
         this.profileCache = profileCache;
@@ -90,6 +96,7 @@ public class ChatPresenterFactory : IChatPresenterFactory
         chatUserStateUpdater = userStateUpdater;
         this.chatService = chatService;
         this.chatMemberListService = chatMemberListService;
+        this.hyperlinkTextFormatter = hyperlinkTextFormatter;
         
         chatUserStateEventBus = new ChatUserStateEventBus();
         var chatRoom = roomHub.ChatRoom();
@@ -111,12 +118,18 @@ public class ChatPresenterFactory : IChatPresenterFactory
             chatUserStateEventBus,
             profileCache,
             profileRepositoryWrapper,
+            chatService,
             config);
     }
 
     public ChatMessageFeedPresenter CreateMessageFeed(IChatMessageFeedView view)
     {
-        return new ChatMessageFeedPresenter(view, chatHistory, profileCache, web3IdentityCache);
+        return new ChatMessageFeedPresenter(view,
+            chatHistory,
+            chatHistoryStorage,
+            profileCache,
+            web3IdentityCache,
+            hyperlinkTextFormatter);
     }
 
     public ChatInputPresenter CreateChatInput(IChatInputView view)

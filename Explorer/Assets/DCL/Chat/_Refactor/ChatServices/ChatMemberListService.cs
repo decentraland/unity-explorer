@@ -7,7 +7,7 @@ using System.Threading;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Friends;
-using DCL.Utilities; // For ChatMemberListView.MemberData
+using DCL.Utilities;
 using Utility;
 
 public class ChatMemberListService : IDisposable

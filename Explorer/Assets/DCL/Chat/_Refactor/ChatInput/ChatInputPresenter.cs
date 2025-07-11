@@ -74,63 +74,76 @@ public class ChatInputPresenter : IDisposable
     
     public void UpdateStateForChannel(ChatChannel channel)
     {
-        // Cancel any previous async operations for the old channel
+        // 1. Cancel any previous async user state checks. This is always safe to do.
         cts = cts.SafeRestart();
 
-        // The logic is simple for non-user channels
-        if (channel.ChannelType != ChatChannel.ChatChannelType.USER)
+        // 2. Handle the special case for the Nearby channel.
+        if (channel.ChannelType == ChatChannel.ChatChannelType.NEARBY)
         {
-            // view.SetState(InputState.Enabled);
+            // The Nearby channel is always available.
+            // Set the view to be interactable and we're done.
+            view.SetInteractable(true);
             return;
         }
 
-        // For DMs, we need to fetch the user's state asynchronously
-        UpdateInputStateForUserAsync(channel.Id.Id, cts.Token).Forget();
+        // 3. If it's not the Nearby channel, it must be a user channel (DM).
+        // Proceed with the asynchronous user state check as before.
+        if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
+        {
+            UpdateInputStateForUserAsync(channel.Id.Id, cts.Token).Forget();
+        }
+        else
+        {
+            // Handle other channel types like Community if they exist,
+            // or disable for unknown types.
+            view.SetInteractable(false, "This chat type is not supported yet.");
+        }
     }
 
     private async UniTaskVoid UpdateInputStateForUserAsync(string userId, CancellationToken ct)
     {
-        view.HideMask();
-        view.SetInputEnabled(false);
+        view.SetInteractable(false, "Checking user status...");
 
-        // Fetch the state from our service
+        // Fetch the state from the service
         var result = await userStateUpdater.GetChatUserStateAsync(userId, ct)
             .SuppressCancellationThrow()
             .SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
 
-        if (ct.IsCancellationRequested || !result.Success)
+        // If the operation was cancelled (e.g., user changed channels), we don't need to do anything.
+        // The new operation will take over.
+        if (ct.IsCancellationRequested) return;
+
+        // Handle the case where the async operation failed
+        if (!result.Success)
         {
-            view.ShowMask("Could not retrieve user status.");
+            view.SetInteractable(false, "Could not retrieve user status.");
             return;
         }
 
-        // Translate the model state from the service into a view state
+        // Translate the model state from the service into a single, clear view command.
         switch (result.Value.Result)
         {
             case ChatUserStateUpdater.ChatUserState.CONNECTED:
-                view.HideMask();
-                view.SetInputEnabled(true);
+                // Enable the input. The second parameter is not needed.
+                view.SetInteractable(true);
                 break;
 
             case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
-                view.SetInputEnabled(false);
-                view.ShowMask("To message this user you must first unblock them.");
+                // Disable the input and provide the specific reason.
+                view.SetInteractable(false, "To message this user you must first unblock them.");
                 break;
 
             case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                view.SetInputEnabled(false);
-                view.ShowMask("Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.");
+                view.SetInteractable(false, "Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.");
                 break;
 
             case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                view.SetInputEnabled(false);
-                view.ShowMask("The user you are trying to message only accepts DMs from friends.");
+                view.SetInteractable(false, "The user you are trying to message only accepts DMs from friends.");
                 break;
 
             case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
             default:
-                view.SetInputEnabled(false);
-                view.ShowMask("The user you are trying to message is offline.");
+                view.SetInteractable(false, "The user you are trying to message is offline.");
                 break;
         }
     }

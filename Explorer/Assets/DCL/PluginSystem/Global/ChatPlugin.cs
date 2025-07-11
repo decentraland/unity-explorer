@@ -61,12 +61,12 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-
+        
         private ChatController chatController;
-        private readonly ChatUserStateUpdater chatUserStateUpdater;
         private ChatMainPresenter chatMainPresenter;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
+        private ChatUserStateUpdater chatUserStateUpdater;
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -140,7 +140,18 @@ namespace DCL.PluginSystem.Global
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
-
+            
+            var chatUserStateEventBus = new ChatUserStateEventBus();
+            var chatUserStateUpdater = new ChatUserStateUpdater(
+                userBlockingCacheProxy,
+                roomHub.ChatRoom().Participants,
+                chatSettingsAsset.Value,
+                privacySettings,
+                chatUserStateEventBus,
+                friendsEventBus,
+                roomHub.ChatRoom(),
+                friendsServiceProxy);
+            
             var chatService = new ChatService(chatHistory,
                 friendsServiceProxy,
                 chatStorage,
@@ -152,6 +163,7 @@ namespace DCL.PluginSystem.Global
             
             var presenterFactory = new ChatPresenterFactory(
                 chatHistory,
+                chatStorage,
                 chatMessagesBus,
                 chatEventBus,
                 profileCache,
@@ -169,7 +181,8 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 friendsServiceProxy,
                 chatService,
-                chatMemberService
+                chatMemberService,
+                hyperlinkTextFormatter
             );
 
             chatMainPresenter = new ChatMainPresenter(
@@ -184,8 +197,9 @@ namespace DCL.PluginSystem.Global
                 chatMessagesBus,
                 friendsServiceProxy,
                 chatService,
-                chatMemberService, 
-                new ChatInputBlockingService(inputBlock, world)
+                chatMemberService,
+                new ChatInputBlockingService(inputBlock, world),
+                chatUserStateEventBus
             );
             
             // chatController = new ChatController(

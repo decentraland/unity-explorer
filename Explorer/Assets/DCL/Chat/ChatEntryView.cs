@@ -40,7 +40,8 @@ namespace DCL.Chat
             chatMessage = data;
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageBubbleElement.SetMessageData(data);
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+            //rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
         }
 
         private void Awake()

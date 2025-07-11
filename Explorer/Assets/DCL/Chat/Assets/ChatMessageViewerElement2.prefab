@@ -373,9 +373,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -2.5, y: 0}
-  m_SizeDelta: {x: 4.9999456, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 1}
 --- !u!222 &3984080857060073335
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -448,7 +448,7 @@ GameObject:
   - component: {fileID: 2232783587231390383}
   - component: {fileID: 7876013243935759455}
   - component: {fileID: 4081156902909443558}
-  - component: {fileID: 3744447422975168905}
+  - component: {fileID: 7665502455413759823}
   m_Layer: 5
   m_Name: ChatMessageViewerElement2
   m_TagString: Untagged
@@ -530,7 +530,7 @@ MonoBehaviour:
   m_Content: {fileID: 7363544493368974116}
   m_Horizontal: 0
   m_Vertical: 1
-  m_MovementType: 2
+  m_MovementType: 1
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
@@ -601,7 +601,7 @@ MonoBehaviour:
   chatEntriesCanvasGroup: {fileID: 860361653977147949}
   loopList: {fileID: 7876013243935759455}
   scrollRect: {fileID: 2232783587231390383}
---- !u!114 &3744447422975168905
+--- !u!114 &7665502455413759823
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -613,5 +613,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3c4e7208792420abc59acba4eb77b2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scrollbarCanvasGroup: {fileID: 860361653977147949}
-  messagesPanelBackgroundCanvasGroup: {fileID: 0}
+  messagesContainer: {fileID: 0}
+  loopListView: {fileID: 7876013243935759455}
+  scrollRect: {fileID: 2232783587231390383}
+  scrollbarCanvasGroup: {fileID: 2190985324859330998}

@@ -1,5 +1,5 @@
 using System;
-using System.Threading;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.History;
@@ -8,6 +8,8 @@ using DCL.Utilities;
 
 public class ChatService : IDisposable
 {
+    public event Action<IReadOnlyCollection<string>> OnInitialized;
+    
     private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
     private readonly ChatHistoryStorage chatHistoryStorage;
     private readonly ChatUserStateUpdater chatUserStateUpdater;
@@ -30,15 +32,20 @@ public class ChatService : IDisposable
     {
         var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
         chatHistory.AddMessage(nearbyChannel.Id, ChatMessage.NewFromSystem("Type /help for available commands."));
+
+        for (int i = 0; i < 20; i++)
+            chatHistory.AddMessage(nearbyChannel.Id, ChatMessage.NewFromSystem("Type /help for available commands."));
         
         if (!friendsServiceProxy.Configured)
             return;
 
-        chatHistoryStorage?.LoadAllChannelsWithoutMessages();
-        
+        if (chatHistoryStorage != null)
+            chatHistoryStorage?.LoadAllChannelsWithoutMessages();
+
         if (chatUserStateUpdater != null)
         {
-            await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+            var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+            OnInitialized?.Invoke(connectedUsers);
         }
     }
     

@@ -11,10 +11,8 @@ namespace DCL.Chat
         event Action OnFocusRequested;
 
         void SetMode(Mode mode, string buttonMessage = "");
-        void SetInputEnabled(bool activate, string? maskMessage = null);
+        void SetInteractable(bool isInteractable, string? maskMessage = null);
         void SetText(string text);
-        void ShowMask(string message);
-        void HideMask();
         string GetText();
         void Focus();
         void Blur();

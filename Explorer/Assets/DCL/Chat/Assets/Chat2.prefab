@@ -232,7 +232,6 @@ GameObject:
   - component: {fileID: 8837004167864387708}
   - component: {fileID: 8243715949018923499}
   - component: {fileID: 4691136467746870999}
-  - component: {fileID: 7389909889610350216}
   - component: {fileID: 4418677951884833455}
   m_Layer: 5
   m_Name: '[Views] Messages and Input'
@@ -310,19 +309,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &7389909889610350216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 581056649289964467}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3c4e7208792420abc59acba4eb77b2f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  scrollbarCanvasGroup: {fileID: 3021285027555005319}
 --- !u!114 &4418677951884833455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1275,7 +1261,7 @@ MonoBehaviour:
   <Config>k__BackingField: {fileID: 11400000, guid: 4359e32789e7f914c8e7e12d16286b76, type: 2}
   sharedBackgroundCanvasGroup: {fileID: 754136446368913457}
   <ConversationToolbarView2>k__BackingField: {fileID: 6432947855054662703}
-  <MessageFeedView>k__BackingField: {fileID: 7389909889610350216}
+  <MessageFeedView>k__BackingField: {fileID: 5223059815053518565}
   <InputView>k__BackingField: {fileID: 4418677951884833455}
   <TitlebarView>k__BackingField: {fileID: 217021846241032117}
   <MemberListView>k__BackingField: {fileID: 5477856504989055548}
@@ -1704,40 +1690,16 @@ PrefabInstance:
       propertyPath: m_Alpha
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2311876475218739460, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3744447422975168905, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
       propertyPath: messagesPanelBackgroundCanvasGroup
       value: 
       objectReference: {fileID: 754136446368913457}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_Pivot.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_Pivot.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_SizeDelta.y
+    - target: {fileID: 4081156902909443558, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
@@ -1746,34 +1708,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
@@ -1800,17 +1734,35 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChatMessages
       objectReference: {fileID: 0}
+    - target: {fileID: 7665502455413759823, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: messagesContainer
+      value: 
+      objectReference: {fileID: 2491885013440900026}
+    - target: {fileID: 7876013243935759455, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7876013243935759455, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: mItemSnapEnable
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
-    - {fileID: 3744447422975168905, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+    - {fileID: 4081156902909443558, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
---- !u!225 &3021285027555005319 stripped
-CanvasGroup:
-  m_CorrespondingSourceObject: {fileID: 860361653977147949, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+--- !u!114 &5223059815053518565 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7665502455413759823, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
   m_PrefabInstance: {fileID: 2458223106124396970}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3c4e7208792420abc59acba4eb77b2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &7075347246372325821 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4624618686689062935, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}

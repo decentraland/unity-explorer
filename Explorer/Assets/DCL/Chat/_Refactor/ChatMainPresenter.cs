@@ -30,10 +30,11 @@ namespace DCL.Chat
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ChatService chatService;
         private readonly ChatMemberListService chatMemberListService;
+        private readonly IChatPresenterFactory presenterFactory;
+        
         private ChatClickDetectionService chatClickDetectionService;
         private ChatInputBlockingService chatInputBlockingService;
         
-        private readonly IChatPresenterFactory presenterFactory;
         public ChatTitlebarPresenter? titleBarPresenter;
         public ChatChannelsPresenter? chatChannelsPresenter;
         public ChatMemberListPresenter? memberListPresenter;
@@ -57,7 +58,8 @@ namespace DCL.Chat
             ObjectProxy<IFriendsService> friendsServiceProxy,
             ChatService chatService,
             ChatMemberListService chatMemberListService,
-            ChatInputBlockingService chatInputBlockingService) : base(viewFactory)
+            ChatInputBlockingService chatInputBlockingService,
+            ChatUserStateEventBus chatUserStateEventBus) : base(viewFactory)
         {
             this.presenterFactory = presenterFactory;
             this.chatHistory = chatHistory;
@@ -66,12 +68,12 @@ namespace DCL.Chat
             this.chatService = chatService;
             this.chatMemberListService = chatMemberListService;
             this.chatInputBlockingService = chatInputBlockingService;
+            this.chatUserStateEventBus = chatUserStateEventBus;
         }
-
+        
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            
             config = viewInstance?.Config;
             chatClickDetectionService = new ChatClickDetectionService(viewInstance.transform as RectTransform);
             
@@ -160,12 +162,13 @@ namespace DCL.Chat
 
         private void OnChatBusMessageAdded(ChatChannel.ChannelId arg1, ChatMessage arg2)
         {
-            ReportHub.Log(ReportData.UNSPECIFIED, $"HandleBusMessageAdded: {arg1} - {arg2}");
+            ReportHub.Log(ReportData.UNSPECIFIED, $"HandleBusMessageAdded: {arg1.Id} - {arg2.Message}");
         }
         
-        private void HandleBusMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
+        private void OnChatMessageAdded(ChatChannel destinationChannel, ChatMessage addedMessage)
         {
             ReportHub.Log(ReportData.UNSPECIFIED, $"HandleBusMessageAdded: {destinationChannel.Id} - {addedMessage.Message}");
+            messageViewerPresenter?.OnMessageReceived(destinationChannel, addedMessage);
         }
         
         private void HandleChatChannelSelected(ChatChannel.ChannelId channelId)
@@ -176,9 +179,9 @@ namespace DCL.Chat
             {
                 var channel = chatHistory.Channels[new ChatChannel.ChannelId(channelId.Id)];
                 titleBarPresenter!.UpdateForChannel(channel);
-                messageViewerPresenter!.LoadChannel(channel);
                 memberListPresenter!.LoadMembersForChannel(channel);
                 chatInputPresenter!.UpdateStateForChannel(channel);
+                messageViewerPresenter!.LoadChannel(channel);
             }
         }
 
@@ -236,7 +239,7 @@ namespace DCL.Chat
             chatClickDetectionService.OnClickOutside += () => OnClickOutside?.Invoke();
             
             chatMessagesBus.MessageAdded += OnChatBusMessageAdded;
-            chatHistory.MessageAdded += HandleBusMessageAdded;
+            chatHistory.MessageAdded += OnChatMessageAdded;
             chatHistory.ChannelAdded += OnHistoryChannelAdded;
             chatHistory.ChannelRemoved += OnHistoryChannelRemoved;
             chatHistory.ReadMessagesChanged += OnHistoryReadMessagesChanged;
@@ -272,7 +275,7 @@ namespace DCL.Chat
             
             if (chatHistory != null)
             {
-                chatHistory.MessageAdded -= HandleBusMessageAdded;
+                chatHistory.MessageAdded -= OnChatMessageAdded;
                 chatHistory.ChannelAdded -= OnHistoryChannelAdded;
                 chatHistory.ChannelRemoved -= OnHistoryChannelRemoved;
                 chatHistory.ReadMessagesChanged -= OnHistoryReadMessagesChanged;

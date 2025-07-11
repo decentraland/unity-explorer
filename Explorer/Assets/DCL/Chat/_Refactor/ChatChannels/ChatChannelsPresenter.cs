@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.History;
@@ -14,6 +16,7 @@ public class ChatChannelsPresenter : IDisposable
     private readonly IChatUserStateEventBus chatUserStateEventBus;
     private readonly IProfileCache profileCache;
     private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+    private readonly ChatService chatService;
     private readonly ChannelItemFactory itemFactory;
     
     public event Action<ChatChannel.ChannelId>? OnConversationSelected;
@@ -24,6 +27,7 @@ public class ChatChannelsPresenter : IDisposable
         IChatUserStateEventBus chatUserStateEventBus,
         IProfileCache profileCache,
         ProfileRepositoryWrapper profileRepositoryWrapper,
+        ChatService chatService,
         ChatConfig config)
     {
         this.view = view;
@@ -31,6 +35,7 @@ public class ChatChannelsPresenter : IDisposable
         this.chatUserStateEventBus = chatUserStateEventBus;
         this.profileCache = profileCache;
         this.profileRepositoryWrapper = profileRepositoryWrapper;
+        this.chatService = chatService;
 
         itemFactory = new ChannelItemFactory(config,profileRepositoryWrapper);
 
@@ -40,6 +45,7 @@ public class ChatChannelsPresenter : IDisposable
 
     public void Activate()
     {
+        chatService.OnInitialized += HandleChatServiceInitialized;
         chatHistory.ChannelAdded += HandleChannelAdded;
         chatHistory.ChannelRemoved += HandleChannelRemoved;
         chatHistory.ReadMessagesChanged += HandleUnreadMessagesChanged;
@@ -48,6 +54,17 @@ public class ChatChannelsPresenter : IDisposable
         foreach(var channel in chatHistory.Channels.Values)
         {
             HandleChannelAdded(channel);
+        }
+    }
+
+    private void HandleChatServiceInitialized(IReadOnlyCollection<string> connectedUsers)
+    {
+        foreach (var channel in chatHistory.Channels.Values)
+        {
+            if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
+            {
+                view.SetOnlineStatus(channel.Id.Id, connectedUsers.Contains(channel.Id.Id));
+            }
         }
     }
 
@@ -63,6 +80,7 @@ public class ChatChannelsPresenter : IDisposable
     
     private void HandleUserConnectionStateChanged(string userId, bool isConnected)
     {
+        view.SetOnlineStatus(userId, isConnected);
     }
 
     private void HandleUnreadMessagesChanged(ChatChannel changedChannel)
@@ -90,6 +108,7 @@ public class ChatChannelsPresenter : IDisposable
 
     public void Dispose()
     {
+        chatService.OnInitialized -= HandleChatServiceInitialized;
         view.ConversationSelected -= HandleChannelSelected;
         view.ConversationRemovalRequested -= HandleChannelRemoved;
         chatHistory.ChannelAdded -= HandleChannelAdded;
