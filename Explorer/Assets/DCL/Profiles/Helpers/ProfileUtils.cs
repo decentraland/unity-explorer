@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -13,7 +14,7 @@ namespace DCL.Profiles.Helpers
 
         public static void CreateProfilePicturePromise(Profile profile, World world, IPartitionComponent partitionComponent)
         {
-            if (string.IsNullOrEmpty(profile.Avatar.FaceSnapshotUrl.Value))
+            if (!profile.Avatar.FaceSnapshotUrl.Value.IsValidUrl())
             {
                 profile.ProfilePicture = new StreamableLoadingResult<SpriteData>.WithFallback(DEFAULT_PROFILE_PIC);
                 return;
@@ -23,6 +24,8 @@ namespace DCL.Profiles.Helpers
                 new GetTextureIntention
                 {
                     CommonArguments = new CommonLoadingArguments(profile.Avatar.FaceSnapshotUrl),
+                    IsAvatarTexture = true,
+                    ReportSource = nameof(ProfileUtils),
                 },
                 partitionComponent);
 

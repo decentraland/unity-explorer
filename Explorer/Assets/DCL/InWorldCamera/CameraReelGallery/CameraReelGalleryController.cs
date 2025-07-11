@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Clipboard;
 using DCL.Diagnostics;
-using DCL.ExplorePanel.Components;
 using DCL.InWorldCamera.CameraReelGallery.Components;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.InWorldCamera.CameraReelStorageService.Schemas;
@@ -61,7 +60,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private readonly CameraReelGalleryView view;
         private readonly ICameraReelStorageService cameraReelStorageService;
-        private readonly IExplorePanelEscapeAction? explorePanelEscapeAction;
         private readonly IDecentralandUrlsSource? decentralandUrlsSource;
         private readonly ISystemClipboard? systemClipboard;
         private readonly IWebBrowser? webBrowser;
@@ -96,14 +94,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
             CameraReelOptionButtonView? optionButtonView = null,
             IWebBrowser? webBrowser = null,
             IDecentralandUrlsSource? decentralandUrlsSource = null,
-            IExplorePanelEscapeAction? explorePanelEscapeAction = null,
             ISystemClipboard? systemClipboard = null,
             ReelGalleryStringMessages? reelGalleryStringMessages = null,
             IMVCManager? mvcManager = null)
         {
             this.view = view;
             this.cameraReelStorageService = cameraReelStorageService;
-            this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.reelGalleryConfigParams = reelGalleryConfigParams;
             this.reelGalleryStringMessages = reelGalleryStringMessages;
             this.view.Disable += OnDisable;
@@ -204,14 +200,12 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
         private void ShowDeleteModal()
         {
-            explorePanelEscapeAction?.RegisterEscapeAction(HideDeleteModal);
             view.deleteReelModal.gameObject.SetActive(true);
             view.deleteReelModal.DOFade(1f, view.deleteModalAnimationDuration);
         }
 
         private void HideDeleteModal(InputAction.CallbackContext callbackContext = default)
         {
-            explorePanelEscapeAction?.RemoveEscapeAction(HideDeleteModal);
             view.deleteReelModal.DOFade(0f, view.deleteModalAnimationDuration).OnComplete(() => view.deleteReelModal.gameObject.SetActive(false));
         }
 
@@ -568,7 +562,6 @@ namespace DCL.InWorldCamera.CameraReelGallery
             ScreenshotDeleted = null;
             view.cancelDeleteIntentButton?.onClick.RemoveAllListeners();
             view.cancelDeleteIntentBackgroundButton?.onClick.RemoveAllListeners();
-            explorePanelEscapeAction?.RemoveEscapeAction(HideDeleteModal);
             downloadScreenshotCts.SafeCancelAndDispose();
 
             optionButtonController?.Dispose();
