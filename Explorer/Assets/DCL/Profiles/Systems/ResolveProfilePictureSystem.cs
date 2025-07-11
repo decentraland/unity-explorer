@@ -25,11 +25,9 @@ namespace DCL.Profiles
         [Query]
         private void CompleteProfilePictureDownload(in Entity entity, ref Profile profile, ref Promise promise)
         {
-            if (promise.TryGetResult(World, out StreamableLoadingResult<Texture2DData> result))
+            if (promise.TryConsume(World, out StreamableLoadingResult<Texture2DData> result))
             {
                 profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
-
-                promise.Consume(World);
                 World.Destroy(entity);
             }
         }
