@@ -184,6 +184,7 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && parameters.ShowAuthentication);
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
+            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
         // TODO should be an operation
