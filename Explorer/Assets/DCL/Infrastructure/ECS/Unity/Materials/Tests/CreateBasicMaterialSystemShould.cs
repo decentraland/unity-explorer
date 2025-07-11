@@ -10,6 +10,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -81,7 +82,7 @@ namespace ECS.Unity.Materials.Tests
 
         internal static MaterialComponent CreateMaterialComponent() =>
             new (MaterialData.CreateBasicMaterial(
-                new TextureComponent("albedo",string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("http://www.albedo.com")), string.Empty, TextureWrapMode.Mirror, FilterMode.Point),
                 null,
                 0,
                 Color.red,

@@ -7,6 +7,8 @@
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
     "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+    "com.cysharp.yetanotherhttphandler": "https://github.com/Cysharp/YetAnotherHttpHandler.git?path=src/YetAnotherHttpHandler#1.11.2",
+    "com.cysharp.yetanotherhttphandler.dependencies": "https://github.com/Cysharp/YetAnotherHttpHandler.git?path=src/YetAnotherHttpHandler.Dependencies#1.11.2",
     "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git",
     "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
     "com.decentraland.rpc-csharp": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -16,6 +18,7 @@
     "com.mackysoft.serializereference-extensions": "1.3.1",
     "com.olegknyazev.softmask": "git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask",
     "com.segment.analytics.csharp": "2.4.2",
+    "com.tivadar.best.http": "git@github.com:decentraland/unity-explorer-packages.git?path=/BestHTTP",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.addressables": "2.4.6",
     "com.unity.animation.rigging": "1.3.0",
@@ -81,6 +84,14 @@
         "com.mackysoft",
         "com.segment.analytics.csharp"
       ]
+    },
+    {
+      "name": "Unity NuGet",
+      "url": "https://unitynuget-registry.openupm.com",
+      "scopes": [
+        "org.nuget"
+      ],
+      "overrideBuiltIns": true
     }
   ],
   "testables": [

@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using System;
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -44,7 +45,7 @@ namespace ECS.StreamableLoading.Common.Components
         public Exception? Exception => exceptionData?.exception;
         public ReportData ReportData => exceptionData?.reportData ?? ReportData.UNSPECIFIED;
 
-        public StreamableLoadingResult(T? asset, AssetSource source = AssetSource.NONE) : this()
+        public StreamableLoadingResult(T? asset) : this()
         {
             Asset = asset;
             Succeeded = true;
@@ -53,7 +54,23 @@ namespace ECS.StreamableLoading.Common.Components
         public StreamableLoadingResult(ReportData reportData, Exception exception) : this()
         {
             if (exception is not OperationCanceledException)
-                ReportHub.LogException(exception, reportData);
+            {
+                if (exception is StreamableLoadingException streamableLoadingException)
+                {
+                    switch (streamableLoadingException.Severity)
+                    {
+                        case LogType.Exception:
+                            ReportHub.LogException(exception, reportData);
+                            break;
+                        default:
+                            ReportHub.Log(streamableLoadingException.Severity, reportData, exception.ToString());
+                            break;
+                    }
+                }
+                else
+                    ReportHub.LogException(exception, reportData);
+            }
+
 
             exceptionData = (reportData, exception);
         }

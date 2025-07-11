@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace DCL.UI.Communities
         [SerializeField] private float fadingDuration = 0.5f;
 
         private CancellationTokenSource? cts;
-        private string? currentCommunityUrl;
+        private Uri? currentCommunityUrl;
 
         public void Dispose()
         {
@@ -37,9 +38,9 @@ namespace DCL.UI.Communities
             currentCommunityUrl = null;
         }
 
-        public async UniTask LoadThumbnailAsync(ISpriteCache thumbnailCache, string imageUrl, CancellationToken ct = default)
+        public async UniTask LoadThumbnailAsync(ISpriteCache thumbnailCache, Uri imageUrl, CancellationToken ct = default)
         {
-            if (imageUrl.Equals(currentCommunityUrl)) return;
+            if (OriginalStringURLComparer.Instance.Equals(imageUrl, currentCommunityUrl)) return;
 
             cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
             currentCommunityUrl = imageUrl;

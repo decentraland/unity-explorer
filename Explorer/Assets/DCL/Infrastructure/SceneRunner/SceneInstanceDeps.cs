@@ -59,7 +59,7 @@ namespace SceneRunner
         public readonly ECSWorldFacade ECSWorldFacade;
 
         public readonly ICRDTWorldSynchronizer CRDTWorldSynchronizer;
-        public readonly URLAddress SceneCodeUrl;
+        public readonly Uri SceneCodeUrl;
         public readonly SceneEcsExecutor EcsExecutor;
         internal readonly ISystemGroupsUpdateGate systemGroupThrottler;
         private readonly ISystemsUpdateGate systemsUpdateGate;

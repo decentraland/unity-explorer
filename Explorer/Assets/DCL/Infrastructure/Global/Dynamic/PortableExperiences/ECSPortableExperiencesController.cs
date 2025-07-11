@@ -82,29 +82,27 @@ namespace PortableExperiences.Controller
             if (!worldUrl.IsValidUrl()) throw new ArgumentException($"Invalid Spawn params. Provide a valid ENS name {ens}");
 
             var portableExperiencePath = URLDomain.FromString(worldUrl);
-            URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
+            Uri url = portableExperiencePath.Append(new URLPath("/about"));
 
-            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericGetRequest genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ReportCategory.REALM);
 
             var serverAbout = new ServerAbout();
-            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity, ct);
 
             if (result.configurations.scenesUrn.Count == 0)
 
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
                 throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
 
-            var assetBundleRegistry =
+            Uri? assetBundleRegistry =
                 FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK)
-                    ? URLBuilder.Combine(URLDomain.FromString(urlsSources.Url(DecentralandUrl.AssetBundleRegistry)),
-                        URLSubdirectory.FromString("entities/active"))
-                    : URLDomain.EMPTY;
+                    ? urlsSources.Url(DecentralandUrl.AssetBundleRegistry).Append("entities/active")
+                    : null;
 
             var realmData = new RealmData();
 
             realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry,
-                    result),
+                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, assetBundleRegistry, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,

@@ -78,18 +78,18 @@ namespace DCL.Communities.EventInfo
             sb.Append(')');
         }
 
-        public static string GetEventCopyLink(IEventDTO eventData) =>
+        public static Uri GetEventCopyLink(IEventDTO eventData) =>
             eventData.Live
                 ? GetPlaceJumpInLink(eventData)
                 : GetEventWebsiteLink(eventData);
 
-        private static string GetPlaceJumpInLink(IEventDTO eventData) =>
-            eventData.World ? string.Format(JUMP_IN_WORLD_LINK, eventData.Server) : string.Format(JUMP_IN_GC_LINK, eventData.X, eventData.Y);
+        private static Uri GetPlaceJumpInLink(IEventDTO eventData) =>
+            new (eventData.World ? string.Format(JUMP_IN_WORLD_LINK, eventData.Server) : string.Format(JUMP_IN_GC_LINK, eventData.X, eventData.Y));
 
-        private static string GetEventWebsiteLink(IEventDTO eventData) =>
-            string.Format(EVENT_WEBSITE_LINK, eventData.Id);
+        private static Uri GetEventWebsiteLink(IEventDTO eventData) =>
+            new (string.Format(EVENT_WEBSITE_LINK, eventData.Id));
 
-        public static string GetEventShareLink(IEventDTO eventData) =>
-            string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, GetEventCopyLink(eventData));
+        public static Uri GetEventShareLink(IEventDTO eventData) =>
+            new (string.Format(TWITTER_NEW_POST_LINK, eventData.Name, TWITTER_HASHTAG, GetEventCopyLink(eventData)));
     }
 }

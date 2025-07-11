@@ -159,10 +159,14 @@ namespace DCL.Profiles
             }
 
             // We GET the profile with full snapshot url information but the profile is saved just with the cid :/
-            int faceUrlPathIndex = avatar.FaceSnapshotUrl.Value.LastIndexOf('/');
-            snapshots.face256 = faceUrlPathIndex != -1 ? avatar.FaceSnapshotUrl.Value[(faceUrlPathIndex + 1)..] : avatar.FaceSnapshotUrl;
-            int bodyUrlPathIndex = avatar.BodySnapshotUrl.Value.LastIndexOf('/');
-            snapshots.body = bodyUrlPathIndex != -1 ? avatar.BodySnapshotUrl.Value[(bodyUrlPathIndex + 1)..] : avatar.BodySnapshotUrl;
+
+            avatar.FaceSnapshotUrl.TryGetStringValue(out string faceSnapshotUrl);
+            int faceUrlPathIndex = faceSnapshotUrl.LastIndexOf('/');
+            snapshots.face256 = faceUrlPathIndex != -1 ? faceSnapshotUrl[(faceUrlPathIndex + 1)..] : faceSnapshotUrl;
+
+            avatar.BodySnapshotUrl.TryGetStringValue(out string bodySnapshotUrl);
+            int bodyUrlPathIndex = bodySnapshotUrl.LastIndexOf('/');
+            snapshots.body = bodyUrlPathIndex != -1 ? bodySnapshotUrl[(bodyUrlPathIndex + 1)..] : bodySnapshotUrl;
 
             eyes.color.CopyFrom(avatar.EyesColor);
             hair.color.CopyFrom(avatar.HairColor);

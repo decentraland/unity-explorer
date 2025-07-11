@@ -24,9 +24,9 @@ namespace SceneRuntime.Factory.JsSource
             this.cache = new GenericCache<string, string>(cache, diskCache, DiskHashCompute.INSTANCE, EXTENSION);
         }
 
-        public async UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
+        public async UniTask<string> SceneSourceCodeAsync(Uri path, CancellationToken ct)
         {
-            string key = path.Value;
+            string key = path.OriginalString;
 
             if (key.StartsWith("file://", StringComparison.Ordinal))
                 return await origin.SceneSourceCodeAsync(path, ct);
@@ -34,7 +34,7 @@ namespace SceneRuntime.Factory.JsSource
             EnumResult<Option<string>, TaskError> result = await cache.ContentOrFetchAsync(key, origin, true, static v => SceneSourceCodeAsync(v), ct);
 
             if (result.Success == false)
-                throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync failed for url {path.Value}: {result.Error!.Value.State} {result.Error!.Value.Message}");
+                throw new Exception($"CachedWebJsSources: SceneSourceCodeAsync failed for url {path}: {result.Error!.Value.State} {result.Error!.Value.Message}");
 
             return result.Unwrap().Value.EnsureNotNull();
         }

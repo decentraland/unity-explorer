@@ -7,7 +7,7 @@ namespace DCL.NftInfoAPIService
         public string name;
         public string tokenId;
         public string description;
-        public string imageUrl;
+        public Uri imageUrl;
         public string assetLink;
         public string marketLink;
         public string marketName;

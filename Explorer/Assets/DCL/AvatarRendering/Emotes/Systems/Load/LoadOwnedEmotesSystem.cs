@@ -10,6 +10,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
 using System;
+using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes.Load
 {
@@ -30,18 +31,18 @@ namespace DCL.AvatarRendering.Emotes.Load
         {
         }
 
-        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParseResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
+        protected override async UniTask<IAttachmentLambdaResponse<ILambdaResponseElement<EmoteDTO>>> ParseResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJsonAsync<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, ct);
 
-        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> adapter) =>
-            await adapter.CreateFromJson<BuilderEmoteDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft);
+        protected override async UniTask<IBuilderLambdaResponse<IBuilderLambdaResponseElement<EmoteDTO>>> ParseBuilderResponseAsync(GenericGetRequest adapter, CancellationToken ct) =>
+            await adapter.CreateFromJsonAsync<BuilderEmoteDTO.BuilderLambdaResponse>(WRJsonParser.Newtonsoft, ct);
 
-        protected override URLAddress BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention)
+        protected override Uri BuildUrlFromIntention(in GetOwnedEmotesFromRealmIntention intention)
         {
             if (intention.CommonArguments.URL != URLAddress.EMPTY && intention.NeedsBuilderAPISigning)
             {
                 urlBuilder.Clear();
-                var url = new Uri(intention.CommonArguments.URL);
+                Uri url = intention.CommonArguments.URL;
                 urlBuilder.AppendDomain(URLDomain.FromString($"{url.Scheme}://{url.Host}"))
                           .AppendSubDirectory(URLSubdirectory.FromString(url.AbsolutePath));
                 return urlBuilder.Build();

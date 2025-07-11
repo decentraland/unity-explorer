@@ -86,7 +86,7 @@ namespace DCL.Communities.EventInfo
 
         private void OnEventCopyLinkButtonClicked(IEventDTO eventData)
         {
-            clipboard.Set(EventUtilities.GetEventCopyLink(eventData));
+            clipboard.Set(EventUtilities.GetEventCopyLink(eventData).OriginalString);
 
             viewInstance!.SuccessNotificationView.AnimatedShowAsync(LINK_COPIED_MESSAGE, WARNING_NOTIFICATION_DURATION_MS, panelCts.Token)
                          .SuppressToResultAsync(ReportCategory.COMMUNITIES)

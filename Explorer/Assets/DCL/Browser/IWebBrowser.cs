@@ -1,13 +1,14 @@
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using System;
 
 namespace DCL.Browser
 {
     public interface IWebBrowser
     {
-        void OpenUrl(string url);
+        void OpenUrl(Uri url);
 
         void OpenUrl(DecentralandUrl url);
 
-        string GetUrl(DecentralandUrl url);
+        Uri GetUrl(DecentralandUrl url);
     }
 }

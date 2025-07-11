@@ -17,7 +17,7 @@ namespace DCL.Communities
             this.Cache = spriteCache;
         }
 
-        public async UniTaskVoid LoadCommunityThumbnailAsync(string thumbnailUrl, ImageView thumbnailView, Sprite? defaultThumbnail, CancellationToken ct)
+        public async UniTaskVoid LoadCommunityThumbnailAsync(Uri? thumbnailUrl, ImageView thumbnailView, Sprite? defaultThumbnail, CancellationToken ct)
         {
             thumbnailView.SetColor(Color.clear);
             thumbnailView.SetImage(defaultThumbnail!, true);
@@ -27,7 +27,7 @@ namespace DCL.Communities
 
             try
             {
-                if (!string.IsNullOrEmpty(thumbnailUrl))
+                if (thumbnailUrl != null)
                     loadedSprite = await Cache!.GetSpriteAsync(thumbnailUrl, ct);
             }
             catch (OperationCanceledException) { }

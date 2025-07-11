@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using DCL.UI.GenericContextMenuParameter;
 using System;
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
             public string userName;
             public string userAddress;
             public bool hasClaimedName;
-            public string userThumbnailAddress;
+            [CanBeNull] public Uri userThumbnailAddress;
             public Color userColor;
         }
 

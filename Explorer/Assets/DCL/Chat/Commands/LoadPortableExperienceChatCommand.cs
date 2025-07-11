@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using PortableExperiences.Controller;
 using System;
 using System.Threading;

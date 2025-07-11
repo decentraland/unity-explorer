@@ -1,7 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities.UIBindings;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests.RequestsHub;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DCL.WebRequests
 {
@@ -18,19 +21,29 @@ namespace DCL.WebRequests
             this.totalBudget = new ConcurrentLoadingPerformanceBudget(totalBudget);
         }
 
-        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op) where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
+        IRequestHub IWebRequestController.requestHub => origin.requestHub;
+
+        public async UniTask<IWebRequest> SendAsync(ITypedWebRequest requestWrap, bool detachDownloadHandler, CancellationToken ct)
         {
             IAcquiredBudget totalBudgetAcquired;
 
+            bool inMainThread = PlayerLoopHelper.IsMainThread;
+
             // Try bypass total budget
             while (!totalBudget.TrySpendBudget(out totalBudgetAcquired))
-                await UniTask.Yield(envelope.Ct);
+            {
+                // Calling `UniTask.Yield` from the background thread will cause switching back to the main thread
+                if (inMainThread)
+                    await UniTask.Yield(ct);
+                else
+                    await Task.Delay(10, ct);
+            }
 
             try
             {
                 lock (debugBudget) { debugBudget.Value--; }
 
-                return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
+                return await origin.SendAsync(requestWrap, detachDownloadHandler, ct);
             }
             finally
             {
@@ -40,6 +53,9 @@ namespace DCL.WebRequests
             }
         }
 
-        IRequestHub IWebRequestController.requestHub => origin.requestHub;
+        public void Dispose()
+        {
+            origin.Dispose();
+        }
     }
 }

@@ -1,0 +1,312 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Arch.System.SourceGenerator</name>
+    </assembly>
+    <members>
+        <member name="M:Arch.System.SourceGenerator.IMethodSymbolExtensions.GetAttributeData(Microsoft.CodeAnalysis.IMethodSymbol,System.String)">
+            <summary>
+                Searches attributes of a <see cref="T:Microsoft.CodeAnalysis.IMethodSymbol"/> and returns the first one found.
+            </summary>
+            <param name="ms">The <see cref="T:Microsoft.CodeAnalysis.IMethodSymbol"/> instance.</param>
+            <param name="name">The attributes name.</param>
+            <returns>The attribute wrapped in an <see cref="T:Microsoft.CodeAnalysis.AttributeData"/>.</returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.CommonUtils.RefKindToString(Microsoft.CodeAnalysis.RefKind)">
+            <summary>
+                Convert a <see cref="T:Microsoft.CodeAnalysis.RefKind"/> to its code string equivalent.
+            </summary>
+            <param name="refKind">The <see cref="T:Microsoft.CodeAnalysis.RefKind"/>.</param>
+            <returns>The code string equivalent.</returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.CommonUtils.GenericsWithoutBrackets(System.Text.StringBuilder,System.Int32)">
+            <summary>
+                Creates a list of generic type parameters separated by a simple comma.
+                <example>T0,T1,..TN</example> 
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="amount">The amount of generic type parameters.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.CommonUtils.GenericsToTypeArray(System.Text.StringBuilder,System.Int32)">
+            <summary>
+                Creates a list of generic type parameters types separated by a simple comma.
+                <example>typeof(T0),typeof(T1),..typeof(TN)</example> 
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="amount">The amount of generic type parameters.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.GenericAttributesUtils.AppendGenericAttributes(System.Text.StringBuilder,System.String,System.String,System.Int32)">
+            <summary>
+                Appends some generic attributes.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="name">The name of the attribute.</param>
+            <param name="parent">Its parent.</param>
+            <param name="amount">The amount.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.GenericAttributesUtils.AppendGenericAttribute(System.Text.StringBuilder,System.String,System.String,System.Int32)">
+            <summary>
+                Appends one generic attribute.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="name">The name of the attribute.</param>
+            <param name="parent">Its parent.</param>
+            <param name="amount">The amount.</param>
+            <returns></returns>
+        </member>
+        <member name="T:Arch.System.SourceGenerator.BaseSystem">
+            <summary>
+            Represents the BaseSystem that is generated and calls its generated query methods.  
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.BaseSystem.GenericTypeNamespace">
+            <summary>
+            The namespace its generic is in.
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.BaseSystem.Namespace">
+            <summary>
+            The namespace this system is in. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.BaseSystem.Name">
+            <summary>
+            Its name.
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.BaseSystem.GenericType">
+            <summary>
+            The generic type. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.BaseSystem.QueryMethods">
+            <summary>
+            The Query methods this base system calls one after another. 
+            </summary>
+        </member>
+        <member name="T:Arch.System.SourceGenerator.QueryMethod">
+            <summary>
+            Represents the Query method that is generated. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.IsGlobalNamespace">
+            <summary>
+            If the class containing this Query method is within the global namespace.
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.Namespace">
+            <summary>
+            The namespace of the method.
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.IsStatic">
+            <summary>
+            If this method is static.
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.IsEntityQuery">
+            <summary>
+            If this Query method contains an Entity as a param and acesses it. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.ClassName">
+            <summary>
+            The name of the class containing this Query method.
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.MethodName">
+            <summary>
+            The name of the Query method.
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.EntityParameter">
+            <summary>
+            The entity parameter, if its an entity query. 
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.Parameters">
+            <summary>
+            All parameters within the query method, not only the components. Also Entity and Data annotated ones.
+            <remarks>public void Query([Data] float time, in Entity entity, ...);</remarks>
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.Components">
+            <summary>
+            The Components acessed within the query method.
+            <remarks>public void Query(ref Position pos, in Velocity vel){}</remarks>
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.AllFilteredTypes">
+            <summary>
+            All <see cref="T:Microsoft.CodeAnalysis.ITypeSymbol"/>s mentioned in the All annotation query filter.
+            <remarks>[All(typeof(Position), typeof(Velocity)] or its generic variant</remarks>
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.AnyFilteredTypes">
+            <summary>
+            All <see cref="T:Microsoft.CodeAnalysis.ITypeSymbol"/>s mentioned in the Any annotation query filter.
+            <remarks>[Any(typeof(Position), typeof(Velocity)] or its generic variant</remarks>
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.NoneFilteredTypes">
+            <summary>
+            All <see cref="T:Microsoft.CodeAnalysis.ITypeSymbol"/>s mentioned in the None annotation query filter.
+            <remarks>[None(typeof(Position), typeof(Velocity)] or its generic variant</remarks>
+            </summary>
+        </member>
+        <member name="P:Arch.System.SourceGenerator.QueryMethod.ExclusiveFilteredTypes">
+            <summary>
+            All <see cref="T:Microsoft.CodeAnalysis.ITypeSymbol"/>s mentioned in the Exclusive annotation query filter.
+            <remarks>[Exclusive(typeof(Position), typeof(Velocity)] or its generic variant</remarks>
+            </summary>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.GetFirstElements(System.Text.StringBuilder,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.IParameterSymbol})">
+            <summary>
+                Appends the first elements of the types specified in the <see cref="!:parameterSymbols"/> from the previous specified arrays.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="parameterSymbols">The <see cref="T:System.Collections.Generic.IEnumerable`1"/> list of <see cref="T:Microsoft.CodeAnalysis.IParameterSymbol"/>s which we wanna append the first elements for.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.GetComponents(System.Text.StringBuilder,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.IParameterSymbol})">
+            <summary>
+                Appends the components of the types specified in the <see cref="!:parameterSymbols"/> from the previous specified first elements.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="parameterSymbols">The <see cref="T:System.Collections.Generic.IEnumerable`1"/> list of <see cref="T:Microsoft.CodeAnalysis.IParameterSymbol"/>s which we wanna append the components for.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.InsertParams(System.Text.StringBuilder,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.IParameterSymbol})">
+            <summary>
+                Inserts the types defined in the <see cref="!:parameterSymbols"/> as parameters in a method.
+                <example>ref position, out velocity,...</example>
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="parameterSymbols">The <see cref="T:System.Collections.Generic.IEnumerable`1"/> of <see cref="T:Microsoft.CodeAnalysis.IParameterSymbol"/>s which we wanna insert.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.GetTypeArray(System.Text.StringBuilder,System.Collections.Generic.IList{Microsoft.CodeAnalysis.ITypeSymbol})">
+            <summary>
+                Creates a ComponentType array from the <see cref="!:parameterSymbols"/> passed through.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/>.</param>
+            <param name="parameterSymbols">The <see cref="T:System.Collections.Generic.IList`1"/> with <see cref="T:Microsoft.CodeAnalysis.ITypeSymbol"/>s which we wanna create a ComponentType array for.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.DataParameters(System.Text.StringBuilder,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.IParameterSymbol})">
+            <summary>
+                Appends a set of <see cref="!:parameterSymbols"/> if they are marked by the data attribute.
+                <example>ref gameTime, out somePassedList,...</example>
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="parameterSymbols">The <see cref="T:System.Collections.Generic.IEnumerable`1"/> of <see cref="T:Microsoft.CodeAnalysis.IParameterSymbol"/>s which will be appended if they are marked with data.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.JobParameters(System.Text.StringBuilder,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.IParameterSymbol})">
+            <summary>
+                Appends a set of <see cref="!:parameterSymbols"/> if they are marked by the data attribute.
+                <example>ref gameTime, out somePassedList,...</example>
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="parameterSymbols">The <see cref="T:System.Collections.Generic.IEnumerable`1"/> of <see cref="T:Microsoft.CodeAnalysis.IParameterSymbol"/>s which will be appended if they are marked with data.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.JobParametersAssigment(System.Text.StringBuilder,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.IParameterSymbol})">
+            <summary>
+                Appends a set of <see cref="!:parameterSymbols"/> if they are marked by the data attribute.
+                <example>ref gameTime, out somePassedList,...</example>
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="parameterSymbols">The <see cref="T:System.Collections.Generic.IEnumerable`1"/> of <see cref="T:Microsoft.CodeAnalysis.IParameterSymbol"/>s which will be appended if they are marked with data.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.CallMethods(System.Text.StringBuilder,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.IMethodSymbol})">
+            <summary>
+                Appends method calls made with their important data parameters.
+                <example>someQuery(World, gameTime); ...</example>
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="methodNames">The <see cref="T:System.Collections.Generic.IEnumerable`1"/> of methods which we wanna call.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.GetAttributeTypes(Microsoft.CodeAnalysis.AttributeData,System.Collections.Generic.List{Microsoft.CodeAnalysis.ITypeSymbol})">
+            <summary>
+                Gets all the types of a <see cref="T:Microsoft.CodeAnalysis.AttributeData"/> as <see cref="T:Microsoft.CodeAnalysis.ITypeSymbol"/>s and adds them to a list.
+                If the attribute is generic it will add the generic parameters, if its non generic it will add the non generic types from the constructor.
+            </summary>
+            <param name="data">The <see cref="T:Microsoft.CodeAnalysis.AttributeData"/>.</param>
+            <param name="array">The <see cref="T:System.Collections.Generic.List`1"/> where the found <see cref="T:Microsoft.CodeAnalysis.ITypeSymbol"/>s are added to.</param>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.AppendQueryMethod(System.Text.StringBuilder,Microsoft.CodeAnalysis.IMethodSymbol)">
+            <summary>
+                Adds a query with an entity for a given annotated method. The attributes of these methods are used to generate the query.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="methodSymbol">The <see cref="T:Microsoft.CodeAnalysis.IMethodSymbol"/> which is annotated for source generation.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.AppendQueryMethod(System.Text.StringBuilder,Arch.System.SourceGenerator.QueryMethod@)">
+            <summary>
+                Adds a query with an entity for a given annotated method. The attributes of these methods are used to generate the query.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="queryMethod">The <see cref="T:Arch.System.SourceGenerator.QueryMethod"/> which is generated.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.AppendParallelQueryMethod(System.Text.StringBuilder,Arch.System.SourceGenerator.QueryMethod@)">
+            <summary>
+                Adds a parallel query with an entity for a given annotated method. The attributes of these methods are used to generate the query.
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="queryMethod">The <see cref="T:Arch.System.SourceGenerator.QueryMethod"/> which is generated.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.AppendBaseSystem(System.Text.StringBuilder,System.Collections.Generic.KeyValuePair{Microsoft.CodeAnalysis.ISymbol,System.Collections.Generic.List{Microsoft.CodeAnalysis.IMethodSymbol}})">
+            <summary>
+                Adds a basesystem that calls a bunch of query methods. 
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="classToMethod">The <see cref="T:System.Collections.Generic.KeyValuePair`2"/> which maps all query methods to a common class containing them.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryUtils.AppendBaseSystem(System.Text.StringBuilder,Arch.System.SourceGenerator.BaseSystem@)">
+            <summary>
+                Adds a basesystem that calls a bunch of query methods. 
+            </summary>
+            <param name="sb">The <see cref="T:System.Text.StringBuilder"/> instance.</param>
+            <param name="baseSystem">The <see cref="T:Arch.System.SourceGenerator.BaseSystem"/> which is generated.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryGenerator.AddMethodToClass(Microsoft.CodeAnalysis.IMethodSymbol)">
+            <summary>
+                Adds a <see cref="T:Microsoft.CodeAnalysis.IMethodSymbol"/> to its class.
+                Stores them in <see cref="P:Arch.System.SourceGenerator.QueryGenerator._classToMethods"/>.
+            </summary>
+            <param name="methodSymbol">The <see cref="T:Microsoft.CodeAnalysis.IMethodSymbol"/> which will be added/mapped to its class.</param>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryGenerator.GetMethodSymbolIfAttributeof(Microsoft.CodeAnalysis.GeneratorSyntaxContext,System.String)">
+            <summary>
+                Returns a <see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax"/> if its annocated with a attribute of <see cref="!:name"/>.
+            </summary>
+            <param name="context">Its <see cref="T:Microsoft.CodeAnalysis.GeneratorSyntaxContext"/>.</param>
+            <param name="name">The attributes name.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Arch.System.SourceGenerator.QueryGenerator.Generate(Microsoft.CodeAnalysis.Compilation,System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax},Microsoft.CodeAnalysis.SourceProductionContext)">
+            <summary>
+                Generates queries and partial classes for the found marked methods.
+            </summary>
+            <param name="compilation">The <see cref="T:Microsoft.CodeAnalysis.Compilation"/>.</param>
+            <param name="methods">The <see cref="T:System.Collections.Immutable.ImmutableArray`1"/> array, the methods which we will generate queries and classes for.</param>
+            <param name="context">The <see cref="T:Microsoft.CodeAnalysis.SourceProductionContext"/>.</param>
+        </member>
+        <member name="T:Arch.System.SourceGenerator.QueryGenerator.Comparer">
+            <summary>
+            Compares <see cref="T:Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax"/>s to remove duplicates. 
+            </summary>
+        </member>
+    </members>
+</doc>

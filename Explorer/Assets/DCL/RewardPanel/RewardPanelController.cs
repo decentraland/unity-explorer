@@ -3,6 +3,7 @@ using DCL.Backpack;
 using DCL.UI;
 using DCL.WebRequests;
 using MVC;
+using System;
 using System.Threading;
 
 namespace DCL.RewardPanel
@@ -53,12 +54,12 @@ namespace DCL.RewardPanel
 
     public readonly struct RewardPanelParameter
     {
-        public readonly string ImageUrl;
+        public readonly Uri ImageUrl;
         public readonly string WearableName;
         public readonly string Category;
         public readonly string Rarity;
 
-        public RewardPanelParameter(string imageUrl, string wearableName, string rarity, string category)
+        public RewardPanelParameter(Uri imageUrl, string wearableName, string rarity, string category)
         {
             ImageUrl = imageUrl;
             WearableName = wearableName;

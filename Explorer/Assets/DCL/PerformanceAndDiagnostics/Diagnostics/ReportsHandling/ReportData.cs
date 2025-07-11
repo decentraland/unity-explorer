@@ -40,5 +40,9 @@ namespace DCL.Diagnostics
 
         public override int GetHashCode() =>
             HashCode.Combine(Category, Debounce, SceneShortInfo, SceneTickNumber);
+
+        public override string ToString() =>
+            $"Category: {Category}, Debounce: {Debounce}, SceneShortInfo: {SceneShortInfo}, SceneTickNumber: {SceneTickNumber}";
+
     }
 }

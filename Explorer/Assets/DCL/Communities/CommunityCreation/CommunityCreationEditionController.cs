@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Crosstales;
 using Crosstales.FB;
 using Cysharp.Threading.Tasks;
@@ -169,7 +170,7 @@ namespace DCL.Communities.CommunityCreation
             if (id != WORLD_LINK_ID)
                 return;
 
-            webBrowser.OpenUrl($"{webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds)}&utm_campaign=communities");
+            webBrowser.OpenUrl(webBrowser.GetUrl(DecentralandUrl.DecentralandWorlds).Append("&utm_campaign=communities"));
             viewInstance!.PlayOnLinkClickAudio();
         }
 
@@ -344,7 +345,7 @@ namespace DCL.Communities.CommunityCreation
                 return;
             }
 
-            viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.raw, thumbnailLoader);
+            viewInstance!.SetProfileSelectedImage(imageUrl: getCommunityResult.Value.data.thumbnails?.rawUri, thumbnailLoader);
             viewInstance.SetCommunityName(getCommunityResult.Value.data.name, getCommunityResult.Value.data.role == CommunityMemberRole.owner);
             viewInstance.SetCommunityDescription(getCommunityResult.Value.data.description);
 
@@ -473,7 +474,7 @@ namespace DCL.Communities.CommunityCreation
 
             if (isProfileThumbnailDirty && lastSelectedProfileThumbnail != null)
             {
-                thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.raw, lastSelectedProfileThumbnail);
+                thumbnailLoader!.Cache?.AddOrReplaceCachedSprite(result.Value.data.thumbnails?.rawUri, lastSelectedProfileThumbnail);
                 isProfileThumbnailDirty = false;
                 lastSelectedProfileThumbnail = null;
             }

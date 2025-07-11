@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.RealmNavigation;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using Global.Dynamic.DebugSettings;
 using PortableExperiences.Controller;
 using System.Collections.Generic;

@@ -16,7 +16,7 @@ namespace DCL.WebRequests
 
         public const float DEFAULT_ATTEMPTS_DELAY = 0f;
 
-        public readonly URLAddress URL;
+        public readonly Uri URL;
 
         public readonly int AttemptsCount;
 
@@ -24,7 +24,7 @@ namespace DCL.WebRequests
 
         public readonly int Timeout;
 
-        public CommonArguments(URLAddress url, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT, float attemptsDelay = DEFAULT_ATTEMPTS_DELAY)
+        public CommonArguments(Uri url, int attemptsCount = DEFAULT_ATTEMPTS_COUNT, int timeout = DEFAULT_TIMEOUT, float attemptsDelay = DEFAULT_ATTEMPTS_DELAY)
         {
             URL = url;
             AttemptsCount = attemptsCount;
@@ -33,10 +33,10 @@ namespace DCL.WebRequests
         }
 
         public static implicit operator CommonArguments(URLAddress url) =>
-            new (url);
+            new (url.Value);
 
-        public static implicit operator CommonArguments(string url) =>
-            new (URLAddress.FromString(url));
+        public static implicit operator CommonArguments(Uri url) =>
+            new (url);
 
         public TimeSpan TotalTimeout() =>
             Timeout == 0

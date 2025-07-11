@@ -6,6 +6,7 @@ using DCL.MapRenderer.MapLayers.Cluster;
 using DCL.Navmap;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using NBitcoin;
 using System;
 using System.Collections.Generic;

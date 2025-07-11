@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
-using DCL.WebRequests.GenericDelete;
 using ECS;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -100,7 +99,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             var signInfo = WebRequestSignInfo.NewFromRaw(
                 signatureMetadata,
-                request.url,
+                new Uri(request.url),
                 unixTimestamp,
                 method ?? string.Empty
             );
@@ -169,7 +168,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
             var signInfo = WebRequestSignInfo.NewFromRaw(
                 signatureMetadata,
-                request.url,
+                new Uri(request.url),
                 unixTimestamp,
                 method ?? string.Empty
             );
@@ -185,55 +184,49 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     switch (method)
                     {
                         case null:
-                            response = await webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
-                                request.url,
-                                new FlatFetchResponse<GenericPostRequest>(),
+                            response = await webController.SignedFetchPostAsync(
+                                                               new Uri(request.url),
                                 signatureMetadata,
-                                GetReportData(),
-                                disposeCts.Token);
+                                GetReportData())
+                                                          .ToFlatFetchResponseAsync(disposeCts.Token);
 
                             break;
                         case "post":
-                            response = await webController.PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
-                                request.url,
-                                new FlatFetchResponse<GenericPostRequest>(),
-                                GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                            response = await webController.PostAsync(
+                                                               new Uri(request.url),
+                                GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: GetReportData());
+                                reportCategory: GetReportData())
+                                                          .ToFlatFetchResponseAsync(disposeCts.Token);
 
                             break;
                         case "get":
-                            response = await webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                                request.url,
-                                new FlatFetchResponse<GenericGetRequest>(),
-                                disposeCts.Token,
+                            response = await webController.GetAsync(
+                                                               new Uri(request.url),
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportData: GetReportData());
+                                reportData: GetReportData())
+                                                          .ToFlatFetchResponseAsync(disposeCts.Token);
 
                             break;
                         case "put":
-                            response = await webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
-                                request.url,
-                                new FlatFetchResponse<GenericPutRequest>(),
-                                GenericPutArguments.CreateJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                            response = await webController.PutAsync(
+                                                               new Uri(request.url),
+                                GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: GetReportData());
-
+                                reportCategory: GetReportData())
+                                                          .ToFlatFetchResponseAsync(disposeCts.Token);
                             break;
                         case "delete":
-                            response = await webController.DeleteAsync<FlatFetchResponse<GenericDeleteRequest>, FlatFetchResponse>(
-                                request.url,
-                                new FlatFetchResponse<GenericDeleteRequest>(),
-                                GenericDeleteArguments.FromJsonOrDefault(request.init?.body),
-                                disposeCts.Token,
+                            response = await webController.DeleteAsync(
+                                                               new Uri(request.url),
+                                GenericUploadArguments.CreateJsonOrDefault(request.init?.body),
                                 headersInfo: headers,
                                 signInfo: signInfo,
-                                reportCategory: GetReportData());
+                                reportCategory: GetReportData())
+                                                          .ToFlatFetchResponseAsync(disposeCts.Token);
 
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");
@@ -241,7 +234,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
 
                     return response;
                 }
-                catch (UnityWebRequestException e)
+                catch (WebRequestException e)
                 {
                     if (e.ResponseHeaders.TryGetValue("Content-type", out string? contentType) && contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
                     {

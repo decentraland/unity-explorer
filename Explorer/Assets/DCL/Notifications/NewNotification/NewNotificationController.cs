@@ -135,8 +135,10 @@ namespace DCL.Notifications.NewNotification
             viewInstance.NotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
 
-            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+            Uri? thumbnail = notification.GetThumbnail();
+
+            if (thumbnail != null)
+                thumbnailImageController.RequestImage(thumbnail, true);
 
             viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -150,8 +152,10 @@ namespace DCL.Notifications.NewNotification
             viewInstance.FriendsNotificationView.Notification = notification;
             ProcessCustomMetadata(notification);
 
-            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                friendsThumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+            Uri? thumbnail = notification.GetThumbnail();
+
+            if (thumbnail != null)
+                friendsThumbnailImageController.RequestImage(thumbnail, true);
 
             viewInstance.FriendsNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
@@ -169,8 +173,10 @@ namespace DCL.Notifications.NewNotification
             viewInstance.BadgeNotificationView.NotificationType = notification.Type;
             viewInstance.BadgeNotificationView.Notification = notification;
 
-            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                badgeThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+            Uri? thumbnail = notification.GetThumbnail();
+
+            if (thumbnail != null)
+                badgeThumbnailImageController.RequestImage(thumbnail, true, true);
 
             await AnimateBadgeNotificationAsync();
         }
@@ -181,8 +187,10 @@ namespace DCL.Notifications.NewNotification
             viewInstance.MarketplaceCreditsNotificationView.SetTitleText(notification.GetTitle());
             viewInstance.MarketplaceCreditsNotificationView.SetNotification(notification.Type, notification);
 
-            if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                marketplaceCreditsThumbnailImageController.RequestImage(notification.GetThumbnail(), true, true);
+            Uri? thumbnail = notification.GetThumbnail();
+
+            if (thumbnail != null)
+                marketplaceCreditsThumbnailImageController.RequestImage(thumbnail, true, true);
 
             await AnimateMarketplaceCreditsNotificationAsync();
         }

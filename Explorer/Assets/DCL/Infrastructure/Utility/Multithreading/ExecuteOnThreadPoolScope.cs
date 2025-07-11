@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using System.Threading.Tasks;
 
 namespace Utility.Multithreading
 {
@@ -12,19 +11,20 @@ namespace Utility.Multithreading
             this.returnOnMainThreadOnDispose = returnOnMainThreadOnDispose;
         }
 
-        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeAsync()
+        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeAsync(bool forceReturnOnMainThread = false)
         {
-            await UniTask.SwitchToThreadPool();
-            return new ExecuteOnThreadPoolScope(false);
+            bool isMainThread = PlayerLoopHelper.IsMainThread;
+
+            if (isMainThread)
+                await UniTask.SwitchToThreadPool();
+
+            return new ExecuteOnThreadPoolScope(forceReturnOnMainThread || isMainThread);
         }
 
-        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeWithReturnOnMainThreadAsync()
-        {
-            await UniTask.SwitchToThreadPool();
-            return new ExecuteOnThreadPoolScope(true);
-        }
+        public static async UniTask<ExecuteOnThreadPoolScope> NewScopeWithReturnOnMainThreadAsync() =>
+            await NewScopeAsync(true);
 
-        public async ValueTask DisposeAsync()
+        public async UniTask DisposeAsync()
         {
             if (returnOnMainThreadOnDispose)
                 await UniTask.SwitchToMainThread();

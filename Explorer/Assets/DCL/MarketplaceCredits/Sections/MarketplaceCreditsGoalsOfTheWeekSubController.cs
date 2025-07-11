@@ -121,7 +121,7 @@ namespace DCL.MarketplaceCredits.Sections
         {
             var goalRow = goalRowsPool.Get();
 
-            goalRow.SetupGoalImage(goalData.thumbnail);
+            goalRow.SetupGoalImage(new Uri(goalData.thumbnail));
             goalRow.SetTitle(goalData.title);
             goalRow.SetCredits(MarketplaceCreditsUtils.FormatGoalReward(goalData.reward));
             goalRow.SetAsCompleted(goalData.progress.completedSteps == goalData.progress.totalSteps, goalData.isClaimed);

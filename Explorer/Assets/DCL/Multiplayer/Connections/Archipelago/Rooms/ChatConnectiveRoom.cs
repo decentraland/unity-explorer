@@ -33,7 +33,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private static readonly TimeSpan CONNECTION_LOOP_RECOVER_INTERVAL = TimeSpan.FromSeconds(5);
         private const string LOG_PREFIX = nameof(ChatConnectiveRoom);
         private readonly IWebRequestController webRequests;
-        private readonly URLAddress adapterAddress;
+        private readonly Uri adapterAddress;
         private readonly InteriorRoom room = new ();
         private readonly Atomic<IConnectiveRoom.ConnectionLoopHealth> connectionLoopHealth = new (IConnectiveRoom.ConnectionLoopHealth.Stopped);
         private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.NONE);
@@ -48,7 +48,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         public AttemptToConnectState AttemptToConnectState => attemptToConnectState.Value();
         public IRoom Room() => room;
 
-        public ChatConnectiveRoom(IWebRequestController webRequests, URLAddress adapterAddress)
+        public ChatConnectiveRoom(IWebRequestController webRequests, Uri adapterAddress)
         {
             this.webRequests = webRequests;
             this.adapterAddress = adapterAddress;
@@ -188,8 +188,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<string> ConnectionStringAsync(CancellationToken ct)
         {
             string metadata = FixedMetadata.Default.ToJson();
-            var result = webRequests.SignedFetchGetAsync(adapterAddress, metadata, ct);
-            AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+
+            AdapterResponse response = await webRequests.SignedFetchGetAsync(adapterAddress, metadata, ReportCategory.LIVEKIT)
+                                                        .CreateFromJsonAsync<AdapterResponse>(WRJsonParser.Unity, ct);
             return response.adapter;
         }
 

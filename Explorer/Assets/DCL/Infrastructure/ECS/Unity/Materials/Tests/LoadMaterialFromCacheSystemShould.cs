@@ -6,6 +6,7 @@ using ECS.Unity.Materials.Systems;
 using ECS.Unity.Textures.Components;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using UnityEngine;
 using Utility.Primitives;
 
@@ -25,7 +26,7 @@ namespace ECS.Unity.Materials.Tests
         public void FinishLoadingIfPresentInCache()
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
-                new TextureComponent("test-texture","file-hash", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("https://www.test-texture.com")), "file-hash", TextureWrapMode.Mirror),
                 null,
                 0.5f,
                 Color.red,
@@ -56,7 +57,7 @@ namespace ECS.Unity.Materials.Tests
         public void DoNothingIfLoadingStarted([Values(StreamableLoading.LifeCycle.LoadingInProgress, StreamableLoading.LifeCycle.LoadingFinished, StreamableLoading.LifeCycle.Applied)] StreamableLoading.LifeCycle status)
         {
             var materialComponent = new MaterialComponent(MaterialData.CreateBasicMaterial(
-                new TextureComponent("test-texture","file-hash", TextureWrapMode.Mirror, FilterMode.Bilinear),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("https://www.test-texture.com")), "file-hash", TextureWrapMode.Mirror),
                 null,
                 0.5f,
                 Color.red,
@@ -87,10 +88,10 @@ namespace ECS.Unity.Materials.Tests
         public void NotFinishLoadingIfNotPresentInCache()
         {
             var materialComponent = new MaterialComponent(MaterialData.CreatePBRMaterial(
-                new TextureComponent("1","file-hash", TextureWrapMode.Mirror, FilterMode.Bilinear),
-                new TextureComponent("2","file-hash", TextureWrapMode.MirrorOnce, FilterMode.Trilinear),
-                new TextureComponent("3","file-hash", TextureWrapMode.Repeat, FilterMode.Point),
-                new TextureComponent("4","file-hash", TextureWrapMode.Clamp, FilterMode.Point, textureType: TextureType.NormalMap),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("https://testaddress1.com")), "file-hash", TextureWrapMode.Mirror),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("https://testaddress2.com")), "file-hash", TextureWrapMode.MirrorOnce, FilterMode.Trilinear),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("https://testaddress3.com")), "file-hash", TextureWrapMode.Repeat, FilterMode.Point),
+                new TextureComponent(TextureSource.CreateFromUri(new Uri("https://testaddress4.com")), "file-hash", TextureWrapMode.Clamp, FilterMode.Point, textureType: TextureType.NormalMap),
                 0.5f,
                 true,
                 Color.red,

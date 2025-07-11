@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.UI;
 using DCL.UI.Communities;
+using System;
 using System.Threading;
 
 namespace DCL.Chat
@@ -13,7 +14,7 @@ namespace DCL.Chat
         /// <param name="thumbnailCache">A way to access thumbnail images asynchronously.</param>
         /// <param name="imageUrl">The URL to the thumbnail picture.</param>
         /// <param name="ct">A cancellation token for the thumbnail download operation.</param>
-        public void SetThumbnailData(ISpriteCache thumbnailCache, string? imageUrl, CancellationToken ct)
+        public void SetThumbnailData(ISpriteCache thumbnailCache, Uri? imageUrl, CancellationToken ct)
         {
             customIcon.gameObject.SetActive(false);
             thumbnailView.SetActive(true);

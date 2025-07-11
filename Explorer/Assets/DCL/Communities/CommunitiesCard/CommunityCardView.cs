@@ -191,13 +191,13 @@ namespace DCL.Communities.CommunitiesCard
             async UniTask ShowLeaveConfirmationDialogAsync(CancellationToken ct)
             {
                 Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                                                                                                        new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, communityName.text),
-                                                                                                            LEAVE_COMMUNITY_CANCEL_TEXT,
-                                                                                                            LEAVE_COMMUNITY_CONFIRM_TEXT,
-                                                                                                            CommunityThumbnail.ImageSprite,
-                                                                                                            true, true),
-                                                                                                        ct)
-                                                                                                     .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(LEAVE_COMMUNITY_TEXT_FORMAT, communityName.text),
+                                                                                                                      LEAVE_COMMUNITY_CANCEL_TEXT,
+                                                                                                                      LEAVE_COMMUNITY_CONFIRM_TEXT,
+                                                                                                                      CommunityThumbnail.ImageSprite,
+                                                                                                                      true, true),
+                                                                                                                  ct)
+                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
 
@@ -281,7 +281,7 @@ namespace DCL.Communities.CommunitiesCard
 
             if (communityData.thumbnails != null)
 
-            thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.raw, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
+                thumbnailLoader.LoadCommunityThumbnailAsync(communityData.thumbnails.Value.rawUri, CommunityThumbnail, defaultCommunityImage, cancellationToken).Forget();
 
             deleteCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.owner;
             leaveCommunityContextMenuElement!.Enabled = communityData.role == CommunityMemberRole.moderator;

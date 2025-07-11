@@ -110,7 +110,7 @@ namespace DCL.TeleportPrompt
         private void SetPlaceInfo(PlacesData.PlaceInfo placeInfo)
         {
             SetPopupAsLoading(false);
-            placeImageController.RequestImage(placeInfo.image);
+            placeImageController.RequestImage(placeInfo.ImageUri);
             viewInstance.placeName.text = placeInfo.title;
             viewInstance.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             viewInstance.location.text = placeInfo.base_position;

@@ -13,6 +13,7 @@ using ECS.TestSuite;
 using ECS.Unity.ColorComponent;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using Entity = Arch.Core.Entity;
 
@@ -53,7 +54,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
 
             IRealmData realmData = Substitute.For<IRealmData>();
             IIpfsRealm ipfsRealm = Substitute.For<IIpfsRealm>();
-            ipfsRealm.EntitiesActiveEndpoint.Returns(URLDomain.FromString("/entities/active"));
+            ipfsRealm.EntitiesActiveEndpoint.Returns((Uri)null!);
             realmData.Ipfs.Returns(ipfsRealm);
             system = new AvatarLoaderSystem(world);
 

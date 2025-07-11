@@ -172,12 +172,12 @@ namespace DCL.Communities.CommunityCreation
                 UpdateCreateButtonAvailability();
         }
 
-        public void SetProfileSelectedImage(string imageUrl, ThumbnailLoader thumbnailLoader)
+        public void SetProfileSelectedImage(Uri? imageUrl, ThumbnailLoader thumbnailLoader)
         {
             creationPanelProfileSelectedImage.gameObject.SetActive(true);
             creationPanelProfilePictureIcon.SetActive(false);
 
-            if (!string.IsNullOrEmpty(imageUrl))
+            if (imageUrl != null)
             {
                 thumbnailLoadingCts = thumbnailLoadingCts.SafeRestart();
                 thumbnailLoader.LoadCommunityThumbnailAsync(imageUrl, creationPanelProfileSelectedImage, creationPanelProfileDefaultSelectedImage, thumbnailLoadingCts.Token).Forget();

@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using System;
@@ -17,21 +18,21 @@ namespace DCL.UI.ProfileElements
 
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private CancellationTokenSource? cts;
-        private string? currentUrl;
+        private Uri? currentUrl;
 
         public void Dispose()
         {
             cts.SafeCancelAndDispose();
         }
 
-        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _, CancellationToken ct)
+        public async UniTask SetupAsync(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string _, CancellationToken ct)
         {
             this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
             await LoadThumbnailAsync(faceSnapshotUrl, ct);
         }
 
-        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string _="")
+        public void Setup(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl, string _="")
         {
             this.profileRepositoryWrapper = profileDataProvider;
             SetupOnlyColor(userColor);
@@ -62,11 +63,11 @@ namespace DCL.UI.ProfileElements
             await thumbnailImageView.FadeInAsync(0.5f, ct);
         }
 
-        private async UniTask LoadThumbnailAsync(string faceSnapshotUrl, CancellationToken ct = default)
+        private async UniTask LoadThumbnailAsync(Uri faceSnapshotUrl, CancellationToken ct = default)
         {
-            if (faceSnapshotUrl.Equals(currentUrl)) return;
+            if (OriginalStringURLComparer.Instance.Equals(faceSnapshotUrl, currentUrl)) return;
 
-            cts = ct != default ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
+            cts = ct != CancellationToken.None ? cts.SafeRestartLinked(ct) : cts.SafeRestart();
             currentUrl = faceSnapshotUrl;
 
             try

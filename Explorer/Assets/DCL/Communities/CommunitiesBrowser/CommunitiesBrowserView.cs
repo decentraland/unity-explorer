@@ -272,7 +272,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.rawUri, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             // Setup card events
             cardView.MainButtonClicked -= CommunityProfileOpened;
@@ -295,7 +295,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
             cardView.SetLiveMarkAsActive(communityData.isLive);
-            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
+            thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.rawUri, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
             cardView.SetJoiningLoadingActive(false);
 
             // Setup card events

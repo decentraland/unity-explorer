@@ -9,11 +9,6 @@ namespace DCL.Diagnostics
     public class EcsSystemException : Exception, IDecentralandException
     {
         /// <summary>
-        ///     Can be used for stability analytics
-        /// </summary>
-        public readonly ISystem<float> FaultySystem;
-
-        /// <summary>
         ///     Indicates that the exception was intercepted by a higher level abstraction and not handled by the user code itself
         /// </summary>
         public readonly bool Unhandled;
@@ -35,7 +30,6 @@ namespace DCL.Diagnostics
             : base(faultySystem == null ? string.Empty : $"[{faultySystem.GetType().Name}]", innerException)
         {
             this.reportData = reportData;
-            FaultySystem = faultySystem;
             Unhandled = unhandled;
         }
     }

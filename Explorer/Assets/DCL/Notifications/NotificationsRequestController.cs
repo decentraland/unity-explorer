@@ -79,11 +79,10 @@ namespace DCL.Notifications
             List<INotification> notifications =
                 await webRequestController.GetAsync(
                                                commonArguments,
-                                               ct,
                                                ReportCategory.UI,
                                                signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                          .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
+                                          .CreateFromNewtonsoftJsonAsync<List<INotification>>(ct, serializerSettings: serializerSettings);
 
             return notifications;
         }
@@ -111,11 +110,10 @@ namespace DCL.Notifications
                 List<INotification> notifications =
                     await webRequestController.GetAsync(
                                                    commonArguments,
-                                                   ct,
                                                    ReportCategory.UI,
                                                    signInfo: WebRequestSignInfo.NewFromUrl(commonArguments.URL, unixTimestamp, "get"),
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                              .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: serializerSettings);
+                                              .CreateFromNewtonsoftJsonAsync<List<INotification>>(ct, serializerSettings: serializerSettings);
 
                 if (notifications.Count == 0)
                     continue;
@@ -171,12 +169,11 @@ namespace DCL.Notifications
 
             await webRequestController.PutAsync(
                                            commonArgumentsForSetRead,
-                                           GenericPutArguments.CreateJson(bodyBuilder.ToString()),
-                                           ct,
+                                           GenericUploadArguments.CreateJson(bodyBuilder.ToString()),
                                            ReportCategory.UI,
                                            signInfo: WebRequestSignInfo.NewFromUrl(commonArgumentsForSetRead.URL, unixTimestamp, "put"),
                                            headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
-                                      .WithNoOpAsync();
+                                      .SendAndForgetAsync(ct);
         }
     }
 }

@@ -3,6 +3,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
 using DG.Tweening;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;

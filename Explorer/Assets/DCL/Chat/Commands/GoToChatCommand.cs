@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -72,8 +73,8 @@ namespace DCL.Chat.Commands
         private async UniTask<Vector2Int> FindCrowdAsync(CancellationToken ct)
         {
             HotScene[] hotScenes = await webRequestController
-                                        .GetAsync(urlsSource.Url(DecentralandUrl.ArchipelagoHotScenes), ct, ReportCategory.BADGES)
-                                        .CreateFromNewtonsoftJsonAsync<HotScene[]>();
+                                        .GetAsync(urlsSource.Url(DecentralandUrl.ArchipelagoHotScenes), ReportCategory.BADGES)
+                                        .CreateFromNewtonsoftJsonAsync<HotScene[]>(ct);
 
             var topScene = hotScenes[0];
 

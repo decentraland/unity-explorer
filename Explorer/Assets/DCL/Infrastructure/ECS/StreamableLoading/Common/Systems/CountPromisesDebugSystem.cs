@@ -48,7 +48,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 sumMs += seconds * 1_000;
                 count++;
                 double avg = sumMs / count;
-                averageNs.Value = (ulong)(avg * 1_000_000);
+                averageNs.Value = (ulong)(avg * 1_000);
                 profilerCounterValue.Value = (float)avg;
             }
         }

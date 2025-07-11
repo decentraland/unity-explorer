@@ -28,7 +28,7 @@ namespace ECS.Unity.Materials.Tests
         {
             system = new CleanUpMaterialsSystem(world, destroyMaterial = Substitute.For<DestroyMaterial>(), Substitute.For<IExtendedObjectPool<Texture2D>>());
 
-            e = world.Create(new MaterialComponent(new MaterialData()) { AlbedoTexPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments("url") }, PartitionComponent.TOP_PRIORITY) }, new DeleteEntityIntention());
+            e = world.Create(new MaterialComponent(new MaterialData()) { AlbedoTexPromise = AssetPromise<Texture2DData, GetTextureIntention>.Create(world, new GetTextureIntention { CommonArguments = new CommonLoadingArguments(null!) }, PartitionComponent.TOP_PRIORITY) }, new DeleteEntityIntention());
         }
 
         [Test]

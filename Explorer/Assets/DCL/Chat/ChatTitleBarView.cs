@@ -168,7 +168,8 @@ namespace DCL.Chat
             communityChannelContainer.gameObject.SetActive(false);
         }
 
-        public void SetupCommunityView(ISpriteCache thumbnailCache, string communityId, string communityName, string thumbnailUrl, CommunityTitleView.OpenContextMenuDelegate openContextMenuAction, CancellationToken ct)
+        public void SetupCommunityView(ISpriteCache thumbnailCache, string communityId, string communityName, Uri? thumbnailUrl, CommunityTitleView.OpenContextMenuDelegate openContextMenuAction,
+            CancellationToken ct)
         {
             nearbyChannelContainer.SetActive(false);
             memberCountObject.SetActive(true);

@@ -1,6 +1,7 @@
 using DCL.BadgesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -71,7 +72,7 @@ namespace DCL.Passport.Fields.Badges
             TierImage.SetColor(string.IsNullOrEmpty(completedAt) ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             imageController?.SetImage(DefaultTierSprite);
             if (tierData.assets is { textures2d: not null } && !string.IsNullOrEmpty(tierData.assets.textures2d.normal))
-                imageController?.RequestImage(tierData.assets.textures2d.normal, hideImageWhileLoading: true);
+                imageController?.RequestImage(new Uri(tierData.assets.textures2d.normal), hideImageWhileLoading: true);
         }
     }
 }

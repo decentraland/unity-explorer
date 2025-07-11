@@ -63,7 +63,7 @@ namespace DCL.NftPrompt
                 if (result != NftPromptResultType.ViewOnMarket || string.IsNullOrEmpty(marketUrl))
                     return;
 
-                webBrowser.OpenUrl(marketUrl);
+                webBrowser.OpenUrl(new Uri(marketUrl));
             });
         }
 

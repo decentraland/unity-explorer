@@ -13,7 +13,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections
             new (new Web3Address(profile.UserId), profile.Name, profile.HasClaimedName, profile.Avatar.FaceSnapshotUrl, profile.UserNameColor);
 
         public static FriendProfile ToFriendProfile(this FriendRequestProfile profile) =>
-            new (new Web3Address(profile.Address), profile.Name, profile.HasClaimedName, URLAddress.FromString(profile.ProfileImageUrl), ProfileNameColorHelper.GetNameColor(profile.Name));
+            new (new Web3Address(profile.Address), profile.Name, profile.HasClaimedName, new URLAddress(profile.ProfileImageUrl), ProfileNameColorHelper.GetNameColor(profile.Name));
 
         public static UserProfileContextMenuControlSettings.UserData ToUserData(this FriendProfile friendProfile) =>
             new ()

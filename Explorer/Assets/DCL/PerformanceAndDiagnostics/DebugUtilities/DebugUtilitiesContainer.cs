@@ -47,6 +47,7 @@ namespace DCL.DebugUtilities
                         IDebugContainerBuilder.Categories.ANALYTICS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS,
                         IDebugContainerBuilder.Categories.WEB_REQUESTS_DEBUG_METRICS,
+                        IDebugContainerBuilder.Categories.PARTIAL_DOWNLOAD
                     };
                 }
             }

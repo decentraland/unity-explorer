@@ -38,6 +38,7 @@ namespace DCL.DebugUtilities
             public const string MEMORY_LIMITS = "Memory Limits";
             public const string WEB_REQUESTS = "Web Requests";
             public const string WEB_REQUESTS_DEBUG_METRICS = "Web Requests Debug Metrics";
+            public const string PARTIAL_DOWNLOAD = "Partial Download";
         }
     }
 

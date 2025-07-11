@@ -19,6 +19,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
@@ -49,7 +50,6 @@ namespace Global.Dynamic
         private readonly RealmLaunchSettings realmLaunchSettings;
         private readonly WebRequestsContainer webRequestsContainer;
         private readonly IDiskCache diskCache;
-        private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
         private readonly World world;
         private readonly ObjectProxy<IProfileRepository> profileRepositoryProxy = new ();
 
@@ -67,7 +67,6 @@ namespace Global.Dynamic
             RealmLaunchSettings realmLaunchSettings,
             WebRequestsContainer webRequestsContainer,
             IDiskCache diskCache,
-            IDiskCache<PartialLoadingState> partialsDiskCache,
             World world)
         {
             this.debugSettings = debugSettings;
@@ -77,7 +76,6 @@ namespace Global.Dynamic
             this.realmLaunchSettings = realmLaunchSettings;
             this.webRequestsContainer = webRequestsContainer;
             this.diskCache = diskCache;
-            this.partialsDiskCache = partialsDiskCache;
             this.world = world;
         }
 
@@ -89,7 +87,7 @@ namespace Global.Dynamic
 
             cursorRoot.EnsureNotNull();
 
-            string realm = await realmUrls.StartingRealmAsync(token);
+            Uri realm = await realmUrls.StartingRealmAsync(token);
             startingRealm = URLDomain.FromString(realm);
 
             // Initialize .NET logging ASAP since it might be used by another systems
@@ -125,7 +123,6 @@ namespace Global.Dynamic
                 EnableAnalytics,
                 bootstrapContainer.Analytics,
                 diskCache,
-                partialsDiskCache,
                 sceneUIRoot,
                 profileRepositoryProxy,
                 ct
@@ -165,8 +162,8 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
-            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
-            string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
+            Uri defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
+            Uri? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
 
 
 
@@ -184,7 +181,7 @@ namespace Global.Dynamic
                     EnableLOD = debugSettings.EnableLOD && realmLaunchSettings.CurrentMode is LaunchMode.Play,
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
-                    LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
+                    LocalSceneDevelopmentRealm = localSceneDevelopmentRealm,
                     AppParameters = appArgs,
                 },
                 backgroundMusic,

@@ -1,5 +1,6 @@
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using System;
 using UnityEngine;
 
 namespace DCL.Chat
@@ -12,7 +13,7 @@ namespace DCL.Chat
         /// <param name="profileDataProvider">A way to access profile data.</param>
         /// <param name="userColor">The color of the user's profile picture. It affects the tooltip too.</param>
         /// <param name="faceSnapshotUrl">The URL to the profile picture.</param>
-        public void SetProfileData(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl)
+        public void SetProfileData(ProfileRepositoryWrapper profileDataProvider, Color userColor, Uri faceSnapshotUrl)
         {
             customIcon.gameObject.SetActive(false);
             thumbnailView.SetActive(true);

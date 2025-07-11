@@ -1,6 +1,7 @@
 using DCL.BadgesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -56,7 +57,7 @@ namespace DCL.Passport.Fields.Badges
         {
             imageController?.SetImage(DefaultBadgeSprite);
             if (!string.IsNullOrEmpty(badgeData.image))
-                imageController?.RequestImage(badgeData.image, hideImageWhileLoading: true);
+                imageController?.RequestImage(new Uri(badgeData.image), hideImageWhileLoading: true);
         }
 
         private void SetBadgeNameToastActive(bool isActive) =>

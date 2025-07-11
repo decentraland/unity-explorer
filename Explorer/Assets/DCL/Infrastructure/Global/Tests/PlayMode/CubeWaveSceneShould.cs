@@ -74,7 +74,7 @@ namespace Global.Tests.PlayMode
         [SetUp]
         public async Task SetUp()
         {
-            (staticContainer, sceneSharedContainer) = await IntegrationTestsSuite.CreateStaticContainer(default(CancellationToken));
+            (staticContainer, sceneSharedContainer) = await IntegrationTestsSuite.CreateStaticContainer(CancellationToken.None);
         }
 
         [TearDown]

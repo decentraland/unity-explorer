@@ -15,7 +15,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         public override string GetTitle() =>
             Metadata.Description;
 
-        public override string GetThumbnail() =>
+        public override Uri GetThumbnail() =>
             Metadata.Image;
     }
 
@@ -32,6 +32,6 @@ namespace DCL.NotificationsBusController.NotificationTypes
         public string Description { get; set; }
 
         [JsonProperty("image")]
-        public string Image { get; set; }
+        public Uri Image { get; set; }
     }
 }

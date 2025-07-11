@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Profiles;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -26,14 +27,14 @@ namespace DCL.UI.Profiles.Helpers
             this.remoteMetadata = remoteMetadata;
         }
 
-        public async UniTask<Sprite?> GetProfileThumbnailAsync(string thumbnailUrl, CancellationToken ct) =>
-            await thumbnailCache.GetSpriteAsync(thumbnailUrl, ct);
+        public UniTask<Sprite?> GetProfileThumbnailAsync(Uri thumbnailUrl, CancellationToken ct) =>
+            thumbnailCache.GetSpriteAsync(thumbnailUrl, ct);
 
-        public Sprite? GetProfileThumbnail(string thumbnailUrl) =>
+        public Sprite? GetProfileThumbnail(Uri thumbnailUrl) =>
             thumbnailCache.GetCachedSprite(thumbnailUrl);
 
-        public async UniTask<Profile?> GetProfileAsync(string userId, CancellationToken ct) =>
-            await profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
+        public UniTask<Profile?> GetProfileAsync(string userId, CancellationToken ct) =>
+            profileRepository.GetAsync(userId, 0, remoteMetadata.GetLambdaDomainOrNull(userId), ct);
 
     }
 }

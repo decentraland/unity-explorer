@@ -3,7 +3,7 @@
     /// <summary>
     ///     Creates/Initialize Web Request based on common and specific arguments
     /// </summary>
-    public delegate TWebRequest InitializeRequest<in T, out TWebRequest>(in CommonArguments commonArguments, T specificArguments)
-        where T: struct
-        where TWebRequest: struct, ITypedWebRequest;
+    public delegate TWebRequest InitializeRequest<TArgs, out TWebRequest>(IWebRequestController controller, in RequestEnvelope requestEnvelope, in TArgs args)
+        where TArgs: struct
+        where TWebRequest: ITypedWebRequest<TArgs>;
 }
