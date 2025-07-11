@@ -160,7 +160,6 @@ namespace DCL.UserInAppInitializationFlow
                                 mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
                             else
                             {
-                                Debug.Log("JUANI HERE WE SHOULD AWAIT");
                                 //Wait for livekit to end handshake
                                 operationResult = await livekitHandshake;
 
@@ -185,7 +184,6 @@ namespace DCL.UserInAppInitializationFlow
             while (result.Success == false && parameters.ShowAuthentication);
 
             await checkOnboardingStartupOperation.MarkOnboardingAsDoneAsync(parameters.World, parameters.PlayerEntity, ct);
-            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed);
         }
 
         // TODO should be an operation

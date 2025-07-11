@@ -5,7 +5,6 @@ using DCL.Utilities.Extensions;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility.Types;
 
 namespace DCL.SceneLoadingScreens.LoadingScreen
@@ -58,7 +57,6 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
                 // one or another
                 (int winArgumentIndex, EnumResult<TaskError> opResult, TaskError timeoutResult) = await UniTask.WhenAny(ExecuteOperationAsync(), ExecuteTimeOutOrCancelledAsync());
 
-                Debug.Log("JUANI THE PROBLEM IS HERE?");
                 switch (winArgumentIndex)
                 {
                     case 0:
