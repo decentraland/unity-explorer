@@ -1,5 +1,6 @@
 ﻿using DCL.Rendering.GPUInstancing.InstancingData;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace DCL.Rendering.GPUInstancing.Utils
@@ -47,7 +48,7 @@ namespace DCL.Rendering.GPUInstancing.Utils
         private static void SaveCombinedMeshAsSubAsset(Mesh combinedMesh, GameObject gameObject)
         {
 #if UNITY_EDITOR
-            string assetPath = UnityEditor.AssetDatabase.GetAssetPath(gameObject);
+            string assetPath = AssetDatabase.GetAssetPath(gameObject);
 
             if (string.IsNullOrEmpty(assetPath))
             {
@@ -55,16 +56,18 @@ namespace DCL.Rendering.GPUInstancing.Utils
                 return;
             }
 
-            Object[] allAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetPath);
+            Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
 
             foreach (Object asset in allAssets)
+            {
                 if (asset is Mesh && asset.name == combinedMesh.name)
                 {
-                    UnityEditor.AssetDatabase.RemoveObjectFromAsset(asset);
+                    AssetDatabase.RemoveObjectFromAsset(asset);
                     Object.DestroyImmediate(asset, true);
                 }
+            }
 
-            UnityEditor.AssetDatabase.AddObjectToAsset(combinedMesh, assetPath);
+            AssetDatabase.AddObjectToAsset(combinedMesh, assetPath);
             Debug.Log($"Combined mesh saved as a sub-asset in: {assetPath}", gameObject);
 #endif
         }
