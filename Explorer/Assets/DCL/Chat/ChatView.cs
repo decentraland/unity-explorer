@@ -843,8 +843,7 @@ namespace DCL.Chat
             bool isOtherUserConnected = userState == ChatUserStateUpdater.ChatUserState.CONNECTED;
             IsMaskActive = !isOtherUserConnected;
 
-            //TODO: re-enable this
-            //chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
+            chatTitleBar.SetCallButtonStatus(currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER });
             chatInputBoxGameObject.SetActive(isOtherUserConnected);
             inputMaskGameObject.SetActive(!isOtherUserConnected);
 
