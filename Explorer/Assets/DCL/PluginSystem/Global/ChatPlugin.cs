@@ -27,6 +27,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using DCL.Chat.Services;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;

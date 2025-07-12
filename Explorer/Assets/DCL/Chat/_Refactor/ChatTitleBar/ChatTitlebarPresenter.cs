@@ -79,4 +79,14 @@ public class ChatTitlebarPresenter : IDisposable
     {
         view.SetFocusedState(isFocused, animate, duration, easing);
     }
+
+    public void SetMemberCount(int memberCount)
+    {
+        
+    }
+
+    public void SwitchToMembersMode()
+    {
+        
+    }
 }

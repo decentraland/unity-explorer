@@ -137,5 +137,10 @@ namespace DCL.Chat
         {
             gameObject.SetActive(false);
         }
+
+        public void SetData(IReadOnlyList<MemberData> members)
+        {
+            
+        }
     }
 }

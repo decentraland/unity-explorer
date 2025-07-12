@@ -3,149 +3,176 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
-using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Utilities;
 using Utility;
 
-public class ChatMemberListService : IDisposable
+namespace DCL.Chat.Services
 {
-    private readonly IRoomHub roomHub;
-    private readonly IProfileCache profileCache;
-    private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
-    private CancellationTokenSource cts = new();
-    
-    public event Action<IReadOnlyList<ChatMemberListView.MemberData>>? OnMemberListUpdated;
-    public event Action<int>? OnMemberCountUpdated;
-    
-    private readonly List<ChatMemberListView.MemberData> membersBuffer = new();
-    private readonly List<Profile> profilesBuffer = new();
+    /// <summary>
+    /// Monitors Continuously: It starts a background task (UpdateLoopAsync)
+    ///     to monitor the underlying data source
+    ///  
+    /// Efficient Polling: It checks for changes in participant count and the current island SID every 500ms.
+    ///     It only rebuilds the full, detailed member list when the island changes
+    ///     which is much more efficient than rebuilding it constantly.
+    ///
+    /// Event-Driven: It emits events (OnMemberCountUpdated, OnMemberListUpdated)
+    ///     only when a change is detected. This prevents the rest of the application
+    ///     from having to do any work when nothing has changed.
+    ///
+    /// Provides a Snapshot:
+    ///     It makes the last known list of members instantly available via
+    ///     the LastKnownMemberList property. This is crucial for responsiveness.
+    /// </summary>
 
-    // NOTE: We'll track the last known values
-    // NOTE: to avoid firing events unnecessarily.
-    private int lastKnownParticipantCount = -1;
-    private string lastKnownIslandSid = string.Empty;
-
-    public ChatMemberListService(IRoomHub roomHub,
-        IProfileCache profileCache,
-        ObjectProxy<IFriendsService> friendsServiceProxy)
+    public class ChatMemberListService : IDisposable
     {
-        this.roomHub = roomHub;
-        this.profileCache = profileCache;
-        this.friendsServiceProxy = friendsServiceProxy;
-    }
+        private readonly List<ChatMemberListView.MemberData> membersBuffer = new();
+        public IReadOnlyList<ChatMemberListView.MemberData> LastKnownMemberList => membersBuffer;
 
-    public void Start()
-    {
-        if (!friendsServiceProxy.Configured)
-            return;
-        
-        cts = cts.SafeRestart();
-        UniTask.RunOnThreadPool(UpdateLoopAsync).Forget();
-    }
+        public event Action<IReadOnlyList<ChatMemberListView.MemberData>>? OnMemberListUpdated;
+        public event Action<int>? OnMemberCountUpdated;
 
-    public void Stop()
-    {
-        cts.SafeCancelAndDispose();
-    }
+        private readonly IRoomHub roomHub;
+        private readonly IProfileCache profileCache;
+        private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
+        private readonly List<Profile> profilesBuffer = new();
+        private CancellationTokenSource cts = new();
 
-    private async UniTask UpdateLoopAsync()
-    {
-        const int WAIT_TIME_MS = 500;
+        // NOTE: We'll track the last known values
+        // NOTE: to avoid firing events unnecessarily.
+        private int lastKnownParticipantCount = -1;
+        private string lastKnownIslandSid = string.Empty;
 
-        while (!cts.IsCancellationRequested)
+        public ChatMemberListService(IRoomHub roomHub,
+            IProfileCache profileCache,
+            ObjectProxy<IFriendsService> friendsServiceProxy)
         {
-            try // CHANGED: Added exception handling to keep loop alive
+            this.roomHub = roomHub;
+            this.profileCache = profileCache;
+            this.friendsServiceProxy = friendsServiceProxy;
+        }
+
+        public void Start()
+        {
+            if (!friendsServiceProxy.Configured)
+                return;
+
+            cts = cts.SafeRestart();
+            UniTask.RunOnThreadPool(UpdateLoopAsync).Forget();
+        }
+
+        public void Stop()
+        {
+            cts.SafeCancelAndDispose();
+        }
+
+        private async UniTask UpdateLoopAsync()
+        {
+            const int WAIT_TIME_MS = 500;
+
+            while (!cts.IsCancellationRequested)
             {
-                if (!roomHub.HasAnyRoomConnected())
+                try
                 {
+                    if (!roomHub.HasAnyRoomConnected())
+                    {
+                        await UniTask.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
+                        continue;
+                    }
+
+                    int currentParticipantCount = roomHub.ParticipantsCount();
+                    if (currentParticipantCount != lastKnownParticipantCount)
+                    {
+                        ReportHub.Log(ReportData.UNSPECIFIED, $"Participant count changed from {lastKnownParticipantCount} to {currentParticipantCount}.");
+                        
+                        lastKnownParticipantCount = currentParticipantCount;
+                        await UniTask.SwitchToMainThread(cts.Token);
+                        if (cts.IsCancellationRequested) continue;
+                        OnMemberCountUpdated?.Invoke(currentParticipantCount);
+                    }
+
+                    string currentIslandSid = roomHub.IslandRoom().Info.Sid;
+                    if (currentIslandSid != lastKnownIslandSid)
+                    {
+                        ReportHub.Log(ReportData.UNSPECIFIED, $"World/Island changed from '{lastKnownIslandSid}' to '{currentIslandSid}'. Refreshing member list.");
+                        
+                        lastKnownIslandSid = currentIslandSid;
+                        await GenerateAndBroadcastFullListAsync(cts.Token);
+                    }
+
                     await UniTask.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
-                    continue;
                 }
-
-                // 1. Participant count change
-                int currentParticipantCount = roomHub.ParticipantsCount();
-                if (currentParticipantCount != lastKnownParticipantCount)
+                catch (OperationCanceledException)
                 {
-                    lastKnownParticipantCount = currentParticipantCount;
-                    // CHANGED: Ensure main-thread before invoking UI-related events
-                    await UniTask.SwitchToMainThread(cts.Token);
-                    if (cts.IsCancellationRequested) continue;
-                    OnMemberCountUpdated?.Invoke(currentParticipantCount);
+                    break;
                 }
-
-                // 2. Island SID change -> full list refresh
-                string currentIslandSid = roomHub.IslandRoom().Info.Sid;
-                if (currentIslandSid != lastKnownIslandSid)
+                catch (Exception ex)
                 {
-                    lastKnownIslandSid = currentIslandSid;
-                    await GenerateAndBroadcastFullListAsync(cts.Token);
+                    ReportHub.LogError(ReportData.UNSPECIFIED, $"[ChatMemberListService] UpdateLoop error: {ex}");
                 }
-
-                await UniTask.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
             }
-            catch (Exception ex)
+        }
+
+
+        public async UniTask RequestRefreshAsync()
+        {
+            await GenerateAndBroadcastFullListAsync(cts.Token);
+        }
+
+        private async UniTask GenerateAndBroadcastFullListAsync(CancellationToken ct)
+        {
+            List<ChatMemberListView.MemberData> newMembers = new();
+            profilesBuffer.Clear();
+
+            GetProfilesFromParticipants(profilesBuffer);
+
+            foreach (var profile in profilesBuffer)
             {
-                // CHANGED: Log error and continue polling
-                ReportHub.LogError(ReportData.UNSPECIFIED, $"[ChatMemberListService] UpdateLoop error: {ex}");
+                if (ct.IsCancellationRequested) return;
+                newMembers.Add(CreateMemberDataFromProfile(profile));
+            }
+
+            newMembers.Sort((a, b) =>
+                string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+
+            await UniTask.SwitchToMainThread(ct);
+            if (ct.IsCancellationRequested) return;
+
+            membersBuffer.Clear();
+            membersBuffer.AddRange(newMembers);
+
+            ReportHub.Log(ReportCategory.UNSPECIFIED, $"Broadcasting updated member list for World '{lastKnownIslandSid}'. Count: {membersBuffer.Count}\n");
+            foreach (var member in membersBuffer)
+                ReportHub.Log(ReportCategory.UNSPECIFIED,$"  - {member.Name} ({member.Id})");
+            
+            OnMemberListUpdated?.Invoke(membersBuffer);
+            OnMemberCountUpdated?.Invoke(membersBuffer.Count);
+        }
+
+        private void GetProfilesFromParticipants(List<Profile> outProfiles)
+        {
+            outProfiles.Clear();
+            foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
+            {
+                if (profileCache.TryGet(identity, out var profile))
+                    outProfiles.Add(profile);
             }
         }
-    }
 
-
-    // This method is now explicitly for full refreshes.
-    public async UniTask RefreshMemberListAsync()
-    {
-        await GenerateAndBroadcastFullListAsync(cts.Token);
-    }
-    
-    private async UniTask GenerateAndBroadcastFullListAsync(CancellationToken ct)
-    {
-        membersBuffer.Clear();
-        profilesBuffer.Clear();
-
-        GetProfilesFromParticipants(profilesBuffer);
-
-        foreach (var profile in profilesBuffer)
+        private ChatMemberListView.MemberData CreateMemberDataFromProfile(Profile profile)
         {
-            if (ct.IsCancellationRequested) return;
-            membersBuffer.Add(CreateMemberDataFromProfile(profile));
+            return new ChatMemberListView.MemberData
+            {
+                Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
+                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor
+            };
         }
-        
-        await UniTask.SwitchToMainThread(ct);
-        if (ct.IsCancellationRequested) return;
 
-        OnMemberListUpdated?.Invoke(membersBuffer);
-        OnMemberCountUpdated?.Invoke(membersBuffer.Count);
+        public void Dispose() => Stop();
     }
-    
-    private void GetProfilesFromParticipants(List<Profile> outProfiles)
-    {
-        outProfiles.Clear();
-        foreach (string? identity in roomHub.AllLocalRoomsRemoteParticipantIdentities())
-        {
-            if (profileCache.TryGet(identity, out var profile))
-                outProfiles.Add(profile);
-        }
-    }
-    
-    private ChatMemberListView.MemberData CreateMemberDataFromProfile(Profile profile)
-    {
-        return new ChatMemberListView.MemberData
-        {
-            Id = profile.UserId,
-            Name = profile.ValidatedName,
-            FaceSnapshotUrl= profile.Avatar.FaceSnapshotUrl,
-            
-            // TODO: wire real status when available
-            ConnectionStatus= ChatMemberConnectionStatus.Online,
-            
-            WalletId = profile.WalletId,
-            ProfileColor = profile.UserNameColor
-        };
-    }
-
-    public void Dispose() => Stop();
 }

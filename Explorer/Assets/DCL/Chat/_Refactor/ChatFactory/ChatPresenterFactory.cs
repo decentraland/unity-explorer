@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Chat.Services;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -149,16 +150,25 @@ public class ChatPresenterFactory : IChatPresenterFactory
 
     public ChatInputPresenter CreateChatInput(IChatInputView view)
     {
-        return new ChatInputPresenter(view, chatEventBus,chatUserStateUpdater);
+        return new ChatInputPresenter(view,
+            chatEventBus,
+            chatUserStateUpdater);
     }
 
     public ChatTitlebarPresenter CreateTitlebar(IChatTitlebarView view)
     {
-        return new ChatTitlebarPresenter(view, roomHub, profileCache, profileRepositoryWrapper);
+        return new ChatTitlebarPresenter(view,
+            roomHub,
+            profileCache,
+            profileRepositoryWrapper);
     }
 
     public ChatMemberListPresenter CreateMemberList(IChatMemberListView view)
     {
-        return new ChatMemberListPresenter(view, roomHub, profileCache, profileRepositoryWrapper);
+        return new ChatMemberListPresenter(view,
+            chatMemberListService,
+            roomHub,
+            profileCache,
+            profileRepositoryWrapper);
     }
 }

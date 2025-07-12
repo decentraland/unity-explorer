@@ -5,6 +5,7 @@ using DCL.Chat.ChatStates;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.Chat.Services;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Utilities;
@@ -96,6 +97,7 @@ namespace DCL.Chat
         public void OnViewClose()
         {
             chatClickDetectionService.Dispose();
+            chatMemberListService.Stop();
             UnsubscribeFromGlobalEvents();
             Dispose();
         }
@@ -202,7 +204,11 @@ namespace DCL.Chat
         public void OnHidden()
         {
             fsm.changeState<MinimizedChatState>();
-            
+        }
+        
+        private void HandleMemberCountUpdated(int memberCount)
+        {
+            titleBarPresenter?.SetMemberCount(memberCount);
         }
         
          #region Subscriptions
@@ -210,6 +216,8 @@ namespace DCL.Chat
         private void SubscribeToGlobalEvents()
         {
             if (viewInstance == null) return;
+            
+            chatMemberListService.OnMemberCountUpdated += HandleMemberCountUpdated;
             
             viewInstance.OnPointerEnterEvent += () => OnPointerEnter?.Invoke();
             viewInstance.OnPointerExitEvent += () => OnPointerExit?.Invoke();
@@ -240,6 +248,8 @@ namespace DCL.Chat
         
         private void UnsubscribeFromGlobalEvents()
         {
+            chatMemberListService.OnMemberCountUpdated -= HandleMemberCountUpdated;
+            
             chatClickDetectionService.OnClickInside -= () => OnClickInside?.Invoke();
             chatClickDetectionService.OnClickOutside -= () => OnClickOutside?.Invoke();
             
