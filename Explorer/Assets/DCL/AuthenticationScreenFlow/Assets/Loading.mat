@@ -124,7 +124,7 @@ Material:
     - _GlossyReflections: 0
     - _GlowRadius: 0.3
     - _GlowSmoothness: 7.36
-    - _GlowStrength: 0.74
+    - _GlowStrength: 0.5
     - _LogoAlpha: 0.208
     - _LogoTiling: 4
     - _LuminosityStrength: 0.541
