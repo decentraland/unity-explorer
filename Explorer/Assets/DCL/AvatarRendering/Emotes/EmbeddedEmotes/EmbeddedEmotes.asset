@@ -15,7 +15,7 @@ MonoBehaviour:
   emotes:
   - id: clap
     name: clap
-    audioClip: {fileID: 0}
+    audioClip: {fileID: 8300000, guid: bbdec9167e5458c4c8f852d49dd77026, type: 3}
     thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 902282f4070ec7b469e73bcbdcc0c3dd, type: 3}
     male: {fileID: 0}
@@ -48,7 +48,7 @@ MonoBehaviour:
   - id: cry
     name: cry
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
+    thumbnail: {fileID: 21300000, guid: ee783a7da0f7c804c8718704f06ba790, type: 3}
     prefab: {fileID: 8771091787928289351, guid: c4ac165a6ecb9194ba6417ac99aa1d0f, type: 3}
     male: {fileID: 0}
     female: {fileID: 0}
@@ -207,7 +207,7 @@ MonoBehaviour:
       loop: 0
   - id: kiss
     name: kiss
-    audioClip: {fileID: 0}
+    audioClip: {fileID: 8300000, guid: aac9f6c56a8383a40b736ef3481dcac6, type: 3}
     thumbnail: {fileID: 21300000, guid: 8845b5e9671db49409bf747319c8f5c7, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 28c3224df1c472940947608d6984ab5b, type: 3}
     male: {fileID: 0}
@@ -223,7 +223,7 @@ MonoBehaviour:
       loop: 0
   - id: money
     name: money
-    audioClip: {fileID: 0}
+    audioClip: {fileID: 8300000, guid: 0bd4a22cf4328f241b7a47f3db620514, type: 3}
     thumbnail: {fileID: 21300000, guid: e2b6332b93b06ab488a93d40b83c69fe, type: 3}
     prefab: {fileID: 8771091787928289351, guid: 73aef91399409734da49e67af4552191, type: 3}
     male: {fileID: 0}
@@ -352,7 +352,7 @@ MonoBehaviour:
   - id: wave
     name: wave
     audioClip: {fileID: 0}
-    thumbnail: {fileID: 21300000, guid: 5ff44e022ab99054bb0a1f79b2077c4f, type: 3}
+    thumbnail: {fileID: 21300000, guid: fe89fdd5fa8082047b39641a3fc66308, type: 3}
     prefab: {fileID: 8018143466885850673, guid: c1d9a11790afd475fbf6ad94eb29306c, type: 3}
     male: {fileID: 0}
     female: {fileID: 0}
