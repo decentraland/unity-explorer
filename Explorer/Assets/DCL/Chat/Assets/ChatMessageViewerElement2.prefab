@@ -397,7 +397,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding: {x: 0, y: 0, z: 0, w: 0}
-  m_Softness: {x: 0, y: 24}
+  m_Softness: {x: 0, y: 10}
 --- !u!1 &6302358864288876030
 GameObject:
   m_ObjectHideFlags: 0
@@ -447,7 +447,6 @@ GameObject:
   - component: {fileID: 2311876475218739460}
   - component: {fileID: 2232783587231390383}
   - component: {fileID: 7876013243935759455}
-  - component: {fileID: 4081156902909443558}
   - component: {fileID: 7665502455413759823}
   m_Layer: 5
   m_Name: ChatMessageViewerElement2
@@ -583,24 +582,6 @@ MonoBehaviour:
   mItemSnapEnable: 0
   mViewPortSnapPivot: {x: 0, y: 0}
   mItemSnapPivot: {x: 0, y: 0}
---- !u!114 &4081156902909443558
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6563487890893190376}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4fcca689a66044b5b872965c591794ef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  chatEntriesFadeTime: 3
-  chatEntriesWaitBeforeFading: 10000
-  scrollbarCanvasGroup: {fileID: 2190985324859330998}
-  chatEntriesCanvasGroup: {fileID: 860361653977147949}
-  loopList: {fileID: 7876013243935759455}
-  scrollRect: {fileID: 2232783587231390383}
 --- !u!114 &7665502455413759823
 MonoBehaviour:
   m_ObjectHideFlags: 0
