@@ -3302,7 +3302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 33514b8ec78216d4c94788f0b6eb5597, type: 2}
+  m_Material: {fileID: 2100000, guid: 00f9de598c0df4d60bb37527a8b26653, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -5406,6 +5406,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4429487927130010149, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2100000, guid: 00f9de598c0df4d60bb37527a8b26653, type: 2}
     - target: {fileID: 8909398026496194027, guid: 9d15a49d781207c49ae4e177fea8df9d, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

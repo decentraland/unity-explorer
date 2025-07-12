@@ -19,7 +19,7 @@ MonoBehaviour:
     m_Items: []
   m_TableData:
   - m_Id: 191273726208528384
-    m_Localized: Press B to Use the <b>Emote Wheel</b> and use your favorites emotes
+    m_Localized: Press <b>B</b> to Use the Emote Wheel and use your favorites emotes
       to dance, cheer, or do any kind of special and weird movements.
     m_Metadata:
       m_Items: []
@@ -81,8 +81,8 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 197098653933887488
-    m_Localized: Get a <b>NAME</b>, unlock a whole World! Separate from Genesis City,
-      use your World to hang out, host events, or experiment with scene building.
+    m_Localized: Get a NAME, unlock a whole World! Separate from Genesis City, use
+      your World to hang out, host events, or experiment with scene building.
     m_Metadata:
       m_Items: []
   - m_Id: 197098893369925632
@@ -109,7 +109,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 197397960180359168
-    m_Localized: "<color=#FFFF00><size=24>COMING SOON!</size></color> \nExplore Communities
+    m_Localized: "<color=#FFFF00><size=30>COMING SOON!</size></color> \nExplore Communities
       to connect over shared interests. Hang in the group chat, get event updates,
       and enjoy that cozy sense of belonging!\n"
     m_Metadata:
