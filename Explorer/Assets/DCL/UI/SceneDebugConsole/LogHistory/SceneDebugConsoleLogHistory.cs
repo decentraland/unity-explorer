@@ -5,12 +5,10 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
 {
     public class SceneDebugConsoleLogHistory
     {
-        private readonly List<SceneDebugConsoleLogEntry> logMessages = new();
+        public readonly List<SceneDebugConsoleLogEntry> LogMessages = new();
         private readonly int maxLogMessages;
 
         public event Action<SceneDebugConsoleLogEntry> LogMessageAdded;
-
-        public IReadOnlyList<SceneDebugConsoleLogEntry> LogMessages => logMessages;
 
         // TODO: Connect max log messages to existent setting
         public SceneDebugConsoleLogHistory(int maxLogMessages = 1000)
@@ -21,18 +19,18 @@ namespace DCL.UI.SceneDebugConsole.LogHistory
         public void AddLogMessage(SceneDebugConsoleLogEntry logEntry)
         {
             // Remove oldest entry if we've reached the limit
-            if (logMessages.Count >= maxLogMessages)
-            {
-                logMessages.RemoveAt(0);
-            }
+            // if (LogMessages.Count >= maxLogMessages)
+            // {
+            //     LogMessages.RemoveAt(0);
+            // }
 
-            logMessages.Add(logEntry);
+            LogMessages.Add(logEntry);
             LogMessageAdded?.Invoke(logEntry);
         }
 
         public void ClearLogMessages()
         {
-            logMessages.Clear();
+            LogMessages.Clear();
         }
     }
 }

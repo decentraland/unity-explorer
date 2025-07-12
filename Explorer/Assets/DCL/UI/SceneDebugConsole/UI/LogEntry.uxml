@@ -1,6 +1,0 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="LogEntry.uss" />
-    <ui:VisualElement name="log-entry" class=".log-entry">
-        <ui:Label text="Log text..." display-tooltip-when-elided="true" />
-    </ui:VisualElement>
-</ui:UXML>

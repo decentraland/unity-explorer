@@ -7,4 +7,9 @@
     border-color: rgb(49, 26, 17);
     border-width: 2px;
     border-radius: 15px;
+    text-overflow: ellipsis;
+}
+
+.log-entry > label {
+    text-overflow: ellipsis;
 }
