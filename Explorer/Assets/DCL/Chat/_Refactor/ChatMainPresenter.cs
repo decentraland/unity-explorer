@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatStates;
 using DCL.Chat.ControllerShowParams;
@@ -8,17 +7,15 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.Friends;
-using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
-using MVC;
 using Prime31.StateKit;
 using UnityEngine;
 
 namespace DCL.Chat
 {
-    public class ChatMainPresenter : ControllerBase<ChatMainView, ChatControllerShowParams>,
-        IControllerInSharedSpace<ChatMainView, ChatControllerShowParams>
+    public class ChatMainPresenter : IDisposable
     {
+        public event Action OnCloseIntent;
         public event Action OnPointerEnter;
         public event Action OnPointerExit;
         public event Action OnClickInside;
@@ -26,7 +23,7 @@ namespace DCL.Chat
         
         private readonly IChatHistory chatHistory;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly ChatUserStateEventBus chatUserStateEventBus;
+        private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ChatService chatService;
         private readonly ChatMemberListService chatMemberListService;
@@ -41,25 +38,20 @@ namespace DCL.Chat
         public ChatMessageFeedPresenter? messageViewerPresenter;
         public ChatInputPresenter? chatInputPresenter;
         
+        private ChatMainView viewInstance;
         private ChatConfig config;
         private SKStateMachine<ChatMainPresenter> fsm;
         
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
         public ChatChannel.ChannelId CurrentChannelId { get; set; }
-        
-        public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
-        public bool IsVisibleInSharedSpace => State != ControllerState.ViewHidden 
-                                              && !IsHidden();
 
-        public ChatMainPresenter(ViewFactoryMethod viewFactory,
-            IChatPresenterFactory presenterFactory,
+        public ChatMainPresenter(IChatPresenterFactory presenterFactory,
             IChatHistory chatHistory,
             IChatMessagesBus chatMessagesBus,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             ChatService chatService,
             ChatMemberListService chatMemberListService,
             ChatInputBlockingService chatInputBlockingService,
-            ChatUserStateEventBus chatUserStateEventBus) : base(viewFactory)
+            IChatUserStateEventBus chatUserStateEventBus)
         {
             this.presenterFactory = presenterFactory;
             this.chatHistory = chatHistory;
@@ -71,9 +63,9 @@ namespace DCL.Chat
             this.chatUserStateEventBus = chatUserStateEventBus;
         }
         
-        protected override void OnViewInstantiated()
+        public void SetView(ChatMainView? viewInstance)
         {
-            base.OnViewInstantiated();
+            this.viewInstance = viewInstance;
             config = viewInstance?.Config;
             chatClickDetectionService = new ChatClickDetectionService(viewInstance.transform as RectTransform);
             
@@ -84,10 +76,8 @@ namespace DCL.Chat
             titleBarPresenter = presenterFactory.CreateTitlebar(viewInstance.TitlebarView);
         }
 
-        protected override void OnViewShow()
+        public void OnViewShow()
         {
-            base.OnViewShow();
-
             chatClickDetectionService.Initialize(elementsToIgnore:new List<Transform>
             {
                 viewInstance.TitlebarView.CurrentTitleBarCloseButton.transform
@@ -103,7 +93,7 @@ namespace DCL.Chat
             chatMemberListService.Start();
         }
 
-        protected override void OnViewClose()
+        public void OnViewClose()
         {
             chatClickDetectionService.Dispose();
             UnsubscribeFromGlobalEvents();
@@ -132,7 +122,7 @@ namespace DCL.Chat
             fsm.changeState<DefaultChatState>();
         }
         
-        private bool IsHidden()
+        public bool IsHidden()
         {
             return fsm.currentState is MinimizedChatState;
         }
@@ -193,37 +183,26 @@ namespace DCL.Chat
         private void HandlePanelCloseChat()
         {
             fsm.changeState<MinimizedChatState>();
+            OnCloseIntent?.Invoke();
         }
 
         private void HandleMessageSubmitted(string message)
         {
         }
 
-        protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)
+
+        public void OnShown(ChatControllerShowParams showParams)
         {
-            ViewShowingComplete?.Invoke(this);
-            await UniTask.WaitUntil(() => State == ControllerState.ViewHidden, PlayerLoopTiming.Update, ct);
+            if (showParams.Focus)
+                fsm.changeState<FocusedChatState>();
+            else
+                fsm.changeState<DefaultChatState>();
         }
-
-
-        public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
-        {
-            if (State != ControllerState.ViewHidden)
-            {
-                if (showParams.Focus)
-                    fsm.changeState<FocusedChatState>();
-                else
-                    fsm.changeState<DefaultChatState>();
-
-                ViewShowingComplete?.Invoke(this);
-            }
-
-            await UniTask.CompletedTask;
-        }
-        public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
+        
+        public void OnHidden()
         {
             fsm.changeState<MinimizedChatState>();
-            await UniTask.CompletedTask;
+            
         }
         
          #region Subscriptions
@@ -304,6 +283,19 @@ namespace DCL.Chat
             messageViewerPresenter?.SetFocusState(isFocused, animate, config.PanelsFadeDuration,config.PanelsFadeEase);
             chatChannelsPresenter?.SetFocusState(isFocused, animate, config.PanelsFadeDuration,config.PanelsFadeEase);
             titleBarPresenter?.SetFocusState(isFocused, animate, config.PanelsFadeDuration,config.PanelsFadeEase);
+        }
+
+        public void Dispose()
+        {
+            chatMessagesBus.Dispose();
+            chatService.Dispose();
+            chatMemberListService.Dispose();
+            chatClickDetectionService.Dispose();
+            titleBarPresenter?.Dispose();
+            chatChannelsPresenter?.Dispose();
+            memberListPresenter?.Dispose();
+            messageViewerPresenter?.Dispose();
+            chatInputPresenter?.Dispose();
         }
     }
 }

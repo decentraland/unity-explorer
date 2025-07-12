@@ -18,6 +18,7 @@ using MVC;
 
 public interface IChatPresenterFactory
 {
+    ChatMainPresenter CreateChatMainPresenter();
     ChatChannelsPresenter CreateConversationList(IChatChannelsView view, ChatConfig config);
     ChatMessageFeedPresenter CreateMessageFeed(IChatMessageFeedView view);
     ChatInputPresenter CreateChatInput(IChatInputView view);
@@ -52,6 +53,7 @@ public class ChatPresenterFactory : IChatPresenterFactory
     private readonly ChatMemberListService chatMemberListService;
     private readonly ITextFormatter hyperlinkTextFormatter;
     private readonly ChatHistoryStorage chatHistoryStorage;
+    private readonly ChatInputBlockingService chatInputBlockingService;
     
     public ChatPresenterFactory(
         IChatHistory chatHistory,
@@ -74,7 +76,8 @@ public class ChatPresenterFactory : IChatPresenterFactory
         ObjectProxy<IFriendsService> friendsService,
         ChatService chatService,
         ChatMemberListService chatMemberListService,
-        ITextFormatter hyperlinkTextFormatter)
+        ITextFormatter hyperlinkTextFormatter,
+        ChatInputBlockingService chatInputBlockingService)
     {
         this.chatHistory = chatHistory;
         this.chatHistoryStorage = chatHistoryStorage;
@@ -97,7 +100,7 @@ public class ChatPresenterFactory : IChatPresenterFactory
         this.chatService = chatService;
         this.chatMemberListService = chatMemberListService;
         this.hyperlinkTextFormatter = hyperlinkTextFormatter;
-        
+        this.chatInputBlockingService = chatInputBlockingService;
         chatUserStateEventBus = new ChatUserStateEventBus();
         var chatRoom = roomHub.ChatRoom();
         chatUserStateUpdater = new ChatUserStateUpdater(
@@ -109,6 +112,18 @@ public class ChatPresenterFactory : IChatPresenterFactory
             friendsEventBus,
             chatRoom,
             friendsService);
+    }
+
+    public ChatMainPresenter CreateChatMainPresenter()
+    {
+        return new ChatMainPresenter(this,
+            chatHistory,
+            chatMessagesBus,
+            friendsServiceProxy,
+            chatService,
+            chatMemberListService,
+            chatInputBlockingService,
+            chatUserStateEventBus);
     }
 
     public ChatChannelsPresenter CreateConversationList(IChatChannelsView view, ChatConfig config)
@@ -146,9 +161,4 @@ public class ChatPresenterFactory : IChatPresenterFactory
     {
         return new ChatMemberListPresenter(view, roomHub, profileCache, profileRepositoryWrapper);
     }
-
-    // public ChatInWorldBubblesPresenter CreateInWorldBubbles()
-    // {
-    //     return new ChatInWorldBubblesPresenter(chatMessagesBus, world, entityParticipantTable, profileCache, nametagsData, chatSettings);
-    // }
 }

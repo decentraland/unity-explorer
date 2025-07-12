@@ -62,8 +62,7 @@ namespace DCL.PluginSystem.Global
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         
-        private ChatController chatController;
-        private ChatMainPresenter chatMainPresenter;
+        private ChatMainController chatMainController;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
         private ChatUserStateUpdater chatUserStateUpdater;
@@ -161,6 +160,8 @@ namespace DCL.PluginSystem.Global
                 profileCache,
                 friendsServiceProxy);
             
+            var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
+            
             var presenterFactory = new ChatPresenterFactory(
                 chatHistory,
                 chatStorage,
@@ -182,58 +183,22 @@ namespace DCL.PluginSystem.Global
                 friendsServiceProxy,
                 chatService,
                 chatMemberService,
-                hyperlinkTextFormatter
-            );
-
-            chatMainPresenter = new ChatMainPresenter(
-                () =>
-                {
-                    var view = mainUIView.ChatView2;
-                    view.gameObject.SetActive(true);
-                    return view;
-                },
-                presenterFactory,
-                chatHistory,
-                chatMessagesBus,
-                friendsServiceProxy,
-                chatService,
-                chatMemberService,
-                new ChatInputBlockingService(inputBlock, world),
-                chatUserStateEventBus
+                hyperlinkTextFormatter,
+                chatInputBlockingService
             );
             
-            // chatController = new ChatController(
-            //     () =>
-            //     {
-            //         ChatView? view = mainUIView.ChatView;
-            //         view.gameObject.SetActive(false);
-            //         return view;
-            //     },
-            //     chatMessagesBus,
-            //     chatHistory,
-            //     entityParticipantTable,
-            //     nametagsData,
-            //     world,
-            //     playerEntity,
-            //     inputBlock,
-            //     roomHub,
-            //     chatSettingsAsset.Value,
-            //     hyperlinkTextFormatter,
-            //     profileCache,
-            //     chatEventBus,
-            //     web3IdentityCache,
-            //     loadingStatus,
-            //     userBlockingCacheProxy,
-            //     privacySettings,
-            //     friendsEventBus,
-            //     chatStorage,
-            //     friendsServiceProxy,
-            //     profileRepositoryWrapper
-            // );
+            chatMainController = new ChatMainController(
+                () =>
+                {
+                    ChatMainView? view = mainUIView.ChatView2;
+                    view.gameObject.SetActive(false);
+                    return view;
+                },
+                presenterFactory.CreateChatMainPresenter()
+            );
 
-            //sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
-            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainPresenter);
-            mvcManager.RegisterController(chatMainPresenter);
+            sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
+            mvcManager.RegisterController(chatMainController);
 
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
@@ -248,8 +213,8 @@ namespace DCL.PluginSystem.Global
 
         private void OnIdentityCleared()
         {
-            if (chatController.IsVisibleInSharedSpace)
-                chatController.HideViewAsync(CancellationToken.None).Forget();
+            if (chatMainController.IsVisibleInSharedSpace)
+                chatMainController.HideViewAsync(CancellationToken.None).Forget();
         }
     }
 
