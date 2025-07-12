@@ -968,7 +968,6 @@ namespace Global.Dynamic
                 globalPlugins.Add(new SceneDebugConsolePlugin(
                     bootstrapContainer.SceneDebugConsoleMessageBus!,
                     new SceneDebugConsoleLogHistory(),
-                    staticContainer.InputBlock,
                     new SceneDebugConsoleCommandsBus()));
 
             var globalWorldFactory = new GlobalWorldFactory(

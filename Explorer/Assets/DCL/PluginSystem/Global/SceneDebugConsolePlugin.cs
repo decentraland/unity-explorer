@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Input;
 using DCL.UI.SceneDebugConsole;
 using DCL.UI.SceneDebugConsole.Commands;
 using DCL.UI.SceneDebugConsole.LogHistory;
@@ -14,7 +13,6 @@ namespace DCL.PluginSystem.Global
     {
         private readonly SceneDebugConsoleLogHistory logHistory;
         private readonly SceneDebugConsoleLogEntryBus logLogEntriesBus;
-        private readonly IInputBlock inputBlock;
         private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
 
         private SceneDebugConsoleController sceneDebugConsoleController;
@@ -22,12 +20,10 @@ namespace DCL.PluginSystem.Global
         public SceneDebugConsolePlugin(
             SceneDebugConsoleLogEntryBus logLogEntriesBus,
             SceneDebugConsoleLogHistory logHistory,
-            IInputBlock inputBlock,
             SceneDebugConsoleCommandsBus consoleCommandsBus)
         {
             this.logHistory = logHistory;
             this.logLogEntriesBus = logLogEntriesBus;
-            this.inputBlock = inputBlock;
             this.consoleCommandsBus = consoleCommandsBus;
         }
 
@@ -40,7 +36,6 @@ namespace DCL.PluginSystem.Global
             sceneDebugConsoleController = new SceneDebugConsoleController(
                 logLogEntriesBus,
                 logHistory,
-                inputBlock,
                 consoleCommandsBus,
                 settings.ConsoleSettings
             );

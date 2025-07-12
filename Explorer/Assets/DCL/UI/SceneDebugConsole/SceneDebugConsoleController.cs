@@ -2,9 +2,11 @@ using DCL.UI.SceneDebugConsole.Commands;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.SceneDebugConsole.MessageBus;
 using DCL.Input;
-using MVC;
 using System;
+using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UIElements;
+using Object = UnityEngine.Object;
 
 namespace DCL.UI.SceneDebugConsole
 {
@@ -14,78 +16,54 @@ namespace DCL.UI.SceneDebugConsole
 
         private readonly SceneDebugConsoleLogEntryBus logEntriesBus;
         private readonly SceneDebugConsoleLogHistory logsHistory;
-        private readonly IInputBlock inputBlock;
         private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
         private readonly SceneDebugConsoleSettings consoleSettings;
 
+        private VisualElement uiDocumentRoot;
         private bool isInputSelected;
-
-        public CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
-
-        public bool IsUnfolded;
-        /*{
-            get => viewInstance != null && viewInstance.IsUnfolded;
-            set
-            {
-                if (viewInstance != null)
-                {
-                    viewInstance.IsUnfolded = value;
-
-                    if (value)
-                        DCLInput.Instance.UI.Submit.performed += OnSubmitShortcutPerformed;
-                    else
-                        DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
-                }
-            }
-        }*/
 
         public event ConsoleVisibilityChangedDelegate ConsoleVisibilityChanged;
 
         public SceneDebugConsoleController(
             SceneDebugConsoleLogEntryBus logEntriesBus,
             SceneDebugConsoleLogHistory logsHistory,
-            IInputBlock inputBlock,
             SceneDebugConsoleCommandsBus consoleCommandsBus,
             SceneDebugConsoleSettings consoleSettings)
         {
             this.logEntriesBus = logEntriesBus;
             this.logsHistory = logsHistory;
-            this.inputBlock = inputBlock;
             this.consoleCommandsBus = consoleCommandsBus;
             this.consoleSettings = consoleSettings;
 
-            // TODO: bind to real view
-            OnViewInstantiated();
+            InstantiateRootGO();
         }
 
-        public void Clear() // Called by a command
-        {
-            logsHistory.ClearLogMessages();
-        }
-
-        public void Dispose()
-        {
-            logEntriesBus.MessageAdded -= OnEntryBusEntryAdded;
-            logsHistory.LogMessageAdded -= OnLogsHistoryEntryAdded;
-            consoleCommandsBus.OnClearConsole -= Clear;
-
-            /*if (viewInstance != null)
-            {
-                viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
-                viewInstance.InputSubmitted -= OnViewInputSubmitted;
-                viewInstance.FoldingChanged -= OnViewFoldingChanged;
-                viewInstance.Dispose();
-            }*/
-
-            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
-            // DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
-        }
-
-        protected void OnViewInstantiated()
+        // Instantiate root UI Document GameObject
+        private void InstantiateRootGO()
         {
             logEntriesBus.MessageAdded += OnEntryBusEntryAdded;
             logsHistory.LogMessageAdded += OnLogsHistoryEntryAdded;
             consoleCommandsBus.OnClearConsole += Clear;
+            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
+
+            /*var styleSheet = Resources.Load<StyleSheet>($"Styles/{styleName}");
+            // Setup VisualElement from Stylesheet and UXML file
+            styleSheets.Add(styleSheet);
+            var uxml = Resources.Load<VisualTreeAsset>($"UXML/{UxmlName}");
+            m_MainContainer = uxml.Instantiate();
+            m_MainContainer.AddToClassList("mainContainer");
+
+            m_Root = m_MainContainer.Q("content");
+            m_HeaderItem = m_MainContainer.Q("header");
+            m_HeaderItem.AddToClassList("subWindowHeader");
+            m_ScrollView = m_MainContainer.Q<ScrollView>("scrollView");
+            m_TitleLabel = m_MainContainer.Q<Label>(name: "titleLabel");
+            m_SubTitleLabel = m_MainContainer.Q<Label>(name: "subTitleLabel");
+            m_ContentContainer = m_MainContainer.Q(name: "contentContainer");*/
+
+            var uiDocument = Object.Instantiate(Resources.Load<GameObject>("SceneDebugConsoleRootCanvas")).GetComponent<UIDocument>();
+            uiDocumentRoot = uiDocument.rootVisualElement;
+            uiDocumentRoot.visible = false;
 
             // viewInstance!.Initialize(logsHistory.LogMessages, consoleSettings);
 
@@ -105,28 +83,40 @@ namespace DCL.UI.SceneDebugConsole
             // logEntriesBus.Send( "13. NullReferenceException: Object reference not set to an instance of an object DCL.ApplicationBlocklistGuard.BlockedScreenController.Dispose () (at Assets/DCL/ApplicationBlocklistGuard/BlockedScreenController.cs:27) MVC.MVCManager.Dispose () (at Assets/DCL/Infrastructure/MVC/Manager/MVCManager.cs:36) DCL.PerformanceAndDiagnostics.Analytics.MVCManagerAnalyticsDecorator.Dispose () (at Assets/DCL/PerformanceAndDiagnostics/Analytics/DecoratorBased/MVCManagerAnalyticsDecorator.cs:53) DCL.PluginSystem.Global.MainUIPlugin.Dispose () (at Assets/DCL/PluginSystem/Global/MainUIPlugin.cs:31) DCL.Utilities.DisposableUtils.SafeDispose[T] (T disposable, DCL.Diagnostics.ReportData reportData, System.Func`2[T,TResult] exceptionMessageFactory) (at Assets/DCL/Utilities/DisposableUtils.cs:14) Rethrow as Exception: DCL.PluginSystem.Global.MainUIPlugin's thrown an exception on disposal. UnityEngine.DebugLogHandler:LogException(Exception, Object) DCL.Diagnostics.DebugLogReportHandler:LogExceptionInternal(Exception, ReportData, Object) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/Handlers/DebugLogReportHandler.cs:109) DCL.Diagnostics.ReportHandlerBase:LogException(Exception, ReportData, Object) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/Handlers/ReportHandlerBase.cs:49) DCL.Diagnostics.ReportHubLogger:LogException(Exception, ReportData, ReportHandler) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/ReportHubLogger.cs:126) DCL.Diagnostics.ReportHub:LogException(Exception, ReportData, ReportHandler) (at Assets/DCL/PerformanceAndDiagnostics/Diagnostics/ReportsHandling/ReportHub.cs:153) DCL.Utilities.DisposableUtils:SafeDispose(IDCLGlobalPlugin, ReportData, Func`2) (at Assets/DCL/Utilities/DisposableUtils.cs:15) Global.Dynamic.MainSceneLoader:OnDestroy() (at Assets/DCL/Infrastructure/Global/Dynamic/MainSceneLoader.cs:94) ", LogType.Error);
         }
 
+        public void Dispose()
+        {
+            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
+            logEntriesBus.MessageAdded -= OnEntryBusEntryAdded;
+            logsHistory.LogMessageAdded -= OnLogsHistoryEntryAdded;
+            consoleCommandsBus.OnClearConsole -= Clear;
+
+            /*if (viewInstance != null)
+            {
+                viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
+                viewInstance.InputSubmitted -= OnViewInputSubmitted;
+                viewInstance.FoldingChanged -= OnViewFoldingChanged;
+                viewInstance.Dispose();
+            }*/
+
+            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
+            // DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
+        }
+
+        private void Clear()
+        {
+            logsHistory.ClearLogMessages();
+        }
+
         private void OnLogsHistoryEntryAdded(SceneDebugConsoleLogEntry logEntry)
         {
             UnityEngine.Debug.Log($"PRAVS - Controller.OnLogsHistoryEntryAdded({logEntry.Message})");
             // viewInstance?.OnLogHistoryEntryAdded();
         }
 
-        private void OnViewFoldingChanged(bool isUnfolded)
+        /*private void OnViewFoldingChanged(bool isUnfolded)
         {
             ConsoleVisibilityChanged?.Invoke(isUnfolded);
-        }
-
-        protected void OnViewShow()
-        {
-            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
-
-            IsUnfolded = false; // Start hidden by default
-        }
-
-        protected void OnViewClose()
-        {
-            DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
-        }
+        }*/
 
         /*private void DisableUnwantedInputs()
         {
@@ -148,7 +138,7 @@ namespace DCL.UI.SceneDebugConsole
 
         private void OnToggleConsoleShortcutPerformed(InputAction.CallbackContext obj)
         {
-            IsUnfolded = !IsUnfolded;
+            uiDocumentRoot.visible = !uiDocumentRoot.visible;
         }
 
         // TODO: IS THE LOG MESSAGEBUS + HISTORY NEEDED? CAN WE HAVE ONLY 1 BUS ??
