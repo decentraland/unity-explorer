@@ -1,17 +1,15 @@
-using DCL.CharacterPreview;
 using DCL.Platforms;
 using DCL.Prefs;
-using DCL.Settings;
-using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using MVC;
 
 namespace DCL.Utilities
 {
     public class UpscalingController
     {
-        private const float STP_VALUE_FOR_CHARACTER_PREVIEW = 1f;
+        private const float STP_VALUE_FOR_UI_OPEN = 1f;
         private const float STP_HIGH_RESOLUTION_WINDOWS = 0.5f;
         private const float STP_HIGH_RESOLUTION_MAC = 0.5f;
         private const float STP_MID_RESOLUTION_MAC = 0.6f;
@@ -20,15 +18,16 @@ namespace DCL.Utilities
 
         private readonly float highResolutionPreset;
         private readonly float midResolutionPreset;
+        private readonly IMVCManager mvcManager;
 
-        private float savedUpscalingDuringCharacterPreview;
+        private float savedUpscalingDuringUIOpen;
         private bool ignoreFirstResolutionChange;
-        private bool isCharacterPreviewActive;
+        private int currentUIOpened;
 
-        public Action<float> OnUpscalingChanged;
-
-        public UpscalingController(CharacterPreviewEventBus characterPreviewEventBus)
+        public UpscalingController(IMVCManager mvcManager)
         {
+            this.mvcManager = mvcManager;
+
             if (IPlatform.DEFAULT.Is(IPlatform.Kind.Windows))
             {
                 highResolutionPreset = STP_HIGH_RESOLUTION_WINDOWS;
@@ -40,48 +39,70 @@ namespace DCL.Utilities
                 midResolutionPreset = STP_MID_RESOLUTION_MAC;
             }
 
-            characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += CharacterViewOpened;
-            characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += CharacterViewClosed;
-            savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+            mvcManager.OnViewShowed += OnUIOpened;
+            mvcManager.OnViewClosed += OnUIClosed;
 
             if (DCLPlayerPrefs.HasKey(DCLPrefKeys.SETTINGS_UPSCALER))
             {
-                SetUpscalingValue(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER), true);
+                UpdateUpscaling(DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER));
                 ignoreFirstResolutionChange = true;
             }
             else
-                SetUpscalingValue(INITIAL_UPSCALE_VALUE, true);
-        }
-
-        private void CharacterViewClosed(CharacterPreviewControllerBase obj)
-        {
-            if (isCharacterPreviewActive)
-            {
-                SetUpscalingValue(savedUpscalingDuringCharacterPreview, false);
-                isCharacterPreviewActive = false;
-            }
-        }
-
-        private void CharacterViewOpened(CharacterPreviewControllerBase obj)
-        {
-            isCharacterPreviewActive = true;
-            savedUpscalingDuringCharacterPreview = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
-
-            //Render scale for character view should have a fixed value
-            SetUpscalingValue(STP_VALUE_FOR_CHARACTER_PREVIEW, false);
+                UpdateUpscaling(INITIAL_UPSCALE_VALUE);
         }
 
         //Should always get in decimal form
-        public void SetUpscalingValue(float sliderValue, bool updateStoredValue)
+        public void UpdateUpscaling(float newValue)
+        {
+            if (currentUIOpened > 0)
+                savedUpscalingDuringUIOpen = newValue;
+            else
+            {
+                SetUpscaling(newValue, UpscalingFilterSelection.FSR);
+                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, newValue);
+            }
+        }
+
+        public float GetCurrentUpscale() =>
+            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
+
+        private void OnUIClosed(IController controller)
+        {
+            if (ShouldTriggerUpscalerChange(controller))
+            {
+                currentUIOpened--;
+                if (currentUIOpened == 0)
+                    UpdateUpscaling(savedUpscalingDuringUIOpen);
+            }
+        }
+
+        private void OnUIOpened(IController controller)
+        {
+            // Only trigger upscaler change for certain types of controllers
+            if (ShouldTriggerUpscalerChange(controller))
+            {
+                savedUpscalingDuringUIOpen = ((UniversalRenderPipelineAsset)GraphicsSettings.currentRenderPipeline).renderScale;
+                SetUpscaling(STP_VALUE_FOR_UI_OPEN, UpscalingFilterSelection.Auto);
+                currentUIOpened++;
+            }
+        }
+
+        private void SetUpscaling(float renderScale, UpscalingFilterSelection filterSelection)
         {
             foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
-                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = sliderValue;
+                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).renderScale = renderScale;
 
-            if (updateStoredValue)
-            {
-                DCLPlayerPrefs.SetFloat(DCLPrefKeys.SETTINGS_UPSCALER, sliderValue);
-                OnUpscalingChanged?.Invoke(sliderValue);
-            }
+            foreach (RenderPipelineAsset allConfiguredRenderPipeline in GraphicsSettings.allConfiguredRenderPipelines)
+                ((UniversalRenderPipelineAsset)allConfiguredRenderPipeline).upscalingFilter = filterSelection;
+        }
+
+        //This UIs should force an upscaling reset.
+        private bool ShouldTriggerUpscalerChange(IController controller)
+        {
+             string controllerTypeName = controller.GetType().Name;
+             return controllerTypeName.Contains("AuthenticationScreenController") ||
+                    controllerTypeName.Contains("ExplorePanelController") ||
+                    controllerTypeName.Contains("PassportController");
         }
 
         public void ResolutionChanged(Resolution resolution)
@@ -89,7 +110,7 @@ namespace DCL.Utilities
             //TODO (Juani): Resolution setting is not correct. You can chose a higher resolution, even if your monitor is not on that resolution.
             //Therefore, automatically setting it is not currently reliable
             return;
-            
+
             //Helper bool for the first stp value set. ResolutionChanged is invoked on application start, and if the value does exist in PlayerPrefs,
             //the first invoke should be ignored
             if (ignoreFirstResolutionChange)
@@ -105,10 +126,16 @@ namespace DCL.Utilities
             else if (resolution.width > 2000 || resolution.height > 2000)
                 newSTPScale = midResolutionPreset;
 
-            SetUpscalingValue(newSTPScale, true);
+            UpdateUpscaling(newSTPScale);
         }
 
-        public float GetCurrentUpscale() =>
-            DCLPlayerPrefs.GetFloat(DCLPrefKeys.SETTINGS_UPSCALER);
+        public void Dispose()
+        {
+            if (mvcManager != null)
+            {
+                mvcManager.OnViewShowed -= OnUIOpened;
+                mvcManager.OnViewClosed -= OnUIClosed;
+            }
+        }
     }
 }

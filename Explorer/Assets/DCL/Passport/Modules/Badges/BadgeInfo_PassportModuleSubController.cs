@@ -34,17 +34,20 @@ namespace DCL.Passport.Modules.Badges
         private IReadOnlyList<TierData> currentTiers = Array.Empty<TierData>();
         private CancellationTokenSource loadBadgeTierButtonsCts;
         private CancellationTokenSource loadBadge3DImageCts;
+        private Animator badge3DImageAnimator;
 
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             IWebRequestController webRequestController,
             BadgesAPIClient badgesAPIClient,
-            PassportErrorsController passportErrorsController)
+            PassportErrorsController passportErrorsController,
+            GameObject badge3DPreviewCamera)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.webRequestController = webRequestController;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
+            this.badge3DImageAnimator = badge3DPreviewCamera.GetComponentInChildren<Animator>();
 
             badgeTierButtonsPool = new ObjectPool<BadgeTierButton_PassportFieldView>(
                 InstantiateBadgeTierButtonPrefab,
@@ -207,7 +210,7 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.BadgeDateText.text = !tierIsLocked ? $"Unlocked: {BadgesUtils.FormatTimestampDate(tierCompletedAt)}" : "Locked";
             badgeInfoModuleView.BadgeDescriptionText.text = tier.description;
             badgeInfoModuleView.Badge3DImage.color = tierIsLocked ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
-            badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, tierIsLocked);
+            badge3DImageAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, tierIsLocked);
         }
 
         private void SetupBadgeInfoView(in BadgeInfo badgeInfo, IReadOnlyList<TierData> tiers)
@@ -216,7 +219,7 @@ namespace DCL.Passport.Modules.Badges
             badgeInfoModuleView.TierSection.SetActive(badgeInfo.data.isTier);
             badgeInfoModuleView.SimpleBadgeProgressBarContainer.SetActive(isOwnProfile && !badgeInfo.data.isTier && badgeInfo.data.progress.totalStepsTarget > 1);
             badgeInfoModuleView.Badge3DImage.color = badgeInfo.isLocked ? badgeInfoModuleView.Badge3DImageLockedColor : badgeInfoModuleView.Badge3DImageUnlockedColor;
-            badgeInfoModuleView.Badge3DAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, badgeInfo.isLocked);
+            badge3DImageAnimator.SetBool(IS_STOPPED_3D_IMAGE_ANIMATION_PARAM, badgeInfo.isLocked);
 
             if (badgeInfo.data.isTier)
                 SetupTierBadge(badgeInfo, tiers);

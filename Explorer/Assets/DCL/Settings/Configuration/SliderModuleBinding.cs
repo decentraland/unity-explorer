@@ -31,7 +31,7 @@ namespace DCL.Settings.Configuration
             UI_SOUNDS_VOLUME_FEATURE,
             AVATAR_SOUNDS_VOLUME_FEATURE,
             VOICE_CHAT_VOLUME_FEATURE,
-            STP_FEATURE,
+            UPSCALER_FEATURE,
             // add other features...
         }
 
@@ -66,11 +66,11 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer),
-                                                       SliderFeatures.STP_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
+                                                       SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(),
                                                    };
-            
+
             return controller;
         }
     }
