@@ -5,7 +5,6 @@ using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -19,6 +18,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -83,6 +83,37 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(c.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
             ecsToCRDTWriter.Received().DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
+        }
+
+        [Test]
+        public void ResetMaterialOnRelease()
+        {
+            // Arrange
+            var originalMaterial = new Material(DefaultMaterial.Get());
+            var newMaterial = new Material(DefaultMaterial.Get());
+            var meshRenderer = new GameObject("TestRenderer").AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = newMaterial;
+
+            var asset = GltfContainerAsset.Create(new GameObject(), null);
+            asset.Renderers.Add(meshRenderer);
+
+            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
+            world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+
+            var gltfContainerComponent = new GltfContainerComponent
+            {
+                Promise = promise,
+                State = LoadingState.Finished,
+                OriginalMaterials = new List<(Renderer renderer, Material material)> { (meshRenderer, originalMaterial) }
+            };
+
+            var entity = world.Create(gltfContainerComponent, new CRDTEntity(100));
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
         }
     }
 }

@@ -3,7 +3,6 @@ using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
@@ -17,6 +16,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility.Primitives;
 
 namespace ECS.Unity.GLTFContainer.Tests
 {
@@ -51,6 +51,37 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.Promise.Entity, Is.EqualTo(Entity.Null));
             cache.Received(1).Dereference("1_Hash", Arg.Any<GltfContainerAsset>());
             collidersSceneCache.Received(2).Remove(Arg.Any<Collider>());
+        }
+
+        [Test]
+        public void ResetMaterialOnDestroy()
+        {
+            // Arrange
+            var originalMaterial = new Material(DefaultMaterial.Get());
+            var newMaterial = new Material(DefaultMaterial.Get());
+            var meshRenderer = new GameObject("TestRenderer").AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = newMaterial;
+
+            var asset = GltfContainerAsset.Create(new GameObject(), null);
+            asset.Renderers.Add(meshRenderer);
+
+            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
+            world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+
+            var gltfContainerComponent = new GltfContainerComponent
+            {
+                Promise = promise,
+                State = LoadingState.Finished,
+                OriginalMaterials = new List<(Renderer renderer, Material material)> { (meshRenderer, originalMaterial) }
+            };
+
+            var entity = world.Create(gltfContainerComponent, new DeleteEntityIntention());
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
         }
     }
 }

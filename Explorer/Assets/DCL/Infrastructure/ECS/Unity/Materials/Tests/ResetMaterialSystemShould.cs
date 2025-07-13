@@ -9,6 +9,8 @@ using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility.Primitives;
+using System.Collections.Generic;
+using ECS.Unity.GLTFContainer.Components;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -60,7 +62,38 @@ namespace ECS.Unity.Materials.Tests
         {
             system.Update(0);
 
-            Assert.That(world.Has<PrimitiveMeshRendererComponent>(entity), Is.False);
+            Assert.That(world.Has<MaterialComponent>(entity), Is.False);
+        }
+
+        [Test]
+        public void ResetGltfContainerMaterial()
+        {
+            // Arrange
+            var originalMaterial = new Material(DefaultMaterial.Get());
+            var newMaterial = new Material(DefaultMaterial.Get());
+            var meshRenderer = new GameObject("TestRenderer").AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = newMaterial;
+
+            var gltfContainerComponent = new GltfContainerComponent
+            {
+                OriginalMaterials = new List<(Renderer renderer, Material material)> { (meshRenderer, originalMaterial) }
+            };
+
+            var materialComponent = new MaterialComponent
+            {
+                Result = newMaterial,
+                Status = StreamableLoading.LifeCycle.Applied
+            };
+
+            var gltfEntity = world.Create(gltfContainerComponent, materialComponent);
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
+            Assert.IsFalse(world.Has<MaterialComponent>(gltfEntity));
+            Assert.IsNull(world.Get<GltfContainerComponent>(gltfEntity).OriginalMaterials);
         }
     }
 }
