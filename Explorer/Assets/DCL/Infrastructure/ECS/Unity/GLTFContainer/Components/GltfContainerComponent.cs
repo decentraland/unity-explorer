@@ -4,6 +4,8 @@ using DCL.ECSComponents;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Components
 {
@@ -18,6 +20,8 @@ namespace ECS.Unity.GLTFContainer.Components
         public LoadingState State;
         public bool NeedsColliderBoundsCheck;
 
+        public List<(Renderer renderer, Material material)>? OriginalMaterials;
+
         public GltfContainerComponent(ColliderLayer visibleMeshesCollisionMask, ColliderLayer invisibleMeshesCollisionMask, AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> promise)
         {
             VisibleMeshesCollisionMask = visibleMeshesCollisionMask;
@@ -25,6 +29,7 @@ namespace ECS.Unity.GLTFContainer.Components
             Promise = promise;
             State = LoadingState.Unknown;
             NeedsColliderBoundsCheck = true;
+            OriginalMaterials = null;
         }
 
         public static GltfContainerComponent CreateFaulty(ReportData reportData, Exception exception)

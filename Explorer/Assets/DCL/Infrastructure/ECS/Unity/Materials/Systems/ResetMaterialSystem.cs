@@ -4,11 +4,11 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -31,16 +31,35 @@ namespace ECS.Unity.Materials.Systems
 
         protected override void Update(float t)
         {
-            ResetQuery(World);
-            World.Remove<PrimitiveMeshRendererComponent>(in Reset_QueryDescription);
+            ResetPrimitiveMeshQuery(World);
+            ResetGltfContainerQuery(World);
         }
 
         [Query]
         [None(typeof(PBMaterial))]
-        private void Reset(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
+        private void ResetPrimitiveMesh(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
             meshRendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
+            World.Remove<MaterialComponent>(entity);
+        }
+
+        [Query]
+        [None(typeof(PBMaterial))]
+        private void ResetGltfContainer(Entity entity, ref GltfContainerComponent gltfContainerComponent, ref MaterialComponent materialComponent)
+        {
+            if(gltfContainerComponent.OriginalMaterials == null) return;
+
+            foreach (var originalMaterial in gltfContainerComponent.OriginalMaterials)
+            {
+                originalMaterial.renderer.sharedMaterial = originalMaterial.material;
+            }
+
+            gltfContainerComponent.OriginalMaterials.Clear();
+            gltfContainerComponent.OriginalMaterials = null;
+
+            ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
+            World.Remove<MaterialComponent>(entity);
         }
     }
 }
