@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.Utilities;
 using SuperScrollView;
@@ -22,7 +23,7 @@ namespace DCL.Chat
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
 
         // The view's local copy of the data source
-        private readonly List<ChatMessage> messages = new ();
+        private readonly List<ChatMessageViewModel> messages = new ();
         public event Action OnScrollToBottom;
 
         private void Awake()
@@ -38,16 +39,16 @@ namespace DCL.Chat
             });
         }
 
-        public void SetMessages(IReadOnlyList<ChatMessage> newMessages)
+        public void SetMessages(IReadOnlyList<ChatMessageViewModel> newMessages)
         {
             messages.Clear();
             messages.AddRange(newMessages);
-            // This resets the view with the new list and scrolls to the bottom.
             loopListView.SetListItemCount(messages.Count, false);
             ScrollToBottom();
         }
-
-        public void AppendMessage(ChatMessage message, bool animated)
+        
+        
+        public void AppendMessage(ChatMessageViewModel message, bool animated)
         {
             bool wasAtBottom = IsAtBottom();
 
@@ -85,7 +86,7 @@ namespace DCL.Chat
             if (index < 0 || index >= messages.Count)
                 return null;
 
-            ChatMessage data = messages[index];
+            ChatMessageViewModel data = messages[index];
             string prefabName = GetPrefabNameForMessage(data);
             LoopListViewItem2 item = listView.NewListViewItem(prefabName);
 
@@ -104,7 +105,7 @@ namespace DCL.Chat
             return item;
         }
 
-        private static string GetPrefabNameForMessage(ChatMessage message)
+        private static string GetPrefabNameForMessage(ChatMessageViewModel message)
         {
             if (message.IsSeparator) return PREFAB_SEPARATOR;
             if (message.IsSystemMessage) return PREFAB_SYSTEM;

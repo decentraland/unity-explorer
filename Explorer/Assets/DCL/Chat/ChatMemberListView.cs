@@ -70,6 +70,16 @@ namespace DCL.Chat
         {
             loopListView.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
+        
+        public void SetData(IReadOnlyList<MemberData> members)
+        {
+            
+        }
+
+        public void SetMemberCount(int memberCount)
+        {
+            
+        }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
@@ -136,11 +146,6 @@ namespace DCL.Chat
         public void Hide()
         {
             gameObject.SetActive(false);
-        }
-
-        public void SetData(IReadOnlyList<MemberData> members)
-        {
-            
         }
     }
 }

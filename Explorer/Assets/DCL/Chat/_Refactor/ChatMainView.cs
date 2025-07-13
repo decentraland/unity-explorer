@@ -12,8 +12,8 @@ namespace DCL.Chat
         public event Action OnPointerExitEvent;
         public event Action OnClickedOutsideEvent;
      
-        [field: SerializeField]
-        public ChatConfig Config { get; private set; }
+        // [field: SerializeField]
+        // public ChatConfig Config { get; private set; }
         
         [SerializeField]
         private CanvasGroup sharedBackgroundCanvasGroup;

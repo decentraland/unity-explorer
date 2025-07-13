@@ -1,46 +1,51 @@
 using System;
 using DCL.Chat;
+using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using DCL.Diagnostics;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DG.Tweening;
-using UnityEngine;
 
 public class ChatTitlebarPresenter : IDisposable
 {
     private readonly IChatTitlebarView view;
-    private readonly IRoomHub roomHub;
-    private readonly IProfileCache profileCache;
+    private readonly IEventBus eventBus;
     private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-
-    public event Action? OnCloseChat;
-    public event Action? OnOpenMembers;
-    public event Action? OnOpenUserContextMenu;
-    public event Action? OnOpenContextMenu;
-    public event Action<bool>? OnMemberListToggle;
+    private readonly EventSubscriptionScope scope = new();
 
     public ChatTitlebarPresenter(
         IChatTitlebarView view,
-        IRoomHub roomHub,
-        IProfileCache profileCache,
+        IEventBus eventBus,
         ProfileRepositoryWrapper profileRepositoryWrapper)
     {
         this.view = view;
-        view.Initialize();
-        this.roomHub = roomHub;
-        this.profileCache = profileCache;
+        this.eventBus = eventBus;
         this.profileRepositoryWrapper = profileRepositoryWrapper;
+        
+        view.Initialize();
+        
+        view.CloseChatButtonClicked += OnCloseButtonClicked;
+        view.OnMemberListToggled += OnMemberListToggled;
+        
+        scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
     }
 
-    public void Enable()
+    private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
     {
-        // view.OnCloseClicked += OnCloseButtonClicked;
-        view.CloseChatButtonClicked += OnCloseButtonClicked;
-        view.CloseMemberListButtonClicked += OnCloseButtonClicked;
-        view.OnMemberListToggled += OnMemberListToggled;
+        if (evt.Channel.ChannelType == ChatChannel.ChatChannelType.USER)
+            view.SetupProfileView(new Web3Address(evt.Channel.Id.Id), profileRepositoryWrapper);
+        else
+            view.SetChannelNameText(evt.Channel.Id.Id);
+    }
+    
+    private void OnMemberListToggled(bool active)
+    {
+        eventBus.Publish(new ChatEvents.ToggleMembersEvent { IsVisible = active });
+    }
+
+    private void OnCloseButtonClicked()
+    {
+        eventBus.Publish(new ChatEvents.CloseChatEvent());
     }
     
     public void Show()
@@ -53,16 +58,6 @@ public class ChatTitlebarPresenter : IDisposable
         view.Hide();
     }
 
-    private void OnMemberListToggled(bool active)
-    {
-        OnMemberListToggle?.Invoke(active);
-    }
-
-    private void OnCloseButtonClicked()
-    {
-        OnCloseChat?.Invoke();
-    }
-
     public void UpdateForChannel(ChatChannel channel)
     {
         view.SetChannelNameText(channel.Id.ToString());
@@ -71,8 +66,9 @@ public class ChatTitlebarPresenter : IDisposable
 
     public void Dispose()
     {
-        view.OnCloseClicked -= OnCloseButtonClicked;
+        view.CloseChatButtonClicked -= OnCloseButtonClicked;
         view.OnMemberListToggled -= OnMemberListToggled;
+        scope.Dispose();
     }
 
     public void SetFocusState(bool isFocused, bool animate, float duration, Ease easing)
@@ -85,7 +81,7 @@ public class ChatTitlebarPresenter : IDisposable
         
     }
 
-    public void SwitchToMembersMode()
+    public void ShowMembersView()
     {
         
     }

@@ -1,6 +1,8 @@
 using System;
 using DCL.Chat;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
+using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using UnityEngine;
 
@@ -9,10 +11,12 @@ public interface IChatChannelsView
     public event Action<ChatChannel.ChannelId> ConversationSelected;
     public event Action<ChatChannel.ChannelId> ConversationRemovalRequested;
 
+    public void Initialize(ProfileRepositoryWrapper profileRepositoryWrapper);
     RectTransform ItemsContainer { get; }
-    void AddConversation(ChannelData data);
+    void AddConversation(ChatChannelViewModel data);
     void RemoveConversation(string channelId);
     void SetUnreadMessages(string channelId, int count);
+    void UpdateConversation(ChatChannelViewModel viewModel);
     void SetOnlineStatus(string channelId, bool isOnline);
     void SelectConversation(ChatChannel.ChannelId channelId);
     void AddItem(ChatConversationsToolbarViewItem item);

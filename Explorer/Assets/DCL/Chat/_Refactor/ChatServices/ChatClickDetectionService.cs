@@ -1,9 +1,5 @@
-// In Services/ChatClickDetectionService.cs
-
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using DCL.Input;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem; // Make sure this is included

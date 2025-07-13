@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
@@ -149,13 +150,9 @@ namespace DCL.Chat
                 items[destinationChannel].SetConnectionStatus(connectionStatus);
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="profileRepositoryWrapper"></param>
-        public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
+        public void Initialize(ProfileRepositoryWrapper profileRepo)
         {
-            this.profileRepositoryWrapper = profileDataProvider;
+            this.profileRepositoryWrapper = profileRepo;
         }
 
         /// <summary>
@@ -276,9 +273,39 @@ namespace DCL.Chat
         public event Action<string>? OnChannelSelected;
         public event Action<string>? OnChannelRemoved;
 
-        public void AddConversation(ChannelData data)
+        public void AddConversation(ChatChannelViewModel viewModel)
         {
+            var newItem = Instantiate(itemPrefab, itemsContainer);
+            newItem.Initialize();
+            newItem.Id = viewModel.Id;
             
+            newItem.OpenButtonClicked += OpenButtonClicked;
+            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
+            newItem.TooltipShown += OnItemTooltipShown;
+            
+            newItem.SetConversationName(viewModel.DisplayName);
+            newItem.SetUnreadMessages(viewModel.UnreadMessagesCount);
+            newItem.SetConversationType(viewModel.IsDirectMessage);
+            newItem.SetClaimedNameIconVisibility(viewModel.HasClaimedName);
+            newItem.SetConnectionStatus(viewModel.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+            
+            if (viewModel.IsDirectMessage && !string.IsNullOrEmpty(viewModel.ImageUrl))
+            {
+                newItem.SetProfileData(
+                    profileRepositoryWrapper,
+                    viewModel.ProfileColor,
+                    viewModel.ImageUrl,
+                    viewModel.Id.Id
+                );
+            }
+            else
+            {
+                // We are using a fallback icon (e.g., for Nearby).
+                newItem.SetConversationIcon(viewModel.FallbackIcon);
+            }
+            
+            items.Add(viewModel.Id, newItem);
+            UpdateScrollButtonsVisibility();
         }
 
         public void RemoveConversation(string channelId)
@@ -289,6 +316,25 @@ namespace DCL.Chat
         public void SetUnreadMessages(string channelId, int count)
         {
             
+        }
+
+        public void UpdateConversation(ChatChannelViewModel viewModel)
+        {
+            if (items.TryGetValue(viewModel.Id, out var itemToUpdate))
+            {
+                itemToUpdate.SetConversationName(viewModel.DisplayName);
+                itemToUpdate.SetClaimedNameIconVisibility(viewModel.HasClaimedName);
+            
+                if (viewModel.IsDirectMessage && !string.IsNullOrEmpty(viewModel.ImageUrl))
+                {
+                    itemToUpdate.SetProfileData(
+                        profileRepositoryWrapper,
+                        viewModel.ProfileColor,
+                        viewModel.ImageUrl,
+                        viewModel.Id.Id
+                    );
+                }
+            }
         }
 
         public void SetOnlineStatus(string channelId, bool isOnline)
@@ -315,7 +361,7 @@ namespace DCL.Chat
 
         public void Clear()
         {
-            throw new NotImplementedException();
+            items.Clear();
         }
         
         public void Show()

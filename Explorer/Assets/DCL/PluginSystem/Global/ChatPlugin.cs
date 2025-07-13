@@ -27,6 +27,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using DCL.Chat.ChatUseCases;
 using DCL.Chat.Services;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
@@ -67,6 +68,8 @@ namespace DCL.PluginSystem.Global
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
         private ChatUserStateUpdater chatUserStateUpdater;
+        private readonly IEventBus eventBus = new EventBus();
+        private readonly EventSubscriptionScope pluginScope = new ();
 
         public ChatPlugin(
             IMVCManager mvcManager,
@@ -134,7 +137,12 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
-
+            
+            // TODO: make it load through assets provisioner
+            // TODO: not working currently, from some reason
+            // ProvidedAsset<ChatConfig> chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, ct);
+            var chatConfig = Resources.Load("ChatConfig") as ChatConfig;
+            
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
@@ -151,11 +159,6 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 roomHub.ChatRoom(),
                 friendsServiceProxy);
-            
-            var chatService = new ChatService(chatHistory,
-                friendsServiceProxy,
-                chatStorage,
-                chatUserStateUpdater);
 
             var chatMemberService = new ChatMemberListService(roomHub,
                 profileCache,
@@ -163,30 +166,22 @@ namespace DCL.PluginSystem.Global
             
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
             
-            var presenterFactory = new ChatPresenterFactory(
+            var currentChannelService = new CurrentChannelService();
+            
+            var useCaseFactory = new UseCaseFactory(
+                chatConfig,
+                eventBus,
+                chatMessagesBus,
                 chatHistory,
                 chatStorage,
-                chatMessagesBus,
-                chatEventBus,
-                profileCache,
-                web3IdentityCache,
-                entityParticipantTable,
-                roomHub,
-                world,
-                chatSettingsAsset.Value,
-                nametagsData,
-                friendsServiceProxy,
-                userBlockingCacheProxy,
-                profileRepositoryWrapper,
-                privacySettings,
                 chatUserStateUpdater,
-                friendsEventBus,
-                friendsServiceProxy,
-                chatService,
-                chatMemberService,
+                currentChannelService,
                 hyperlinkTextFormatter,
-                chatInputBlockingService
+                profileCache,
+                profileRepositoryWrapper,
+                friendsServiceProxy
             );
+            pluginScope.Add(useCaseFactory);
             
             chatMainController = new ChatMainController(
                 () =>
@@ -195,12 +190,24 @@ namespace DCL.PluginSystem.Global
                     view.gameObject.SetActive(false);
                     return view;
                 },
-                presenterFactory.CreateChatMainPresenter()
+                chatConfig,
+                eventBus,
+                currentChannelService,
+                chatInputBlockingService,
+                chatSettingsAsset.Value,
+                useCaseFactory,
+                chatHistory,
+                profileRepositoryWrapper,
+                chatMemberService
             );
+            
+            pluginScope.Add(chatMainController);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
             mvcManager.RegisterController(chatMainController);
-
+            
+            //await useCaseFactory.InitializeChat.ExecuteAsync(ct);
+            
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
@@ -222,5 +229,6 @@ namespace DCL.PluginSystem.Global
     public class ChatPluginSettings : IDCLPluginSettings
     {
         [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
+        [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
     }
 }

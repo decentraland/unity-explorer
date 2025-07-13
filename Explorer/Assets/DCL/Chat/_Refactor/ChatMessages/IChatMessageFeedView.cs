@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DG.Tweening;
 
@@ -10,10 +11,9 @@ namespace DCL.Chat
         event System.Action OnScrollToBottom;
 
         // Replaces all messages in the view. Used when changing channels.
-        void SetMessages(IReadOnlyList<ChatMessage> messages);
-
-        // Appends a single new message to the end of the list.
-        void AppendMessage(ChatMessage message, bool animated);
+        void SetMessages(IReadOnlyList<ChatMessageViewModel> messages);
+        
+        void AppendMessage(ChatMessageViewModel message, bool animated);
 
         // Scrolls the view to the very last message.
         void ScrollToBottom();
@@ -25,16 +25,5 @@ namespace DCL.Chat
         void Show();
         void Hide();
         void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing);
-    }
-
-    public struct MessageData
-    {
-        public string Body;
-        public string SenderName;
-        public string SenderWalletAddress;
-        public string SenderImageUrl;
-
-        public bool IsOwnMessage;
-        // etc.
     }
 }

@@ -32,7 +32,10 @@ namespace DCL.Chat
         public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
 
         [SerializeField] private Button closeChatButton;
+        public Button CloseChatButton => closeChatButton;
         [SerializeField] private Button closeMemberListButton;
+        public Button CloseMemberListButton => closeMemberListButton;
+        
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
