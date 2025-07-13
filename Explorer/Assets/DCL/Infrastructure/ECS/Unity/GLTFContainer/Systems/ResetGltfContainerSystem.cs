@@ -7,7 +7,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -66,6 +65,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
+                component.ResetOriginalMaterials();
                 cache.Dereference(component.Hash, result.Asset);
                 entityCollidersSceneCache.Remove(result.Asset);
             }

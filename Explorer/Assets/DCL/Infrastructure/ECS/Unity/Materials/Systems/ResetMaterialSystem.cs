@@ -48,16 +48,7 @@ namespace ECS.Unity.Materials.Systems
         [None(typeof(PBMaterial))]
         private void ResetGltfContainer(Entity entity, ref GltfContainerComponent gltfContainerComponent, ref MaterialComponent materialComponent)
         {
-            if(gltfContainerComponent.OriginalMaterials == null) return;
-
-            foreach (var originalMaterial in gltfContainerComponent.OriginalMaterials)
-            {
-                originalMaterial.renderer.sharedMaterial = originalMaterial.material;
-            }
-
-            gltfContainerComponent.OriginalMaterials.Clear();
-            gltfContainerComponent.OriginalMaterials = null;
-
+            gltfContainerComponent.ResetOriginalMaterials();
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
             World.Remove<MaterialComponent>(entity);
         }

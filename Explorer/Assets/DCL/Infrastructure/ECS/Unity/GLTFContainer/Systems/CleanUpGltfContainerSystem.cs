@@ -11,7 +11,6 @@ using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
-using UnityEngine;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
@@ -59,6 +58,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
+                    component.ResetOriginalMaterials();
+
                     cache.Dereference(component.Hash, result.Asset);
                     entityCollidersSceneCache.Remove(result.Asset);
 
