@@ -1,3 +1,4 @@
+using DCL.UI.ProfileElements;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -10,6 +11,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [SerializeField] private RectTransform hoverElement;
 
         [SerializeField] private Button contextMenuButton;
+
+        [SerializeField] public SimpleProfileView profileView;
 
         private void Start()
         {

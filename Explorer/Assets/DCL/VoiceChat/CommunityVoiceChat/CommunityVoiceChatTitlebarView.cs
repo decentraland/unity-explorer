@@ -23,6 +23,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public RectTransform FooterContainer { get; private set; }
 
+        [field: SerializeField]
+        public RectTransform SpeakersParent { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform ListenersParent { get; private set; }
+
         private void Start()
         {
             CollapseButton.onClick.AddListener(OnCollapseButtonClick);
