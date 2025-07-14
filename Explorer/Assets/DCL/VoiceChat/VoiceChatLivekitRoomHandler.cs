@@ -17,6 +17,12 @@ using Utility.Types;
 
 namespace DCL.VoiceChat
 {
+    /// <summary>
+    /// This class should be in charge of connecting the voice chat room with the rest of the features that use it,
+    /// exposing only the relevant events and information they need to use and abstracting everything else.
+    /// It's also right now handling the audio publishing. Should we extract it?
+    /// It's also handling the reconnecting logic and error handling.
+    /// </summary>
     public class VoiceChatLivekitRoomHandler : IDisposable
     {
         private const int WAIT_BEFORE_DISCONNECT_DELAY = 500;
@@ -91,7 +97,6 @@ namespace DCL.VoiceChat
                         orderedDisconnectionCts?.Cancel();
                         DisconnectFromRoomAsync().Forget();
                     }
-
                     break;
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     ConnectToRoomAsync().Forget();

@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
 
-            statusSubscription = voiceChatState.PrivateVoiceChatStatus.Subscribe(OnVoiceChatStatusChanged);
+            statusSubscription = voiceChatState.CurrentPrivateVoiceChatStatus.Subscribe(OnVoiceChatStatusChanged);
 
             // We might want to start the call directly here. And let the orchestrator handle the states.
             // But we will need to handle the parent view so it closes after the button is pressed and the call is successfully established (in case of Passport, etc.)
@@ -96,14 +96,14 @@ namespace DCL.VoiceChat
             isClickedOnce = true;
 
             // Check if we're in a community call first
-            if (voiceChatState.CurrentVoiceChat.Value == CurrentVoiceChatType.COMMUNITY)
+            if (voiceChatState.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY)
             {
                 await ShowTooltipWithAutoCloseAsync(COMMUNITY_CALL_ACTIVE_TOOLTIP_TEXT, ct);
                 return;
             }
 
             // Check if we're already in a private call
-            if (voiceChatState.PrivateVoiceChatStatus.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
+            if (voiceChatState.CurrentPrivateVoiceChatStatus.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
                 await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                 return;

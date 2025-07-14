@@ -7,11 +7,17 @@ using System;
 
 namespace DCL.VoiceChat
 {
-    public enum CurrentVoiceChatType
+    public enum VoiceChatType
     {
         NONE,
         PRIVATE,
         COMMUNITY,
+    }
+
+    public enum VoiceChatPanelSize
+    {
+        DEFAULT,
+        EXPANDED
     }
 
     /// <summary>
@@ -19,9 +25,10 @@ namespace DCL.VoiceChat
     /// </summary>
     public interface IVoiceChatState
     {
-        IReadonlyReactiveProperty<CurrentVoiceChatType> CurrentVoiceChat { get; }
-        IReadonlyReactiveProperty<VoiceChatStatus> PrivateVoiceChatStatus { get; }
-        IReadonlyReactiveProperty<VoiceChatStatus> CommunityVoiceChatStatus { get; }
+        IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType { get; }
+        IReadonlyReactiveProperty<VoiceChatStatus> CurrentPrivateVoiceChatStatus { get; }
+        IReadonlyReactiveProperty<VoiceChatStatus> CurrentCommunityVoiceChatStatus { get; }
+        IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize { get; }
     }
 
     /// <summary>
@@ -50,13 +57,15 @@ namespace DCL.VoiceChat
 
         private readonly IDisposable statusSubscription;
 
-        private readonly ReactiveProperty<CurrentVoiceChatType> currentVoiceChatProperty = new(CurrentVoiceChatType.NONE);
+        private readonly ReactiveProperty<VoiceChatType> voiceChatTypeProperty = new(VoiceChat.VoiceChatType.NONE);
         private readonly ReactiveProperty<VoiceChatStatus> privateVoiceChatStatusProperty = new(VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatStatus> communityVoiceChatStatusProperty = new(VoiceChatStatus.DISCONNECTED);
+        private readonly ReactiveProperty<VoiceChatPanelSize> voiceChatPanelSizeProperty = new(VoiceChatPanelSize.DEFAULT);
 
-        public IReadonlyReactiveProperty<CurrentVoiceChatType> CurrentVoiceChat => currentVoiceChatProperty;
-        public IReadonlyReactiveProperty<VoiceChatStatus> PrivateVoiceChatStatus => privateVoiceChatStatusProperty;
-        public IReadonlyReactiveProperty<VoiceChatStatus> CommunityVoiceChatStatus => communityVoiceChatStatusProperty;
+        public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => voiceChatTypeProperty;
+        public IReadonlyReactiveProperty<VoiceChatStatus> CurrentPrivateVoiceChatStatus => privateVoiceChatStatusProperty;
+        public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCommunityVoiceChatStatus => communityVoiceChatStatusProperty;
+        public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => voiceChatPanelSizeProperty;
 
         public VoiceChatOrchestrator(
             IVoiceChatCallStatusService privateVoiceChatCallStatusService,
@@ -74,7 +83,7 @@ namespace DCL.VoiceChat
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
             statusSubscription?.Dispose();
 
-            currentVoiceChatProperty?.Dispose();
+            voiceChatTypeProperty?.Dispose();
             privateVoiceChatStatusProperty?.Dispose();
             communityVoiceChatStatusProperty?.Dispose();
         }
@@ -82,7 +91,7 @@ namespace DCL.VoiceChat
         // IVoiceChatActions implementation
         public void StartPrivateCall(Web3Address walletId)
         {
-            if (currentVoiceChatProperty.Value != CurrentVoiceChatType.COMMUNITY)
+            if (voiceChatTypeProperty.Value != VoiceChat.VoiceChatType.COMMUNITY)
             {
                 privateVoiceChatCallStatusService.StartCall(walletId);
             }
@@ -95,7 +104,7 @@ namespace DCL.VoiceChat
 
         private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
         {
-            if (currentVoiceChatProperty.Value != CurrentVoiceChatType.COMMUNITY)
+            if (voiceChatTypeProperty.Value != VoiceChat.VoiceChatType.COMMUNITY)
             {
                 privateVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
             }
@@ -105,25 +114,25 @@ namespace DCL.VoiceChat
         {
             privateVoiceChatStatusProperty.Value = status;
 
-            if (currentVoiceChatProperty.Value != CurrentVoiceChatType.PRIVATE) return;
+            if (voiceChatTypeProperty.Value != VoiceChat.VoiceChatType.PRIVATE) return;
 
             if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
             {
-                SetVoiceChatType(CurrentVoiceChatType.NONE);
+                SetVoiceChatType(VoiceChat.VoiceChatType.NONE);
             }
             else
             {
-                SetVoiceChatType(CurrentVoiceChatType.PRIVATE);
+                SetVoiceChatType(VoiceChat.VoiceChatType.PRIVATE);
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatProperty.Value}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {voiceChatTypeProperty.Value}");
         }
 
-        private void SetVoiceChatType(CurrentVoiceChatType newType)
+        private void SetVoiceChatType(VoiceChatType newType)
         {
-            if (currentVoiceChatProperty.Value != newType)
+            if (voiceChatTypeProperty.Value != newType)
             {
-                currentVoiceChatProperty.Value = newType;
+                voiceChatTypeProperty.Value = newType;
             }
         }
     }
