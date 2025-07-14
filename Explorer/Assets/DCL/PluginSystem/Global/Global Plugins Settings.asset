@@ -565,7 +565,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        <SettingsAsset>k__BackingField: {fileID: 11400000, guid: 9891b090dc6dc574d9415313003375f0, type: 2}
+        <SettingsAsset>k__BackingField:
+          m_AssetGUID: 9891b090dc6dc574d9415313003375f0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         ControlsPanelPrefab:
           m_AssetGUID: 542424588a68b46f688ef5c667aa0c68
           m_SubObjectName: 
