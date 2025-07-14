@@ -82,7 +82,7 @@ namespace DCL.RealmNavigation.LoadingOperation
             }
 
             if (lastOpResult.Success)
-                args.Report.SetProgress(loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                args.Report.SetProgress(1);
 
             return lastOpResult;
         }
