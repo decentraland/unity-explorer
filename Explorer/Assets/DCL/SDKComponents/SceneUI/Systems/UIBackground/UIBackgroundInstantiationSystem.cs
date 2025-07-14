@@ -144,7 +144,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             // If component is being reused forget the previous promise
             TryAddAbortIntention(World, ref promise);
 
-            promise = Promise.Create(World, new GetTextureIntention(textureComponentValue.Src, textureComponentValue.FileHash, textureComponentValue.WrapMode, textureComponentValue.FilterMode, textureComponentValue.TextureType, attemptsCount: ATTEMPTS_COUNT, isAvatarTexture: textureComponentValue.IsAvatarTexture), partitionComponent);
+            promise = Promise.Create(
+                World,
+                new GetTextureIntention(
+                    textureComponentValue.Src,
+                    textureComponentValue.FileHash,
+                    textureComponentValue.WrapMode,
+                    textureComponentValue.FilterMode,
+                    textureComponentValue.TextureType,
+                    attemptsCount: ATTEMPTS_COUNT,
+                    isAvatarTexture: textureComponentValue.IsAvatarTexture,
+                    reportSource: nameof(UIBackgroundInstantiationSystem)),
+                partitionComponent);
         }
 
         private static void TryAddAbortIntention(World world, ref Promise? promise)

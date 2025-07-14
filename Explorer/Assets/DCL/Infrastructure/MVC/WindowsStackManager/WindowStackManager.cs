@@ -7,12 +7,16 @@ namespace MVC
 {
     public class WindowStackManager : IWindowsStackManager
     {
-        internal List<IController> popupStack { get; } = new ();
+        private const int POPUP_ORDER_IN_LAYER_INCREMENT = 2;
+        // Calculated from the old equation when Count == 0: ((popupStack.Count - 1) * 2) - 1
+        private const int MINIMUM_POPUP_CLOSER_ODER_IN_LAYER = -3;
+
+        internal List<(IController controller, int orderInLayer)> popupStack { get; } = new ();
         internal List<IController> persistentStack { get; } = new ();
         internal IController? fullscreenController { get; private set; }
         internal IController? topController { get; private set; }
 
-        public IController? TopMostPopup => popupStack.LastOrDefault();
+        public (IController controller, int orderInLayer) TopMostPopup => popupStack.LastOrDefault();
         public IController CurrentFullscreenController => fullscreenController;
 
         private readonly List<(IController controller, UniTaskCompletionSource? onClose)> closeableStack = new ();
@@ -32,8 +36,14 @@ namespace MVC
 
         public PopupPushInfo PushPopup(IController controller)
         {
-            int orderInLayer = popupStack.Count * 2;
-            popupStack.Add(controller);
+            int currentMaxOrderInLayer = POPUP_ORDER_IN_LAYER_INCREMENT;
+            (IController controller, int orderInLayer) topMostPopup = TopMostPopup;
+            if (topMostPopup.controller != null)
+                // We increment the order in layer by 2 to keep the popup closer ordering odd
+                currentMaxOrderInLayer = topMostPopup.orderInLayer + POPUP_ORDER_IN_LAYER_INCREMENT;
+
+            // Keep track of every popup canvass order
+            popupStack.Add((controller, currentMaxOrderInLayer));
 
             UniTaskCompletionSource? onClose = null;
 
@@ -45,9 +55,9 @@ namespace MVC
                     persistant.Blur();
 
             return new PopupPushInfo(
-                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer),
-                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, orderInLayer - 1),
-                    popupStack.Count >= 2 ? popupStack[^2] : null,
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer),
+                    new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, currentMaxOrderInLayer - 1),
+                    popupStack.Count >= 2 ? popupStack[^2].controller : null,
                     onClose);
         }
 
@@ -101,7 +111,7 @@ namespace MVC
 
         public PopupPopInfo PopPopup(IController controller)
         {
-            popupStack.Remove(controller);
+            RemovePopup(controller);
 
             if (popupStack.Count == 0)
             {
@@ -112,24 +122,35 @@ namespace MVC
 
             TryPopCloseable(controller);
 
+            // We get the topmost popup after removing the current one so that we can calculate the new popup closer ordering
+            // and configure the new top most, if exists
+            (IController controller, int orderInLayer) topMostPopup = TopMostPopup;
+
             return new PopupPopInfo(
-                new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, ((popupStack.Count - 1) * 2) - 1),
-                TopMostPopup);
+                new CanvasOrdering(CanvasOrdering.SortingLayer.Popup, topMostPopup.controller == null ? MINIMUM_POPUP_CLOSER_ODER_IN_LAYER : topMostPopup.orderInLayer - 1),
+                topMostPopup.controller);
+        }
+
+        private void RemovePopup(IController controller)
+        {
+            for (var i = 0; i < popupStack.Count; i++)
+                if (popupStack[i].controller == controller)
+                {
+                    popupStack.RemoveAt(i);
+                    break;
+                }
         }
 
         private void TryPopCloseable(IController controller)
         {
-            if (controller.CanBeClosedByEscape)
-            {
-                for (var i = 0; i < closeableStack.Count; i++)
+            if (!controller.CanBeClosedByEscape) return;
+
+            for (var i = 0; i < closeableStack.Count; i++)
+                if (closeableStack[i].controller == controller)
                 {
-                    if (closeableStack[i].controller == controller)
-                    {
-                        closeableStack.RemoveAt(i);
-                        break;
-                    }
+                    closeableStack.RemoveAt(i);
+                    break;
                 }
-            }
         }
     }
 
@@ -163,11 +184,11 @@ namespace MVC
 
     public readonly struct FullscreenPushInfo
     {
-        public readonly List<IController> PopupControllers;
+        public readonly List<(IController, int)> PopupControllers;
         public readonly CanvasOrdering ControllerOrdering;
         public readonly UniTaskCompletionSource? OnClose;
 
-        public FullscreenPushInfo(List<IController> popupControllers, CanvasOrdering controllerOrdering, UniTaskCompletionSource? onClose)
+        public FullscreenPushInfo(List<(IController, int)> popupControllers, CanvasOrdering controllerOrdering, UniTaskCompletionSource? onClose)
         {
             this.PopupControllers = popupControllers;
             ControllerOrdering = controllerOrdering;
@@ -177,11 +198,11 @@ namespace MVC
 
     public readonly struct OverlayPushInfo
     {
-        public readonly List<IController> PopupControllers;
+        public readonly List<(IController, int)> PopupControllers;
         public readonly IController FullscreenController;
         public readonly CanvasOrdering ControllerOrdering;
 
-        public OverlayPushInfo(List<IController> popupControllers, IController fullscreenController, CanvasOrdering controllerOrdering)
+        public OverlayPushInfo(List<(IController, int)> popupControllers, IController fullscreenController, CanvasOrdering controllerOrdering)
         {
             this.PopupControllers = popupControllers;
             ControllerOrdering = controllerOrdering;
