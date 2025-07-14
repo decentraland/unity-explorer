@@ -42,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private CommunityVoiceChatController? communitiesVoiceChatController;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
+        private VoiceChatPanelResizeController voiceChatPanelResizeController;
 
         public VoiceChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -88,6 +89,7 @@ namespace DCL.PluginSystem.Global
             privateVoiceChatController?.Dispose();
             communitiesVoiceChatController?.Dispose();
             voiceChatOrchestrator?.Dispose();
+            voiceChatPanelResizeController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -127,8 +129,9 @@ namespace DCL.PluginSystem.Global
 
             playerEntry = await assetsProvisioner.ProvideMainAssetAsync(settings.PlayerEntryView, ct: ct);
 
+            voiceChatPanelResizeController = new VoiceChatPanelResizeController(mainUIView.VoiceChatPanelResizeView, voiceChatOrchestrator);
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider);
+            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator);
         }
 
         [Serializable]

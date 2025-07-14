@@ -18,7 +18,7 @@ namespace DCL.UI.MainUI
     {
         [field: SerializeField] public ChatView ChatView { get; private set; }
         [field: SerializeField] public VoiceChatView VoiceChatView { get; private set; }
-
+        [field: SerializeField] public VoiceChatPanelResizeView VoiceChatPanelResizeView { get; private set; }
         [field: SerializeField] public CommunityVoiceChatTitlebarView CommunityVoiceChatView { get; private set; }
         [field: SerializeField] public FriendsPanelView FriendsPanelViewView { get; private set; }
         [field: SerializeField] public MinimapView MinimapView { get; private set; }

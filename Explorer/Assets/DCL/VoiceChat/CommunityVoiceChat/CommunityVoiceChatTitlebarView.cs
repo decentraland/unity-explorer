@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,6 +6,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class CommunityVoiceChatTitlebarView : MonoBehaviour
     {
+        public event Action CollapseButtonClicked;
+
         [field: SerializeField]
         public Button CollapseButton  { get; private set; }
 
@@ -31,14 +34,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void Start()
         {
-            CollapseButton.onClick.AddListener(OnCollapseButtonClick);
+            CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
         }
 
-        private void OnCollapseButtonClick()
+        public void SetCollapsedButtonState(bool isCollapsed)
         {
-            ContentContainer.gameObject.SetActive(!ContentContainer.gameObject.activeSelf);
-            FooterContainer.gameObject.SetActive(!FooterContainer.gameObject.activeSelf);
-            CollapseButton.image.sprite = ContentContainer.gameObject.activeSelf ? CollapseButtonImage : UnCollapseButtonImage;
+            ContentContainer.gameObject.SetActive(!isCollapsed);
+            FooterContainer.gameObject.SetActive(!isCollapsed);
+            CollapseButton.image.sprite = isCollapsed ? UnCollapseButtonImage : CollapseButtonImage;
         }
     }
 }

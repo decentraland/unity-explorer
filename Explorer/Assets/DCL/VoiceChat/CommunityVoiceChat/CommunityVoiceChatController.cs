@@ -12,21 +12,38 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatTitlebarView view;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatUIEvents voiceChatOrchestratorUIEvents;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly List<PlayerEntryView> usedPlayerEntries = new ();
+
+        private bool isPanelCollapsed;
 
         public CommunityVoiceChatController(
             CommunityVoiceChatTitlebarView view,
             PlayerEntryView playerEntry,
-            ProfileRepositoryWrapper profileRepositoryWrapper)
+            ProfileRepositoryWrapper profileRepositoryWrapper,
+            IVoiceChatUIEvents voiceChatOrchestratorUIEvents)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
+            this.voiceChatOrchestratorUIEvents = voiceChatOrchestratorUIEvents;
+
+            this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
 
             playerEntriesPool = new ObjectPool<PlayerEntryView>(
                 () => Object.Instantiate(playerEntry),
                 actionOnGet:entry => entry.gameObject.SetActive(true),
                 actionOnRelease:entry => entry.gameObject.SetActive(false));
+
+            //Temporary fix, this will be moved to the Show function to set expanded as default state
+            voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void OnCollapsedButtonClicked()
+        {
+            isPanelCollapsed = !isPanelCollapsed;
+            voiceChatOrchestratorUIEvents.ChangePanelSize(isPanelCollapsed ? VoiceChatPanelSize.DEFAULT : VoiceChatPanelSize.EXPANDED);
+            view.SetCollapsedButtonState(isPanelCollapsed);
         }
 
         private void AddSpeaker()
