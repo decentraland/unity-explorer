@@ -1,6 +1,9 @@
 ﻿using Arch.Core;
 using CRDT;
+using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using System.Collections.Generic;
@@ -32,12 +35,22 @@ namespace ECS.Unity.Textures.Utils
             info.VideoTexture = consumer.Texture;
             info.VideoTexture.AddReference();
 
-            ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasRenderer);
+            if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
+            {
+                info.VideoRenderer = primitiveMeshComponent.MeshRenderer;
+                consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
+            }
+            else if (world.TryGet(entity, out GltfContainerComponent gltfContainerComponent))
+            {
+                if (!gltfContainerComponent.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result)
+                    || !result.Succeeded
+                    || result.Asset.Renderers.Count == 0)
+                    return false;
 
-            if (hasRenderer)
-                consumer.AddConsumerMeshRenderer(meshRenderer.MeshRenderer);
-
-            info.VideoRenderer = hasRenderer ? meshRenderer.MeshRenderer : null;
+                info.VideoRenderer = result.Asset.Renderers[0];
+                foreach (Renderer renderer in result.Asset.Renderers)
+                    consumer.AddConsumer(renderer);
+            }
 
             return true;
         }

@@ -1,10 +1,11 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.Cache;
-using ECS.StreamableLoading.Textures;
+using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
-using ECS.Unity.Textures.Utils;
 using UnityEngine;
 using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -67,10 +68,12 @@ namespace ECS.Unity.Materials
 
                 if (hasConsumer)
                 {
-                    ref PrimitiveMeshRendererComponent meshRenderer = ref world.TryGetRef<PrimitiveMeshRendererComponent>(entity, out bool hasMesh);
-
-                    if(hasMesh)
-                        consumer.RemoveConsumerMeshRenderer(meshRenderer.MeshRenderer);
+                    if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
+                        consumer.RemoveConsumer(primitiveMeshComponent.MeshRenderer);
+                    else if (world.TryGet(entity, out GltfContainerComponent gltfContainerComponent)
+                             && gltfContainerComponent.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result)
+                             && result.Succeeded && result.Asset.Renderers.Count > 0)
+                        foreach (Renderer renderer in result.Asset.Renderers) { consumer.RemoveConsumer(renderer); }
                 }
             }
 
