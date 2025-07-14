@@ -214,7 +214,6 @@ MonoBehaviour:
   <configurationSo>k__BackingField: {fileID: 11400000, guid: 6afb31861b85441b6ab2b988819bb96a, type: 2}
   <popupPosition>k__BackingField: {fileID: 6766592991432594522}
   <mentionedOutline>k__BackingField: {fileID: 122324971239042325}
-  <greyColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.6039216}
 --- !u!1 &8793144509521958599
 GameObject:
   m_ObjectHideFlags: 0
@@ -671,8 +670,28 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7807971652004131216, guid: faaa81bda20189649961c29e42d56d57, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 112398231019755964}
   m_SourcePrefab: {fileID: 100100000, guid: faaa81bda20189649961c29e42d56d57, type: 3}
+--- !u!1 &6003262397116051636 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7807971652004131216, guid: faaa81bda20189649961c29e42d56d57, type: 3}
+  m_PrefabInstance: {fileID: 4545437757149364516}
+  m_PrefabAsset: {fileID: 0}
+--- !u!225 &112398231019755964
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6003262397116051636}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!224 &6815094952191305205 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 7025816968232101073, guid: faaa81bda20189649961c29e42d56d57, type: 3}
@@ -683,7 +702,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5912007805231747652, guid: faaa81bda20189649961c29e42d56d57, type: 3}
   m_PrefabInstance: {fileID: 4545437757149364516}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 6003262397116051636}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b81d843ec79411183cdbe3bccae96de, type: 3}

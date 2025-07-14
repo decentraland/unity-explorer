@@ -12,12 +12,7 @@ namespace DCL.Chat
         [field: SerializeField] internal TMP_Text messageContentText { get; private set; }
         [field: SerializeField] internal TextHyperlinkHandlerElement textHyperlinkHandler { get; private set; }
 
-        private Color originalTextColor;
-
-        private void Awake()
-        {
-            originalTextColor = messageContentText.color;
-        }
+        [field: SerializeField] private CanvasGroup messageContentCanvas;
 
         public void SetMessageContent(string content)
         {
@@ -31,7 +26,7 @@ namespace DCL.Chat
 
         public void GreyOut(bool greyOut, float opacity)
         {
-            messageContentText.color = greyOut ? Color.Lerp(originalTextColor, new Color(0.0f, 0.0f, 0.0f, messageContentText.color.a), opacity) : originalTextColor;
+            messageContentCanvas.alpha = greyOut ? 1.0f - opacity : 1.0f;
         }
     }
 }

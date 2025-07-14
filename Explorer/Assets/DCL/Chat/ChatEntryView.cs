@@ -26,12 +26,10 @@ namespace DCL.Chat
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
         [field: SerializeField] internal Button profileButton { get; private set; }
 
+        [field: SerializeField] private CanvasGroup usernameElementCanvas;
+
         private ChatMessage chatMessage;
         private readonly Vector3[] cornersCache = new Vector3[4];
-
-        private Color originalUserNameColor;
-        private Color originalUserIdColor;
-        private Color originalVerifiedIconColor;
 
         public void AnimateChatEntry()
         {
@@ -51,10 +49,6 @@ namespace DCL.Chat
         {
             profileButton.onClick.AddListener(OnProfileButtonClicked);
             usernameElement.UserNameClicked += OnUsernameClicked;
-            originalUserIdColor = usernameElement.walletIdText.color;
-
-            if(usernameElement.verifiedIcon != null)
-                originalVerifiedIconColor = usernameElement.verifiedIcon.color;
         }
 
         private void OnProfileButtonClicked()
@@ -88,16 +82,11 @@ namespace DCL.Chat
             ProfilePictureView.GreyOut(greyOut, opacity);
             messageBubbleElement.GreyOut(greyOut, opacity);
 
-            usernameElement.userName.color = greyOut ? Color.Lerp(originalUserNameColor, new Color(0.0f, 0.0f, 0.0f, originalUserNameColor.a), opacity) : originalUserNameColor;
-            usernameElement.walletIdText.color = greyOut ? Color.Lerp(originalUserIdColor, new Color(0.0f, 0.0f, 0.0f, originalUserIdColor.a), opacity) : originalUserIdColor;
-
-            if(usernameElement.verifiedIcon != null)
-                usernameElement.verifiedIcon.color = greyOut ? Color.Lerp(originalVerifiedIconColor, new Color(0.0f, 0.0f, 0.0f, originalVerifiedIconColor.a), opacity) : originalVerifiedIconColor;
+            usernameElementCanvas.alpha = greyOut ? 1.0f - opacity : 1.0f;
         }
 
         public void SetUsernameColor(Color newUserNameColor)
         {
-            originalUserNameColor = newUserNameColor;
             usernameElement.userName.color = newUserNameColor;
         }
     }

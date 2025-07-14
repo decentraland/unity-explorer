@@ -173,7 +173,7 @@ MonoBehaviour:
   <messageBubbleElement>k__BackingField: {fileID: 4503932955293153024}
   <ProfilePictureView>k__BackingField: {fileID: 6332478220486376778}
   <profileButton>k__BackingField: {fileID: 8047739455508307062}
-  <greyColor>k__BackingField: {r: 0, g: 0, b: 0, a: 0.6039216}
+  usernameElementCanvas: {fileID: 8250733646857004067}
 --- !u!225 &3886723384659671108
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -523,3 +523,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d8a2ca8e7094397a8282c4e41f4f51d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!225 &8250733646857004067 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 112398231019755964, guid: 92d0354f55942e84b84febfe2060295c, type: 3}
+  m_PrefabInstance: {fileID: 8290897192900033951}
+  m_PrefabAsset: {fileID: 0}
