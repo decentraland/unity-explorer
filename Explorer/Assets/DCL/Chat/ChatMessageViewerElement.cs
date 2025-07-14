@@ -86,6 +86,7 @@ namespace DCL.Chat
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
         private HashSet<string>? onlineUserAddresses;
+        private CancellationTokenSource greyOutCts;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -228,6 +229,9 @@ namespace DCL.Chat
                 }
             }
 
+            greyOutCts = greyOutCts.SafeRestart();
+            ApplyGreyOut(greyOutCts.Token).Forget();
+
             entriesPendingToAnimate = 0;
         }
 
@@ -297,24 +301,40 @@ namespace DCL.Chat
 
             return false;
         }
-/*
-        public void GreyOutMessagesForSender(bool greyOut, string userAddress)
+
+        private async UniTaskVoid ApplyGreyOut(CancellationToken ct)
         {
-            for (int i = 0; i < loopList.ShownItemCount; ++i)
+            try
             {
-                LoopListViewItem2 item = loopList.GetShownItemByIndex(i);
+                await UniTask.SwitchToMainThread();
 
-                if (!item.gameObject.activeInHierarchy)
+                for (int i = 0; i < loopList.ShownItemCount; ++i)
                 {
-                    continue;
-                }
+                    LoopListViewItem2 item = loopList.GetShownItemByIndex(i);
 
-                int messageIndex = loopList.GetIndexInShownItemList(item);
-                ChatEntryView entry = item.GetComponent<ChatEntryView>();
-                entry.GreyOut(chatMessages[messageIndex].SenderWalletAddress == userAddress);
+                    if (!item.gameObject.activeInHierarchy)
+                    {
+                        continue;
+                    }
+
+                    int messageIndex = loopList.GetIndexInShownItemList(item);
+                    ChatEntryView entry = item.GetComponent<ChatEntryView>();
+
+                    if (entry != null)
+                    {
+                        bool isGreyedOut = !chatMessages[messageIndex].IsSystemMessage && !chatMessages[messageIndex].IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(chatMessages[messageIndex].SenderWalletAddress);
+                        Debug.Log("GREY: " + isGreyedOut + " " + i);
+                        entry.GreyOut(isGreyedOut, entryGreyOutOpacity);
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.CHAT_MESSAGES);
             }
         }
-*/
+
         public void Dispose()
         {
             contextMenuTask.TrySetResult();
@@ -444,6 +464,8 @@ namespace DCL.Chat
         private void OnEnable()
         {
             loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
+            greyOutCts = greyOutCts.SafeRestart();
+            ApplyGreyOut(greyOutCts.Token).Forget();
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileRepositoryWrapper)
@@ -454,7 +476,8 @@ namespace DCL.Chat
         public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
         {
             this.onlineUserAddresses = onlineUserAddresses;
-            loopList.RefreshAllShownItem();
+            greyOutCts = greyOutCts.SafeRestart();
+            ApplyGreyOut(greyOutCts.Token).Forget();
         }
     }
 }

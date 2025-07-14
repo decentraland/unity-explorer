@@ -319,6 +319,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7253102694193305417}
     m_Modifications:
+    - target: {fileID: 112398231019755964, guid: 92d0354f55942e84b84febfe2060295c, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 122324971239042325, guid: 92d0354f55942e84b84febfe2060295c, type: 3}
       propertyPath: m_IsActive
       value: 1

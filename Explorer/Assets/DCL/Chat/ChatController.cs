@@ -1119,10 +1119,10 @@ namespace DCL.Chat
             {
                 Debug.Log("-PARTICIPANT: " + participant.Identity + " " + update);
                 participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
-
-                if (viewInstance!.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                    viewInstance.SetOnlineUserAddresses(participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID]);
             }
+
+            if (viewInstance!.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
+                    viewInstance.SetOnlineUserAddresses(participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID]);
         }
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
