@@ -24,7 +24,7 @@ namespace DCL.Profiles
             this.urlsSource = urlsSource;
         }
 
-        public async UniTask<GetAvatarsDetailsDto?> GetAvatarsDetailsAsync(List<string> userIds, CancellationToken ct)
+        public async UniTask<List<GetAvatarsDetailsDto>> GetAvatarsDetailsAsync(List<string> userIds, CancellationToken ct)
         {
             StringBuilder bodyBuilder = new ();
             bodyBuilder.Clear();
@@ -54,7 +54,7 @@ namespace DCL.Profiles
             if (response == null)
                 throw new Exception("No Avatars details info retrieved");
 
-            return response.Count > 0 ? response[0] : null;
+            return response;
         }
     }
 }

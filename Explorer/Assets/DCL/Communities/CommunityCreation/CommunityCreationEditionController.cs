@@ -61,11 +61,20 @@ namespace DCL.Communities.CommunityCreation
 
         private class CommunityPlace
         {
-            public string Id;
-            public bool IsWorld;
-            public string Name;
-            public string OwnerId;
+            public readonly string Id;
+            public readonly bool IsWorld;
+            public readonly string Name;
+            public readonly string OwnerId;
             public string OwnerName;
+
+            public CommunityPlace(string id, bool isWorld, string name, string ownerId, string ownerName)
+            {
+                Id = id;
+                IsWorld = isWorld;
+                Name = name;
+                OwnerId = ownerId;
+                OwnerName = ownerName;
+            }
         }
 
         private readonly List<CommunityPlace> currentCommunityPlaces = new ();
@@ -266,14 +275,13 @@ namespace DCL.Communities.CommunityCreation
                     var placeText = $"{placeInfo.title} ({placeInfo.base_position})";
                     placesToAdd.Add(placeText);
 
-                    currentCommunityPlaces.Add(new CommunityPlace
-                    {
-                        Id = placeInfo.id,
-                        IsWorld = false,
-                        Name = placeText,
-                        OwnerId = placeInfo.owner,
-                        OwnerName = string.Empty,
-                    });
+                    currentCommunityPlaces.Add(
+                        new CommunityPlace(
+                            placeInfo.id,
+                            false,
+                            placeText,
+                            placeInfo.owner,
+                            string.Empty));
                 }
 
                 // Worlds
@@ -293,14 +301,12 @@ namespace DCL.Communities.CommunityCreation
                     var worldText = $"{worldInfo.title} ({worldInfo.world_name})";
                     placesToAdd.Add(worldText);
 
-                    currentCommunityPlaces.Add(new CommunityPlace
-                    {
-                        Id = worldInfo.id,
-                        IsWorld = true,
-                        Name = worldText,
-                        OwnerId = worldInfo.owner,
-                        OwnerName = string.Empty,
-                    });
+                    currentCommunityPlaces.Add(new CommunityPlace (
+                        worldInfo.id,
+                        true,
+                        worldText,
+                        worldInfo.owner,
+                        string.Empty));
                 }
 
                 // Owners' names
@@ -316,26 +322,25 @@ namespace DCL.Communities.CommunityCreation
                 var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds, ct)
                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (!getAvatarsDetailsResult.Success)
+                if (getAvatarsDetailsResult.Success)
+                {
+                    foreach (var communityPlace in currentCommunityPlaces)
+                    {
+                        foreach (var avatarDetails in getAvatarsDetailsResult.Value)
+                        {
+                            if (avatarDetails.avatars.Count == 0 || !string.Equals(communityPlace.OwnerId, avatarDetails.avatars[0].userId, StringComparison.CurrentCultureIgnoreCase))
+                                continue;
+
+                            communityPlace.OwnerName = avatarDetails.avatars[0].name;
+                            break;
+                        }
+                    }
+                }
+                else
                 {
                     showErrorCts = showErrorCts.SafeRestart();
                     await viewInstance!.WarningNotificationView.AnimatedShowAsync(GET_OWNERS_NAMES_ERROR_MESSAGE, WARNING_MESSAGE_DELAY_MS, showErrorCts.Token)
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
-                }
-
-                if (getAvatarsDetailsResult is { Success: true, Value: not null })
-                {
-                    foreach (var communityPlace in currentCommunityPlaces)
-                    {
-                        foreach (ProfileJsonDto avatarDetails in getAvatarsDetailsResult.Value.avatars)
-                        {
-                            if (!string.Equals(communityPlace.OwnerId, avatarDetails.userId, StringComparison.CurrentCultureIgnoreCase))
-                                continue;
-
-                            communityPlace.OwnerName = avatarDetails.name;
-                            break;
-                        }
-                    }
                 }
             }
 
@@ -466,28 +471,26 @@ namespace DCL.Communities.CommunityCreation
                         }
 
                         string ownerName = string.Empty;
-                        if (getAvatarsDetailsResult is { Success: true, Value: not null })
+                        if (getAvatarsDetailsResult.Success)
                         {
-                            foreach (ProfileJsonDto avatarDetails in getAvatarsDetailsResult.Value.avatars)
+                            foreach (var avatarDetails in getAvatarsDetailsResult.Value)
                             {
-                                if (!string.Equals(placeInfo.owner, avatarDetails.userId, StringComparison.CurrentCultureIgnoreCase))
+                                if (avatarDetails.avatars.Count == 0 || !string.Equals(placeInfo.owner, avatarDetails.avatars[0].userId, StringComparison.CurrentCultureIgnoreCase))
                                     continue;
 
-                                ownerName = avatarDetails.name;
+                                ownerName = avatarDetails.avatars[0].name;
                                 break;
                             }
                         }
 
-                        AddPlaceTag(new CommunityPlace
-                        {
-                            Id = placeInfo.id,
-                            IsWorld = !string.IsNullOrEmpty(placeInfo.world_name),
-                            Name = string.IsNullOrEmpty(placeInfo.world_name) ?
+                        AddPlaceTag(new CommunityPlace(
+                            placeInfo.id,
+                            !string.IsNullOrEmpty(placeInfo.world_name),
+                            string.IsNullOrEmpty(placeInfo.world_name) ?
                                 $"{placeInfo.title} ({placeInfo.base_position})" :
                                 $"{placeInfo.title} ({placeInfo.world_name})",
-                            OwnerId = placeInfo.owner,
-                            OwnerName = ownerName,
-                        }, isRemovalAllowed, updateScrollPosition: false);
+                            placeInfo.owner,
+                            ownerName), isRemovalAllowed, updateScrollPosition: false);
                     }
                 }
             }
