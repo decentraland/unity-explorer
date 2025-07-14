@@ -1,9 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
+using DCL.Communities;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DG.Tweening;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -23,7 +25,13 @@ namespace DCL.Chat
         private RectTransform itemsContainer;
 
         [SerializeField]
-        private ChatConversationsToolbarViewItem itemPrefab;
+        private ChatConversationsToolbarViewItem nearbyConversationItemPrefab;
+
+        [SerializeField]
+        private PrivateChatConversationsToolbarViewItem privateConversationItemPrefab;
+
+        [SerializeField]
+        private CommunityChatConversationsToolbarViewItem communityConversationItemPrefab;
 
         [SerializeField]
         private CanvasGroup scrollButtons;
@@ -36,6 +44,8 @@ namespace DCL.Chat
 
         [SerializeField]
         private Button scrollDownButton;
+
+        private const string NEARBY_CONVERSATION_NAME = "Nearby";
 
         private Dictionary<ChatChannel.ChannelId, ChatConversationsToolbarViewItem> items = new ();
         private ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -67,47 +77,57 @@ namespace DCL.Chat
         /// <summary>
         /// Creates a new item and adds it to the last position of the toolbar. It does not change any data.
         /// </summary>
-        /// <param name="channel">The channel the item will represent. The visual aspect of the item depends on the type of channel.</param>
-        /// <param name="icon">An icon to show instead of a profile picture.</param>
-        public void AddConversation(ChatChannel channel, Sprite icon = null)
+        /// <param name="channel">The channel the item will represent.</param>
+        public void AddConversation(ChatChannel channel)
         {
-            if (items.TryGetValue(channel.Id, out var item)) return;
+            ChatConversationsToolbarViewItem newItem;
 
-            ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
+            switch (channel.ChannelType)
+            {
+                case ChatChannel.ChatChannelType.NEARBY:
+                    newItem = Instantiate(nearbyConversationItemPrefab, itemsContainer);
+                    break;
+                case ChatChannel.ChatChannelType.COMMUNITY:
+                    newItem = Instantiate(communityConversationItemPrefab, itemsContainer);
+                    break;
+                case ChatChannel.ChatChannelType.USER:
+                    newItem = Instantiate(privateConversationItemPrefab, itemsContainer);
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+
             newItem.Initialize();
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
             newItem.TooltipShown += OnItemTooltipShown;
             newItem.Id = channel.Id;
 
-            switch (channel.ChannelType)
-            {
-                case ChatChannel.ChatChannelType.NEARBY:
-                    newItem.SetConversationIcon(icon);
-                    newItem.SetConversationName("Nearby"); // TODO: Localization
-                    newItem.SetClaimedNameIconVisibility(false);
-                    newItem.SetConversationType(false);
-                    break;
-                case ChatChannel.ChatChannelType.USER:
-                    SetupUserConversationItemAsync(newItem).Forget();
-                    break;
-                case ChatChannel.ChatChannelType.COMMUNITY:
-                    // TODO in future shapes
-                    newItem.SetConversationIcon(/*TODO*/icon);
-                    newItem.SetConversationName("TODO");
-                    newItem.SetClaimedNameIconVisibility(false);
-                    newItem.SetConversationType(false);
-                    break;
-            }
-
-            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
-            
             items.Add(channel.Id, newItem);
 
             if(items.Count == 1)
                 SelectConversation(channel.Id);
 
             UpdateScrollButtonsVisibility();
+        }
+
+        public void SetNearbyConversationData(Sprite icon)
+        {
+            ChatConversationsToolbarViewItem conversationItem = items[ChatChannel.NEARBY_CHANNEL_ID];
+            conversationItem.SetConversationIcon(icon);
+            conversationItem.SetConversationName(NEARBY_CONVERSATION_NAME); // TODO: Localization
+            conversationItem.SetClaimedNameIconVisibility(false);
+        }
+
+        public void SetCommunityConversationData(ChatChannel.ChannelId channelId, ISpriteCache thumbnailCache, GetUserCommunitiesData.CommunityData communityData, CancellationToken ct)
+        {
+            CommunityChatConversationsToolbarViewItem conversationItem = (CommunityChatConversationsToolbarViewItem)items[channelId];
+            SetupCommunityConversationItem(conversationItem, communityData, thumbnailCache, ct);
+        }
+
+        public void SetPrivateConversationData(ChatChannel.ChannelId channelId, CancellationToken ct)
+        {
+            PrivateChatConversationsToolbarViewItem conversationItem = (PrivateChatConversationsToolbarViewItem)items[channelId];
+            SetupPrivateConversationItemAsync(conversationItem, ct).Forget();
         }
 
         /// <summary>
@@ -264,18 +284,32 @@ namespace DCL.Chat
             tooltip.transform.SetParent(transform, true);
         }
 
-        private async UniTaskVoid SetupUserConversationItemAsync(ChatConversationsToolbarViewItem newItem)
+        private async UniTaskVoid SetupPrivateConversationItemAsync(PrivateChatConversationsToolbarViewItem newItem, CancellationToken ct)
         {
-            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
+            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, ct);
 
             if (profile != null)
             {
-                newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+                newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 newItem.SetConversationName(profile.ValidatedName);
                 newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
-                newItem.SetConversationType(true);
             }
         }
 
+        private void SetupCommunityConversationItem(CommunityChatConversationsToolbarViewItem newItem, GetUserCommunitiesData.CommunityData communityData, ISpriteCache thumbnailCache, CancellationToken ct)
+        {
+            newItem.SetThumbnailData(thumbnailCache, communityData.thumbnails?.raw, ct);
+            newItem.SetConversationName(communityData.name);
+        }
+
+        /// <summary>
+        /// Moves the icon that corresponds to a conversation to the given position in the list of conversations.
+        /// </summary>
+        /// <param name="channelToMove">The conversation to move.</param>
+        /// <param name="position">The index of the new position.</param>
+        public void MoveConversationToPosition(ChatChannel.ChannelId channelToMove, int position)
+        {
+            items[channelToMove].transform.SetSiblingIndex(position);
+        }
     }
 }

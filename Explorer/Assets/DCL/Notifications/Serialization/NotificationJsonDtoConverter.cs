@@ -21,6 +21,8 @@ namespace DCL.Notifications.Serialization
         private const string STREAMING_KEY_EXPIRED = "streaming_key_expired";
         private const string STREAMING_TIME_EXCEEDED = "streaming_time_exceeded";
         private const string STREAMING_PLACE_UPDATED = "streaming_place_updated";
+        private const string REFERRAL_INVITED_USERS_ACCEPTED = "referral_invited_users_accepted";
+        private const string REFERRAL_NEW_TIER_REACHED = "referral_new_tier_reached";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -76,9 +78,11 @@ namespace DCL.Notifications.Serialization
                     MARKETPLACE_CREDITS_TYPE => new MarketplaceCreditsNotification(),
                     STREAMING_KEY_RESET => new StreamingFeatureNotification(),
                     STREAMING_KEY_REVOKE => new StreamingFeatureNotification(),
-                    STREAMING_KEY_EXPIRED=> new StreamingFeatureNotification(),
-                    STREAMING_TIME_EXCEEDED=> new StreamingFeatureNotification(),
+                    STREAMING_KEY_EXPIRED => new StreamingFeatureNotification(),
+                    STREAMING_TIME_EXCEEDED => new StreamingFeatureNotification(),
                     STREAMING_PLACE_UPDATED => new StreamingFeatureNotification(),
+                    REFERRAL_INVITED_USERS_ACCEPTED => new ReferralNotification(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED),
+                    REFERRAL_NEW_TIER_REACHED => new ReferralNotification(NotificationType.REFERRAL_NEW_TIER_REACHED),
                     _ => null,
                 };
 

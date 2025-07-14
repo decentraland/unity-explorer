@@ -11,5 +11,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         string Url(DecentralandUrl decentralandUrl);
         string GetHostnameForFeatureFlag();
+
+        bool RequiresAboutOverride();
     }
 }

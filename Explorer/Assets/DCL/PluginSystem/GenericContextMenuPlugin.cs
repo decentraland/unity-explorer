@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.PluginSystem.Global;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controls;
+using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
 using MVC;
 using System.Threading;

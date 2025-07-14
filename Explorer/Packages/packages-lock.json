@@ -12,7 +12,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "21358a186f934f16d49f2989f1ef0c535046600f"
+      "hash": "de7bceffbc41b6d4bb8a43e1e0e786a6348402de"
     },
     "com.arch.systemgroups": {
       "version": "https://github.com/mikhail-dcl/Arch.SystemGroups.git?path=/Arch.SystemGroups",
@@ -56,12 +56,19 @@
       "dependencies": {},
       "hash": "73d86259ce31ce7f4dfe1d028ea1c3edf96c23e4"
     },
+    "com.decentraland.filebrowserpro": {
+      "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e2daa643b01fc072db3dd3276e584db705a3d9a9"
+    },
     "com.decentraland.livekit-sdk": {
       "version": "https://github.com/decentraland/client-sdk-unity.git",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "a3d04b4bba166375ba225b90256e57eea07febd5"
+      "hash": "ff71e4556e471da577ec934cf75182d2b1c71339"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -86,7 +93,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+      "hash": "d8112ca7ebc0c660d7850d72850d46a3e376dc08"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",

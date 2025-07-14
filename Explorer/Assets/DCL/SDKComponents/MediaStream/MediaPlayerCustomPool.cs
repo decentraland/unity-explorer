@@ -40,8 +40,8 @@ namespace DCL.SDKComponents.MediaStream
             else
             {
                 mediaPlayer = Object.Instantiate(mediaPlayerPrefab, rootContainerTransform);
-                mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
-                mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
+                mediaPlayer.PlatformOptionsWindows._audioMode = Windows.AudioOutput.Unity;
+                mediaPlayer.PlatformOptions_macOS.audioMode = MediaPlayer.PlatformOptions.AudioMode.Unity;
             }
 
             mediaPlayer.AutoOpen = false;
@@ -84,7 +84,7 @@ namespace DCL.SDKComponents.MediaStream
         {
             //On quit, Unity may have already detroyed the MediaPlayer; so we might get a null-ref
             if (UnityObjectUtils.IsQuitting) return;
-            
+
             mediaPlayer.Stop();
             mediaPlayer.enabled = false;
             mediaPlayer.gameObject.SetActive(false);

@@ -76,7 +76,9 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.Add(VirtualCameraSystem.InjectToWorld(
                 ref builder,
                 virtualCameraPoolRegistry,
-                sharedDependencies.SceneStateProvider));
+                sharedDependencies.SceneStateProvider,
+                sharedDependencies.SceneData,
+                sharedDependencies.SceneData.Geometry.CircumscribedPlanes));
 
             var mainCameraSystem = MainCameraSystem.InjectToWorld(
                 ref builder,
@@ -85,7 +87,8 @@ namespace DCL.PluginSystem.World
                 sharedDependencies.SceneStateProvider,
                 cameraData,
                 sceneRestrictionBusController,
-                globalWorld);
+                globalWorld,
+                sharedDependencies.SceneData);
             finalizeWorldSystems.Add(mainCameraSystem);
             sceneIsCurrentListeners.Add(mainCameraSystem);
         }

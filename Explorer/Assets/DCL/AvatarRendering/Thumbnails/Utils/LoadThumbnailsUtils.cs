@@ -86,6 +86,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 {
                     // If cancellation token source was not provided a new one will be created
                     CommonArguments = new CommonLoadingArguments(urlBuilder.Build(), cancellationTokenSource: cancellationTokenSource),
+                    ReportSource = "AvatarRendering.LoadThumbnailsUtils",
                 },
                 partitionComponent);
 
