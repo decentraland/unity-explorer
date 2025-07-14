@@ -103,6 +103,8 @@ namespace DCL.VoiceChat
 
         private async UniTaskVoid ConnectToRoomAsync()
         {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Connecting to Room!");
+
             CleanupReconnectionState();
             Result<bool> result = await roomHub.VoiceChatRoom().TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl).SuppressToResultAsync();
 
@@ -132,10 +134,13 @@ namespace DCL.VoiceChat
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Livekit Connected!");
+
                     CleanupReconnectionState();
 
                     if (!isMediaOpen)
                     {
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Opening Media!");
                         isMediaOpen = true;
                         trackPublishingCts = trackPublishingCts.SafeRestart();
 
@@ -146,6 +151,8 @@ namespace DCL.VoiceChat
                     voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
                     break;
                 case ConnectionUpdate.Disconnected:
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Livekit Disconnected");
+
                     CleanupReconnectionState();
                     isMediaOpen = false;
 
@@ -217,6 +224,8 @@ namespace DCL.VoiceChat
 
         private void SubscribeToRemoteTracks()
         {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatLivekitRoomHandler] Subscribing to Remote Tracks!");
+
             combinedStreamsAudioSource.Reset();
 
             foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())

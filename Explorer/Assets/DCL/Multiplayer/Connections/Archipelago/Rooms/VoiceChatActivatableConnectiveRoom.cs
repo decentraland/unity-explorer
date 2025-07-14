@@ -63,7 +63,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public async UniTask ActivateAsync()
         {
-            if (Activated) { return; }
+            if (Activated)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatActivatableConnectiveRoom] Already Activated, skipping Activation");
+                return;
+            }
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatActivatableConnectiveRoom] Activating!");
 
             Activated = true;
 
@@ -72,7 +78,11 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
 
         public async UniTask DeactivateAsync()
         {
-            if (!Activated) { return; }
+            if (!Activated)
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, "[VoiceChatActivatableConnectiveRoom] Not Activated - Returning!");
+                return;
+            }
 
             Activated = false;
             await this.StopIfNotAsync();
@@ -83,18 +93,22 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new WarningException("Room is already running");
 
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{LOG_PREFIX} - Start Async!");
+
+
             cts = cts.SafeRestart();
             attemptToConnectState.Set(AttemptToConnectState.NONE);
 
             if (connectionString == string.Empty)
             {
-                ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - No connection string specified");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{LOG_PREFIX} - No connection string specified");
                 return false;
             }
 
-            roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync(cts.Token).Forget();
             await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.NONE);
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{LOG_PREFIX} - Start Async! -> state {attemptToConnectState.Value()}");
 
             if (attemptToConnectState.Value() is AttemptToConnectState.ERROR)
             {
@@ -142,6 +156,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             while (ct.IsCancellationRequested == false)
             {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{LOG_PREFIX} - Send Connection Status! {CurrentState().ToString()}");
                 if (CurrentState() == IConnectiveRoom.State.Running)
                     room.SimulateConnectionStateChanged();
 
@@ -160,7 +175,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
                 }
                 catch (Exception e) when (e is not OperationCanceledException)
                 {
-                    ReportHub.LogWarning(ReportCategory.LIVEKIT, $"{LOG_PREFIX} - CycleStepAsync failed: {e}");
+                    ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{LOG_PREFIX} - CycleStepAsync failed: {e}");
                     connectionLoopHealth.Set(IConnectiveRoom.ConnectionLoopHealth.CycleFailed);
                     await RecoveryDelayAsync(ct);
                 }
@@ -180,11 +195,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         private async UniTask<bool> TryConnectToRoomAsync(CancellationToken ct)
         {
             var credentials = new ConnectionStringCredentials(connectionString);
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{LOG_PREFIX} - TryConnectToRoomAsync: {connectionString}");
 
             // Create a fresh room instance each time to ensure clean state
             var freshRoom = CreateFreshRoom();
 
             bool connectResult = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{LOG_PREFIX} - TryConnectToRoomAsync AFTER Connect Async result: {connectResult}");
 
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
