@@ -19,10 +19,6 @@ namespace DCL.VoiceChat
     /// </summary>
     public interface IVoiceChatState
     {
-        CurrentVoiceChatType GetCurrentVoiceChatType();
-        VoiceChatStatus GetCurrentPrivateVoiceChatStatus();
-        VoiceChatStatus GetCurrentCommunityVoiceChatStatus();
-
         IReadonlyReactiveProperty<CurrentVoiceChatType> CurrentVoiceChat { get; }
         IReadonlyReactiveProperty<VoiceChatStatus> PrivateVoiceChatStatus { get; }
         IReadonlyReactiveProperty<VoiceChatStatus> CommunityVoiceChatStatus { get; }
@@ -83,11 +79,6 @@ namespace DCL.VoiceChat
             communityVoiceChatStatusProperty?.Dispose();
         }
 
-        // IVoiceChatState implementation
-        public CurrentVoiceChatType GetCurrentVoiceChatType() => currentVoiceChatProperty.Value;
-        public VoiceChatStatus GetCurrentPrivateVoiceChatStatus() => privateVoiceChatStatusProperty.Value;
-        public VoiceChatStatus GetCurrentCommunityVoiceChatStatus() => communityVoiceChatStatusProperty.Value;
-
         // IVoiceChatActions implementation
         public void StartPrivateCall(Web3Address walletId)
         {
@@ -127,7 +118,7 @@ namespace DCL.VoiceChat
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatProperty.Value}");
         }
-        
+
         private void SetVoiceChatType(CurrentVoiceChatType newType)
         {
             if (currentVoiceChatProperty.Value != newType)
