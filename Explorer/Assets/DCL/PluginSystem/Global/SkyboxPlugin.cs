@@ -48,7 +48,7 @@ namespace DCL.SkyBox
             try
             {
                 skyboxSettings = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.SettingsRef, ct)).Value;
-                skyboxSettings.Init();
+                skyboxSettings.Reset();
                 skyboxRenderController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxRenderControllerPrefab, ct: ct)).Value);
 
                 AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(skyboxSettings.SkyboxAnimationCycle, ct: ct)).Value;

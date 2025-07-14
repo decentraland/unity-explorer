@@ -69,7 +69,7 @@ namespace DCL.SkyBox
 
         public float TargetTimeOfDayNormalized { get; set; }
 
-        public void Init()
+        public void Reset()
         {
             timeOfDayNormalized = INITIAL_TIME_OF_DAY;
             TargetTimeOfDayNormalized = INITIAL_TIME_OF_DAY;
