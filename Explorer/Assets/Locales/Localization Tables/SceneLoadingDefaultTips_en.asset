@@ -19,8 +19,9 @@ MonoBehaviour:
     m_Items: []
   m_TableData:
   - m_Id: 191273726208528384
-    m_Localized: Press <b>B</b> to Use the Emote Wheel and use your favorites emotes
-      to dance, cheer, or do any kind of special and weird movements.
+    m_Localized: Wave to friends or show off your moves using <b>'B'</b> to trigger
+      the Emote Wheel. Customize options from your Backpack so you're always ready
+      to go!
     m_Metadata:
       m_Items: []
   - m_Id: 1078626870091776
@@ -28,9 +29,9 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1078683115708416
-    m_Localized: Dress up your avatar with cool outfits! From epic armor to funky
-      hats, wearables let you show off your style, trade gear, and stand out in the
-      metaverse.
+    m_Localized: Express yourself without limits! From accessories to full skins,
+      the Marketplace has thousands of community-made Wearables for crafting your
+      unique look.
     m_Metadata:
       m_Items: []
   - m_Id: 1078715894194176
@@ -52,8 +53,9 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 191273927132467200
-    m_Localized: Get <b>Decentraland Badges</b> while making friends, creating wearables,
-      or just wonder around the world having fun!
+    m_Localized: "Unlock badges by excelling at what you love\u2014socializing, creating,
+      or styling the perfect look in Decentraland\u2014and show them off on your
+      profile!"
     m_Metadata:
       m_Items: []
   - m_Id: 197019265204740096
@@ -111,7 +113,7 @@ MonoBehaviour:
   - m_Id: 197397960180359168
     m_Localized: "<color=#FFFF00><size=30>COMING SOON!</size></color> \nExplore Communities
       to connect over shared interests. Hang in the group chat, get event updates,
-      and enjoy that cozy sense of belonging!\n"
+      and enjoy that cozy sense of belonging!"
     m_Metadata:
       m_Items: []
   references:
