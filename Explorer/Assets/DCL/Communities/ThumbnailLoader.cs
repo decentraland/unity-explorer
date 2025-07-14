@@ -20,7 +20,7 @@ namespace DCL.Communities
         public async UniTaskVoid LoadCommunityThumbnailAsync(string thumbnailUrl, ImageView thumbnailView, Sprite? defaultThumbnail, CancellationToken ct)
         {
             thumbnailView.ImageColor = Color.clear;
-            thumbnailView.SetImage(defaultThumbnail!);
+            thumbnailView.SetImage(defaultThumbnail!, true);
             thumbnailView.IsLoading = true;
 
             Sprite? loadedSprite = null;
@@ -38,7 +38,7 @@ namespace DCL.Communities
             }
 
             if (loadedSprite != null)
-                thumbnailView.SetImage(loadedSprite);
+                thumbnailView.SetImage(loadedSprite, true);
 
             thumbnailView.ShowImageAnimated();
         }

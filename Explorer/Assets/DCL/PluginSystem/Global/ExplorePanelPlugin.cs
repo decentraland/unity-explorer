@@ -119,12 +119,11 @@ namespace DCL.PluginSystem.Global
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
 
         private readonly bool includeCameraReel;
 
-        private ExplorePanelInputHandler? inputHandler;
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
@@ -190,7 +189,7 @@ namespace DCL.PluginSystem.Global
             WarningNotificationView inWorldWarningNotificationView,
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             INftNamesProvider nftNamesProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -254,7 +253,6 @@ namespace DCL.PluginSystem.Global
             navmapController?.Dispose();
             settingsController?.Dispose();
             backpackSubPlugin?.Dispose();
-            inputHandler?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
         }
@@ -390,15 +388,13 @@ namespace DCL.PluginSystem.Global
 
             await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
-            inputHandler = new ExplorePanelInputHandler();
-
             CameraReelView cameraReelView = explorePanelView.GetComponentInChildren<CameraReelView>();
             var cameraReelController = new CameraReelController(cameraReelView,
                 new CameraReelGalleryController(cameraReelView.CameraReelGalleryView, this.cameraReelStorageService,
                     cameraReelScreenshotsStorage,
                     new ReelGalleryConfigParams(settings.GridLayoutFixedColumnCount, settings.ThumbnailHeight, settings.ThumbnailWidth, true, true), true,
                     cameraReelView.CameraReelOptionsButton,
-                    webBrowser, decentralandUrlsSource, inputHandler, systemClipboard,
+                    webBrowser, decentralandUrlsSource, systemClipboard,
                     new ReelGalleryStringMessages(settings.CameraReelGalleryShareToXMessage, settings.PhotoSuccessfullyDeletedMessage, settings.PhotoSuccessfullyUpdatedMessage, settings.PhotoSuccessfullyDownloadedMessage, settings.LinkCopiedMessage),
                     mvcManager),
                 cameraReelStorageService,
@@ -424,7 +420,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                    communitiesBrowserController, inputHandler, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
+                    communitiesBrowserController, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);

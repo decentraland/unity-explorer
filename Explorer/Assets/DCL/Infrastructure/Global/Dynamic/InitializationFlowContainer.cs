@@ -1,5 +1,6 @@
 ﻿using DCL.Audio;
 using DCL.Character;
+using DCL.Character.Plugin;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -39,7 +40,7 @@ namespace DCL.UserInAppInitializationFlow
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
             bool localSceneDevelopment,
-            ICharacterObject characterObject)
+            CharacterContainer characterContainer)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
@@ -104,7 +105,8 @@ namespace DCL.UserInAppInitializationFlow
                     bootstrapContainer.IdentityCache.EnsureNotNull(),
                     ensureLivekitConnectionStartupOperation,
                     appArgs,
-                    characterObject,
+                    characterContainer.CharacterObject,
+                    characterContainer.Transform,
                     dynamicWorldParams.StartParcel),
             };
         }

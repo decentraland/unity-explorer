@@ -35,7 +35,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
-        private readonly ICommunitiesDataProvider dataProvider;
+        private readonly CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
@@ -63,7 +63,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
             ICursor cursor,
-            ICommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider dataProvider,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
             WarningNotificationView warningNotificationView,

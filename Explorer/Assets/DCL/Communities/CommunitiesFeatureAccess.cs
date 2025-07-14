@@ -13,6 +13,7 @@ namespace DCL.Communities
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private bool? storedResult;
+        private bool? storedMembersCounterResult;
 
         public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache)
         {
@@ -50,6 +51,16 @@ namespace DCL.Communities
             }
 
             storedResult = cacheResult ? result : null;
+            return result;
+        }
+
+        public bool CanMembersCounterBeDisplayer()
+        {
+            if (storedMembersCounterResult != null)
+                return storedMembersCounterResult.Value;
+
+            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
+            storedMembersCounterResult = result;
             return result;
         }
 

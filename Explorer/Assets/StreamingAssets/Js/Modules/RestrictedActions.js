@@ -24,7 +24,7 @@ module.exports.teleportTo = async function(message) {
 }
 
 module.exports.triggerEmote = async function(message) {
-    UnityRestrictedActionsApi.TriggerEmote(message.predefinedEmote)
+    await UnityRestrictedActionsApi.TriggerEmote(message.predefinedEmote)
     return {};
 }
 

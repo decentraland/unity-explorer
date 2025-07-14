@@ -20,8 +20,9 @@ namespace DCL.Communities
             public string name;
             public string description;
             public string ownerAddress;
+            public string ownerName;
             public int membersCount;
-            public bool isLive;
+            public bool isHostingLiveEvent;
             public CommunityPrivacy privacy;
             public CommunityMemberRole role;
             public FriendInCommunity[] friends;
@@ -45,6 +46,7 @@ namespace DCL.Communities
             public string address;
             public string name;
             public string profilePictureUrl;
+            public bool hasClaimedName;
         }
 
         public CommunityData[] results;
