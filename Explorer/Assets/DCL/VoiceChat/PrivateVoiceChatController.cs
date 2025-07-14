@@ -12,7 +12,7 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatController : IDisposable
+    public class PrivateVoiceChatController : IDisposable
     {
         private readonly VoiceChatView view;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
@@ -23,7 +23,7 @@ namespace DCL.VoiceChat
         private CancellationTokenSource cts;
         private IDisposable? statusSubscription;
 
-        public VoiceChatController(
+        public PrivateVoiceChatController(
             VoiceChatView view,
             IVoiceChatCallStatusService voiceChatCallStatusService,
             VoiceChatMicrophoneHandler microphoneHandler,

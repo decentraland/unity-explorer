@@ -15,28 +15,36 @@ namespace DCL.VoiceChat
         private const string OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT = "Add User as a friend, or update your DM & Call settings to connect with everyone.";
         private const string USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "User is in another call.";
         private const string OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT = "End your current call to start a new one.";
+        private const string COMMUNITY_CALL_ACTIVE_TOOLTIP_TEXT = "You are in a community call. End it to start a private call.";
         private const float ANIMATION_DURATION = 0.5f;
         private const int WAIT_TIME_BEFORE_TOOLTIP_CLOSES_MS = 4000;
+
+        private readonly IDisposable statusSubscription;
+        private readonly IDisposable orchestratorTypeSubscription;
+        private readonly IDisposable privateVoiceChatAvailableSubscription;
 
         public event Action<string> StartCall;
         public string CurrentUserId { get; private set; }
 
         private readonly CallButtonView view;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatState voiceChatState;
         private readonly IChatEventBus chatEventBus;
-        private bool isClickedOnce = false;
+        private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
-        private IDisposable? statusSubscription;
 
-        public CallButtonController(CallButtonView view, IVoiceChatCallStatusService voiceChatCallStatusService, IChatEventBus chatEventBus)
+        public CallButtonController(CallButtonView view, IVoiceChatState voiceChatState, IChatEventBus chatEventBus)
         {
             this.view = view;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatState = voiceChatState;
             this.chatEventBus = chatEventBus;
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
-            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnVoiceChatStatusChanged);
+
+            statusSubscription = voiceChatState.PrivateVoiceChatStatus.Subscribe(OnVoiceChatStatusChanged);
+
+            // We might want to start the call directly here. And let the orchestrator handle the states.
+            // But we will need to handle the parent view so it closes after the button is pressed and the call is successfully established (in case of Passport, etc.)
             chatEventBus.StartCall += OnChatEventBusStartCall;
         }
 
@@ -87,7 +95,15 @@ namespace DCL.VoiceChat
             // First click - set the flag and handle the logic
             isClickedOnce = true;
 
-            if (voiceChatCallStatusService.Status.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
+            // Check if we're in a community call first
+            if (voiceChatState.CurrentVoiceChat.Value == CurrentVoiceChatType.COMMUNITY)
+            {
+                await ShowTooltipWithAutoCloseAsync(COMMUNITY_CALL_ACTIVE_TOOLTIP_TEXT, ct);
+                return;
+            }
+
+            // Check if we're already in a private call
+            if (voiceChatState.PrivateVoiceChatStatus.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
                 await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                 return;
@@ -135,6 +151,8 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus newStatus)
         {
+            //This state comes after a call to BE, so we won't show any tooltip until the reply arrives.
+            //DO we need to add some loading/calling animation here??
             if (newStatus == VoiceChatStatus.VOICE_CHAT_USER_BUSY)
             {
                 ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
@@ -144,6 +162,8 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             statusSubscription?.Dispose();
+            orchestratorTypeSubscription?.Dispose();
+            privateVoiceChatAvailableSubscription?.Dispose();
             chatEventBus.StartCall -= OnChatEventBusStartCall;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
         }

@@ -48,7 +48,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
-using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
@@ -545,8 +544,10 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
-            IVoiceService voiceService = new RPCVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
+            IVoiceService voiceService = new RPCPrivateVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
             IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService);
+
+            VoiceChatOrchestrator voiceChatOrchestrator = new VoiceChatOrchestrator(voiceChatCallStatusService, voiceService);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -724,8 +725,9 @@ namespace Global.Dynamic
                     thumbnailCache,
                     mainUIView.WarningNotification,
                     communitiesEventBus,
-                    voiceChatCallStatusService,
-                    includeVoiceChat),
+                    voiceChatOrchestrator,
+                    includeVoiceChat
+                    ),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -878,7 +880,11 @@ namespace Global.Dynamic
                         profileRepositoryWrapper,
                         entityParticipantTable,
                         globalWorld,
-                        playerEntity));
+                        playerEntity,
+                        voiceService,
+                        voiceChatOrchestrator
+                        )
+                    );
 
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))

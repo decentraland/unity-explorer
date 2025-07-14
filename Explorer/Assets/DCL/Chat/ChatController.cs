@@ -70,7 +70,7 @@ namespace DCL.Chat
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
@@ -141,8 +141,9 @@ namespace DCL.Chat
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            bool isCallEnabled
+            ) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -160,7 +161,7 @@ namespace DCL.Chat
             this.chatStorage = chatStorage;
             this.profileRepositoryWrapper = profileDataProvider;
             friendsServiceProxy = friendsService;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communitiesDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
@@ -292,7 +293,7 @@ namespace DCL.Chat
 
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
 
-            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService, chatEventBus);
+            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatOrchestrator, chatEventBus);
             viewInstance.chatTitleBar.CallButton.gameObject.SetActive(isCallEnabled);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
@@ -506,8 +507,7 @@ namespace DCL.Chat
 
         private void OnStartCall(string userId)
         {
-            voiceChatCallStatusService.StartCall(new Web3Address(userId));
-
+            voiceChatOrchestrator.StartPrivateCall(new Web3Address(userId));
         }
 
         private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
