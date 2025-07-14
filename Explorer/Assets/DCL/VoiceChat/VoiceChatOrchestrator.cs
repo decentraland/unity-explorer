@@ -42,10 +42,16 @@ namespace DCL.VoiceChat
         void RejectCall();
     }
 
+    public interface IVoiceChatUIEvents
+    {
+        void ChangePanelSize(VoiceChatPanelSize panelSize);
+
+    }
+
     /// <summary>
     /// Interface for systems that need both state and actions (like voice chat UI)
     /// </summary>
-    public interface IVoiceChatOrchestrator : IVoiceChatState, IVoiceChatActions
+    public interface IVoiceChatOrchestrator : IVoiceChatState, IVoiceChatActions, IVoiceChatUIEvents
     {
     }
 
@@ -134,6 +140,11 @@ namespace DCL.VoiceChat
             {
                 voiceChatTypeProperty.Value = newType;
             }
+        }
+
+        public void ChangePanelSize(VoiceChatPanelSize panelSize)
+        {
+            voiceChatPanelSizeProperty.Value = panelSize;
         }
     }
 }
