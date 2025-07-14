@@ -11,6 +11,7 @@ using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.Services;
+using DCL.Chat.Services.DCL.Chat;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
@@ -33,7 +34,7 @@ namespace DCL.Chat
         private EventSubscriptionScope uiScope;
         
         private ChatClickDetectionService chatClickDetectionService;
-        
+        private ChatUserStateBridge chatUserStateBridge;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public event Action? PointerEntered;
@@ -46,6 +47,7 @@ namespace DCL.Chat
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
             IEventBus eventBus,
+            IChatUserStateEventBus userStateEventBus,
             ICurrentChannelService currentChannelService,
             ChatInputBlockingService chatInputBlockingService,
             ChatSettingsAsset chatSettingsAsset,
@@ -63,6 +65,8 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
+            
+            chatUserStateBridge = new ChatUserStateBridge(userStateEventBus, eventBus, currentChannelService);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -83,9 +87,11 @@ namespace DCL.Chat
                 viewInstance.TitlebarView.CloseChatButton.transform,
                 viewInstance.TitlebarView.CloseMemberListButton.transform,
             });
-            
+
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
-                eventBus, profileRepositoryWrapper);
+                eventBus,
+                profileRepositoryWrapper,
+                chatConfig);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
@@ -104,6 +110,7 @@ namespace DCL.Chat
             var inputPresenter = new ChatInputPresenter(
                 viewInstance.InputView,
                 eventBus,
+                currentChannelService,
                 useCaseFactory.GetUserChatStatus,
                 useCaseFactory.SendMessage);
             

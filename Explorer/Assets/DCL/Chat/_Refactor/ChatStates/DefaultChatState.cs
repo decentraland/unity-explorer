@@ -5,6 +5,8 @@
         public override void begin()
         {
             _context.Mediator.SetupForDefaultState(animate: true);
+            _context.Mediator.chatInputPresenter.OnDefocus();
+            
             _context.MainController.PointerEntered += OnPointerEnter;
             _context.MainController.PointerExited += OnPointerExit;
         }

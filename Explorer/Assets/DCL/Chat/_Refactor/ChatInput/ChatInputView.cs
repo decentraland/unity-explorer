@@ -56,59 +56,33 @@ namespace DCL.Chat
             emojiButtonObject.SetActive(false);
         }
         
-        public void Blur()
-        {
-            //SetMode(IChatInputView.Mode.InactiveAsButton);
-            inputField.DeactivateInputField();
-        }
         
-        public void SetMode(IChatInputView.Mode mode, string buttonMessage = "Type a message...")
-        {
-            switch (mode)
-            {
-                case IChatInputView.Mode.Active:
-                    inputFieldContainer.SetActive(true);
-                    ApplyFocusStyle();
-                    maskContainer.SetActive(false);
-                    break;
-                case IChatInputView.Mode.InactiveAsButton:
-                    inputFieldContainer.SetActive(false);
-                    maskContainer.SetActive(true);
-                    maskText.text = buttonMessage;
-                    break;
-            }
-        }
-
         public void SetText(string text) => inputField.text = text;
         public string GetText() => inputField.text;
-
-        public void Focus()
-        {
-            SetMode(IChatInputView.Mode.Active);
-            inputField.Select();
-            inputField.ActivateInputField();
-        }
         
         public void Show() => gameObject.SetActive(true);
         public void Hide() => gameObject.SetActive(false);
-
-        /// <summary>
-        /// Sets the interactable state of the input view.
-        /// </summary>
-        /// <param name="isInteractable">If true, the input field is shown. If false, the mask is shown.</param>
-        /// <param name="maskMessage">The message to display on the mask when not interactable. Can be null if interactable.</param>
-        public void SetInteractable(bool isInteractable, string? maskMessage = null)
+        
+        public void SetActiveTyping()
         {
-            if (isInteractable)
-            {
-                Focus();
-            }
-            else
-            {
-                inputFieldContainer.SetActive(false);
-                maskContainer.SetActive(true);
-                maskText.text = maskMessage ?? "Input is disabled.";
-            }
+            maskContainer.SetActive(false);
+            inputFieldContainer.SetActive(true);
+            inputField.Select();
+            inputField.ActivateInputField();
+        }
+
+        public void SetDefault()
+        {
+            maskContainer.SetActive(false);
+            inputFieldContainer.SetActive(true);
+            ApplyUnfocusStyle();
+        }
+
+        public void SetBlocked(string reason)
+        {
+            inputFieldContainer.SetActive(false);
+            maskContainer.SetActive(true);
+            maskText.text = reason;
         }
     }
 }

@@ -48,8 +48,9 @@ namespace DCL.Chat.ChatUseCases
                 currentChannelService);
 
             CreateMessageViewModel = new CreateMessageViewModelUseCase(textFormatter);
-            
-            GetUserChatStatus = new GetUserChatStatusUseCase(chatUserStateUpdater);
+
+            GetUserChatStatus = new GetUserChatStatusUseCase(chatUserStateUpdater,
+                eventBus);
             
             SelectChannel = new SelectChannelUseCase(eventBus,
                 chatHistory,

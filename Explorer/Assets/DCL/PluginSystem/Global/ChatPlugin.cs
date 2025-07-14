@@ -192,6 +192,7 @@ namespace DCL.PluginSystem.Global
                 },
                 chatConfig,
                 eventBus,
+                chatUserStateEventBus,
                 currentChannelService,
                 chatInputBlockingService,
                 chatSettingsAsset.Value,

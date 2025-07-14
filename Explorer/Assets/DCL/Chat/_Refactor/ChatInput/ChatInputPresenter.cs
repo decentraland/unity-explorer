@@ -5,12 +5,14 @@ using DCL.Chat;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
+using DCL.Chat.Services;
 using Utility;
 
 public class ChatInputPresenter : IDisposable
 {
     private readonly IChatInputView view;
     private readonly IEventBus eventBus;
+    private readonly ICurrentChannelService currentChannelService;
     private readonly GetUserChatStatusUseCase getUserChatStatusUseCase;
     private readonly SendMessageUseCase sendMessageUseCase;
     private readonly EventSubscriptionScope scope = new();
@@ -23,11 +25,13 @@ public class ChatInputPresenter : IDisposable
     public ChatInputPresenter(
         IChatInputView view,
         IEventBus eventBus,
+        ICurrentChannelService currentChannelService,
         GetUserChatStatusUseCase getUserChatStatusUseCase,
         SendMessageUseCase sendMessageUseCase)
     {
         this.view = view;
         this.eventBus = eventBus;
+        this.currentChannelService = currentChannelService;
         this.getUserChatStatusUseCase = getUserChatStatusUseCase;
         this.sendMessageUseCase = sendMessageUseCase;
         
@@ -35,6 +39,7 @@ public class ChatInputPresenter : IDisposable
         view.OnFocusRequested += HandleFocusRequested;
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+        scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
     }
 
     public void Show()
@@ -51,6 +56,14 @@ public class ChatInputPresenter : IDisposable
     {
         UpdateStateForChannel(evt.Channel);
     }
+    
+    private void OnForceRefreshInputState(ChatEvents.CurrentChannelStateUpdatedEvent evt)
+    {
+        if (currentChannelService.CurrentChannel != null)
+        {
+            UpdateStateForChannel(currentChannelService.CurrentChannel);
+        }
+    }
 
     private void HandleMessageSubmitted(string message)
     {
@@ -63,21 +76,38 @@ public class ChatInputPresenter : IDisposable
         eventBus.Publish(new ChatEvents.FocusRequestedEvent());
     }
     
+    public void OnFocus()
+    {
+        view.SetActiveTyping();
+        UpdateCurrentChannelStatus();
+    }
+    
+    public void OnDefocus()
+    {
+        view.SetDefault();
+    }
+    
     private void OnInputChanged(string input)
     {
         
     }
 
-    public void SetActiveMode()
+    public void OnMinimize()
     {
-        view.SetMode(IChatInputView.Mode.Active);
-        view.Focus();
+        view.SetDefault();
     }
     
-    public void SetInactiveMode()
+    private void UpdateCurrentChannelStatus()
     {
-        //view.SetMode(IChatInputView.Mode.InactiveAsButton, "Type a message...");
-        view.Blur();
+        if (currentChannelService.CurrentChannel != null)
+        {
+            UpdateStateForChannel(currentChannelService.CurrentChannel);
+        }
+        else
+        {
+            // If there is no channel selected for some reason, block the input.
+            view.SetBlocked("No channel selected.");
+        }
     }
     
     public void UpdateStateForChannel(ChatChannel channel)
@@ -85,7 +115,7 @@ public class ChatInputPresenter : IDisposable
         cts = cts.SafeRestart();
         if (channel.ChannelType == ChatChannel.ChatChannelType.NEARBY)
         {
-            view.SetInteractable(true);
+            view.SetDefault();
             return;
         }
 
@@ -95,13 +125,13 @@ public class ChatInputPresenter : IDisposable
         }
         else
         {
-            view.SetInteractable(false, "This chat type is not supported yet.");
+            view.SetBlocked("This chat type is not supported yet.");
         }
     }
 
     private async UniTaskVoid UpdateInputStateForUserAsync(string userId, CancellationToken ct)
     {
-        view.SetInteractable(false, "Checking user status...");
+        view.SetBlocked("Checking user status...");
         
         var status = await getUserChatStatusUseCase.ExecuteAsync(userId, ct);
         if (ct.IsCancellationRequested) return;
@@ -109,24 +139,24 @@ public class ChatInputPresenter : IDisposable
         switch (status)
         {
             case ChatUserStateUpdater.ChatUserState.CONNECTED:
-                view.SetInteractable(true);
+                view.SetDefault();
                 break;
 
             case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
-                view.SetInteractable(false, "To message this user you must first unblock them.");
+                view.SetBlocked("To message this user you must first unblock them.");
                 break;
 
             case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                view.SetInteractable(false, "Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.");
+                view.SetBlocked("Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.");
                 break;
 
             case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                view.SetInteractable(false, "The user you are trying to message only accepts DMs from friends.");
+                view.SetBlocked("The user you are trying to message only accepts DMs from friends.");
                 break;
 
             case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
             default:
-                view.SetInteractable(false, "The user you are trying to message is offline.");
+                view.SetBlocked("The user you are trying to message is offline.");
                 break;
         }
     }

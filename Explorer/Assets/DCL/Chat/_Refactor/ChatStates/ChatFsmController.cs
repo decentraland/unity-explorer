@@ -8,7 +8,7 @@ namespace DCL.Chat._Refactor.ChatStates
 {
     public class ChatFsmController : IDisposable
     {
-        private readonly IEventBus eventBus;
+        internal readonly IEventBus eventBus;
         private readonly ChatUIMediator mediator;
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionService chatClickDetectionService;

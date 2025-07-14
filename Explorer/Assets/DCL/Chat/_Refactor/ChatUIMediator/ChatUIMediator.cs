@@ -6,11 +6,11 @@
     {
         private readonly ChatMainView mainView;
         private readonly ChatConfig config;
-        private readonly ChatTitlebarPresenter titleBarPresenter;
-        private readonly ChatChannelsPresenter channelListPresenter;
-        private readonly ChatMessageFeedPresenter messageFeedPresenter;
-        private readonly ChatInputPresenter chatInputPresenter;
-        private readonly ChatMemberListPresenter memberListPresenter;
+        internal readonly ChatTitlebarPresenter titleBarPresenter;
+        internal readonly ChatChannelsPresenter channelListPresenter;
+        internal readonly ChatMessageFeedPresenter messageFeedPresenter;
+        internal readonly ChatInputPresenter chatInputPresenter;
+        internal readonly ChatMemberListPresenter memberListPresenter;
 
         public ChatUIMediator(
             ChatMainView mainView,
@@ -36,7 +36,6 @@
             channelListPresenter.Show();
             messageFeedPresenter.Show();
             chatInputPresenter.Show();
-            chatInputPresenter.SetInactiveMode();
             memberListPresenter.Hide();
             
             SetPanelsFocus(isFocused: false, animate);
@@ -48,7 +47,6 @@
             channelListPresenter.Show();
             messageFeedPresenter.Show();
             chatInputPresenter.Show();
-            chatInputPresenter.SetActiveMode();
             memberListPresenter.Hide();
             
             SetPanelsFocus(isFocused: true, animate: false);
@@ -71,9 +69,7 @@
             channelListPresenter.Hide();
             messageFeedPresenter.Hide();
             memberListPresenter.Hide();
-            
             chatInputPresenter.Show();
-            chatInputPresenter.SetInactiveMode();
             
             SetPanelsFocus(isFocused: false, animate: true);
         }

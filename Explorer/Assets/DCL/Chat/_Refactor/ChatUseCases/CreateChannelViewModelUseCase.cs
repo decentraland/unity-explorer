@@ -38,6 +38,7 @@ public class CreateChannelViewModelUseCase
             case ChatChannel.ChatChannelType.NEARBY:
                 initialViewModel.DisplayName = chatConfig.NearbyConversationName;
                 initialViewModel.FallbackIcon = chatConfig.NearbyConversationIcon;
+                initialViewModel.IsOnline = true;
                 break;
 
             case ChatChannel.ChatChannelType.USER:

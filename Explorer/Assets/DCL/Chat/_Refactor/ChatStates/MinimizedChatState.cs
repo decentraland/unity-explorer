@@ -5,6 +5,8 @@
         public override void begin()
         {
             _context.Mediator.SetupForMinimizedState();
+            
+            _context.Mediator.chatInputPresenter.OnMinimize();
         }
 
         public override void end()

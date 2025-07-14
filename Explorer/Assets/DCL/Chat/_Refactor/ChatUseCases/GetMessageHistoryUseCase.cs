@@ -3,7 +3,6 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.UI.InputFieldFormatting;
 
 namespace DCL.Chat.ChatUseCases
 {

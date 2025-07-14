@@ -164,6 +164,15 @@ namespace DCL.Chat.EventBus
         /// Subscribers:    ChatFsmController: Transitions the UI to/from the MembersChatState.
         /// </summary>
         public struct ToggleMembersEvent { public bool IsVisible; }
+        
+        /// <summary>
+        /// Event:          CurrentChannelStateUpdatedEvent
+        /// Triggered By:   ChatUserStateBridge or ChatFsmController states.
+        /// When:           A real-time status change affects the current conversation OR the chat UI becomes visible again.
+        /// Subscribers:    ChatInputPresenter: Re-runs its permission checks for the current channel and updates the input view.
+        /// </summary>
+        public struct CurrentChannelStateUpdatedEvent { }
+        
         #endregion
     }
 }

@@ -11,16 +11,19 @@ public class ChatTitlebarPresenter : IDisposable
     private readonly IChatTitlebarView view;
     private readonly IEventBus eventBus;
     private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+    private readonly ChatConfig chatConfig;
     private readonly EventSubscriptionScope scope = new();
 
     public ChatTitlebarPresenter(
         IChatTitlebarView view,
         IEventBus eventBus,
-        ProfileRepositoryWrapper profileRepositoryWrapper)
+        ProfileRepositoryWrapper profileRepositoryWrapper,
+        ChatConfig chatConfig)
     {
         this.view = view;
         this.eventBus = eventBus;
         this.profileRepositoryWrapper = profileRepositoryWrapper;
+        this.chatConfig = chatConfig;
         
         view.Initialize();
         
@@ -33,9 +36,18 @@ public class ChatTitlebarPresenter : IDisposable
     private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
     {
         if (evt.Channel.ChannelType == ChatChannel.ChatChannelType.USER)
+        {
             view.SetupProfileView(new Web3Address(evt.Channel.Id.Id), profileRepositoryWrapper);
+        }
+        else if(evt.Channel.ChannelType == ChatChannel.ChatChannelType.NEARBY)
+        {
+            view.SetNearbyChannelImage();
+            view.SetChannelNameText(chatConfig.NearbyConversationName);
+        }
         else
+        {
             view.SetChannelNameText(evt.Channel.Id.Id);
+        }
     }
     
     private void OnMemberListToggled(bool active)

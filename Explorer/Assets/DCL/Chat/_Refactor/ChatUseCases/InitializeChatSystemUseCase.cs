@@ -37,7 +37,7 @@ namespace DCL.Chat.ChatUseCases
         public async UniTask ExecuteAsync(CancellationToken ct)
         {
             var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
-            if (nearbyChannel.Messages.Count == 0) // Only add if it's a fresh channel
+            if (nearbyChannel.Messages.Count == 0)
             {
                 chatHistory.AddMessage(nearbyChannel.Id, ChatMessage.NewFromSystem("Type /help for available commands."));
             }

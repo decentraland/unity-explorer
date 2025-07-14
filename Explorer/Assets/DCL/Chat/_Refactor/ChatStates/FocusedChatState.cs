@@ -1,4 +1,4 @@
-﻿using DCL.Diagnostics;
+﻿using DCL.Chat.EventBus;
 
 namespace DCL.Chat.ChatStates
 {
@@ -7,7 +7,10 @@ namespace DCL.Chat.ChatStates
         public override void begin()
         {
             _context.Mediator.SetupForFocusedState();
+            
             _context.InputBlocker.Block();
+
+            _context.Mediator.chatInputPresenter.OnFocus();
         }
 
         public override void end()
