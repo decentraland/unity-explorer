@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using System.Threading;
+using System;
 using UnityEngine;
 
 namespace DCL.UI
@@ -50,5 +50,8 @@ namespace DCL.UI
                               });
 
         }
+
+        private void OnDisable() =>
+            HideLoading();
     }
 }
