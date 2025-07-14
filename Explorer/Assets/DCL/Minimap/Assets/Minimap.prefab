@@ -2952,7 +2952,7 @@ MonoBehaviour:
   - {fileID: 591988185976572089}
   <destinationPinMarker>k__BackingField: {fileID: 8445240332872895182}
   contextMenuConfig:
-    copyLinkIcon: {fileID: 21300000, guid: 72892de2c8c434ade8af95e8181962d9, type: 3}
+    copyLinkIcon: {fileID: 21300000, guid: 3bffb1589fb814c70b23fbce43ba6736, type: 3}
     button: {fileID: 6933064213982824976}
 --- !u!95 &5048152786859444568
 Animator:
