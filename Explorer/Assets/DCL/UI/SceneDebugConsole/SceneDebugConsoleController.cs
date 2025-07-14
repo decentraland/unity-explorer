@@ -1,8 +1,8 @@
+using Cysharp.Threading.Tasks;
 using DCL.UI.SceneDebugConsole.Commands;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.SceneDebugConsole.MessageBus;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -12,8 +12,6 @@ namespace DCL.UI.SceneDebugConsole
 {
     public class SceneDebugConsoleController : IDisposable
     {
-        public delegate void ConsoleVisibilityChangedDelegate(bool isVisible);
-
         private readonly SceneDebugConsoleLogEntryBus logEntriesBus;
         private readonly SceneDebugConsoleLogHistory logsHistory;
         private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
@@ -24,8 +22,6 @@ namespace DCL.UI.SceneDebugConsole
         private VisualTreeAsset logEntryUXML;
         private ListView consoleListView;
         private bool isInputSelected;
-
-        public event ConsoleVisibilityChangedDelegate ConsoleVisibilityChanged;
 
         public SceneDebugConsoleController(
             SceneDebugConsoleLogEntryBus logEntriesBus,
@@ -55,28 +51,15 @@ namespace DCL.UI.SceneDebugConsole
 
             logEntryUXML = Resources.Load<VisualTreeAsset>("SceneDebugConsoleLogEntry");
             consoleListView = uiDocumentRoot.Q<ListView>(name: "console");
-            consoleListView.makeItem = () =>
+            consoleListView.makeItem = () => logEntryUXML.Instantiate();
+            consoleListView.bindItem = (item, index) => item.Q<Label>(className: "log-entry__label").text = logsHistory.LogMessages[index].Message;
+            /*consoleListView.onAdd = view =>
             {
-                // Instantiate the UXML for the entry
-                var newEntry = logEntryUXML.Instantiate();
+                var itemsSourceCount = view.itemsSource.Count;
+                view.RefreshItems();
+                view.ScrollToItem(itemsSourceCount);
+            };*/
 
-                // Instantiate a controller for the data
-                // var newEntryLogic = new LogEntryController();
-
-                // Assign the controller script to the visual element
-                // newLogEntry.userData = newEntryLogic;
-
-                // Initialize the controller script
-                // newEntryLogic.SetVisualElement(newLogEntry);
-
-                // Return the root of the instantiated visual tree
-                return newEntry;
-            };
-            consoleListView.bindItem = (item, index) =>
-            {
-                // (item.userData as CharacterListEntryController)?.SetCharacterData(m_AllCharacters[index]);
-                item.Q<Label>(className: "log-entry__label").text = logsHistory.LogMessages[index].Message;
-            };
             // Set the actual item's source list/array
             consoleListView.itemsSource = logsHistory.LogMessages;
 
@@ -105,14 +88,6 @@ namespace DCL.UI.SceneDebugConsole
             logsHistory.LogMessageAdded -= OnLogsHistoryEntryAdded;
             consoleCommandsBus.OnClearConsole -= Clear;
 
-            /*if (viewInstance != null)
-            {
-                viewInstance.InputBoxFocusChanged -= OnViewInputBoxFocusChanged;
-                viewInstance.InputSubmitted -= OnViewInputSubmitted;
-                viewInstance.FoldingChanged -= OnViewFoldingChanged;
-                viewInstance.Dispose();
-            }*/
-
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             // DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
         }
@@ -125,6 +100,7 @@ namespace DCL.UI.SceneDebugConsole
         private void OnLogsHistoryEntryAdded(SceneDebugConsoleLogEntry logEntry)
         {
             Debug.Log($"PRAVS - Controller.OnLogsHistoryEntryAdded({logEntry.Message})");
+            RefreshListViewAsync().Forget();
         }
 
         /*private void OnViewFoldingChanged(bool isUnfolded)
@@ -158,16 +134,15 @@ namespace DCL.UI.SceneDebugConsole
         // TODO: IS THE LOG MESSAGEBUS + HISTORY NEEDED? CAN WE HAVE ONLY 1 BUS ??
         private void OnEntryBusEntryAdded(SceneDebugConsoleLogEntry entry)
         {
-            // consoleListView.ClearSelection();
-
-            // var updated = new List<SceneDebugConsoleLogEntry>(logsHistory.LogMessages) { entry };
             logsHistory.AddLogMessage(entry);
-            // consoleListView.itemsSource = updated;
-            consoleListView.RefreshItems();
-            // consoleListView.style.display = DisplayStyle.None;
-            // consoleListView.style.display = DisplayStyle.Flex;
+        }
 
-            // TODO: HOW TO MAKE THE LISTVIEW RE-DRAW??? IT ONLY HAPPENS WHEN I MODIFY THE VIEWPORT MANUALLY...
+        // It can only be refreshed on the MAIN THREAD, otherwise it doesn't work and fails silently...
+        // TODO: Find out if we can instantiate the 'SceneDebugConsoleController' on the main thread instead of this...
+        private async UniTask RefreshListViewAsync()
+        {
+            await UniTask.SwitchToMainThread();
+            consoleListView.RefreshItems();
         }
     }
 }
