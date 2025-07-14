@@ -71,5 +71,31 @@ namespace DCL.Rendering.GPUInstancing.Utils
             Debug.Log($"Combined mesh saved as a sub-asset in: {assetPath}", gameObject);
 #endif
         }
+
+        public static void RemoveAllMeshTypeSubAssets(GameObject gameObject)
+        {
+#if UNITY_EDITOR
+            string assetPath = AssetDatabase.GetAssetPath(gameObject);
+
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                Debug.LogWarning("Selected object is not a prefab asset. The combined mesh will not be saved as a sub-asset.");
+                return;
+            }
+
+            Object[] allAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+
+            foreach (Object asset in allAssets)
+            {
+                if (asset is Mesh)
+                {
+                    Debug.Log($"Removing mesh sub-asset {asset.name} from {assetPath}", gameObject);
+
+                    AssetDatabase.RemoveObjectFromAsset(asset);
+                    Object.DestroyImmediate(asset, true);
+                }
+            }
+#endif
+        }
     }
 }
