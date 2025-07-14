@@ -46,6 +46,7 @@ namespace DCL.Communities
             public string address;
             public string name;
             public string profilePictureUrl;
+            public bool hasClaimedName;
         }
 
         public CommunityData[] results;
