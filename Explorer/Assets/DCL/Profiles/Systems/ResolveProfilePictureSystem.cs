@@ -7,8 +7,6 @@ using DCL.Profiles.Helpers;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using UnityEngine;
-using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.Profiles
@@ -29,7 +27,7 @@ namespace DCL.Profiles
         {
             if (promise.TryConsume(World, out StreamableLoadingResult<Texture2DData> result))
             {
-                profile.ProfilePicture = result.ToFullRectSpriteData(ProfileUtils.DEFAULT_PROFILE_PIC);
+                profile.ProfilePicture = result.ToFullRectSpriteData(fallback: ProfileUtils.DEFAULT_PROFILE_PIC);
                 World.Destroy(entity);
             }
         }
