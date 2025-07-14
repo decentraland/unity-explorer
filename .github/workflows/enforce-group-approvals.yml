@@ -56,6 +56,14 @@ jobs:
             exit 0
           fi
 
+          REQUIRES_QA=true
+          if jq -r '.[].name' <<< "$LABELS_JSON" | grep -qi "^no QA needed$"; then
+            REQUIRES_QA=false
+            echo "ℹ️ 'no QA needed' label found — QA approval NOT required."
+          else
+            echo "ℹ️ 'no QA needed' label not found — QA approval required."
+          fi
+
           echo "🔍 Fetching team members..."
           QA_TEAM="qa"
           DEV_TEAM="explorer-devs"
@@ -106,9 +114,9 @@ jobs:
             fi
           done
 
-          if [ "$HAS_QA_APPROVAL" != true ] || [ "$HAS_DEV_APPROVAL" != true ]; then
+          if { [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ]; } || [ "$HAS_DEV_APPROVAL" != true ]; then
             MISSING=()
-            [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
+            [ "$REQUIRES_QA" == true ] && [ "$HAS_QA_APPROVAL" != true ] && MISSING+=("QA approval")
             [ "$HAS_DEV_APPROVAL" != true ] && MISSING+=("DEV approval")
             MISSING_MSG=$(IFS=", "; echo "${MISSING[*]}")
             echo "❌ PR must have at least 1: $MISSING_MSG."
@@ -125,14 +133,26 @@ jobs:
         if: env.APPROVAL_CHECK == 'passed' && github.event_name == 'pull_request_review'
         run: |
           echo "📦 Searching 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
-          gh run list \
+          RUNS_JSON=$(gh run list \
             --workflow="Enforce QA and DEV Approvals" \
             --limit 1000 \
             --repo "$REPO_OWNER/$REPO_NAME" \
-            --json databaseId,headSha,event,conclusion,status,createdAt \
-            | jq --arg HEAD_SHA "$HEAD_SHA" '
-                .[] | select(.headSha == $HEAD_SHA)
-              '
+            --json databaseId,headSha,event,conclusion,status,createdAt)
+
+          echo "$RUNS_JSON" | jq --arg HEAD_SHA "$HEAD_SHA" '
+            .[] | select(.headSha == $HEAD_SHA)
+          '
+
+          # Count in-progress runs for this SHA
+          IN_PROGRESS_COUNT=$(echo "$RUNS_JSON" | jq --arg HEAD_SHA "$HEAD_SHA" -r '
+            map(select(.headSha == $HEAD_SHA and .status == "in_progress")) | length
+          ')
+
+          echo "🔸 Number of in-progress runs for SHA $HEAD_SHA: $IN_PROGRESS_COUNT"
+          if [ "$IN_PROGRESS_COUNT" -gt 1 ]; then
+            echo "⚠️ More than 1 in-progress run detected for this SHA, skipping rerun."
+            exit 0
+          fi
 
           echo "🔎 Searching failed 'Enforce QA and DEV Approvals' workflow run for SHA $HEAD_SHA..."
           WORKFLOW_RUN_ID=$(gh run list \

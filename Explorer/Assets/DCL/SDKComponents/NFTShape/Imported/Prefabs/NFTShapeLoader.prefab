@@ -308,6 +308,7 @@ MonoBehaviour:
   viewNftShapeMaterial: {fileID: 2100000, guid: c95a10e5c65124c1aa82d6fe293b895c, type: 2}
   emptyTexture: {fileID: 2800000, guid: 2268cc2ec51f442fa959897ff4946b94, type: 3}
   albedoColorPropertyName: _BaseMap
+  texScalePropertyName: _BaseMap_ST
   placeIndex: 0
   loadingStatus: {fileID: 6031248581314555280}
   failedStatus: {fileID: 7004181466692703064}

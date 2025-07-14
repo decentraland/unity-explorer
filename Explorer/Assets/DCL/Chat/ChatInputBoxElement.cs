@@ -76,8 +76,8 @@ namespace DCL.Chat
         private ChatSettingsAsset chatSettings;
         private CancellationTokenSource popupCts;
 
-        private GetParticipantProfilesDelegate GetParticipantProfiles;
-        private readonly List<Profile> participantProfiles = new ();
+        private GetChannelMembersDelegate GetParticipantProfiles;
+        private readonly List<ChatUserData> participantProfiles = new ();
 
         private bool isInputSubmissionEnabled;
 
@@ -135,11 +135,12 @@ namespace DCL.Chat
         /// </summary>
         public event InputChangedDelegate? InputChanged;
 
-        public void Initialize(ChatSettingsAsset chatSettings, GetParticipantProfilesDelegate getParticipantProfiles)
+        public void Initialize(ChatSettingsAsset chatSettings, GetChannelMembersDelegate getParticipantProfiles, IProfileCache profileCache)
         {
             device = InputSystem.GetDevice<Mouse>();
             this.chatSettings = chatSettings;
             this.GetParticipantProfiles = getParticipantProfiles;
+            this.profileCache = profileCache;
 
             InitializeEmojiPanelController();
             InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
@@ -149,7 +150,7 @@ namespace DCL.Chat
 
             inputField.onSelect.AddListener(OnInputSelected);
             inputField.onDeselect.AddListener(OnInputDeselected);
-            inputField.onValueChanged.AddListener(OnInputChanged);
+            inputField.onValueChanged.AddListener(OnInputChangedAsync);
             inputField.Clicked += OnClicked;
             inputField.PasteShortcutPerformed += OnPasteShortcutPerformed;
 
@@ -211,8 +212,12 @@ namespace DCL.Chat
             ViewDependencies.ClipboardManager.Paste(this);
         }
 
-        private void OnInputChanged(string inputText)
+        private CancellationTokenSource suggestionsCts;
+
+        private async void OnInputChangedAsync(string inputText)
         {
+            suggestionsCts = suggestionsCts.SafeRestart();
+
             //With this we are detecting only the last word (where the current caret position is) and checking for matches there.
             //This regex already pre-matches the starting patterns for both Emoji ":" and Profile "@" patterns, and only sends the match further to validate other specific conditions
             //This is needed because otherwise we wouldn't know which word in the whole text we are trying to match, and if there were several potential matches
@@ -226,6 +231,7 @@ namespace DCL.Chat
                 //If we don't find any emoji pattern only then we look for username patterns
                 if (!lastMatch.Success)
                 {
+                    await GetParticipantProfiles(participantProfiles, suggestionsCts.Token);
                     UpdateProfileNameMap();
                     lastMatch = suggestionPanelController.HandleSuggestionsSearch(wordMatch.Value, PROFILE_PATTERN_REGEX, InputSuggestionType.PROFILE, profileSuggestionsDictionary);
                 }
@@ -433,6 +439,7 @@ namespace DCL.Chat
 
             inputField.Clicked -= OnClicked;
             inputField.PasteShortcutPerformed -= OnPasteShortcutPerformed;
+            emojiPanelButton.Button.onClick.RemoveListener(OnEmojiPanelButtonClicked);
         }
 
         private void OnSuggestionSelected(string suggestionId)
@@ -457,15 +464,13 @@ namespace DCL.Chat
 
         private void UpdateProfileNameMap()
         {
-            GetParticipantProfiles(participantProfiles);
-
             var profileSuggestions = ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Get();
             profileSuggestions.AddRange(profileSuggestionsDictionary);
 
             for (var index = 0; index < profileSuggestions.Count; index++)
             {
                 KeyValuePair<string, ProfileInputSuggestionData> suggestion = profileSuggestions[index];
-                bool isThereProfileForSuggestion = participantProfiles.FindIndex((profile) => profile.UserId == suggestion.Value.GetId()) > -1;
+                bool isThereProfileForSuggestion = participantProfiles.FindIndex((userData) => userData.WalletAddress == suggestion.Value.GetId()) > -1;
                 if (!isThereProfileForSuggestion)
                         profileSuggestionsDictionary.Remove(suggestion.Key);
             }
@@ -474,11 +479,13 @@ namespace DCL.Chat
             ListPool<KeyValuePair<string, ProfileInputSuggestionData>>.Release(profileSuggestions);
 
             //We add or update the remaining participants
-            foreach (Profile? profile in participantProfiles)
+            foreach (ChatUserData userData in participantProfiles)
             {
+                Profile? profile = profileCache.Get(userData.WalletAddress);
+
                 if (profile != null)
                 {
-                    if (profileSuggestionsDictionary.TryGetValue(profile.DisplayName, out ProfileInputSuggestionData profileSuggestionData))
+                    if (profileSuggestionsDictionary.TryGetValue(profile.Name, out ProfileInputSuggestionData profileSuggestionData))
                     {
                         if (profileSuggestionData.ProfileData != profile)
                             profileSuggestionsDictionary[profile.DisplayName] = new ProfileInputSuggestionData(profile, profileRepositoryWrapper);
