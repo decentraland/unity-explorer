@@ -20,6 +20,7 @@ namespace DCL.Chat._Refactor.ChatStates
         public ChatInputBlockingService InputBlocker => inputBlocker;
         public bool IsInputFocused => fsm.currentState is FocusedChatState;
         public bool IsMinimized => fsm.currentState is MinimizedChatState;
+        public bool IsHidden => fsm.currentState is HiddenChatState;
 
         public ChatFsmController(
             IEventBus eventBus,
@@ -40,6 +41,7 @@ namespace DCL.Chat._Refactor.ChatStates
             fsm.addState(new FocusedChatState());
             fsm.addState(new MembersChatState());
             fsm.addState(new MinimizedChatState());
+            fsm.addState(new HiddenChatState());
 
             scope.Add(this.eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(evt => fsm.changeState<FocusedChatState>()));
             scope.Add(this.eventBus.Subscribe<ChatEvents.CloseChatEvent>(evt => Minimize()));
@@ -87,6 +89,21 @@ namespace DCL.Chat._Refactor.ChatStates
                 fsm.changeState<FocusedChatState>();
             else
                 fsm.changeState<DefaultChatState>();
+        }
+        
+        public void SetVisibility(bool isVisible)
+        {
+            if (isVisible)
+            {
+                fsm.changeState<DefaultChatState>();
+            }
+            else
+            {
+                if (fsm.currentState is not HiddenChatState)
+                {
+                    fsm.changeState<HiddenChatState>();
+                }
+            }
         }
 
         public void Dispose()

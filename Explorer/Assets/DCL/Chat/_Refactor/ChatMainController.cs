@@ -40,9 +40,12 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
         
-        public bool IsVisibleInSharedSpace => 
-            State != ControllerState.ViewHidden &&
-            fsmController is { IsMinimized: false };
+        // public bool IsVisibleInSharedSpace => 
+        //     State != ControllerState.ViewHidden &&
+        //     fsmController is { IsMinimized: false };
+        public bool IsVisibleInSharedSpace =>
+            State != ControllerState.ViewHidden && (fsmController is { IsHidden: false } || fsmController is { IsMinimized: false });
+        
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
@@ -152,8 +155,15 @@ namespace DCL.Chat
             fsmController?.OnViewShow();
         }
 
+        public void SetVisibility(bool isVisible)
+        {
+            fsmController?.SetVisibility(isVisible);
+        }
+        
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
         {
+            SetVisibility(true);
+            
             if (State != ControllerState.ViewHidden)
             {
                 fsmController?.SetInitialState(showParams.Focus);

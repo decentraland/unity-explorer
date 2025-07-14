@@ -84,5 +84,16 @@
             channelListPresenter.SetFocusState(isFocused, animate, duration, ease);
             titleBarPresenter.SetFocusState(isFocused, animate, duration, ease);
         }
+
+        public void SetupForHiddenState()
+        {
+            titleBarPresenter.Hide();
+            channelListPresenter.Hide();
+            messageFeedPresenter.Hide();
+            chatInputPresenter.Hide();
+            memberListPresenter.Hide();
+        
+            SetPanelsFocus(isFocused: false, animate: false);
+        }
     }
 }

@@ -127,9 +127,7 @@ namespace DCL.UI.SharedSpaceManager
                         if (!panelInSharedSpace.IsVisibleInSharedSpace && isFriendsFeatureEnabled)
                         {
                             ChatMainController chatController = registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainController>();
-
-                            // The chat is hidden while the friends panel is present
-                            // chatController.SetViewVisibility(false);
+                            chatController.SetVisibility(false);
 
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
 
