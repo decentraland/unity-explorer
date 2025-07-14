@@ -18,7 +18,7 @@ namespace DCL.Chat.MessageBus
         private readonly Dictionary<string, IChatCommand> commands;
         private CancellationTokenSource commandCts = new ();
 
-        public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
         public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyList<IChatCommand> commands, ILoadingStatus loadingStatus)
         {
@@ -36,7 +36,7 @@ namespace DCL.Chat.MessageBus
             commandCts.SafeCancelAndDispose();
         }
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
             if (loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
                 return;
@@ -44,14 +44,14 @@ namespace DCL.Chat.MessageBus
             if (message[0] == '/') // User tried running a command
             {
                 //We send the results of the command to the nearby channel
-                HandleChatCommandAsync(ChatChannel.NEARBY_CHANNEL_ID, message).Forget();
+                HandleChatCommandAsync(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, message).Forget();
                 return;
             }
 
-            this.origin.Send(channel, message, origin);
+            this.origin.Send(channel, message, origin, topic);
         }
 
-        private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, string message)
+        private async UniTaskVoid HandleChatCommandAsync(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, string message)
         {
             string[] split = message.Replace(", ", ",").Split(' '); // Split by space but keep commas
             string userCommand = split[0][1..];
@@ -67,31 +67,31 @@ namespace DCL.Chat.MessageBus
                     try
                     {
                         string response = await command.ExecuteCommandAsync(parameters, commandCts.Token);
-                        SendFromSystem(channelId, response);
+                        SendFromSystem(channelId, channelType, response);
                     }
-                    catch (Exception) { SendFromSystem(channelId, "🔴 Error running command."); }
+                    catch (Exception) { SendFromSystem(channelId, channelType, "🔴 Error running command."); }
 
                     return;
                 }
 
-                SendFromSystem(channelId, $"🔴 Invalid parameters, usage:\n{command.Description}");
+                SendFromSystem(channelId, channelType, $"🔴 Invalid parameters, usage:\n{command.Description}");
                 return;
             }
 
             // Command not found
-            SendFromSystem(channelId, "🔴 Command not found.");
+            SendFromSystem(channelId, channelType, "🔴 Command not found.");
         }
 
-        private void SendFromSystem(ChatChannel.ChannelId channelId, string? message)
+        private void SendFromSystem(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, string? message)
         {
             if (string.IsNullOrEmpty(message)) return;
 
-            MessageAdded?.Invoke(channelId, ChatMessage.NewFromSystem(message));
+            MessageAdded?.Invoke(channelId, channelType, ChatMessage.NewFromSystem(message));
         }
 
-        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatMessage obj)
+        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage obj)
         {
-            MessageAdded?.Invoke(channelId, obj);
+            MessageAdded?.Invoke(channelId, channelType, obj);
         }
     }
 }

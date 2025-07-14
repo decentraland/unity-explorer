@@ -69,7 +69,6 @@ namespace DCL.EmotesWheel
 
             emoteWheelInput.Customize.performed += OpenBackpack;
             emoteWheelInput.Close.performed += Close;
-            DCLInput.Instance.UI.Close.performed += Close;
         }
 
         public override void Dispose()
@@ -78,7 +77,6 @@ namespace DCL.EmotesWheel
 
             emoteWheelInput.Customize.performed -= OpenBackpack;
             emoteWheelInput.Close.performed -= Close;
-            DCLInput.Instance.UI.Close.performed -= Close;
             UnregisterSlotsInput(emoteWheelInput);
         }
 

@@ -42,6 +42,11 @@ namespace DCL.Diagnostics.Sentry
             SentrySdk.Init(options);
         }
 
+        public void AddMeetMinimumRequirements(Scope scope, bool meets)
+        {
+            scope.SetTag("meets_minimum_requirements", meets.ToString());
+        }
+
         public void AddIdentityToScope(Scope scope, string wallet)
         {
             scope.SetTag("wallet", wallet);

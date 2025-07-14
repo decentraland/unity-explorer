@@ -33,6 +33,9 @@ namespace DCL.UI
             ButtonAnimator.enabled = false;
         }
 
+        public void ResetButtonAnimationScale() =>
+            transform.localScale = Vector3.one;
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             ButtonAnimator.SetTrigger(UIAnimationHashes.HOVER);

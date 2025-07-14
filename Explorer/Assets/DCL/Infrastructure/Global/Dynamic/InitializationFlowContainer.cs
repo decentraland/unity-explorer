@@ -1,4 +1,6 @@
 ﻿using DCL.Audio;
+using DCL.Character;
+using DCL.Character.Plugin;
 using DCL.Chat.History;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -37,12 +39,12 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appArgs,
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
-            IChatHistory chatHistory,
-            bool localSceneDevelopment)
+            bool localSceneDevelopment,
+            CharacterContainer characterContainer)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
 
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(loadingStatus, liveKitHealthCheck);
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(liveKitHealthCheck);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var blocklistCheckStartupOperation = new BlocklistCheckStartupOperation(staticContainer.WebRequestsContainer, bootstrapContainer.IdentityCache!, bootstrapContainer.DecentralandUrlsSource);
             var loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(loadingStatus, selfProfile, staticContainer.MainPlayerAvatarBaseProxy);
@@ -57,8 +59,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadPlayerAvatarStartupOperation,
                 loadLandscapeStartupOperation,
                 checkOnboardingStartupOperation,
-                teleportStartupOperation,
-                ensureLivekitConnectionStartupOperation, // GateKeeperRoom is dependent on player position so it must be after teleport
+                teleportStartupOperation
             };
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
@@ -98,12 +99,15 @@ namespace DCL.UserInAppInitializationFlow
                     realmContainer.RealmController,
                     staticContainer.PortableExperiencesController,
                     roomHub,
-                    chatHistory,
                     startUpOps,
                     reLoginOps,
                     checkOnboardingStartupOperation,
                     bootstrapContainer.IdentityCache.EnsureNotNull(),
-                    appArgs),
+                    ensureLivekitConnectionStartupOperation,
+                    appArgs,
+                    characterContainer.CharacterObject,
+                    characterContainer.Transform,
+                    dynamicWorldParams.StartParcel),
             };
         }
     }

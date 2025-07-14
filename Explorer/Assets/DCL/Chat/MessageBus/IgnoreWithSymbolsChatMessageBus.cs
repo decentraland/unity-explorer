@@ -27,20 +27,21 @@ namespace DCL.Chat.MessageBus
             this.origin.MessageAdded += OriginOnOnMessageAdded;
         }
 
-        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatMessage obj)
+        private void OriginOnOnMessageAdded(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage obj)
         {
             if (Valid(obj.Message))
-                MessageAdded?.Invoke(channelId, obj);
+                MessageAdded?.Invoke(channelId, channelType, obj);
         }
 
-        public event Action<ChatChannel.ChannelId, ChatMessage>? MessageAdded;
+        public event Action<ChatChannel.ChannelId, ChatChannel.ChatChannelType, ChatMessage>? MessageAdded;
 
-        public void Send(ChatChannel channel, string message, string origin)
+        public void Send(ChatChannel channel, string message, string origin, string topic)
         {
             if (Valid(message))
-                this.origin.Send(channel, message, origin);
+                this.origin.Send(channel, message, origin, topic);
             else
                 MessageAdded?.Invoke(channel.Id,
+                    channel.ChannelType,
                     ChatMessage.NewFromSystem("Message with the special character is forbidden")
                 );
         }

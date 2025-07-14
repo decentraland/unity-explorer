@@ -24,14 +24,13 @@ namespace DCL.Multiplayer.Connections.Messaging
         private readonly IMemoryPool memoryPool;
         private readonly uint supportedVersion;
         private bool sent;
+        private readonly string topic;
 
-        private const string TOPIC = "";
-
-        public MessageWrap(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, uint supportedVersion) : this(
-            multiPool.Get<T>(), dataPipe, multiPool.Get<List<string>>(), multiPool, memoryPool, supportedVersion
+        public MessageWrap(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, string topic, uint supportedVersion) : this(
+            multiPool.Get<T>(), dataPipe, multiPool.Get<List<string>>(), multiPool, memoryPool, topic, supportedVersion
         ) { }
 
-        public MessageWrap(T payload, IDataPipe dataPipe, List<string> recipients, IMultiPool multiPool, IMemoryPool memoryPool,
+        public MessageWrap(T payload, IDataPipe dataPipe, List<string> recipients, IMultiPool multiPool, IMemoryPool memoryPool, string topic,
             uint supportedVersion)
         {
             Payload = payload;
@@ -40,6 +39,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             this.multiPool = multiPool;
             this.memoryPool = memoryPool;
             this.supportedVersion = supportedVersion;
+            this.topic = topic;
             sent = false;
         }
 
@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             using MemoryWrap memory = memoryPool.Memory(packetWrap.value);
             packetWrap.value.WriteTo(memory);
             packetWrap.value.ProtocolVersion = 0;
-            dataPipe.PublishData(memory.Span(), TOPIC, recipients, dataPacketKind);
+            dataPipe.PublishData(memory.Span(), topic, recipients, dataPacketKind);
             sent = true;
             Dispose();
         }
