@@ -628,6 +628,8 @@ namespace Global.Dynamic
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
+            var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -1002,7 +1004,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     chatEventBus,
                     communitiesEventBus,
-                    socialServiceContainer.socialServicesRPC));
+                    socialServiceContainer.socialServicesRPC,
+                    lambdasProfilesProvider));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
