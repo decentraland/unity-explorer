@@ -8,6 +8,7 @@ using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
 using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Services;
 using System;
 using System.Threading;
@@ -33,13 +34,14 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<VoiceChatSettingsAsset> voiceChatSettingsAsset;
         private ProvidedAsset<VoiceChatConfiguration> voiceChatConfigurationAsset;
         private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
+        private ProvidedAsset<PlayerEntryView> playerEntry;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
         private VoiceChatLivekitRoomHandler? livekitRoomHandler;
         private PrivateVoiceChatController? privateVoiceChatController;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
-        private CommunitiesVoiceChatController? communitiesVoiceChatController;
-        private VoiceChatOrchestrator voiceChatOrchestrator;
+        private CommunityVoiceChatController? communitiesVoiceChatController;
+        private readonly VoiceChatOrchestrator voiceChatOrchestrator;
 
         public VoiceChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -123,14 +125,24 @@ namespace DCL.PluginSystem.Global
                 world,
                 playerEntity);
 
+            playerEntry = await assetsProvisioner.ProvideMainAssetAsync(settings.PlayerEntryView, ct: ct);
+
             privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
-            communitiesVoiceChatController = new CommunitiesVoiceChatController();
+            communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider);
         }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
             [field: SerializeField] public VoiceChatConfigurationsReference VoiceChatConfigurations { get; private set; }
+
+            [field: SerializeField] public PlayerEntryViewRef PlayerEntryView { get; private set; }
+
+            [Serializable]
+            public class PlayerEntryViewRef : ComponentReference<PlayerEntryView>
+            {
+                public PlayerEntryViewRef(string guid) : base(guid) { }
+            }
 
             [Serializable]
             public class VoiceChatConfigurationsReference : AssetReferenceT<VoiceChatPluginSettings>

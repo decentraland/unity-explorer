@@ -7,6 +7,7 @@ using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.Controls;
 using DCL.UI.Sidebar;
 using DCL.VoiceChat;
+using DCL.VoiceChat.CommunityVoiceChat;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,6 +18,8 @@ namespace DCL.UI.MainUI
     {
         [field: SerializeField] public ChatView ChatView { get; private set; }
         [field: SerializeField] public VoiceChatView VoiceChatView { get; private set; }
+
+        [field: SerializeField] public CommunityVoiceChatTitlebarView CommunityVoiceChatView { get; private set; }
         [field: SerializeField] public FriendsPanelView FriendsPanelViewView { get; private set; }
         [field: SerializeField] public MinimapView MinimapView { get; private set; }
         [field: SerializeField] public FriendPushNotificationView FriendPushNotificationView { get; private set; }

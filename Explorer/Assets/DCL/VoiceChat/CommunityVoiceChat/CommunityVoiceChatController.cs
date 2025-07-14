@@ -1,13 +1,14 @@
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
+using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
-    public class CommunityVoiceChatController
+    public class CommunityVoiceChatController : IDisposable
     {
         private readonly CommunityVoiceChatTitlebarView view;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -54,6 +55,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 playerEntriesPool.Release(playerEntry);
 
             usedPlayerEntries.Clear();
+        }
+
+        public void Dispose()
+        {
         }
     }
 }
