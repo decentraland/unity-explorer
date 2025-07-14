@@ -1134,5 +1134,10 @@ namespace DCL.Chat
         {
             conversationsToolbar.MoveConversationToPosition(channelToMove, 1);
         }
+
+        public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
+        {
+            chatMessageViewer.SetOnlineUserAddresses(onlineUserAddresses);
+        }
     }
 }

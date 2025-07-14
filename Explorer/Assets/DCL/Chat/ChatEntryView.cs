@@ -19,7 +19,7 @@ namespace DCL.Chat
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
         [field: Header("Elements")]
-        [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
+        [field: SerializeField] private ChatEntryUsernameElement usernameElement { get; set; }
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
 
         [field: Header("Avatar Profile")]
@@ -28,6 +28,10 @@ namespace DCL.Chat
 
         private ChatMessage chatMessage;
         private readonly Vector3[] cornersCache = new Vector3[4];
+
+        private Color originalUserNameColor;
+        private Color originalUserIdColor;
+        private Color originalVerifiedIconColor;
 
         public void AnimateChatEntry()
         {
@@ -47,6 +51,10 @@ namespace DCL.Chat
         {
             profileButton.onClick.AddListener(OnProfileButtonClicked);
             usernameElement.UserNameClicked += OnUsernameClicked;
+            originalUserIdColor = usernameElement.walletIdText.color;
+
+            if(usernameElement.verifiedIcon != null)
+                originalVerifiedIconColor = usernameElement.verifiedIcon.color;
         }
 
         private void OnProfileButtonClicked()
@@ -73,6 +81,24 @@ namespace DCL.Chat
         private void OpenContextMenu(float posX, float posY)
         {
             ChatEntryClicked?.Invoke(chatMessage.SenderWalletAddress, new Vector2(posX, posY));
+        }
+
+        public void GreyOut(bool greyOut, float opacity)
+        {
+            ProfilePictureView.GreyOut(greyOut, opacity);
+            messageBubbleElement.GreyOut(greyOut, opacity);
+
+            usernameElement.userName.color = greyOut ? Color.Lerp(originalUserNameColor, new Color(0.0f, 0.0f, 0.0f, originalUserNameColor.a), opacity) : originalUserNameColor;
+            usernameElement.walletIdText.color = greyOut ? Color.Lerp(originalUserIdColor, new Color(0.0f, 0.0f, 0.0f, originalUserIdColor.a), opacity) : originalUserIdColor;
+
+            if(usernameElement.verifiedIcon != null)
+                usernameElement.verifiedIcon.color = greyOut ? Color.Lerp(originalVerifiedIconColor, new Color(0.0f, 0.0f, 0.0f, originalVerifiedIconColor.a), opacity) : originalVerifiedIconColor;
+        }
+
+        public void SetUsernameColor(Color newUserNameColor)
+        {
+            originalUserNameColor = newUserNameColor;
+            usernameElement.userName.color = newUserNameColor;
         }
     }
 }

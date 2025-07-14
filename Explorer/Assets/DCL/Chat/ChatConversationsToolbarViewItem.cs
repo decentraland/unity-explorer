@@ -1,7 +1,7 @@
 using DCL.Chat.History;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -58,6 +58,10 @@ namespace DCL.Chat
 
         [SerializeField]
         private RectTransform tooltipPosition;
+
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float offlineThumbnailGreyOutOpacity = 0.6f;
 
         /// <summary>
         /// Gets or sets the identifier of the conversation.
@@ -125,6 +129,8 @@ namespace DCL.Chat
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
+            thumbnailView.GetComponent<ProfilePictureView>().GreyOut(connectionStatus != OnlineStatus.ONLINE, offlineThumbnailGreyOutOpacity);
         }
 
         /// <summary>

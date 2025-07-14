@@ -443,6 +443,8 @@ MonoBehaviour:
   thumbnailImageView: {fileID: 2554876876778093011}
   thumbnailBackground: {fileID: 1550108083613389261}
   defaultEmptyThumbnail: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
+  thumbnailFrame: {fileID: 4132762169368970970}
+  greyOutOpacity: 0.6
 --- !u!1001 &6361093526505562350
 PrefabInstance:
   m_ObjectHideFlags: 0

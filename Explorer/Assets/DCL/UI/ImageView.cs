@@ -46,8 +46,11 @@ namespace DCL.UI
             LoadingObject.SetActive(false);
         }
 
-        public void SetColor(Color color) =>
-            Image.color = color;
+        public Color ImageColor
+        {
+            get => Image.color;
+            set => Image.color = value;
+        }
 
         public async UniTask FadeInAsync(float duration, CancellationToken ct)
         {

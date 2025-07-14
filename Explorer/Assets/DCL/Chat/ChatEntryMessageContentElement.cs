@@ -12,6 +12,13 @@ namespace DCL.Chat
         [field: SerializeField] internal TMP_Text messageContentText { get; private set; }
         [field: SerializeField] internal TextHyperlinkHandlerElement textHyperlinkHandler { get; private set; }
 
+        private Color originalTextColor;
+
+        private void Awake()
+        {
+            originalTextColor = messageContentText.color;
+        }
+
         public void SetMessageContent(string content)
         {
             messageContentText.SetText(content);
@@ -20,6 +27,11 @@ namespace DCL.Chat
             //of the previous frame, also data for links would not be updated either.
             messageContentText.ForceMeshUpdate(true, true);
             messageContentSizeFitter.SetLayoutVertical();
+        }
+
+        public void GreyOut(bool greyOut, float opacity)
+        {
+            messageContentText.color = greyOut ? Color.Lerp(originalTextColor, new Color(0.0f, 0.0f, 0.0f, messageContentText.color.a), opacity) : originalTextColor;
         }
     }
 }

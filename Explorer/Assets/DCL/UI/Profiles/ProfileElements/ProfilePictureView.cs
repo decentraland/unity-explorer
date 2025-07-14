@@ -14,10 +14,24 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
+        [SerializeField] private Image thumbnailFrame;
 
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private CancellationTokenSource? cts;
         private string? currentUrl;
+
+        private Color originalThumbnailImageColor;
+        private Color originalThumbnailBackgroundColor;
+        private Color originalThumbnailFrameColor;
+
+        private void Awake()
+        {
+            if(thumbnailImageView != null)
+                originalThumbnailImageColor = thumbnailImageView.ImageColor;
+
+            if(thumbnailFrame != null)
+                originalThumbnailFrameColor = thumbnailFrame.color;
+        }
 
         public void Dispose()
         {
@@ -41,6 +55,7 @@ namespace DCL.UI.ProfileElements
         public void SetupOnlyColor(Color userColor)
         {
             thumbnailBackground.color = userColor;
+            originalThumbnailBackgroundColor = userColor;
         }
 
         public void SetLoadingState(bool isLoading)
@@ -104,6 +119,18 @@ namespace DCL.UI.ProfileElements
                 currentUrl = null;
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }
+        }
+
+        public void GreyOut(bool greyOut, float opacity)
+        {
+            if(thumbnailImageView != null)
+                thumbnailImageView.ImageColor = greyOut ? Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity) : originalThumbnailImageColor;
+
+            if(thumbnailBackground != null)
+                thumbnailBackground.color = greyOut ? Color.Lerp(originalThumbnailBackgroundColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailBackgroundColor.a), opacity) : originalThumbnailBackgroundColor;
+
+            if(thumbnailFrame != null)
+                thumbnailFrame.color = greyOut ? Color.Lerp(originalThumbnailFrameColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailFrameColor.a), opacity) : originalThumbnailFrameColor;
         }
     }
 }

@@ -169,6 +169,7 @@ MonoBehaviour:
   <messageContentSizeFitter>k__BackingField: {fileID: 5118336956721699336}
   <messageContentText>k__BackingField: {fileID: 2681651048344826938}
   <textHyperlinkHandler>k__BackingField: {fileID: 4356320699868230769}
+  greyOutColor: {r: 0, g: 0, b: 0, a: 0.59607846}
 --- !u!114 &4356320699868230769
 MonoBehaviour:
   m_ObjectHideFlags: 0

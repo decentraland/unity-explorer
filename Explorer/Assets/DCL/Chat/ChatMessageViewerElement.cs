@@ -68,6 +68,10 @@ namespace DCL.Chat
         [SerializeField]
         private ScrollRect scrollRect;
 
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float entryGreyOutOpacity = 0.6f;
+
         // The latest amount of messages added to the chat that must be animated yet
         private int entriesPendingToAnimate;
 
@@ -81,6 +85,7 @@ namespace DCL.Chat
         private CancellationTokenSource popupCts;
         private UniTaskCompletionSource contextMenuTask = new ();
         private bool isInitialized;
+        private HashSet<string>? onlineUserAddresses;
 
         /// <summary>
         /// Gets whether the scroll view is showing the bottom of the content, and it can't scroll down anymore.
@@ -292,7 +297,24 @@ namespace DCL.Chat
 
             return false;
         }
+/*
+        public void GreyOutMessagesForSender(bool greyOut, string userAddress)
+        {
+            for (int i = 0; i < loopList.ShownItemCount; ++i)
+            {
+                LoopListViewItem2 item = loopList.GetShownItemByIndex(i);
 
+                if (!item.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                int messageIndex = loopList.GetIndexInShownItemList(item);
+                ChatEntryView entry = item.GetComponent<ChatEntryView>();
+                entry.GreyOut(chatMessages[messageIndex].SenderWalletAddress == userAddress);
+            }
+        }
+*/
         public void Dispose()
         {
             contextMenuTask.TrySetResult();
@@ -378,19 +400,22 @@ namespace DCL.Chat
         private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView)
         {
             if (itemData.IsSystemMessage)
-                itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
+                itemView.SetUsernameColor(ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName));
             else
             {
                 Profile? profile = await profileRepositoryWrapper.GetProfileAsync(itemData.SenderWalletAddress, CancellationToken.None);
 
                 if (profile != null)
                 {
-                    itemView.usernameElement.userName.color = profile.UserNameColor;
+                    itemView.SetUsernameColor(profile.UserNameColor);
                     itemView.ProfilePictureView.Setup(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 }
             }
 
             itemView.SetItemData(itemData);
+
+            bool isGreyedOut = !itemData.IsSystemMessage && !itemData.IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(itemData.SenderWalletAddress);
+            itemView.GreyOut(isGreyedOut, entryGreyOutOpacity);
 
             // Views that correspond to new added items have to be animated
             if (index - 1 < entriesPendingToAnimate) // Note: -1 because the first real message starts at 1, which is the latest messaged added
@@ -424,6 +449,12 @@ namespace DCL.Chat
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileRepositoryWrapper)
         {
             this.profileRepositoryWrapper = profileRepositoryWrapper;
+        }
+
+        public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
+        {
+            this.onlineUserAddresses = onlineUserAddresses;
+            loopList.RefreshAllShownItem();
         }
     }
 }
