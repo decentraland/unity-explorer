@@ -155,7 +155,8 @@ namespace DCL.SDKComponents.MapPins.Systems
                     textureComponentValue.WrapMode,
                     textureComponentValue.FilterMode,
                     textureComponentValue.TextureType,
-                    attemptsCount: ATTEMPTS_COUNT
+                    attemptsCount: ATTEMPTS_COUNT,
+                    reportSource: nameof(MapPinLoaderSystem)
                 ),
                 partitionComponent
             );

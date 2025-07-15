@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Essentials
   m_GUID: 47f803e1e9c5079449bd106df98a0b7d
   m_SerializeEntries:
+  - m_GUID: 022077403db6945e58f0023757b0155f
+    m_Address: Assets/DCL/ApplicationsGuards/ApplicationLivekitGuard/LivekitDownGuardPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 04a7ffcd277754f7c91237894604f522
     m_Address: NftRarityBackgrounds
     m_ReadOnly: 0
@@ -47,6 +52,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0fce4c1a785b1495bbf861787a9a3224
     m_Address: Assets/DCL/UI/ErrorPopup/Assets/ErrorPopup.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 112ec96d4c89d41d68b03e4ba73992e9
+    m_Address: Assets/DCL/Communities/EventInfo/Prefabs/EventInfoPanel.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -152,6 +162,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4f24a591312ba473ab5ac65d6658cb94
     m_Address: SDKVirtualCamera
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f900819503d2412194e6de3e5a95ba0
+    m_Address: Assets/DCL/Communities/CommunitiesCard/Prefabs/CommunityCard.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -52,5 +52,6 @@ namespace DCL.ECS7
         public const int AUDIO_EVENT = 1105;
         public const int REALM_INFO = 1106;
         public const int PRIMARY_POINTER_INFO = 1209;
+        public const int SKYBOX_TIME = 1210;
     }
 }

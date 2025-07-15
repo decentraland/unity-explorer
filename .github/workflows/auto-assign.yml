@@ -1,12 +1,20 @@
-name: 'Auto Assign'
+name: 'Auto Assign Reviewers'
+
 on:
   pull_request:
     types: [opened, ready_for_review]
 
 jobs:
-  add-reviews:
+  assign-devs:
     runs-on: ubuntu-latest
     steps:
-      - uses: kentaro-m/auto-assign-action@v1.2.1
+      - uses: kentaro-m/auto-assign-action@v2.0.0
         with:
-          configuration-path: '.github/auto_assign_config.yml'
+          configuration-path: '.github/auto_assign_config_dev.yml'
+
+  assign-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: kentaro-m/auto-assign-action@v2.0.0
+        with:
+          configuration-path: '.github/auto_assign_config_qa.yml'
