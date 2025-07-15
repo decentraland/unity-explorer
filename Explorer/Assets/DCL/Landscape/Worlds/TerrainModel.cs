@@ -43,7 +43,6 @@ namespace DCL.Landscape
             // surrounded by red pixels to fill out the power of two texture, but at least one. World
             // origin (parcel 0,0) corresponds to uv of 0.5 plus half a pixel. The outer border is there
             // so that terrain height blends to zero at its edges.
-            try
             {
                 int i = 0;
 
@@ -131,12 +130,11 @@ namespace DCL.Landscape
                 }
 
                 // Fifth section, same as first section.
-                endY = i + (textureSize / 2 - maxParcel.y) * textureSize;
+                endY = i + (textureSize / 2 - maxParcel.y - 1) * textureSize;
 
                 while (i < endY)
                     data[i++] = 255;
             }
-            catch (IndexOutOfRangeException) { }
 
             for (int i = 0; i < empty.Length; i++)
             {
