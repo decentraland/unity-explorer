@@ -12,6 +12,11 @@ namespace DCL.UI
         [SerializeField] private float tweenDuration = 1f;
         [SerializeField] private float fadeDuration = 0.3f;
 
+        private void Awake()
+        {
+            loadingCanvasGroup.interactable = false;
+        }
+
         public void ShowLoading()
         {
             loadedCanvasGroup.alpha = 0f;
@@ -20,7 +25,6 @@ namespace DCL.UI
 
             loadingCanvasGroup.alpha = 1f;
             loadingCanvasGroup.blocksRaycasts = true;
-            loadingCanvasGroup.interactable = false;
 
             foreach (var bone in bones)
             {
@@ -35,7 +39,6 @@ namespace DCL.UI
         {
             loadingCanvasGroup.alpha = 0f;
             loadingCanvasGroup.blocksRaycasts = false;
-            loadingCanvasGroup.interactable = false;
 
             foreach (var bone in bones)
                 bone.DOKill();
@@ -46,7 +49,6 @@ namespace DCL.UI
                                   loadedCanvasGroup.blocksRaycasts = true;
                                   loadedCanvasGroup.interactable = true;
                               });
-
         }
 
         private void OnDisable() =>
