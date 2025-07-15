@@ -231,7 +231,7 @@ GameObject:
   m_Component:
   - component: {fileID: 476514791755445301}
   m_Layer: 5
-  m_Name: Nearby Container
+  m_Name: NearbyInfoContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -482,7 +482,7 @@ GameObject:
   - component: {fileID: 217021846241032117}
   - component: {fileID: 4237234292030030612}
   m_Layer: 5
-  m_Name: ChatTitleBarsContainer2
+  m_Name: '[MB] ChatTitlebarView'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -558,7 +558,7 @@ GameObject:
   - component: {fileID: 3597521123135245045}
   - component: {fileID: 689654050071568157}
   m_Layer: 5
-  m_Name: ChatDefaultTitlebar
+  m_Name: '[MB] ChatDefaultTitlebarView'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -730,7 +730,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6095199347428510888}
   m_Layer: 0
-  m_Name: ChatMemberListContainer
+  m_Name: MembersButtonContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -771,7 +771,7 @@ GameObject:
   - component: {fileID: 7706948236113640189}
   - component: {fileID: 4619050915050350415}
   m_Layer: 5
-  m_Name: ChatMemberListButton
+  m_Name: '[BTN] Members'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -930,7 +930,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4933224818269731490}
   m_Layer: 5
-  m_Name: Left Side Layout Container
+  m_Name: LeftContentWrapper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1095,7 +1095,7 @@ GameObject:
   - component: {fileID: 6297441786139354885}
   - component: {fileID: 1175182096778357491}
   m_Layer: 5
-  m_Name: VerifiedMark
+  m_Name: '[ICO] Verified'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1286,7 +1286,7 @@ GameObject:
   - component: {fileID: 3919413173897026530}
   - component: {fileID: 6744472502356441645}
   m_Layer: 5
-  m_Name: Left Side Layout Container
+  m_Name: LeftContentWrapper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1353,7 +1353,7 @@ GameObject:
   - component: {fileID: 4371476550450355553}
   - component: {fileID: 2691890649571711131}
   m_Layer: 5
-  m_Name: MemberListIcon
+  m_Name: '[ICO] Members'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1449,7 +1449,7 @@ GameObject:
   - component: {fileID: 584336670951736726}
   - component: {fileID: 9185301759590671889}
   m_Layer: 5
-  m_Name: SimpleUserNameElement
+  m_Name: '[MB] ChatUsernameView'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1668,7 +1668,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6450525531802300144}
   m_Layer: 5
-  m_Name: LoadingObject
+  m_Name: '[GRP] LoadingSpinner'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1763,7 +1763,7 @@ GameObject:
   - component: {fileID: 8320471403969392248}
   - component: {fileID: 3938562537897885268}
   m_Layer: 5
-  m_Name: Frame
+  m_Name: '[IMG] Frame'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1837,7 +1837,7 @@ GameObject:
   - component: {fileID: 128577825813998989}
   - component: {fileID: 5196087202178403724}
   m_Layer: 5
-  m_Name: ChatTitlebarArea
+  m_Name: '[GRP] Titlebar'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1895,7 +1895,7 @@ GameObject:
   - component: {fileID: 9205590739467069770}
   - component: {fileID: 4324604800558299376}
   m_Layer: 5
-  m_Name: Title
+  m_Name: '[TXT] ChannelName'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2033,7 +2033,7 @@ GameObject:
   - component: {fileID: 8102543784431732333}
   - component: {fileID: 2151574619496656256}
   m_Layer: 5
-  m_Name: MemberListNumberText
+  m_Name: '[TXT] MembersCount'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2296,7 +2296,7 @@ GameObject:
   - component: {fileID: 7727610339970739220}
   - component: {fileID: 4598247860072284817}
   m_Layer: 5
-  m_Name: ProfileName
+  m_Name: '[TXT] UserName'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2434,7 +2434,7 @@ GameObject:
   - component: {fileID: 7979634175404499648}
   - component: {fileID: 5729440488806790430}
   m_Layer: 5
-  m_Name: ChatMemberListTittlebar
+  m_Name: '[MB] ChatMemberTitlebarView'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2788,7 +2788,7 @@ GameObject:
   - component: {fileID: 2443891791861239402}
   - component: {fileID: 2229037462692490088}
   m_Layer: 5
-  m_Name: SimpleProfileView
+  m_Name: '[MB] ChatProfileView'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2979,7 +2979,7 @@ GameObject:
   - component: {fileID: 464926953595659796}
   - component: {fileID: 2687767749500433520}
   m_Layer: 5
-  m_Name: ProfileAddress
+  m_Name: '[TXT] UserAddress'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3116,7 +3116,7 @@ GameObject:
   - component: {fileID: 896664166956389552}
   - component: {fileID: 1243063389034321664}
   m_Layer: 5
-  m_Name: MembersWord
+  m_Name: '[TXT] MembersLabel'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3136,10 +3136,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3717356028859036248}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 24.76, y: 0}
-  m_SizeDelta: {x: 62.15, y: 18}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 18}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &5603663240934269935
 CanvasRenderer:
@@ -3346,7 +3346,7 @@ GameObject:
   - component: {fileID: 4371306610158908708}
   - component: {fileID: 1867130404773162731}
   m_Layer: 5
-  m_Name: Mask
+  m_Name: '[Mask] Picture'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3412,7 +3412,7 @@ GameObject:
   - component: {fileID: 5528712836289449314}
   - component: {fileID: 6040503751934298986}
   m_Layer: 5
-  m_Name: Title
+  m_Name: '[TXT] Header'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3432,10 +3432,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 3919413173897026530}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 47, y: -23}
-  m_SizeDelta: {x: 59.17, y: 20}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 20}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &5528712836289449314
 CanvasRenderer:
@@ -3548,7 +3548,7 @@ GameObject:
   - component: {fileID: 8842050217746508257}
   - component: {fileID: 7910287029091115181}
   m_Layer: 5
-  m_Name: Vertical Separator
+  m_Name: '[IMG] Separator'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3807,11 +3807,10 @@ GameObject:
   - component: {fileID: 932114035295818161}
   - component: {fileID: 559435666334939715}
   - component: {fileID: 1905312500665395523}
-  - component: {fileID: 540908867072416836}
   - component: {fileID: 896929030011923953}
   - component: {fileID: 6499250143713956460}
   m_Layer: 5
-  m_Name: ProfilePictureView
+  m_Name: '[MB] ChatProfilePictureView'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3877,21 +3876,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &540908867072416836
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7665480578268303041}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 946db314bdcc52a41a226ff3aa3acbbd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  thumbnailImageView: {fileID: 3208443591853523293}
-  thumbnailBackground: {fileID: 1905312500665395523}
-  defaultEmptyThumbnail: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
 --- !u!114 &896929030011923953
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3975,7 +3959,7 @@ GameObject:
   - component: {fileID: 2411346910251009276}
   - component: {fileID: 6351973519745108351}
   m_Layer: 5
-  m_Name: DefaultNearbyChannelImage
+  m_Name: '[IMG] NearbyIcon'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4148,7 +4132,7 @@ GameObject:
   - component: {fileID: 3836212055298738781}
   - component: {fileID: 2089604150211307329}
   m_Layer: 0
-  m_Name: Right Side Layout Container
+  m_Name: RightContentWrapper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4619,7 +4603,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2702495720024624198, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Name
-      value: ClosingMemberListButton
+      value: '[BTN] Back'
       objectReference: {fileID: 0}
     - target: {fileID: 2914244638103383707, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_Sprite
@@ -4639,7 +4623,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_AnchorMin.x
@@ -4647,11 +4631,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 30
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_SizeDelta.y
@@ -4687,11 +4671,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 6.999999
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -7.9999857
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3152644595163223519, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -4728,6 +4712,10 @@ PrefabInstance:
     - target: {fileID: 3171233690257926112, guid: 83437f351686bca419378abea4d2ed07, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5736390777860353485, guid: 83437f351686bca419378abea4d2ed07, type: 3}
+      propertyPath: m_Name
+      value: '[ICO] BackArrow'
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -4800,7 +4788,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 936457765274931090, guid: 122e057ec2e97d3468ce67fcc24592c5, type: 3}
       propertyPath: m_Name
-      value: ChatTitleBarCloseButton2
+      value: '[BTN] Close'
       objectReference: {fileID: 0}
     - target: {fileID: 5407499520862043377, guid: 122e057ec2e97d3468ce67fcc24592c5, type: 3}
       propertyPath: m_Pivot.x
@@ -4913,7 +4901,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 936457765274931090, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
       propertyPath: m_Name
-      value: ChatTitleBarCloseButton
+      value: '[BTN] Close'
       objectReference: {fileID: 0}
     - target: {fileID: 1479259760242829374, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
       propertyPath: m_TargetGraphic
@@ -5002,6 +4990,10 @@ PrefabInstance:
     - target: {fileID: 1479259760242829374, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5281090298808975206, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
+      propertyPath: m_Name
+      value: '[ICO] DownArrow'
       objectReference: {fileID: 0}
     - target: {fileID: 5407499520862043377, guid: 1f3c546a532daa747b4ce87863a96242, type: 3}
       propertyPath: m_Pivot.x
@@ -5461,6 +5453,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 9
       objectReference: {fileID: 0}
+    - target: {fileID: 5673222028376354750, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
+      propertyPath: m_Name
+      value: '[TXT] MemberCount'
+      objectReference: {fileID: 0}
     - target: {fileID: 6398025803462769792, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_MinWidth
       value: 16
@@ -5477,21 +5473,25 @@ PrefabInstance:
       propertyPath: m_PreferredHeight
       value: 16
       objectReference: {fileID: 0}
+    - target: {fileID: 6626343868291535316, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
+      propertyPath: m_Name
+      value: '[ICO] MembersIcon'
+      objectReference: {fileID: 0}
     - target: {fileID: 7572996485319117745, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_Name
-      value: ChatMemberListButton
+      value: '[GRP] MembersInfo'
       objectReference: {fileID: 0}
     - target: {fileID: 7604144051163629321, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7604144051163629321, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7604144051163629321, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 16
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7604144051163629321, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_SizeDelta.y
@@ -5499,11 +5499,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7604144051163629321, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -8
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7604144051163629321, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 8
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 4368511898959526508, guid: c81ab4bb81d658b49b3f788135a159cb, type: 3}
@@ -5772,7 +5772,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7408386511624158409, guid: 71bc459f54ff8c0429ce56bfd7f1b180, type: 3}
       propertyPath: m_Name
-      value: ThreeDotsMenuButton
+      value: '[BTN] ContextMenu'
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
