@@ -36,7 +36,8 @@ namespace DCL.PluginSystem.Global
         private ProvidedInstance<VoiceChatCombinedStreamsAudioSource> combinedAudioSource;
         private ProvidedAsset<PlayerEntryView> playerEntry;
         private VoiceChatMicrophoneHandler? voiceChatHandler;
-        private VoiceChatLivekitRoomHandler? livekitRoomHandler;
+        private VoiceChatTrackManager? trackManager;
+        private VoiceChatRoomManager? roomManager;
         private PrivateVoiceChatController? privateVoiceChatController;
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
@@ -70,7 +71,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            if (voiceChatHandler == null || livekitRoomHandler == null)
+            if (voiceChatHandler == null || roomManager == null)
             {
                 // Attempted to dispose before initialization - this is expected in some scenarios
                 return;
@@ -79,7 +80,7 @@ namespace DCL.PluginSystem.Global
             microphoneStateManager?.Dispose();
             nametagsHandler?.Dispose();
             voiceChatHandler.Dispose();
-            livekitRoomHandler.Dispose();
+            roomManager?.Dispose();
 
             combinedAudioSource.Dispose();
             voiceChatConfigurationAsset.Dispose();
@@ -118,7 +119,8 @@ namespace DCL.PluginSystem.Global
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);
             microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatCallStatusService);
 
-            livekitRoomHandler = new VoiceChatLivekitRoomHandler(combinedAudioSource.Value, voiceChatHandler, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, roomHub, voiceChatConfiguration, microphoneStateManager);
+            trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, combinedAudioSource.Value, voiceChatHandler);
+            roomManager = new VoiceChatRoomManager(trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, voiceChatConfiguration, microphoneStateManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
                 roomHub.VoiceChatRoom().Room(),
