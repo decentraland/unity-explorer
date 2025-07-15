@@ -10,26 +10,26 @@ public class ChatChannelsPresenter : IDisposable
 {
     private readonly IChatChannelsView view;
     private readonly IEventBus eventBus;
-    private readonly SelectChannelUseCase selectChannelUseCase;
-    private readonly LeaveChannelUseCase leaveChannelUseCase;
-    private readonly CreateChannelViewModelUseCase createChannelViewModelUseCase;
+    private readonly SelectChannelCommand _selectChannelCommand;
+    private readonly LeaveChannelCommand _leaveChannelCommand;
+    private readonly CreateChannelViewModelCommand _createChannelViewModelCommand;
     
     private EventSubscriptionScope scope = new();
 
     public ChatChannelsPresenter(IChatChannelsView view,
         IEventBus eventBus,
         ProfileRepositoryWrapper profileRepositoryWrapper,
-        SelectChannelUseCase selectChannelUseCase,
-        LeaveChannelUseCase leaveChannelUseCase,
-        CreateChannelViewModelUseCase createChannelViewModelUseCase)
+        SelectChannelCommand selectChannelCommand,
+        LeaveChannelCommand leaveChannelCommand,
+        CreateChannelViewModelCommand createChannelViewModelCommand)
     {
         this.view = view;
         this.view.Initialize(profileRepositoryWrapper);
         
         this.eventBus = eventBus;
-        this.selectChannelUseCase = selectChannelUseCase;
-        this.leaveChannelUseCase = leaveChannelUseCase;
-        this.createChannelViewModelUseCase = createChannelViewModelUseCase;
+        this._selectChannelCommand = selectChannelCommand;
+        this._leaveChannelCommand = leaveChannelCommand;
+        this._createChannelViewModelCommand = createChannelViewModelCommand;
         
         view.ConversationSelected += OnViewConversationSelected;
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
@@ -84,18 +84,18 @@ public class ChatChannelsPresenter : IDisposable
 
     private void AddChannelToView(ChatChannel channel)
     {
-        var initialModel = createChannelViewModelUseCase.CreateViewModelAndFetch(channel);
+        var initialModel = _createChannelViewModelCommand.CreateViewModelAndFetch(channel);
         view.AddConversation(initialModel);
     }
     
     private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
     {
-        selectChannelUseCase.Execute(channelId);
+        _selectChannelCommand.Execute(channelId);
     }
     
     private void OnViewConversationRemovalRequested(ChatChannel.ChannelId channelId)
     {
-        leaveChannelUseCase.Execute(channelId);
+        _leaveChannelCommand.Execute(channelId);
     }
     
     public void Dispose()

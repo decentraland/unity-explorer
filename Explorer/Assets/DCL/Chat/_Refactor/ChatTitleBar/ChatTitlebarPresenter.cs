@@ -16,7 +16,7 @@ public class ChatTitlebarPresenter : IDisposable
 {
     private readonly ChatTitlebarView2 view;
     private readonly IEventBus eventBus;
-    private readonly GetTitlebarViewModelUseCase getTitlebarViewModel;
+    private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
     private readonly ChatMemberListService chatMemberListService;
     
     CancellationTokenSource profileLoadCts = new ();
@@ -26,7 +26,7 @@ public class ChatTitlebarPresenter : IDisposable
         ChatTitlebarView2 view,
         IEventBus eventBus,
         ChatMemberListService chatMemberListService,
-        GetTitlebarViewModelUseCase getTitlebarViewModel)
+        GetTitlebarViewModelCommand getTitlebarViewModel)
     {
         this.view = view;
         this.eventBus = eventBus;

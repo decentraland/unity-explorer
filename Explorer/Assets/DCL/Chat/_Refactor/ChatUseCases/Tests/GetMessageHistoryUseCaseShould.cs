@@ -10,10 +10,10 @@ using DCL.UI.InputFieldFormatting;
 
 public class GetMessageHistoryUseCaseShould
 {
-    private GetMessageHistoryUseCase useCase;
+    private GetMessageHistoryCommand _command;
     private IChatHistory mockChatHistory;
     private ChatHistoryStorage mockChatHistoryStorage;
-    private CreateMessageViewModelUseCase mockCreateViewModelUseCase;
+    private CreateMessageViewModelCommand _mockCreateViewModelCommand;
 
     [SetUp]
     public void SetUp()
@@ -23,12 +23,12 @@ public class GetMessageHistoryUseCaseShould
         mockChatHistoryStorage = Substitute.For<ChatHistoryStorage>(null, null, null); 
         
         var mockFormatter = Substitute.For<ITextFormatter>();
-        mockCreateViewModelUseCase = Substitute.For<CreateMessageViewModelUseCase>(mockFormatter);
+        _mockCreateViewModelCommand = Substitute.For<CreateMessageViewModelCommand>(mockFormatter);
 
-        useCase = new GetMessageHistoryUseCase(
+        _command = new GetMessageHistoryCommand(
             mockChatHistory,
             mockChatHistoryStorage,
-            mockCreateViewModelUseCase
+            _mockCreateViewModelCommand
         );
     }
 
@@ -54,14 +54,14 @@ public class GetMessageHistoryUseCaseShould
         mockChatHistory.Channels.TryGetValue(Arg.Any<ChatChannel.ChannelId>(), out outChannel)
                        .Returns(true);
 
-        mockCreateViewModelUseCase.Execute(Arg.Any<ChatMessage>())
+        _mockCreateViewModelCommand.Execute(Arg.Any<ChatMessage>())
                                   .Returns(callInfo =>
                                   {
                                       var msg = (ChatMessage)callInfo[0];
                                       return new ChatMessageViewModel { Message = msg.Message, IsSeparator = msg.IsSeparator };
                                   });
 
-        var result = await useCase.ExecuteAsync(new ChatChannel.ChannelId("test-channel"), CancellationToken.None);
+        var result = await _command.ExecuteAsync(new ChatChannel.ChannelId("test-channel"), CancellationToken.None);
 
         Assert.AreEqual(11, result.Messages.Count);
         Assert.IsTrue(result.Messages[5].IsSeparator, "The separator was not at the expected index 5.");

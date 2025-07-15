@@ -1,6 +1,6 @@
 ﻿namespace DCL.Chat.ChatUseCases
 {
-    public class OpenPrivateConversationUseCase
+    public class UnblockUserInputCommand
     {
         
     }

@@ -1,6 +1,6 @@
 ﻿namespace DCL.Chat.ChatUseCases
 {
-    public class UnblockUserInputUseCase
+    public class DeleteChatHistoryCommand
     {
         
     }

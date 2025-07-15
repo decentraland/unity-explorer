@@ -7,12 +7,12 @@ using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class GetUserChatStatusUseCase
+    public class GetUserChatStatusCommand
     {
         private readonly IEventBus eventBus;
         private readonly ChatUserStateUpdater userStateUpdater;
         
-        public GetUserChatStatusUseCase(ChatUserStateUpdater userStateUpdater, IEventBus eventBus)
+        public GetUserChatStatusCommand(ChatUserStateUpdater userStateUpdater, IEventBus eventBus)
         {
             this.eventBus = eventBus;
             this.userStateUpdater = userStateUpdater;

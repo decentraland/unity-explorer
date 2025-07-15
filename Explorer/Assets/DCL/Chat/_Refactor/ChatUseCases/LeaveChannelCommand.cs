@@ -6,23 +6,23 @@ namespace DCL.Chat.ChatUseCases
     using History;
     using Services;
 
-    public class LeaveChannelUseCase
+    public class LeaveChannelCommand
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
         private readonly ICurrentChannelService currentChannelService;
-        private readonly SelectChannelUseCase selectChannelUseCase;
+        private readonly SelectChannelCommand _selectChannelCommand;
 
-        public LeaveChannelUseCase(
+        public LeaveChannelCommand(
             IEventBus eventBus,
             IChatHistory chatHistory,
             ICurrentChannelService currentChannelService,
-            SelectChannelUseCase selectChannelUseCase)
+            SelectChannelCommand selectChannelCommand)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
             this.currentChannelService = currentChannelService;
-            this.selectChannelUseCase = selectChannelUseCase;
+            this._selectChannelCommand = selectChannelCommand;
         }
 
         public void Execute(ChatChannel.ChannelId channelId)
@@ -34,7 +34,7 @@ namespace DCL.Chat.ChatUseCases
 
             if (currentChannelService.CurrentChannelId.Equals(channelId))
             {
-                selectChannelUseCase.Execute(ChatChannel.NEARBY_CHANNEL_ID);
+                _selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID);
             }
 
             chatHistory.RemoveChannel(channelId);

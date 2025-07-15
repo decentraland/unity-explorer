@@ -12,7 +12,7 @@ public class ChatMemberListPresenter : IDisposable
 {
     private readonly ChannelMemberFeedView view;
     private readonly IEventBus eventBus;
-    private readonly GetChannelMembersUseCase getChannelMembersUseCase;
+    private readonly GetChannelMembersCommand _getChannelMembersCommand;
     private readonly ChatMemberListService memberListService;
     private readonly EventSubscriptionScope scope = new ();
     private CancellationTokenSource cts = new ();
@@ -21,12 +21,12 @@ public class ChatMemberListPresenter : IDisposable
         ChannelMemberFeedView view,
         IEventBus eventBus,
         ChatMemberListService memberListService,
-        GetChannelMembersUseCase getChannelMembersUseCase)
+        GetChannelMembersCommand getChannelMembersCommand)
     {
         this.view = view;
         this.eventBus = eventBus;
         this.memberListService = memberListService;
-        this.getChannelMembersUseCase = getChannelMembersUseCase;
+        this._getChannelMembersCommand = getChannelMembersCommand;
         
         this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
     }
@@ -38,7 +38,7 @@ public class ChatMemberListPresenter : IDisposable
         try
         {
             view.SetLoading(true);
-            var memberViewModels = await getChannelMembersUseCase.ExecuteAsync(cts.Token);
+            var memberViewModels = await _getChannelMembersCommand.ExecuteAsync(cts.Token);
             if (cts.IsCancellationRequested) return;
             view.SetData(memberViewModels);
         }

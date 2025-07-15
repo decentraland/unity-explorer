@@ -8,16 +8,16 @@ using UnityEngine;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class GetChannelMembersUseCase
+    public class GetChannelMembersCommand
     {
         private readonly ChatMemberListService memberListService;
-        private readonly GetProfileThumbnailUseCase getProfileThumbnailUseCase;
+        private readonly GetProfileThumbnailCommand _getProfileThumbnailCommand;
 
-        public GetChannelMembersUseCase( ChatMemberListService memberListService,
-            GetProfileThumbnailUseCase getProfileThumbnailUseCase)
+        public GetChannelMembersCommand( ChatMemberListService memberListService,
+            GetProfileThumbnailCommand getProfileThumbnailCommand)
         {
             this.memberListService = memberListService;
-            this.getProfileThumbnailUseCase = getProfileThumbnailUseCase;
+            this._getProfileThumbnailCommand = getProfileThumbnailCommand;
         }
         
         public async UniTask<List<ChatMemberListViewModel>> ExecuteAsync(CancellationToken ct)
@@ -43,7 +43,7 @@ namespace DCL.Chat.ChatUseCases
 
         private async UniTask<ChatMemberListViewModel> CreateViewModelAsync(ChatMemberListView.MemberData member, CancellationToken ct)
         {
-            Sprite thumbnail = await getProfileThumbnailUseCase.ExecuteAsync(member.Id, member.FaceSnapshotUrl, ct);
+            Sprite thumbnail = await _getProfileThumbnailCommand.ExecuteAsync(member.Id, member.FaceSnapshotUrl, ct);
 
             if (ct.IsCancellationRequested) return null; // Handle cancellation
 

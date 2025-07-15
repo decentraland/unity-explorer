@@ -10,7 +10,7 @@ using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class InitializeChatSystemUseCase
+    public class InitializeChatSystemCommand
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
@@ -19,7 +19,7 @@ namespace DCL.Chat.ChatUseCases
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly ICurrentChannelService currentChannelService;
 
-        public InitializeChatSystemUseCase(
+        public InitializeChatSystemCommand(
             IEventBus eventBus,
             IChatHistory chatHistory,
             ObjectProxy<IFriendsService> friendsServiceProxy,

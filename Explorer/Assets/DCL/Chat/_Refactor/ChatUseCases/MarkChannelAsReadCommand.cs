@@ -4,12 +4,12 @@ using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class MarkChannelAsReadUseCase
+    public class MarkChannelAsReadCommand
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
         
-        public MarkChannelAsReadUseCase(IEventBus eventBus, IChatHistory chatHistory)
+        public MarkChannelAsReadCommand(IEventBus eventBus, IChatHistory chatHistory)
         {
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;

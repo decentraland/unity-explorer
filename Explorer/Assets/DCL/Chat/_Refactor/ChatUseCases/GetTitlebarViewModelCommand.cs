@@ -9,22 +9,22 @@ using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class GetTitlebarViewModelUseCase
+    public class GetTitlebarViewModelCommand
     {
         private readonly IEventBus eventBus;
         private readonly ProfileRepositoryWrapper profileRepository;
-        private readonly GetProfileThumbnailUseCase getThumbnailUseCase;
+        private readonly GetProfileThumbnailCommand _getThumbnailCommand;
         private readonly ChatConfig chatConfig;
 
-        public GetTitlebarViewModelUseCase(
+        public GetTitlebarViewModelCommand(
             IEventBus eventBus,
             ProfileRepositoryWrapper profileRepository,
-            GetProfileThumbnailUseCase getThumbnailUseCase,
+            GetProfileThumbnailCommand getThumbnailCommand,
             ChatConfig chatConfig)
         {
             this.eventBus = eventBus;
             this.profileRepository = profileRepository;
-            this.getThumbnailUseCase = getThumbnailUseCase;
+            this._getThumbnailCommand = getThumbnailCommand;
             this.chatConfig = chatConfig;
         }
 
@@ -49,7 +49,7 @@ namespace DCL.Chat.ChatUseCases
                 viewModel.Title = profile.ValidatedName;
                 viewModel.HasClaimedName = profile.HasClaimedName;
                 viewModel.ProfileColor = profile.UserNameColor;
-                viewModel.ProfileSprite = await getThumbnailUseCase.ExecuteAsync(
+                viewModel.ProfileSprite = await _getThumbnailCommand.ExecuteAsync(
                     profile.UserId,
                     profile.Avatar.FaceSnapshotUrl,
                     ct

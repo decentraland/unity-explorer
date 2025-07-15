@@ -11,20 +11,20 @@ namespace DCL.Chat.ChatUseCases
         public List<ChatMessageViewModel> Messages { get; set; }
     }
 
-    public class GetMessageHistoryUseCase
+    public class GetMessageHistoryCommand
     {
         private readonly IChatHistory chatHistory;
         private readonly ChatHistoryStorage? chatHistoryStorage;
-        private readonly CreateMessageViewModelUseCase createMessageViewModelUseCase;
+        private readonly CreateMessageViewModelCommand _createMessageViewModelCommand;
 
-        public GetMessageHistoryUseCase(
+        public GetMessageHistoryCommand(
             IChatHistory chatHistory,
             ChatHistoryStorage? chatHistoryStorage,
-            CreateMessageViewModelUseCase createMessageViewModelUseCase)
+            CreateMessageViewModelCommand createMessageViewModelCommand)
         {
             this.chatHistory = chatHistory;
             this.chatHistoryStorage = chatHistoryStorage;
-            this.createMessageViewModelUseCase = createMessageViewModelUseCase;
+            this._createMessageViewModelCommand = createMessageViewModelCommand;
         }
 
         public async UniTask<MessageHistoryResult> ExecuteAsync(ChatChannel.ChannelId channelId, CancellationToken token)
@@ -70,7 +70,7 @@ namespace DCL.Chat.ChatUseCases
             foreach (var msg in processedMessages)
             {
                 // The use case is responsible for creating the view model
-                viewModels.Add(createMessageViewModelUseCase.Execute(msg));
+                viewModels.Add(_createMessageViewModelCommand.Execute(msg));
             }
 
             return new MessageHistoryResult

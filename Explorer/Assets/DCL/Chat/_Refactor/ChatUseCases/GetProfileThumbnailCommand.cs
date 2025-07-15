@@ -8,13 +8,13 @@ using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class GetProfileThumbnailUseCase
+    public class GetProfileThumbnailCommand
     {
         private IEventBus eventBus;
         private readonly ChatConfig chatConfig;
         private readonly ProfileRepositoryWrapper profileRepository;
         
-        public GetProfileThumbnailUseCase(IEventBus eventBus,
+        public GetProfileThumbnailCommand(IEventBus eventBus,
             ChatConfig chatConfig,
             ProfileRepositoryWrapper profileRepository)
         {

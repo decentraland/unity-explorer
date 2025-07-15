@@ -3,13 +3,13 @@ using DCL.Chat.History;
 using DCL.Chat.Services;
 using Utilities;
 
-public class SelectChannelUseCase
+public class SelectChannelCommand
 {
     private readonly IEventBus eventBus;
     private readonly IChatHistory chatHistory;
     private readonly ICurrentChannelService currentChannelService;
 
-    public SelectChannelUseCase(
+    public SelectChannelCommand(
         IEventBus eventBus,
         IChatHistory chatHistory,
         ICurrentChannelService currentChannelService)

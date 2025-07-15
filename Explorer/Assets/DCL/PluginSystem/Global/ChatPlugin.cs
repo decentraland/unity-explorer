@@ -169,7 +169,7 @@ namespace DCL.PluginSystem.Global
             
             var currentChannelService = new CurrentChannelService();
             
-            var useCaseFactory = new UseCaseFactory(
+            var useCaseFactory = new CommandRegistry(
                 chatConfig,
                 eventBus,
                 chatMessagesBus,

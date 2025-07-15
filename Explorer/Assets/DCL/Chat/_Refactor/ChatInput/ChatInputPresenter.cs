@@ -14,8 +14,8 @@ public class ChatInputPresenter : IDisposable
     private readonly IChatInputView view;
     private readonly IEventBus eventBus;
     private readonly ICurrentChannelService currentChannelService;
-    private readonly GetUserChatStatusUseCase getUserChatStatusUseCase;
-    private readonly SendMessageUseCase sendMessageUseCase;
+    private readonly GetUserChatStatusCommand _getUserChatStatusCommand;
+    private readonly SendMessageCommand _sendMessageCommand;
     private readonly EventSubscriptionScope scope = new();
 
     public event Action<string>? OnMessageSubmitted;
@@ -27,14 +27,14 @@ public class ChatInputPresenter : IDisposable
         IChatInputView view,
         IEventBus eventBus,
         ICurrentChannelService currentChannelService,
-        GetUserChatStatusUseCase getUserChatStatusUseCase,
-        SendMessageUseCase sendMessageUseCase)
+        GetUserChatStatusCommand getUserChatStatusCommand,
+        SendMessageCommand sendMessageCommand)
     {
         this.view = view;
         this.eventBus = eventBus;
         this.currentChannelService = currentChannelService;
-        this.getUserChatStatusUseCase = getUserChatStatusUseCase;
-        this.sendMessageUseCase = sendMessageUseCase;
+        this._getUserChatStatusCommand = getUserChatStatusCommand;
+        this._sendMessageCommand = sendMessageCommand;
         
         view.OnMessageSubmit += HandleMessageSubmitted;
         view.OnFocusRequested += HandleFocusRequested;
@@ -68,7 +68,7 @@ public class ChatInputPresenter : IDisposable
 
     private void HandleMessageSubmitted(string message)
     {
-        sendMessageUseCase.Execute(new SendMessageCommand { Body = message });
+        _sendMessageCommand.Execute(new SendMessageCommandPayload { Body = message });
         view.SetText("");
     }
 
@@ -134,7 +134,7 @@ public class ChatInputPresenter : IDisposable
     {
         view.SetBlocked("Checking user status...");
         
-        var status = await getUserChatStatusUseCase.ExecuteAsync(userId, ct);
+        var status = await _getUserChatStatusCommand.ExecuteAsync(userId, ct);
         if (ct.IsCancellationRequested) return;
 
         switch (status)

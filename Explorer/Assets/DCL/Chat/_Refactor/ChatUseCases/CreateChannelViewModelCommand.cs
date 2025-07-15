@@ -8,13 +8,13 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using Utilities;
 
-public class CreateChannelViewModelUseCase
+public class CreateChannelViewModelCommand
 {
     private readonly IEventBus eventBus;
     private readonly ChatConfig chatConfig;
     private readonly ProfileRepositoryWrapper profileRepository; 
 
-    public CreateChannelViewModelUseCase(
+    public CreateChannelViewModelCommand(
         IEventBus eventBus,
         ChatConfig chatConfig,
         ProfileRepositoryWrapper profileRepository)

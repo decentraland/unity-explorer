@@ -1,15 +1,14 @@
 ﻿using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
-using DCL.Profiles;
 using DCL.UI.InputFieldFormatting;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class CreateMessageViewModelUseCase
+    public class CreateMessageViewModelCommand
     {
         private readonly ITextFormatter hyperlinkFormatter;
 
-        public CreateMessageViewModelUseCase(ITextFormatter hyperlinkFormatter)
+        public CreateMessageViewModelCommand(ITextFormatter hyperlinkFormatter)
         {
             this.hyperlinkFormatter = hyperlinkFormatter;
         }

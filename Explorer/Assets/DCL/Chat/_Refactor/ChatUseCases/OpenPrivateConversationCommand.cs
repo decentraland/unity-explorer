@@ -1,6 +1,6 @@
 ﻿namespace DCL.Chat.ChatUseCases
 {
-    public class DeleteChatHistoryUseCase
+    public class OpenPrivateConversationCommand
     {
         
     }

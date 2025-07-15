@@ -11,25 +11,25 @@ using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
-    public class UseCaseFactory : IDisposable
+    public class CommandRegistry : IDisposable
     {
         private readonly ChatConfig chatConfig;
         private readonly EventSubscriptionScope scope = new();
         
-        public InitializeChatSystemUseCase InitializeChat { get; }
-        public CreateMessageViewModelUseCase CreateMessageViewModel { get; }
-        public GetUserChatStatusUseCase GetUserChatStatus { get; }
-        public SelectChannelUseCase SelectChannel { get; }
-        public GetMessageHistoryUseCase GetMessageHistory { get; }
-        public MarkChannelAsReadUseCase MarkChannelAsRead { get; }
-        public GetTitlebarViewModelUseCase GetTitlebarViewModel { get; }
-        public GetProfileThumbnailUseCase GetProfileThumbnail { get; }
-        public SendMessageUseCase SendMessage { get; }
-        public LeaveChannelUseCase LeaveChannel { get; }
-        public CreateChannelViewModelUseCase CreateChannelViewModel { get; }
-        public GetChannelMembersUseCase GetChannelMembersUseCase { get; set; }
+        public InitializeChatSystemCommand InitializeChat { get; }
+        public CreateMessageViewModelCommand CreateMessageViewModel { get; }
+        public GetUserChatStatusCommand GetUserChatStatus { get; }
+        public SelectChannelCommand SelectChannel { get; }
+        public GetMessageHistoryCommand GetMessageHistory { get; }
+        public MarkChannelAsReadCommand MarkChannelAsRead { get; }
+        public GetTitlebarViewModelCommand GetTitlebarViewModel { get; }
+        public GetProfileThumbnailCommand GetProfileThumbnail { get; }
+        public SendMessageCommand SendMessage { get; }
+        public LeaveChannelCommand LeaveChannel { get; }
+        public CreateChannelViewModelCommand CreateChannelViewModel { get; }
+        public GetChannelMembersCommand GetChannelMembersCommand { get; set; }
 
-        public UseCaseFactory(
+        public CommandRegistry(
             ChatConfig chatConfig,
             IEventBus eventBus,
             IChatMessagesBus chatMessageBus,
@@ -44,51 +44,51 @@ namespace DCL.Chat.ChatUseCases
             ObjectProxy<IFriendsService> friendsServiceProxy
         )
         {
-            InitializeChat = new InitializeChatSystemUseCase(eventBus,
+            InitializeChat = new InitializeChatSystemCommand(eventBus,
                 chatHistory,
                 friendsServiceProxy,
                 chatHistoryStorage,
                 chatUserStateUpdater,
                 currentChannelService);
 
-            CreateMessageViewModel = new CreateMessageViewModelUseCase(textFormatter);
+            CreateMessageViewModel = new CreateMessageViewModelCommand(textFormatter);
 
-            GetUserChatStatus = new GetUserChatStatusUseCase(chatUserStateUpdater,
+            GetUserChatStatus = new GetUserChatStatusCommand(chatUserStateUpdater,
                 eventBus);
             
-            SelectChannel = new SelectChannelUseCase(eventBus,
+            SelectChannel = new SelectChannelCommand(eventBus,
                 chatHistory,
                 currentChannelService);
             
-            GetMessageHistory = new GetMessageHistoryUseCase(chatHistory,
+            GetMessageHistory = new GetMessageHistoryCommand(chatHistory,
                 chatHistoryStorage,
                 CreateMessageViewModel);
             
-            MarkChannelAsRead = new MarkChannelAsReadUseCase(eventBus,
+            MarkChannelAsRead = new MarkChannelAsReadCommand(eventBus,
                 chatHistory);
 
-            GetProfileThumbnail = new GetProfileThumbnailUseCase(eventBus,
+            GetProfileThumbnail = new GetProfileThumbnailCommand(eventBus,
                 chatConfig,
                 profileRepositoryWrapper);
             
-            GetChannelMembersUseCase = new GetChannelMembersUseCase(chatMemberListService,
+            GetChannelMembersCommand = new GetChannelMembersCommand(chatMemberListService,
                 GetProfileThumbnail);
             
-            GetTitlebarViewModel = new GetTitlebarViewModelUseCase(eventBus,
+            GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
                 profileRepositoryWrapper,
                 GetProfileThumbnail,
                 chatConfig);
             
-            SendMessage = new SendMessageUseCase(
+            SendMessage = new SendMessageCommand(
                 chatMessageBus,
                 currentChannelService);
             
-            LeaveChannel = new LeaveChannelUseCase(eventBus,
+            LeaveChannel = new LeaveChannelCommand(eventBus,
                 chatHistory,
                 currentChannelService,
                 SelectChannel);
 
-            CreateChannelViewModel = new CreateChannelViewModelUseCase(eventBus,
+            CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 chatConfig,
                 profileRepositoryWrapper);
         }
