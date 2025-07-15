@@ -1,66 +1,91 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Chat.EventBus;
+using DCL.Chat.ChatUseCases;
 using DCL.Chat.Services;
-using DCL.UI.Profiles.Helpers;
 using Utilities;
+using Utility;
 
 public class ChatMemberListPresenter : IDisposable
 {
-    private readonly IChatMemberListView view;
+    private readonly ChannelMemberFeedView view;
     private readonly IEventBus eventBus;
+    private readonly GetChannelMembersUseCase getChannelMembersUseCase;
     private readonly ChatMemberListService memberListService;
-    private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-    private readonly EventSubscriptionScope scope = new EventSubscriptionScope();
+    private readonly EventSubscriptionScope scope = new ();
+    private CancellationTokenSource cts = new ();
 
     public ChatMemberListPresenter(
-        IChatMemberListView view,
+        ChannelMemberFeedView view,
         IEventBus eventBus,
         ChatMemberListService memberListService,
-        ProfileRepositoryWrapper profileRepositoryWrapper)
+        GetChannelMembersUseCase getChannelMembersUseCase)
     {
         this.view = view;
         this.eventBus = eventBus;
         this.memberListService = memberListService;
-        this.profileRepositoryWrapper = profileRepositoryWrapper;
+        this.getChannelMembersUseCase = getChannelMembersUseCase;
         
-        memberListService.OnMemberListUpdated += OnMemberListUpdated;
-        memberListService.OnMemberCountUpdated += OnMemberCountUpdated;
+        this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
     }
 
-    private void OnMemberListUpdated(IReadOnlyList<ChatMemberListView.MemberData> members)
+    private async UniTaskVoid LoadMembersAsync()
     {
-        view.SetData(members);
+        cts = cts.SafeRestart();
+        
+        try
+        {
+            view.SetLoading(true);
+            var memberViewModels = await getChannelMembersUseCase.ExecuteAsync(cts.Token);
+            if (cts.IsCancellationRequested) return;
+            view.SetData(memberViewModels);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception e)
+        {
+            view.SetLoading(false);
+        }
     }
     
     private void OnMemberCountUpdated(int memberCount)
     {
         view.SetMemberCount(memberCount);
     }
+
+    private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> members)
+    {
+        
+    }
     
-    public void ShowAndLoadCurrentList()
-    {
-        view.SetData(memberListService.LastKnownMemberList);
-
-        view.Show();
-
-        memberListService.RequestRefreshAsync().Forget();
-    }
-
-    public void Show()
+    public void ShowAndLoad()
     {
         view.Show();
+        LoadMembersAsync().Forget();
+        // TODO: use memberListService.LastKnownMemberList
+        memberListService.OnMemberListUpdated += HandleLiveUpdate;
     }
+    
+    public void Show() => ShowAndLoad();
+
     public void Hide()
     {
         view.Hide();
+        memberListService.OnMemberListUpdated -= HandleLiveUpdate;
+    }
+
+    private void OnMemberContextMenuRequested(string obj)
+    {
+        
     }
     
     public void Dispose()
     {
-        memberListService.OnMemberListUpdated -= OnMemberListUpdated;
+        if (memberListService != null)
+            memberListService.OnMemberListUpdated -= HandleLiveUpdate;
+        
+        cts.SafeCancelAndDispose();
         scope.Dispose();
     }
 }

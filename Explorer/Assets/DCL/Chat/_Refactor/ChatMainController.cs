@@ -82,18 +82,22 @@ namespace DCL.Chat
             
             viewInstance.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
+
+            chatMemberListService.Start();
             
             chatClickDetectionService = new ChatClickDetectionService(viewInstance.transform as RectTransform);
             chatClickDetectionService.Initialize(elementsToIgnore: new List<Transform>
             {
                 viewInstance.TitlebarView.CloseChatButton.transform,
                 viewInstance.TitlebarView.CloseMemberListButton.transform,
+                viewInstance.TitlebarView.OpenMemberListButton.transform,
+                viewInstance.TitlebarView.BackFromMemberList.transform,
             });
 
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 eventBus,
-                profileRepositoryWrapper,
-                chatConfig);
+                chatMemberListService,
+                useCaseFactory.GetTitlebarViewModel);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
@@ -120,7 +124,7 @@ namespace DCL.Chat
                 viewInstance.MemberListView,
                 eventBus,
                 chatMemberListService,
-                profileRepositoryWrapper);
+                useCaseFactory.GetChannelMembersUseCase);
             
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);

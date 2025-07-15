@@ -8,6 +8,9 @@ namespace DCL.Chat
     {
         [SerializeField] private string DCL_SYSTEM_SENDER = "DCL System";
 
+        [field: Header("General")]
+        public Sprite DefaultProfileThumbnail { get; set; }
+        
         [field: Header("Prefabs")]
         [field: SerializeField]
         public ChatConversationsToolbarViewItem ItemPrefab { get; private set; }

@@ -1,9 +1,10 @@
-﻿using DCL.Chat.EventBus;
-
-namespace DCL.Chat.ChatStates
+﻿namespace DCL.Chat.ChatStates
 {
     public class FocusedChatState : ChatState, 
-        IClickOutsideHandler, ICloseRequestHandler, IToggleMembersHandler, IMinimizeRequestHandler
+        IClickOutsideHandler,
+        ICloseRequestHandler,
+        IToggleMembersHandler,
+        IMinimizeRequestHandler
     {
         public override void begin()
         {
@@ -22,13 +23,6 @@ namespace DCL.Chat.ChatStates
         public void OnClickOutside() => _machine.changeState<DefaultChatState>();
         public void OnCloseRequested() => _machine.changeState<MinimizedChatState>();
         public void OnMinimizeRequested() => _machine.changeState<MinimizedChatState>();
-        public void OnToggleMembers(bool isVisible)
-        {
-            if (isVisible)
-            {
-                _machine.changeState<MembersChatState>();
-            }
-        }
-        
+        public void OnToggleMembers() => _machine.changeState<MembersChatState>();
     }
 }

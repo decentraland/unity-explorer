@@ -28,10 +28,10 @@ namespace DCL.Chat
         public ChatInputView InputView { get; private set; }
 
         [field: SerializeField]
-        public ChatTitleBarView2 TitlebarView { get; private set; }
+        public ChatTitlebarView2 TitlebarView { get; private set; }
 
         [field: SerializeField]
-        public ChatMemberListView MemberListView { get; private set; }
+        public ChannelMemberFeedView MemberListView { get; private set; }
 
         public void Dispose()
         {

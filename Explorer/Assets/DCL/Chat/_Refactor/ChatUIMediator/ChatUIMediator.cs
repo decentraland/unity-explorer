@@ -33,6 +33,8 @@
         public void SetupForDefaultState(bool animate)
         {
             titleBarPresenter.Show();
+            titleBarPresenter.ShowMembersView(isMemberListVisible:false);
+            
             channelListPresenter.Show();
             messageFeedPresenter.Show();
             chatInputPresenter.Show();
@@ -44,6 +46,8 @@
         public void SetupForFocusedState()
         {
             titleBarPresenter.Show();
+            titleBarPresenter.ShowMembersView(isMemberListVisible:false);
+            
             channelListPresenter.Show();
             messageFeedPresenter.Show();
             chatInputPresenter.Show();
@@ -54,24 +58,41 @@
 
         public void SetupForMembersState()
         {
-            titleBarPresenter.ShowMembersView();
+            titleBarPresenter.Show();
+            titleBarPresenter.ShowMembersView(isMemberListVisible:true);
+            
             channelListPresenter.Hide();
             messageFeedPresenter.Hide();
             chatInputPresenter.Hide();
             memberListPresenter.Show();
 
-            SetPanelsFocus(isFocused: true, animate: true);
+            SetPanelsFocus(isFocused: false, animate: false);
         }
 
         public void SetupForMinimizedState()
         {
             titleBarPresenter.Hide();
+            titleBarPresenter.ShowMembersView(isMemberListVisible:false);
+            
             channelListPresenter.Hide();
             messageFeedPresenter.Hide();
             memberListPresenter.Hide();
             chatInputPresenter.Show();
             
             SetPanelsFocus(isFocused: false, animate: true);
+        }
+        
+        public void SetupForHiddenState()
+        {
+            titleBarPresenter.Hide();
+            titleBarPresenter.ShowMembersView(isMemberListVisible:false);
+            
+            channelListPresenter.Hide();
+            messageFeedPresenter.Hide();
+            chatInputPresenter.Hide();
+            memberListPresenter.Hide();
+        
+            SetPanelsFocus(isFocused: false, animate: false);
         }
 
         internal void SetPanelsFocus(bool isFocused, bool animate)
@@ -83,17 +104,6 @@
             messageFeedPresenter.SetFocusState(isFocused, animate, duration, ease);
             channelListPresenter.SetFocusState(isFocused, animate, duration, ease);
             titleBarPresenter.SetFocusState(isFocused, animate, duration, ease);
-        }
-
-        public void SetupForHiddenState()
-        {
-            titleBarPresenter.Hide();
-            channelListPresenter.Hide();
-            messageFeedPresenter.Hide();
-            chatInputPresenter.Hide();
-            memberListPresenter.Hide();
-        
-            SetPanelsFocus(isFocused: false, animate: false);
         }
     }
 }

@@ -1,214 +1,48 @@
 using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.UI.ProfileElements;
-using DCL.UI.Profiles.Helpers;
-using DCL.Web3;
-using DG.Tweening;
-using MVC;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Utility;
+using DG.Tweening;
 
 namespace DCL.Chat
 {
-    public class ChatTitleBarView2 : MonoBehaviour, IChatTitlebarView
+    public class ChatTitlebarView2 : MonoBehaviour
     {
-        public delegate void VisibilityChangedDelegate(bool isVisible);
-        public delegate void DeleteChatHistoryRequestedDelegate();
+        public event Action OnCloseRequested;
+        public event Action OnMembersToggleRequested;
 
-        public event Action? CloseChatButtonClicked;
-        public event Action? CloseMemberListButtonClicked;
-        public event Action? HideMemberListButtonClicked;
-        public event Action? ShowMemberListButtonClicked;
-        public event Action? OnCloseClicked;
-        public event Action<bool>? OnMemberListToggled;
+        public Button CloseChatButton => defaultTitlebarView.ButtonClose;
+        public Button OpenMemberListButton => defaultTitlebarView.ButtonOpenMembers;
+        public Button CloseMemberListButton => membersTitlebarView.ButtonClose;
+        public Button BackFromMemberList => membersTitlebarView.ButtonBack;
         
-        [SerializeField]
-        private CanvasGroup titlebarCanvasGroup;
-
-        public event VisibilityChangedDelegate? ContextMenuVisibilityChanged;
-        public event DeleteChatHistoryRequestedDelegate? DeleteChatHistoryRequested;
-
-        [SerializeField] private Button closeChatButton;
-        public Button CloseChatButton => closeChatButton;
-        [SerializeField] private Button closeMemberListButton;
-        public Button CloseMemberListButton => closeMemberListButton;
         
-        [SerializeField] private Button showMemberListButton;
-        [SerializeField] private Button hideMemberListButton;
-        [SerializeField] private Button openContextMenuButton;
-
-        [SerializeField] private TMP_Text chatTitleMemberListNumberText;
-        [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
-        [SerializeField] private TMP_Text chatChannelNameNameText;
-        [SerializeField] private TMP_Text memberListChannelNameText;
-
-        [SerializeField] private GameObject defaultChatTitlebar;
-        [SerializeField] private GameObject memberListTitlebar;
-
-        [SerializeField] private GameObject memberCountObject;
-        [SerializeField] private GameObject nearbyChannelContainer;
-        [SerializeField] private SimpleProfileView profileView;
-
-        [Header("Context Menu Data")]
-        [SerializeField] private ChatOptionsContextMenuData chatOptionsContextMenuData;
-
-        private ViewDependencies viewDependencies;
-        private CancellationTokenSource cts;
-        private UniTaskCompletionSource contextMenuTask = new ();
-        private bool isInitialized;
-
-        /// <summary>
-        /// Gets the button that is currently available for folding the chat panel. The titlebar may change depending on whether the Member List is visible or not.
-        /// </summary>
-        public Button CurrentTitleBarCloseButton
-        {
-            get
-            {
-                if (closeChatButton.gameObject.activeInHierarchy)
-                    return closeChatButton;
-                else
-                    return closeMemberListButton;
-            }
-        }
-
+        [Header("UI Elements")]
+        [SerializeField] private CanvasGroup titlebarCanvasGroup;
+        [SerializeField] public ChatDefaultTitlebarView defaultTitlebarView;
+        [SerializeField] public ChatMemberTitlebarView membersTitlebarView;
+        
         public void Initialize()
         {
-            if(isInitialized)
-                return;
-
-            closeChatButton.onClick.AddListener(OnCloseChatButtonClicked);
-            closeMemberListButton.onClick.AddListener(OnCloseMemberListButtonClicked);
-            showMemberListButton.onClick.AddListener(OnShowMemberListButtonClicked);
-            hideMemberListButton.onClick.AddListener(OnHideMemberListButtonClicked);
-            openContextMenuButton.onClick.AddListener(OnOpenContextMenuButtonClicked);
-            profileView.ProfileContextMenuOpened += OnProfileContextMenuOpened;
-            profileView.ProfileContextMenuClosed += OnProfileContextMenuClosed;
-            isInitialized = true;
+            defaultTitlebarView.OnCloseRequested += () => OnCloseRequested?.Invoke();
+            defaultTitlebarView.OnMembersRequested += () => OnMembersToggleRequested?.Invoke();
+            membersTitlebarView.OnCloseRequested += () => OnCloseRequested?.Invoke();
+            membersTitlebarView.OnBackRequested += () => OnMembersToggleRequested?.Invoke();
         }
 
-        public void ChangeTitleBarVisibility(bool isMemberListVisible)
+        public void SetMemberListMode(bool isMemberListVisible)
         {
-            defaultChatTitlebar.SetActive(!isMemberListVisible);
-            memberListTitlebar.SetActive(isMemberListVisible);
+            defaultTitlebarView.Activate(!isMemberListVisible);
+            membersTitlebarView.Activate(isMemberListVisible);
         }
 
-        public void SetMemberListNumberText(string userAmount)
-        {
-            chatTitleMemberListNumberText.text = userAmount;
-            memberListTitleMemberListNumberText.text = userAmount;
-        }
-
-        public void Show()
-        {
-            gameObject.SetActive(true);
-        }
-
-        public void Hide()
-        {
-            gameObject.SetActive(false);
-        }
-
-        public void SetChannelNameText(string channelName)
-        {
-            chatChannelNameNameText.text = channelName;
-            memberListChannelNameText.text = channelName;
-        }
-
-        public void SetNearbyChannelImage()
-        {
-            nearbyChannelContainer.SetActive(true);
-            memberCountObject.SetActive(true);
-            profileView.gameObject.SetActive(false);
-        }
-
-        public void SetupProfileView(Web3Address userId, ProfileRepositoryWrapper profileDataProvider)
-        {
-            cts = cts.SafeRestart();
-            profileView.gameObject.SetActive(true);
-            profileView.SetupAsync(userId, profileDataProvider, cts.Token).Forget();
-            nearbyChannelContainer.SetActive(false);
-            memberCountObject.SetActive(false);
-        }
-
-        private void OnOpenContextMenuButtonClicked()
-        {
-            contextMenuTask.TrySetResult();
-            contextMenuTask = new UniTaskCompletionSource();
-            openContextMenuButton.OnSelect(null);
-            ContextMenuVisibilityChanged?.Invoke(true);
-
-            ViewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
-        }
-
-        private void OnDeleteChatHistoryButtonClicked()
-        {
-            DeleteChatHistoryRequested?.Invoke();
-        }
-
-        private void OnContextMenuClosed()
-        {
-            ContextMenuVisibilityChanged?.Invoke(false);
-        }
-
-        private void OnCloseMemberListButtonClicked()
-        {
-            CloseMemberListButtonClicked?.Invoke();
-        }
-
-        private void OnHideMemberListButtonClicked()
-        {
-            HideMemberListButtonClicked?.Invoke();
-        }
-
-        private void OnShowMemberListButtonClicked()
-        {
-            ShowMemberListButtonClicked?.Invoke();
-        }
-
-        private void OnCloseChatButtonClicked()
-        {
-            CloseChatButtonClicked?.Invoke();
-        }
-
-        private void OnProfileContextMenuClosed()
-        {
-            ContextMenuVisibilityChanged?.Invoke(false);
-        }
-
-        private void OnProfileContextMenuOpened()
-        {
-            ContextMenuVisibilityChanged?.Invoke(true);
-        }
-
-        private void OnDisable()
-        {
-            contextMenuTask.TrySetResult();
-        }
+        public void Show() => gameObject.SetActive(true);
+        public void Hide() => gameObject.SetActive(false);
 
         public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
         {
             titlebarCanvasGroup.DOKill();
-
             float targetAlpha = isFocused ? 1.0f : 0.0f;
-            float fadeDuration = animate ? duration : 0f;
-
-            if (isFocused && !titlebarCanvasGroup.gameObject.activeSelf)
-            {
-                titlebarCanvasGroup.gameObject.SetActive(true);
-            }
-
-            titlebarCanvasGroup.DOFade(targetAlpha, fadeDuration)
-                .SetEase(easing)
-                .OnComplete(() =>
-                {
-                    if (!isFocused)
-                    {
-                        titlebarCanvasGroup.gameObject.SetActive(false);
-                    }
-                });
+            titlebarCanvasGroup.DOFade(targetAlpha, animate ? duration : 0f);
         }
     }
 }

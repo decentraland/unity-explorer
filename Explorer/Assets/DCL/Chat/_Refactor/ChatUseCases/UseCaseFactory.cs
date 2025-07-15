@@ -1,5 +1,4 @@
 ﻿using System;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.Services;
@@ -23,9 +22,12 @@ namespace DCL.Chat.ChatUseCases
         public SelectChannelUseCase SelectChannel { get; }
         public GetMessageHistoryUseCase GetMessageHistory { get; }
         public MarkChannelAsReadUseCase MarkChannelAsRead { get; }
+        public GetTitlebarViewModelUseCase GetTitlebarViewModel { get; }
+        public GetProfileThumbnailUseCase GetProfileThumbnail { get; }
         public SendMessageUseCase SendMessage { get; }
         public LeaveChannelUseCase LeaveChannel { get; }
         public CreateChannelViewModelUseCase CreateChannelViewModel { get; }
+        public GetChannelMembersUseCase GetChannelMembersUseCase { get; set; }
 
         public UseCaseFactory(
             ChatConfig chatConfig,
@@ -35,6 +37,7 @@ namespace DCL.Chat.ChatUseCases
             ChatHistoryStorage? chatHistoryStorage,
             ChatUserStateUpdater chatUserStateUpdater,
             ICurrentChannelService currentChannelService,
+            ChatMemberListService chatMemberListService,
             ITextFormatter textFormatter,
             IProfileCache profileCache,
             ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -63,6 +66,18 @@ namespace DCL.Chat.ChatUseCases
             
             MarkChannelAsRead = new MarkChannelAsReadUseCase(eventBus,
                 chatHistory);
+
+            GetProfileThumbnail = new GetProfileThumbnailUseCase(eventBus,
+                chatConfig,
+                profileRepositoryWrapper);
+            
+            GetChannelMembersUseCase = new GetChannelMembersUseCase(chatMemberListService,
+                GetProfileThumbnail);
+            
+            GetTitlebarViewModel = new GetTitlebarViewModelUseCase(eventBus,
+                profileRepositoryWrapper,
+                GetProfileThumbnail,
+                chatConfig);
             
             SendMessage = new SendMessageUseCase(
                 chatMessageBus,

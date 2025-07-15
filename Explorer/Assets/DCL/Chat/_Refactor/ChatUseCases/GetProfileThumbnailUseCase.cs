@@ -1,0 +1,43 @@
+﻿using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.UI.Profiles.Helpers;
+using UnityEngine;
+using Utilities;
+
+namespace DCL.Chat.ChatUseCases
+{
+    public class GetProfileThumbnailUseCase
+    {
+        private IEventBus eventBus;
+        private readonly ChatConfig chatConfig;
+        private readonly ProfileRepositoryWrapper profileRepository;
+        
+        public GetProfileThumbnailUseCase(IEventBus eventBus,
+            ChatConfig chatConfig,
+            ProfileRepositoryWrapper profileRepository)
+        {
+            this.eventBus = eventBus;
+            this.chatConfig = chatConfig;
+            this.profileRepository = profileRepository;
+        }
+
+        public async UniTask<Sprite> ExecuteAsync(string userId, string faceSnapshotUrl, CancellationToken ct)
+        {
+            Sprite? cachedSprite = profileRepository.GetProfileThumbnail(userId);
+            if (cachedSprite != null) return cachedSprite;
+
+            try
+            {
+                Sprite? downloadedSprite = await profileRepository.GetProfileThumbnailAsync(userId, faceSnapshotUrl, ct);
+                return downloadedSprite ?? chatConfig.DefaultProfileThumbnail;
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(ReportCategory.UI, $"Thumbnail download failed for {userId}: {e.Message}");
+                return chatConfig.DefaultProfileThumbnail;
+            }
+        }
+    }
+}

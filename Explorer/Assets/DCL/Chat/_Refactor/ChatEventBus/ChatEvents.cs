@@ -111,6 +111,15 @@ namespace DCL.Chat.EventBus
         public struct ChannelReadEvent { public ChatChannel.ChannelId ChannelId; }
         
         #endregion
+
+        #region Memeber List Events
+
+        public struct ChannelMembersUpdatedEvent
+        {
+            public int MemberCount;
+        }
+
+        #endregion
         
         #region General Chat Events
         
@@ -163,7 +172,7 @@ namespace DCL.Chat.EventBus
         /// When:           The user clicks the button to show or hide the member list for the current channel.
         /// Subscribers:    ChatFsmController: Transitions the UI to/from the MembersChatState.
         /// </summary>
-        public struct ToggleMembersEvent { public bool IsVisible; }
+        public struct ToggleMembersEvent { }
         
         /// <summary>
         /// Event:          CurrentChannelStateUpdatedEvent

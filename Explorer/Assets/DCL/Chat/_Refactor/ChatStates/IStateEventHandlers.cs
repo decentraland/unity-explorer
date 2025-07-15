@@ -17,7 +17,7 @@ namespace  DCL.Chat.ChatStates
 
     public interface IToggleMembersHandler
     {
-        void OnToggleMembers(bool isVisible);
+        void OnToggleMembers();
     }
     
     public interface IMinimizeRequestHandler

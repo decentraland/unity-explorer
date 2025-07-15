@@ -177,6 +177,7 @@ namespace DCL.PluginSystem.Global
                 chatStorage,
                 chatUserStateUpdater,
                 currentChannelService,
+                chatMemberService,
                 hyperlinkTextFormatter,
                 profileCache,
                 profileRepositoryWrapper,

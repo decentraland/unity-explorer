@@ -1,7 +1,11 @@
 ﻿namespace DCL.Chat.ChatStates
 {
     public class DefaultChatState : ChatState, 
-        IClickInsideHandler, ICloseRequestHandler, IFocusRequestHandler, IMinimizeRequestHandler
+        IClickInsideHandler,
+        ICloseRequestHandler,
+        IFocusRequestHandler,
+        IMinimizeRequestHandler,
+        IToggleMembersHandler
     {
         public override void begin()
         {
@@ -24,5 +28,6 @@
         public void OnCloseRequested() => _machine.changeState<MinimizedChatState>();
         public void OnFocusRequested() => _machine.changeState<FocusedChatState>();
         public void OnMinimizeRequested() => _machine.changeState<MinimizedChatState>();
+        public void OnToggleMembers() => _machine.changeState<MembersChatState>();
     }
 }

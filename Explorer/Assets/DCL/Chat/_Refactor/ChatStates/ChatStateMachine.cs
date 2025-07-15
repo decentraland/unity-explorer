@@ -73,7 +73,7 @@ namespace DCL.Chat._Refactor.ChatStates
         private void HandleToggleMembersEvent(ChatEvents.ToggleMembersEvent evt)
         {
             if (fsm.currentState is IToggleMembersHandler handler)
-                handler.OnToggleMembers(evt.IsVisible);
+                handler.OnToggleMembers();
         }
         
         private void HandleClickInside()

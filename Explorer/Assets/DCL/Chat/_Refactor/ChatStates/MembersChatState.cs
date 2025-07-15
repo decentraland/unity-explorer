@@ -1,6 +1,8 @@
 ﻿namespace DCL.Chat.ChatStates
 {
-    public class MembersChatState : ChatState
+    public class MembersChatState : ChatState,
+        IToggleMembersHandler,
+        ICloseRequestHandler
     {
         public override void begin()
         {
@@ -11,5 +13,9 @@
         {
             
         }
+        
+        public void OnToggleMembers() => _machine.changeState<FocusedChatState>();
+
+        public void OnCloseRequested() => _machine.changeState<FocusedChatState>();
     }
 }
