@@ -9829,6 +9829,10 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -464
@@ -9869,10 +9873,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 6018933580786833773, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
@@ -9899,6 +9923,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -304
@@ -9939,10 +9971,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 6114104822107187366, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
@@ -9969,6 +10013,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -320
@@ -10009,10 +10061,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10355,6 +10427,10 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -624
@@ -10395,6 +10471,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
@@ -10429,6 +10517,10 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -784
@@ -10469,6 +10561,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
@@ -10497,6 +10601,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -64
@@ -10537,10 +10649,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10688,6 +10820,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -384
@@ -10728,10 +10868,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10897,10 +11057,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 9191960974026694660, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
@@ -11034,6 +11214,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -160
@@ -11074,10 +11262,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11100,6 +11308,10 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -224
@@ -11140,10 +11352,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 6018933580786833773, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
@@ -11273,6 +11505,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -544
@@ -11313,10 +11553,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11339,6 +11599,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -144
@@ -11379,10 +11647,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 8452131049264686654, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
@@ -11409,6 +11693,10 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -720
@@ -11449,10 +11737,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 8452131049264686654, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
@@ -11683,6 +11987,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -640
@@ -11723,10 +12035,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11749,6 +12081,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -80
@@ -11789,10 +12129,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11815,6 +12175,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -480
@@ -11855,6 +12223,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
@@ -11889,6 +12265,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -11929,10 +12313,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -12054,6 +12458,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -240
@@ -12094,10 +12506,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -12223,6 +12655,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -560
@@ -12263,10 +12703,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 6114104822107187366, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
@@ -12293,6 +12745,14 @@ PrefabInstance:
       propertyPath: indirectShader
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 145593992724127501, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
+    - target: {fileID: 1689214528318337876, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 3744927929776855109, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_LocalPosition.x
       value: -704
@@ -12333,10 +12793,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 3780951803480886777, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
+    - target: {fileID: 4679779326363334220, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: 5000937984345895893, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
       propertyPath: m_Name
       value: LongRoadPivot
       objectReference: {fileID: 0}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+    - target: {fileID: 5170259706339427278, guid: e1cc13afb4db8964c9febcf74091aa85, type: 3}
+      propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
