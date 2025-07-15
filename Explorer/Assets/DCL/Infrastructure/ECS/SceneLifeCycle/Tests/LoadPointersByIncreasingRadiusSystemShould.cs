@@ -6,10 +6,15 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -52,7 +57,7 @@ namespace ECS.SceneLifeCycle.Tests
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             using var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
-            parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
+            parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels, Array.Empty<int2>());
 
             var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(),
                 new List<int2>(), new PartitionComponent());
@@ -75,7 +80,7 @@ namespace ECS.SceneLifeCycle.Tests
             var realm = new RealmComponent(new RealmData(new TestIpfsRealm()));
             using var processedParcels = new NativeHashSet<int2>(100, AllocatorManager.Persistent);
 
-            parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
+            parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels, Array.Empty<int2>());
             ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> array = ref parcelMathJobifiedHelper.FinishParcelsRingSplit();
 
             // add all parcels to processed
@@ -88,7 +93,7 @@ namespace ECS.SceneLifeCycle.Tests
             Entity e = world.Create(realm, scenePointers, new ProcessedScenePointers { Value = processedParcels });
 
             // For system
-            parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
+            parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels, Array.Empty<int2>());
 
             system.Update(0);
 

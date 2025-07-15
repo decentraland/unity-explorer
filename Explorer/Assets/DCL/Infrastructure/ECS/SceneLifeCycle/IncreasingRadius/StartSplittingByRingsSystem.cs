@@ -2,14 +2,18 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using ECS;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Systems;
+using System;
+using System.Collections.Generic;
+using Unity.Mathematics;
 using Utility;
 
-namespace ECS.SceneLifeCycle.IncreasingRadius
+namespace SceneLifeCycle.IncreasingRadius
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(CheckCameraQualifiedForRepartitioningSystem))]
@@ -48,19 +52,24 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
         [Query]
         [All(typeof(RealmComponent))]
-        private void ProcessRealm(ref ProcessedScenePointers processedScenePointers)
+        private void ProcessRealm(Entity entity, ref ProcessedScenePointers processedScenePointers)
         {
-            StartSplittingQuery(World, in processedScenePointers);
+            IReadOnlyList<int2>? pendingScenePointers = World.TryGet(entity, out VolatileScenePointers volatileScenePointers) && volatileScenePointers.ActivePromise.HasValue
+                ? volatileScenePointers.ActivePromise.Value.LoadingIntention.Pointers
+                : Array.Empty<int2>();
+
+            StartSplittingQuery(World, in processedScenePointers, pendingScenePointers);
         }
 
         [Query]
-        private void StartSplitting([Data] in ProcessedScenePointers processedScenePointers, ref CameraSamplingData cameraSamplingData)
+        private void StartSplitting([Data] in ProcessedScenePointers processedScenePointers, [Data] IReadOnlyList<int2> pendingScenePointers, ref CameraSamplingData cameraSamplingData)
         {
             if (cameraSamplingData.IsDirty)
                 parcelMathJobifiedHelper.StartParcelsRingSplit(
                     cameraSamplingData.Parcel.ToInt2(),
                     realmPartitionSettings.MaxLoadingDistanceInParcels,
-                    processedScenePointers.Value);
+                    processedScenePointers.Value,
+                    pendingScenePointers);
         }
     }
 }
