@@ -165,10 +165,11 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
-            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
+            string defaultStartingRealm = startingRealm.HasValue
+                ? startingRealm.Value.Value
+                : await realmUrls.StartingRealmAsync(ct);
+
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
-
-
 
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
