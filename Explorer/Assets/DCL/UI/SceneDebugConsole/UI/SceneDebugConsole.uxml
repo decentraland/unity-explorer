@@ -11,6 +11,6 @@
             <ui:Toggle label="ERRORS" name="ErrorsToggle" class="header__item header__toggle" />
             <ui:Button text="X" name="CloseButton" class="header__item header__button" />
         </ui:VisualElement>
-        <ui:ListView name="console" virtualization-method="DynamicHeight" fixed-item-height="1" class="console" />
+        <ui:ListView name="console" virtualization-method="DynamicHeight" fixed-item-height="1" show-alternating-row-backgrounds="All" class="console" />
     </ui:VisualElement>
 </ui:UXML>

@@ -1,15 +1,30 @@
-.log-entry {
+.console__log-entry {
     height: auto;
     align-items: flex-start;
     justify-content: center;
     padding-left: 10px;
-    background-color: rgb(170, 89, 57);
     border-color: rgb(49, 26, 17);
     border-width: 2px;
     border-radius: 15px;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
-.log-entry > .unity-label {
+.console__log-entry--log {
+    color: white;
+}
+
+.console__log-entry--error {
+    color: red;
+}
+
+.console__log-entry > .unity-label {
     flex-grow: 1;
     flex-wrap: wrap;
     white-space: normal;

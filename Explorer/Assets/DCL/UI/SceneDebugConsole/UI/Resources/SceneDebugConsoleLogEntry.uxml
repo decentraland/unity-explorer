@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/DCL/UI/SceneDebugConsole/UI/SceneDebugConsoleLogEntry.uss?fileID=7433441132597879392&amp;guid=0746af6b4f382427f8c9677af4c49436&amp;type=3#SceneDebugConsoleLogEntry" />
-    <ui:VisualElement name="log-entry" class="log-entry">
+    <ui:VisualElement name="log-entry" class="console__log-entry">
         <ui:Label display-tooltip-when-elided="true" double-click-selects-word="false" triple-click-selects-line="false" class="log-entry__label" />
     </ui:VisualElement>
 </ui:UXML>
