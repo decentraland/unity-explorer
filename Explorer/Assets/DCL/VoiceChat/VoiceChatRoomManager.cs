@@ -25,6 +25,7 @@ namespace DCL.VoiceChat
         private const string TAG = nameof(VoiceChatRoomManager);
 
         private readonly VoiceChatTrackManager trackManager;
+        private readonly VoiceChatReconnectionManager reconnectionManager;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
@@ -55,11 +56,18 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
 
+            reconnectionManager = new VoiceChatReconnectionManager(
+                roomHub, voiceChatCallStatusService, configuration, voiceChatRoom);
+
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
             voiceChatRoom.TrackUnsubscribed += OnTrackUnsubscribed;
             voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
             voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
+
+            reconnectionManager.ReconnectionStarted += OnReconnectionStarted;
+            reconnectionManager.ReconnectionSuccessful += OnReconnectionSuccessful;
+            reconnectionManager.ReconnectionFailed += OnReconnectionFailed;
 
             statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
         }
@@ -80,6 +88,7 @@ namespace DCL.VoiceChat
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     if (currentStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL)
                     {
+                        reconnectionManager.ConfirmOrderedDisconnection();
                         DisconnectFromRoomAsync().Forget();
                     }
                     break;
@@ -181,6 +190,21 @@ namespace DCL.VoiceChat
             trackManager.HandleLocalTrackUnpublished(publication, participant);
         }
 
+        private void OnReconnectionStarted()
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection process started");
+        }
+
+        private void OnReconnectionSuccessful()
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection successful");
+        }
+
+        private void OnReconnectionFailed()
+        {
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Reconnection failed");
+        }
+
         private void OnConnectionEstablished()
         {
             try
@@ -218,6 +242,8 @@ namespace DCL.VoiceChat
                 MediaDeactivated?.Invoke();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
+                
+                reconnectionManager.StartOrderedDisconnectionGracePeriod();
             }
             catch (Exception ex)
             {
@@ -235,8 +261,13 @@ namespace DCL.VoiceChat
             voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
             voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
             voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
+            
+            reconnectionManager.ReconnectionStarted -= OnReconnectionStarted;
+            reconnectionManager.ReconnectionSuccessful -= OnReconnectionSuccessful;
+            reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
+            
             statusSubscription?.Dispose();
-
+            reconnectionManager?.Dispose();
             trackManager?.Dispose();
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
