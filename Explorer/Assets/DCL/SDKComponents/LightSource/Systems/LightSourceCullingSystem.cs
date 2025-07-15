@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using Unity.Burst;
@@ -107,7 +106,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void CullLightSources([Data] NativeArray<int> ranks, [Data] int maxLightCount, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        private void CullLightSources([Data] NativeArray<int> ranks, [Data] int maxLightCount, ref LightSourceComponent lightSourceComponent)
         {
             // Lights without an index are either inactive or already culled by a previous system
             if (lightSourceComponent.Index < 0) return;

@@ -11,8 +11,6 @@ using DCL.SDKComponents.LightSource;
 using DCL.SDKComponents.LightSource.Systems;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
-using Global;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
@@ -28,22 +26,27 @@ namespace DCL.PluginSystem.World
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly ICharacterObject characterObject;
+        private readonly Arch.Core.World globalWorld;
+        private readonly bool hasDebugFlag;
 
         private LightSourceSettings? pluginSettings;
-        private static LightSourceDefaults? lightSourceDefaults;
-
+        private LightSourceDefaults? lightSourceDefaults;
         private IComponentPool<Light>? lightPoolRegistry;
 
         public LightSourcePlugin(
             IComponentPoolsRegistry poolsRegistry,
             IAssetsProvisioner assetsProvisioner,
             CacheCleaner cacheCleaner,
-            ICharacterObject characterObject)
+            ICharacterObject characterObject,
+            Arch.Core.World globalWorld,
+            bool hasDebugFlag)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.poolsRegistry = poolsRegistry;
+            this.assetsProvisioner = assetsProvisioner;
             this.cacheCleaner = cacheCleaner;
             this.characterObject = characterObject;
+            this.globalWorld = globalWorld;
+            this.hasDebugFlag = hasDebugFlag;
         }
 
         public void Dispose()
@@ -61,9 +64,11 @@ namespace DCL.PluginSystem.World
 
             var lifecycleSystem = LightSourceLifecycleSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightPoolRegistry);
             LightSourcePreCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
-            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, pluginSettings.LightsPerParcel, pluginSettings.HardMaxLightCount);
+            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, pluginSettings!.LightsPerParcel, pluginSettings.HardMaxLightCount);
             LightSourceLodSystem.InjectToWorld(ref builder, pluginSettings.SpotLightsLods, pluginSettings.PointLightsLods);
             LightSourcePostCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, pluginSettings.fadeDuration);
+
+            if (hasDebugFlag) LightSourceDebugSystem.InjectToWorld(ref builder, globalWorld);
 
             finalizeWorldSystems.Add(lifecycleSystem);
         }

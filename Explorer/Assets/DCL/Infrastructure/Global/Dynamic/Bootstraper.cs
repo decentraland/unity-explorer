@@ -106,6 +106,7 @@ namespace Global.Dynamic
             Entity playerEntity,
             ISystemMemoryCap memoryCap,
             UIDocument sceneUIRoot,
+            bool hasDebugFlag,
             CancellationToken ct
         ) =>
             await StaticContainer.CreateAsync(
@@ -130,7 +131,8 @@ namespace Global.Dynamic
                 partialsDiskCache,
                 sceneUIRoot,
                 profileRepositoryProxy,
-                ct
+                ct,
+                hasDebugFlag
             );
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
