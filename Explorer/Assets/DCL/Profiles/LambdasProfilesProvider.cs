@@ -14,6 +14,8 @@ namespace DCL.Profiles
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
 
+        private readonly StringBuilder bodyBuilder = new ();
+
         private string lambdasProfilesBaseUrl => urlsSource.Url(DecentralandUrl.LambdasProfiles);
 
         public LambdasProfilesProvider(
@@ -26,7 +28,6 @@ namespace DCL.Profiles
 
         public async UniTask<List<GetAvatarsDetailsDto>> GetAvatarsDetailsAsync(List<string> userIds, CancellationToken ct)
         {
-            StringBuilder bodyBuilder = new ();
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"ids\":[");
 
