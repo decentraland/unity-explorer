@@ -30,7 +30,7 @@ namespace DCL.Chat
         private readonly ChatMemberListService chatMemberListService;
         private readonly ICurrentChannelService currentChannelService;
         private readonly ChatConfig chatConfig;
-        private ChatFsmController? fsmController;
+        private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
         
         private ChatClickDetectionService chatClickDetectionService;
@@ -40,11 +40,9 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
         
-        // public bool IsVisibleInSharedSpace => 
-        //     State != ControllerState.ViewHidden &&
-        //     fsmController is { IsMinimized: false };
         public bool IsVisibleInSharedSpace =>
-            State != ControllerState.ViewHidden && (fsmController is { IsHidden: false } || fsmController is { IsMinimized: false });
+            State != ControllerState.ViewHidden || (chatStateMachine is { IsHidden: false } 
+                                                    || chatStateMachine is { IsMinimized: false });
         
 
         public ChatMainController(ViewFactoryMethod viewFactory,
@@ -85,7 +83,7 @@ namespace DCL.Chat
             viewInstance.OnPointerExitEvent += HandlePointerExit;
             
             chatClickDetectionService = new ChatClickDetectionService(viewInstance.transform as RectTransform);
-            chatClickDetectionService.Initialize(new List<Transform>
+            chatClickDetectionService.Initialize(elementsToIgnore: new List<Transform>
             {
                 viewInstance.TitlebarView.CloseChatButton.transform,
                 viewInstance.TitlebarView.CloseMemberListButton.transform,
@@ -139,34 +137,34 @@ namespace DCL.Chat
                 inputPresenter, 
                 memberListPresenter);
 
-            fsmController = new ChatFsmController(eventBus,
+            chatStateMachine = new ChatStateMachine(eventBus,
                 mediator,
                 chatInputBlockingService,
                 chatClickDetectionService,
                 this);
             
-            uiScope.Add(fsmController);
+            uiScope.Add(chatStateMachine);
         }
 
         protected override void OnViewShow()
         {
             initCts = new CancellationTokenSource();
             useCaseFactory.InitializeChat.ExecuteAsync(initCts.Token).Forget();
-            fsmController?.OnViewShow();
+            chatStateMachine?.OnViewShow();
         }
 
         public void SetVisibility(bool isVisible)
         {
-            fsmController?.SetVisibility(isVisible);
+            chatStateMachine?.SetVisibility(isVisible);
         }
         
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
         {
-            SetVisibility(true);
+            //SetVisibility(true);
             
             if (State != ControllerState.ViewHidden)
             {
-                fsmController?.SetInitialState(showParams.Focus);
+                chatStateMachine?.SetInitialState(showParams.Focus);
                 ViewShowingComplete?.Invoke(this);
             }
             await UniTask.CompletedTask;
@@ -174,7 +172,7 @@ namespace DCL.Chat
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
         {
-            fsmController?.Minimize();
+            chatStateMachine?.Minimize();
             await UniTask.CompletedTask;
         }
 

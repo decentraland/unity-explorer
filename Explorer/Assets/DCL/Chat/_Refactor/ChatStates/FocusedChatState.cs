@@ -2,7 +2,8 @@
 
 namespace DCL.Chat.ChatStates
 {
-    public class FocusedChatState : ChatState
+    public class FocusedChatState : ChatState, 
+        IClickOutsideHandler, ICloseRequestHandler, IToggleMembersHandler, IMinimizeRequestHandler
     {
         public override void begin()
         {
@@ -17,5 +18,17 @@ namespace DCL.Chat.ChatStates
         {
             _context.InputBlocker.Unblock();
         }
+        
+        public void OnClickOutside() => _machine.changeState<DefaultChatState>();
+        public void OnCloseRequested() => _machine.changeState<MinimizedChatState>();
+        public void OnMinimizeRequested() => _machine.changeState<MinimizedChatState>();
+        public void OnToggleMembers(bool isVisible)
+        {
+            if (isVisible)
+            {
+                _machine.changeState<MembersChatState>();
+            }
+        }
+        
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace DCL.Chat.ChatStates
 {
-    public class MinimizedChatState : ChatState
+    public class MinimizedChatState : ChatState, IFocusRequestHandler
     {
         public override void begin()
         {
@@ -13,5 +13,7 @@
         {
             
         }
+        
+        public void OnFocusRequested() => _machine.changeState<FocusedChatState>();
     }
 }

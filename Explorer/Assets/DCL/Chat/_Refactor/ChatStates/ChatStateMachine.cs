@@ -6,13 +6,14 @@ using System;
 
 namespace DCL.Chat._Refactor.ChatStates
 {
-    public class ChatFsmController : IDisposable
+    public class ChatStateMachine : IDisposable
     {
+        
         internal readonly IEventBus eventBus;
         private readonly ChatUIMediator mediator;
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionService chatClickDetectionService;
-        private readonly SKStateMachine<ChatFsmController> fsm;
+        private readonly SKStateMachine<ChatStateMachine> fsm;
         private readonly EventSubscriptionScope scope = new ();
         
         public ChatMainController MainController { get; }
@@ -22,7 +23,7 @@ namespace DCL.Chat._Refactor.ChatStates
         public bool IsMinimized => fsm.currentState is MinimizedChatState;
         public bool IsHidden => fsm.currentState is HiddenChatState;
 
-        public ChatFsmController(
+        public ChatStateMachine(
             IEventBus eventBus,
             ChatUIMediator mediator, 
             ChatInputBlockingService inputBlocker,
@@ -36,19 +37,19 @@ namespace DCL.Chat._Refactor.ChatStates
 
             MainController = mainController;
             
-            fsm = new SKStateMachine<ChatFsmController>(this, new InitChatState());
+            fsm = new SKStateMachine<ChatStateMachine>(this, new InitChatState());
             fsm.addState(new DefaultChatState());
             fsm.addState(new FocusedChatState());
             fsm.addState(new MembersChatState());
             fsm.addState(new MinimizedChatState());
             fsm.addState(new HiddenChatState());
 
-            scope.Add(this.eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(evt => fsm.changeState<FocusedChatState>()));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.CloseChatEvent>(evt => Minimize()));
-            scope.Add(this.eventBus.Subscribe<ChatEvents.ToggleMembersEvent>(evt => OnToggleMembers(evt.IsVisible)));
+            scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
+            scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
+            scope.Add(eventBus.Subscribe<ChatEvents.ToggleMembersEvent>(HandleToggleMembersEvent));
 
-            chatClickDetectionService.OnClickInside += OnClickInside;
-            chatClickDetectionService.OnClickOutside += OnClickOutside;
+            chatClickDetectionService.OnClickInside += HandleClickInside;
+            chatClickDetectionService.OnClickOutside += HandleClickOutside;
         }
 
         public void OnViewShow()
@@ -56,31 +57,34 @@ namespace DCL.Chat._Refactor.ChatStates
             fsm.changeState<DefaultChatState>();
         }
         
-        public void Minimize()
+        private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
         {
-            fsm.changeState<MinimizedChatState>();
+            if (fsm.currentState is IFocusRequestHandler handler)
+                handler.OnFocusRequested();
+        }
+        
+        private void HandleCloseChatEvent(ChatEvents.CloseChatEvent evt)
+        {
+            if (fsm.currentState is ICloseRequestHandler handler)
+                handler.OnCloseRequested();
         }
 
-        private void OnClickInside()
+        private void HandleToggleMembersEvent(ChatEvents.ToggleMembersEvent evt)
         {
-            if (fsm.currentState is DefaultChatState)
-            {
-                fsm.changeState<FocusedChatState>();
-            }
+            if (fsm.currentState is IToggleMembersHandler handler)
+                handler.OnToggleMembers(evt.IsVisible);
+        }
+        
+        private void HandleClickInside()
+        {
+            if (fsm.currentState is IClickInsideHandler handler)
+                handler.OnClickInside();
         }
 
-        private void OnClickOutside()
+        private void HandleClickOutside()
         {
-            if (IsInputFocused)
-            {
-                fsm.changeState<DefaultChatState>();
-            }
-        }
-
-        private void OnToggleMembers(bool isVisible)
-        {
-            if (isVisible) fsm.changeState<MembersChatState>();
-            else fsm.changeState<FocusedChatState>();
+            if (fsm.currentState is IClickOutsideHandler handler)
+                handler.OnClickOutside();
         }
         
         public void SetInitialState(bool focus)
@@ -90,7 +94,17 @@ namespace DCL.Chat._Refactor.ChatStates
             else
                 fsm.changeState<DefaultChatState>();
         }
-        
+
+        public void Minimize()
+        {
+            if (fsm.currentState is IMinimizeRequestHandler handler)
+                handler.OnMinimizeRequested();
+        }
+        /// <summary>
+        /// NOTE: this method is clunky,
+        /// NOTE: but it is used to set the visibility of the chat UI.
+        /// </summary>
+        /// <param name="isVisible"></param>
         public void SetVisibility(bool isVisible)
         {
             if (isVisible)
@@ -110,8 +124,8 @@ namespace DCL.Chat._Refactor.ChatStates
         {
             if (chatClickDetectionService != null)
             {
-                chatClickDetectionService.OnClickInside -= OnClickInside;
-                chatClickDetectionService.OnClickOutside -= OnClickOutside;
+                chatClickDetectionService.OnClickInside -= HandleClickInside;
+                chatClickDetectionService.OnClickOutside -= HandleClickOutside;
             }
             
             scope.Dispose();  

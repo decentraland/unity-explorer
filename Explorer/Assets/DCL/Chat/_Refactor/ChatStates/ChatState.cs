@@ -3,7 +3,7 @@ using Prime31.StateKit;
 
 namespace DCL.Chat
 {
-    public class ChatState : SKState<ChatFsmController>
+    public class ChatState : SKState<ChatStateMachine>
     {
         public override void update(float deltaTime)
         {
