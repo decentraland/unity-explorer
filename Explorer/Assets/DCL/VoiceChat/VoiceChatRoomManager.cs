@@ -6,6 +6,9 @@ using DCL.Utilities.Extensions;
 using LiveKit;
 using LiveKit.Proto;
 using LiveKit.Rooms;
+using LiveKit.Rooms.Participants;
+using LiveKit.Rooms.TrackPublications;
+using LiveKit.Rooms.Tracks;
 using System;
 using System.Threading;
 using Utility;
@@ -52,10 +55,12 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
 
-            // Subscribe to room connection events
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
+            voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
+            voiceChatRoom.TrackUnsubscribed += OnTrackUnsubscribed;
+            voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
+            voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
 
-            // Subscribe to call status changes
             statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
         }
 
@@ -156,14 +161,33 @@ namespace DCL.VoiceChat
             }
         }
 
+        private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        {
+            trackManager.HandleTrackSubscribed(track, publication, participant);
+        }
+
+        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        {
+            trackManager.HandleTrackUnsubscribed(track, publication, participant);
+        }
+
+        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
+        {
+            trackManager.HandleLocalTrackPublished(publication, participant);
+        }
+
+        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        {
+            trackManager.HandleLocalTrackUnpublished(publication, participant);
+        }
+
         private void OnConnectionEstablished()
         {
             try
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Setting up tracks and media");
 
-                trackManager.SubscribeToRemoteTracks();
-
+                trackManager.StartListeningToRemoteTracks();
                 trackManager.PublishLocalTrack(CancellationToken.None);
 
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(true);
@@ -186,8 +210,7 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Cleaning up tracks and media");
 
                 trackManager.UnpublishLocalTrack();
-
-                trackManager.UnsubscribeFromRemoteTracks();
+                trackManager.StopListeningToRemoteTracks();
 
                 voiceChatMicrophoneStateManager.OnRoomConnectionChanged(false);
 
@@ -208,6 +231,10 @@ namespace DCL.VoiceChat
             isDisposed = true;
 
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
+            voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
+            voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
+            voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
+            voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
             statusSubscription?.Dispose();
 
             trackManager?.Dispose();

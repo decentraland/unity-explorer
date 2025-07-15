@@ -41,9 +41,6 @@ namespace DCL.VoiceChat
             this.configuration = configuration;
             this.combinedStreamsAudioSource = combinedStreamsAudioSource;
             this.microphoneHandler = microphoneHandler;
-            
-            voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
-            voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
         }
 
         /// <summary>
@@ -108,16 +105,12 @@ namespace DCL.VoiceChat
             }
         }
 
-        /// <summary>
-        /// Subscribes to all existing remote audio tracks and sets up event handlers for new tracks.
-        /// </summary>
-        public void SubscribeToRemoteTracks()
+        public void StartListeningToRemoteTracks()
         {
             try
             {
                 combinedStreamsAudioSource.Reset();
 
-                // Subscribe to existing remote tracks
                 foreach (string remoteParticipantIdentity in voiceChatRoom.Participants.RemoteParticipantIdentities())
                 {
                     Participant participant = voiceChatRoom.Participants.RemoteParticipant(remoteParticipantIdentity);
@@ -136,95 +129,113 @@ namespace DCL.VoiceChat
                         }
                     }
                 }
-
-                // Set up event handlers for future track subscriptions
-                voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
-                voiceChatRoom.TrackUnsubscribed += OnTrackUnsubscribed;
                 
                 combinedStreamsAudioSource.Play();
                 
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track subscription setup completed");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening started");
             }
             catch (Exception ex)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to subscribe to remote tracks: {ex.Message}");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to start listening to remote tracks: {ex.Message}");
                 throw;
             }
         }
 
-        /// <summary>
-        /// Unsubscribes from all remote tracks and cleans up event handlers.
-        /// </summary>
-        public void UnsubscribeFromRemoteTracks()
+        public void StopListeningToRemoteTracks()
         {
             try
             {
-                voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
-                voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
-                
                 if (combinedStreamsAudioSource != null)
                 {
                     combinedStreamsAudioSource.Stop();
                     combinedStreamsAudioSource.Reset();
                 }
                 
-                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscription completed");
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track listening stopped");
             }
             catch (Exception ex)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to unsubscribe from remote tracks: {ex.Message}");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to stop listening to remote tracks: {ex.Message}");
             }
         }
 
-        private void OnTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
+        public void HandleTrackSubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            if (publication.Kind == TrackKind.KindAudio)
+            try
             {
-                WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
-                if (stream != null)
+                if (publication.Kind == TrackKind.KindAudio)
                 {
-                    combinedStreamsAudioSource.AddStream(stream);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New remote track subscribed from {participant.Identity}");
+                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    if (stream != null)
+                    {
+                        combinedStreamsAudioSource.AddStream(stream);
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} New remote track subscribed from {participant.Identity}");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track subscription: {ex.Message}");
             }
         }
 
-        private void OnTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
+        public void HandleTrackUnsubscribed(ITrack track, TrackPublication publication, Participant participant)
         {
-            if (publication.Kind == TrackKind.KindAudio)
+            try
             {
-                WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
-                if (stream != null)
+                if (publication.Kind == TrackKind.KindAudio)
                 {
-                    combinedStreamsAudioSource.RemoveStream(stream);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
+                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    if (stream != null)
+                    {
+                        combinedStreamsAudioSource.RemoveStream(stream);
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Remote track unsubscribed from {participant.Identity}");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle track unsubscription: {ex.Message}");
             }
         }
 
-        private void OnLocalTrackPublished(TrackPublication publication, Participant participant)
+        public void HandleLocalTrackPublished(TrackPublication publication, Participant participant)
         {
-            if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
+            try
             {
-                WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
-                if (stream != null)
+                if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    combinedStreamsAudioSource.AddStream(stream);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
+                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    if (stream != null)
+                    {
+                        combinedStreamsAudioSource.AddStream(stream);
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track added to playback (loopback enabled)");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track published: {ex.Message}");
             }
         }
 
-        private void OnLocalTrackUnpublished(TrackPublication publication, Participant participant)
+        public void HandleLocalTrackUnpublished(TrackPublication publication, Participant participant)
         {
-            if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
+            try
             {
-                WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
-                if (stream != null)
+                if (publication.Kind == TrackKind.KindAudio && configuration.EnableLocalTrackPlayback)
                 {
-                    combinedStreamsAudioSource.RemoveStream(stream);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
+                    WeakReference<IAudioStream> stream = voiceChatRoom.AudioStreams.ActiveStream(participant.Identity, publication.Sid);
+                    if (stream != null)
+                    {
+                        combinedStreamsAudioSource.RemoveStream(stream);
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Local track removed from playback");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to handle local track unpublished: {ex.Message}");
             }
         }
 
@@ -241,12 +252,9 @@ namespace DCL.VoiceChat
         {
             if (isDisposed) return;
             isDisposed = true;
-            
-            voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
-            voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
 
             UnpublishLocalTrack();
-            UnsubscribeFromRemoteTracks();
+            StopListeningToRemoteTracks();
             
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
