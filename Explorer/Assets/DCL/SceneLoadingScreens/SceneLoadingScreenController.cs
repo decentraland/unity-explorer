@@ -208,8 +208,6 @@ namespace DCL.SceneLoadingScreens
             viewInstance.HideAllTips();
             viewInstance.ShowTip(index);
 
-            // viewInstance.ChangeBackgroundColor(tips.Tips[index].BackgroundColor);
-
             currentTip.Value = index;
         }
 
@@ -237,12 +235,7 @@ namespace DCL.SceneLoadingScreens
                 currentTip.Value = index;
 
                 await FadeOthers(ct);
-
-                await UniTask.WhenAll
-                (
-                    // viewInstance.ChangeBackgroundColorFadeAsync(tips.Tips[index].BackgroundColor, DURATION, ct),
-                    viewInstance.ShowTipWithFadeAsync(index, DURATION, ct)
-                );
+                await viewInstance.ShowTipWithFadeAsync(index, DURATION, ct);
             }
 
             ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();
