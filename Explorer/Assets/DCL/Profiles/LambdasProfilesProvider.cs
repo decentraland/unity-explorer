@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using UnityEngine.Pool;
 
 namespace DCL.Profiles
 {
@@ -13,8 +14,7 @@ namespace DCL.Profiles
     {
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
-
-        private readonly StringBuilder bodyBuilder = new ();
+        private readonly IObjectPool<StringBuilder> bodyBuilderPool;
 
         private string lambdasProfilesBaseUrl => urlsSource.Url(DecentralandUrl.LambdasProfiles);
 
@@ -24,11 +24,15 @@ namespace DCL.Profiles
         {
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
+
+            bodyBuilderPool = new ObjectPool<StringBuilder>(
+                createFunc: () => new StringBuilder(),
+                actionOnRelease: equippedItemView => equippedItemView.Clear());
         }
 
         public async UniTask<List<GetAvatarsDetailsDto>> GetAvatarsDetailsAsync(List<string> userIds, CancellationToken ct)
         {
-            bodyBuilder.Clear();
+            StringBuilder bodyBuilder = bodyBuilderPool.Get();
             bodyBuilder.Append("{\"ids\":[");
 
             for (var i = 0; i < userIds.Count; ++i)
@@ -48,6 +52,8 @@ namespace DCL.Profiles
                 GenericPostArguments.CreateJson(bodyBuilder.ToString()),
                 ct,
                 ReportCategory.PROFILE);
+
+            bodyBuilderPool.Release(bodyBuilder);
 
             var response = await result.CreateFromJson<List<GetAvatarsDetailsDto>>(WRJsonParser.Newtonsoft,
                 createCustomExceptionOnFailure: static (_, text) => new Exception($"Error parsing Get Avatars details response: {text}"));

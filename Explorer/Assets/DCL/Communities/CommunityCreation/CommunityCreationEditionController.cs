@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -56,6 +57,8 @@ namespace DCL.Communities.CommunityCreation
 
         private Sprite? lastSelectedProfileThumbnail;
         private bool isProfileThumbnailDirty;
+
+        private static readonly ListObjectPool<string> USER_IDS_POOL = new (defaultCapacity: 2);
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -310,16 +313,16 @@ namespace DCL.Communities.CommunityCreation
                 }
 
                 // Owners' names
-                List<string> userIds = new ();
+                using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
                 foreach (var communityPlace in currentCommunityPlaces)
                 {
-                    if (userIds.Contains(communityPlace.OwnerId))
+                    if (userIds.Value.Contains(communityPlace.OwnerId))
                         continue;
 
-                    userIds.Add(communityPlace.OwnerId);
+                    userIds.Value.Add(communityPlace.OwnerId);
                 }
 
-                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds, ct)
+                var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
                                                                            .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                 if (getAvatarsDetailsResult.Success)
@@ -434,16 +437,16 @@ namespace DCL.Communities.CommunityCreation
                 if (getPlacesDetailsResult.Value is { data: { Count: > 0 } })
                 {
                     // Owners' names
-                    List<string> userIds = new ();
+                    using PoolExtensions.Scope<List<string>> userIds = USER_IDS_POOL.AutoScope();
                     foreach (var communityPlace in getPlacesDetailsResult.Value.data)
                     {
-                        if (userIds.Contains(communityPlace.owner))
+                        if (userIds.Value.Contains(communityPlace.owner))
                             continue;
 
-                        userIds.Add(communityPlace.owner);
+                        userIds.Value.Add(communityPlace.owner);
                     }
 
-                    var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds, ct)
+                    var getAvatarsDetailsResult = await lambdasProfilesProvider.GetAvatarsDetailsAsync(userIds.Value, ct)
                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
                     if (!getAvatarsDetailsResult.Success)
