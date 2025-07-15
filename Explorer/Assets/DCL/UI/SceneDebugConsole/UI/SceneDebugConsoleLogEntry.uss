@@ -1,5 +1,5 @@
 .log-entry {
-    height: 41px;
+    height: auto;
     align-items: flex-start;
     justify-content: center;
     padding-left: 10px;
@@ -7,9 +7,10 @@
     border-color: rgb(49, 26, 17);
     border-width: 2px;
     border-radius: 15px;
-    text-overflow: ellipsis;
 }
 
-.log-entry > label {
-    text-overflow: ellipsis;
+.log-entry > .unity-label {
+    flex-grow: 1;
+    flex-wrap: wrap;
+    white-space: normal;
 }

@@ -19,8 +19,8 @@ namespace DCL.UI.SceneDebugConsole
 
         private UIDocument uiDocument;
         private VisualElement uiDocumentRoot;
-        private VisualTreeAsset logEntryUXML;
         private ListView consoleListView;
+        private ScrollView scrollView;
         private bool isInputSelected;
 
         public SceneDebugConsoleController(
@@ -49,21 +49,17 @@ namespace DCL.UI.SceneDebugConsole
             uiDocumentRoot = uiDocument.rootVisualElement;
             uiDocumentRoot.visible = false;
 
-            logEntryUXML = Resources.Load<VisualTreeAsset>("SceneDebugConsoleLogEntry");
-            consoleListView = uiDocumentRoot.Q<ListView>(name: "console");
+            var logEntryUXML = Resources.Load<VisualTreeAsset>("SceneDebugConsoleLogEntry");
+            consoleListView = uiDocumentRoot.Q<ListView>();
             consoleListView.makeItem = () => logEntryUXML.Instantiate();
             consoleListView.bindItem = (item, index) => item.Q<Label>(className: "log-entry__label").text = logsHistory.LogMessages[index].Message;
-            /*consoleListView.onAdd = view =>
-            {
-                var itemsSourceCount = view.itemsSource.Count;
-                view.RefreshItems();
-                view.ScrollToItem(itemsSourceCount);
-            };*/
 
             // Set the actual item's source list/array
             consoleListView.itemsSource = logsHistory.LogMessages;
 
-            consoleListView.fixedItemHeight = 45;
+            consoleListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
+
+            scrollView = consoleListView.Q<ScrollView>();
 
             // FOR DEBUGGING...
             // logEntriesBus.Send("1. Type '/help' for available commands.", LogType.Log);
@@ -100,7 +96,7 @@ namespace DCL.UI.SceneDebugConsole
         private void OnLogsHistoryEntryAdded(SceneDebugConsoleLogEntry logEntry)
         {
             Debug.Log($"PRAVS - Controller.OnLogsHistoryEntryAdded({logEntry.Message})");
-            RefreshListViewAsync().Forget();
+            RefreshListViewAsync(IsScrollAtBottom()).Forget();
         }
 
         /*private void OnViewFoldingChanged(bool isUnfolded)
@@ -139,10 +135,18 @@ namespace DCL.UI.SceneDebugConsole
 
         // It can only be refreshed on the MAIN THREAD, otherwise it doesn't work and fails silently...
         // TODO: Find out if we can instantiate the 'SceneDebugConsoleController' on the main thread instead of this...
-        private async UniTask RefreshListViewAsync()
+        private async UniTask RefreshListViewAsync(bool scrollToBottom)
         {
             await UniTask.SwitchToMainThread();
             consoleListView.RefreshItems();
+
+            if (scrollToBottom)
+                consoleListView.ScrollToItem(consoleListView.itemsSource.Count-1);
         }
+
+        // Cannot compare against 'highValue' directly due to floating point precision error
+        private bool IsScrollAtBottom() =>
+            scrollView != null
+            && scrollView.verticalScroller.value >= (scrollView.verticalScroller.highValue * 0.999f);
     }
 }
