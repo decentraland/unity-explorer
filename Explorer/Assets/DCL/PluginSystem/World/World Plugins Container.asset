@@ -29,6 +29,7 @@ MonoBehaviour:
   - rid: 1970080267461197826
   - rid: 3414978285727645698
   - rid: 3414978285727645699
+  - rid: 6144113899072913497
   references:
     version: 2
     RefIds:
@@ -68,8 +69,6 @@ MonoBehaviour:
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
-        <MaxSizeOfNftForDownload>k__BackingField:
-          maxSizeInBytes: 2097152
     - rid: 892605770607624196
       type: {class: DynamicWorldSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data: 
@@ -222,6 +221,15 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+    - rid: 6144113899072913497
+      type: {class: SkyboxTimePlugin/SkyboxTimeSettings, ns: DCL.SDKComponents.SkyboxTime, asm: DCL.Plugins}
+      data:
+        <Settings>k__BackingField:
+          m_AssetGUID: 9891b090dc6dc574d9415313003375f0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 6784895267130048515
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -234,5 +242,3 @@ MonoBehaviour:
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
-        <MaxSizeOfNftForDownload>k__BackingField:
-          maxSizeInBytes: 8388608
