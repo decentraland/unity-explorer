@@ -43,15 +43,26 @@ namespace DCL.Landscape
             // surrounded by red pixels to fill out the power of two texture, but at least one. World
             // origin (parcel 0,0) corresponds to uv of 0.5 plus half a pixel. The outer border is there
             // so that terrain height blends to zero at its edges.
-            try
+              try
             {
                 int i = 0;
+                int dataLength = data.Length; // Cache the length for bounds checking
+
+                // Helper function to safely set data with bounds checking
+                void SafeSetData(int index, byte value)
+                {
+                    if (index < 0 || index >= dataLength)
+                    {
+                        throw new System.IndexOutOfRangeException($"Index {index} is out of bounds for array of length {dataLength}");
+                    }
+                    data[index] = value;
+                }
 
                 // First section: rows of red pixels from the top edge of the texture to minParcel.y.
                 int endY = (textureSize / 2 + minParcel.y) * textureSize;
 
                 while (i < endY)
-                    data[i++] = 255;
+                    SafeSetData(i++, 255);
 
                 // Second section: totalPadding rows of: one or more red pixels (enough to pad the
                 // texture out to a power of two), terrainSize.x black pixels, one or more red pixels
@@ -63,17 +74,17 @@ namespace DCL.Landscape
                     int endX = i + textureSize / 2 + minParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        SafeSetData(i++, 255);
 
                     endX = i + terrainSize.x;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        SafeSetData(i++, 0);
 
                     endX = i + textureSize / 2 - maxParcel.x - 1;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        SafeSetData(i++, 255);
                 }
 
                 // Third, innermost section: citySize.y rows of: one or more red pixels, totalPadding
@@ -86,27 +97,27 @@ namespace DCL.Landscape
                     int endX = i + textureSize / 2 + minParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        SafeSetData(i++, 255);
 
                     endX = i + totalPadding;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        SafeSetData(i++, 0);
 
                     endX = i + citySize.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        SafeSetData(i++, 255);
 
                     endX = i + totalPadding;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        SafeSetData(i++, 0);
 
                     endX = i + textureSize / 2 - maxParcel.x - 1;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        SafeSetData(i++, 255);
                 }
 
                 // Fourth section, same as second section.
@@ -117,26 +128,29 @@ namespace DCL.Landscape
                     int endX = i + textureSize / 2 + minParcel.x;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        SafeSetData(i++, 255);
 
                     endX = i + terrainSize.x;
 
                     while (i < endX)
-                        data[i++] = 0;
+                        SafeSetData(i++, 0);
 
                     endX = i + textureSize / 2 - maxParcel.x - 1;
 
                     while (i < endX)
-                        data[i++] = 255;
+                        SafeSetData(i++, 255);
                 }
 
                 // Fifth section, same as first section.
                 endY = i + (textureSize / 2 - maxParcel.y) * textureSize;
 
                 while (i < endY)
-                    data[i++] = 255;
+                    SafeSetData(i++, 255);
             }
-            catch (IndexOutOfRangeException) { }
+            catch (IndexOutOfRangeException) {
+                int z = 0;
+                z++;
+            }
 
             for (int i = 0; i < empty.Length; i++)
             {
