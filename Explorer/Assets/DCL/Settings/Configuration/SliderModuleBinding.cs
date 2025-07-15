@@ -24,8 +24,8 @@ namespace DCL.Settings.Configuration
         {
             SCENE_DISTANCE_FEATURE,
             ENVIRONMENT_DISTANCE_FEATURE,
-            ROADS_DISTANCE_FEATURE,
             MOUSE_VERTICAL_SENSITIVITY_FEATURE,
+            ROADS_DISTANCE_FEATURE,
             MOUSE_HORIZONTAL_SENSITIVITY_FEATURE,
             MASTER_VOLUME_FEATURE,
             WORLD_SOUNDS_VOLUME_FEATURE,
@@ -68,7 +68,7 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.STP_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
-                                                       _ => throw new ArgumentOutOfRangeException(),
+                                                       _ => throw new ArgumentOutOfRangeException(nameof(Feature), Feature, $"Unsupported feature: {Feature}"),
                                                    };
 
             return controller;
