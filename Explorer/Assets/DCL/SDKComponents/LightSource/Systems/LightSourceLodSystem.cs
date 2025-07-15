@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.LightSource.Systems
     /// Also updates properties that are LOD dependant.
     /// </summary>
     [UpdateInGroup(typeof(LightSourcesGroup))]
-    [UpdateAfter(typeof(LightSourcePreCullingUpdateSystem))]
+    [UpdateAfter(typeof(LightSourceCullingSystem))]
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
     public partial class LightSourceLodSystem : BaseUnityLoopSystem
     {
@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             lightSourceComponent.LOD = FindLOD(lodSettings, lightSourceComponent);
 
-            ApplyLOD(pbLightSource, ref lightSourceComponent, lodSettings[lightSourceComponent.LOD]);
+            ApplyLOD(ref lightSourceComponent, lodSettings[lightSourceComponent.LOD]);
         }
 
         private bool TryGetLodSettings(PBLightSource pbLightSource, out List<LodSettings> lodSettings)
@@ -74,13 +74,13 @@ namespace DCL.SDKComponents.LightSource.Systems
             return lodSettings.Count - 1;
         }
 
-        private void ApplyLOD(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent, LodSettings lodSetting)
+        private void ApplyLOD(ref LightSourceComponent lightSourceComponent, LodSettings lodSetting)
         {
             if (lodSetting.IsCulled) lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CulledByLOD;
 
             Light light = lightSourceComponent.LightSourceInstance;
 
-            light.shadows = LightSourceHelper.GetCappedUnityLightShadows(pbLightSource, lodSetting.Shadows);
+            light.shadows = LightSourceHelper.ClampShadowQuality(light.shadows, lodSetting.Shadows);
 
             // NOTE setting the resolution to 0 allows unity to decide on the resolution (tiers are defined in the URP asset)
             light.shadowCustomResolution = lodSetting.OverrideShadowMapResolution ? lodSetting.ShadowMapResolution : 0;

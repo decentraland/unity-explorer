@@ -63,10 +63,10 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
 
             var lifecycleSystem = LightSourceLifecycleSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightPoolRegistry);
-            LightSourcePreCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
-            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, pluginSettings!.LightsPerParcel, pluginSettings.HardMaxLightCount);
+            LightSourceApplyPropertiesSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
+            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, pluginSettings!.LightsPerParcel, pluginSettings.HardMaxLightCount, pluginSettings.MaxPointLightShadows, pluginSettings.MaxSpotLightShadows);
             LightSourceLodSystem.InjectToWorld(ref builder, pluginSettings.SpotLightsLods, pluginSettings.PointLightsLods);
-            LightSourcePostCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, pluginSettings.fadeDuration);
+            LightSourcePostCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, pluginSettings.FadeDuration);
 
             if (hasDebugFlag) LightSourceDebugSystem.InjectToWorld(ref builder, globalWorld);
 
@@ -116,7 +116,11 @@ namespace DCL.PluginSystem.World
 
             public int HardMaxLightCount = 10;
 
-            public float fadeDuration = 0.25f;
+            public int MaxPointLightShadows = 1;
+
+            public int MaxSpotLightShadows = 3;
+
+            public float FadeDuration = 0.25f;
 
             public AssetReferenceGameObject LightSourcePrefab;
 

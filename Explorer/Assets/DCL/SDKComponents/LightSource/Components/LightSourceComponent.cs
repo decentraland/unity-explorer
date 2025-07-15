@@ -20,6 +20,8 @@ namespace DCL.SDKComponents.LightSource
 
         public int Rank;
 
+        public int TypeRank;
+
         public int LOD;
 
         public CullingFlags Culling;
@@ -36,6 +38,7 @@ namespace DCL.SDKComponents.LightSource
             DistanceToPlayer = 0;
             Index = -1;
             Rank = -1;
+            TypeRank = -1;
             LOD = -1;
             Culling = CullingFlags.None;
             TextureMaskPromise = null;

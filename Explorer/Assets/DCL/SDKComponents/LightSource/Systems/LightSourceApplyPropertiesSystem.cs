@@ -27,14 +27,14 @@ namespace DCL.SDKComponents.LightSource.Systems
     [UpdateInGroup(typeof(LightSourcesGroup))]
     [UpdateAfter(typeof(LightSourceLifecycleSystem))]
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
-    public partial class LightSourcePreCullingUpdateSystem : BaseUnityLoopSystem
+    public partial class LightSourceApplyPropertiesSystem : BaseUnityLoopSystem
     {
         private const int GET_TEXTURE_MAX_ATTEMPT_COUNT = 6;
 
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent partitionComponent;
 
-        public LightSourcePreCullingUpdateSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent) : base(world)
+        public LightSourceApplyPropertiesSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent) : base(world)
         {
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
@@ -49,12 +49,14 @@ namespace DCL.SDKComponents.LightSource.Systems
         [Query]
         private void UpdateLightSource(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
-            if (!pbLightSource.IsDirty) return;
-
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            lightSourceInstance.enabled = LightSourceHelper.IsPBLightSourceActive(pbLightSource);
-            if (!lightSourceInstance.enabled) return;
+            bool isActive = LightSourceHelper.IsPBLightSourceActive(pbLightSource);
+            lightSourceInstance.enabled = isActive;
+
+            if (isActive)
+                // NOTE we reset the shadow quality every frame because culling and LOD systems can change it
+                lightSourceInstance.shadows = LightSourceHelper.GetShadowQualityFromPBLightSource(pbLightSource);
 
             if (pbLightSource.IsDirty) ApplyPBLightSource(pbLightSource, ref lightSourceComponent);
         }
@@ -88,9 +90,6 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             light.type = LightType.Spot;
 
-            if (pbLightSource.Spot.HasShadow)
-                light.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Spot.Shadow);
-
             if (pbLightSource.Spot.HasInnerAngle)
                 light.innerSpotAngle = pbLightSource.Spot.InnerAngle;
 
@@ -101,9 +100,6 @@ namespace DCL.SDKComponents.LightSource.Systems
         private static void ApplyPointLight(PBLightSource pbLightSource, Light light)
         {
             light.type = LightType.Point;
-
-            if (pbLightSource.Point.HasShadow)
-                light.shadows = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow);
         }
 
         private void ApplyCookie(ref LightSourceComponent component, TextureUnion cookie)

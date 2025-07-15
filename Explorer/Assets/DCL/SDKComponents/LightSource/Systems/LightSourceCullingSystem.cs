@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine.Pool;
+using UnityEngine;
 
 namespace DCL.SDKComponents.LightSource.Systems
 {
@@ -19,7 +19,7 @@ namespace DCL.SDKComponents.LightSource.Systems
     /// Handles culling light sources based on their distance to the player.
     /// </summary>
     [UpdateInGroup(typeof(LightSourcesGroup))]
-    [UpdateAfter(typeof(LightSourcePreCullingUpdateSystem))]
+    [UpdateAfter(typeof(LightSourceApplyPropertiesSystem))]
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
     [BurstCompile]
     public partial class LightSourceCullingSystem : BaseUnityLoopSystem
@@ -28,18 +28,24 @@ namespace DCL.SDKComponents.LightSource.Systems
         private readonly ICharacterObject characterObject;
         private readonly float lightsPerParcel;
         private readonly int hardMaxLightCount;
+        private readonly int maxPointLightShadows;
+        private readonly int maxSpotLightShadows;
 
         public LightSourceCullingSystem(
             World world,
             ISceneData sceneData,
             ICharacterObject characterObject,
             float lightsPerParcel,
-            int hardMaxLightCount) : base(world)
+            int hardMaxLightCount,
+            int maxPointLightShadows,
+            int maxSpotLightShadows) : base(world)
         {
             this.sceneData = sceneData;
             this.characterObject = characterObject;
             this.lightsPerParcel = lightsPerParcel;
             this.hardMaxLightCount = hardMaxLightCount;
+            this.maxPointLightShadows = maxPointLightShadows;
+            this.maxSpotLightShadows = maxSpotLightShadows;
         }
 
         protected override void Update(float t)
@@ -50,10 +56,11 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void ClearLightSourceCulling(ref LightSourceComponent lightSourceComponent)
+        private void ClearLightSourceCulling(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             lightSourceComponent.Index = -1;
             lightSourceComponent.Rank = -1;
+            lightSourceComponent.TypeRank = -1;
             lightSourceComponent.Culling = LightSourceComponent.CullingFlags.None;
         }
 
@@ -67,74 +74,104 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         private void SortAndCullLightSources()
         {
-            _ = ListPool<LightSourceComponent>.Get(out var activeLights);
-            CollectActiveLightSourcesQuery(World, activeLights);
+            const int CAPACITY = 1000;
+            var lightData = new NativeList<LightData>(CAPACITY, Allocator.Temp);
+            CollectActiveLightSourcesQuery(World, ref lightData);
+
+            SortByDistanceToPlayer(lightData, out var ranks);
 
             int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * lightsPerParcel), hardMaxLightCount);
-
-            if (activeLights.Count <= maxLightCount) return;
-
-            var distances = new NativeArray<float>(activeLights.Count, Allocator.Temp);
-            for (var i = 0; i < distances.Length; i++) distances[i] = activeLights[i].DistanceToPlayer;
-
-            SortByDistanceToPlayer(distances, out var ranks);
-
             CullLightSourcesQuery(World, ranks, maxLightCount);
         }
 
         [Query]
-        private void CollectActiveLightSources([Data] List<LightSourceComponent> lights, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        private void CollectActiveLightSources([Data] ref NativeList<LightData> lightData, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource)) return;
 
-            lightSourceComponent.Index = lights.Count;
-            lights.Add(lightSourceComponent);
+            lightSourceComponent.Index = lightData.Length;
+            lightData.AddNoResize(new LightData(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayer));
         }
 
         [BurstCompile]
-        private static void SortByDistanceToPlayer(in NativeArray<float> lightDistances, out NativeArray<int> ranks)
+        private static void SortByDistanceToPlayer(in NativeList<LightData> lightData, out NativeArray<(int, int)> ranks)
         {
-            int lightCount = lightDistances.Length;
+            int lightCount = lightData.Length;
 
             var sortedIndices = new NativeArray<int>(lightCount, Allocator.Temp);
             for (var i = 0; i < lightCount; i++) sortedIndices[i] = i;
 
-            sortedIndices.Sort(new DistanceToPlayerComparer(lightDistances));
+            sortedIndices.Sort(new DistanceToPlayerComparer(lightData));
 
-            ranks = new NativeArray<int>(lightCount, Allocator.Temp);
-            for (var i = 0; i < lightCount; i++) ranks[sortedIndices[i]] = i;
+            ranks = new NativeArray<(int, int)>(lightCount, Allocator.Temp);
+
+            var pointLightRank = 0;
+            var spotLightRank = 0;
+
+            for (var i = 0; i < lightCount; i++)
+            {
+                int typeRank = lightData[i].Type switch
+                               {
+                                   PBLightSource.TypeOneofCase.Point => pointLightRank++,
+                                   PBLightSource.TypeOneofCase.Spot => spotLightRank++,
+                                   _ => -1
+                               };
+
+                ranks[sortedIndices[i]] = (i, typeRank);
+            }
         }
 
         [Query]
-        private void CullLightSources([Data] NativeArray<int> ranks, [Data] int maxLightCount, ref LightSourceComponent lightSourceComponent)
+        private void CullLightSources([Data] NativeArray<(int, int)> ranks, [Data] int maxLightCount, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
-            // Lights without an index are either inactive or already culled by a previous system
+            // Lights without an index are inactive
             if (lightSourceComponent.Index < 0) return;
 
-            lightSourceComponent.Rank = ranks[lightSourceComponent.Index];
+            (int rank, int typeRank) = ranks[lightSourceComponent.Index];
+
+            lightSourceComponent.Rank = rank;
+            lightSourceComponent.TypeRank = typeRank;
 
             if (lightSourceComponent.Rank >= maxLightCount)
                 lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.TooManyLightSources;
+
+            bool shouldDisableShadows = (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Point && lightSourceComponent.TypeRank >= maxPointLightShadows) ||
+                                        (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot && lightSourceComponent.TypeRank >= maxSpotLightShadows);
+            if (shouldDisableShadows)
+                lightSourceComponent.LightSourceInstance.shadows = LightShadows.None;
+        }
+
+        public struct LightData
+        {
+            public PBLightSource.TypeOneofCase Type;
+
+            public float Distance;
+
+            public LightData(PBLightSource.TypeOneofCase type, float distance)
+            {
+                Type = type;
+                Distance = distance;
+            }
         }
 
         #region DistanceToPlayerComparer
 
         /// <summary>
         /// Sorts lights from closest to more distant to the player position.
-        /// It actually sorts an array of indices. Each index IDs a light in the distances array.
+        /// It actually sorts an array of indices. Each index IDs a light in the light data collection.
         /// </summary>
         private struct DistanceToPlayerComparer : IComparer<int>
         {
-            public NativeArray<float> LightDistances;
+            public NativeList<LightData> LightData;
 
-            public DistanceToPlayerComparer(NativeArray<float> lightDistances)
+            public DistanceToPlayerComparer(NativeList<LightData> lightData)
             {
-                LightDistances = lightDistances;
+                LightData = lightData;
             }
 
             public int Compare(int lhs, int rhs)
             {
-                return LightDistances[lhs].CompareTo(LightDistances[rhs]);
+                return LightData[lhs].Distance.CompareTo(LightData[rhs].Distance);
             }
         }
 

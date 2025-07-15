@@ -17,25 +17,33 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         /// <summary>
-        /// Gets the <see cref="LightShadows"/> value from the given PB light source, capped by the specified max value.
-        /// Can be used to ensure shadow quality is not better than the desired value.
+        /// Clamps the value of <paramref name="quality"/> to <see cref="maxQuality"/>.
         /// </summary>
-        public static LightShadows GetCappedUnityLightShadows(PBLightSource pbLightSource, LightShadows maxValue)
+        public static LightShadows ClampShadowQuality(LightShadows quality, LightShadows maxQuality)
         {
-            LightShadows preferredValue = LightShadows.None;
+            return (int)quality <= (int)maxQuality ? quality : maxQuality;
+        }
 
+        /// <summary>
+        /// Clamps the shadow quality from the given <see cref="PBLightSource"/> to <paramref name="maxQuality"/>.
+        /// </summary>
+        public static LightShadows ClampShadowQuality(PBLightSource pbLightSource, LightShadows maxQuality)
+        {
+            return ClampShadowQuality(GetShadowQualityFromPBLightSource(pbLightSource), maxQuality);
+        }
+
+        public static LightShadows GetShadowQualityFromPBLightSource(PBLightSource pbLightSource)
+        {
             switch (pbLightSource.TypeCase)
             {
                 case PBLightSource.TypeOneofCase.Spot when pbLightSource.Spot.HasShadow:
-                    preferredValue = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Spot.Shadow);
-                    break;
+                    return PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Spot.Shadow);
 
                 case PBLightSource.TypeOneofCase.Point when pbLightSource.Point.HasShadow:
-                    preferredValue = PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow);
-                    break;
+                    return PrimitivesConversionExtensions.PBLightSourceShadowToUnityLightShadow(pbLightSource.Point.Shadow);
             }
 
-            return (int)preferredValue <= (int)maxValue ? preferredValue : maxValue;
+            return LightShadows.None;
         }
     }
 }

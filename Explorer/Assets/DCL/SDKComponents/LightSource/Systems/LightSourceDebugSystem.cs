@@ -42,14 +42,14 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void ApplyDebugState([Data] in LightSourceDebugState debugState, in PBLightSource pbLightSource,  in LightSourceComponent lightSourceComponent)
+        private void ApplyDebugState([Data] in LightSourceDebugState debugState, in LightSourceComponent lightSourceComponent)
         {
             var light = lightSourceComponent.LightSourceInstance;
 
             bool shadowsEnabled = debugState.ShadowsEnabled && (light.type != LightType.Point || debugState.PointLightShadowsEnabled);
 
             var maxShadowQuality = shadowsEnabled ? LightShadows.Soft : LightShadows.None;
-            light.shadows = LightSourceHelper.GetCappedUnityLightShadows(pbLightSource, maxShadowQuality);
+            light.shadows = LightSourceHelper.ClampShadowQuality(light.shadows, maxShadowQuality);
         }
     }
 }
