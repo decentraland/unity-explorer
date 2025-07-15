@@ -3,7 +3,6 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
-using DCL.Multiplayer.Connections.Typing;
 using DCL.Web3.Identities;
 using Decentraland.Common;
 using Decentraland.Kernel.Comms.V3;
@@ -61,7 +60,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             // It seems to be not required
             catch (Exception e)
             {
-                return Result.ErrorResult($"Cannot send heartbeat for position {playerPosition}: {e}");;
+                return Result.ErrorResult($"Cannot send heartbeat for position {playerPosition}: {e}");
             }
         }
 
