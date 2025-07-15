@@ -148,8 +148,6 @@ namespace DCL.Landscape
                     SafeSetData(i++, 255);
             }
             catch (IndexOutOfRangeException) {
-                int z = 0;
-                z++;
             }
 
             for (int i = 0; i < empty.Length; i++)
