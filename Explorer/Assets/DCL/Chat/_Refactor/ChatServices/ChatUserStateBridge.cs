@@ -1,5 +1,6 @@
 ﻿using System;
 using DCL.Chat.EventBus;
+using Utilities;
 
 namespace DCL.Chat.Services
 {

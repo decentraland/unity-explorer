@@ -4,6 +4,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
+using Utilities;
 
 public class ChatChannelsPresenter : IDisposable
 {

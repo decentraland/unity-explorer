@@ -1,4 +1,6 @@
-﻿namespace DCL.Chat.ChatUseCases
+﻿using Utilities;
+
+namespace DCL.Chat.ChatUseCases
 {
     using EventBus;
     using History;

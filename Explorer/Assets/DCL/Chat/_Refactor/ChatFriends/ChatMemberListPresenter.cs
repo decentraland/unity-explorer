@@ -5,6 +5,7 @@ using DCL.Chat;
 using DCL.Chat.EventBus;
 using DCL.Chat.Services;
 using DCL.UI.Profiles.Helpers;
+using Utilities;
 
 public class ChatMemberListPresenter : IDisposable
 {

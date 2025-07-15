@@ -33,6 +33,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Utilities;
 
 namespace DCL.PluginSystem.Global
 {

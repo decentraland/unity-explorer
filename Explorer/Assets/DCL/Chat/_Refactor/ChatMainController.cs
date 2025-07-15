@@ -15,6 +15,7 @@ using DCL.Chat.Services.DCL.Chat;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
+using Utilities;
 
 namespace DCL.Chat
 {

@@ -5,6 +5,7 @@ using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using DG.Tweening;
+using Utilities;
 
 public class ChatTitlebarPresenter : IDisposable
 {

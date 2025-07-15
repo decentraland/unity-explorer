@@ -3,6 +3,7 @@ using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using Prime31.StateKit;
 using System;
+using Utilities;
 
 namespace DCL.Chat._Refactor.ChatStates
 {

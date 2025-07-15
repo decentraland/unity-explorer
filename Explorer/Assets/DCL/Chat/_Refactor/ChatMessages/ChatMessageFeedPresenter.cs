@@ -7,6 +7,7 @@ using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.Services;
 using DG.Tweening;
+using Utilities;
 using Utility;
 
 public class ChatMessageFeedPresenter : IDisposable

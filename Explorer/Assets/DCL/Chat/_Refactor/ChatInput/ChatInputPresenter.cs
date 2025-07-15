@@ -6,6 +6,7 @@ using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.Services;
+using Utilities;
 using Utility;
 
 public class ChatInputPresenter : IDisposable

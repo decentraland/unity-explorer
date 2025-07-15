@@ -8,6 +8,7 @@ using DCL.Profiles;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
+using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
