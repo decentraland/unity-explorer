@@ -330,7 +330,7 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
         {
             viewInstance?.communitiesButton.gameObject.SetActive(false);
-            bool includeCommunities = await IncludedFeaturesRegistry.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(ct);
+            bool includeCommunities = await FeaturesRegistry.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 

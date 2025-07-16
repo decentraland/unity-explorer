@@ -126,7 +126,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            includeCommunities = await IncludedFeaturesRegistry.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(ct);
+            includeCommunities = await FeaturesRegistry.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 

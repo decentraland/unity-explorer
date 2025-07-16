@@ -335,6 +335,10 @@ namespace Global.Dynamic
 
             //TODO should be unified with LaunchMode
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+
+            var includedFeaturesRegistry = new FeaturesRegistry(appArgs, localSceneDevelopment);
+            FeaturesRegistry.Initialize(includedFeaturesRegistry);
+
             bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
             var realmContainer = RealmContainer.Create(
@@ -425,19 +429,16 @@ namespace Global.Dynamic
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
                 : livekitHealthCheck;
 
-            IncludedFeaturesRegistry includedFeaturesRegistry = new IncludedFeaturesRegistry(appArgs, localSceneDevelopment);
-            IncludedFeaturesRegistry.Initialize(includedFeaturesRegistry);
-
             var communitiesProvider = new CommunitiesFeatureProvider(identityCache);
-            includedFeaturesRegistry.RegisterFeatureProvider(FeatureFlagsStrings.COMMUNITIES, communitiesProvider);
+            includedFeaturesRegistry.RegisterFeatureProvider(FeatureId.COMMUNITIES, communitiesProvider);
 
-            bool includeCameraReel = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.CAMERA_REEL);
-            bool includeFriends = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.FRIENDS);
-            bool includeUserBlocking = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING);
-            bool includeVoiceChat = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.VOICE_CHAT);
-            bool isNameEditorEnabled = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR);
-            bool includeMarketplaceCredits = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
-            bool includeCommunities = await includedFeaturesRegistry.IsEnabledForUserAsync(FeatureFlagsStrings.COMMUNITIES, ct);
+            bool includeCameraReel = includedFeaturesRegistry.IsEnabled(FeatureId.CAMERA_REEL);
+            bool includeFriends = includedFeaturesRegistry.IsEnabled(FeatureId.FRIENDS);
+            bool includeUserBlocking = includedFeaturesRegistry.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            bool includeVoiceChat = includedFeaturesRegistry.IsEnabled(FeatureId.VOICE_CHAT);
+            bool isNameEditorEnabled = includedFeaturesRegistry.IsEnabled(FeatureId.PROFILE_NAME_EDITOR);
+            bool includeMarketplaceCredits = includedFeaturesRegistry.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
+            bool includeCommunities = await includedFeaturesRegistry.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct);
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel);
