@@ -28,6 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
         private readonly IVoiceService voiceChatService;
+        private readonly VoiceChatOrchestrator voiceChatOrchestrator;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
         private ProvidedInstance<VoiceChatMicrophoneAudioFilter> microphoneAudioFilter;
@@ -42,8 +43,7 @@ namespace DCL.PluginSystem.Global
         private VoiceChatNametagsHandler? nametagsHandler;
         private VoiceChatMicrophoneStateManager? microphoneStateManager;
         private CommunityVoiceChatController? communitiesVoiceChatController;
-        private readonly VoiceChatOrchestrator voiceChatOrchestrator;
-        private VoiceChatPanelResizeController voiceChatPanelResizeController;
+        private VoiceChatPanelResizeController? voiceChatPanelResizeController;
 
         public VoiceChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -54,18 +54,18 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world,
             Entity playerEntity
-            )
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
-            this.voiceChatCallStatusService = voiceChatContainer.VoiceChatCallStatusService;
+            voiceChatCallStatusService = voiceChatContainer.VoiceChatCallStatusService;
             this.profileDataProvider = profileDataProvider;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.voiceChatService = voiceChatContainer.RPCPrivateVoiceChatService;
-            this.voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
+            voiceChatService = voiceChatContainer.RPCPrivateVoiceChatService;
+            voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
         public void Dispose()

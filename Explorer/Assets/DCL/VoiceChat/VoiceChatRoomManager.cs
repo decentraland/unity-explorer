@@ -3,22 +3,19 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using LiveKit;
-using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
 using System;
 using System.Threading;
-using Utility;
 using Utility.Types;
 
 namespace DCL.VoiceChat
 {
     /// <summary>
-    /// Orchestrates voice chat room operations by coordinating between track and
-    /// connection management.
+    ///     Orchestrates voice chat room operations by coordinating between track and
+    ///     connection management.
     /// </summary>
     public class VoiceChatRoomManager : IDisposable
     {
@@ -72,8 +69,30 @@ namespace DCL.VoiceChat
             statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
         }
 
+        public void Dispose()
+        {
+            if (isDisposed) return;
+            isDisposed = true;
+
+            voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
+            voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
+            voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
+            voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
+            voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
+
+            reconnectionManager.ReconnectionStarted -= OnReconnectionStarted;
+            reconnectionManager.ReconnectionSuccessful -= OnReconnectionSuccessful;
+            reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
+
+            statusSubscription?.Dispose();
+            reconnectionManager?.Dispose();
+            trackManager?.Dispose();
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
+        }
+
         /// <summary>
-        /// Handles call status changes and triggers appropriate room operations.
+        ///     Handles call status changes and triggers appropriate room operations.
         /// </summary>
         private void OnCallStatusChanged(VoiceChatStatus newStatus)
         {
@@ -91,6 +110,7 @@ namespace DCL.VoiceChat
                         reconnectionManager.ConfirmOrderedDisconnection();
                         DisconnectFromRoomAsync().Forget();
                     }
+
                     break;
 
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
@@ -108,13 +128,14 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connecting to room");
 
                 Result<bool> result = await roomHub.VoiceChatRoom()
-                    .TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl)
-                    .SuppressToResultAsync();
+                                                   .TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl)
+                                                   .SuppressToResultAsync();
 
                 if (!result.Success)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
                         $"Initial connection failed for room {voiceChatCallStatusService.RoomUrl}: {result.ErrorMessage}");
+
                     voiceChatCallStatusService.HandleLivekitConnectionFailed();
                 }
             }
@@ -132,16 +153,13 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disconnecting from room");
 
                 EnumResult<TaskError> result = await roomHub.VoiceChatRoom()
-                    .DeactivateAsync()
-                    .SuppressToResultAsync();
+                                                            .DeactivateAsync()
+                                                            .SuppressToResultAsync();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT,
                     result.Success ? $"{TAG} Completed disconnection" : $"{TAG} Exception during disconnection: {result.Error?.Message}");
             }
-            catch (Exception ex)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to disconnect from room: {ex.Message}");
-            }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to disconnect from room: {ex.Message}"); }
         }
 
         private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
@@ -221,10 +239,7 @@ namespace DCL.VoiceChat
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection setup completed");
             }
-            catch (Exception ex)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}");
-            }
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
         }
 
         private void OnConnectionLost()
@@ -242,35 +257,10 @@ namespace DCL.VoiceChat
                 MediaDeactivated?.Invoke();
 
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection cleanup completed");
-                
+
                 reconnectionManager.StartOrderedDisconnectionGracePeriod();
             }
-            catch (Exception ex)
-            {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}");
-            }
-        }
-
-        public void Dispose()
-        {
-            if (isDisposed) return;
-            isDisposed = true;
-
-            voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
-            voiceChatRoom.TrackSubscribed -= OnTrackSubscribed;
-            voiceChatRoom.TrackUnsubscribed -= OnTrackUnsubscribed;
-            voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
-            voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
-            
-            reconnectionManager.ReconnectionStarted -= OnReconnectionStarted;
-            reconnectionManager.ReconnectionSuccessful -= OnReconnectionSuccessful;
-            reconnectionManager.ReconnectionFailed -= OnReconnectionFailed;
-            
-            statusSubscription?.Dispose();
-            reconnectionManager?.Dispose();
-            trackManager?.Dispose();
-
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
+            catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
         }
     }
 }
