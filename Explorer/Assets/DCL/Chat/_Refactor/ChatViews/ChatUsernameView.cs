@@ -9,18 +9,16 @@ namespace DCL.Chat
         [SerializeField] private TMP_Text userNameHashtagText;
         [SerializeField] private GameObject verifiedMark;
 
-        public void Setup(string username, string walletId, bool isVerified, Color nameColor)
+        public void Setup(string username,
+            string walletId,
+            bool isVerified,
+            Color nameColor)
         {
             userNameText.text = username;
             userNameText.color = nameColor;
-
             verifiedMark.SetActive(isVerified);
+            userNameHashtagText.text = walletId ?? string.Empty;
             userNameHashtagText.gameObject.SetActive(!isVerified);
-
-            if (!isVerified)
-            {
-                userNameHashtagText.text = walletId;
-            }
         }
     }
 }

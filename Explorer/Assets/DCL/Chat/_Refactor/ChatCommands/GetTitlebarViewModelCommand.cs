@@ -35,19 +35,21 @@ namespace DCL.Chat.ChatUseCases
             if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
             {
                 viewModel.ViewMode = Mode.DirectMessage;
-                viewModel.UserProfileId = new Web3Address(channel.Id.Id);
+                viewModel.WalletId = new Web3Address(channel.Id.Id);
 
                 Profile? profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
                 if (ct.IsCancellationRequested || profile == null)
                 {
                     return new ChatTitlebarViewModel
                     {
-                        Title = "Unknown User"
+                        Name = "Unknown User"
                     };
                 }
 
-                viewModel.Title = profile.ValidatedName;
+                viewModel.IsLoadingProfile = false;
+                viewModel.Name = profile.ValidatedName;
                 viewModel.HasClaimedName = profile.HasClaimedName;
+                viewModel.WalletId = profile.WalletId;
                 viewModel.ProfileColor = profile.UserNameColor;
                 viewModel.ProfileSprite = await _getThumbnailCommand.ExecuteAsync(
                     profile.UserId,
@@ -58,7 +60,7 @@ namespace DCL.Chat.ChatUseCases
             else
             {
                 viewModel.ViewMode = Mode.Nearby;
-                viewModel.Title = chatConfig.NearbyConversationName;
+                viewModel.Name = chatConfig.NearbyConversationName;
                 viewModel.HasClaimedName = false;
                 viewModel.ProfileSprite = chatConfig.NearbyConversationIcon;
             }

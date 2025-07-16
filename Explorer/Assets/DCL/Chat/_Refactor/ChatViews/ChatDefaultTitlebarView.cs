@@ -28,7 +28,16 @@ public class ChatDefaultTitlebarView : MonoBehaviour
 
     public void Setup(ChatTitlebarViewModel model)
     {
-        textChannelName.text = model.Title;
+        if (model.IsLoadingProfile)
+        {
+            textChannelName.text = model.Name;
+            chatProfileView.gameObject.SetActive(false);
+            nearbyElementsContainer.SetActive(false);
+            buttonOpenMembers.gameObject.SetActive(false);
+            return;
+        }
+        
+        textChannelName.text = model.Name;
         
         bool isDirectMessage = model.ViewMode == Mode.DirectMessage;
         chatProfileView.gameObject.SetActive(isDirectMessage);
@@ -37,7 +46,7 @@ public class ChatDefaultTitlebarView : MonoBehaviour
 
         if (isDirectMessage)
         {
-            chatProfileView.Setup(model.ProfileSprite, model.IsLoadingProfile);
+            chatProfileView.Setup(model);
             chatProfileView.SetProfileBackgroundColor(model.ProfileColor);
         }
     }

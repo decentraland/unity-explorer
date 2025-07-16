@@ -1,4 +1,4 @@
-﻿using DCL.UI.ProfileElements;
+﻿using DCL.Chat.ChatViewModels;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,9 +12,11 @@ namespace DCL.Chat
 
         public Button ButtonOpenProfile => buttonOpenProfile;
 
-        public void Setup(Sprite sprite, bool isLoading)
+        public void Setup(ChatTitlebarViewModel model)
         {
-            chatProfilePictureView.Setup(sprite, isLoading);
+            chatProfilePictureView.Setup(model.ProfileSprite, model.IsLoadingProfile);
+            usernameElement.Setup(model.Name, model.WalletId,model.HasClaimedName,
+                model.ProfileColor);
         }
 
         public void SetProfileBackgroundColor(Color color)

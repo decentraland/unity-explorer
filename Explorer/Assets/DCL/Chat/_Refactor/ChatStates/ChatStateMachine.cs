@@ -9,7 +9,6 @@ namespace DCL.Chat._Refactor.ChatStates
 {
     public class ChatStateMachine : IDisposable
     {
-        
         internal readonly IEventBus eventBus;
         private readonly ChatUIMediator mediator;
         private readonly ChatInputBlockingService inputBlocker;
@@ -104,6 +103,7 @@ namespace DCL.Chat._Refactor.ChatStates
         /// <summary>
         /// NOTE: this method is clunky,
         /// NOTE: but it is used to set the visibility of the chat UI.
+        /// NOTE: need to rework this it's set
         /// </summary>
         /// <param name="isVisible"></param>
         public void SetVisibility(bool isVisible)

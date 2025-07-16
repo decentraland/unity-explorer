@@ -14,11 +14,7 @@ namespace DCL.Chat
         {
             //loadingSpinner.SetActive(isLoading);
             thumbnailImageView.gameObject.SetActive(!isLoading);
-
-            if (!isLoading)
-            {
-                thumbnailImageView.SetImage(sprite);
-            }
+            if (!isLoading) thumbnailImageView.SetImage(sprite);
         }
 
         public void SetBackgroundColor(Color color)

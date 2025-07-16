@@ -59,14 +59,10 @@ public class ChatTitlebarPresenter : IDisposable
 
         try
         {
-            view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
-            {
-                Title = "Loading...",
-                IsLoadingProfile = true,
-                ViewMode = channel.ChannelType == ChatChannel.ChatChannelType.NEARBY ?
-                    Mode.Nearby :
-                    Mode.DirectMessage
-            });
+            var loadingViewModel = ChatTitlebarViewModel
+                .CreateLoading(channel.ChannelType == ChatChannel.ChatChannelType.NEARBY ?
+                    Mode.Nearby : Mode.DirectMessage);
+            view.defaultTitlebarView.Setup(loadingViewModel);
             
             var finalViewModel = await getTitlebarViewModel.ExecuteAsync(channel, ct);
             if (ct.IsCancellationRequested) return;
@@ -78,7 +74,7 @@ public class ChatTitlebarPresenter : IDisposable
         {
             view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
             {
-                Title = "Error"
+                Name = "Error"
             });
             ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
         }
