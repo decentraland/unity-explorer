@@ -6,17 +6,12 @@
         {
             context.UIMediator.SetupForDefaultState(animate: true);
             context.UIMediator.chatInputPresenter.OnDefocus();
-
-            // TODO Propagate events via a View Bus to prevent a circular dependency on the main chat controller
-            // Or make them active similar to other callbacks
-            // _context.MainController.PointerEntered += OnPointerEnter;
-            // _context.MainController.PointerExited += OnPointerExit;
         }
 
-        private void OnPointerEnter() =>
+        public override void OnPointerEnter() =>
             context.UIMediator.SetPanelsFocus(isFocused: true, animate: true);
 
-        private void OnPointerExit() =>
+        public override void OnPointerExit() =>
             context.UIMediator.SetPanelsFocus(isFocused: false, animate: true);
 
         public override void OnClickInside() =>

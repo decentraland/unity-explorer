@@ -16,5 +16,9 @@ namespace DCL.Chat
         public virtual void OnMinimizeRequested() { }
 
         public virtual void OnToggleMembers() { }
+
+        public virtual void OnPointerEnter() { }
+
+        public virtual void OnPointerExit() { }
     }
 }

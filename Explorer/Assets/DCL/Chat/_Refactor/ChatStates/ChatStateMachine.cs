@@ -50,12 +50,18 @@ namespace DCL.Chat._Refactor.ChatStates
 
             chatClickDetectionService.OnClickInside += HandleClickInside;
             chatClickDetectionService.OnClickOutside += HandleClickOutside;
+            
+            MainController.PointerEntered += HandlePointerEntered;
+            MainController.PointerExited += HandlePointerExited;
         }
 
         public void Dispose()
         {
             chatClickDetectionService.OnClickInside -= HandleClickInside;
             chatClickDetectionService.OnClickOutside -= HandleClickOutside;
+            
+            MainController.PointerEntered -= HandlePointerEntered;
+            MainController.PointerExited -= HandlePointerExited;
 
             scope.Dispose();
         }
@@ -88,6 +94,16 @@ namespace DCL.Chat._Refactor.ChatStates
         private void HandleClickOutside()
         {
             fsm.CurrentState.OnClickOutside();
+        }
+        
+        private void HandlePointerExited()
+        {
+            fsm.CurrentState.OnPointerExit();
+        }
+
+        private void HandlePointerEntered()
+        {
+            fsm.CurrentState.OnPointerEnter();
         }
 
         public void SetInitialState(bool focus)

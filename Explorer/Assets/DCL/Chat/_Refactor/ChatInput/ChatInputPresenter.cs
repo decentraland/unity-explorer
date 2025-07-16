@@ -99,8 +99,8 @@ public class ChatInputPresenter : IDisposable
         cts.Cancel();
         view.SetDefault();
     }
-    
-    public async UniTask UpdateStateForChannel(ChatChannel channel)
+
+    private async UniTask UpdateStateForChannel(ChatChannel channel)
     {
         cts = cts.SafeRestart();
 
