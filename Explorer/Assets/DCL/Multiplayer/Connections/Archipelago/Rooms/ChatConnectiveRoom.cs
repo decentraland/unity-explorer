@@ -200,7 +200,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
         {
             var credentials = new ConnectionStringCredentials(connectionString);
 
-            bool connectResult = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+            var connectResultTuple = await roomInstance.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+            bool connectResult = connectResultTuple.success;
 
             AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);

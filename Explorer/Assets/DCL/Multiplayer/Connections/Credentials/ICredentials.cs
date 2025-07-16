@@ -30,8 +30,11 @@ namespace DCL.Multiplayer.Connections.Credentials
         public static string ReadableString(this ICredentials credentials) =>
             $"Url: {credentials.Url}, AuthToken: {credentials.AuthToken}";
 
-        public static Task<bool> ConnectAsync<T>(this IRoom room, T credentials, CancellationToken token) where T: ICredentials =>
-            room.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+        public static async Task<bool> ConnectAsync<T>(this IRoom room, T credentials, CancellationToken token) where T: ICredentials
+        {
+            var result = await room.ConnectAsync(credentials.Url, credentials.AuthToken, token, true);
+            return result.success;
+        }
 
         public static async Task EnsuredConnectAsync<T>(this IRoom room, T credentials, IMultiPool multiPool, CancellationToken token) where T: ICredentials
         {
