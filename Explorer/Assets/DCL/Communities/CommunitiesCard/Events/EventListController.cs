@@ -7,11 +7,13 @@ using DCL.Communities.CommunityCreation;
 using DCL.Communities.EventInfo;
 using DCL.Diagnostics;
 using DCL.EventsApi;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -25,6 +27,8 @@ namespace DCL.Communities.CommunitiesCard.Events
     {
         private const int PAGE_SIZE = 20;
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
+
+        private const string CREATE_EVENT_FORMAT = "https://decentraland.{0}/events/submit?communityId={1}";
 
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
@@ -40,6 +44,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
@@ -60,7 +65,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             WarningNotificationView inWorldSuccessNotificationView,
             ISystemClipboard clipboard,
             IWebBrowser webBrowser,
-            IRealmNavigator realmNavigator) : base(view, PAGE_SIZE)
+            IRealmNavigator realmNavigator,
+            IDecentralandUrlsSource decentralandUrlsSource) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.eventsApiService = eventsApiService;
@@ -72,6 +78,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
+            this.decentralandUrlsSource = decentralandUrlsSource;
 
             view.InitList(thumbnailLoader, cancellationToken);
 
@@ -81,6 +88,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             view.InterestedButtonClicked += OnInterestedButtonClicked;
             view.EventShareButtonClicked += OnEventShareButtonClicked;
             view.EventCopyLinkButtonClicked += OnEventCopyLinkButtonClicked;
+            view.CreateEventRequested += OnCreateEventButtonClicked;
         }
 
         public override void Dispose()
@@ -91,11 +99,15 @@ namespace DCL.Communities.CommunitiesCard.Events
             view.InterestedButtonClicked -= OnInterestedButtonClicked;
             view.EventShareButtonClicked -= OnEventShareButtonClicked;
             view.EventCopyLinkButtonClicked -= OnEventCopyLinkButtonClicked;
+            view.CreateEventRequested -= OnCreateEventButtonClicked;
 
             eventCardOperationsCts.SafeCancelAndDispose();
 
             base.Dispose();
         }
+
+        private void OnCreateEventButtonClicked() =>
+            webBrowser.OpenUrl(string.Format(CREATE_EVENT_FORMAT, decentralandUrlsSource.DecentralandDomain, communityData?.id));
 
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
