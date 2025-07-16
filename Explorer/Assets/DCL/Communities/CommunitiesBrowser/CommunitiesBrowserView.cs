@@ -47,7 +47,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject myCommunitiesSection = null!;
         [SerializeField] private GameObject myCommunitiesMainContainer = null!;
         [SerializeField] private GameObject myCommunitiesEmptyContainer = null!;
-        [SerializeField] private GameObject myCommunitiesLoadingSpinner = null!;
+        [SerializeField] private SkeletonLoadingView myCommunitiesLoadingSpinner = null!;
         [SerializeField] private LoopListView2 myCommunitiesLoopList = null!;
         [SerializeField] private Button myCommunitiesViewAllButton = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject resultsSection = null!;
         [SerializeField] private LoopGridView resultLoopGrid = null!;
         [SerializeField] private GameObject resultsEmptyContainer = null!;
-        [SerializeField] private GameObject resultsLoadingSpinner = null!;
+        [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
 
         private readonly List<CommunityData> currentMyCommunities = new ();
@@ -118,17 +118,21 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMyCommunitiesAsLoading(bool isLoading)
         {
-            myCommunitiesLoadingSpinner.SetActive(isLoading);
-            myCommunitiesSection.SetActive(!isLoading);
+            if (isLoading)
+                myCommunitiesLoadingSpinner.ShowLoading();
+            else
+                myCommunitiesLoadingSpinner.HideLoading();
         }
 
         public void SetResultsAsLoading(bool isLoading)
         {
-            resultsLoadingSpinner.SetActive(isLoading);
-            resultsSection.SetActive(!isLoading);
-
             if (isLoading)
+            {
                 resultsCountText.text = string.Empty;
+                resultsLoadingSpinner.ShowLoading();
+            }
+            else
+                resultsLoadingSpinner.HideLoading();
         }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>

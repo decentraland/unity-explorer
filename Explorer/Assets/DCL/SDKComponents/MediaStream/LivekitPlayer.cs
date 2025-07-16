@@ -180,10 +180,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (isCurrentScene)
             {
-                case true when Volume < targetVolume:
+                case true:
                     SetVolume(Mathf.Min(targetVolume, Volume + volumeDelta));
                     break;
-                case false when Volume > 0:
+                case false:
                     SetVolume(Mathf.Max(0, targetVolume - volumeDelta));
                     break;
             }
