@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             public bool IsSceneConnected(string? sceneId) =>
                 origin.IsSceneConnected(sceneId);
 
-            public ISceneData? ConnectedScene => origin.ConnectedScene;
+            public ISceneData? ConnectedScene => origin.connectedScene?.SceneData;
         }
 
         private readonly IWebRequestController webRequests;
@@ -38,8 +38,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private ISceneFacade? connectedScene;
 
         private MetaData previousMetaData;
-
-        public ISceneData? ConnectedScene => connectedScene?.SceneData;
 
         public GateKeeperSceneRoom(
             IWebRequestController webRequests,
