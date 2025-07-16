@@ -15,6 +15,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly IVoiceChatUIEvents voiceChatOrchestratorUIEvents;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly List<PlayerEntryView> usedPlayerEntries = new ();
+        private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
 
         private bool isPanelCollapsed;
 
@@ -27,6 +28,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.voiceChatOrchestratorUIEvents = voiceChatOrchestratorUIEvents;
+            communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
 
@@ -55,7 +57,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void AddListener()
         {
             PlayerEntryView entryView = GetAndConfigurePlayerEntry();
-            entryView.transform.parent = view.ListenersParent;
+            entryView.transform.parent = view.CommunityVoiceChatSearchView.ListenersParent;
         }
 
         private PlayerEntryView GetAndConfigurePlayerEntry()
@@ -76,6 +78,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
+            communityVoiceChatSearchController?.Dispose();
+            ClearPool();
         }
     }
 }
