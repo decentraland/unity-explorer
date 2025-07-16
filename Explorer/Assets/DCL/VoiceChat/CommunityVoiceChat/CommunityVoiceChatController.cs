@@ -1,4 +1,5 @@
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Web3;
 using System;
 using System.Collections.Generic;
@@ -13,21 +14,24 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly CommunityVoiceChatTitlebarView view;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestratorUIEvents voiceChatOrchestratorUIEvents;
+        private readonly IVoiceChatOrchestratorState voiceChatOrchestratorState;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly List<PlayerEntryView> usedPlayerEntries = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
 
         private bool isPanelCollapsed;
+        private IDisposable? voiceChatTypeSubscription;
 
         public CommunityVoiceChatController(
             CommunityVoiceChatTitlebarView view,
             PlayerEntryView playerEntry,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            IVoiceChatOrchestratorUIEvents voiceChatOrchestratorUIEvents)
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
-            this.voiceChatOrchestratorUIEvents = voiceChatOrchestratorUIEvents;
+            this.voiceChatOrchestratorUIEvents = voiceChatOrchestrator;
+            this.voiceChatOrchestratorState = voiceChatOrchestrator;
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
@@ -37,8 +41,37 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 actionOnGet:entry => entry.gameObject.SetActive(true),
                 actionOnRelease:entry => entry.gameObject.SetActive(false));
 
+            voiceChatTypeSubscription = voiceChatOrchestratorState.CurrentVoiceChatType.Subscribe(OnVoiceChatTypeChanged);
+
+            OnVoiceChatTypeChanged(voiceChatOrchestratorState.CurrentVoiceChatType.Value);
+
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
+        {
+            switch (voiceChatType)
+            {
+                case VoiceChatType.PRIVATE:
+                    Hide();
+                    break;
+                case VoiceChatType.COMMUNITY:
+                case VoiceChatType.NONE:
+                default:
+                    Show();
+                    break;
+            }
+        }
+
+        private void Show()
+        {
+            view.gameObject.SetActive(true);
+        }
+
+        private void Hide()
+        {
+            view.gameObject.SetActive(false);
         }
 
         private void OnCollapsedButtonClicked()
@@ -78,6 +111,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
+            voiceChatTypeSubscription?.Dispose();
             communityVoiceChatSearchController?.Dispose();
             ClearPool();
         }

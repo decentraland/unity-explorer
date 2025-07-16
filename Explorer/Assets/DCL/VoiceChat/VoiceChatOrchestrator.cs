@@ -154,22 +154,29 @@ namespace DCL.VoiceChat
 
         private void OnPrivateVoiceChatStatusChanged(VoiceChatStatus status)
         {
+            // Update call status if we're already in a private call
             if (currentVoiceChatType.Value == VoiceChatType.PRIVATE)
             {
                 currentCallStatus.Value = status;
             }
 
-            if (currentVoiceChatType.Value != VoiceChatType.PRIVATE) return;
-
+            // Handle transitions to/from private call
             if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
             {
-                SetVoiceChatType(VoiceChatType.NONE);
-                activeCallStatusService = null;
+                if (currentVoiceChatType.Value == VoiceChatType.PRIVATE)
+                {
+                    SetVoiceChatType(VoiceChatType.NONE);
+                    activeCallStatusService = null;
+                }
             }
-            else
+            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL || 
+                     status == VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL ||
+                     status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
+                     status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
                 SetVoiceChatType(VoiceChatType.PRIVATE);
                 activeCallStatusService = privateVoiceChatCallStatusService;
+                currentCallStatus.Value = status;
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
@@ -177,22 +184,29 @@ namespace DCL.VoiceChat
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)
         {
+            // Update call status if we're already in a community call
             if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY)
             {
                 currentCallStatus.Value = status;
             }
 
-            if (currentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
-
+            // Handle transitions to/from community call
             if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
             {
-                SetVoiceChatType(VoiceChatType.NONE);
-                activeCallStatusService = null;
+                if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+                {
+                    SetVoiceChatType(VoiceChatType.NONE);
+                    activeCallStatusService = null;
+                }
             }
-            else
+            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL || 
+                     status == VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL ||
+                     status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
+                     status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
                 SetVoiceChatType(VoiceChatType.COMMUNITY);
                 activeCallStatusService = communityVoiceChatCallStatusService;
+                currentCallStatus.Value = status;
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");

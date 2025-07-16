@@ -7,6 +7,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Settings.Settings;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.VoiceChat;
 using DCL.VoiceChat.CommunityVoiceChat;
 using DCL.VoiceChat.Services;
