@@ -83,7 +83,6 @@ using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.UI.Profiles.Helpers;
-using DCL.UI.SceneDebugConsole.Commands;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.SharedSpaceManager;
 using DCL.UserInAppInitializationFlow;
@@ -1032,8 +1031,7 @@ namespace Global.Dynamic
             if (localSceneDevelopment || appArgs.HasFlag(AppArgsFlags.SCENE_CONSOLE))
                 globalPlugins.Add(new SceneDebugConsolePlugin(
                     bootstrapContainer.SceneDebugConsoleMessageBus!,
-                    new SceneDebugConsoleLogHistory(),
-                    new SceneDebugConsoleCommandsBus()));
+                    new SceneDebugConsoleLogHistory()));
 
             var globalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
 using DCL.UI.SceneDebugConsole;
-using DCL.UI.SceneDebugConsole.Commands;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.SceneDebugConsole.MessageBus;
 
@@ -10,17 +9,14 @@ namespace DCL.PluginSystem.Global
     {
         private readonly SceneDebugConsoleLogHistory logHistory;
         private readonly SceneDebugConsoleLogEntryBus logLogEntriesBus;
-        private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
         private SceneDebugConsoleController sceneDebugConsoleController;
 
         public SceneDebugConsolePlugin(
             SceneDebugConsoleLogEntryBus logLogEntriesBus,
-            SceneDebugConsoleLogHistory logHistory,
-            SceneDebugConsoleCommandsBus consoleCommandsBus)
+            SceneDebugConsoleLogHistory logHistory)
         {
             this.logHistory = logHistory;
             this.logLogEntriesBus = logLogEntriesBus;
-            this.consoleCommandsBus = consoleCommandsBus;
         }
 
         public void Dispose() { }
@@ -29,8 +25,7 @@ namespace DCL.PluginSystem.Global
         {
             sceneDebugConsoleController = new SceneDebugConsoleController(
                 logLogEntriesBus,
-                logHistory,
-                consoleCommandsBus
+                logHistory
             );
         }
     }

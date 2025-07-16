@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.UI.SceneDebugConsole.Commands;
 using DCL.UI.SceneDebugConsole.LogHistory;
 using DCL.UI.SceneDebugConsole.MessageBus;
 using System;
@@ -14,7 +13,6 @@ namespace DCL.UI.SceneDebugConsole
     {
         private readonly SceneDebugConsoleLogEntryBus logEntriesBus;
         private readonly SceneDebugConsoleLogHistory logsHistory;
-        private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
 
         private UIDocument uiDocument;
         private VisualElement uiDocumentRoot;
@@ -24,12 +22,10 @@ namespace DCL.UI.SceneDebugConsole
 
         public SceneDebugConsoleController(
             SceneDebugConsoleLogEntryBus logEntriesBus,
-            SceneDebugConsoleLogHistory logsHistory,
-            SceneDebugConsoleCommandsBus consoleCommandsBus)
+            SceneDebugConsoleLogHistory logsHistory)
         {
             this.logEntriesBus = logEntriesBus;
             this.logsHistory = logsHistory;
-            this.consoleCommandsBus = consoleCommandsBus;
 
             InstantiateRootGO();
         }
@@ -39,7 +35,6 @@ namespace DCL.UI.SceneDebugConsole
         {
             logEntriesBus.MessageAdded += OnEntryBusEntryAdded;
             logsHistory.LogMessageAdded += OnLogsHistoryEntryAdded;
-            consoleCommandsBus.OnClearConsole += Clear;
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed += OnToggleConsoleShortcutPerformed;
 
             uiDocument = Object.Instantiate(Resources.Load<GameObject>("SceneDebugConsoleRootCanvas")).GetComponent<UIDocument>();
@@ -73,7 +68,6 @@ namespace DCL.UI.SceneDebugConsole
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             logEntriesBus.MessageAdded -= OnEntryBusEntryAdded;
             logsHistory.LogMessageAdded -= OnLogsHistoryEntryAdded;
-            consoleCommandsBus.OnClearConsole -= Clear;
 
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             // DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
