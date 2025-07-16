@@ -1,21 +1,18 @@
 ﻿namespace DCL.Chat.ChatStates
 {
-    public class MembersChatState : ChatState,
-        IToggleMembersHandler,
-        ICloseRequestHandler
+    public class MembersChatState : ChatState
     {
-        public override void begin()
+        public override void Begin()
         {
-            _context.Mediator.SetupForMembersState();
+            context.UIMediator.SetupForMembersState();
         }
 
-        public override void end()
-        {
-            
-        }
-        
-        public void OnToggleMembers() => _machine.changeState<FocusedChatState>();
+        public override void End() { }
 
-        public void OnCloseRequested() => _machine.changeState<FocusedChatState>();
+        public override void OnToggleMembers() =>
+            ChangeState<FocusedChatState>();
+
+        public override void OnCloseRequested() =>
+            ChangeState<FocusedChatState>();
     }
 }

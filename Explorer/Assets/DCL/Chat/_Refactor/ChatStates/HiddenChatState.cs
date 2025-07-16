@@ -2,12 +2,12 @@
 {
     public class HiddenChatState : ChatState
     {
-        public override void begin()
+        public override void Begin()
         {
-            _context.Mediator.SetupForHiddenState();
+            context.UIMediator.SetupForHiddenState();
         }
 
-        public override void end()
+        public override void End()
         {
             
         }

@@ -2,12 +2,12 @@ using DCL.Chat;
 
 public class InitChatState : ChatState
 {
-    public override void begin()
+    public override void Begin()
     {
 
     }
 
-    public override void end()
+    public override void End()
     {
         
     }

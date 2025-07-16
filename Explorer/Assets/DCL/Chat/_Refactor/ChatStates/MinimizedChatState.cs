@@ -1,19 +1,20 @@
 ﻿namespace DCL.Chat.ChatStates
 {
-    public class MinimizedChatState : ChatState, IFocusRequestHandler
+    public class MinimizedChatState : ChatState
     {
-        public override void begin()
+        public override void Begin()
         {
-            _context.Mediator.SetupForMinimizedState();
-            
-            _context.Mediator.chatInputPresenter.OnMinimize();
+            context.UIMediator.SetupForMinimizedState();
+
+            context.UIMediator.chatInputPresenter.OnMinimize();
         }
 
-        public override void end()
+        public override void End()
         {
-            
+
         }
-        
-        public void OnFocusRequested() => _machine.changeState<FocusedChatState>();
+
+        public override void OnFocusRequested() =>
+            ChangeState<FocusedChatState>();
     }
 }
