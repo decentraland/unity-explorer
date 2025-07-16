@@ -39,6 +39,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
         {
             transComp.Transform.position = firstRemote.position;
+            transComp.Transform.rotation = Quaternion.Euler(transComp.Transform.rotation.x, firstRemote.rotationY, transComp.Transform.rotation.z);
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
@@ -175,6 +176,8 @@ namespace DCL.Multiplayer.Movement.Systems
                     remote = playerInbox.Dequeue();
 
             transComp.Transform.position = remote.position;
+            transComp.Transform.rotation = Quaternion.Euler(transComp.Transform.rotation.x, remote.rotationY, transComp.Transform.rotation.z);
+
             remotePlayerMovement.AddPassed(remote, characterControllerSettings, wasTeleported: true);
         }
 
@@ -209,6 +212,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
 
             transComp.Transform.position = intComp.Start.position;
+            transComp.Transform.rotation = Quaternion.Euler(transComp.Transform.rotation.x, remote.rotationY, transComp.Transform.rotation.z);
 
             // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
             float unusedTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);

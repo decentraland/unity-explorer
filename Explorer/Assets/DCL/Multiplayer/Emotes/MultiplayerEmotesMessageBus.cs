@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Emotes
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly EmotesDeduplication messageDeduplication;
+        private readonly EmotesScheduler messageScheduler;
 
         private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
         private readonly MutexSync sync = new();
@@ -41,7 +41,7 @@ namespace DCL.Multiplayer.Emotes
             this.settings = settings;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
 
-            messageDeduplication = new EmotesDeduplication();
+            messageScheduler = new EmotesScheduler();
 
             this.messagePipesHub.IslandPipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
             this.messagePipesHub.ScenePipe().Subscribe<PlayerEmote>(Packet.MessageOneofCase.PlayerEmote, OnMessageReceived);
@@ -71,7 +71,7 @@ namespace DCL.Multiplayer.Emotes
         }
 
         public void OnPlayerRemoved(string walletId) =>
-            messageDeduplication.RemoveWallet(walletId);
+            messageScheduler.RemoveWallet(walletId);
 
         private void SendTo(URN emoteId, float timestamp, IMessagePipe messagePipe)
         {
@@ -94,7 +94,7 @@ namespace DCL.Multiplayer.Emotes
             {
                 if (cancellationTokenSource.Token.IsCancellationRequested || IsUserBlocked(receivedMessage.FromWalletId))
                 {
-                    messageDeduplication.RemoveWallet(receivedMessage.FromWalletId);
+                    messageScheduler.RemoveWallet(receivedMessage.FromWalletId);
                     return;
                 }
 
@@ -107,7 +107,7 @@ namespace DCL.Multiplayer.Emotes
 
         private void Inbox(string walletId, URN emoteURN, float timestamp)
         {
-            if (messageDeduplication.TryPass(walletId, timestamp) == false)
+            if (messageScheduler.TryPass(walletId, timestamp) == false)
                 return;
 
             using (sync.GetScope())
