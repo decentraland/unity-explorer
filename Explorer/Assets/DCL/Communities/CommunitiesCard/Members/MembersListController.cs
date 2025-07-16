@@ -221,8 +221,9 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void TryRemoveLocalUser()
         {
+            string? userAddress = web3IdentityCache.Identity?.Address;
             for (int i = 0; i < allMembersFetchData.Items.Count; i++)
-                if (allMembersFetchData.Items[i].memberAddress.Equals(web3IdentityCache.Identity?.Address, StringComparison.OrdinalIgnoreCase))
+                if (allMembersFetchData.Items[i].memberAddress.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     allMembersFetchData.Items.RemoveAt(i);
                     if (currentSection == MembersListView.MemberListSections.ALL)
