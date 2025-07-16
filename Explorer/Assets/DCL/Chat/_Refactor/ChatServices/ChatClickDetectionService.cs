@@ -12,7 +12,7 @@ public class ChatClickDetectionService : IDisposable
     private readonly RectTransform targetArea;
     private readonly DCLInput dclInput;
     private HashSet<Transform> ignoredElementsSet;
-    
+    private bool isPaused = false;
     public ChatClickDetectionService(RectTransform targetArea)
     {
         this.targetArea = targetArea;
@@ -30,6 +30,9 @@ public class ChatClickDetectionService : IDisposable
             dclInput.UI.Click.performed += HandleGlobalClick;
     }
 
+    public void Pause() =>  isPaused = true;
+    public void Resume() => isPaused = false;
+
     public void Dispose()
     {
         if (dclInput != null)
@@ -39,7 +42,8 @@ public class ChatClickDetectionService : IDisposable
     private void HandleGlobalClick(InputAction.CallbackContext context)
     {
         if (EventSystem.current == null) return;
-
+        if (isPaused) return;
+        
         var eventData = new PointerEventData(EventSystem.current) { position = Mouse.current.position.ReadValue() };
         var results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
