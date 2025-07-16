@@ -52,7 +52,7 @@ MonoBehaviour:
     - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cab127bf632384449be1ce1e91be26db
-    m_Address: Builder
+    m_Address: CreatorHub
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
