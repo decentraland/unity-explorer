@@ -7,13 +7,12 @@ using System.Threading;
 namespace DCL.FeatureFlags
 {
     /// <summary>
-    ///     Handles complex communities feature logic including identity-based allowlists
+    ///     Handles complex communities feature logic including identity-based allowlists.
     /// </summary>
     public class CommunitiesFeatureProvider : IFeatureProvider
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
         private bool? storedResult;
-        private bool? storedMembersCounterResult;
 
         public CommunitiesFeatureProvider(IWeb3IdentityCache web3IdentityCache)
         {
@@ -57,15 +56,7 @@ namespace DCL.FeatureFlags
             return result;
         }
 
-        public bool CanMembersCounterBeDisplayer()
-        {
-            if (storedMembersCounterResult != null)
-                return storedMembersCounterResult.Value;
 
-            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
-            storedMembersCounterResult = result;
-            return result;
-        }
 
         private void OnIdentityCacheChanged() =>
             storedResult = null;

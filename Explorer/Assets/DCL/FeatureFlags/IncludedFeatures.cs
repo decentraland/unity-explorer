@@ -100,6 +100,7 @@ namespace DCL.FeatureFlags
                 [FeatureFlagsStrings.VOICE_CHAT] = IsEnabled(FeatureFlagsStrings.FRIENDS) && IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING) && (Application.isEditor || featureFlags.IsEnabled(FeatureFlagsStrings.VOICE_CHAT) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.VOICE_CHAT))),
                 [FeatureFlagsStrings.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
                 [FeatureFlagsStrings.MARKETPLACE_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS),
+                [FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
 
