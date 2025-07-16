@@ -202,8 +202,9 @@ namespace DCL.Communities.CommunitiesCard
 
                 //Sets the toggle state in the community data to reflect the change in the UI.
                 communityData.notifications = toggle;
+                viewInstance!.SetNotificationsEnabled(toggle);
 
-                await viewInstance!.successNotificationView.AnimatedShowAsync(TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
+                await viewInstance.successNotificationView.AnimatedShowAsync(TOGGLE_COMMUNITY_NOTIFICATIONS_SUCCESS_TEXT, WARNING_NOTIFICATION_DURATION_MS, ct)
                              .SuppressToResultAsync(ReportCategory.COMMUNITIES);
             }
         }

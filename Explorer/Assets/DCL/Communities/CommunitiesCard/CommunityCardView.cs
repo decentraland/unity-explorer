@@ -110,7 +110,6 @@ namespace DCL.Communities.CommunitiesCard
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
         private ToggleWithIconContextMenuControlSettings? communityNotificationsContextMenuElement;
         private CancellationToken cancellationToken;
-        private bool notificationsEnabled;
         private UniTaskCompletionSource? contextMenuCloseTask;
 
         private void Awake()
@@ -179,7 +178,6 @@ namespace DCL.Communities.CommunitiesCard
         {
             contextMenuCloseTask = new UniTaskCompletionSource();
             openContextMenuButton.interactable = false;
-            communityNotificationsContextMenuElement!.SetInitialValue(notificationsEnabled);
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
                 actionOnHide: () => openContextMenuButton.interactable = true,
@@ -188,6 +186,9 @@ namespace DCL.Communities.CommunitiesCard
 
         public void CloseContextMenu() =>
             contextMenuCloseTask?.TrySetResult();
+        
+        public void SetNotificationsEnabled(bool notificationsEnabled) =>
+            communityNotificationsContextMenuElement?.SetInitialValue(notificationsEnabled);
 
         private void OnDisable()
         {
@@ -294,7 +295,7 @@ namespace DCL.Communities.CommunitiesCard
             communityName.text = communityData.name;
             communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
             communityDescription.text = communityData.description;
-            notificationsEnabled = communityData.notifications;
+            SetNotificationsEnabled(communityData.notifications);
 
             if (communityData.thumbnails != null)
 
