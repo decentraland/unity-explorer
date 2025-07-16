@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -126,7 +126,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            includeCommunities = await IncludedFeatures.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 

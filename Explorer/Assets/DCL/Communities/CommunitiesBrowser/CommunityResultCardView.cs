@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using DCL.UI;
 using DCL.UI.ProfileElements;
 using DCL.Profiles.Helpers;
@@ -123,7 +124,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMembersCount(int memberCount)
         {
-            bool showMembers = CommunitiesFeatureAccess.Instance.CanMembersCounterBeDisplayer();
+            bool showMembers = IncludedFeatures.Instance.CommunitiesFeatureProvider.CanMembersCounterBeDisplayer();
             communityMembersSeparator.SetActive(showMembers);
             communityMembersCountText.gameObject.SetActive(showMembers);
             if (showMembers)

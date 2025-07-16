@@ -2,8 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus.Deduplication;
-using DCL.Communities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging;
@@ -56,7 +56,8 @@ namespace DCL.Chat.MessageBus
 
         private async UniTaskVoid ConfigureMessagePipesHubAsync(CancellationToken ct)
         {
-            isCommunitiesIncluded = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+
+            isCommunitiesIncluded = await IncludedFeatures.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(ct);
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
@@ -151,8 +152,6 @@ namespace DCL.Chat.MessageBus
                     break;
                 case ChatChannel.ChatChannelType.COMMUNITY:
                     SendTo(message, timestamp, channel.Id.Id, messagePipesHub.ChatPipe(), routingUser);
-                    break;
-                default:
                     break;
             }
 
