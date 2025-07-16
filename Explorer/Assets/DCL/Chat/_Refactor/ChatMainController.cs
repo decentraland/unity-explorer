@@ -92,6 +92,7 @@ namespace DCL.Chat
                 viewInstance.TitlebarView.CloseMemberListButton.transform,
                 viewInstance.TitlebarView.OpenMemberListButton.transform,
                 viewInstance.TitlebarView.BackFromMemberList.transform,
+                viewInstance.InputView.InputField.transform
             });
 
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,

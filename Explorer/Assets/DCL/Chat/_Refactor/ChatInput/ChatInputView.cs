@@ -5,9 +5,11 @@ using UnityEngine.UI;
 
 namespace DCL.Chat
 {
-    public class ChatInputView : MonoBehaviour, IChatInputView
+    public class ChatInputView : MonoBehaviour
     {
         [SerializeField] private TMP_InputField inputField;
+        public TMP_InputField InputField => inputField;
+        
         [SerializeField] private GameObject inputFieldContainer;
         [SerializeField] private Button maskButton;
         [SerializeField] private GameObject maskContainer;

@@ -11,11 +11,11 @@ using Utility;
 
 public class ChatInputPresenter : IDisposable
 {
-    private readonly IChatInputView view;
+    private readonly ChatInputView view;
     private readonly IEventBus eventBus;
     private readonly ICurrentChannelService currentChannelService;
-    private readonly GetUserChatStatusCommand _getUserChatStatusCommand;
-    private readonly SendMessageCommand _sendMessageCommand;
+    private readonly GetUserChatStatusCommand getUserChatStatusCommand;
+    private readonly SendMessageCommand sendMessageCommand;
     private readonly EventSubscriptionScope scope = new();
 
     public event Action<string>? OnMessageSubmitted;
@@ -24,7 +24,7 @@ public class ChatInputPresenter : IDisposable
     private CancellationTokenSource cts = new ();
 
     public ChatInputPresenter(
-        IChatInputView view,
+        ChatInputView view,
         IEventBus eventBus,
         ICurrentChannelService currentChannelService,
         GetUserChatStatusCommand getUserChatStatusCommand,
@@ -33,8 +33,8 @@ public class ChatInputPresenter : IDisposable
         this.view = view;
         this.eventBus = eventBus;
         this.currentChannelService = currentChannelService;
-        this._getUserChatStatusCommand = getUserChatStatusCommand;
-        this._sendMessageCommand = sendMessageCommand;
+        this.getUserChatStatusCommand = getUserChatStatusCommand;
+        this.sendMessageCommand = sendMessageCommand;
         
         view.OnMessageSubmit += HandleMessageSubmitted;
         view.OnFocusRequested += HandleFocusRequested;
@@ -68,7 +68,7 @@ public class ChatInputPresenter : IDisposable
 
     private void HandleMessageSubmitted(string message)
     {
-        _sendMessageCommand.Execute(new SendMessageCommandPayload { Body = message });
+        sendMessageCommand.Execute(new SendMessageCommandPayload { Body = message });
         view.SetText("");
     }
 
@@ -77,88 +77,89 @@ public class ChatInputPresenter : IDisposable
         eventBus.Publish(new ChatEvents.FocusRequestedEvent());
     }
     
-    public void OnFocus()
+    public async UniTaskVoid OnFocus()
     {
-        view.SetActiveTyping();
-        UpdateCurrentChannelStatus();
+        cts = cts.SafeRestart();
+        
+        bool canType = await CanTypeInChannelAsync(currentChannelService.CurrentChannel, cts.Token);
+        if (cts.IsCancellationRequested) return;
+        
+        if (canType)
+            view.SetActiveTyping();
     }
     
     public void OnDefocus()
     {
+        cts.Cancel(); 
         view.SetDefault();
-    }
-    
-    private void OnInputChanged(string input)
-    {
-        
     }
 
     public void OnMinimize()
     {
+        cts.Cancel();
         view.SetDefault();
     }
     
-    private void UpdateCurrentChannelStatus()
-    {
-        if (currentChannelService.CurrentChannel != null)
-        {
-            UpdateStateForChannel(currentChannelService.CurrentChannel);
-        }
-        else
-        {
-            // If there is no channel selected for some reason, block the input.
-            view.SetBlocked("No channel selected.");
-        }
-    }
-    
-    public void UpdateStateForChannel(ChatChannel channel)
+    public async UniTask UpdateStateForChannel(ChatChannel channel)
     {
         cts = cts.SafeRestart();
-        if (channel.ChannelType == ChatChannel.ChatChannelType.NEARBY)
-        {
-            view.SetDefault();
-            return;
-        }
 
-        if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
-        {
-            UpdateInputStateForUserAsync(channel.Id.Id, cts.Token).Forget();
-        }
-        else
-        {
-            view.SetBlocked("This chat type is not supported yet.");
-        }
+        bool canType = await CanTypeInChannelAsync(channel, cts.Token);
+        if (cts.IsCancellationRequested) return;
+
+        // If the user can type, we ensure the view is in its default, unblocked state.
+        // If they CANNOT type, we do nothing, because CanTypeInChannelAsync has already
+        // set the view to the correct blocked state. Overwriting it would be a bug.
+        if (canType)
+            view.SetDefault();
     }
 
-    private async UniTaskVoid UpdateInputStateForUserAsync(string userId, CancellationToken ct)
+    private async UniTask<bool> CanTypeInChannelAsync(ChatChannel channel, CancellationToken ct)
     {
-        view.SetBlocked("Checking user status...");
-        
-        var status = await _getUserChatStatusCommand.ExecuteAsync(userId, ct);
-        if (ct.IsCancellationRequested) return;
-
-        switch (status)
+        if (channel == null)
         {
-            case ChatUserStateUpdater.ChatUserState.CONNECTED:
-                view.SetDefault();
-                break;
+            view.SetBlocked("No channel selected.");
+            return false;
+        }
 
-            case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
-                view.SetBlocked("To message this user you must first unblock them.");
-                break;
+        switch (channel.ChannelType)
+        {
+            case ChatChannel.ChatChannelType.NEARBY:
+                return true;
+            case ChatChannel.ChatChannelType.USER:
+                {
+                    view.SetBlocked("Checking user status...");
+                    var status = await getUserChatStatusCommand.ExecuteAsync(channel.Id.Id, ct);
+                    if (ct.IsCancellationRequested) return false;
 
-            case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                view.SetBlocked("Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.");
-                break;
+                    switch (status)
+                    {
+                        case ChatUserStateUpdater.ChatUserState.CONNECTED:
+                            return true; // Yes, we can type!
 
-            case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                view.SetBlocked("The user you are trying to message only accepts DMs from friends.");
-                break;
+                        case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
+                            view.SetBlocked("To message this user you must first unblock them.");
+                            return false;
 
-            case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
+                        case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
+                            view.SetBlocked("Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.");
+                            return false;
+
+                        case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
+                            view.SetBlocked("The user you are trying to message only accepts DMs from friends.");
+                            return false;
+
+                        case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
+                        default:
+                            view.SetBlocked("The user you are trying to message is offline.");
+                            return false;
+                    }
+
+                    break;
+                }
             default:
-                view.SetBlocked("The user you are trying to message is offline.");
-                break;
+                view.SetBlocked("This chat type is not supported yet.");
+                return false;
         }
     }
     
