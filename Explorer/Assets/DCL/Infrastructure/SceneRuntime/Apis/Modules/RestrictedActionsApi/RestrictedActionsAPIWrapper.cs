@@ -44,8 +44,16 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             api.TryChangeRealm(message, realm);
 
         [UsedImplicitly]
-        public void TriggerEmote(string predefinedEmote) =>
-            api.TryTriggerEmote(predefinedEmote);
+        public object TriggerEmote(string predefinedEmote)
+        {
+            return TriggerEmoteAsync().ToDisconnectedPromise(this);
+
+            async UniTask TriggerEmoteAsync()
+            {
+                await UniTask.SwitchToMainThread();
+                api.TryTriggerEmote(predefinedEmote);
+            }
+        }
 
         [UsedImplicitly]
         public object TriggerSceneEmote(string src, bool loop)

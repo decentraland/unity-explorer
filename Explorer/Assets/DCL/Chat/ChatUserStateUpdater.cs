@@ -256,6 +256,10 @@ namespace DCL.Chat
         private async UniTaskVoid CheckFriendStatusAsync(string userId)
         {
             Result<FriendshipStatus> result = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+
+            if (cts.IsCancellationRequested)
+                return;
+
             if (!result.Success) return;
 
             if (result.Value == FriendshipStatus.FRIEND)
@@ -277,6 +281,10 @@ namespace DCL.Chat
             }
 
             Result<FriendshipStatus> status = await friendsService.StrictObject.GetFriendshipStatusAsync(userId, cts.Token).SuppressToResultAsync(ReportCategory.CHAT_MESSAGES);
+
+            if (cts.IsCancellationRequested)
+                return;
+
             if (status is { Success: true, Value: FriendshipStatus.FRIEND }) return;
 
             chatUserStateEventBus.OnCurrentConversationUserUnavailable();

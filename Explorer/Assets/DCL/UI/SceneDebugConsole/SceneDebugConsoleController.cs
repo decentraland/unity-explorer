@@ -15,7 +15,6 @@ namespace DCL.UI.SceneDebugConsole
         private readonly SceneDebugConsoleLogEntryBus logEntriesBus;
         private readonly SceneDebugConsoleLogHistory logsHistory;
         private readonly SceneDebugConsoleCommandsBus consoleCommandsBus;
-        private readonly SceneDebugConsoleSettings consoleSettings;
 
         private UIDocument uiDocument;
         private VisualElement uiDocumentRoot;
@@ -26,13 +25,11 @@ namespace DCL.UI.SceneDebugConsole
         public SceneDebugConsoleController(
             SceneDebugConsoleLogEntryBus logEntriesBus,
             SceneDebugConsoleLogHistory logsHistory,
-            SceneDebugConsoleCommandsBus consoleCommandsBus,
-            SceneDebugConsoleSettings consoleSettings)
+            SceneDebugConsoleCommandsBus consoleCommandsBus)
         {
             this.logEntriesBus = logEntriesBus;
             this.logsHistory = logsHistory;
             this.consoleCommandsBus = consoleCommandsBus;
-            this.consoleSettings = consoleSettings;
 
             InstantiateRootGO();
         }

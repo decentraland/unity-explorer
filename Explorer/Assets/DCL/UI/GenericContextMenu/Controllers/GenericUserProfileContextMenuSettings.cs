@@ -1,4 +1,5 @@
 using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using UnityEngine;
 
 namespace DCL.UI.GenericContextMenu.Controllers
@@ -11,5 +12,6 @@ namespace DCL.UI.GenericContextMenu.Controllers
         [field: SerializeField] public GenericContextMenuControlConfig MentionButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig OpenUserProfileButtonConfig { get; private set; }
         [field: SerializeField] public GenericContextMenuControlConfig OpenConversationButtonConfig { get; private set; }
+        [field: SerializeField] public GenericContextMenuControlConfig StartCallButtonConfig { get; private set; }
     }
 }

@@ -5,6 +5,7 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Streaming.Audio;
+using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Hub;
 using LiveKit.Rooms.VideoStreaming;
 using System.Threading;
@@ -22,6 +23,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public IRoomInfo Info => NullRoomInfo.INSTANCE;
         public IVideoStreams VideoStreams => NullVideoStreams.INSTANCE;
         public IAudioStreams AudioStreams => NullAudioStreams.INSTANCE;
+        public IAudioTracks AudioTracks  => NullAudioTracks.INSTANCE;
 
         public event LocalPublishDelegate? LocalTrackPublished;
         public event LocalPublishDelegate? LocalTrackUnpublished;

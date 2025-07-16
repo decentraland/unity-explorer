@@ -5,6 +5,8 @@ using DCL.Diagnostics;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Utilities;
 using DCL.Utilities;
@@ -44,8 +46,9 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly List<INotification> notifications = new ();
         private readonly CancellationTokenSource lifeCycleCts = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly ProfileRepositoryWrapper profileRepository;
+        private readonly CancellationTokenSource notificationThumbnailCts;
 
-        private CancellationTokenSource? notificationThumbnailCts;
         private CancellationTokenSource? notificationPanelCts = new ();
         private int unreadNotifications;
         private Web3Address? previousWeb3Identity;
@@ -61,7 +64,8 @@ namespace DCL.Notifications.NotificationsMenu
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
             NftTypeIconSO rarityBackgroundMapping,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            ProfileRepositoryWrapper profileRepository)
         {
             notificationThumbnailCts = new CancellationTokenSource();
 
@@ -72,6 +76,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.webRequestController = webRequestController;
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.web3IdentityCache = web3IdentityCache;
+            this.profileRepository = profileRepository;
             this.view.OnViewShown += OnViewShown;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
@@ -207,6 +212,7 @@ namespace DCL.Notifications.NotificationsMenu
             UpdateUnreadNotificationRender();
 
             notificationView.NotificationImage.SetImage(null);
+
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
@@ -227,8 +233,10 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             var iconBackground = notificationIconTypes.GetNotificationIconBackground(notificationData.Type);
+
             if (iconBackground.backgroundSprite != null)
                 notificationView.NotificationImageBackground.sprite = iconBackground.backgroundSprite;
+
             notificationView.NotificationImageBackground.color = iconBackground.backgroundColor;
 
             ProcessCustomMetadata(notificationData, notificationView);
@@ -269,6 +277,20 @@ namespace DCL.Notifications.NotificationsMenu
         private async UniTask LoadNotificationThumbnailAsync(INotificationView notificationImage, INotification notificationData,
             CancellationToken ct)
         {
+            if (notificationData.Type == NotificationType.REFERRAL_INVITED_USERS_ACCEPTED)
+            {
+                ReferralNotification referral = (ReferralNotification)notificationData;
+                Sprite? profileThumbnail = await DownloadProfileThumbnailAsync(referral.Metadata.invitedUserAddress);
+
+                if (profileThumbnail != null)
+                {
+                    notificationThumbnailCache.TryAdd(notificationData.Id, profileThumbnail);
+                    notificationImage.NotificationImage.SetImage(profileThumbnail);
+                }
+
+                return;
+            }
+
             IOwnedTexture2D ownedTexture = await webRequestController.GetTextureAsync(
                 new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
                 new GetTextureArguments(TextureType.Albedo),
@@ -285,6 +307,18 @@ namespace DCL.Notifications.NotificationsMenu
             //In that case we will just use the same thumbnail for each notification with the same id
             notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
             notificationImage.NotificationImage.SetImage(thumbnailSprite);
+
+            return;
+
+            async UniTask<Sprite?> DownloadProfileThumbnailAsync(string user)
+            {
+                Profile? profile = await profileRepository.GetProfileAsync(user, ct);
+
+                if (profile != null)
+                    return await profileRepository.GetProfileThumbnailAsync(profile.Avatar.FaceSnapshotUrl, ct);
+
+                return null;
+            }
         }
 
         private void OnNotificationReceived(INotification notification)
