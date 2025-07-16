@@ -598,11 +598,11 @@ PrefabInstance:
     - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
+      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
     - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[2].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: 416e2d348062da84ea557a9e24ab560d, type: 2}
+      objectReference: {fileID: 2100000, guid: fed320bd28c262e46ab87a5819b7324d, type: 2}
     - target: {fileID: 3167230315515256952, guid: 42063baa639a06d47a07f4b219ee7f67, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[3].SharedMaterial
       value: 
