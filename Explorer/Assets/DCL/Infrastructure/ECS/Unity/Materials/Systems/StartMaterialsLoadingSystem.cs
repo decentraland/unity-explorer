@@ -12,6 +12,8 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -21,6 +23,7 @@ using ECS.Unity.Textures.Utils;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -134,23 +137,49 @@ namespace ECS.Unity.Materials.Systems
         [Query]
         [All(typeof(PartitionComponent))]
         [None(typeof(MaterialComponent), typeof(PBMaterial))]
-        private void AssignGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers)
+        private void AssignGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer)
         {
-            if (gltfNodeModifiers.Modifiers.Count == 0) return;
+            if (gltfContainer.State != LoadingState.Finished
+                || !gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result)
+                || !result.Succeeded
+                || gltfNodeModifiers.Modifiers.Count == 0)
+                return;
             gltfNodeModifiers.IsDirty = false;
+            var rootGltfNodeModifier = gltfNodeModifiers.Modifiers[0];
 
-            var pbMaterial = gltfNodeModifiers.Modifiers[0].Material;
-            World.Add(entity, pbMaterial);
+            if (rootGltfNodeModifier.HasOverrideShadows)
+                result.Asset!.SetCastingShadows(rootGltfNodeModifier.OverrideShadows);
+
+            if (rootGltfNodeModifier.Material == null
+                || rootGltfNodeModifier.Material.MaterialCase == PBMaterial.MaterialOneofCase.None)
+                return;
+
+            World.Add(entity, rootGltfNodeModifier.Material);
         }
 
         [Query]
         [All(typeof(MaterialComponent), typeof(PBMaterial))]
-        private void UpdateGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers)
+        private void UpdateGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer)
         {
-            if (!gltfNodeModifiers.IsDirty || gltfNodeModifiers.Modifiers.Count == 0) return;
+            if (!gltfNodeModifiers.IsDirty
+                || gltfContainer.State != LoadingState.Finished
+                || !gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result)
+                || !result.Succeeded
+                || gltfNodeModifiers.Modifiers.Count == 0)
+                return;
             gltfNodeModifiers.IsDirty = false;
+            var rootGltfNodeModifier = gltfNodeModifiers.Modifiers[0];
 
-            var pbMaterial = gltfNodeModifiers.Modifiers[0].Material;
+            result.Asset!.SetCastingShadows(!rootGltfNodeModifier.HasOverrideShadows || rootGltfNodeModifier.OverrideShadows);
+
+            if (rootGltfNodeModifier.Material == null
+                || rootGltfNodeModifier.Material.MaterialCase == PBMaterial.MaterialOneofCase.None)
+            {
+                gltfContainer.ResetOriginalMaterials();
+                return;
+            }
+
+            var pbMaterial = rootGltfNodeModifier.Material;
             pbMaterial.IsDirty = true;
             World.Set(entity, pbMaterial);
         }
