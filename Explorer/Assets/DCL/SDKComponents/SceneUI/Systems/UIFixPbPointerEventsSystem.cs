@@ -29,8 +29,6 @@ namespace DCL.SDKComponents.SceneUI.Systems
         {
             if (!pbPointerEventsModel.IsDirty && !uiSdkTransformModel.IsDirty) return;
 
-            ReportHub.Log($"FixPointerEvents: {uiSdkTransformModel.HasPointerFilter}, {uiSdkTransformModel.PointerFilter}", ReportCategory.ALWAYS);
-
             uiSdkTransformModel.PointerFilter = PointerFilterMode.PfmBlock;
             uiSdkTransformModel.IsDirty = true;
         }
