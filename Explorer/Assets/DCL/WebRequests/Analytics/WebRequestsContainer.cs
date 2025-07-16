@@ -17,15 +17,20 @@ namespace DCL.WebRequests.Analytics
 
         public IWebRequestController SceneWebRequestController { get; }
 
+        public IWebRequestController LivekitRequestController { get; }
+
+
         public IWebRequestsAnalyticsContainer AnalyticsContainer { get; }
 
         private WebRequestsContainer(
             IWebRequestController webRequestController,
             IWebRequestController sceneWebRequestController,
+            IWebRequestController livekit,
             IWebRequestsAnalyticsContainer analyticsContainer)
         {
             WebRequestController = webRequestController;
             AnalyticsContainer = analyticsContainer;
+            LivekitRequestController = livekit;
             SceneWebRequestController = sceneWebRequestController;
         }
 
@@ -71,11 +76,17 @@ namespace DCL.WebRequests.Analytics
                                                              .WithArtificialDelay(options)
                                                              .WithBudget(sceneBudget, sceneAvailableBudget);
 
+            IWebRequestController livekitWebRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider, requestHub)
+                                                               .WithDebugMetrics(cannotConnectToHostExceptionDebugMetric, requestCompleteDebugMetric)
+                                                               .WithLog()
+                                                               .WithArtificialDelay(options)
+                                                               .WithBudget(sceneBudget, sceneAvailableBudget);
+
             CreateStressTestUtility();
             CreateWebRequestDelayUtility();
             CreateWebRequestsMetricsDebugUtility();
 
-            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, analyticsContainer);
+            return new WebRequestsContainer(coreWebRequestController, sceneWebRequestController, livekitWebRequestController, analyticsContainer);
 
             void CreateWebRequestsMetricsDebugUtility()
             {

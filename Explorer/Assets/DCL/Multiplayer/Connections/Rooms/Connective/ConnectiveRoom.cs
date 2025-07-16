@@ -16,10 +16,12 @@ using LiveKit.Rooms.Tracks;
 using LiveKit.Rooms.Tracks.Factory;
 using LiveKit.Rooms.VideoStreaming;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using UnityEngine.Pool;
 using Utility;
 using Utility.Multithreading;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
@@ -248,7 +250,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 // Don't disconnect the current room as it can be used instead of the new one according to the SelectValidRoom delegate
                 // Subscribers will miss connection callback
+                var stopwatch = Stopwatch.StartNew();
+                Debug.Log("JUANI INNER CONNECTING TO ROOM");
                 connectResult = await newRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
+                stopwatch.Stop();
+                Debug.Log($"JUANI INNER CONNECTING TO ROOM FINISHED {stopwatch.ElapsedMilliseconds} ms");
             }
             catch (Exception)
             {

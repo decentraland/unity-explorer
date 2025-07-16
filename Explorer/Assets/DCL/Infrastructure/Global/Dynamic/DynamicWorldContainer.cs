@@ -356,7 +356,7 @@ namespace Global.Dynamic
 
             var gateKeeperSceneRoomOptions = new GateKeeperSceneRoomOptions(staticContainer.LaunchMode, bootstrapContainer.DecentralandUrlsSource, playSceneMetaDataSource, localDevelopmentMetaDataSource);
 
-            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.ScenesCache, gateKeeperSceneRoomOptions)
+            IGateKeeperSceneRoom gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.LivekitRequestController, staticContainer.ScenesCache, gateKeeperSceneRoomOptions)
                .AsActivatable();
 
             var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
@@ -367,7 +367,7 @@ namespace Global.Dynamic
                 new ArrayMemoryPool(),
                 staticContainer.CharacterContainer.CharacterObject,
                 currentAdapterAddress,
-                staticContainer.WebRequestsContainer.WebRequestController
+                staticContainer.WebRequestsContainer.LivekitRequestController
             );
 
             var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
