@@ -6,23 +6,26 @@ namespace DCL.VoiceChat
 {
     public class VoiceChatContainer : IDisposable
     {
-        public readonly IVoiceService RPCPrivateVoiceChatService;
-        public readonly IVoiceChatCallStatusService VoiceChatCallStatusService;
+        private readonly IVoiceService rpcPrivateVoiceChatService;
+        private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
+        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
 
         public VoiceChatContainer(
             IRPCSocialServices socialServiceRPC,
             ISocialServiceEventBus socialServiceEventBus)
         {
-            RPCPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
-            VoiceChatCallStatusService = new VoiceChatCallStatusService(RPCPrivateVoiceChatService);
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(VoiceChatCallStatusService, RPCPrivateVoiceChatService);
+            rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
+            privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
+            communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService();
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, communityVoiceChatCallStatusService, rpcPrivateVoiceChatService);
         }
 
         public void Dispose()
         {
-            VoiceChatCallStatusService?.Dispose();
-            RPCPrivateVoiceChatService?.Dispose();
+            privateVoiceChatCallStatusService?.Dispose();
+            communityVoiceChatCallStatusService?.Dispose();
+            rpcPrivateVoiceChatService?.Dispose();
             VoiceChatOrchestrator?.Dispose();
         }
     }

@@ -25,7 +25,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatReconnectionManager reconnectionManager;
         private readonly IRoomHub roomHub;
         private readonly IRoom voiceChatRoom;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly VoiceChatConfiguration configuration;
         private readonly VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager;
         private readonly IDisposable statusSubscription;
@@ -42,19 +42,19 @@ namespace DCL.VoiceChat
             VoiceChatTrackManager trackManager,
             IRoomHub roomHub,
             IRoom voiceChatRoom,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatConfiguration configuration,
             VoiceChatMicrophoneStateManager voiceChatMicrophoneStateManager)
         {
             this.trackManager = trackManager;
             this.roomHub = roomHub;
             this.voiceChatRoom = voiceChatRoom;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.configuration = configuration;
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
 
             reconnectionManager = new VoiceChatReconnectionManager(
-                roomHub, voiceChatCallStatusService, configuration, voiceChatRoom);
+                roomHub, voiceChatOrchestrator, configuration, voiceChatRoom);
 
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
             voiceChatRoom.TrackSubscribed += OnTrackSubscribed;
@@ -66,7 +66,7 @@ namespace DCL.VoiceChat
             reconnectionManager.ReconnectionSuccessful += OnReconnectionSuccessful;
             reconnectionManager.ReconnectionFailed += OnReconnectionFailed;
 
-            statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
+            statusSubscription = voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
         }
 
         public void Dispose()
@@ -128,21 +128,24 @@ namespace DCL.VoiceChat
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connecting to room");
 
                 Result<bool> result = await roomHub.VoiceChatRoom()
-                                                   .TrySetConnectionStringAndActivateAsync(voiceChatCallStatusService.RoomUrl)
+                                                   .TrySetConnectionStringAndActivateAsync(
+                                                        (voiceChatOrchestrator.CurrentCallStatus.Value == VoiceChatStatus.VOICE_CHAT_IN_CALL ?
+                                                            voiceChatOrchestrator.CurrentRoomUrl
+                                                            : null) ?? string.Empty)
                                                    .SuppressToResultAsync();
 
                 if (!result.Success)
                 {
                     ReportHub.Log(ReportCategory.VOICE_CHAT,
-                        $"Initial connection failed for room {voiceChatCallStatusService.RoomUrl}: {result.ErrorMessage}");
+                        $"Initial connection failed for room {voiceChatOrchestrator.CurrentRoomUrl}: {result.ErrorMessage}");
 
-                    voiceChatCallStatusService.HandleLivekitConnectionFailed();
+                    voiceChatOrchestrator.HandleConnectionError();
                 }
             }
             catch (Exception ex)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to connect to room: {ex.Message}");
-                voiceChatCallStatusService.HandleLivekitConnectionFailed();
+                voiceChatOrchestrator.HandleConnectionError();
             }
         }
 
@@ -262,5 +265,7 @@ namespace DCL.VoiceChat
             }
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to cleanup connection: {ex.Message}"); }
         }
+
+
     }
 }

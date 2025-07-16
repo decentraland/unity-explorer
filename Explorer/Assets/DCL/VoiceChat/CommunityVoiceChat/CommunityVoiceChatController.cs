@@ -12,7 +12,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly CommunityVoiceChatTitlebarView view;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatUIEvents voiceChatOrchestratorUIEvents;
+        private readonly IVoiceChatOrchestratorUIEvents voiceChatOrchestratorUIEvents;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
         private readonly List<PlayerEntryView> usedPlayerEntries = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
@@ -23,7 +23,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             CommunityVoiceChatTitlebarView view,
             PlayerEntryView playerEntry,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            IVoiceChatUIEvents voiceChatOrchestratorUIEvents)
+            IVoiceChatOrchestratorUIEvents voiceChatOrchestratorUIEvents)
         {
             this.view = view;
             this.profileRepositoryWrapper = profileRepositoryWrapper;

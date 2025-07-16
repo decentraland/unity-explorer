@@ -27,13 +27,13 @@ namespace DCL.VoiceChat
         public string CurrentUserId { get; private set; }
 
         private readonly CallButtonView view;
-        private readonly IVoiceChatState voiceChatState;
+        private readonly IVoiceChatOrchestratorState voiceChatState;
         private readonly IChatEventBus chatEventBus;
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
 
-        public CallButtonController(CallButtonView view, IVoiceChatState voiceChatState, IChatEventBus chatEventBus)
+        public CallButtonController(CallButtonView view, IVoiceChatOrchestratorState voiceChatState, IChatEventBus chatEventBus)
         {
             this.view = view;
             this.voiceChatState = voiceChatState;
@@ -41,7 +41,7 @@ namespace DCL.VoiceChat
             this.view.CallButton.onClick.AddListener(OnCallButtonClicked);
             cts = new CancellationTokenSource();
 
-            statusSubscription = voiceChatState.CurrentPrivateVoiceChatStatus.Subscribe(OnVoiceChatStatusChanged);
+            statusSubscription = voiceChatState.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
 
             // We might want to start the call directly here. And let the orchestrator handle the states.
             // But we will need to handle the parent view so it closes after the button is pressed and the call is successfully established (in case of Passport, etc.)
@@ -102,8 +102,8 @@ namespace DCL.VoiceChat
                 return;
             }
 
-            // Check if we're already in a private call
-            if (voiceChatState.CurrentPrivateVoiceChatStatus.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
+            // Check if we're already in a call
+            if (voiceChatState.CurrentCallStatus.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
                 await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                 return;

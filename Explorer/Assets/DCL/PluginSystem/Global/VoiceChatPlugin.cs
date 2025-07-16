@@ -22,12 +22,10 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IRoomHub roomHub;
         private readonly MainUIView mainUIView;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly IVoiceService voiceChatService;
         private readonly VoiceChatOrchestrator voiceChatOrchestrator;
 
         private ProvidedAsset<VoiceChatPluginSettings> voiceChatConfigurations;
@@ -59,12 +57,10 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
-            voiceChatCallStatusService = voiceChatContainer.VoiceChatCallStatusService;
             this.profileDataProvider = profileDataProvider;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
-            voiceChatService = voiceChatContainer.RPCPrivateVoiceChatService;
             voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
@@ -116,14 +112,14 @@ namespace DCL.PluginSystem.Global
             combinedAudioSource = await assetsProvisioner.ProvideInstanceAsync(configurations.CombinedAudioSource, ct: ct);
 
             voiceChatHandler = new VoiceChatMicrophoneHandler(voiceChatSettings, voiceChatConfiguration, microphoneAudioSource, microphoneAudioFilter.Value);
-            microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatCallStatusService);
+            microphoneStateManager = new VoiceChatMicrophoneStateManager(voiceChatHandler, voiceChatOrchestrator);
 
             trackManager = new VoiceChatTrackManager(roomHub.VoiceChatRoom().Room(), voiceChatConfiguration, combinedAudioSource.Value, voiceChatHandler);
-            roomManager = new VoiceChatRoomManager(trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatCallStatusService, voiceChatConfiguration, microphoneStateManager);
+            roomManager = new VoiceChatRoomManager(trackManager, roomHub, roomHub.VoiceChatRoom().Room(), voiceChatOrchestrator, voiceChatConfiguration, microphoneStateManager);
 
             nametagsHandler = new VoiceChatNametagsHandler(
                 roomHub.VoiceChatRoom().Room(),
-                voiceChatCallStatusService,
+                voiceChatOrchestrator,
                 entityParticipantTable,
                 world,
                 playerEntity);
@@ -131,7 +127,7 @@ namespace DCL.PluginSystem.Global
             playerEntry = await assetsProvisioner.ProvideMainAssetAsync(settings.PlayerEntryView, ct: ct);
 
             voiceChatPanelResizeController = new VoiceChatPanelResizeController(mainUIView.VoiceChatPanelResizeView, voiceChatOrchestrator);
-            privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatCallStatusService, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
+            privateVoiceChatController = new PrivateVoiceChatController(mainUIView.VoiceChatView, voiceChatOrchestrator, voiceChatHandler, profileDataProvider, roomHub.VoiceChatRoom().Room());
             communitiesVoiceChatController = new CommunityVoiceChatController(mainUIView.CommunityVoiceChatView, playerEntry.Value, profileDataProvider, voiceChatOrchestrator);
         }
 

@@ -23,94 +23,130 @@ namespace DCL.VoiceChat
     /// <summary>
     /// Interface for systems that need to read or subscribe to voice chat state
     /// </summary>
-    public interface IVoiceChatState
+    public interface IVoiceChatOrchestratorState
     {
         IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType { get; }
-        IReadonlyReactiveProperty<VoiceChatStatus> CurrentPrivateVoiceChatStatus { get; }
-        IReadonlyReactiveProperty<VoiceChatStatus> CurrentCommunityVoiceChatStatus { get; }
+        IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus { get; }
         IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize { get; }
     }
 
     /// <summary>
     /// Interface for systems that need to perform voice chat actions
     /// </summary>
-    public interface IVoiceChatActions
+    public interface IVoiceChatOrchestratorActions
     {
         void StartPrivateCall(Web3Address walletId);
         void AcceptCall();
         void HangUp();
         void RejectCall();
+        void HandleConnectionError();
     }
 
-    public interface IVoiceChatUIEvents
+    public interface IVoiceChatOrchestratorUIEvents
     {
         void ChangePanelSize(VoiceChatPanelSize panelSize);
 
     }
 
     /// <summary>
-    /// Interface for systems that need both state and actions (like voice chat UI)
+    /// Interface for systems that need all interfaces (like voice chat UI)
     /// </summary>
-    public interface IVoiceChatOrchestrator : IVoiceChatState, IVoiceChatActions, IVoiceChatUIEvents
+    public interface IVoiceChatOrchestrator : IVoiceChatOrchestratorState, IVoiceChatOrchestratorActions, IVoiceChatOrchestratorUIEvents
     {
-    }
+        string CurrentRoomUrl { get; }
+        IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
+        ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
+
+     }
 
 
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
-        private readonly IVoiceChatCallStatusService privateVoiceChatCallStatusService;
+        private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
+        private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly IVoiceService rpcPrivateVoiceChatService;
 
-        private readonly IDisposable statusSubscription;
+        private readonly IDisposable privateStatusSubscription;
+        private readonly IDisposable communityStatusSubscription;
 
-        private readonly ReactiveProperty<VoiceChatType> voiceChatTypeProperty = new(VoiceChat.VoiceChatType.NONE);
-        private readonly ReactiveProperty<VoiceChatStatus> privateVoiceChatStatusProperty = new(VoiceChatStatus.DISCONNECTED);
-        private readonly ReactiveProperty<VoiceChatStatus> communityVoiceChatStatusProperty = new(VoiceChatStatus.DISCONNECTED);
+        private readonly ReactiveProperty<VoiceChatType> voiceChatTypeProperty = new(VoiceChatType.NONE);
+        private readonly ReactiveProperty<VoiceChatStatus> currentCallStatusProperty = new(VoiceChatStatus.DISCONNECTED);
         private readonly ReactiveProperty<VoiceChatPanelSize> voiceChatPanelSizeProperty = new(VoiceChatPanelSize.DEFAULT);
 
+        private VoiceChatCallStatusServiceBase activeCallStatusService;
+
         public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => voiceChatTypeProperty;
-        public IReadonlyReactiveProperty<VoiceChatStatus> CurrentPrivateVoiceChatStatus => privateVoiceChatStatusProperty;
-        public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCommunityVoiceChatStatus => communityVoiceChatStatusProperty;
+        public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatusProperty;
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => voiceChatPanelSizeProperty;
 
+        public string CurrentRoomUrl => activeCallStatusService?.RoomUrl ?? string.Empty;
+        public IPrivateVoiceChatCallStatusService PrivateStatusService => privateVoiceChatCallStatusService;
+        public ICommunityVoiceChatCallStatusService CommunityStatusService => communityVoiceChatCallStatusService;
+
         public VoiceChatOrchestrator(
-            IVoiceChatCallStatusService privateVoiceChatCallStatusService,
+            PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
+            CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             IVoiceService rpcPrivateVoiceChatService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
+            this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.rpcPrivateVoiceChatService = rpcPrivateVoiceChatService;
 
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
-            statusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
+            privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
+            communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
         }
 
         public void Dispose()
         {
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
-            statusSubscription?.Dispose();
+            privateStatusSubscription?.Dispose();
+            communityStatusSubscription?.Dispose();
 
             voiceChatTypeProperty?.Dispose();
-            privateVoiceChatStatusProperty?.Dispose();
-            communityVoiceChatStatusProperty?.Dispose();
+            currentCallStatusProperty?.Dispose();
+            voiceChatPanelSizeProperty?.Dispose();
         }
 
         // IVoiceChatActions implementation
         public void StartPrivateCall(Web3Address walletId)
         {
-            if (voiceChatTypeProperty.Value != VoiceChat.VoiceChatType.COMMUNITY)
+            if (voiceChatTypeProperty.Value == VoiceChatType.COMMUNITY)
             {
-                privateVoiceChatCallStatusService.StartCall(walletId);
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot start private call while in community call");
+                return;
             }
-            // TODO: Handle community call state - show proper message
+
+            SetActiveCallService(privateVoiceChatCallStatusService);
+            privateVoiceChatCallStatusService.StartCall(walletId);
         }
 
-        public void AcceptCall() => privateVoiceChatCallStatusService.AcceptCall();
-        public void HangUp() => privateVoiceChatCallStatusService.HangUp();
-        public void RejectCall() => privateVoiceChatCallStatusService.RejectCall();
+        public void AcceptCall()
+        {
+            if (activeCallStatusService is PrivateVoiceChatCallStatusService  privateService)
+                privateService.AcceptCall();
+            else
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "AcceptCall not supported for current voice chat type");
+        }
+
+        public void HangUp() => activeCallStatusService?.HangUp();
+
+        public void RejectCall()
+        {
+            if (activeCallStatusService is PrivateVoiceChatCallStatusService  privateService)
+                privateService.RejectCall();
+            else
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "RejectCall not supported for current voice chat type");
+        }
+
+        public void HandleConnectionError()
+        {
+            activeCallStatusService?.HandleLivekitConnectionFailed();
+        }
 
         private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
         {
-            if (voiceChatTypeProperty.Value != VoiceChat.VoiceChatType.COMMUNITY)
+            if (voiceChatTypeProperty.Value != VoiceChatType.COMMUNITY)
             {
                 privateVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
             }
@@ -118,17 +154,45 @@ namespace DCL.VoiceChat
 
         private void OnPrivateVoiceChatStatusChanged(VoiceChatStatus status)
         {
-            privateVoiceChatStatusProperty.Value = status;
+            if (voiceChatTypeProperty.Value == VoiceChatType.PRIVATE)
+            {
+                currentCallStatusProperty.Value = status;
+            }
 
-            if (voiceChatTypeProperty.Value != VoiceChat.VoiceChatType.PRIVATE) return;
+            if (voiceChatTypeProperty.Value != VoiceChatType.PRIVATE) return;
 
             if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
             {
-                SetVoiceChatType(VoiceChat.VoiceChatType.NONE);
+                SetVoiceChatType(VoiceChatType.NONE);
+                activeCallStatusService = null;
             }
             else
             {
-                SetVoiceChatType(VoiceChat.VoiceChatType.PRIVATE);
+                SetVoiceChatType(VoiceChatType.PRIVATE);
+                activeCallStatusService = privateVoiceChatCallStatusService;
+            }
+
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {voiceChatTypeProperty.Value}");
+        }
+
+        private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)
+        {
+            if (voiceChatTypeProperty.Value == VoiceChatType.COMMUNITY)
+            {
+                currentCallStatusProperty.Value = status;
+            }
+
+            if (voiceChatTypeProperty.Value != VoiceChatType.COMMUNITY) return;
+
+            if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
+            {
+                SetVoiceChatType(VoiceChatType.NONE);
+                activeCallStatusService = null;
+            }
+            else
+            {
+                SetVoiceChatType(VoiceChatType.COMMUNITY);
+                activeCallStatusService = communityVoiceChatCallStatusService;
             }
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {voiceChatTypeProperty.Value}");
@@ -140,6 +204,11 @@ namespace DCL.VoiceChat
             {
                 voiceChatTypeProperty.Value = newType;
             }
+        }
+
+        private void SetActiveCallService(VoiceChatCallStatusServiceBase service)
+        {
+            activeCallStatusService = service;
         }
 
         public void ChangePanelSize(VoiceChatPanelSize panelSize)
