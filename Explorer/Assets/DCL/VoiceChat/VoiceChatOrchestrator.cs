@@ -69,15 +69,15 @@ namespace DCL.VoiceChat
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
 
-        private readonly ReactiveProperty<VoiceChatType> voiceChatTypeProperty = new(VoiceChatType.NONE);
-        private readonly ReactiveProperty<VoiceChatStatus> currentCallStatusProperty = new(VoiceChatStatus.DISCONNECTED);
-        private readonly ReactiveProperty<VoiceChatPanelSize> voiceChatPanelSizeProperty = new(VoiceChatPanelSize.DEFAULT);
+        private readonly ReactiveProperty<VoiceChatType> currentVoiceChatType = new(VoiceChatType.NONE);
+        private readonly ReactiveProperty<VoiceChatStatus> currentCallStatus = new(VoiceChatStatus.DISCONNECTED);
+        private readonly ReactiveProperty<VoiceChatPanelSize> currentVoiceChatPanelSize = new(VoiceChatPanelSize.DEFAULT);
 
         private VoiceChatCallStatusServiceBase activeCallStatusService;
 
-        public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => voiceChatTypeProperty;
-        public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatusProperty;
-        public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => voiceChatPanelSizeProperty;
+        public IReadonlyReactiveProperty<VoiceChatType> CurrentVoiceChatType => currentVoiceChatType;
+        public IReadonlyReactiveProperty<VoiceChatStatus> CurrentCallStatus => currentCallStatus;
+        public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
 
         public string CurrentRoomUrl => activeCallStatusService?.RoomUrl ?? string.Empty;
         public IPrivateVoiceChatCallStatusService PrivateStatusService => privateVoiceChatCallStatusService;
@@ -103,15 +103,15 @@ namespace DCL.VoiceChat
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
 
-            voiceChatTypeProperty?.Dispose();
-            currentCallStatusProperty?.Dispose();
-            voiceChatPanelSizeProperty?.Dispose();
+            currentVoiceChatType?.Dispose();
+            currentCallStatus?.Dispose();
+            currentVoiceChatPanelSize?.Dispose();
         }
 
         // IVoiceChatActions implementation
         public void StartPrivateCall(Web3Address walletId)
         {
-            if (voiceChatTypeProperty.Value == VoiceChatType.COMMUNITY)
+            if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY)
             {
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot start private call while in community call");
                 return;
@@ -146,7 +146,7 @@ namespace DCL.VoiceChat
 
         private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
         {
-            if (voiceChatTypeProperty.Value != VoiceChatType.COMMUNITY)
+            if (currentVoiceChatType.Value != VoiceChatType.COMMUNITY)
             {
                 privateVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
             }
@@ -154,12 +154,12 @@ namespace DCL.VoiceChat
 
         private void OnPrivateVoiceChatStatusChanged(VoiceChatStatus status)
         {
-            if (voiceChatTypeProperty.Value == VoiceChatType.PRIVATE)
+            if (currentVoiceChatType.Value == VoiceChatType.PRIVATE)
             {
-                currentCallStatusProperty.Value = status;
+                currentCallStatus.Value = status;
             }
 
-            if (voiceChatTypeProperty.Value != VoiceChatType.PRIVATE) return;
+            if (currentVoiceChatType.Value != VoiceChatType.PRIVATE) return;
 
             if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
             {
@@ -172,17 +172,17 @@ namespace DCL.VoiceChat
                 activeCallStatusService = privateVoiceChatCallStatusService;
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {voiceChatTypeProperty.Value}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
         }
 
         private void OnCommunityVoiceChatStatusChanged(VoiceChatStatus status)
         {
-            if (voiceChatTypeProperty.Value == VoiceChatType.COMMUNITY)
+            if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY)
             {
-                currentCallStatusProperty.Value = status;
+                currentCallStatus.Value = status;
             }
 
-            if (voiceChatTypeProperty.Value != VoiceChatType.COMMUNITY) return;
+            if (currentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
 
             if (status == VoiceChatStatus.DISCONNECTED || status == VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
             {
@@ -195,14 +195,14 @@ namespace DCL.VoiceChat
                 activeCallStatusService = communityVoiceChatCallStatusService;
             }
 
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {voiceChatTypeProperty.Value}");
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"Switched Orchestrator state to {currentVoiceChatType.Value}");
         }
 
         private void SetVoiceChatType(VoiceChatType newType)
         {
-            if (voiceChatTypeProperty.Value != newType)
+            if (currentVoiceChatType.Value != newType)
             {
-                voiceChatTypeProperty.Value = newType;
+                currentVoiceChatType.Value = newType;
             }
         }
 
@@ -213,7 +213,7 @@ namespace DCL.VoiceChat
 
         public void ChangePanelSize(VoiceChatPanelSize panelSize)
         {
-            voiceChatPanelSizeProperty.Value = panelSize;
+            currentVoiceChatPanelSize.Value = panelSize;
         }
     }
 }

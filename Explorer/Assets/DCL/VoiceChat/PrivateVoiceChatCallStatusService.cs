@@ -50,11 +50,9 @@ namespace DCL.VoiceChat
                     RoomUrl = update.Credentials.ConnectionUrl;
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                     break;
-                case PrivateVoiceChatStatus.VoiceChatEnded:
-                    ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
-                    break;
                 case PrivateVoiceChatStatus.VoiceChatRejected:
+                case PrivateVoiceChatStatus.VoiceChatEnded:
+                case PrivateVoiceChatStatus.VoiceChatExpired:
                     ResetVoiceChatData();
                     UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     break;
@@ -62,10 +60,6 @@ namespace DCL.VoiceChat
                     CallId = update.CallId;
                     CurrentTargetWallet = new Web3Address(update.Caller.Address);
                     UpdateStatus(VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL);
-                    break;
-                case PrivateVoiceChatStatus.VoiceChatExpired:
-                    ResetVoiceChatData();
-                    UpdateStatus(VoiceChatStatus.DISCONNECTED);
                     break;
             }
         }
