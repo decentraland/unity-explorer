@@ -346,12 +346,21 @@ namespace DCL.Chat
 
             foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channel in chatHistory.Channels)
             {
-                if (channel.Value.ChannelType == ChatChannel.ChatChannelType.NEARBY || channel.Value.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
-                    InitializeOnlineChannelParticipantsAsync(channel.Key, CancellationToken.None).Forget(); //TODO
+                if (channel.Value.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+                    InitializeOnlineChannelParticipantsInCommunitiesAsync(channel.Key, CancellationToken.None).Forget(); //TODO
             }
+
+            // Livekit connection may happen before the chat loads, so they have to be initialized here;
+            // otherwise they will be initialized later the event arrives
+            if (roomHub.IslandRoom().Info.ConnectionState == ConnectionState.ConnConnected)
+                OnIslandRoomConnectionStateChanged(ConnectionState.ConnConnected);
+
+            if (roomHub.ChatRoom().Info.ConnectionState == ConnectionState.ConnConnected)
+                OnChatRoomConnectionStateChanged(ConnectionState.ConnConnected);
         }
 
-        private async UniTaskVoid InitializeOnlineChannelParticipantsAsync(ChatChannel.ChannelId channelId, CancellationToken ct)
+        // Note: For Nearby and private conversations, online channels are initialized when their rooms connect
+        private async UniTaskVoid InitializeOnlineChannelParticipantsInCommunitiesAsync(ChatChannel.ChannelId channelId, CancellationToken ct)
         {
             List<ChatUserData> members = new List<ChatUserData>();
 
@@ -399,7 +408,8 @@ namespace DCL.Chat
                 viewInstance!.SetCommunitiesData(userCommunities);
 
                 // Creates one channel per community
-                for (int i = 0; i < response.data.results.Length; ++i) { chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.results[i].id), ChatChannel.ChatChannelType.COMMUNITY); }
+                for (int i = 0; i < response.data.results.Length; ++i)
+                    chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.results[i].id), ChatChannel.ChatChannelType.COMMUNITY);
             }
             else
             {
@@ -564,7 +574,8 @@ namespace DCL.Chat
                 chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
                 UpdateChatUserStateAsync(channelId.Id, true, chatUsersUpdateCts.Token).Forget();
             }
-            else { SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget(); }
+            else
+                SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
         }
 
         private async UniTaskVoid UpdateChatUserStateAsync(string userId, bool updateToolbar, CancellationToken ct)
@@ -654,7 +665,8 @@ namespace DCL.Chat
                         HandleUnreadMessagesSeparator(destinationChannel);
                         viewInstance.RefreshMessages();
                     }
-                    else { viewInstance.RefreshUnreadMessages(destinationChannel.Id); }
+                    else
+                        viewInstance.RefreshUnreadMessages(destinationChannel.Id);
                 }
             }
 
@@ -714,11 +726,15 @@ namespace DCL.Chat
                     viewInstance.RefreshMessages();
                 }
 
-                // TODO: Set online users viewInstance.SetOnlineUserAddresses
+                // Private conversations
+                viewInstance.SetOnlineUserAddresses(participantsPerChannel[privateConversationOnlineUserListId]);
             }
-            else if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
+            else
             {
-                viewInstance.SetOnlineUserAddresses(participantsPerChannel[viewInstance!.CurrentChannelId]);
+                // Nearby and community conversations
+                // Note: The check is necessary because when the chat loads the Nearby participant list is not ready yet
+                if(!viewInstance!.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID) || participantsPerChannel.ContainsKey(ChatChannel.NEARBY_CHANNEL_ID))
+                    viewInstance.SetOnlineUserAddresses(participantsPerChannel[viewInstance!.CurrentChannelId]);
             }
         }
 
@@ -857,6 +873,10 @@ namespace DCL.Chat
                 case ChatChannel.ChatChannelType.USER:
                     chatUserStateUpdater.AddConversation(addedChannel.Id.Id);
                     viewInstance!.AddPrivateConversation(addedChannel);
+                    
+                    if(roomHub.ChatRoom().Participants.RemoteParticipant(addedChannel.Id.Id) != null)
+                        participantsPerChannel[privateConversationOnlineUserListId].Add(addedChannel.Id.Id);
+
                     break;
             }
         }
@@ -1085,6 +1105,8 @@ namespace DCL.Chat
 
             roomHub.IslandRoom().Participants.UpdatesFromParticipant += OnIslandRoomUpdatesFromParticipant;
             roomHub.IslandRoom().ConnectionStateChanged += OnIslandRoomConnectionStateChanged;
+            roomHub.ChatRoom().Participants.UpdatesFromParticipant += OnChatRoomUpdatesFromParticipantAsync;
+            roomHub.ChatRoom().ConnectionStateChanged += OnChatRoomConnectionStateChanged;
 
             SubscribeToCommunitiesBusEventsAsync().Forget();
         }
@@ -1122,7 +1144,61 @@ namespace DCL.Chat
             }
 
             if (viewInstance!.CurrentChannelId.Equals(ChatChannel.NEARBY_CHANNEL_ID))
-                    viewInstance.SetOnlineUserAddresses(participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID]);
+                viewInstance.SetOnlineUserAddresses(participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID]);
+        }
+
+        private ChatChannel.ChannelId privateConversationOnlineUserListId = new ChatChannel.ChannelId("PrivateConversations");
+
+        private void OnChatRoomConnectionStateChanged(ConnectionState connectionState)
+        {
+            if (connectionState == ConnectionState.ConnConnected)
+            {
+                roomHub.ChatRoom().ConnectionStateChanged -= OnChatRoomConnectionStateChanged;
+
+                if(!participantsPerChannel.ContainsKey(privateConversationOnlineUserListId))
+                   participantsPerChannel.Add(privateConversationOnlineUserListId, new HashSet<string>());
+
+                IReadOnlyCollection<string> roomParticipants = roomHub.ChatRoom().Participants.RemoteParticipantIdentities();
+                participantsPerChannel[privateConversationOnlineUserListId].Clear();
+
+                foreach (string roomParticipant in roomParticipants)
+                {
+                    // Checks that the participant has an open conversation with the local user
+                    foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> chatChannel in chatHistory.Channels)
+                    {
+                        if (chatChannel.Value.ChannelType == ChatChannel.ChatChannelType.USER && chatChannel.Key.Id == roomParticipant)
+                        {
+                            Debug.Log("#PARTICIPANT: " + roomParticipant);
+                            participantsPerChannel[privateConversationOnlineUserListId].Add(roomParticipant);
+                        }
+                    }
+                }
+            }
+        }
+
+        private async void OnChatRoomUpdatesFromParticipantAsync(Participant participant, UpdateFromParticipant update)
+        {
+            ChatChannel.ChannelId channelId = new ChatChannel.ChannelId(participant.Identity);
+
+            if (update == UpdateFromParticipant.Connected)
+            {
+                Debug.Log("+PARTICIPANT: " + participant.Identity + " " + update);
+
+                if (chatHistory.Channels.ContainsKey(channelId))
+                    participantsPerChannel[privateConversationOnlineUserListId].Add(participant.Identity);
+            }
+            else if (update == UpdateFromParticipant.Disconnected)
+            {
+                Debug.Log("-PARTICIPANT: " + participant.Identity + " " + update);
+
+                if (chatHistory.Channels.ContainsKey(channelId))
+                    participantsPerChannel[privateConversationOnlineUserListId].Remove(participant.Identity);
+            }
+
+            await UniTask.SwitchToMainThread();
+
+            if (viewInstance!.CurrentChannelId.Equals(channelId))
+                viewInstance.SetOnlineUserAddresses(participantsPerChannel[privateConversationOnlineUserListId]);
         }
 
         private async UniTaskVoid SubscribeToCommunitiesBusEventsAsync()
@@ -1143,6 +1219,7 @@ namespace DCL.Chat
 
             Debug.Log("+PARTICIPANT: " + userConnectivity.Member.Address + ", " + userConnectivity.CommunityId + " " + userConnectivity.Status);
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);;
+
             participantsPerChannel[communityChannelId].Add(userConnectivity.Member.Address);
 
             if (viewInstance.CurrentChannelId.Equals(communityChannelId))
@@ -1156,6 +1233,7 @@ namespace DCL.Chat
 
             Debug.Log("-PARTICIPANT: " + userConnectivity.Member.Address + ", " + userConnectivity.CommunityId + " " + userConnectivity.Status);
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);;
+
             participantsPerChannel[communityChannelId].Remove(userConnectivity.Member.Address);
 
             if (viewInstance.CurrentChannelId.Equals(communityChannelId))
@@ -1226,6 +1304,8 @@ namespace DCL.Chat
 
             roomHub.IslandRoom().Participants.UpdatesFromParticipant -= OnIslandRoomUpdatesFromParticipant;
             roomHub.IslandRoom().ConnectionStateChanged -= OnIslandRoomConnectionStateChanged;
+            roomHub.ChatRoom().Participants.UpdatesFromParticipant -= OnChatRoomUpdatesFromParticipantAsync;
+            roomHub.ChatRoom().ConnectionStateChanged -= OnChatRoomConnectionStateChanged;
         }
 
         private async UniTaskVoid ShowErrorNotificationAsync(string errorMessage, CancellationToken ct)

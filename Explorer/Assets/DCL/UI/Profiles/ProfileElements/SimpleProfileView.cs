@@ -21,11 +21,15 @@ namespace DCL.UI.ProfileElements
         [SerializeField] private ProfilePictureView profilePictureView;
         [SerializeField] private Button openProfileButton;
         [SerializeField] private SimpleUserNameElement userNameElement;
-        
+
         [Header("Connection indicator")]
         [SerializeField] private Image connectionStatusIndicator;
         [SerializeField] private GameObject connectionStatusIndicatorContainer;
         [SerializeField] private OnlineStatusConfiguration onlineStatusConfiguration;
+
+        [Range(0.0f, 1.0f)]
+        [SerializeField]
+        private float offlineThumbnailGreyOutOpacity = 0.6f;
 
         private Web3Address currentWalledId;
         private CancellationTokenSource cts;
@@ -39,7 +43,7 @@ namespace DCL.UI.ProfileElements
             Profile? profile = await profileRepositoryWrapper.GetProfileAsync(playerId, ct);
 
             connectionStatusIndicatorContainer.gameObject.SetActive(profile != null);
-            
+
             if (profile == null) return;
 
             currentWalledId = playerId;
@@ -51,7 +55,7 @@ namespace DCL.UI.ProfileElements
         {
             openProfileButton.onClick.AddListener(OnOpenProfileClicked);
         }
-        
+
         /// <summary>
         /// Changes the visual aspect of the connection status indicator.
         /// </summary>
@@ -59,6 +63,8 @@ namespace DCL.UI.ProfileElements
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
+            profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE, offlineThumbnailGreyOutOpacity);
         }
 
         private void OnOpenProfileClicked()

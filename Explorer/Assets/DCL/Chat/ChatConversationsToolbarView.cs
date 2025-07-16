@@ -293,6 +293,7 @@ namespace DCL.Chat
                 newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl);
                 newItem.SetConversationName(profile.ValidatedName);
                 newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
+ //               newItem.SetConnectionStatus(OnlineStatus.OFFLINE);
             }
         }
 

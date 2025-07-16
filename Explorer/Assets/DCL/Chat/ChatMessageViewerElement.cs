@@ -323,7 +323,6 @@ namespace DCL.Chat
                     if (entry != null)
                     {
                         bool isGreyedOut = !chatMessages[messageIndex].IsSystemMessage && !chatMessages[messageIndex].IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(chatMessages[messageIndex].SenderWalletAddress);
-                        Debug.Log("GREY: " + isGreyedOut + " " + i);
                         entry.GreyOut(isGreyedOut, entryGreyOutOpacity);
                     }
                 }

@@ -1137,6 +1137,10 @@ namespace DCL.Chat
 
         public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
         {
+            if (currentChannel is { ChannelType: ChatChannel.ChatChannelType.USER })
+                chatTitleBar.SetConnectionStatus(onlineUserAddresses.Contains(currentChannel.Id.Id) ? OnlineStatus.ONLINE
+                                                                                                    : OnlineStatus.OFFLINE);
+
             chatMessageViewer.SetOnlineUserAddresses(onlineUserAddresses);
         }
     }

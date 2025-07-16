@@ -28,6 +28,9 @@ namespace DCL.UI.ProfileElements
         private Color originalThumbnailBackgroundColor;
         private Color originalThumbnailFrameColor;
 
+        private bool initialized;
+        private float greyOutOpacity;
+
         private void Awake()
         {
             if(thumbnailImageView != null)
@@ -35,6 +38,10 @@ namespace DCL.UI.ProfileElements
 
             if(thumbnailFrame != null)
                 originalThumbnailFrameColor = thumbnailFrame.color;
+
+            initialized = true;
+
+            GreyOut(greyOutOpacity > 0.0f, greyOutOpacity);
         }
 
         public void Dispose()
@@ -58,8 +65,9 @@ namespace DCL.UI.ProfileElements
 
         public void SetupOnlyColor(Color userColor)
         {
-            thumbnailBackground.color = userColor;
             originalThumbnailBackgroundColor = userColor;
+            GreyOut(greyOutOpacity > 0.0f, greyOutOpacity);
+//            thumbnailBackground.color = userColor;
         }
 
         public void SetLoadingState(bool isLoading)
@@ -133,6 +141,11 @@ namespace DCL.UI.ProfileElements
 
         public void GreyOut(bool greyOut, float opacity)
         {
+            greyOutOpacity = greyOut ? opacity : 0.0f;
+
+            if(!initialized)
+                return;
+
             if(thumbnailImageView != null)
                 thumbnailImageView.ImageColor = greyOut ? Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity) : originalThumbnailImageColor;
 
