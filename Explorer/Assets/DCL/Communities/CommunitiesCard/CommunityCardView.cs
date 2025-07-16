@@ -58,7 +58,7 @@ namespace DCL.Communities.CommunitiesCard
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; } = null!;
         [field: SerializeField] private Button backgroundCloseButton { get; set; } = null!;
-        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private Image backgroundImage { get; set; } = null!;
         [field: SerializeField] public Color BackgroundColor { get; private set; }
         [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
@@ -229,7 +229,11 @@ namespace DCL.Communities.CommunitiesCard
             communityMembersNumber.enabled = !isLoading;
             communityDescription.enabled = !isLoading;
             EventListView.SetLoadingStateActive(isLoading);
-            loadingObject.SetActive(isLoading);
+
+            if (isLoading)
+                loadingObject.ShowLoading();
+            else
+                loadingObject.HideLoading();
         }
 
         private void ToggleSection(Sections section, bool invokeEvent = true)
