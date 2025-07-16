@@ -38,6 +38,20 @@ namespace DCL.FeatureFlags
                 [FeatureId.PROFILE_NAME_EDITOR] = featureFlags.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR) || (appArgs.HasDebugFlag() && appArgs.HasFlag(AppArgsFlags.PROFILE_NAME_EDITOR)) || Application.isEditor,
                 [FeatureId.MARKETPLACE_CREDITS] = featureFlags.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS),
                 [FeatureId.COMMUNITIES_MEMBERS_COUNTER] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
+                [FeatureId.MULTIPLAYER_COMPRESSION_WIN] = featureFlags.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN),
+                [FeatureId.MULTIPLAYER_COMPRESSION_MAC] = featureFlags.IsEnabled(FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC),
+                [FeatureId.PORTABLE_EXPERIENCE] = featureFlags.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE),
+                [FeatureId.GLOBAL_PORTABLE_EXPERIENCE] = featureFlags.IsEnabled(FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE),
+                [FeatureId.PORTABLE_EXPERIENCE_CHAT_COMMANDS] = featureFlags.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS),
+                [FeatureId.MAP_PINS] = featureFlags.IsEnabled(FeatureFlagsStrings.MAP_PINS),
+                [FeatureId.CUSTOM_MAP_PINS_ICONS] = featureFlags.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS),
+                [FeatureId.VIDEO_PRIORITIZATION] = featureFlags.IsEnabled(FeatureFlagsStrings.VIDEO_PRIORITIZATION),
+                [FeatureId.ASSET_BUNDLE_FALLBACK] = featureFlags.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK),
+                [FeatureId.CHAT_HISTORY_LOCAL_STORAGE] = featureFlags.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE),
+                [FeatureId.KTX2_CONVERSION] = featureFlags.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION),
+                [FeatureId.SCENE_MEMORY_LIMIT] = featureFlags.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT),
+                [FeatureId.AUTH_CODE_VALIDATION] = featureFlags.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION),
+                [FeatureId.GPUI_ENABLED] = featureFlags.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED),
 
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
