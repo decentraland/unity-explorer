@@ -12,6 +12,9 @@ namespace DCL.UI
         [field: SerializeField]
         internal GameObject LoadingObject { get; private set; }
 
+        [field: SerializeField, Tooltip("Optional")]
+        private SkeletonLoadingView? skeletonLoadingView { get; set; }
+
         [field: SerializeField]
         internal Image Image { get; private set; }
 
@@ -38,7 +41,15 @@ namespace DCL.UI
         public bool IsLoading
         {
             get => LoadingObject.activeSelf;
-            set => LoadingObject.SetActive(value);
+            set
+            {
+                LoadingObject.SetActive(value);
+
+                if (value)
+                    skeletonLoadingView?.ShowLoading();
+                else
+                    skeletonLoadingView?.HideLoading();
+            }
         }
 
         public bool ImageEnabled
@@ -59,7 +70,7 @@ namespace DCL.UI
         {
             Image.enabled = true;
             Image.sprite = sprite;
-            LoadingObject.SetActive(false);
+            IsLoading = false;
 
             //Cannot fit image if aspect ratio fitter or rect transform is not set
             if (aspectRatioFitter == null || rectTransform == null)
