@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
@@ -31,7 +32,7 @@ namespace DCL.Communities.CommunitiesCard.Places
         [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
         [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; } = null!;
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
-        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
         [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
         [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
@@ -71,8 +72,13 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void SetEmptyStateActive(bool active) =>
             emptyState.SetActive(active && !canModify);
 
-        public void SetLoadingStateActive(bool active) =>
-            loadingObject.SetActive(active);
+        public void SetLoadingStateActive(bool active)
+        {
+            if (active)
+                loadingObject.ShowLoading();
+            else
+                loadingObject.HideLoading();
+        }
 
         public void SetCanModify(bool canModify)
         {
