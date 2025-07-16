@@ -1,3 +1,4 @@
+using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
@@ -16,7 +17,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         [field: SerializeField] private LoopListView2 loopList { get; set; } = null!;
         [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
-        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
         [field: SerializeField] private GameObject emptyStateAdminText { get; set; } = null!;
         [field: SerializeField] private Button openWizardButton { get; set; } = null!;
@@ -107,7 +108,11 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         public void SetLoadingStateActive(bool active)
         {
-            loadingObject.SetActive(active);
+            if (active)
+                loadingObject.ShowLoading();
+            else
+                loadingObject.HideLoading();
+
             SetEmptyStateActive(!active);
         }
     }

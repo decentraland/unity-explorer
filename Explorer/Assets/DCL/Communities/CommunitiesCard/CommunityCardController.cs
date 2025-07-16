@@ -259,6 +259,8 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
                 viewInstance!.SetLoadingState(true);
+                //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
+                viewInstance.MembersListView.SetLoadingStateActive(true);
 
                 if (spriteCache == null)
                 {
@@ -291,7 +293,7 @@ namespace DCL.Communities.CommunitiesCard
             spriteCache = null;
 
             ResetSubControllers();
-            viewInstance.ResetToggle(false);
+            viewInstance!.ResetToggle(false);
         }
 
         private void ResetSubControllers()

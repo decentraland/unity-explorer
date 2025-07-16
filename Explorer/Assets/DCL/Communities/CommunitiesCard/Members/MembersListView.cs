@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.UI;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
@@ -40,7 +41,7 @@ namespace DCL.Communities.CommunitiesCard.Members
         [field: SerializeField] private RectTransform sectionButtons { get; set; } = null!;
         [field: SerializeField] private RectTransform scrollViewRect { get; set; } = null!;
         [field: SerializeField] private MemberListSectionMapping[] memberListSectionsElements { get; set; } = null!;
-        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
 
         [field: Header("Assets")]
         [field: SerializeField] private CommunityMemberListContextMenuConfiguration contextMenuSettings = null!;
@@ -252,8 +253,13 @@ namespace DCL.Communities.CommunitiesCard.Members
 
         public void SetEmptyStateActive(bool active) { }
 
-        public void SetLoadingStateActive(bool active) =>
-            loadingObject.SetActive(active);
+        public void SetLoadingStateActive(bool active)
+        {
+            if (active)
+                loadingObject.ShowLoading();
+            else
+                loadingObject.HideLoading();
+        }
 
         [Serializable]
         public struct MemberListSectionMapping
