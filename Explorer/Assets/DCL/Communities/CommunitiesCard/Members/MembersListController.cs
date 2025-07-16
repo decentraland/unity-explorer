@@ -139,8 +139,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (sectionData.PageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
-                else
-                    RefreshGrid(true);
+
+                RefreshGrid(true);
             }
         }
 
