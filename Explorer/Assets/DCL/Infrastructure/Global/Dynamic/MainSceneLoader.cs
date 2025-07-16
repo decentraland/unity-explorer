@@ -221,7 +221,7 @@ namespace Global.Dynamic
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
-                staticContainer.SceneLoadingLimit.SetEnabled(FeaturesRegistry.Instance.IsEnabled(FeatureId.SCENE_MEMORY_LIMIT));
+                staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(
                     bootstrapContainer,
