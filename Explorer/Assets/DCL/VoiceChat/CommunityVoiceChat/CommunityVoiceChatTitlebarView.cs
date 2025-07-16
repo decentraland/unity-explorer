@@ -30,7 +30,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public RectTransform SpeakersParent { get; private set; }
 
         [field: SerializeField]
-        public RectTransform ListenersParent { get; private set; }
+        public CommunityVoiceChatSearchView CommunityVoiceChatSearchView { get; private set; }
 
         private void Start()
         {
