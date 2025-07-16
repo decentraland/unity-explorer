@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
+using Random = UnityEngine.Random;
 
 namespace DCL.Communities
 {
@@ -228,6 +229,12 @@ namespace DCL.Communities
                 CommunityDeleted?.Invoke(communityId);
 
             return result.Success;
+        }
+
+        public async UniTask<bool> UpdateCommunityNotificationsAsync(string communityId, bool value, CancellationToken ct)
+        {
+            //TODO: implement request
+            return Random.Range(0, 100) > 50;
         }
 
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct)

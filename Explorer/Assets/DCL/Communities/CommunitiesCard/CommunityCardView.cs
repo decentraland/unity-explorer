@@ -54,6 +54,7 @@ namespace DCL.Communities.CommunitiesCard
         public event Action? JoinCommunity;
         public event Action? LeaveCommunityRequested;
         public event Action? DeleteCommunityRequested;
+        public event Action<bool>? ToggleNotificationsRequested;
 
         [field: Header("References")]
         [field: SerializeField] private Button closeButton { get; set; } = null!;
@@ -107,7 +108,10 @@ namespace DCL.Communities.CommunitiesCard
         private GenericContextMenu? contextMenu;
         private GenericContextMenuElement? leaveCommunityContextMenuElement;
         private GenericContextMenuElement? deleteCommunityContextMenuElement;
+        private ToggleWithIconContextMenuControlSettings? communityNotificationsContextMenuElement;
         private CancellationToken cancellationToken;
+        private bool notificationsEnabled;
+        private UniTaskCompletionSource? contextMenuCloseTask;
 
         private void Awake()
         {
@@ -129,6 +133,8 @@ namespace DCL.Communities.CommunitiesCard
                               verticalLayoutPadding: contextMenuSettings.VerticalPadding,
                               elementsSpacing: contextMenuSettings.ElementsSpacing,
                               anchorPoint: ContextMenuOpenDirection.BOTTOM_LEFT)
+                         .AddControl(communityNotificationsContextMenuElement = new ToggleWithIconContextMenuControlSettings(
+                              contextMenuSettings.ToggleNotificationsSprite, contextMenuSettings.ToggleNotificationsText, toggle => ToggleNotificationsRequested?.Invoke(toggle)))
                          .AddControl(leaveCommunityContextMenuElement = new GenericContextMenuElement(
                               new ButtonContextMenuControlSettings(contextMenuSettings.LeaveCommunityText, contextMenuSettings.LeaveCommunitySprite, ShowLeaveConfirmationDialog)))
                          .AddControl(deleteCommunityContextMenuElement = new GenericContextMenuElement(
@@ -171,11 +177,17 @@ namespace DCL.Communities.CommunitiesCard
 
         private void OpenContextMenu()
         {
+            contextMenuCloseTask = new UniTaskCompletionSource();
             openContextMenuButton.interactable = false;
+            communityNotificationsContextMenuElement!.SetInitialValue(notificationsEnabled);
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, openContextMenuButton.transform.position,
-                actionOnHide: () => openContextMenuButton.interactable = true), cancellationToken);
+                actionOnHide: () => openContextMenuButton.interactable = true,
+                closeTask: contextMenuCloseTask.Task), cancellationToken);
         }
+
+        public void CloseContextMenu() =>
+            contextMenuCloseTask?.TrySetResult();
 
         private void OnDisable()
         {
@@ -255,7 +267,7 @@ namespace DCL.Communities.CommunitiesCard
         {
             openChatButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator or CommunityMemberRole.member);
             openWizardButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
-            openContextMenuButton.gameObject.SetActive(role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
+            openContextMenuButton.gameObject.SetActive(role is not CommunityMemberRole.none);
             joinedButton.gameObject.SetActive(role is CommunityMemberRole.member);
             joinButton.gameObject.SetActive(role == CommunityMemberRole.none);
         }
@@ -282,6 +294,7 @@ namespace DCL.Communities.CommunitiesCard
             communityName.text = communityData.name;
             communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
             communityDescription.text = communityData.description;
+            notificationsEnabled = communityData.notifications;
 
             if (communityData.thumbnails != null)
 

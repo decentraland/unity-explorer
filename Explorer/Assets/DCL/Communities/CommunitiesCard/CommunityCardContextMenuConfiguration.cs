@@ -10,6 +10,10 @@ namespace DCL.Communities.CommunitiesCard
         [field: SerializeField] public Vector2 OffsetFromTarget { get; private set; }
         [field: SerializeField] public RectOffset VerticalPadding { get; private set; } = null!;
 
+
+        [field: SerializeField] public Sprite ToggleNotificationsSprite { get; private set; } = null!;
+        [field: SerializeField] public string ToggleNotificationsText { get; private set; } = "Notifications";
+
         [field: SerializeField] public Sprite LeaveCommunitySprite { get; private set; } = null!;
         [field: SerializeField] public string LeaveCommunityText { get; private set; } = "Leave Community";
 
