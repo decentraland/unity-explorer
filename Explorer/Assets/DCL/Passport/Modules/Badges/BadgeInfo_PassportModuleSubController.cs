@@ -34,20 +34,23 @@ namespace DCL.Passport.Modules.Badges
         private IReadOnlyList<TierData> currentTiers = Array.Empty<TierData>();
         private CancellationTokenSource loadBadgeTierButtonsCts;
         private CancellationTokenSource loadBadge3DImageCts;
+
         private Animator badge3DImageAnimator;
+        private readonly Material badge3DMaterial;
 
         public BadgeInfo_PassportModuleSubController(
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             IWebRequestController webRequestController,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController,
-            GameObject badge3DPreviewCamera)
+            BadgePreviewCameraView badge3DPreviewCamera)
         {
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.webRequestController = webRequestController;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
-            this.badge3DImageAnimator = badge3DPreviewCamera.GetComponentInChildren<Animator>();
+            badge3DImageAnimator = badge3DPreviewCamera.badge3DAnimator;
+            badge3DMaterial = badge3DPreviewCamera.badge3DRenderer.sharedMaterial;
 
             badgeTierButtonsPool = new ObjectPool<BadgeTierButton_PassportFieldView>(
                 InstantiateBadgeTierButtonPrefab,
@@ -310,9 +313,9 @@ namespace DCL.Passport.Modules.Badges
 
         private void Set3DImage(Texture2D baseColor, Texture2D normal, Texture2D hrm)
         {
-            badgeInfoModuleView.Badge3DMaterial.SetTexture(BASE_COLOR, baseColor);
-            badgeInfoModuleView.Badge3DMaterial.SetTexture(NORMAL, normal);
-            badgeInfoModuleView.Badge3DMaterial.SetTexture(HRM, hrm);
+            badge3DMaterial.SetTexture(BASE_COLOR, baseColor);
+            badge3DMaterial.SetTexture(NORMAL, normal);
+            badge3DMaterial.SetTexture(HRM, hrm);
         }
     }
 }

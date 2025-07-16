@@ -43,7 +43,7 @@ namespace DCL.Passport.Modules.Badges
             PassportErrorsController passportErrorsController,
             IWebRequestController webRequestController,
             ISelfProfile selfProfile,
-            GameObject badge3DPreviewCamera)
+            BadgePreviewCameraView badge3DPreviewCamera)
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;

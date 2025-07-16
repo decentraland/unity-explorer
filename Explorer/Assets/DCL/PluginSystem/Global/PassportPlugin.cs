@@ -168,7 +168,7 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
-            GameObject passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value;
+            BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
 
 
             var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);

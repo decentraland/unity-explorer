@@ -137,7 +137,7 @@ namespace DCL.Passport
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
-        private GameObject badge3DPreviewCamera;
+        private readonly BadgePreviewCameraView badge3DPreviewCamera;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -188,7 +188,7 @@ namespace DCL.Passport
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            GameObject badge3DPreviewCameraPrefab) : base(viewFactory)
+            BadgePreviewCameraView badge3DPreviewCameraPrefab) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -235,7 +235,7 @@ namespace DCL.Passport
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((_, _) => { });
-            badge3DPreviewCamera.SetActive(false);
+            badge3DPreviewCamera.gameObject.SetActive(false);
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
