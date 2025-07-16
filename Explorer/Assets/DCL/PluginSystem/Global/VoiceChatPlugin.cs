@@ -49,24 +49,23 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IRoomHub roomHub,
             MainUIView mainUIView,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            VoiceChatContainer voiceChatContainer,
             ProfileRepositoryWrapper profileDataProvider,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             Arch.Core.World world,
-            Entity playerEntity,
-            IVoiceService voiceChatService,
-            VoiceChatOrchestrator voiceChatOrchestrator)
+            Entity playerEntity
+            )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.roomHub = roomHub;
             this.mainUIView = mainUIView;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatCallStatusService = voiceChatContainer.VoiceChatCallStatusService;
             this.profileDataProvider = profileDataProvider;
             this.entityParticipantTable = entityParticipantTable;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.voiceChatService = voiceChatService;
-            this.voiceChatOrchestrator = voiceChatOrchestrator;
+            this.voiceChatService = voiceChatContainer.RPCPrivateVoiceChatService;
+            this.voiceChatOrchestrator = voiceChatContainer.VoiceChatOrchestrator;
         }
 
         public void Dispose()

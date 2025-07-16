@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
         private PassportController? passportController;
 
@@ -112,7 +112,7 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -149,7 +149,7 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
         }
 
         public void Dispose()
@@ -211,7 +211,7 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatCallStatusService
+                voiceChatOrchestrator
             );
 
             mvcManager.RegisterController(passportController);
