@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Web3;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
@@ -6,9 +7,9 @@ using System.Threading;
 namespace DCL.FeatureFlags
 {
     /// <summary>
-    /// Handles complex communities feature logic including identity-based allowlists
+    ///     Handles complex communities feature logic including identity-based allowlists
     /// </summary>
-    public class CommunitiesFeatureProvider
+    public class CommunitiesFeatureProvider : IFeatureProvider
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
         private bool? storedResult;
@@ -21,23 +22,27 @@ namespace DCL.FeatureFlags
         }
 
         /// <summary>
-        /// Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
+        ///     Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
         /// </summary>
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct, bool ignoreAllowedList = false, bool cacheResult = true)
-        {
-            if (!cacheResult)
-                storedResult = null;
+        public async UniTask<bool> IsFeatureEnabledForUserAsync(CancellationToken ct) =>
+            await IsUserAllowedToUseTheFeatureAsync(ct);
 
+        /// <summary>
+        ///     Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
+        /// </summary>
+        /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
+        public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct)
+        {
             if (storedResult != null)
                 return storedResult.Value;
 
             bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
-            if (result && !ignoreAllowedList)
+            if (result)
             {
                 await UniTask.WaitUntil(() => web3IdentityCache.Identity != null, cancellationToken: ct);
-                var ownWalletId = web3IdentityCache.Identity!.Address;
+                Web3Address ownWalletId = web3IdentityCache.Identity!.Address;
 
                 if (string.IsNullOrEmpty(ownWalletId))
                     result = false;
@@ -48,7 +53,7 @@ namespace DCL.FeatureFlags
                 }
             }
 
-            storedResult = cacheResult ? result : null;
+            storedResult = result;
             return result;
         }
 

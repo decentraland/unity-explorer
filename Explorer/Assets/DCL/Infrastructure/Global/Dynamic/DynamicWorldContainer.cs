@@ -394,8 +394,7 @@ namespace Global.Dynamic
 
                 //override allowed only in Editor
                 Application.isEditor
-                    ? new LinkedBox<(bool use, ConnectionQuality quality)>(
-                        () => (bootstrapContainer.DebugSettings.OverrideConnectionQuality, bootstrapContainer.DebugSettings.ConnectionQuality)
+                    ? new LinkedBox<(bool use, ConnectionQuality quality)>(() => (bootstrapContainer.DebugSettings.OverrideConnectionQuality, bootstrapContainer.DebugSettings.ConnectionQuality)
                     )
                     : new Box<(bool use, ConnectionQuality quality)>((false, ConnectionQuality.QualityExcellent))
             );
@@ -419,17 +418,17 @@ namespace Global.Dynamic
                 (staticContainer, bootstrapContainer, lodContainer, realmContainer, remoteEntities, globalWorld, roomHub, terrainContainer.Landscape, exposedGlobalDataContainer, loadingScreen);
 
             IHealthCheck livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
-                ? new IHealthCheck.AlwaysFails() :
-                  new StartLiveKitRooms(roomHub);
+                ? new IHealthCheck.AlwaysFails()
+                : new StartLiveKitRooms(roomHub);
 
             livekitHealthCheck = dynamicWorldParams.EnableAnalytics
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
                 : livekitHealthCheck;
 
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
-            var includedFeatures = IncludedFeatures.Instance;
+            IncludedFeatures includedFeatures = IncludedFeatures.Instance;
 
-            await includedFeatures.InitializeAsync(appArgs, identityCache, localSceneDevelopment, ct);
+            includedFeatures.Initialize(appArgs, identityCache, localSceneDevelopment);
 
             bool includeCameraReel = includedFeatures.IsEnabled(FeatureFlagsStrings.CAMERA_REEL);
             bool includeFriends = includedFeatures.IsEnabled(FeatureFlagsStrings.FRIENDS);
@@ -437,7 +436,7 @@ namespace Global.Dynamic
             bool includeVoiceChat = includedFeatures.IsEnabled(FeatureFlagsStrings.VOICE_CHAT);
             bool isNameEditorEnabled = includedFeatures.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR);
             bool includeMarketplaceCredits = includedFeatures.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
-            bool includeCommunities = includedFeatures.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
+            bool includeCommunities = await includedFeatures.IsEnabledForUserAsync(FeatureFlagsStrings.COMMUNITIES, ct);
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel);
@@ -583,7 +582,7 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
-            DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, realmNavigator, ct);
+            var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, realmNavigator, ct);
             deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
@@ -591,11 +590,11 @@ namespace Global.Dynamic
             var friendsCacheProxy = new ObjectProxy<FriendsCache>();
 
             ISpriteCache thumbnailCache = new SpriteCache(staticContainer.WebRequestsContainer.WebRequestController);
-            ProfileRepositoryWrapper profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
+            var profileRepositoryWrapper = new ProfileRepositoryWrapper(profileRepository, thumbnailCache, remoteMetadata);
 
             IChatEventBus chatEventBus = new ChatEventBus();
             IFriendsEventBus friendsEventBus = new DefaultFriendsEventBus();
-            CommunitiesEventBus communitiesEventBus = new CommunitiesEventBus();
+            var communitiesEventBus = new CommunitiesEventBus();
 
             var profileChangesBus = new ProfileChangesBus();
 
@@ -882,7 +881,6 @@ namespace Global.Dynamic
                         entityParticipantTable,
                         globalWorld,
                         playerEntity));
-
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
