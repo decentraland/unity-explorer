@@ -5,7 +5,6 @@ using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Diagnostics;
-using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
@@ -28,7 +27,6 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -78,9 +76,6 @@ namespace DCL.UI.Sidebar
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
             IWebBrowser webBrowser,
-            bool includeCameraReel,
-            bool includeFriends,
-            bool includeMarketplaceCredits,
             ChatView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
@@ -98,11 +93,11 @@ namespace DCL.UI.Sidebar
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
-            this.includeCameraReel = includeCameraReel;
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             this.chatView = chatView;
             this.chatHistory = chatHistory;
-            this.includeFriends = includeFriends;
-            this.includeMarketplaceCredits = includeMarketplaceCredits;
+            this.includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
+            this.includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
@@ -129,7 +124,7 @@ namespace DCL.UI.Sidebar
             viewInstance!.backpackButton.onClick.AddListener(() =>
             {
                 viewInstance.backpackNotificationIndicator.SetActive(false);
-                OpenExplorePanelInSectionAsync(ExploreSections.Backpack);
+                OpenExplorePanelInSectionAsync(ExploreSections.Backpack).Forget();
             });
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());

@@ -65,7 +65,6 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController communitiesBrowserController,
             INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
-            bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
@@ -78,7 +77,7 @@ namespace DCL.ExplorePanel
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
             this.inputBlock = inputBlock;
-            this.includeCameraReel = includeCameraReel;
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             this.sharedSpaceManager = sharedSpaceManager;
             CommunitiesBrowserController = communitiesBrowserController;
         }

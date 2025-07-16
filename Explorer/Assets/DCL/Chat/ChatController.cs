@@ -142,8 +142,8 @@ namespace DCL.Chat
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled) : base(viewFactory)
+            IVoiceChatCallStatusService voiceChatCallStatusService
+            ) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -167,7 +167,7 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
-            this.isCallEnabled = isCallEnabled;
+            this.isCallEnabled =  FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();

@@ -432,16 +432,8 @@ namespace Global.Dynamic
             var communitiesProvider = new CommunitiesFeatureProvider(identityCache);
             includedFeaturesRegistry.RegisterFeatureProvider(FeatureId.COMMUNITIES, communitiesProvider);
 
-            bool includeCameraReel = includedFeaturesRegistry.IsEnabled(FeatureId.CAMERA_REEL);
-            bool includeFriends = includedFeaturesRegistry.IsEnabled(FeatureId.FRIENDS);
-            bool includeUserBlocking = includedFeaturesRegistry.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
-            bool includeVoiceChat = includedFeaturesRegistry.IsEnabled(FeatureId.VOICE_CHAT);
-            bool isNameEditorEnabled = includedFeaturesRegistry.IsEnabled(FeatureId.PROFILE_NAME_EDITOR);
-            bool includeMarketplaceCredits = includedFeaturesRegistry.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
-            bool includeCommunities = await includedFeaturesRegistry.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct);
-
             var chatHistory = new ChatHistory();
-            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel);
+            ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld);
 
             var initializationFlowContainer = InitializationFlowContainer.Create(staticContainer,
                 bootstrapContainer,
@@ -581,7 +573,7 @@ namespace Global.Dynamic
             var clipboardManager = new ClipboardManager(clipboard);
             ITextFormatter hyperlinkTextFormatter = new HyperlinkTextFormatter(profileCache, selfProfile);
 
-            var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
+            var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
             var deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, realmNavigator, ct);
@@ -610,14 +602,12 @@ namespace Global.Dynamic
                 friendServiceProxy,
                 chatEventBus,
                 genericUserProfileContextMenuSettingsSo,
-                includeUserBlocking,
                 bootstrapContainer.Analytics,
                 onlineUsersProvider,
                 realmNavigator,
                 friendOnlineStatusCacheProxy,
                 profileRepository,
-                sharedSpaceManager,
-                includeVoiceChat);
+                sharedSpaceManager);
 
             ViewDependencies.Initialize(new ViewDependencies(
                 unityEventSystem,
@@ -683,7 +673,7 @@ namespace Global.Dynamic
                     defaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog,
                     userBlockingCacheProxy),
-                new MainUIPlugin(mvcManager, mainUIView, includeFriends, sharedSpaceManager),
+                new MainUIPlugin(mvcManager, mainUIView, sharedSpaceManager),
                 new ProfilePlugin(profileRepository, profileCache, staticContainer.CacheCleaner),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(
@@ -693,8 +683,7 @@ namespace Global.Dynamic
                     webBrowser, dynamicWorldDependencies.Web3Authenticator,
                     initializationFlowContainer.InitializationFlow,
                     profileCache,
-                    globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
-                    chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
+                    globalWorld, playerEntity, chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
                     selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
                     bootstrapContainer.DecentralandUrlsSource),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
@@ -728,8 +717,7 @@ namespace Global.Dynamic
                     thumbnailCache,
                     mainUIView.WarningNotification,
                     communitiesEventBus,
-                    voiceChatCallStatusService,
-                    includeVoiceChat),
+                    voiceChatCallStatusService),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -773,7 +761,6 @@ namespace Global.Dynamic
                     userCalendar,
                     clipboard,
                     explorePanelNavmapBus,
-                    includeCameraReel,
                     appArgs,
                     userBlockingCacheProxy,
                     sharedSpaceManager,
@@ -849,7 +836,6 @@ namespace Global.Dynamic
                     cameraReelStorageService,
                     globalWorld,
                     playerEntity,
-                    includeCameraReel,
                     friendServiceProxy,
                     friendOnlineStatusCacheProxy,
                     onlineUsersProvider,
@@ -857,10 +843,6 @@ namespace Global.Dynamic
                     identityCache,
                     realmNftNamesProvider,
                     profileChangesBus,
-                    includeFriends,
-                    includeUserBlocking,
-                    isNameEditorEnabled,
-                    includeVoiceChat,
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
@@ -872,7 +854,7 @@ namespace Global.Dynamic
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
             };
 
-            if (includeVoiceChat)
+            if (includedFeaturesRegistry.IsEnabled(FeatureId.VOICE_CHAT))
                 globalPlugins.Add(
                     new VoiceChatPlugin(
                         assetsProvisioner,
@@ -900,7 +882,7 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
-            if (includeFriends)
+            if (includedFeaturesRegistry.IsEnabled(FeatureId.FRIENDS))
             {
                 // TODO many circular dependencies - adjust the flow and get rid of ObjectProxy
                 var friendsContainer = new FriendsContainer(
@@ -916,8 +898,6 @@ namespace Global.Dynamic
                     notificationsBusController,
                     onlineUsersProvider,
                     realmNavigator,
-                    includeUserBlocking,
-                    includeVoiceChat,
                     appArgs,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
@@ -937,7 +917,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(friendsContainer);
             }
 
-            if (includeCameraReel)
+            if (includedFeaturesRegistry.IsEnabled(FeatureId.CAMERA_REEL))
                 globalPlugins.Add(new InWorldCameraPlugin(
                     selfProfile,
                     staticContainer.RealmData,
@@ -967,7 +947,7 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     identityCache));
 
-            if (includeMarketplaceCredits)
+            if (includedFeaturesRegistry.IsEnabled(FeatureId.MARKETPLACE_CREDITS))
             {
                 globalPlugins.Add(new MarketplaceCreditsPlugin(
                     mainUIView,
@@ -985,7 +965,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus));
             }
 
-            if (includeCommunities)
+            if (await includedFeaturesRegistry.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct))
                 globalPlugins.Add(new CommunitiesPlugin(
                     mvcManager,
                     assetsProvisioner,

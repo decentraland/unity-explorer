@@ -39,12 +39,12 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
+        public SharedSpaceManager(IMVCManager mvcManager, World world)
         {
             this.mvcManager = mvcManager;
             dclInput = DCLInput.Instance;
-            isFriendsFeatureEnabled = isFriendsEnabled;
-            isCameraReelFeatureEnabled = isCameraReelEnabled;
+            isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
+            isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             ecsWorld = world;
 
             configureShortcutsCts = configureShortcutsCts.SafeRestart();
