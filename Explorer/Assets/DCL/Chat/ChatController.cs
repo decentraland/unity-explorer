@@ -382,7 +382,9 @@ namespace DCL.Chat
 
                 // Creates one channel per community
                 for (int i = 0; i < response.data.results.Length; ++i)
+                {
                     chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.results[i].id), ChatChannel.ChatChannelType.COMMUNITY);
+                }
             }
             else
             {
