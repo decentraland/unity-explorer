@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.RealmNavigation;
 using ECS.SceneLifeCycle.Realm;
@@ -26,6 +27,17 @@ namespace DCL.RuntimeDeepLink
         public Result HandleDeepLink(DeepLink deeplink)
         {
             Vector2Int? position = PositionFrom(deeplink);
+            URLDomain? realm = RealmFrom(deeplink);
+
+            if (realm.HasValue)
+            {
+                if (position.HasValue)
+                    realmNavigator.TryChangeRealmAsync(realm.Value, token, position.Value).Forget();
+                else
+                    realmNavigator.TryChangeRealmAsync(realm.Value, token).Forget();
+
+                return Result.SuccessResult();
+            }
 
             if (position.HasValue)
             {
@@ -40,6 +52,16 @@ namespace DCL.RuntimeDeepLink
             }
 
             return Result.ErrorResult("no matches");
+        }
+
+        private static URLDomain? RealmFrom(DeepLink deepLink)
+        {
+            string? rawRealm = deepLink.ValueOf(AppArgsFlags.REALM);
+
+            if (rawRealm == null)
+                return null;
+
+            return URLDomain.FromString(rawRealm);
         }
 
         private static Vector2Int? PositionFrom(DeepLink deeplink)
