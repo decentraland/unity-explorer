@@ -57,8 +57,8 @@ namespace ECS.Unity.Materials.Systems
             InvalidateMaterialComponentQuery(World);
             CreateMaterialComponentQuery(World);
 
-            CreateMaterialForGltfNodeModifierQuery(World);
-            UpdateMaterialForGltfNodeModifierQuery(World);
+            AssignGltfNodeModifierPBMaterialQuery(World);
+            UpdateGltfNodeModifierPBMaterialQuery(World);
         }
 
         [Query]
@@ -134,21 +134,21 @@ namespace ECS.Unity.Materials.Systems
         [Query]
         [All(typeof(PartitionComponent))]
         [None(typeof(MaterialComponent), typeof(PBMaterial))]
-        private void CreateMaterialForGltfNodeModifier(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers)
+        private void AssignGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers)
         {
             if (gltfNodeModifiers.Modifiers.Count == 0) return;
+            gltfNodeModifiers.IsDirty = false;
 
             var pbMaterial = gltfNodeModifiers.Modifiers[0].Material;
             World.Add(entity, pbMaterial);
-
-            gltfNodeModifiers.IsDirty = false;
         }
 
         [Query]
         [All(typeof(MaterialComponent), typeof(PBMaterial))]
-        private void UpdateMaterialForGltfNodeModifier(Entity entity, in PBGltfNodeModifiers gltfNodeModifiers)
+        private void UpdateGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers)
         {
             if (!gltfNodeModifiers.IsDirty || gltfNodeModifiers.Modifiers.Count == 0) return;
+            gltfNodeModifiers.IsDirty = false;
 
             var pbMaterial = gltfNodeModifiers.Modifiers[0].Material;
             pbMaterial.IsDirty = true;
