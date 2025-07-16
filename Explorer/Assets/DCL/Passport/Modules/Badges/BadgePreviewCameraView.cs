@@ -7,4 +7,7 @@ public class BadgePreviewCameraView : MonoBehaviour
 
     [field: SerializeField]
     public Renderer badge3DRenderer { get; private set; }
+
+    [field: SerializeField]
+    public Camera badge3DCamera { get; private set; }
 }

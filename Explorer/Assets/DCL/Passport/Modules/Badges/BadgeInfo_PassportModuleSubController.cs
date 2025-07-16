@@ -35,7 +35,7 @@ namespace DCL.Passport.Modules.Badges
         private CancellationTokenSource loadBadgeTierButtonsCts;
         private CancellationTokenSource loadBadge3DImageCts;
 
-        private Animator badge3DImageAnimator;
+        private readonly Animator badge3DImageAnimator;
         private readonly Material badge3DMaterial;
 
         public BadgeInfo_PassportModuleSubController(
@@ -51,6 +51,7 @@ namespace DCL.Passport.Modules.Badges
             this.passportErrorsController = passportErrorsController;
             badge3DImageAnimator = badge3DPreviewCamera.badge3DAnimator;
             badge3DMaterial = badge3DPreviewCamera.badge3DRenderer.sharedMaterial;
+            badgeInfoModuleView.Badge3DImage.texture = badge3DPreviewCamera.badge3DCamera.targetTexture;
 
             badgeTierButtonsPool = new ObjectPool<BadgeTierButton_PassportFieldView>(
                 InstantiateBadgeTierButtonPrefab,

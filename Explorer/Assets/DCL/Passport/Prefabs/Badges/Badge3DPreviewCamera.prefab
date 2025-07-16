@@ -143,9 +143,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 373144e5682aa435aa223284d6719cec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <badge3DRawImage>k__BackingField: {fileID: 0}
   <badge3DAnimator>k__BackingField: {fileID: 2333833773583042938}
   <badge3DRenderer>k__BackingField: {fileID: 8296579380273699519}
+  <badge3DCamera>k__BackingField: {fileID: 8839841422032170982}
 --- !u!1 &3654869557990348961
 GameObject:
   m_ObjectHideFlags: 0
