@@ -27,10 +27,12 @@ namespace DCL.SDKComponents.SceneUI.Systems
         [Query]
         private void FixPointerEvents(ref PBPointerEvents pbPointerEventsModel, ref PBUiTransform uiSdkTransformModel, ref CRDTEntity sdkEntity)
         {
-            if (pbPointerEventsModel.IsDirty || uiSdkTransformModel.IsDirty)
-            {
-                uiSdkTransformModel.PointerFilter = PointerFilterMode.PfmBlock;
-            }
+            if (!pbPointerEventsModel.IsDirty && !uiSdkTransformModel.IsDirty) return;
+
+            ReportHub.Log($"FixPointerEvents: {uiSdkTransformModel.HasPointerFilter}, {uiSdkTransformModel.PointerFilter}", ReportCategory.ALWAYS);
+
+            uiSdkTransformModel.PointerFilter = PointerFilterMode.PfmBlock;
+            uiSdkTransformModel.IsDirty = true;
         }
     }
 }
