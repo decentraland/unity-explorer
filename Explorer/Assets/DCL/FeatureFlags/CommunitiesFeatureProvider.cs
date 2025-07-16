@@ -9,7 +9,7 @@ namespace DCL.FeatureFlags
     /// <summary>
     ///     Handles complex communities feature logic including identity-based allowlists.
     /// </summary>
-    public class CommunitiesFeatureProvider : IFeatureProvider, IDisposable
+    public class CommunitiesFeatureProvider : IFeatureProvider
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
         private bool? storedResult;
@@ -24,14 +24,7 @@ namespace DCL.FeatureFlags
         ///     Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
         /// </summary>
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public async UniTask<bool> IsFeatureEnabledForUserAsync(CancellationToken ct) =>
-            await IsUserAllowedToUseTheFeatureAsync(ct);
-
-        /// <summary>
-        ///     Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
-        /// </summary>
-        /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct)
+        public async UniTask<bool> IsFeatureEnabledForUserAsync(CancellationToken ct)
         {
             if (storedResult != null)
                 return storedResult.Value;
@@ -49,8 +42,7 @@ namespace DCL.FeatureFlags
                 {
                     FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string? walletsAllowlist);
                     result = string.IsNullOrEmpty(walletsAllowlist) || walletsAllowlist.Contains(ownWalletId, StringComparison.OrdinalIgnoreCase);
-                }
-            }
+                }            }
 
             storedResult = result;
             return result;
@@ -58,10 +50,5 @@ namespace DCL.FeatureFlags
 
         private void OnIdentityCacheChanged() =>
             storedResult = null;
-
-        public void Dispose()
-        {
-            web3IdentityCache.OnIdentityChanged -= OnIdentityCacheChanged;
-        }
     }
 }
