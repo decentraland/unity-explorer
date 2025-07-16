@@ -124,7 +124,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMembersCount(int memberCount)
         {
-            bool showMembers = IncludedFeatures.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
+            bool showMembers = IncludedFeaturesRegistry.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
             communityMembersSeparator.SetActive(showMembers);
             communityMembersCountText.gameObject.SetActive(showMembers);
             if (showMembers)

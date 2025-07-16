@@ -9,7 +9,7 @@ namespace DCL.FeatureFlags
     /// <summary>
     ///     Handles complex communities feature logic including identity-based allowlists.
     /// </summary>
-    public class CommunitiesFeatureProvider : IFeatureProvider
+    public class CommunitiesFeatureProvider : IFeatureProvider, IDisposable
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
         private bool? storedResult;
@@ -56,9 +56,12 @@ namespace DCL.FeatureFlags
             return result;
         }
 
-
-
         private void OnIdentityCacheChanged() =>
             storedResult = null;
+
+        public void Dispose()
+        {
+            web3IdentityCache.OnIdentityChanged -= OnIdentityCacheChanged;
+        }
     }
 }

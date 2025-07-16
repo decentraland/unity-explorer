@@ -339,7 +339,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
-            if (await IncludedFeatures.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
+            if (await IncludedFeaturesRegistry.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
                 await InitializeCommunityCoversationsAsync();
         }
 
@@ -1081,7 +1081,7 @@ namespace DCL.Chat
         {
             isUserAllowedInCommunitiesBusSubscriptionCts = isUserAllowedInCommunitiesBusSubscriptionCts.SafeRestart();
 
-            if (await IncludedFeatures.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInCommunitiesBusSubscriptionCts.Token))
+            if (await IncludedFeaturesRegistry.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInCommunitiesBusSubscriptionCts.Token))
             {
                 communitiesEventBus.UserConnectedToCommunity += OnCommunitiesEventBusUserConnectedToCommunity;
                 communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;

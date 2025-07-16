@@ -425,18 +425,19 @@ namespace Global.Dynamic
                 ? livekitHealthCheck.WithFailAnalytics(bootstrapContainer.Analytics!)
                 : livekitHealthCheck;
 
-            FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
-            IncludedFeatures includedFeatures = IncludedFeatures.Instance;
+            IncludedFeaturesRegistry includedFeaturesRegistry = new IncludedFeaturesRegistry(appArgs, localSceneDevelopment);
+            IncludedFeaturesRegistry.Initialize(includedFeaturesRegistry);
 
-            includedFeatures.Initialize(appArgs, identityCache, localSceneDevelopment);
+            var communitiesProvider = new CommunitiesFeatureProvider(identityCache);
+            includedFeaturesRegistry.RegisterFeatureProvider(FeatureFlagsStrings.COMMUNITIES, communitiesProvider);
 
-            bool includeCameraReel = includedFeatures.IsEnabled(FeatureFlagsStrings.CAMERA_REEL);
-            bool includeFriends = includedFeatures.IsEnabled(FeatureFlagsStrings.FRIENDS);
-            bool includeUserBlocking = includedFeatures.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING);
-            bool includeVoiceChat = includedFeatures.IsEnabled(FeatureFlagsStrings.VOICE_CHAT);
-            bool isNameEditorEnabled = includedFeatures.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR);
-            bool includeMarketplaceCredits = includedFeatures.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
-            bool includeCommunities = await includedFeatures.IsEnabledForUserAsync(FeatureFlagsStrings.COMMUNITIES, ct);
+            bool includeCameraReel = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.CAMERA_REEL);
+            bool includeFriends = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.FRIENDS);
+            bool includeUserBlocking = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.FRIENDS_USER_BLOCKING);
+            bool includeVoiceChat = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.VOICE_CHAT);
+            bool isNameEditorEnabled = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.PROFILE_NAME_EDITOR);
+            bool includeMarketplaceCredits = includedFeaturesRegistry.IsEnabled(FeatureFlagsStrings.MARKETPLACE_CREDITS);
+            bool includeCommunities = await includedFeaturesRegistry.IsEnabledForUserAsync(FeatureFlagsStrings.COMMUNITIES, ct);
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld, includeFriends, includeCameraReel);

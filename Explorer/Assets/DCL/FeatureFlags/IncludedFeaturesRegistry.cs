@@ -1,6 +1,5 @@
 using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
-using DCL.Web3.Identities;
 using Global.AppArgs;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,17 +13,16 @@ namespace DCL.FeatureFlags
     ///     - Use IsEnabled() for global features (FRIENDS, VOICE_CHAT, CAMERA_REEL)
     ///     - Use IsEnabledForUserAsync() for user-specific features (COMMUNITIES)
     ///     - Use GetFeatureProvider() for direct access to provider-specific methods
-    ///     User-specific features are automatically handled through registered IFeatureProvider implementations.
+    ///     - Use RegisterFeatureProvider() to register user-specific feature providers
+    ///     - User-specific features are handled through registered IFeatureProvider implementations.
     /// </summary>
     [Singleton]
-    public partial class IncludedFeatures
+    public partial class IncludedFeaturesRegistry
     {
         private readonly Dictionary<string, bool> featureStates = new ();
         private readonly Dictionary<string, IFeatureProvider> featureProviders = new ();
 
         public CommunitiesFeatureProvider CommunitiesFeatureProvider => GetFeatureProvider<CommunitiesFeatureProvider>(FeatureFlagsStrings.COMMUNITIES)!;
-
-        public bool IsInitialized { get; private set; }
 
         /// <summary>
         ///     Checks if a feature flag is enabled globally (cached, synchronous).
@@ -65,7 +63,7 @@ namespace DCL.FeatureFlags
         /// </summary>
         /// <param name="featureId">The feature ID to register the provider for</param>
         /// <param name="provider">The feature provider implementation</param>
-        private void RegisterFeatureProvider(string featureId, IFeatureProvider provider)
+        public void RegisterFeatureProvider(string featureId, IFeatureProvider provider)
         {
             featureProviders[featureId] = provider;
         }
@@ -80,17 +78,11 @@ namespace DCL.FeatureFlags
         public T? GetFeatureProvider<T>(string featureId) where T: class, IFeatureProvider =>
             featureProviders.GetValueOrDefault(featureId) as T;
 
-        public void Initialize(
+        public IncludedFeaturesRegistry(
             IAppArgs appArgs,
-            IWeb3IdentityCache identityCache,
             bool localSceneDevelopment)
         {
-            if (IsInitialized) return;
-
             FeatureFlagsConfiguration featureFlags = FeatureFlagsConfiguration.Instance;
-
-            var communitiesProvider = new CommunitiesFeatureProvider(identityCache);
-            RegisterFeatureProvider(FeatureFlagsStrings.COMMUNITIES, communitiesProvider);
 
             SetFeatureStates(new Dictionary<string, bool>
             {
@@ -103,8 +95,6 @@ namespace DCL.FeatureFlags
                 [FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER),
                 // Note: COMMUNITIES feature is not cached here because it depends on user identity
             });
-
-            IsInitialized = true;
         }
     }
 }

@@ -5,8 +5,7 @@ namespace DCL.FeatureFlags
 {
     /// <summary>
     /// Interface for feature providers that handle user-specific feature logic.
-    /// Implement this interface for features that depend on user identity, allowlists, or other dynamic conditions.
-    /// </summary>
+    /// Implement this interface for features that depend on user identity, allowlists, or other dynamic conditions.    /// </summary>
     public interface IFeatureProvider
     {
         /// <summary>
