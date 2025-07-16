@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
+using Object = System.Object;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -214,7 +215,10 @@ namespace DCL.Communities.CommunitiesBrowser
                 resultCommunityData?.SetAsJoined(isJoined);
 
                 CommunityData? myCommunityData = GetMyCommunityById(communityId);
-                myCommunityData?.SetAsJoined(isJoined);
+                //Since we are updating currentMyCommunities with the resultCommunityData, we need to check if they are the same instance
+                //so we avoid updating the same instance twice
+                if (!ReferenceEquals(myCommunityData, resultCommunityData))
+                    myCommunityData?.SetAsJoined(isJoined);
 
                 // Add/remove the joined/left community to/from My Communities
                 if (resultCommunityData != null && isJoined)
@@ -236,7 +240,10 @@ namespace DCL.Communities.CommunitiesBrowser
             resultCommunityData?.DecreaseMembersCount();
 
             CommunityData? myCommunityData = GetMyCommunityById(communityId);
-            myCommunityData?.DecreaseMembersCount();
+            //Since we are updating currentMyCommunities with the resultCommunityData, we need to check if they are the same instance
+            //so we avoid updating the same instance twice
+            if (!ReferenceEquals(myCommunityData, resultCommunityData))
+                myCommunityData?.DecreaseMembersCount();
 
             RefreshCommunityCardInGrid(communityId);
         }
