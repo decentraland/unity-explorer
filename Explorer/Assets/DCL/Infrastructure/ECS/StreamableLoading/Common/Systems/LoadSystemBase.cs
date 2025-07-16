@@ -130,10 +130,11 @@ namespace ECS.StreamableLoading.Common.Systems
             try
             {
                 var requestIsNotFulfilled = true;
+                string cacheKey = GetIntentionCacheKey(in intention);
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.GetCacheableURL(), out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(cacheKey, out UniTaskCompletionSource<OngoingRequestResult<TAsset>>? cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     state.AcquiredBudget?.Release();
@@ -156,7 +157,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 }
 
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.GetCacheableURL(), out StreamableLoadingResult<TAsset> failure))
+                if (cache.IrrecoverableFailures.TryGetValue(cacheKey, out StreamableLoadingResult<TAsset> failure))
                 {
                     result = failure;
                     return;
@@ -278,8 +279,9 @@ namespace ECS.StreamableLoading.Common.Systems
         private async UniTask<StreamableLoadingResult<TAsset>?> CacheableFlowAsync(TIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
         {
             var source = new UniTaskCompletionSource<OngoingRequestResult<TAsset>>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
-
-            cache.OngoingRequests.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), source);
+            string cacheKey = GetIntentionCacheKey(in intention);
+            
+            cache.OngoingRequests.SyncTryAdd(cacheKey, source);
             var ongoingRequestRemoved = false;
 
             StreamableLoadingResult<TAsset>? result = null;
@@ -338,7 +340,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (!ongoingRequestRemoved)
                 {
                     // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.GetCacheableURL());
+                    cache.OngoingRequests.SyncRemove(cacheKey);
                     ongoingRequestRemoved = true;
                 }
             }
@@ -367,9 +369,16 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            bool result = cache.IrrecoverableFailures.SyncTryAdd(intention.CommonArguments.GetCacheableURL(), failure);
+            string cacheKey = GetIntentionCacheKey(in intention);
+            bool result = cache.IrrecoverableFailures.SyncTryAdd(cacheKey, failure);
             if (result == false) ReportHub.LogError(GetReportData(), $"Irrecoverable failure for {intention} is already added");
             return failure;
+        }
+        
+        private string GetIntentionCacheKey(in TIntention intention)
+        {
+            // Use the intention's hash code which includes all relevant properties
+            return intention.GetHashCode().ToString();
         }
     }
 }
