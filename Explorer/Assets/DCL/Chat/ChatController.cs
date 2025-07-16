@@ -17,6 +17,7 @@ using DCL.Input.Systems;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.Prefs;
 using DCL.Profiles;
 using DCL.Profiles.Helpers;
 using DCL.UI.Profiles.Helpers;
@@ -41,6 +42,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using Utility.Types;
 
@@ -339,7 +341,7 @@ namespace DCL.Chat
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
             if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
-                await InitializeCommunityCoversationsAsync();
+                await InitializeCommunityConversationsAsync();
         }
 
         protected override void OnViewClose()
@@ -354,7 +356,7 @@ namespace DCL.Chat
 
 #region Communities
 
-        private async UniTask InitializeCommunityCoversationsAsync()
+        private async UniTask InitializeCommunityConversationsAsync()
         {
             // Obtains all the communities of the user
             const int ALL_COMMUNITIES_OF_USER = 100;
@@ -381,6 +383,9 @@ namespace DCL.Chat
                 // Creates one channel per community
                 for (int i = 0; i < response.data.results.Length; ++i)
                 {
+                    if (IsCommunityChatClosed(response.data.results[i].id))
+                        continue;
+
                     chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.results[i].id), ChatChannel.ChatChannelType.COMMUNITY);
                 }
             }
@@ -502,6 +507,8 @@ namespace DCL.Chat
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
 
             viewInstance.Focus();
+
+            SetCommunityChatAsOpened(communityId);
         }
 
         private void OnStartCall(string userId)
@@ -615,6 +622,10 @@ namespace DCL.Chat
             bool isSentByOwnUser = addedMessage is { IsSystemMessage: false, IsSentByOwnUser: true };
 
             string? communityName = destinationChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY ? userCommunities[destinationChannel.Id].name : null;
+
+            // Ignores the community chats that are closed
+            if (destinationChannel.ChannelType == ChatChannel.ChatChannelType.COMMUNITY && IsCommunityChatClosed(userCommunities[destinationChannel.Id].id))
+                return;
 
             chatBubblesHelper.CreateChatBubble(destinationChannel, addedMessage, isSentByOwnUser, communityName);
 
@@ -831,6 +842,8 @@ namespace DCL.Chat
         {
             if(channelType == ChatChannel.ChatChannelType.USER)
                 chatUserStateUpdater.RemoveConversation(removedChannel.Id);
+            else if (channelType == ChatChannel.ChatChannelType.COMMUNITY)
+                SetCommunityChatAsClosed(userCommunities[removedChannel].id);
 
             viewInstance!.RemoveConversation(removedChannel);
         }
@@ -1173,6 +1186,29 @@ namespace DCL.Chat
             await UniTask.Delay(WARNING_MESSAGE_DELAY_MS, cancellationToken: ct);
 
             warningNotificationView.Hide(ct: ct);
+        }
+
+        private static void SetCommunityChatAsClosed(string communityId)
+        {
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            if (allClosedCommunityChats.Contains(communityId))
+                return;
+
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, $"{allClosedCommunityChats}{communityId},");
+            DCLPlayerPrefs.Save();
+        }
+
+        private static void SetCommunityChatAsOpened(string communityId)
+        {
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            DCLPlayerPrefs.SetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, allClosedCommunityChats.Replace($"{communityId},", string.Empty));
+            DCLPlayerPrefs.Save();
+        }
+
+        private static bool IsCommunityChatClosed(string communityId)
+        {
+            string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
+            return allClosedCommunityChats.Contains(communityId);
         }
     }
 }
