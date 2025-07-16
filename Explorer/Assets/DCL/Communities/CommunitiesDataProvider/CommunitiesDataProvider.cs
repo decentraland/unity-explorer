@@ -19,6 +19,7 @@ namespace DCL.Communities
         public event Action<string> CommunityDeleted;
         public event Action<string, bool> CommunityJoined;
         public event Action<string, bool> CommunityLeft;
+        public event Action<string> CommunityUserRemoved;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -196,6 +197,8 @@ namespace DCL.Communities
 
             if (web3IdentityCache.Identity?.Address == userId)
                 CommunityLeft?.Invoke(communityId, result.Success);
+            else if (result.Success)
+                CommunityUserRemoved?.Invoke(communityId);
 
             return result.Success;
         }

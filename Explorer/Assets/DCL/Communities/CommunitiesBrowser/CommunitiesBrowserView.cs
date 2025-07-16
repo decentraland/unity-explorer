@@ -227,14 +227,28 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             // Refresh the community card (if exists) in the results' grid
+            RefreshCommunityCardInGrid(communityId);
+        }
+
+        public void RemoveOneMemberFromCounter(string communityId)
+        {
+            CommunityData? resultCommunityData = GetResultCommunityById(communityId);
+            resultCommunityData?.DecreaseMembersCount();
+
+            CommunityData? myCommunityData = GetMyCommunityById(communityId);
+            myCommunityData?.DecreaseMembersCount();
+
+            RefreshCommunityCardInGrid(communityId);
+        }
+
+        private void RefreshCommunityCardInGrid(string communityId)
+        {
             for (var i = 0; i < currentResults.Count; i++)
             {
                 CommunityData communityData = currentResults[i];
-                if (communityData.id == communityId)
-                {
-                    resultLoopGrid.RefreshItemByItemIndex(i);
-                    break;
-                }
+                if (communityData.id != communityId) continue;
+                resultLoopGrid.RefreshItemByItemIndex(i);
+                break;
             }
         }
 

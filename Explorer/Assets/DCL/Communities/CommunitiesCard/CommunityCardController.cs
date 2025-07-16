@@ -108,6 +108,8 @@ namespace DCL.Communities.CommunitiesCard
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
+            communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
+            communitiesDataProvider.CommunityLeft += OnCommunityLeft;
         }
 
         public override void Dispose()
@@ -125,6 +127,8 @@ namespace DCL.Communities.CommunitiesCard
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
+            communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
+            communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -137,6 +141,20 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+        }
+
+        private void OnCommunityLeft(string communityId, bool success)
+        {
+            if (success)
+                OnCommunityUserRemoved(communityId);
+        }
+
+        private void OnCommunityUserRemoved(string communityId)
+        {
+            if (communityData.id != communityId) return;
+
+            communityData.DecreaseMembersCount();
+            viewInstance?.UpdateMemberCount(communityData);
         }
 
         private void OnCommunityUpdated(string communityId)
