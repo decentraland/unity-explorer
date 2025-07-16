@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using DCL.ECSComponents;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
@@ -70,7 +71,8 @@ namespace ECS.Unity.Materials
                 {
                     if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
                         consumer.RemoveConsumer(primitiveMeshComponent.MeshRenderer);
-                    else if (world.TryGet(entity, out GltfContainerComponent gltfContainerComponent)
+                    else if (world.Has<PBGltfNodeModifiers.Types.GltfNodeModifier>(entity)
+                             && world.TryGet(entity, out GltfContainerComponent gltfContainerComponent)
                              && gltfContainerComponent.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result)
                              && result.Succeeded && result.Asset.Renderers.Count > 0)
                         foreach (Renderer renderer in result.Asset.Renderers) { consumer.RemoveConsumer(renderer); }

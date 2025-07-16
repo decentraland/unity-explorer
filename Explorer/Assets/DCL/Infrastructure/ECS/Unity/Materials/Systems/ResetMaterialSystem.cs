@@ -36,7 +36,7 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        [None(typeof(PBMaterial))]
+        [None(typeof(PBMaterial), typeof(PBGltfNodeModifiers))]
         private void ResetPrimitiveMesh(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
             meshRendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
@@ -45,12 +45,14 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        [None(typeof(PBMaterial))]
+        [All(typeof(PBMaterial))]
+        [None(typeof(PBGltfNodeModifiers), typeof(PrimitiveMeshRendererComponent))]
         private void ResetGltfContainer(Entity entity, ref GltfContainerComponent gltfContainerComponent, ref MaterialComponent materialComponent)
         {
             gltfContainerComponent.ResetOriginalMaterials();
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
             World.Remove<MaterialComponent>(entity);
+            World.Remove<PBMaterial>(entity);
         }
     }
 }

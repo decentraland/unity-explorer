@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
-using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -15,6 +14,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
+using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
 using ECS.Unity.Textures.Utils;
@@ -56,6 +56,9 @@ namespace ECS.Unity.Materials.Systems
         {
             InvalidateMaterialComponentQuery(World);
             CreateMaterialComponentQuery(World);
+
+            CreateMaterialForGltfNodeModifierQuery(World);
+            UpdateMaterialForGltfNodeModifierQuery(World);
         }
 
         [Query]
@@ -98,7 +101,7 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        [All(typeof(PBMaterial))]
+        [Any(typeof(PrimitiveMeshRendererComponent), typeof(PBGltfNodeModifiers))]
         [None(typeof(MaterialComponent))]
         private void CreateMaterialComponent(Entity entity, ref PBMaterial material, ref PartitionComponent partitionComponent)
         {
@@ -126,6 +129,30 @@ namespace ECS.Unity.Materials.Systems
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             World.Add(entity, materialComponent, new ShouldInstanceMaterialComponent());
+        }
+
+        [Query]
+        [All(typeof(PartitionComponent))]
+        [None(typeof(MaterialComponent), typeof(PBMaterial))]
+        private void CreateMaterialForGltfNodeModifier(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers)
+        {
+            if (gltfNodeModifiers.Modifiers.Count == 0) return;
+
+            var pbMaterial = gltfNodeModifiers.Modifiers[0].Material;
+            World.Add(entity, pbMaterial);
+
+            gltfNodeModifiers.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(MaterialComponent), typeof(PBMaterial))]
+        private void UpdateMaterialForGltfNodeModifier(Entity entity, in PBGltfNodeModifiers gltfNodeModifiers)
+        {
+            if (!gltfNodeModifiers.IsDirty || gltfNodeModifiers.Modifiers.Count == 0) return;
+
+            var pbMaterial = gltfNodeModifiers.Modifiers[0].Material;
+            pbMaterial.IsDirty = true;
+            World.Set(entity, pbMaterial);
         }
 
         private MaterialData CreateMaterialData(in PBMaterial material)

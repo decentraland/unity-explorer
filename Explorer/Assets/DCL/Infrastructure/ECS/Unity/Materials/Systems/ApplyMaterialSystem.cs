@@ -60,8 +60,8 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        [All(typeof(PBMaterial))]
-        private void ApplyMaterialToGltf(ref GltfContainerComponent gltfContainer, ref MaterialComponent materialComponent, ref PBMaterial pbMaterial)
+        [All(typeof(PBGltfNodeModifiers))]
+        private void ApplyMaterialToGltf(ref GltfContainerComponent gltfContainer, ref MaterialComponent materialComponent, in PBMaterial pbMaterial)
         {
             if (gltfContainer.State != LoadingState.Finished) return;
 
