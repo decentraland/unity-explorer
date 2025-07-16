@@ -75,8 +75,8 @@ using DCL.RealmNavigation;
 using DCL.Rendering.GPUInstancing.Systems;
 using DCL.RuntimeDeepLink;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.SkyBox;
 using DCL.SocialService;
-using DCL.StylizedSkybox.Scripts.Plugin;
 using DCL.UI;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
@@ -456,7 +456,7 @@ namespace Global.Dynamic
                 backgroundMusic,
                 roomHub,
                 localSceneDevelopment,
-                staticContainer.CharacterContainer.CharacterObject);
+                staticContainer.CharacterContainer);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(initializationFlowContainer.InitializationFlow, playerEntity, globalWorld);
 
@@ -600,9 +600,7 @@ namespace Global.Dynamic
 
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
-            // TODO: Remove fakeCommunitiesDataProvider when all the whole communitiesDataProvider implementation is ready.
-            ICommunitiesDataProvider fakeCommunitiesDataProvider = new FakeCommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            ICommunitiesDataProvider communitiesDataProvider = new CommunitiesDataProvider(fakeCommunitiesDataProvider, staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
@@ -629,6 +627,8 @@ namespace Global.Dynamic
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
+
+            var lambdasProfilesProvider = new LambdasProfilesProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -693,7 +693,8 @@ namespace Global.Dynamic
                     profileCache,
                     globalWorld, playerEntity, includeCameraReel, includeFriends, includeMarketplaceCredits,
                     chatHistory, profileRepositoryWrapper, sharedSpaceManager, profileChangesBus,
-                    selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController),
+                    selfProfile, staticContainer.RealmData, staticContainer.SceneRestrictionBusController,
+                    bootstrapContainer.DecentralandUrlsSource),
                 new ErrorPopupPlugin(mvcManager, assetsProvisioner),
                 connectionStatusPanelPlugin,
                 new MinimapPlugin(mvcManager, minimap),
@@ -785,7 +786,7 @@ namespace Global.Dynamic
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
+                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
@@ -1003,7 +1004,8 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     chatEventBus,
                     communitiesEventBus,
-                    socialServiceContainer.socialServicesRPC));
+                    socialServiceContainer.socialServicesRPC,
+                    lambdasProfilesProvider));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
@@ -1066,16 +1068,6 @@ namespace Global.Dynamic
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
 
             return (container, true);
-        }
-
-        private static URLAddress GetFriendsApiUrl(IDecentralandUrlsSource dclUrlSource, IAppArgs appArgs)
-        {
-            string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
-
-            if (appArgs.TryGetValue(AppArgsFlags.FRIENDS_API_URL, out string? urlFromArgs))
-                url = urlFromArgs!;
-
-            return URLAddress.FromString(url);
         }
 
         private static void ParseDebugForcedEmotes(IReadOnlyCollection<string>? debugEmotes, ref List<URN> parsedEmotes)

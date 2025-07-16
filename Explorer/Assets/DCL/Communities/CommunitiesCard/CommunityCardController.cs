@@ -47,7 +47,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IPlacesAPIService placesAPIService;
@@ -78,7 +78,7 @@ namespace DCL.Communities.CommunitiesCard
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileDataProvider,
             IPlacesAPIService placesAPIService,
@@ -259,6 +259,8 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
                 viewInstance!.SetLoadingState(true);
+                //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
+                viewInstance.MembersListView.SetLoadingStateActive(true);
 
                 if (spriteCache == null)
                 {
@@ -291,7 +293,7 @@ namespace DCL.Communities.CommunitiesCard
             spriteCache = null;
 
             ResetSubControllers();
-            viewInstance.ResetToggle(false);
+            viewInstance!.ResetToggle(false);
         }
 
         private void ResetSubControllers()

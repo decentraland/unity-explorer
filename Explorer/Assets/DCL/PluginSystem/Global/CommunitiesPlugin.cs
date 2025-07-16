@@ -13,6 +13,7 @@ using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
 using DCL.PlacesAPIService;
+using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SocialService;
 using DCL.UI.Profiles.Helpers;
@@ -38,7 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
         private readonly ISelfProfile selfProfile;
@@ -48,6 +49,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly LambdasProfilesProvider lambdasProfilesProvider;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -62,7 +64,7 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
             ISelfProfile selfProfile,
@@ -73,7 +75,8 @@ namespace DCL.PluginSystem.Global
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
             CommunitiesEventBus communitiesEventBus,
-            IRPCSocialServices rpcSocialServices)
+            IRPCSocialServices rpcSocialServices,
+            LambdasProfilesProvider lambdasProfilesProvider)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -92,6 +95,7 @@ namespace DCL.PluginSystem.Global
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.lambdasProfilesProvider = lambdasProfilesProvider;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
         }
 
@@ -138,7 +142,8 @@ namespace DCL.PluginSystem.Global
                 communitiesDataProvider,
                 placesAPIService,
                 selfProfile,
-                mvcManager);
+                mvcManager,
+                lambdasProfilesProvider);
             mvcManager.RegisterController(communityCreationEditionController);
 
             EventInfoView eventInfoViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.EventInfoPrefab, ct: ct)).GetComponent<EventInfoView>();

@@ -425,4 +425,11 @@ namespace DCL.Profiles
         public ProfileJsonDto? FirstProfileDto() =>
             AnyAvatarInList() ? avatars[0] : null;
     }
+
+    [Serializable]
+    public class GetAvatarsDetailsDto
+    {
+        public long timestamp;
+        public List<ProfileJsonDto> avatars;
+    }
 }

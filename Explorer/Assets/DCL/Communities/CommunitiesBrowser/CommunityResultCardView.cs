@@ -29,6 +29,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private RectTransform headerContainer = null!;
         [SerializeField] private RectTransform footerContainer = null!;
         [SerializeField] private TMP_Text communityTitle = null!;
+        [SerializeField] private TMP_Text communityOwner = null!;
         [SerializeField] private TMP_Text communityDescription = null!;
         [SerializeField] private CanvasGroup communityDescriptionCanvasGroup = null!;
         [field: SerializeField] public ImageView communityThumbnail = null!;
@@ -56,6 +57,9 @@ namespace DCL.Communities.CommunitiesBrowser
             {
                 public GameObject root;
                 public ProfilePictureView picture;
+                public ProfileNameTooltipView profileNameTooltip;
+
+                internal bool isPointerEventsSubscribed;
             }
         }
 
@@ -105,6 +109,9 @@ namespace DCL.Communities.CommunitiesBrowser
         public void SetTitle(string title) =>
             communityTitle.text = title;
 
+        public void SetOwner(string owner) =>
+            communityOwner.text = owner;
+
         public void SetDescription(string description) =>
             communityDescription.text = description;
 
@@ -147,6 +154,21 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
                 mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
+                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.hasClaimedName);
+
+                if (mutualFriends.thumbnails[i].isPointerEventsSubscribed)
+                    continue;
+
+                int thumbnailIndex = i;
+                Action pointerEnterAction = () => mutualFriends.thumbnails[thumbnailIndex].profileNameTooltip.gameObject.SetActive(true);
+                mutualFriends.thumbnails[i].picture.PointerEnter -= pointerEnterAction;
+                mutualFriends.thumbnails[i].picture.PointerEnter += pointerEnterAction;
+
+                Action pointerExitAction = () => mutualFriends.thumbnails[thumbnailIndex].profileNameTooltip.gameObject.SetActive(false);
+                mutualFriends.thumbnails[i].picture.PointerExit -= pointerExitAction;
+                mutualFriends.thumbnails[i].picture.PointerExit += pointerExitAction;
+
+                mutualFriends.thumbnails[i].isPointerEventsSubscribed = true;
             }
         }
 

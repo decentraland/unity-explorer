@@ -47,7 +47,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject myCommunitiesSection = null!;
         [SerializeField] private GameObject myCommunitiesMainContainer = null!;
         [SerializeField] private GameObject myCommunitiesEmptyContainer = null!;
-        [SerializeField] private GameObject myCommunitiesLoadingSpinner = null!;
+        [SerializeField] private SkeletonLoadingView myCommunitiesLoadingSpinner = null!;
         [SerializeField] private LoopListView2 myCommunitiesLoopList = null!;
         [SerializeField] private Button myCommunitiesViewAllButton = null!;
         [SerializeField] private Sprite defaultThumbnailSprite = null!;
@@ -59,7 +59,7 @@ namespace DCL.Communities.CommunitiesBrowser
         [SerializeField] private GameObject resultsSection = null!;
         [SerializeField] private LoopGridView resultLoopGrid = null!;
         [SerializeField] private GameObject resultsEmptyContainer = null!;
-        [SerializeField] private GameObject resultsLoadingSpinner = null!;
+        [SerializeField] private SkeletonLoadingView resultsLoadingSpinner = null!;
         [SerializeField] private GameObject resultsLoadingMoreSpinner = null!;
 
         private readonly List<CommunityData> currentMyCommunities = new ();
@@ -118,17 +118,21 @@ namespace DCL.Communities.CommunitiesBrowser
 
         public void SetMyCommunitiesAsLoading(bool isLoading)
         {
-            myCommunitiesLoadingSpinner.SetActive(isLoading);
-            myCommunitiesSection.SetActive(!isLoading);
+            if (isLoading)
+                myCommunitiesLoadingSpinner.ShowLoading();
+            else
+                myCommunitiesLoadingSpinner.HideLoading();
         }
 
         public void SetResultsAsLoading(bool isLoading)
         {
-            resultsLoadingSpinner.SetActive(isLoading);
-            resultsSection.SetActive(!isLoading);
-
             if (isLoading)
+            {
                 resultsCountText.text = string.Empty;
+                resultsLoadingSpinner.ShowLoading();
+            }
+            else
+                resultsLoadingSpinner.HideLoading();
         }
 
         public void SetResultsBackButtonVisible(bool isVisible) =>
@@ -271,7 +275,7 @@ namespace DCL.Communities.CommunitiesBrowser
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
             cardView.SetUserRole(communityData.role);
-            cardView.SetLiveMarkAsActive(communityData.isLive);
+            cardView.SetLiveMarkAsActive(communityData.isHostingLiveEvent);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
 
             // Setup card events
@@ -290,11 +294,12 @@ namespace DCL.Communities.CommunitiesBrowser
             // Setup card data
             cardView.SetCommunityId(communityData.id);
             cardView.SetTitle(communityData.name);
+            cardView.SetOwner(communityData.ownerName);
             cardView.SetDescription(communityData.description);
             cardView.SetPrivacy(communityData.privacy);
             cardView.SetMembersCount(communityData.membersCount);
             cardView.SetOwnership(communityData.role != CommunityMemberRole.none);
-            cardView.SetLiveMarkAsActive(communityData.isLive);
+            cardView.SetLiveMarkAsActive(communityData.isHostingLiveEvent);
             thumbnailLoader!.LoadCommunityThumbnailAsync(communityData.thumbnails?.raw, cardView.communityThumbnail, defaultThumbnailSprite, myCommunityThumbnailsLoadingCts.Token).Forget();
             cardView.SetJoiningLoadingActive(false);
 
