@@ -20,6 +20,7 @@ namespace DCL.Communities
         public event Action<string, bool> CommunityJoined;
         public event Action<string, bool> CommunityLeft;
         public event Action<string> CommunityUserRemoved;
+        public event Action<string, string> CommunityUserBanned;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -172,6 +173,9 @@ namespace DCL.Communities
             var result = await webRequestController.SignedFetchPostAsync(url, string.Empty, ct)
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+
+            if (result.Success)
+                CommunityUserBanned?.Invoke(communityId, userId);
 
             return result.Success;
         }

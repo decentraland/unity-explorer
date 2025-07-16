@@ -114,6 +114,7 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
             communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft += OnCommunityLeft;
+            communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
         }
 
         public override void Dispose()
@@ -133,6 +134,7 @@ namespace DCL.Communities.CommunitiesCard
             communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
             communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
             communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
+            communitiesDataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -146,6 +148,9 @@ namespace DCL.Communities.CommunitiesCard
             placesSectionController?.Dispose();
             eventListController?.Dispose();
         }
+
+        private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
+            OnCommunityUserRemoved(communityId);
 
         private void OnCommunityLeft(string communityId, bool success)
         {

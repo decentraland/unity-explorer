@@ -189,7 +189,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                RefreshGrid(false);
+                RefreshGrid(true);
             }
         }
 
@@ -215,7 +215,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 allMembersFetchData.Items.Remove(profile);
-                RefreshGrid(false);
+                RefreshGrid(true);
             }
         }
 
