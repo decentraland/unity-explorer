@@ -210,13 +210,13 @@ namespace DCL.Multiplayer.Connections.Rooms
             origin.SetLocalName(name);
         }
 
-        public async Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
+        public async Task<(bool success, string? errorMessage)> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
                .Log($"{PREFIX} connect start {url} with token {authToken}");
 
-            bool result = await origin.ConnectAsync(url, authToken, cancelToken, autoSubscribe);
+            (bool success, string? errorMessage) result = await origin.ConnectAsync(url, authToken, cancelToken, autoSubscribe);
 
             ReportHub
                .WithReport(ReportCategory.LIVEKIT)
