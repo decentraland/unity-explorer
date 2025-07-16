@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
-using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
@@ -66,7 +65,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await FeaturesRegistry.Instance.CommunitiesFeatureProvider.IsUserAllowedToUseTheFeatureAsync(ct);
+            isCommunitiesFeatureEnabled = await FeaturesRegistry.Instance.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct);
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
 

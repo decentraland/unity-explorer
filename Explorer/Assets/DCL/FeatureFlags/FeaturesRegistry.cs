@@ -22,8 +22,6 @@ namespace DCL.FeatureFlags
         private readonly Dictionary<FeatureId, bool> featureStates = new ();
         private readonly Dictionary<FeatureId, IFeatureProvider> featureProviders = new ();
 
-        public CommunitiesFeatureProvider CommunitiesFeatureProvider => GetFeatureProvider<CommunitiesFeatureProvider>(FeatureId.COMMUNITIES)!;
-
         public FeaturesRegistry(
             IAppArgs appArgs,
             bool localSceneDevelopment)
