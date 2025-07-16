@@ -46,8 +46,8 @@ namespace DCL.Multiplayer.Connections.Rooms
 
         public void SetLocalName(string name) { }
 
-        public Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
-            Task.FromResult(true);
+        public Task<(bool success, string? errorMessage)> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+            Task.FromResult((true, (string?)null));
 
         public Task DisconnectAsync(CancellationToken cancellationToken) =>
             Task.CompletedTask;

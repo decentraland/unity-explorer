@@ -6,14 +6,14 @@ namespace DCL.VoiceChat
     public class VoiceChatPanelResizeController : IDisposable
     {
         private readonly VoiceChatPanelResizeView view;
-        private readonly IVoiceChatState voiceChatState;
+        private readonly IVoiceChatOrchestratorState voiceChatState;
 
         private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 300;
         private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 46;
         private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
         private const float COLLAPSED_PRIVATE_VOICE_CHAT_SIZE = 46;
 
-        public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatState voiceChatState)
+        public VoiceChatPanelResizeController(VoiceChatPanelResizeView view, IVoiceChatOrchestratorState voiceChatState)
         {
             this.view = view;
             this.voiceChatState = voiceChatState;
