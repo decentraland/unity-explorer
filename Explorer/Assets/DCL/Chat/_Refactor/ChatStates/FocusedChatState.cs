@@ -1,28 +1,31 @@
 ﻿namespace DCL.Chat.ChatStates
 {
-    public class FocusedChatState : ChatState, 
-        IClickOutsideHandler,
-        ICloseRequestHandler,
-        IToggleMembersHandler,
-        IMinimizeRequestHandler
+    public class FocusedChatState : ChatState
     {
-        public override void begin()
+        public override void Begin()
         {
-            _context.Mediator.SetupForFocusedState();
-            
-            _context.InputBlocker.Block();
+            context.UIMediator.SetupForFocusedState();
 
-            _context.Mediator.chatInputPresenter.OnFocus();
+            context.InputBlocker.Block();
+
+            context.UIMediator.chatInputPresenter.OnFocus();
         }
 
-        public override void end()
+        public override void End()
         {
-            _context.InputBlocker.Unblock();
+            context.InputBlocker.Unblock();
         }
-        
-        public void OnClickOutside() => _machine.changeState<DefaultChatState>();
-        public void OnCloseRequested() => _machine.changeState<MinimizedChatState>();
-        public void OnMinimizeRequested() => _machine.changeState<MinimizedChatState>();
-        public void OnToggleMembers() => _machine.changeState<MembersChatState>();
+
+        public override void OnClickOutside() =>
+            ChangeState<DefaultChatState>();
+
+        public override void OnCloseRequested() =>
+            ChangeState<MinimizedChatState>();
+
+        public override void OnMinimizeRequested() =>
+            ChangeState<MinimizedChatState>();
+
+        public override void OnToggleMembers() =>
+            ChangeState<MembersChatState>();
     }
 }

@@ -1,18 +1,20 @@
 using DCL.Chat._Refactor.ChatStates;
-using Prime31.StateKit;
+using MVC;
 
 namespace DCL.Chat
 {
-    public class ChatState : SKState<ChatStateMachine>
+    public class ChatState : MVCState<ChatState, ChatStateContext>
     {
-        public override void update(float deltaTime)
-        {
-            
-        }
+        public virtual void OnClickOutside() { }
 
-        public override void lateUpdate(float deltaTime)
-        {
-            
-        }
+        public virtual void OnClickInside() { }
+
+        public virtual void OnCloseRequested() { }
+
+        public virtual void OnFocusRequested() { }
+
+        public virtual void OnMinimizeRequested() { }
+
+        public virtual void OnToggleMembers() { }
     }
 }

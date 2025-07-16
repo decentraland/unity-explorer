@@ -1,7 +1,7 @@
 ﻿using DCL.Chat.ChatMediator;
 using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
-using Prime31.StateKit;
+using MVC;
 using System;
 using Utilities;
 
@@ -13,19 +13,17 @@ namespace DCL.Chat._Refactor.ChatStates
         private readonly ChatUIMediator mediator;
         private readonly ChatInputBlockingService inputBlocker;
         private readonly ChatClickDetectionService chatClickDetectionService;
-        private readonly SKStateMachine<ChatStateMachine> fsm;
+        private readonly MVCStateMachine<ChatState, ChatStateContext> fsm;
         private readonly EventSubscriptionScope scope = new ();
-        
+
         public ChatMainController MainController { get; }
-        public ChatUIMediator Mediator => mediator;
-        public ChatInputBlockingService InputBlocker => inputBlocker;
-        public bool IsInputFocused => fsm.currentState is FocusedChatState;
-        public bool IsMinimized => fsm.currentState is MinimizedChatState;
-        public bool IsHidden => fsm.currentState is HiddenChatState;
+        public bool IsInputFocused => fsm.CurrentState is FocusedChatState;
+        public bool IsMinimized => fsm.CurrentState is MinimizedChatState;
+        public bool IsHidden => fsm.CurrentState is HiddenChatState;
 
         public ChatStateMachine(
             IEventBus eventBus,
-            ChatUIMediator mediator, 
+            ChatUIMediator mediator,
             ChatInputBlockingService inputBlocker,
             ChatClickDetectionService chatClickDetectionService,
             ChatMainController mainController)
@@ -36,13 +34,15 @@ namespace DCL.Chat._Refactor.ChatStates
             this.chatClickDetectionService = chatClickDetectionService;
 
             MainController = mainController;
-            
-            fsm = new SKStateMachine<ChatStateMachine>(this, new InitChatState());
-            fsm.addState(new DefaultChatState());
-            fsm.addState(new FocusedChatState());
-            fsm.addState(new MembersChatState());
-            fsm.addState(new MinimizedChatState());
-            fsm.addState(new HiddenChatState());
+
+            var context = new ChatStateContext(mediator, inputBlocker);
+
+            fsm = new MVCStateMachine<ChatState, ChatStateContext>(context, new InitChatState());
+            fsm.AddState(new DefaultChatState());
+            fsm.AddState(new FocusedChatState());
+            fsm.AddState(new MembersChatState());
+            fsm.AddState(new MinimizedChatState());
+            fsm.AddState(new HiddenChatState());
 
             scope.Add(eventBus.Subscribe<ChatEvents.FocusRequestedEvent>(HandleFocusRequestedEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
@@ -52,84 +52,68 @@ namespace DCL.Chat._Refactor.ChatStates
             chatClickDetectionService.OnClickOutside += HandleClickOutside;
         }
 
+        public void Dispose()
+        {
+            chatClickDetectionService.OnClickInside -= HandleClickInside;
+            chatClickDetectionService.OnClickOutside -= HandleClickOutside;
+
+            scope.Dispose();
+        }
+
         public void OnViewShow()
         {
-            fsm.changeState<DefaultChatState>();
+            fsm.ChangeState<DefaultChatState>();
         }
-        
+
         private void HandleFocusRequestedEvent(ChatEvents.FocusRequestedEvent evt)
         {
-            if (fsm.currentState is IFocusRequestHandler handler)
-                handler.OnFocusRequested();
+            fsm.CurrentState.OnFocusRequested();
         }
-        
+
         private void HandleCloseChatEvent(ChatEvents.CloseChatEvent evt)
         {
-            if (fsm.currentState is ICloseRequestHandler handler)
-                handler.OnCloseRequested();
+            fsm.CurrentState.OnCloseRequested();
         }
 
         private void HandleToggleMembersEvent(ChatEvents.ToggleMembersEvent evt)
         {
-            if (fsm.currentState is IToggleMembersHandler handler)
-                handler.OnToggleMembers();
+            fsm.CurrentState.OnToggleMembers();
         }
-        
+
         private void HandleClickInside()
         {
-            if (fsm.currentState is IClickInsideHandler handler)
-                handler.OnClickInside();
+            fsm.CurrentState.OnClickInside();
         }
 
         private void HandleClickOutside()
         {
-            if (fsm.currentState is IClickOutsideHandler handler)
-                handler.OnClickOutside();
+            fsm.CurrentState.OnClickOutside();
         }
-        
+
         public void SetInitialState(bool focus)
         {
             if (focus)
-                fsm.changeState<FocusedChatState>();
+                fsm.ChangeState<FocusedChatState>();
             else
-                fsm.changeState<DefaultChatState>();
+                fsm.ChangeState<DefaultChatState>();
         }
 
         public void Minimize()
         {
-            if (fsm.currentState is IMinimizeRequestHandler handler)
-                handler.OnMinimizeRequested();
+            fsm.CurrentState.OnMinimizeRequested();
         }
+
         /// <summary>
-        /// NOTE: this method is clunky,
-        /// NOTE: but it is used to set the visibility of the chat UI.
-        /// NOTE: need to rework this it's set
+        ///     NOTE: this method is clunky,
+        ///     NOTE: but it is used to set the visibility of the chat UI.
         /// </summary>
         /// <param name="isVisible"></param>
         public void SetVisibility(bool isVisible)
         {
             if (isVisible)
-            {
-                fsm.changeState<DefaultChatState>();
-            }
+                fsm.ChangeState<DefaultChatState>();
             else
-            {
-                if (fsm.currentState is not HiddenChatState)
-                {
-                    fsm.changeState<HiddenChatState>();
-                }
-            }
+                fsm.ChangeState<HiddenChatState>();
         }
-
-        public void Dispose()
-        {
-            if (chatClickDetectionService != null)
-            {
-                chatClickDetectionService.OnClickInside -= HandleClickInside;
-                chatClickDetectionService.OnClickOutside -= HandleClickOutside;
-            }
-            
-            scope.Dispose();  
-        } 
     }
 }
