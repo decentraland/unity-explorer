@@ -149,11 +149,11 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             string url = options.AdapterUrl;
-            AdapterResponse response = await webRequests.SignedFetchPostAsync(
-                                                             url,
-                                                             meta.ToJson(),
-                                                             token)
-                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+            string json = meta.ToJson();
+
+            AdapterResponse response = await webRequests
+                                            .SignedFetchPostAsync(url, json, token)
+                                            .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
 
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.COMMS_SCENE_HANDLER).Log($"String is: {connectionString}");
