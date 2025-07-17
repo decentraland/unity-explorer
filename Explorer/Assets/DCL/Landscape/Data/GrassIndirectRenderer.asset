@@ -15,3 +15,6 @@ MonoBehaviour:
   <QuadTreeCullingShader>k__BackingField: {fileID: 7200000, guid: 1ffe6570cfbb43f78f6b2beb126b69bc, type: 3}
   <ScatterGrassShader>k__BackingField: {fileID: 7200000, guid: a08d70e37ff645da89433c194594339a, type: 3}
   <HeightMapTexture>k__BackingField: {fileID: 2800000, guid: b15e509b80445d94b92a2d38a4c493a6, type: 3}
+  <TerrainBlendTexture>k__BackingField: {fileID: 2800000, guid: 04369a9b5ba8138478cd9df43fdd86f8, type: 3}
+  <GroundDetailTexture>k__BackingField: {fileID: 2800000, guid: a58597a338584a9449f09c78590c197d, type: 3}
+  <SandDetailTexture>k__BackingField: {fileID: 2800000, guid: ad4d41b523159b649b789be2bfd029f7, type: 3}

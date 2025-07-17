@@ -14,10 +14,11 @@ Material:
   m_ValidKeywords:
   - _ADVANCED_LIGHTING
   - _FADING
+  - _RECEIVE_SHADOWS_OFF
   - _SPECULARHIGHLIGHTS_OFF
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -98,8 +99,8 @@ Material:
     - _BillboardingVerticalRotation: 0
     - _Blend: 0
     - _BumpScale: 1
-    - _ColorMapHeight: 0.5
-    - _ColorMapStrength: 1
+    - _ColorMapHeight: 0
+    - _ColorMapStrength: 0
     - _Cull: 0
     - _Cutoff: 0.75
     - _Darkening: 0.487
@@ -119,13 +120,13 @@ Material:
     - _NormalMapKwToggle: 0
     - _NormalSpherify: 0
     - _NormalSpherifyMask: 0
-    - _OcclusionStrength: 0
+    - _OcclusionStrength: 0.1
     - _PerspectiveCorrection: 1
     - _QueueOffset: 0
-    - _ReceiveShadows: 1
+    - _ReceiveShadows: 0
     - _Scalemap: 0
     - _ShadowBiasCorrection: 0
-    - _Smoothness: 0.021
+    - _Smoothness: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularAmount: 0
     - _SpecularHighlights: 0
@@ -135,15 +136,15 @@ Material:
     - _SubsurfaceKwToggle: 0
     - _Surface: 0
     - _Translucency: 1
-    - _TranslucencyDirect: 0.847
-    - _TranslucencyFalloff: 2.15
-    - _TranslucencyIndirect: 0
+    - _TranslucencyDirect: 1
+    - _TranslucencyFalloff: 8
+    - _TranslucencyIndirect: 0.5
     - _TranslucencyOffset: 1
     - _TwoSided: 0
     - _VertexColorBendingChannel: 0
     - _VertexColorShadingChannel: 0
     - _VertexColorWindChannel: 0
-    - _VertexDarkening: 0.505
+    - _VertexDarkening: 1
     - _WindAmbientStrength: 0.2
     - _WindFlutter: 0.559
     - _WindGustFreq: 0.33
@@ -163,14 +164,14 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.9098039, g: 0.24954338, b: 0.21176468, a: 1}
-    - _BendTint: {r: 1, g: 0.80655015, b: 0, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BendTint: {r: 0.051886797, g: 1, b: 0.14413284, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _FadeFar: {r: 69.46374, g: 133.3565, b: 0, a: 0}
-    - _FadeNear: {r: 0.25, g: 0.5, b: 0, a: 0}
+    - _FadeFar: {r: 436.10724, g: 500, b: 0, a: 0}
+    - _FadeNear: {r: 0.25, g: 0.25, b: 0, a: 0}
     - _FadeParams: {r: 50, g: 100, b: 0, a: 0}
-    - _HueVariation: {r: 0.83590317, g: 0, b: 1, a: 1}
+    - _HueVariation: {r: 0.37887147, g: 0.8113208, b: 0.38735086, a: 1}
     - _HueVariationColor: {r: 1, g: 0.5, b: 0, a: 0.1}
     - _LODDebugColor: {r: 1, g: 1, b: 1, a: 1}
     - _NormalParams: {r: 0, g: 1, b: 0, a: 0}

@@ -6,6 +6,7 @@ struct PerInst
 {
     float4 position;
     float4 quatRotation;
+    float4 colour;
 };
 
 cbuffer ConstBuffer : register(b0)
@@ -17,13 +18,19 @@ cbuffer ConstBuffer : register(b0)
 
 Texture2D<float4> HeightMapTexture : register(t0);
 Texture2D<float4> OccupancyTexture : register(t1);
+Texture2D<float4> TerrainBlendTexture : register(t2);
+Texture2D<float4> GroundDetailTexture : register(t3);
+Texture2D<float4> SandDetailTexture : register(t4);
+StructuredBuffer<int2> visibleParcels : register(t5);
+StructuredBuffer<uint> visibleParcelCount : register(t6);
 
 SamplerState samplerHeightMapTexture : register(s0);
 SamplerState samplerOccupancyTexture : register(s1);
 SamplerState HeightMapTexturePointClampSampler : register(s2);
-
-StructuredBuffer<int2> visibleParcels : register(t2);
-StructuredBuffer<uint> visibleParcelCount : register(t3);
+SamplerState samplerTerrainBlendTexture : register(s3);
+SamplerState TerrainBlendPointRepeatSampler : register(s4);
+SamplerState samplerGroundDetailTexture : register(s5);
+SamplerState samplerSandDetailTexture : register(s6);
 
 RWStructuredBuffer<PerInst> instances : register(u0);
 
@@ -152,6 +159,83 @@ inline float GetOccupancy(float2 UV_Coord, float4 TerrainBounds, int ParcelSize)
     return OccupancyTexture.SampleLevel(samplerOccupancyTexture, UV_Coord, 0.0).r;
 }
 
+inline float4 SampleColour(float2 uv)
+{
+    float redThreshold = 0.22f;
+    float yellowThreshold = 0.04f;
+    float blendSmoothness = 0.02f;
+    float4 mask = float4(TerrainBlendTexture.SampleLevel(samplerTerrainBlendTexture, uv, 0.0).rgb, 1.0f);
+    float4 texA = float4(GroundDetailTexture.SampleLevel(samplerGroundDetailTexture, uv, 0).rgb, 1.0f);
+    float4 texB = float4(SandDetailTexture.SampleLevel(samplerSandDetailTexture, uv, 0).rgb, 1.0f);
+
+    // More precise color detection9
+    float redStrength = mask.r * (1.0f - mask.g) * (1.0f - mask.b);
+    float yellowStrength = min(mask.r, mask.g) * (1.0f - mask.b);
+
+    // Apply thresholds with smooth transitions
+    float weightA = smoothstep(redThreshold - blendSmoothness, redThreshold + blendSmoothness, redStrength);
+    float weightB = smoothstep(yellowThreshold - blendSmoothness, yellowThreshold + blendSmoothness, yellowStrength);
+
+    // Normalize weights for overlapping areas
+    float totalWeight = weightA + weightB;
+    if (totalWeight > 1.0f)
+    {
+        weightA /= totalWeight;
+        weightB /= totalWeight;
+    }
+
+    // Blend textures
+    float4 result = texA; // Start with base mask
+    result = lerp(result, texA, weightA);
+    result = lerp(result, texB, weightB);
+
+    return result;
+}
+
+half4 SplatmapMix(float2 uv)
+{
+    half4 splatControl = half4(TerrainBlendTexture.SampleLevel(samplerTerrainBlendTexture, uv, 0).rgb, 1.0f);
+    half4 diffAlbedo[4];
+
+    diffAlbedo[0] = float4(GroundDetailTexture.SampleLevel(samplerGroundDetailTexture, uv, 0).rgb, 1.0f);
+    diffAlbedo[1] = float4(SandDetailTexture.SampleLevel(samplerSandDetailTexture, uv, 0).rgb, 1.0f);
+    diffAlbedo[2] = 1.0f;
+    diffAlbedo[3] = 1.0f;
+
+    // This might be a bit of a gamble -- the assumption here is that if the diffuseMap has no
+    // alpha channel, then diffAlbedo[n].a = 1.0 (and _DiffuseHasAlphaN = 0.0)
+    // Prior to coming in, _SmoothnessN is actually set to max(_DiffuseHasAlphaN, _SmoothnessN)
+    // This means that if we have an alpha channel, _SmoothnessN is locked to 1.0 and
+    // otherwise, the true slider value is passed down and diffAlbedo[n].a == 1.0.
+    float _Smoothness0 = 0.0f;
+    float _Smoothness1 = 0.15f;
+    float _Smoothness2 = 0.0f;
+    float _Smoothness3 = 0.0f;
+    half4 defaultSmoothness = half4(diffAlbedo[0].a, diffAlbedo[1].a, diffAlbedo[2].a, diffAlbedo[3].a);
+    defaultSmoothness *= half4(_Smoothness0, _Smoothness1, _Smoothness2, _Smoothness3);
+
+    float4 _DiffuseRemapScale0 = float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 _DiffuseRemapScale1 = float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 _DiffuseRemapScale2 = float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 _DiffuseRemapScale3 = float4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    int _NumLayersCount = 2;
+    if(_NumLayersCount <= 4)
+    {
+        // 20.0 is the number of steps in inputAlphaMask (Density mask. We decided 20 empirically)
+        half4 opacityAsDensity = saturate((half4(diffAlbedo[0].a, diffAlbedo[1].a, diffAlbedo[2].a, diffAlbedo[3].a) - (1 - splatControl)) * 20.0);
+        opacityAsDensity += 0.001h * splatControl;      // if all weights are zero, default to what the blend mask says
+        half4 useOpacityAsDensityParam = { _DiffuseRemapScale0.w, _DiffuseRemapScale1.w, _DiffuseRemapScale2.w, _DiffuseRemapScale3.w }; // 1 is off
+        splatControl = lerp(opacityAsDensity, splatControl, useOpacityAsDensityParam);
+    }
+
+    half4 mixedDiffuse = 0.0h;
+    mixedDiffuse += diffAlbedo[0] * half4(_DiffuseRemapScale0.rgb * splatControl.rrr, 1.0h);
+    mixedDiffuse += diffAlbedo[1] * half4(_DiffuseRemapScale1.rgb * splatControl.ggg, 1.0h);
+
+    return mixedDiffuse;
+}
+
 [numthreads(256, 1, 1)]
 void ScatterGrass(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, uint3 localId : SV_GroupThreadID)
 {
@@ -170,10 +254,11 @@ void ScatterGrass(uint3 id : SV_DispatchThreadID, uint3 groupId : SV_GroupID, ui
 
     float fOccupancy = GetOccupancy(UV_coords, TerrainBounds, parcelSize);
     float height = CalculateHeightFromHeightmap(UV_coords, TerrainHeight, fOccupancy);
-    float fScale = 1.0f + hash_int_to_float(corner0 + gridPosition);
+    float fScale = 1.0f + (hash_int_to_float(corner0 + gridPosition) * 2.0f);
     perInst.position = float4(random_X, height, random_Z, fScale);
 
     float3 normalWS = CalculateNormalFromHeightmap(UV_coords, TerrainHeight, fOccupancy);
     perInst.quatRotation = CreateGrassRotationQuaternion(normalWS, hash_int_to_float(corner0 + gridPosition) * 2.0f);
+    perInst.colour = SplatmapMix(UV_coords * 8.0f);
     instances[id.x] = perInst;
 }

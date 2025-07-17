@@ -176,25 +176,16 @@ Varyings LitPassVertexSimple(Attributes input)
     output.positionWS.xyz = vertexInput.positionWS;
 
     VertexNormalInputs normalInput;
-    if (_UseHeightMap > 0)
-    {
-        float2 heightUV = (output.positionWS.xz + 4096.0f) / 8192.0f;
-        float3 normalWS;
-        float3 tangentWS;
-        float3 bitangentWS;
 
-        CalculateNormalFromHeightmap(heightUV, output.occupancy, normalWS, tangentWS, bitangentWS);
-        normalInput.normalWS = normalWS;
-        normalInput.tangentWS = tangentWS;
-        normalInput.bitangentWS = bitangentWS;
-    }
-    else
-    {
-        float3 normalOS = normalize(float3(output.heightDerivatives.y, 1.0, output.heightDerivatives.w));
-        float4 tangentOS = float4(normalize(float3(1.0, output.heightDerivatives.y, 0.0)), 1.0);
-        float3 bitangent = normalize(float3(0.0, output.heightDerivatives.w, 1.0));
-        normalInput = GetVertexNormalInputs(normalOS, tangentOS);
-    }
+    float2 heightUV = (output.positionWS.xz + 4096.0f) / 8192.0f;
+    float3 normalWS;
+    float3 tangentWS;
+    float3 bitangentWS;
+
+    CalculateNormalFromHeightmap(heightUV, output.occupancy, normalWS, tangentWS, bitangentWS);
+    normalInput.normalWS = normalWS;
+    normalInput.tangentWS = tangentWS;
+    normalInput.bitangentWS = bitangentWS;
 
 #if defined(_FOG_FRAGMENT)
         half fogFactor = 0;
@@ -202,7 +193,8 @@ Varyings LitPassVertexSimple(Attributes input)
         half fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
 #endif
 
-    output.uv = float2(input.positionOS.x, input.positionOS.z);//TRANSFORM_TEX(input.texcoord, _BaseMap);
+    output.uv = float2(vertexInput.positionWS.x, vertexInput.positionWS.z);
+    output.uv = (output.uv + 4096.0f) / 8192.0f;
     output.positionWS.xyz = vertexInput.positionWS;
     output.positionCS = vertexInput.positionCS;
 
@@ -235,6 +227,8 @@ Varyings LitPassVertexSimple(Attributes input)
     return output;
 }
 
+SamplerState OccupancyPointClampSampler;
+
 // Used for StandardSimpleLighting shader
 void LitPassFragmentSimple(
     Varyings input
@@ -264,42 +258,12 @@ void LitPassFragmentSimple(
 
     InitializeBakedGIData(input, inputData);
 
-    // float rawNoise = input.heightDerivatives.w;
-    // float sandNoise2 = sin(rawNoise * 3.14159f * 4.0f) * 0.5f + 0.5f;  // Higher frequency pattern
-    //
-    // float slopeSteepness = length(input.heightDerivatives.xyz);
-    //
-    // // STRATEGY A: Sand in specific noise value ranges
-    // float sandMask1 = smoothstep(_sandThreshold - _sandSoftness, _sandThreshold + _sandSoftness, sandNoise2);
-    //
-    // // STRATEGY B: Sand based on slope (avoid steep areas)
-    // float slopeBasedSand = 1.0f - smoothstep(0.1f, 0.3f, slopeSteepness);
-    //
-    // // STRATEGY C: Sand in "pockets" - areas where noise oscillates
-    // float pocketSand = smoothstep(0.2f, 0.4f, abs(sin(rawNoise * 6.28f)));
-    //
-    // // STRATEGY D: Combine multiple approaches
-    // float combinedSandMask = sandMask1 * slopeBasedSand * pocketSand;
-    //
-    // // Choose which strategy to use (or blend them)
-    // float sandAmount = combinedSandMask;
-    //
-    // // Calculate texture coordinates
-    // float2 texCoord = input.uv * _sandScale;
-    //
-    // // Sample textures
-    // //float4 groundColor = groundTexture.Sample(textureSampler, texCoord);
-    // float4 sandColor = SAMPLE_TEXTURE2D(_BlendMap, sampler_BlendMap, texCoord * 1.5f); // Different scale for sand
-    //
-    // // Blend between ground and sand based on sand mask
-    // surfaceData.albedo.rgb = lerp(surfaceData.albedo.rgb, sandColor.rgb, sandAmount);
-
+    surfaceData.albedo = SplatmapMix(input.uv).xyz;
     half4 color = UniversalFragmentBlinnPhong(inputData, surfaceData);
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
     color.a = OutputAlpha(color.a, IsSurfaceTypeTransparent(_Surface));
 
-    outColor = lerp(color, float4(1,0,0,1), input.occupancy * 1.25f );
-
+    outColor = color;
 #ifdef _WRITE_RENDERING_LAYERS
     uint renderingLayers = GetMeshRenderingLayer();
     outRenderingLayers = float4(EncodeMeshRenderingLayer(renderingLayers), 0, 0, 0);

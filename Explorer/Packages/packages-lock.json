@@ -444,7 +444,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "60d9da034722754ad42e067f92a57b67ce4ba367"
+      "hash": "67008c6df1f21a57ff4559efdd52c631dd2a8e43"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
@@ -485,7 +485,7 @@
         "com.unity.collections": "2.5.1",
         "com.unity.mathematics": "1.3.2"
       },
-      "hash": "2ae91f3dacf54ad172395bf1debee6702a83fc88"
+      "hash": "aed84d75b653f49e2ae6e05710d1e54e5975972c"
     },
     "superscrollview": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

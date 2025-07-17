@@ -21,7 +21,9 @@ struct QuadTreeNode
 // Input/Output buffers
 StructuredBuffer<QuadTreeNode> quadTreeNodes : register(t0);
 Texture2D<float4> OccupancyTexture : register(t1);
+
 SamplerState OccupancyPointClampSampler : register(s0);
+
 RWStructuredBuffer<int2> visibleParcels : register(u0);
 RWStructuredBuffer<uint> visibleParcelCount : register(u1);
 
@@ -55,4 +57,3 @@ void HierarchicalQuadTreeCulling(uint3 id : SV_DispatchThreadID, uint3 groupId :
         }
     }
 }
-

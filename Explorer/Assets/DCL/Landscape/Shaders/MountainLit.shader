@@ -26,10 +26,16 @@ Shader "DCL/MountainLit"
         _octaves("Octaves", Integer) = 4            // Number of noise octaves (e.g., 6-8)
         _frequency("Frequency", Float) = 0.005        // Base noise frequency (e.g., 0.01-0.1)
 
-        _BlendMap("Blend Map", 2D) = "white" {}
-        _sandThreshold("Sand Threshold", Float) = 0.3 // Sand appears where noise > this value (e.g., 0.3)
-        _sandSoftness("Sand Softness", Float) = 0.2 // Softness of sand edges (e.g., 0.2)
-        _sandScale("Sand Scale", Float) = 10.0 // Scale for sand texture sampling (e.g., 10.0)
+        _TerrainMaskMap("Blend Map", 2D) = "white" {}
+        _GroundDetailMap("Ground Detail Map", 2D) = "white" {}
+        _SandDetailMap("Sand Detail Map", 2D) = "white" {}
+        [HideInInspector] _GroundNormalScale("Ground Normal Scale", Float) = 1.0
+        [NoScaleOffset] _GroundNormalMap("Ground Normal Map", 2D) = "bump" {}
+        [HideInInspector] _SandNormalScale("Sand Normal Scale", Float) = 1.0
+        [NoScaleOffset] _SandNormalMap("Sand Normal Map", 2D) = "bump" {}
+        _RedThreshold("Red Threshold", Float) = 1.0
+        _YellowThreshold("Yellow Threshold", Float) = 1.0
+        _BlendSmoothness("Blend Smoothness", Float) = 1.0
 
         [HideInInspector] _BumpScale("Scale", Float) = 1.0
         [NoScaleOffset] _BumpMap("Normal Map", 2D) = "bump" {}
