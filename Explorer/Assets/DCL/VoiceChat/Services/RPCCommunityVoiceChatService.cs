@@ -86,6 +86,7 @@ namespace DCL.VoiceChat.Services
         {
             if (isServiceDisabled)
             {
+                //The caller should have proper error handling
                 throw new InvalidOperationException("Voice chat service is disabled due to connection failures.");
             }
         }
