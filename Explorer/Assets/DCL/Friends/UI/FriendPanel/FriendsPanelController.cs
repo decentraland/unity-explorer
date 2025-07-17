@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -65,19 +66,16 @@ namespace DCL.Friends.UI.FriendPanel
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
-            bool includeUserBlocking,
-            bool includeCall,
-            bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.chatEventBus = chatEventBus;
-            this.includeUserBlocking = includeUserBlocking;
+            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.sharedSpaceManager = sharedSpaceManager;
 
-            if (isConnectivityStatusEnabled)
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_ONLINE_STATUS))
             {
                 friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(instantiatedView.FriendsSection,
                     friendsService,
@@ -103,7 +101,6 @@ namespace DCL.Friends.UI.FriendPanel
                     realmNavigator,
                     chatEventBus,
                     sharedSpaceManager,
-                    includeCall,
                     voiceChatCallStatusService);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
