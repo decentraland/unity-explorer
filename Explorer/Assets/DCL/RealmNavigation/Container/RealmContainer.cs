@@ -37,7 +37,6 @@ namespace DCL.RealmNavigation
             IDebugContainerBuilder debugContainerBuilder,
             LoadingScreenTimeout loadingScreenTimeout,
             ILoadingScreen loadingScreen,
-            bool localSceneDevelopment,
             IDecentralandUrlsSource urlsSource,
             IAppArgs appArgs,
             TeleportController teleportController)
@@ -48,7 +47,7 @@ namespace DCL.RealmNavigation
             var realmNavigatorDebugView = new RealmNavigatorDebugView(debugContainerBuilder);
 
             var assetBundleRegistry =
-                FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && !localSceneDevelopment
+                FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK) && !FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT)
                     ? URLDomain.FromString(urlsSource.Url(DecentralandUrl.AssetBundleRegistry))
                     : URLDomain.EMPTY;
 
@@ -65,7 +64,6 @@ namespace DCL.RealmNavigation
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry
                                .GetReferenceTypePool<PartitionComponent>(),
                 realmNavigatorDebugView,
-                localSceneDevelopment,
                 assetBundleRegistry,
                 appArgs,
                 urlsSource

@@ -1,8 +1,7 @@
 ﻿using DCL.Audio;
-using DCL.Character;
 using DCL.Character.Plugin;
-using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
@@ -39,7 +38,6 @@ namespace DCL.UserInAppInitializationFlow
             IAppArgs appArgs,
             AudioClipConfig backgroundMusic,
             IRoomHub roomHub,
-            bool localSceneDevelopment,
             CharacterContainer characterContainer)
         {
             ILoadingStatus? loadingStatus = staticContainer.LoadingStatus;
@@ -64,7 +62,7 @@ namespace DCL.UserInAppInitializationFlow
 
             // The Global PX operation is the 3rd most time-consuming loading stage and it's currently not needed in Local Scene Development
             // More loading stage measurements for Local Scene Development at https://github.com/decentraland/unity-explorer/pull/3630
-            if (!localSceneDevelopment)
+            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT))
             {
                 // TODO review why loadGlobalPxOperation is invoked on recovery
                 loadingOperations.Add(new LoadGlobalPortableExperiencesStartupOperation(loadingStatus, bootstrapContainer.DebugSettings, staticContainer.PortableExperiencesController));

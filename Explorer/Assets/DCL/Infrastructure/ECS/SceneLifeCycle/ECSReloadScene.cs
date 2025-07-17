@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.FeatureFlags;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
@@ -23,13 +24,12 @@ namespace ECS.SceneLifeCycle
 
         public ECSReloadScene(IScenesCache scenesCache,
             World world,
-            Entity playerEntity,
-            bool localSceneDevelopment)
+            Entity playerEntity)
         {
             this.scenesCache = scenesCache;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.localSceneDevelopment = localSceneDevelopment;
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
         }
 
         public async UniTask<bool> TryReloadSceneAsync(CancellationToken ct)

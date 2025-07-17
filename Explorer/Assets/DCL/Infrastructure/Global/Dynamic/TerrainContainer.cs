@@ -3,7 +3,6 @@ using DCL.Landscape;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.Global;
 using DCL.RealmNavigation;
-using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.Landscapes;
 
@@ -27,14 +26,14 @@ namespace Global.Dynamic
                 bootstrapContainer.Environment.Equals(DecentralandEnvironment.Zone),
                 isGPUIEnabledFF);
 
-        public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape, bool localSceneDevelopemnt)
+        public static TerrainContainer Create(StaticContainer staticContainer, RealmContainer realmContainer, bool enableLandscape)
         {
             var genesisTerrain = new TerrainGenerator(staticContainer.Profiler);
             var worldsTerrain = new WorldTerrainGenerator();
 
             return new TerrainContainer
             {
-                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape, localSceneDevelopemnt),
+                Landscape = new Landscape(realmContainer.RealmController, genesisTerrain, worldsTerrain, enableLandscape),
                 GenesisTerrain = genesisTerrain,
                 worldsTerrain = worldsTerrain,
                 landscapeEnabled = enableLandscape,

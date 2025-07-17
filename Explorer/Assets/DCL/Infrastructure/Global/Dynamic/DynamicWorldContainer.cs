@@ -48,7 +48,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
-using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
@@ -344,12 +343,11 @@ namespace Global.Dynamic
                 debugBuilder,
                 loadingScreenTimeout,
                 loadingScreen,
-                localSceneDevelopment,
                 bootstrapContainer.DecentralandUrlsSource,
                 appArgs,
                 new TeleportController(staticContainer.SceneReadinessReportQueue));
 
-            var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape, localSceneDevelopment);
+            var terrainContainer = TerrainContainer.Create(staticContainer, realmContainer, dynamicWorldParams.EnableLandscape);
 
             SceneRoomLogMetaDataSource playSceneMetaDataSource = new SceneRoomMetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.Transform, globalWorld, dynamicWorldParams.IsolateScenesCommunication).WithLog();
             SceneRoomLogMetaDataSource localDevelopmentMetaDataSource = ConstSceneRoomMetaDataSource.FromMachineUUID().WithLog();
@@ -370,7 +368,7 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
-            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity, localSceneDevelopment);
+            var reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache, globalWorld, playerEntity);
 
             var chatRoom = new ChatConnectiveRoom(staticContainer.WebRequestsContainer.WebRequestController, URLAddress.FromString(bootstrapContainer.DecentralandUrlsSource.Url(DecentralandUrl.ChatAdapter)));
 
@@ -445,7 +443,6 @@ namespace Global.Dynamic
                 appArgs,
                 backgroundMusic,
                 roomHub,
-                localSceneDevelopment,
                 staticContainer.CharacterContainer);
 
             IRealmNavigator realmNavigator = realmNavigatorContainer.WithMainScreenFallback(initializationFlowContainer.InitializationFlow, playerEntity, globalWorld);
@@ -1016,7 +1013,6 @@ namespace Global.Dynamic
                 multiplayerEmotesMessageBus,
                 globalWorld,
                 staticContainer.SceneReadinessReportQueue,
-                localSceneDevelopment,
                 profileRepository,
                 bootstrapContainer.UseRemoteAssetBundles,
                 lodContainer.RoadAssetsPool,

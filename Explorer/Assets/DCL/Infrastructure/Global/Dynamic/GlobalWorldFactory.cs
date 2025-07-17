@@ -5,6 +5,7 @@ using CrdtEcsBridge.RestrictedActions;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.LOD;
@@ -13,7 +14,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.Systems;
-using DCL.Time;
 using DCL.Time.Systems;
 using DCL.WebRequests;
 using ECS;
@@ -87,7 +87,6 @@ namespace Global.Dynamic
             IEmotesMessageBus emotesMessageBus,
             World world,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            bool localSceneDevelopment,
             IProfileRepository profileRepository,
             bool useRemoteAssetBundles,
             RoadAssetsPool roadAssetPool,
@@ -112,7 +111,7 @@ namespace Global.Dynamic
             this.currentSceneInfo = currentSceneInfo;
             this.lodCache = lodCache;
             this.emotesMessageBus = emotesMessageBus;
-            this.localSceneDevelopment = localSceneDevelopment;
+            this.localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.world = world;
             this.profileRepository = profileRepository;

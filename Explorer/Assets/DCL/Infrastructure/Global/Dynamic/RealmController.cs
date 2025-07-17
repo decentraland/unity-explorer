@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.CommunicationData.URLHelpers;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
@@ -84,7 +85,6 @@ namespace Global.Dynamic
             PartitionDataContainer partitionDataContainer,
             IComponentPool<PartitionComponent> partitionComponentPool,
             RealmNavigatorDebugView realmNavigatorDebugView,
-            bool isLocalSceneDevelopment,
             URLDomain assetBundleRegistry,
             IAppArgs appArgs,
             IDecentralandUrlsSource decentralandUrlsSource)
@@ -99,7 +99,7 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
             this.partitionComponentPool = partitionComponentPool;
-            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
+            this.isLocalSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
             this.realmNavigatorDebugView = realmNavigatorDebugView;
             this.assetBundleRegistry = assetBundleRegistry;
             this.appArgs = appArgs;
