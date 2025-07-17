@@ -51,7 +51,7 @@ Unity Explorer is the official desktop client implementation for Decentraland 2.
    git submodule update --init --recursive
    ```
 
-2. Open the project in Unity
+3. Open the project in Unity
 
 ## 🎮 Quick Start
 
