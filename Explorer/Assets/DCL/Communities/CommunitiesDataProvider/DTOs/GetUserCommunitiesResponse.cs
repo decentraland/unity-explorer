@@ -38,6 +38,12 @@ namespace DCL.Communities
                 else
                     membersCount--;
             }
+
+            public void DecreaseMembersCount()
+            {
+                if (membersCount > 0)
+                    membersCount--;
+            }
         }
 
         [Serializable]
