@@ -5,8 +5,12 @@ namespace DCL.VoiceChat
     /// </summary>
     public interface ICommunityVoiceChatCallStatusService
     {
-        // TODO: Add community-specific properties when implemented
-        // Example: string CommunityId { get; }
-        // Example: List<Web3Address> Participants { get; }
+        /// <summary>
+        /// Checks if a community has an active voice chat call
+        /// </summary>
+        /// <param name="communityId">The community ID to check</param>
+        /// <param name="callId">The call ID if the community has an active call, null otherwise</param>
+        /// <returns>True if the community has an active voice chat call, false otherwise</returns>
+        bool HasActiveVoiceChatCall(string communityId, out string? callId);
     }
 }

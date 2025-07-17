@@ -45,7 +45,6 @@ namespace DCL.VoiceChat
     public interface IVoiceChatOrchestratorUIEvents
     {
         void ChangePanelSize(VoiceChatPanelSize panelSize);
-
     }
 
     /// <summary>
@@ -56,9 +55,7 @@ namespace DCL.VoiceChat
         string CurrentRoomUrl { get; }
         IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
         ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
-
      }
-
 
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
     {
@@ -169,7 +166,7 @@ namespace DCL.VoiceChat
                     activeCallStatusService = null;
                 }
             }
-            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL || 
+            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
@@ -199,7 +196,7 @@ namespace DCL.VoiceChat
                     activeCallStatusService = null;
                 }
             }
-            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL || 
+            else if (status == VoiceChatStatus.VOICE_CHAT_STARTING_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_STARTED_CALL ||
                      status == VoiceChatStatus.VOICE_CHAT_IN_CALL)
