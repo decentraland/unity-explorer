@@ -99,7 +99,7 @@ namespace DCL.VoiceChat
         public override void StartCall(string walletId)
         {
             //We can start a call only if we are not connected or trying to start a call
-            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_USER_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
+            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
 
             CurrentTargetWallet = walletId;
 
@@ -129,7 +129,7 @@ namespace DCL.VoiceChat
                     case StartPrivateVoiceChatResponse.ResponseOneofCase.InvalidRequest:
                     case StartPrivateVoiceChatResponse.ResponseOneofCase.ConflictingError:
                         ResetVoiceChatData();
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_BUSY);
                         break;
                     default:
                         ResetVoiceChatData();

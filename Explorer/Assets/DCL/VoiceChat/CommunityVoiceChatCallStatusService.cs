@@ -26,7 +26,7 @@ namespace DCL.VoiceChat
         public override void StartCall(string communityId)
         {
             //We can start a call only if we are not connected or trying to start a call
-            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_USER_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
+            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
 
             cts = cts.SafeRestart();
 
@@ -46,14 +46,14 @@ namespace DCL.VoiceChat
                 {
                     //When the call can be started
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
+                        RoomUrl = response.Ok.Credentials.ConnectionUrl;
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
 
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.InvalidRequest:
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.ConflictingError:
-                        //Do we want to do something specific here?
                         ResetVoiceChatData();
-                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_USER_BUSY);
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_BUSY);
                         break;
                     default:
                         ResetVoiceChatData();
@@ -68,7 +68,41 @@ namespace DCL.VoiceChat
 
         public override void HangUp()
         {
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Community voice chat HangUp not yet implemented");
+            //TODO: currently just exits, need to figure out how to handle hang up
+            UpdateStatus(VoiceChatStatus.DISCONNECTED);
+        }
+
+        public void JoinCommunityVoiceChat()
+        {
+            //We can start a call only if we are not connected or trying to start a call
+            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
+
+            cts = cts.SafeRestart();
+            UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
+            JoinCommunityVoiceChatAsync(CallId, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
+        {
+            try
+            {
+                JoinCommunityVoiceChatResponse response = await voiceChatService.JoinCommunityVoiceChatAsync(communityId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    case JoinCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        RoomUrl = response.Ok.Credentials.ConnectionUrl;
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                        break;
+                    default:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+            }
         }
 
         public override void HandleLivekitConnectionFailed()
@@ -79,7 +113,7 @@ namespace DCL.VoiceChat
 
         public void OnPrivateVoiceChatUpdateReceived(CommunityVoiceChatUpdate update)
         {
-
+            //Send the community voice chat started event
         }
     }
 }
