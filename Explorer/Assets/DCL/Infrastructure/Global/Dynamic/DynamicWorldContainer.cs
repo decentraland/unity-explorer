@@ -333,11 +333,7 @@ namespace Global.Dynamic
             var wearablesProvider = new ApplicationParametersWearablesProvider(appArgs,
                 new ECSWearablesProvider(identityCache, globalWorld), builderDTOsURL.Value);
 
-            //TODO should be unified with LaunchMode
-            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
-
-            var includedFeaturesRegistry = new FeaturesRegistry(appArgs, localSceneDevelopment);
-            FeaturesRegistry.Initialize(includedFeaturesRegistry);
+            bool localSceneDevelopment = FeaturesRegistry.Instance.IsEnabled(FeatureId.LOCAL_SCENE_DEVELOPMENT);
 
             bool builderCollectionsPreview = appArgs.HasFlag(AppArgsFlags.SELF_PREVIEW_BUILDER_COLLECTIONS);
 
@@ -430,7 +426,7 @@ namespace Global.Dynamic
                 : livekitHealthCheck;
 
             var communitiesProvider = new CommunitiesFeatureProvider(identityCache);
-            includedFeaturesRegistry.RegisterFeatureProvider(FeatureId.COMMUNITIES, communitiesProvider);
+            FeaturesRegistry.Instance.RegisterFeatureProvider(FeatureId.COMMUNITIES, communitiesProvider);
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld);
@@ -854,7 +850,7 @@ namespace Global.Dynamic
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
             };
 
-            if (includedFeaturesRegistry.IsEnabled(FeatureId.VOICE_CHAT))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
                 globalPlugins.Add(
                     new VoiceChatPlugin(
                         assetsProvisioner,
@@ -882,7 +878,7 @@ namespace Global.Dynamic
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
 
-            if (includedFeaturesRegistry.IsEnabled(FeatureId.FRIENDS))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS))
             {
                 // TODO many circular dependencies - adjust the flow and get rid of ObjectProxy
                 var friendsContainer = new FriendsContainer(
@@ -917,7 +913,7 @@ namespace Global.Dynamic
                 globalPlugins.Add(friendsContainer);
             }
 
-            if (includedFeaturesRegistry.IsEnabled(FeatureId.CAMERA_REEL))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL))
                 globalPlugins.Add(new InWorldCameraPlugin(
                     selfProfile,
                     staticContainer.RealmData,
@@ -947,7 +943,7 @@ namespace Global.Dynamic
                     sharedSpaceManager,
                     identityCache));
 
-            if (includedFeaturesRegistry.IsEnabled(FeatureId.MARKETPLACE_CREDITS))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS))
             {
                 globalPlugins.Add(new MarketplaceCreditsPlugin(
                     mainUIView,
@@ -965,7 +961,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus));
             }
 
-            if (await includedFeaturesRegistry.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct))
+            if (await FeaturesRegistry.Instance.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct))
                 globalPlugins.Add(new CommunitiesPlugin(
                     mvcManager,
                     assetsProvisioner,
