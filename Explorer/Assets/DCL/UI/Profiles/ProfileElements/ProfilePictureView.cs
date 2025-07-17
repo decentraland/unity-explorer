@@ -41,7 +41,7 @@ namespace DCL.UI.ProfileElements
 
             initialized = true;
 
-            GreyOut(greyOutOpacity > 0.0f, greyOutOpacity);
+            GreyOut(greyOutOpacity);
         }
 
         public void Dispose()
@@ -66,8 +66,7 @@ namespace DCL.UI.ProfileElements
         public void SetupOnlyColor(Color userColor)
         {
             originalThumbnailBackgroundColor = userColor;
-            GreyOut(greyOutOpacity > 0.0f, greyOutOpacity);
-//            thumbnailBackground.color = userColor;
+            GreyOut(greyOutOpacity);
         }
 
         public void SetLoadingState(bool isLoading)
@@ -139,21 +138,19 @@ namespace DCL.UI.ProfileElements
         public void OnPointerExit(PointerEventData eventData) =>
             PointerExit?.Invoke();
 
-        public void GreyOut(bool greyOut, float opacity)
+        public void GreyOut(float opacity)
         {
-            greyOutOpacity = greyOut ? opacity : 0.0f;
-
             if(!initialized)
                 return;
 
             if(thumbnailImageView != null)
-                thumbnailImageView.ImageColor = greyOut ? Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity) : originalThumbnailImageColor;
+                thumbnailImageView.ImageColor = Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity);
 
             if(thumbnailBackground != null)
-                thumbnailBackground.color = greyOut ? Color.Lerp(originalThumbnailBackgroundColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailBackgroundColor.a), opacity) : originalThumbnailBackgroundColor;
+                thumbnailBackground.color = Color.Lerp(originalThumbnailBackgroundColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailBackgroundColor.a), opacity);
 
             if(thumbnailFrame != null)
-                thumbnailFrame.color = greyOut ? Color.Lerp(originalThumbnailFrameColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailFrameColor.a), opacity) : originalThumbnailFrameColor;
+                thumbnailFrame.color = Color.Lerp(originalThumbnailFrameColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailFrameColor.a), opacity);
         }
     }
 }

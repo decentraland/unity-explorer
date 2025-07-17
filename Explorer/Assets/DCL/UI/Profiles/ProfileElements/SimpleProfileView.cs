@@ -64,7 +64,7 @@ namespace DCL.UI.ProfileElements
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
             connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
-            profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE, offlineThumbnailGreyOutOpacity);
+            profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
         }
 
         private void OnOpenProfileClicked()

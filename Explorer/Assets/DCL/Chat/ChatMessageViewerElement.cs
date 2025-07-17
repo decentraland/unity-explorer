@@ -328,7 +328,7 @@ namespace DCL.Chat
                     if (entry != null)
                     {
                         bool isGreyedOut = !chatMessages[messageIndex].IsSystemMessage && !chatMessages[messageIndex].IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(chatMessages[messageIndex].SenderWalletAddress);
-                        entry.GreyOut(isGreyedOut, entryGreyOutOpacity);
+                        entry.GreyOut(isGreyedOut ? entryGreyOutOpacity : 0.0f);
                     }
                 }
             }
@@ -444,7 +444,7 @@ namespace DCL.Chat
             itemView.SetItemData(itemData);
 
             bool isGreyedOut = !itemData.IsSystemMessage && !itemData.IsSentByOwnUser && onlineUserAddresses != null && !onlineUserAddresses!.Contains(itemData.SenderWalletAddress);
-            itemView.GreyOut(isGreyedOut, entryGreyOutOpacity);
+            itemView.GreyOut(isGreyedOut ? entryGreyOutOpacity : 0.0f);
 
             // Views that correspond to new added items have to be animated
             if (index - 1 < entriesPendingToAnimate) // Note: -1 because the first real message starts at 1, which is the latest messaged added

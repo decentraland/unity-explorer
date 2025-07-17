@@ -125,9 +125,9 @@ namespace DCL.Chat
             return count;
         }
 
-        public void GreyOut(bool greyOut, float opacity)
+        public void GreyOut(float opacity)
         {
-            messageContentElement.GreyOut(greyOut, opacity);
+            messageContentElement.GreyOut(opacity);
         }
     }
 }

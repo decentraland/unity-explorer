@@ -24,9 +24,9 @@ namespace DCL.Chat
             messageContentSizeFitter.SetLayoutVertical();
         }
 
-        public void GreyOut(bool greyOut, float opacity)
+        public void GreyOut(float opacity)
         {
-            messageContentCanvas.alpha = greyOut ? 1.0f - opacity : 1.0f;
+            messageContentCanvas.alpha = 1.0f - opacity;
         }
     }
 }

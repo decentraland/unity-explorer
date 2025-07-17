@@ -77,12 +77,12 @@ namespace DCL.Chat
             ChatEntryClicked?.Invoke(chatMessage.SenderWalletAddress, new Vector2(posX, posY));
         }
 
-        public void GreyOut(bool greyOut, float opacity)
+        public void GreyOut(float opacity)
         {
-            ProfilePictureView.GreyOut(greyOut, opacity);
-            messageBubbleElement.GreyOut(greyOut, opacity);
+            ProfilePictureView.GreyOut(opacity);
+            messageBubbleElement.GreyOut(opacity);
 
-            usernameElementCanvas.alpha = greyOut ? 1.0f - opacity : 1.0f;
+            usernameElementCanvas.alpha = 1.0f - opacity;
         }
 
         public void SetUsernameColor(Color newUserNameColor)
