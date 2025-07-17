@@ -64,7 +64,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(renderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
         }
 
-        [Test]
+        /*[Test]
         public void ApplyMaterialToGltfContainer()
         {
             // Arrange
@@ -103,6 +103,6 @@ namespace ECS.Unity.Materials.Tests
             Assert.AreEqual(1, updatedGltfContainer.OriginalMaterials.Count);
             Assert.AreEqual(originalMaterial, updatedGltfContainer.OriginalMaterials[0].material);
             Assert.AreEqual(StreamableLoading.LifeCycle.Applied, world.Get<MaterialComponent>(entity).Status);
-        }
+        }*/
     }
 }

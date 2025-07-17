@@ -85,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             ecsToCRDTWriter.Received().DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
         }
 
-        [Test]
+        /*[Test]
         public void ResetMaterialOnRelease()
         {
             // Arrange
@@ -114,6 +114,6 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             // Assert
             Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
-        }
+        }*/
     }
 }

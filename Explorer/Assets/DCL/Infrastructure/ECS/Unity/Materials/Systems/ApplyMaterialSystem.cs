@@ -10,8 +10,6 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
-using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace ECS.Unity.Materials.Systems
@@ -34,7 +32,7 @@ namespace ECS.Unity.Materials.Systems
         protected override void Update(float t)
         {
             ApplyMaterialToPrimitiveMeshQuery(World);
-            ApplyMaterialToGltfQuery(World);
+            ApplyMaterialToGltfNodeQuery(World);
         }
 
         [Query]
@@ -59,11 +57,13 @@ namespace ECS.Unity.Materials.Systems
             }
         }
 
-        [Query]
-        [All(typeof(PBGltfNodeModifiers))]
-        private void ApplyMaterialToGltf(ref GltfContainerComponent gltfContainer, ref MaterialComponent materialComponent, in PBMaterial pbMaterial)
+                [Query]
+        private void ApplyMaterialToGltfNode(ref GltfNode gltfNode, ref MaterialComponent materialComponent, in PBMaterial pbMaterial)
         {
-            if (gltfContainer.State != LoadingState.Finished) return;
+            // Get the container entity to check its state
+            if (!World.TryGet<GltfContainerComponent>(gltfNode.ContainerEntity, out var gltfContainer) || 
+                gltfContainer.State != LoadingState.Finished) 
+                return;
 
             switch (materialComponent.Status)
             {
@@ -75,22 +75,11 @@ namespace ECS.Unity.Materials.Systems
 
                     materialComponent.Status = StreamableLoading.LifeCycle.Applied;
 
-                    GltfContainerAsset asset = result.Asset;
-
-                    if (gltfContainer.OriginalMaterials == null)
-                    {
-                        gltfContainer.OriginalMaterials = new List<(Renderer renderer, Material material)>();
-                        foreach (var renderer in asset.Renderers)
-                        {
-                            gltfContainer.OriginalMaterials.Add((renderer, renderer.sharedMaterial));
-                        }
-                    }
-
                     ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
 
-                    for (var i = 0; i < asset.Renderers.Count; i++)
+                    // Apply material to all renderers in the list
+                    foreach (var renderer in gltfNode.Renderers)
                     {
-                        var renderer = asset.Renderers[i];
                         renderer.sharedMaterial = materialComponent.Result;
                         renderer.shadowCastingMode = materialComponent.Data.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
                     }

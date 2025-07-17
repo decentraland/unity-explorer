@@ -12,7 +12,6 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
@@ -59,9 +58,6 @@ namespace ECS.Unity.Materials.Systems
         {
             InvalidateMaterialComponentQuery(World);
             CreateMaterialComponentQuery(World);
-
-            AssignGltfNodeModifierPBMaterialQuery(World);
-            UpdateGltfNodeModifierPBMaterialQuery(World);
         }
 
         [Query]
@@ -104,7 +100,7 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        [Any(typeof(PrimitiveMeshRendererComponent), typeof(PBGltfNodeModifiers))]
+        [Any(typeof(PrimitiveMeshRendererComponent), typeof(GltfNode))]
         [None(typeof(MaterialComponent))]
         private void CreateMaterialComponent(Entity entity, ref PBMaterial material, ref PartitionComponent partitionComponent)
         {
@@ -132,56 +128,6 @@ namespace ECS.Unity.Materials.Systems
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             World.Add(entity, materialComponent, new ShouldInstanceMaterialComponent());
-        }
-
-        [Query]
-        [All(typeof(PartitionComponent))]
-        [None(typeof(MaterialComponent), typeof(PBMaterial))]
-        private void AssignGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer)
-        {
-            if (gltfContainer.State != LoadingState.Finished
-                || !gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result)
-                || !result.Succeeded
-                || gltfNodeModifiers.Modifiers.Count == 0)
-                return;
-            gltfNodeModifiers.IsDirty = false;
-            var rootGltfNodeModifier = gltfNodeModifiers.Modifiers[0];
-
-            if (rootGltfNodeModifier.HasOverrideShadows)
-                result.Asset!.SetCastingShadows(rootGltfNodeModifier.OverrideShadows);
-
-            if (rootGltfNodeModifier.Material == null
-                || rootGltfNodeModifier.Material.MaterialCase == PBMaterial.MaterialOneofCase.None)
-                return;
-
-            World.Add(entity, rootGltfNodeModifier.Material);
-        }
-
-        [Query]
-        [All(typeof(MaterialComponent), typeof(PBMaterial))]
-        private void UpdateGltfNodeModifierPBMaterial(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer)
-        {
-            if (!gltfNodeModifiers.IsDirty
-                || gltfContainer.State != LoadingState.Finished
-                || !gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result)
-                || !result.Succeeded
-                || gltfNodeModifiers.Modifiers.Count == 0)
-                return;
-            gltfNodeModifiers.IsDirty = false;
-            var rootGltfNodeModifier = gltfNodeModifiers.Modifiers[0];
-
-            result.Asset!.SetCastingShadows(!rootGltfNodeModifier.HasOverrideShadows || rootGltfNodeModifier.OverrideShadows);
-
-            if (rootGltfNodeModifier.Material == null
-                || rootGltfNodeModifier.Material.MaterialCase == PBMaterial.MaterialOneofCase.None)
-            {
-                gltfContainer.ResetOriginalMaterials();
-                return;
-            }
-
-            var pbMaterial = rootGltfNodeModifier.Material;
-            pbMaterial.IsDirty = true;
-            World.Set(entity, pbMaterial);
         }
 
         private MaterialData CreateMaterialData(in PBMaterial material)

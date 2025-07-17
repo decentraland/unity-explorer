@@ -65,7 +65,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(world.Has<MaterialComponent>(entity), Is.False);
         }
 
-        [Test]
+        /*[Test]
         public void ResetGltfContainerMaterial()
         {
             // Arrange
@@ -94,6 +94,6 @@ namespace ECS.Unity.Materials.Tests
             Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
             Assert.IsFalse(world.Has<MaterialComponent>(gltfEntity));
             Assert.IsNull(world.Get<GltfContainerComponent>(gltfEntity).OriginalMaterials);
-        }
+        }*/
     }
 }

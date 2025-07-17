@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
 using ECS.Groups;
@@ -68,6 +69,25 @@ namespace ECS.Unity.GLTFContainer.Systems
                         result.Asset.Dispose();
                 }
 
+                // Clean up GLTF node entities
+                if (component.GltfNodeEntities != null)
+                {
+                    foreach (Entity gltfNodeEntity in component.GltfNodeEntities)
+                    {
+                        if (world.IsAlive(gltfNodeEntity))
+                        {
+                            if(world.Has<PBMaterial>(gltfNodeEntity))
+                                world.Remove<PBMaterial>(gltfNodeEntity); // ResetMaterialSystem takes care of the rest...
+                            else if(world.Get<GltfNode>(gltfNodeEntity).ContainerEntity != gltfNodeEntity) // Don't destroy the container entity itself
+                                world.Destroy(gltfNodeEntity);
+                        }
+                    }
+                    component.GltfNodeEntities.Clear();
+                    component.GltfNodeEntities = null;
+                }
+
+                // Clear the root GameObject reference
+                component.RootGameObject = null;
                 component.Promise.ForgetLoading(world);
             }
         }

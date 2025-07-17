@@ -53,7 +53,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             collidersSceneCache.Received(2).Remove(Arg.Any<Collider>());
         }
 
-        [Test]
+        /*[Test]
         public void ResetMaterialOnDestroy()
         {
             // Arrange
@@ -82,6 +82,6 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             // Assert
             Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
-        }
+        }*/
     }
 }

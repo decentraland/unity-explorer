@@ -74,6 +74,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                 if (!result.Succeeded)
                 {
                     component.State = LoadingState.FinishedWithError;
+                    component.RootGameObject = null;
+                    // component.GltfNodeEntities = null;
                     eventsBuffer.Add(entity, component);
                     return;
                 }
@@ -82,6 +84,9 @@ namespace ECS.Unity.GLTFContainer.Systems
                 ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes, sceneHeight);
 
                 entityCollidersSceneCache.Associate(in component, entity, sdkEntity);
+
+                // Store reference to the root GameObject
+                component.RootGameObject = result.Asset!.Root;
 
                 // Re-parent to the current transform
                 result.Asset!.Root.transform.SetParent(transformComponent.Transform);

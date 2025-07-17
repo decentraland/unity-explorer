@@ -9,6 +9,7 @@ using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
+using UnityEngine.Rendering;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -32,11 +33,11 @@ namespace ECS.Unity.Materials.Systems
         protected override void Update(float t)
         {
             ResetPrimitiveMeshQuery(World);
-            ResetGltfContainerQuery(World);
+            ResetGltfNodeQuery(World);
         }
 
         [Query]
-        [None(typeof(PBMaterial), typeof(PBGltfNodeModifiers))]
+        [None(typeof(PBMaterial), typeof(GltfNode))]
         private void ResetPrimitiveMesh(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
             meshRendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
@@ -45,14 +46,27 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        [All(typeof(PBMaterial))]
-        [None(typeof(PBGltfNodeModifiers), typeof(PrimitiveMeshRendererComponent))]
-        private void ResetGltfContainer(Entity entity, ref GltfContainerComponent gltfContainerComponent, ref MaterialComponent materialComponent)
+        [None(typeof(PBMaterial), typeof(PrimitiveMeshRendererComponent))]
+        private void ResetGltfNode(Entity entity, ref GltfNode gltfNode, ref MaterialComponent materialComponent)
         {
-            gltfContainerComponent.ResetOriginalMaterials();
+            var gltfContainer = World.TryGetRef<GltfContainerComponent>(gltfNode.ContainerEntity, out bool exists);
+            if (!exists) return;
+
+                        // Reset all renderers to their original state
+            foreach (var renderer in gltfNode.Renderers)
+            {
+                if (gltfContainer.OriginalMaterials!.TryGetValue(renderer, out var originalMaterial))
+                    renderer.sharedMaterial = originalMaterial;
+            }
+
+            // Clean up the material component and remove the entity
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
             World.Remove<MaterialComponent>(entity);
-            World.Remove<PBMaterial>(entity);
+            gltfContainer.GltfNodeEntities?.Remove(entity);
+            
+            // Destroy the GltfNode entity (unless it's the container entity itself)
+            if (entity != gltfNode.ContainerEntity)
+                World.Destroy(entity);
         }
     }
 }

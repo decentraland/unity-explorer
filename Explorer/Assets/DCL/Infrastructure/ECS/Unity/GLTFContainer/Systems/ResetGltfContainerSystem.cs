@@ -91,6 +91,25 @@ namespace ECS.Unity.GLTFContainer.Systems
                 // It will be a signal to create a new promise
                 component.State = LoadingState.Unknown;
                 component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
+                component.RootGameObject = null;
+
+                if (World.Has<GltfNodeModifiers>(entity))
+                {
+                    foreach (Entity gltfNodeEntity in component.GltfNodeEntities!)
+                    {
+                        if (World.IsAlive(gltfNodeEntity))
+                        {
+                            if(World.Has<PBMaterial>(gltfNodeEntity))
+                                World.Remove<PBMaterial>(gltfNodeEntity); // ResetMaterialSystem takes care of the rest...
+                            else if (gltfNodeEntity != entity) // Don't destroy the container entity itself
+                                World.Destroy(gltfNodeEntity);
+                        }
+                    }
+                    World.Remove<GltfNodeModifiers>(entity);
+                    component.GltfNodeEntities.Clear();
+                    component.GltfNodeEntities = null;
+                }
+
                 eventsBuffer.Add(entity, component);
                 RemoveAnimationMarker(entity);
             }

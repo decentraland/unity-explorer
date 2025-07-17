@@ -71,11 +71,11 @@ namespace ECS.Unity.Materials
                 {
                     if (world.TryGet(entity, out PrimitiveMeshRendererComponent primitiveMeshComponent))
                         consumer.RemoveConsumer(primitiveMeshComponent.MeshRenderer);
-                    else if (world.Has<PBGltfNodeModifiers.Types.GltfNodeModifier>(entity)
-                             && world.TryGet(entity, out GltfContainerComponent gltfContainerComponent)
-                             && gltfContainerComponent.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result)
-                             && result.Succeeded && result.Asset.Renderers.Count > 0)
-                        foreach (Renderer renderer in result.Asset.Renderers) { consumer.RemoveConsumer(renderer); }
+                    else if (world.TryGet(entity, out GltfNode gltfNode))
+                    {
+                        foreach (var renderer in gltfNode.Renderers)
+                            consumer.RemoveConsumer(renderer);
+                    }
                 }
             }
 

@@ -1,4 +1,3 @@
-using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace ECS.Unity.GLTFContainer.Components
@@ -9,10 +8,10 @@ namespace ECS.Unity.GLTFContainer.Components
         {
             if (component.OriginalMaterials == null) return;
 
-            foreach ((Renderer renderer, Material material) in component.OriginalMaterials)
+            foreach (var rendererMaterialKeyValuePair in component.OriginalMaterials)
             {
-                renderer.sharedMaterial = material;
-                renderer.shadowCastingMode = ShadowCastingMode.On;
+                rendererMaterialKeyValuePair.Key.sharedMaterial = rendererMaterialKeyValuePair.Value;
+                rendererMaterialKeyValuePair.Key.shadowCastingMode = ShadowCastingMode.On;
             }
 
             component.OriginalMaterials.Clear();

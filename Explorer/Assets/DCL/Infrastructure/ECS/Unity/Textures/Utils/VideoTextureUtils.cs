@@ -40,15 +40,13 @@ namespace ECS.Unity.Textures.Utils
                 info.VideoRenderer = primitiveMeshComponent.MeshRenderer;
                 consumer.AddConsumer(primitiveMeshComponent.MeshRenderer);
             }
-            else if (world.TryGet(entity, out GltfContainerComponent gltfContainerComponent))
+            else if (world.TryGet(entity, out GltfNode gltfNode))
             {
-                if (!gltfContainerComponent.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result)
-                    || !result.Succeeded
-                    || result.Asset.Renderers.Count == 0)
-                    return false;
-
-                info.VideoRenderer = result.Asset.Renderers[0];
-                foreach (Renderer renderer in result.Asset.Renderers)
+                // Use the first renderer for VideoRenderer (for backward compatibility)
+                info.VideoRenderer = gltfNode.Renderers.Count > 0 ? gltfNode.Renderers[0] : null;
+                
+                // Add all renderers as consumers
+                foreach (var renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);
             }
 
