@@ -979,7 +979,8 @@ namespace Global.Dynamic
                     chatEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
-                    lambdasProfilesProvider));
+                    lambdasProfilesProvider,
+                    identityCache));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
