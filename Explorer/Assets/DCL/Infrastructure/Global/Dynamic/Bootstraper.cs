@@ -225,6 +225,11 @@ namespace Global.Dynamic
             }
         }
 
+        public void InitializeFeaturesRegistry()
+        {
+            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
+        }
+
         public GlobalWorld CreateGlobalWorld(
             BootstrapContainer bootstrapContainer,
             StaticContainer staticContainer,

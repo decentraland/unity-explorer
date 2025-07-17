@@ -276,11 +276,14 @@ namespace DCL.Communities.CommunitiesCard
             placesButton.gameObject.SetActive(true);
         }
 
+        public void UpdateMemberCount(GetCommunityResponse.CommunityData communityData) =>
+            communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
+
         public void ConfigureCommunity(GetCommunityResponse.CommunityData communityData,
             ThumbnailLoader thumbnailLoader)
         {
             communityName.text = communityData.name;
-            communityMembersNumber.text = string.Format(COMMUNITY_MEMBERS_NUMBER_FORMAT, CommunitiesUtility.NumberToCompactString(communityData.membersCount));
+            UpdateMemberCount(communityData);
             communityDescription.text = communityData.description;
 
             if (communityData.thumbnails != null)
