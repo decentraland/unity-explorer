@@ -18,7 +18,7 @@ namespace DCL.VoiceChat
         private readonly IVoiceService voiceChatService;
         private CancellationTokenSource cts;
 
-        public Web3Address CurrentTargetWallet { get; private set; }
+        public string CurrentTargetWallet { get; private set; }
 
         public PrivateVoiceChatCallStatusService(IVoiceService voiceChatService)
         {
@@ -96,7 +96,7 @@ namespace DCL.VoiceChat
             }
         }
 
-        public override void StartCall(Web3Address walletId)
+        public override void StartCall(string walletId)
         {
             //We can start a call only if we are not connected or trying to start a call
             if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_USER_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
@@ -111,11 +111,11 @@ namespace DCL.VoiceChat
             StartCallAsync(walletId, cts.Token).Forget();
         }
 
-        private async UniTaskVoid StartCallAsync(Web3Address walletId, CancellationToken ct)
+        private async UniTaskVoid StartCallAsync(string walletId, CancellationToken ct)
         {
             try
             {
-                StartPrivateVoiceChatResponse response = await voiceChatService.StartPrivateVoiceChatAsync(walletId.ToString(), ct);
+                StartPrivateVoiceChatResponse response = await voiceChatService.StartPrivateVoiceChatAsync(walletId, ct);
 
                 switch (response.ResponseCase)
                 {
