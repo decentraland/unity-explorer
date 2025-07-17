@@ -7,6 +7,9 @@ namespace DCL.VoiceChat.Services
 {
     public interface ICommunityVoiceService : IDisposable
     {
+        /// <summary>
+        /// Only needed by the CommunitiesStatusService, as it handles updates to communities call states.
+        /// </summary>
         event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
 
         UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct);

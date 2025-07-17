@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Services;
 using Decentraland.SocialService.V2;
@@ -19,6 +20,7 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceService voiceChatService;
         private CancellationTokenSource cts;
         private readonly Dictionary<string, string> communityVoiceChatCalls = new();
+        private readonly Dictionary<string, CommunitySubscription> communitySubscriptions = new();
 
         public CommunityVoiceChatCallStatusService(ICommunityVoiceService voiceChatService)
         {
@@ -139,6 +141,12 @@ namespace DCL.VoiceChat
                 communityVoiceChatCalls[communityUpdate.CommunityId] = communityUpdate.VoiceChatId;
                 ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated community {communityUpdate.CommunityId} with Voice Chat ID {communityUpdate.VoiceChatId}");
             }
+
+            // Notify subscribers for this specific community
+            if (communitySubscriptions.TryGetValue(communityUpdate.CommunityId, out var subscription))
+            {
+                subscription.Property.Value = new CommunityCallStatus(communityUpdate.VoiceChatId);
+            }
         }
 
         private async UniTaskVoid SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct)
@@ -163,6 +171,12 @@ namespace DCL.VoiceChat
                 voiceChatService.Dispose();
             }
 
+            foreach (var subscription in communitySubscriptions.Values)
+            {
+                subscription.Property.Dispose();
+            }
+            communitySubscriptions.Clear();
+
             cts.SafeCancelAndDispose();
             base.Dispose();
         }
@@ -176,6 +190,70 @@ namespace DCL.VoiceChat
             }
 
             return communityVoiceChatCalls.TryGetValue(communityId, out callId);
+        }
+
+        public IReadonlyReactiveProperty<CommunityCallStatus>? SubscribeToCommunityUpdates(string communityId)
+        {
+            if (string.IsNullOrEmpty(communityId))
+                return null;
+
+            if (communitySubscriptions.TryGetValue(communityId, out var existingSubscription))
+            {
+                var updatedSubscription = existingSubscription.WithIncrementedCount();
+                communitySubscriptions[communityId] = updatedSubscription;
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Added subscriber to community {communityId}, total subscribers: {updatedSubscription.SubscriberCount}");
+                return existingSubscription.Property;
+            }
+
+            var newProperty = new ReactiveProperty<CommunityCallStatus>(CommunityCallStatus.NoCall);
+            communitySubscriptions[communityId] = new CommunitySubscription(newProperty, 1);
+
+            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Created subscription for community {communityId}");
+            return newProperty;
+        }
+
+        public void UnsubscribeFromCommunityUpdates(string communityId)
+        {
+            if (string.IsNullOrEmpty(communityId))
+                return;
+
+            if (communitySubscriptions.TryGetValue(communityId, out var subscription))
+            {
+                var updatedSubscription = subscription.WithDecrementedCount();
+
+                if (updatedSubscription.HasNoSubscribers)
+                {
+                    // No more subscribers, dispose and remove the property
+                    subscription.Property.Dispose();
+                    communitySubscriptions.Remove(communityId);
+                }
+                else
+                {
+                    // Decrement subscriber count but keep the property
+                    communitySubscriptions[communityId] = updatedSubscription;
+                }
+
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Removed subscriber from community {communityId}, remaining subscribers: {updatedSubscription.SubscriberCount}");
+            }
+        }
+
+        /// <summary>
+        /// Encapsulates a reactive property with its subscriber count for community voice chat updates
+        /// </summary>
+        private readonly struct CommunitySubscription
+        {
+            public readonly ReactiveProperty<CommunityCallStatus> Property;
+            public readonly int SubscriberCount;
+
+            public CommunitySubscription(ReactiveProperty<CommunityCallStatus> property, int subscriberCount)
+            {
+                Property = property;
+                SubscriberCount = subscriberCount;
+            }
+
+            public CommunitySubscription WithIncrementedCount() => new(Property, SubscriberCount + 1);
+            public CommunitySubscription WithDecrementedCount() => new(Property, SubscriberCount - 1);
+            public bool HasNoSubscribers => SubscriberCount <= 0;
         }
     }
 }

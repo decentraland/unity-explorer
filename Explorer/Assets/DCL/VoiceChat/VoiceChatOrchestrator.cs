@@ -93,7 +93,9 @@ namespace DCL.VoiceChat
             this.rpcCommunityVoiceChatService = rpcCommunityVoiceChatService;
 
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
-            rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
+
+            //I think we dont need this one for now, as these updates are only for communities data, doesnt affect the relation between both states.
+            //rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
         }
@@ -101,7 +103,7 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
-            rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
+            //rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
 
@@ -110,7 +112,6 @@ namespace DCL.VoiceChat
             currentVoiceChatPanelSize?.Dispose();
         }
 
-        // IVoiceChatActions implementation
         public void StartPrivateCall(Web3Address walletId)
         {
             if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY)
@@ -160,7 +161,6 @@ namespace DCL.VoiceChat
 
         private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate update)
         {
-            communityVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
         }
 
         private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)
