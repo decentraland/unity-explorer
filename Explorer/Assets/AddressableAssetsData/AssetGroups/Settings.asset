@@ -30,6 +30,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4359e32789e7f914c8e7e12d16286b76
+    m_Address: ChatConfig
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 495d936d8dfe78444abfd5ff3e260159
     m_Address: Multiplayer SpatialState Settings
     m_ReadOnly: 0

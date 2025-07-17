@@ -138,11 +138,9 @@ namespace DCL.PluginSystem.Global
         {
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
-            
-            // TODO: make it load through assets provisioner
-            // TODO: not working currently, from some reason
-            // ProvidedAsset<ChatConfig> chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, ct);
-            var chatConfig = Resources.Load("ChatConfig") as ChatConfig;
+
+            var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, ct);
+            var chatConfig = chatConfigAsset.Value;
             
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {

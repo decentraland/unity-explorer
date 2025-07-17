@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DCL.Chat
 {
-    [CreateAssetMenu(fileName = "ChatConfig", menuName = "DCL/Chat/ChatConfig")]
+    //[CreateAssetMenu(fileName = "ChatConfig", menuName = "DCL/Chat/ChatConfig")]
     public class ChatConfig : ScriptableObject
     {
         [SerializeField] private string DCL_SYSTEM_SENDER = "DCL System";
