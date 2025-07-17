@@ -30,7 +30,7 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 5242998342527483909
       - rid: 5242998342527483910
-      - rid: 1050560535785373790
+      - rid: 1050560664644616286
   <SoundSectionConfig>k__BackingField:
     <SettingsGroups>k__BackingField:
     - <GroupTitle>k__BackingField: Volume
@@ -55,7 +55,7 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
-    - rid: 1050560535785373790
+    - rid: 1050560664644616286
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
@@ -68,7 +68,7 @@ MonoBehaviour:
           maxValue: 300
           wholeNumbers: 1
           defaultValue: 70
-        <Feature>k__BackingField: 3
+        <Feature>k__BackingField: 10
     - rid: 1708279571579404288
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:

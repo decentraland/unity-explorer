@@ -25,7 +25,6 @@ namespace DCL.Settings.Configuration
             SCENE_DISTANCE_FEATURE,
             ENVIRONMENT_DISTANCE_FEATURE,
             MOUSE_VERTICAL_SENSITIVITY_FEATURE,
-            ROADS_DISTANCE_FEATURE,
             MOUSE_HORIZONTAL_SENSITIVITY_FEATURE,
             MASTER_VOLUME_FEATURE,
             WORLD_SOUNDS_VOLUME_FEATURE,
@@ -33,6 +32,7 @@ namespace DCL.Settings.Configuration
             UI_SOUNDS_VOLUME_FEATURE,
             AVATAR_SOUNDS_VOLUME_FEATURE,
             STP_FEATURE,
+            ROADS_DISTANCE_FEATURE,
             // add other features...
         }
 
