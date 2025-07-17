@@ -20,6 +20,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -59,6 +60,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CameraReelGalleryController? cameraReelGalleryController;
         private MembersListController? membersListController;
@@ -89,7 +91,8 @@ namespace DCL.Communities.CommunitiesCard
             IWebBrowser webBrowser,
             IEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus)
+            IChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -106,10 +109,14 @@ namespace DCL.Communities.CommunitiesCard
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
+            communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
+            communitiesDataProvider.CommunityLeft += OnCommunityLeft;
+            communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
         }
 
         public override void Dispose()
@@ -128,6 +135,9 @@ namespace DCL.Communities.CommunitiesCard
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
+            communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
+            communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
+            communitiesDataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -140,6 +150,23 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+        }
+
+        private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
+            OnCommunityUserRemoved(communityId);
+
+        private void OnCommunityLeft(string communityId, bool success)
+        {
+            if (success)
+                OnCommunityUserRemoved(communityId);
+        }
+
+        private void OnCommunityUserRemoved(string communityId)
+        {
+            if (communityData.id != communityId) return;
+
+            communityData.DecreaseMembersCount();
+            viewInstance?.UpdateMemberCount(communityData);
         }
 
         private void OnCommunityUpdated(string communityId)
@@ -252,7 +279,8 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 viewInstance.warningNotificationView,
                 sharedSpaceManager,
-                chatEventBus);
+                chatEventBus,
+                web3IdentityCache);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,
@@ -389,7 +417,14 @@ namespace DCL.Communities.CommunitiesCard
                     return;
                 }
 
-                viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.member);
+                communityData.IncreaseMembersCount();
+                viewInstance!.UpdateMemberCount(communityData);
+
+                //Reset member list and fetch the data again so that we pop inside the member list
+                membersListController?.Reset();
+                membersListController?.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
+
+                viewInstance.ConfigureInteractionButtons(CommunityMemberRole.member);
             }
         }
 
@@ -413,6 +448,8 @@ namespace DCL.Communities.CommunitiesCard
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
+
+                membersListController?.TryRemoveLocalUser();
 
                 viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
             }

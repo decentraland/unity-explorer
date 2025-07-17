@@ -20,6 +20,8 @@ namespace DCL.Communities
         public event Action<string> CommunityDeleted;
         public event Action<string, bool> CommunityJoined;
         public event Action<string, bool> CommunityLeft;
+        public event Action<string> CommunityUserRemoved;
+        public event Action<string, string> CommunityUserBanned;
 
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
@@ -173,6 +175,9 @@ namespace DCL.Communities
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (result.Success)
+                CommunityUserBanned?.Invoke(communityId, userId);
+
             return result.Success;
         }
 
@@ -197,6 +202,8 @@ namespace DCL.Communities
 
             if (web3IdentityCache.Identity?.Address == userId)
                 CommunityLeft?.Invoke(communityId, result.Success);
+            else if (result.Success)
+                CommunityUserRemoved?.Invoke(communityId);
 
             return result.Success;
         }

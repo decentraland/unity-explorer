@@ -18,6 +18,17 @@ namespace DCL.Communities
             public CommunityMemberRole role;
             public int membersCount;
             public bool notifications;
+
+            public void DecreaseMembersCount()
+            {
+                if (membersCount > 0)
+                    membersCount--;
+            }
+
+            public void IncreaseMembersCount()
+            {
+                membersCount++;
+            }
         }
 
         public CommunityData data;
