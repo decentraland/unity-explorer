@@ -3,7 +3,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.Friends;
@@ -60,7 +59,10 @@ namespace DCL.Chat.Services
         public void Start()
         {
             if (!friendsServiceProxy.Configured)
+            {
+                ReportHub.LogError(ReportData.UNSPECIFIED, "[ChatMemberListService] FriendsService is not configured. Cannot start member list service.");
                 return;
+            }
 
             cts = cts.SafeRestart();
             UniTask.RunOnThreadPool(UpdateLoopAsync).Forget();

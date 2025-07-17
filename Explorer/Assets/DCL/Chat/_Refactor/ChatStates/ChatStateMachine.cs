@@ -106,6 +106,11 @@ namespace DCL.Chat._Refactor.ChatStates
             fsm.CurrentState.OnPointerEnter();
         }
 
+        public void Minimize()
+        {
+            fsm.CurrentState.OnMinimizeRequested();
+        }
+
         public void SetInitialState(bool focus)
         {
             if (focus)
@@ -113,27 +118,9 @@ namespace DCL.Chat._Refactor.ChatStates
             else
                 fsm.ChangeState<DefaultChatState>();
         }
-
-        public void Minimize()
-        {
-            if (fsm.CurrentState is not MinimizedChatState)
-            {
-                fsm.CurrentState.OnMinimizeRequested();
-            }
-            else
-            {
-                Focus();
-            }
-        }
-
-        private void Focus()
-        {
-            fsm.ChangeState<FocusedChatState>();
-        }
-
+        
         /// <summary>
-        ///     NOTE: this method is clunky,
-        ///     NOTE: but it is used to set the visibility of the chat UI.
+        /// NOTE: called from the SharedSpaceManager
         /// </summary>
         /// <param name="isVisible"></param>
         public void SetVisibility(bool isVisible)
