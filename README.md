@@ -46,7 +46,7 @@ Unity Explorer is the official desktop client implementation for Decentraland 2.
    git clone https://github.com/decentraland/unity-explorer.git
    ```
 
-2. Pull the submodules:
+2. Pull the submodules (at the roof of the cloned repo):
    ```
    git submodule update --init --recursive
    ```
@@ -79,10 +79,10 @@ That happens if you haven't got GIT LFS installed.
 A simple way to confirm that is looking at this [Google.Api.CommonProtos.dll file](https://github.com/decentraland/unity-explorer/blob/50ddf83a3ff7eb76c6036904390d3298a24e2f88/Explorer/Assets/Protocol/Plugins/Google.Api.CommonProtos.dll) here in Github and compare its size (348KB) with the size of the one you have in your cloned version of the repo (it would be a 'placeholder' file with only 131 bytes aprox).
 
 1. Make sure you have git-lfs installed, for example you can install it with `brew install git-lfs`.
-2. Close Unity and step in the cloned repo root directory.
+2. Close Unity and step into the cloned repo root directory.
 3. run `git lfs install`, `git lfs pull` and `git submodule update --init --recursive`.
 4. Just in case delete the `Explorer/Library/` folder.
-5. Open the Unity project again and this time it should compile correctly
+5. Open the Unity project again and this time it should compile correctly.
 
 ## 🛣️ Roadmap
 
