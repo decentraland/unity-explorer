@@ -123,7 +123,13 @@ namespace DCL.Chat
             openContextMenuButton.OnSelect(null);
             ContextMenuVisibilityChanged?.Invoke(true);
 
-            ViewDependencies.GlobalUIViews.ShowChatContextMenuAsync(openContextMenuButton.transform.position, chatOptionsContextMenuData, OnDeleteChatHistoryButtonClicked, OnContextMenuClosed, contextMenuTask.Task).Forget();
+            ViewDependencies
+                .GlobalUIViews
+                .ShowChatContextMenuAsync(openContextMenuButton.transform.position,
+                    chatOptionsContextMenuData,
+                    OnDeleteChatHistoryButtonClicked,
+                    OnContextMenuClosed,
+                    contextMenuTask.Task).Forget();
         }
 
         private void OnDeleteChatHistoryButtonClicked()

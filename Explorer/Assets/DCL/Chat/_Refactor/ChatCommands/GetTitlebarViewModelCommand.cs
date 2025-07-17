@@ -46,6 +46,7 @@ namespace DCL.Chat.ChatUseCases
                     };
                 }
 
+                viewModel.Id = profile.UserId;
                 viewModel.IsLoadingProfile = false;
                 viewModel.Username = profile.Name;
                 viewModel.HasClaimedName = profile.HasClaimedName;

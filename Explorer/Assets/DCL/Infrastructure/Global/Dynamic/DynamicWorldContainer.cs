@@ -704,7 +704,8 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     friendServiceProxy,
                     staticContainer.RealmData,
-                    realmNavigator),
+                    realmNavigator,
+                    menusAccessFacade),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,

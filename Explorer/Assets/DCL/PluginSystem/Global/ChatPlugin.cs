@@ -64,7 +64,7 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        
+        private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private IRealmData realmData;
         private IRealmNavigator realmNavigator;
@@ -97,7 +97,8 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             IRealmData realmData,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -125,6 +126,7 @@ namespace DCL.PluginSystem.Global
             this.profileRepositoryWrapper = profileDataProvider;
             this.realmData = realmData;
             this.realmNavigator = realmNavigator;
+            this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
         }
 
         public void Dispose()
@@ -159,12 +161,13 @@ namespace DCL.PluginSystem.Global
                 roomHub.ChatRoom(),
                 friendsServiceProxy);
 
+            
             var chatMemberService = new ChatMemberListService(roomHub,
                 profileCache,
                 friendsServiceProxy);
             
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
-            
+            var chatContextMenuService = new ChatContextMenuService(mvcManager);
             var currentChannelService = new CurrentChannelService();
             
             var useCaseFactory = new CommandRegistry(
@@ -199,15 +202,25 @@ namespace DCL.PluginSystem.Global
                 useCaseFactory,
                 chatHistory,
                 profileRepositoryWrapper,
-                chatMemberService
+                chatMemberService,
+                chatContextMenuService
             );
             
             pluginScope.Add(chatMainController);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
             mvcManager.RegisterController(chatMainController);
-            
-            //await useCaseFactory.InitializeChat.ExecuteAsync(ct);
+
+            var contextMenuProxyController = new ContextMenuProxyController(
+                () =>
+                {
+                    var view = new GameObject("ChatContextMenuProxy").AddComponent<ContextMenuProxyView>();
+                    view.gameObject.SetActive(false);
+                    return view;
+                },
+                mvcManagerMenusAccessFacade
+            );
+            mvcManager.RegisterController(contextMenuProxyController);
             
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;

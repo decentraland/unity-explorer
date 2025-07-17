@@ -1,7 +1,10 @@
 using System;
+using DCL.Chat.Services;
+using DCL.Web3;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using MVC;
 
 namespace DCL.Chat
 {
@@ -9,6 +12,7 @@ namespace DCL.Chat
     {
         public event Action OnCloseRequested;
         public event Action OnMembersToggleRequested;
+        public event Action<ChatContextMenuRequest> OnContextMenuRequested;
 
         public Button CloseChatButton => defaultTitlebarView.ButtonClose;
         public Button OpenMemberListButton => defaultTitlebarView.ButtonOpenMembers;
@@ -23,10 +27,30 @@ namespace DCL.Chat
         
         public void Initialize()
         {
+            defaultTitlebarView.OnContextMenuRequested += OnContextMenuButtonClicked;
             defaultTitlebarView.OnCloseRequested += () => OnCloseRequested?.Invoke();
             defaultTitlebarView.OnMembersRequested += () => OnMembersToggleRequested?.Invoke();
             membersTitlebarView.OnCloseRequested += () => OnCloseRequested?.Invoke();
             membersTitlebarView.OnBackRequested += () => OnMembersToggleRequested?.Invoke();
+            
+        }
+
+        private void OnContextMenuButtonClicked()
+        {
+            // var data = new UserProfileMenuRequest
+            // {
+            //     WalletAddress = new Web3Address(""),
+            //     Position = defaultTitlebarView.ButtonOpenContextMenu.transform.position,
+            //     AnchorPoint = MenuAnchorPoint.TOP_RIGHT,
+            //     Offset = Vector2.zero
+            // };
+
+            var data = new ChatContextMenuRequest
+            {
+                Position = defaultTitlebarView.ButtonOpenContextMenu.transform.position
+            };
+
+            OnContextMenuRequested?.Invoke(data);
         }
 
         public void SetMemberListMode(bool isMemberListVisible)

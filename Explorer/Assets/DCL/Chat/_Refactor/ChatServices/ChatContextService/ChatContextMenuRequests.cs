@@ -1,4 +1,5 @@
-﻿using DCL.Web3;
+﻿using System;
+using DCL.Web3;
 using MVC;
 using UnityEngine;
 
@@ -10,10 +11,18 @@ namespace DCL.Chat.Services
     /// </summary>
     public struct UserProfileMenuRequest : IContextMenuRequest
     {
-        public readonly Web3Address WalletAddress;
-        public readonly Vector2 Position;
-        public readonly Vector2 Offset;
-        public readonly MenuAnchorPoint AnchorPoint;
+        public Web3Address WalletAddress;
+        public Vector2 Position;
+        public Vector2 Offset;
+        public MenuAnchorPoint AnchorPoint;
+    }
+
+
+    public struct ChatContextMenuRequest : IContextMenuRequest
+    {
+        public Vector2 Position;
+        public ChatOptionsContextMenuData contextMenuData;
+        public Action OnDeleteHistory;
     }
     
     /// <summary>

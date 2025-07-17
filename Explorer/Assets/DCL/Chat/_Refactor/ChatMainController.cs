@@ -32,6 +32,7 @@ namespace DCL.Chat
         private readonly ChatConfig chatConfig;
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
+        private readonly ChatContextMenuService chatContextMenuService;
         
         private ChatClickDetectionService chatClickDetectionService;
         private ChatUserStateBridge chatUserStateBridge;
@@ -54,7 +55,8 @@ namespace DCL.Chat
             CommandRegistry commandRegistry,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileRepositoryWrapper,
-            ChatMemberListService chatMemberListService) : base(viewFactory)
+            ChatMemberListService chatMemberListService,
+            ChatContextMenuService chatContextMenuService) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -65,6 +67,7 @@ namespace DCL.Chat
             this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
+            this.chatContextMenuService = chatContextMenuService;
             
             chatUserStateBridge = new ChatUserStateBridge(userStateEventBus, eventBus, currentChannelService);
         }
@@ -94,8 +97,10 @@ namespace DCL.Chat
             });
 
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
+                chatConfig,
                 eventBus,
                 chatMemberListService,
+                chatContextMenuService,
                 commandRegistry.GetTitlebarViewModel);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,

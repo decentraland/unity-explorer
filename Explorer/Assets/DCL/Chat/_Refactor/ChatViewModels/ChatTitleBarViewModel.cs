@@ -8,6 +8,7 @@ namespace DCL.Chat.ChatViewModels
         public Mode ViewMode;
         public string Username;
         public Color UsernameColor;
+        public string Id;
         public string WalletId;
         public Sprite? ProfileSprite;
         public bool HasClaimedName;

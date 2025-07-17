@@ -1,102 +1,42 @@
-﻿using DCL.UI;
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
 using MVC;
 
 namespace DCL.Chat.Services
 {
-    using Cysharp.Threading.Tasks;
-    using System.Threading;
-
     public interface IContextMenuRequest
     {
     }
 
     public interface IContextMenuService
     {
-        // Shows a modal context menu and awaits its closure.
         UniTask ShowMenuAsync<TRequest>(TRequest request, CancellationToken ct) where TRequest : IContextMenuRequest;
     }
 
     public class ChatContextMenuService : IContextMenuService
     {
-        private readonly IMVCManagerMenusAccessFacade mvcFacade;
-        private readonly ChatInputBlockingService inputBlocker;
-        private readonly ChatClickDetectionService clickDetectionService;
+        private readonly IMVCManager mvcManager;
 
-
-        public ChatContextMenuService(IMVCManagerMenusAccessFacade mvcFacade,
-            ChatInputBlockingService inputBlocker,
-            ChatClickDetectionService clickDetectionService)
+        public ChatContextMenuService(IMVCManager mvcManager)
         {
-            this.mvcFacade = mvcFacade;
-            this.inputBlocker = inputBlocker;
-            this.clickDetectionService = clickDetectionService;
+            this.mvcManager = mvcManager;
         }
 
-        /// <summary>
-        /// How to use this service:
-        /// Gather Data: The view should have methods to provide its own data.
-        /// Vector2 menuPosition = sourceEntryView.GetContextMenuAnchorPosition();
-        /// string messageText = sourceEntryView.GetMessageText();
-        /// 
-        /// // Create Request
-        /// var request = new ChatMessageMenuRequest
-        /// {
-        ///     Position = menuPosition,
-        ///     MessageText = messageText,
-        ///     AnchorPoint = MenuAnchorPoint.TOP_RIGHT // Or determined by the view
-        /// };
-        /// 
-        /// // Call Service and Forget
-        /// // The presenter's job is done. It has delegated the complex task of showing
-        /// // a modal menu to the specialized service.
-        /// contextMenuService.ShowMenuAsync(request, lifeCts.Token).Forget();
-        /// </summary>
-        /// <param name="request"></param>
-        /// <param name="ct"></param>
-        /// <typeparam name="TRequest"></typeparam>
+        // The method signature stays the same, providing a clean interface.
         public async UniTask ShowMenuAsync<TRequest>(TRequest request, CancellationToken ct) where TRequest : IContextMenuRequest
         {
-            // block input somehow
-
-            var closeCompletionSource = new UniTaskCompletionSource();
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-
-            try
+            // Create the input data for our proxy controller
+            var proxyInput = new ContextMenuProxyInput
             {
-                // use appropriate facade method to show the menu
-                switch (request)
-                {
-                    case UserProfileMenuRequest userReq:
-                        await mvcFacade.ShowUserProfileContextMenuFromWalletIdAsync(
-                            userReq.WalletAddress,
-                            userReq.Position,
-                            userReq.Offset,
-                            linkedCts.Token,
-                            closeCompletionSource.Task,
-                            () => closeCompletionSource.TrySetResult(),
-                            userReq.AnchorPoint
-                        );
-                        break;
+                RealRequest = request
+            };
 
-                    case ChatMessageMenuRequest msgReq:
-                        var popupData = new ChatEntryMenuPopupData(
-                            msgReq.Position,
-                            msgReq.MessageText,
-                            () => closeCompletionSource.TrySetResult(),
-                            closeCompletionSource.Task
-                        );
-                        await mvcFacade.ShowChatEntryMenuPopupAsync(popupData, linkedCts.Token);
-                        break;
+            // Create the command to show our proxy controller
+            var command = new ShowCommand<ContextMenuProxyView, ContextMenuProxyInput>(proxyInput);
 
-                    // Add cases for other menu types...
-                }
-            }
-            finally
-            {
-                // exit modal
-                linkedCts.Cancel();
-                inputBlocker.Unblock();
-            }
+            // Tell the MVCManager to show our proxy controller as a popup.
+            // The MVCManager will now handle the blocker, input, and stacking for us!
+            await mvcManager.ShowAsync(command, ct);
         }
     }
 }
