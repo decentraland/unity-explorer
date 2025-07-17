@@ -1006,7 +1006,8 @@ namespace Global.Dynamic
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
                     lambdasProfilesProvider,
-                    bootstrapContainer.DecentralandUrlsSource));
+                    bootstrapContainer.DecentralandUrlsSource,
+                    identityCache));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(

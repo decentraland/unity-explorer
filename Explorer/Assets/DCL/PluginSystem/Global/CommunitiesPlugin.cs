@@ -52,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IChatEventBus chatEventBus;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
@@ -79,7 +80,8 @@ namespace DCL.PluginSystem.Global
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
             LambdasProfilesProvider lambdasProfilesProvider,
-            IDecentralandUrlsSource decentralandUrlsSource)
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.mvcManager = mvcManager;
             this.assetsProvisioner = assetsProvisioner;
@@ -100,6 +102,7 @@ namespace DCL.PluginSystem.Global
             this.chatEventBus = chatEventBus;
             this.lambdasProfilesProvider = lambdasProfilesProvider;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.web3IdentityCache = web3IdentityCache;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
         }
 
@@ -134,7 +137,8 @@ namespace DCL.PluginSystem.Global
                 eventsApiService,
                 sharedSpaceManager,
                 chatEventBus,
-                decentralandUrlsSource);
+                decentralandUrlsSource,
+                web3IdentityCache);
 
             mvcManager.RegisterController(communityCardController);
 

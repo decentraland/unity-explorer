@@ -9,6 +9,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using CommunityData = DCL.Communities.GetUserCommunitiesData.CommunityData;
+using Object = System.Object;
 
 namespace DCL.Communities.CommunitiesBrowser
 {
@@ -214,7 +215,10 @@ namespace DCL.Communities.CommunitiesBrowser
                 resultCommunityData?.SetAsJoined(isJoined);
 
                 CommunityData? myCommunityData = GetMyCommunityById(communityId);
-                myCommunityData?.SetAsJoined(isJoined);
+                //Since we are updating currentMyCommunities with the resultCommunityData, we need to check if they are the same instance
+                //so we avoid updating the same instance twice
+                if (!ReferenceEquals(myCommunityData, resultCommunityData))
+                    myCommunityData?.SetAsJoined(isJoined);
 
                 // Add/remove the joined/left community to/from My Communities
                 if (resultCommunityData != null && isJoined)
@@ -227,14 +231,31 @@ namespace DCL.Communities.CommunitiesBrowser
             }
 
             // Refresh the community card (if exists) in the results' grid
+            RefreshCommunityCardInGrid(communityId);
+        }
+
+        public void RemoveOneMemberFromCounter(string communityId)
+        {
+            CommunityData? resultCommunityData = GetResultCommunityById(communityId);
+            resultCommunityData?.DecreaseMembersCount();
+
+            CommunityData? myCommunityData = GetMyCommunityById(communityId);
+            //Since we are updating currentMyCommunities with the resultCommunityData, we need to check if they are the same instance
+            //so we avoid updating the same instance twice
+            if (!ReferenceEquals(myCommunityData, resultCommunityData))
+                myCommunityData?.DecreaseMembersCount();
+
+            RefreshCommunityCardInGrid(communityId);
+        }
+
+        private void RefreshCommunityCardInGrid(string communityId)
+        {
             for (var i = 0; i < currentResults.Count; i++)
             {
                 CommunityData communityData = currentResults[i];
-                if (communityData.id == communityId)
-                {
-                    resultLoopGrid.RefreshItemByItemIndex(i);
-                    break;
-                }
+                if (communityData.id != communityId) continue;
+                resultLoopGrid.RefreshItemByItemIndex(i);
+                break;
             }
         }
 

@@ -1,19 +1,9 @@
 fileFormatVersion: 2
-guid: 14c353cd19b5ed543b9bb8851997011b
+guid: 15f291a522d36574eb47140c494c94fc
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: FountainGray_mat
-    second: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: FountainGray_mat.001
-    second: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -44,6 +34,7 @@ ModelImporter:
   meshes:
     lODScreenPercentages:
     - 0.25
+    - 0.125
     - 0.01
     globalScale: 1
     meshCompression: 0
