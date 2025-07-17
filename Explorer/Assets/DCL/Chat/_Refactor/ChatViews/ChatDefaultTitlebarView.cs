@@ -30,14 +30,14 @@ public class ChatDefaultTitlebarView : MonoBehaviour
     {
         if (model.IsLoadingProfile)
         {
-            textChannelName.text = model.Name;
+            textChannelName.text = model.Username;
             chatProfileView.gameObject.SetActive(false);
             nearbyElementsContainer.SetActive(false);
             buttonOpenMembers.gameObject.SetActive(false);
             return;
         }
-        
-        textChannelName.text = model.Name;
+
+        textChannelName.text = model.Username;
         
         bool isDirectMessage = model.ViewMode == Mode.DirectMessage;
         chatProfileView.gameObject.SetActive(isDirectMessage);

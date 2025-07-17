@@ -42,12 +42,12 @@ namespace DCL.Chat.ChatUseCases
                 {
                     return new ChatTitlebarViewModel
                     {
-                        Name = "Unknown User"
+                        Username = "Unknown User"
                     };
                 }
 
                 viewModel.IsLoadingProfile = false;
-                viewModel.Name = profile.ValidatedName;
+                viewModel.Username = profile.Name;
                 viewModel.HasClaimedName = profile.HasClaimedName;
                 viewModel.WalletId = profile.WalletId;
                 viewModel.ProfileColor = profile.UserNameColor;
@@ -60,7 +60,7 @@ namespace DCL.Chat.ChatUseCases
             else
             {
                 viewModel.ViewMode = Mode.Nearby;
-                viewModel.Name = chatConfig.NearbyConversationName;
+                viewModel.Username = chatConfig.NearbyConversationName;
                 viewModel.HasClaimedName = false;
                 viewModel.ProfileSprite = chatConfig.NearbyConversationIcon;
             }

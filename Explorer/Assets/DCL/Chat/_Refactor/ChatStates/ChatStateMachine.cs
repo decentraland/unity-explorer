@@ -116,7 +116,19 @@ namespace DCL.Chat._Refactor.ChatStates
 
         public void Minimize()
         {
-            fsm.CurrentState.OnMinimizeRequested();
+            if (fsm.CurrentState is not MinimizedChatState)
+            {
+                fsm.CurrentState.OnMinimizeRequested();
+            }
+            else
+            {
+                Focus();
+            }
+        }
+
+        private void Focus()
+        {
+            fsm.ChangeState<FocusedChatState>();
         }
 
         /// <summary>

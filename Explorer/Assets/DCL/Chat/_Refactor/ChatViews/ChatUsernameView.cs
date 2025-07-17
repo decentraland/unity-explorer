@@ -17,7 +17,8 @@ namespace DCL.Chat
             userNameText.text = username;
             userNameText.color = nameColor;
             verifiedMark.SetActive(isVerified);
-            userNameHashtagText.text = walletId ?? string.Empty;
+            if (walletId != null)
+                userNameHashtagText.text = $"#{walletId[^4..]}";
             userNameHashtagText.gameObject.SetActive(!isVerified);
         }
     }

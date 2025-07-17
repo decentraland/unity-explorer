@@ -6,10 +6,10 @@ namespace DCL.Chat.ChatViewModels
     public class ChatTitlebarViewModel
     {
         public Mode ViewMode;
-        public string Name;
+        public string Username;
         public Color UsernameColor;
         public string WalletId;
-        public Sprite ProfileSprite;
+        public Sprite? ProfileSprite;
         public bool HasClaimedName;
         public bool IsLoadingProfile { get; set; }
         public Color ProfileColor { get; set; }
@@ -18,7 +18,7 @@ namespace DCL.Chat.ChatViewModels
         {
             return new ChatTitlebarViewModel
             {
-                Name = "Loading...",
+                Username = "Loading...",
                 IsLoadingProfile = true,
                 ViewMode = viewMode,
                 WalletId = string.Empty,

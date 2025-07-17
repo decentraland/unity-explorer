@@ -34,7 +34,8 @@ namespace DCL.Chat.ChatUseCases
             {
                 var viewModel = new ChatMemberListViewModel
                 {
-                    UserId = member.Id, UserName = member.Name, ProfilePicture = null, IsOnline = member.ConnectionStatus == ChatMemberConnectionStatus.Online,
+                    UserId = member.Id, WalletId = member.WalletId, UserName = member.Name, ProfilePicture = null,
+                    IsOnline = member.ConnectionStatus == ChatMemberConnectionStatus.Online,
                     ProfileColor = member.ProfileColor, HasClaimedName = member.HasClaimedName, IsLoading = true
                 };
 

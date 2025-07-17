@@ -15,7 +15,7 @@ namespace DCL.Chat
         public void Setup(ChatTitlebarViewModel model)
         {
             chatProfilePictureView.Setup(model.ProfileSprite, model.IsLoadingProfile);
-            usernameElement.Setup(model.Name, model.WalletId,model.HasClaimedName,
+            usernameElement.Setup(model.Username, model.WalletId, model.HasClaimedName,
                 model.ProfileColor);
         }
 

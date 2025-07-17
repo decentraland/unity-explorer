@@ -8,7 +8,6 @@ using System.Threading;
 using DCL.Chat._Refactor.ChatStates;
 using DCL.Chat.ChatMediator;
 using DCL.Chat.ChatUseCases;
-using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.Services;
 using DCL.Chat.Services.DCL.Chat;
@@ -40,10 +39,9 @@ namespace DCL.Chat
 
         public event Action? PointerEntered;
         public event Action? PointerExited;
-        
+
         public bool IsVisibleInSharedSpace =>
-            State != ControllerState.ViewHidden || (chatStateMachine is { IsHidden: false } 
-                                                    || chatStateMachine is { IsMinimized: false });
+            State != ControllerState.ViewHidden;
         
 
         public ChatMainController(ViewFactoryMethod viewFactory,

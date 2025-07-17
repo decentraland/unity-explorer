@@ -14,5 +14,10 @@
 
         public override void OnCloseRequested() =>
             ChangeState<FocusedChatState>();
+
+        public override void OnClickOutside()
+        {
+            ChangeState<DefaultChatState>();
+        }
     }
 }

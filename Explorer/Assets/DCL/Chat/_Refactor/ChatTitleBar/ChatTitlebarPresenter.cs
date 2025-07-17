@@ -74,7 +74,7 @@ public class ChatTitlebarPresenter : IDisposable
         {
             view.defaultTitlebarView.Setup(new ChatTitlebarViewModel
             {
-                Name = "Error"
+                Username = "Error"
             });
             ReportHub.LogError(ReportCategory.UI, $"Titlebar load failed for channel {channel.Id}: {e}");
         }
