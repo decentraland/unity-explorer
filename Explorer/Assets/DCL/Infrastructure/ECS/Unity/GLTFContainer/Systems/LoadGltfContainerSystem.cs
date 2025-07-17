@@ -52,10 +52,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         private async UniTask LoadBigAssetBundle()
         {
             UnityWebRequest unityWebRequest =
-                UnityWebRequestAssetBundle.GetAssetBundle("file:///Users/juanmolteni/Decentraland/unity-explorer/Explorer/Assets/_SingleAssetBundle/GP_staticscene_LZ4");
-
-            //UnityWebRequest unityWebRequest =
-            //    UnityWebRequestAssetBundle.GetAssetBundle("https://ab-cdn.decentraland.today/genesisplaza_lzma");
+                UnityWebRequestAssetBundle.GetAssetBundle("file:////Users/juanmolteni/Decentraland/unity-explorer/Explorer/Assets/StreamingAssets/AssetBundles/SingleAssetBundle/GP_staticscene_LZMA");
 
             await unityWebRequest.SendWebRequest();
 
