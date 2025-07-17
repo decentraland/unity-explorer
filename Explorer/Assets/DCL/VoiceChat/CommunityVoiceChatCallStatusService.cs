@@ -1,9 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Services;
-using DCL.Web3;
 using Decentraland.SocialService.V2;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -17,9 +18,14 @@ namespace DCL.VoiceChat
     {
         private readonly ICommunityVoiceService voiceChatService;
         private CancellationTokenSource cts;
+        private readonly Dictionary<string, string> communityVoiceChatCalls = new();
+
         public CommunityVoiceChatCallStatusService(ICommunityVoiceService voiceChatService)
         {
             this.voiceChatService = voiceChatService;
+            this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
+
+            SubscribeToCommunityVoiceChatUpdatesAsync(cts.Token).Forget();
             cts = new CancellationTokenSource();
         }
 
@@ -111,9 +117,65 @@ namespace DCL.VoiceChat
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 
-        public void OnPrivateVoiceChatUpdateReceived(CommunityVoiceChatUpdate update)
+        private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate communityUpdate)
         {
-            //Send the community voice chat started event
+            if (string.IsNullOrEmpty(communityUpdate.CommunityId))
+            {
+                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Received community voice chat update with empty community ID");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(communityUpdate.VoiceChatId))
+            {
+                // Remove community from dictionary if call_id is empty
+                if (communityVoiceChatCalls.Remove(communityUpdate.CommunityId))
+                {
+                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Removed community {communityUpdate.CommunityId} from voice chat calls");
+                }
+            }
+            else
+            {
+                // Add or update community with new call_id
+                communityVoiceChatCalls[communityUpdate.CommunityId] = communityUpdate.VoiceChatId;
+                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated community {communityUpdate.CommunityId} with Voice Chat ID {communityUpdate.VoiceChatId}");
+            }
+        }
+
+        private async UniTaskVoid SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct)
+        {
+            try
+            {
+                await voiceChatService.SubscribeToCommunityVoiceChatUpdatesAsync(ct)
+                                           .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
+            }
+            catch (OperationCanceledException) { } // Expected, don't report
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+            }
+        }
+
+        public override void Dispose()
+        {
+            if (voiceChatService != null)
+            {
+                voiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
+                voiceChatService.Dispose();
+            }
+
+            cts.SafeCancelAndDispose();
+            base.Dispose();
+        }
+
+        public bool HasActiveVoiceChatCall(string communityId, out string? callId)
+        {
+            if (string.IsNullOrEmpty(communityId))
+            {
+                callId = null;
+                return false;
+            }
+
+            return communityVoiceChatCalls.TryGetValue(communityId, out callId);
         }
     }
 }
