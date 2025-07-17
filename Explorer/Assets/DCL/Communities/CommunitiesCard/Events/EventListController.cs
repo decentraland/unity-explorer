@@ -28,8 +28,6 @@ namespace DCL.Communities.CommunitiesCard.Events
         private const int PAGE_SIZE = 20;
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
-        private const string CREATE_EVENT_FORMAT = "https://decentraland.{0}/events/submit?communityId={1}";
-
         private const string LINK_COPIED_MESSAGE = "Link copied to clipboard!";
         private const string INTERESTED_CHANGED_ERROR_MESSAGE = "There was an error changing your interest on the event. Please try again.";
         private const string FAILED_EVENTS_FETCHING_ERROR_MESSAGE = "There was an error fetching the community's events. Please try again.";
@@ -44,11 +42,11 @@ namespace DCL.Communities.CommunitiesCard.Events
         private readonly IWebBrowser webBrowser;
         private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
-        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly SectionFetchData<PlaceAndEventDTO> eventsFetchData = new (PAGE_SIZE);
         private readonly List<string> eventPlaceIds = new (PAGE_SIZE);
         private readonly Dictionary<string, PlaceInfo> placeInfoCache = new (PAGE_SIZE);
         private readonly ThumbnailLoader thumbnailLoader;
+        private readonly string createEventFormat;
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
@@ -78,7 +76,8 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
-            this.decentralandUrlsSource = decentralandUrlsSource;
+
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?communityId={{0}}";
 
             view.InitList(thumbnailLoader, cancellationToken);
 
@@ -107,7 +106,7 @@ namespace DCL.Communities.CommunitiesCard.Events
         }
 
         private void OnCreateEventButtonClicked() =>
-            webBrowser.OpenUrl(string.Format(CREATE_EVENT_FORMAT, decentralandUrlsSource.DecentralandDomain, communityData?.id));
+            webBrowser.OpenUrl(string.Format(createEventFormat, communityData?.id));
 
         private void OnEventCopyLinkButtonClicked(PlaceAndEventDTO eventData)
         {
