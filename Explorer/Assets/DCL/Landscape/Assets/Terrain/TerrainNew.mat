@@ -25,7 +25,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 062d2022e68a07243ac880e6984132fb, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BlendMap:
@@ -33,11 +33,19 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: 29ba9abe82143a14d98eb9eb31737eb9, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GroundDetailMap:
+        m_Texture: {fileID: 2800000, guid: a58597a338584a9449f09c78590c197d, type: 3}
+        m_Scale: {x: 2048, y: 2048}
+        m_Offset: {x: 0, y: 0}
+    - _GroundNormalMap:
+        m_Texture: {fileID: 2800000, guid: f769afb03c5a08d45848c8465601863c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _HeightMap:
@@ -52,9 +60,21 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SandDetailMap:
+        m_Texture: {fileID: 2800000, guid: ad4d41b523159b649b789be2bfd029f7, type: 3}
+        m_Scale: {x: 4096, y: 4096}
+        m_Offset: {x: 0, y: 0}
+    - _SandNormalMap:
+        m_Texture: {fileID: 2800000, guid: c1505f77da9dacb40b2e6dab5933ba7e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TerrainMaskMap:
+        m_Texture: {fileID: 2800000, guid: 04369a9b5ba8138478cd9df43fdd86f8, type: 3}
+        m_Scale: {x: 8, y: 8}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
@@ -77,16 +97,20 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
+    - _BlendSmoothness: 1
     - _BumpScale: 1
     - _Cull: 2
     - _Cutoff: 0.5
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _GlossinessSource: 0
+    - _GroundNormalScale: 1
     - _ParcelSize: 0
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
+    - _RedThreshold: 1
+    - _SandNormalScale: 1
     - _Shininess: 0
     - _Smoothness: 0
     - _SmoothnessSource: 0
@@ -95,6 +119,7 @@ Material:
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
+    - _YellowThreshold: 1
     - _ZWrite: 1
     - _frequency: 0.1
     - _sandScale: 0
@@ -107,7 +132,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0, g: 0, b: 0, a: 1}
-    - _TerrainBounds: {r: 0, g: 0, b: 0, a: 0}
+    - _TerrainBounds: {r: -2400, g: 2624, b: -2400, a: 2544}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &3041878237790230907
