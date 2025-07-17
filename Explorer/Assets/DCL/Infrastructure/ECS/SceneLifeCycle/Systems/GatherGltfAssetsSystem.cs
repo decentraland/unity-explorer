@@ -8,6 +8,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System;
@@ -78,7 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT || !LoadGltfContainerSystem.bigFileLoaded)
             {
                 eventsBuffer.ForEach(forEachEvent);
             }

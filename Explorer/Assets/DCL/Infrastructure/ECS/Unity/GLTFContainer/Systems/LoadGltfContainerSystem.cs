@@ -4,6 +4,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
+using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -13,8 +14,12 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Interaction.Utility;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Networking;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
 namespace ECS.Unity.GLTFContainer.Systems
@@ -30,12 +35,37 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly ISceneData sceneData;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
 
+        public static bool bigFileLoaded;
+        private readonly Dictionary<string, GameObject> loadedObjects = new ();
+        private readonly bool useSingle = true;
+
         internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
             IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+
+            LoadBigAssetBundle().Forget();
+        }
+
+        private async UniTask LoadBigAssetBundle()
+        {
+            UnityWebRequest unityWebRequest =
+                UnityWebRequestAssetBundle.GetAssetBundle("file:///Users/juanmolteni/Decentraland/unity-explorer/Explorer/Assets/_SingleAssetBundle/GP_staticscene_LZ4");
+
+            //UnityWebRequest unityWebRequest =
+            //    UnityWebRequestAssetBundle.GetAssetBundle("https://ab-cdn.decentraland.today/genesisplaza_lzma");
+
+            await unityWebRequest.SendWebRequest();
+
+            AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(unityWebRequest);
+
+            GameObject[] loaddedAssets = assetBundle.LoadAllAssets<GameObject>();
+
+            foreach (GameObject loaddedAsset in loaddedAssets) { loadedObjects.Add(loaddedAsset.name, loaddedAsset); }
+
+            bigFileLoaded = true;
         }
 
         protected override void Update(float t)
@@ -48,10 +78,36 @@ namespace ECS.Unity.GLTFContainer.Systems
         [None(typeof(GltfContainerComponent))]
         private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
+            if (!bigFileLoaded)
+                return;
+
+
             GltfContainerComponent component;
             sdkComponent.IsDirty = false; // IsDirty is only relevant for ReConfiguration of the GLTFContainer
 
-            if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
+            bool tryGetHash = sceneData.TryGetHash(sdkComponent.Src, out string hash);
+
+            if (useSingle && tryGetHash && loadedObjects.ContainsKey(hash))
+            {
+                // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
+                var data = new AssetBundleData(null, null, loadedObjects[hash], new AssetBundleData[0]);
+                data.description = $"AB:{hash}_BIG_ASSET_BUNDLE";
+                World.Add(promise.Entity, new StreamableLoadingResult<AssetBundleData>(data));
+
+                component = new GltfContainerComponent(
+                    sdkComponent.GetVisibleMeshesCollisionMask(),
+                    sdkComponent.GetInvisibleMeshesCollisionMask(),
+                    promise);
+
+                component.State = LoadingState.Loading;
+                World.Add(entity, component);
+                eventsBuffer.Add(entity, component);
+
+                return;
+            }
+
+            if (!tryGetHash)
             {
                 component = GltfContainerComponent.CreateFaulty(
                     GetReportData(),
