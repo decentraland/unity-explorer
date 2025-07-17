@@ -1,7 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using DCL.RealmNavigation;
-using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using System.Threading;
 using UnityEngine;
@@ -12,13 +12,13 @@ namespace DCL.RuntimeDeepLink
     public class DeepLinkHandle : IDeepLinkHandle
     {
         private readonly StartParcel startParcel;
-        private readonly IRealmNavigator realmNavigator;
+        private readonly ChatTeleporter chatTeleporter;
         private readonly CancellationToken token;
 
-        public DeepLinkHandle(StartParcel startParcel, IRealmNavigator realmNavigator, CancellationToken token)
+        public DeepLinkHandle(StartParcel startParcel, ChatTeleporter chatTeleporter, CancellationToken token)
         {
             this.startParcel = startParcel;
-            this.realmNavigator = realmNavigator;
+            this.chatTeleporter = chatTeleporter;
             this.token = token;
         }
 
@@ -31,11 +31,7 @@ namespace DCL.RuntimeDeepLink
 
             if (realm.HasValue)
             {
-                if (position.HasValue)
-                    realmNavigator.TryChangeRealmAsync(realm.Value, token, position.Value).Forget();
-                else
-                    realmNavigator.TryChangeRealmAsync(realm.Value, token).Forget();
-
+                chatTeleporter.TeleportToRealmAsync(realm.Value.Value, position, token).Forget();
                 return Result.SuccessResult();
             }
 
@@ -44,7 +40,7 @@ namespace DCL.RuntimeDeepLink
                 var parcel = position.Value;
 
                 if (startParcel.IsConsumed())
-                    realmNavigator.TeleportToParcelAsync(position.Value, token, false).Forget();
+                    chatTeleporter.TeleportToParcelAsync(position.Value, false, token).Forget();
                 else
                     startParcel.Assign(parcel);
 
