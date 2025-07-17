@@ -418,6 +418,12 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityDeleted(string communityId) =>
             ReloadBrowser();
 
+        private void OnUserRemovedFromCommunity(string communityId) =>
+            view.RemoveOneMemberFromCounter(communityId);
+
+        private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
+            OnUserRemovedFromCommunity(communityId);
+
         private void SubscribeDataProviderEvents()
         {
             dataProvider.CommunityCreated += OnCommunityCreated;
@@ -425,6 +431,8 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUpdated += OnCommunityUpdated;
             dataProvider.CommunityJoined += OnCommunityJoined;
             dataProvider.CommunityLeft += OnCommunityLeft;
+            dataProvider.CommunityUserRemoved += OnUserRemovedFromCommunity;
+            dataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
         }
 
         private void UnsubscribeDataProviderEvents()
@@ -434,6 +442,8 @@ namespace DCL.Communities.CommunitiesBrowser
             dataProvider.CommunityUpdated -= OnCommunityUpdated;
             dataProvider.CommunityJoined -= OnCommunityJoined;
             dataProvider.CommunityLeft -= OnCommunityLeft;
+            dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
+            dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
         }
     }
 }
