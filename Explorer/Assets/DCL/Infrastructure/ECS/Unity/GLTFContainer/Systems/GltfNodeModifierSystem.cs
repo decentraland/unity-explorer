@@ -12,6 +12,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Materials.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
@@ -49,18 +50,30 @@ namespace ECS.Unity.GLTFContainer.Systems
             gltfNodeModifiers.IsDirty = false;
             gltfContainer.GltfNodeEntities ??= new List<Entity>();
             gltfContainer.OriginalMaterials ??= new Dictionary<Renderer, Material>();
+            bool hasCastingShadowOverride = false;
+            bool hasMaterialOverride = false;
 
             // Special case: single modifier with empty path applies to ALL renderers
             if (gltfNodeModifiers.Modifiers.Count == 1 && string.IsNullOrEmpty(gltfNodeModifiers.Modifiers[0].Path))
             {
                 var modifier = gltfNodeModifiers.Modifiers[0];
 
+                hasCastingShadowOverride = modifier.HasOverrideShadows;
+                hasMaterialOverride = modifier.Material != null && modifier.Material.MaterialCase != PBMaterial.MaterialOneofCase.None;
+                if (!hasCastingShadowOverride && !hasMaterialOverride) return;
+
+                // Add GltfNode to the container entity itself with all renderers
+                World.Add(entity, new GltfNode
+                {
+                    Renderers = new List<Renderer>(result.Asset!.Renderers),
+                    ContainerEntity = entity
+                });
+
                 // Handle global shadow override
-                /*if (gltfNodeModifier == gltfNodeModifiers.Modifiers[0] && gltfNodeModifier.HasOverrideShadows)
-                        result.Asset!.SetCastingShadows(gltfNodeModifier.OverrideShadows);*/
+                result.Asset.SetCastingShadows(!hasCastingShadowOverride || modifier.OverrideShadows);
 
                 // Skip if no material or invalid material
-                if (modifier.Material != null && modifier.Material.MaterialCase != PBMaterial.MaterialOneofCase.None)
+                if (hasMaterialOverride)
                 {
                     // Store original materials for all renderers in the GLTF asset
                     foreach (var renderer in result.Asset!.Renderers)
@@ -68,48 +81,44 @@ namespace ECS.Unity.GLTFContainer.Systems
                         gltfContainer.OriginalMaterials[renderer] = renderer.sharedMaterial;
                     }
 
-                    // Add GltfNode to the container entity itself with all renderers
-                    World.Add(entity, new GltfNode
-                    {
-                        Renderers = new List<Renderer>(result.Asset.Renderers),
-                        ContainerEntity = entity
-                    }, modifier.Material);
-
-                    gltfContainer.GltfNodeEntities.Add(entity);
+                    World.Add(entity, modifier.Material);
                 }
+
+                gltfContainer.GltfNodeEntities.Add(entity);
             }
             else
             {
                 // Normal case: create separate entities for each modifier
-                foreach (var gltfNodeModifier in gltfNodeModifiers.Modifiers)
+                foreach (var modifier in gltfNodeModifiers.Modifiers)
                 {
-                    // Handle global shadow override
-                    /*if (gltfNodeModifier == gltfNodeModifiers.Modifiers[0] && gltfNodeModifier.HasOverrideShadows)
-                            result.Asset!.SetCastingShadows(gltfNodeModifier.OverrideShadows);*/
+                    hasCastingShadowOverride = modifier.HasOverrideShadows;
+                    hasMaterialOverride = modifier.Material != null && modifier.Material.MaterialCase != PBMaterial.MaterialOneofCase.None;
+                    if (!hasCastingShadowOverride && !hasMaterialOverride) continue;
 
-                    // Skip if no material or invalid material
-                    if (gltfNodeModifier.Material == null
-                        || gltfNodeModifier.Material.MaterialCase == PBMaterial.MaterialOneofCase.None)
+                    // Find the Renderer using the path
+                    GameObject? targetGameObject = FindGameObjectByPath(gltfContainer.RootGameObject, modifier.Path);
+                    if (targetGameObject == null || !targetGameObject.TryGetComponent(out Renderer renderer))
                         continue;
-
-                    // Find the GameObject using the path
-                    GameObject? targetGameObject = FindGameObjectByPath(gltfContainer.RootGameObject, gltfNodeModifier.Path);
-                    if (targetGameObject == null)
-                        continue;
-
-                    // Get the Renderer component from the target GameObject
-                    if (!targetGameObject.TryGetComponent(out Renderer renderer))
-                        continue;
-
-                    // Store original material only for the renderers used
-                    gltfContainer.OriginalMaterials[renderer] = renderer.sharedMaterial;
 
                     Entity nodeEntity = this.World.Create();
-                    World.Add(
-                        nodeEntity,
-                        new GltfNode { Renderers = new List<Renderer> { renderer }, ContainerEntity = entity },
-                        gltfNodeModifier.Material,
-                        partitionComponent);
+                    World.Add(nodeEntity,
+                        new GltfNode { Renderers = new List<Renderer> { renderer }, ContainerEntity = entity });
+
+                    // Handle global shadow override
+                    renderer.shadowCastingMode = !hasCastingShadowOverride || modifier.OverrideShadows ?
+                                                    ShadowCastingMode.On : ShadowCastingMode.Off;
+
+                    // Skip if no material or invalid material
+                    if (hasMaterialOverride)
+                    {
+                        // Store original material only for the renderers used
+                        gltfContainer.OriginalMaterials[renderer] = renderer.sharedMaterial;
+
+                        World.Add(nodeEntity,
+                            modifier.Material,
+                            partitionComponent);
+                    }
+
                     gltfContainer.GltfNodeEntities.Add(nodeEntity);
                 }
             }
@@ -127,9 +136,19 @@ namespace ECS.Unity.GLTFContainer.Systems
             foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities)
             {
                 if(World.Has<PBMaterial>(gltfNodeEntity))
+                {
                     World.Remove<PBMaterial>(gltfNodeEntity); // ResetMaterialSystem takes care of the rest...
-                else if (gltfNodeEntity != entity) // Don't destroy the container entity itself
-                    World.Destroy(gltfNodeEntity);
+                }
+                else
+                {
+                    foreach (Renderer renderer in World.Get<GltfNode>(gltfNodeEntity).Renderers)
+                    {
+                        renderer.shadowCastingMode = ShadowCastingMode.On;
+                    }
+
+                    if (gltfNodeEntity != entity) // Don't destroy the container entity itself
+                        World.Destroy(gltfNodeEntity);
+                }
             }
             gltfContainer.GltfNodeEntities.Clear();
             World.Remove<GltfNodeModifiers>(entity);
