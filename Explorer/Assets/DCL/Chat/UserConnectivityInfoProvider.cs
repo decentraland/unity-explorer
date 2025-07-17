@@ -12,18 +12,35 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Utility;
 using Utility.Types;
 
 namespace DCL.Chat
 {
+    /// <summary>
+    /// Once initialized, it keeps track of who is reachable in each chat conversation for the local user.
+    /// It notifies when a user is connected or disconnected in a conversation, which does not mean to be connected or disconnected from DCL.
+    /// For example, leaving a community will mark a user as disconnected.
+    /// </summary>
     internal class UserConnectivityInfoProvider : IDisposable
     {
         public delegate void UserConnectedDelegate(string userAddress, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType);
         public delegate void UserDisconnectedDelegate(string userAddress, ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType);
         public delegate void ConversationInitializedDelegate(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType);
 
+        /// <summary>
+        /// Raised when a user is connected to a conversation (joined a community, teleported to a place nearby...).
+        /// </summary>
         public event UserConnectedDelegate? UserConnected;
+
+        /// <summary>
+        /// Raised when a user is connected to a conversation (left a community, teleported to a far place...).
+        /// </summary>
         public event UserDisconnectedDelegate? UserDisconnected;
+
+        /// <summary>
+        /// Raised when the list of online users in a conversation has been rebuilt.
+        /// </summary>
         public event ConversationInitializedDelegate? ConversationInitialized;
 
         private readonly IRoom islandRoom;
@@ -32,8 +49,13 @@ namespace DCL.Chat
         private readonly IChatHistory chatHistory;
         private readonly IRealmNavigator realmNavigator;
 
+        // Stores a list of wallet addreses of reachable users per channel.
+        // In the case of private channels, there is one special channelId that contains all the online users for which the local user
+        // as an open conversation.
         private readonly Dictionary<ChatChannel.ChannelId, HashSet<string>> participantsPerChannel = new Dictionary<ChatChannel.ChannelId, HashSet<string>>();
         private readonly ChatChannel.ChannelId privateConversationOnlineUserListId = new ChatChannel.ChannelId("OnlinePrivateConversations");
+
+        private readonly CancellationTokenSource initializationCts = new CancellationTokenSource();
 
         public UserConnectivityInfoProvider(IRoom islandRoom, IRoom chatRoom, CommunitiesEventBus communitiesEventBus, IChatHistory chatHistory, IRealmNavigator realmNavigator)
         {
@@ -53,8 +75,14 @@ namespace DCL.Chat
             communitiesEventBus.UserConnectedToCommunity -= OnCommunitiesEventBusUserConnectedToCommunity;
             communitiesEventBus.UserDisconnectedFromCommunity -= OnCommunitiesEventBusUserDisconnectedToCommunity;
             realmNavigator.NavigationExecuted -= OnRealmNavigatorNavigationExecuted;
+            initializationCts.SafeCancelAndDispose();
         }
 
+        /// <summary>
+        /// Starts gatherting information about the connected users in all the open conversations.
+        /// </summary>
+        /// <param name="isCommunityEnabled">Whether the communities feature is used or not.</param>
+        /// <param name="communitiesDataProvider">A data source for obtaining the community conversations of the user.</param>
         public void Initialize(bool isCommunityEnabled, CommunitiesDataProvider communitiesDataProvider)
         {
             islandRoom.Participants.UpdatesFromParticipant += OnIslandRoomUpdatesFromParticipant;
@@ -71,7 +99,7 @@ namespace DCL.Chat
                 foreach (KeyValuePair<ChatChannel.ChannelId, ChatChannel> channel in chatHistory.Channels)
                 {
                     if (channel.Value.ChannelType == ChatChannel.ChatChannelType.COMMUNITY)
-                        InitializeOnlineChannelParticipantsInCommunitiesAsync(channel.Key, communitiesDataProvider, CancellationToken.None).Forget(); //TODO
+                        InitializeOnlineChannelParticipantsInCommunitiesAsync(channel.Key, communitiesDataProvider, initializationCts.Token).Forget();
                 }
             }
 
@@ -84,11 +112,11 @@ namespace DCL.Chat
                 OnChatRoomConnectionStateChanged(ConnectionState.ConnConnected);
         }
 
-        private void OnRealmNavigatorNavigationExecuted(Vector2Int obj)
-        {
-            OnIslandRoomConnectionStateChanged(ConnectionState.ConnConnected);
-        }
-
+        /// <summary>
+        /// Adds a conversation for which to track its connected users.
+        /// </summary>
+        /// <param name="addedChannelId">The id of the conversation.</param>
+        /// <param name="channelType">The type of conversation.</param>
         public void AddConversation(ChatChannel.ChannelId addedChannelId, ChatChannel.ChatChannelType channelType)
         {
             if (channelType == ChatChannel.ChatChannelType.USER)
@@ -102,12 +130,23 @@ namespace DCL.Chat
             }
         }
 
+        /// <summary>
+        /// Stops tracking the connectivity of the users for a conversation.
+        /// </summary>
+        /// <param name="removedChannelId">The id of the conversation.</param>
+        /// <param name="channelType">The type of the conversation.</param>
         public void RemoveConversation(ChatChannel.ChannelId removedChannelId, ChatChannel.ChatChannelType channelType)
         {
             if (channelType is ChatChannel.ChatChannelType.NEARBY or ChatChannel.ChatChannelType.COMMUNITY)
                 participantsPerChannel.Remove(removedChannelId);
         }
 
+        /// <summary>
+        /// Gets a list of wallet addreses of all the users that are connected to a conversation.
+        /// </summary>
+        /// <param name="channelId">The id of the conversation.</param>
+        /// <param name="channelType">The type of conversation.</param>
+        /// <returns>A list of unique addresses. If a user is not present, it is offline.</returns>
         public HashSet<string> GetOnlineUsersInConversation(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType)
         {
             if (channelType == ChatChannel.ChatChannelType.USER)
@@ -116,6 +155,12 @@ namespace DCL.Chat
                 return participantsPerChannel[channelId];
         }
 
+        /// <summary>
+        /// Gets whether a conversation has been previously added.
+        /// </summary>
+        /// <param name="channelId">The id of the conversation.</param>
+        /// <param name="channelType">The type of the conversation.</param>
+        /// <returns>True if the conversation was added; False otherwise.</returns>
         public bool HasConversation(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType)
         {
             if (channelType == ChatChannel.ChatChannelType.USER)
@@ -138,7 +183,7 @@ namespace DCL.Chat
 
                 foreach (GetCommunityMembersResponse.MemberData memberData in response.data.results)
                 {
-                    Debug.Log("#PARTICIPANT: " + memberData.memberAddress + ", " + channelId.Id);
+                    ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {memberData.memberAddress}, {channelId.Id}");
                     participantsPerChannel[channelId].Add(memberData.memberAddress);
                 }
 
@@ -152,7 +197,7 @@ namespace DCL.Chat
 
         private void OnCommunitiesEventBusUserConnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
         {
-            Debug.Log("+PARTICIPANT: " + userConnectivity.Member.Address + ", " + userConnectivity.CommunityId + " " + userConnectivity.Status);
+            ReportHub.Log(ReportCategory.DEBUG, $"+PARTICIPANT: {userConnectivity.Member.Address}, {userConnectivity.CommunityId}, {userConnectivity.Status}");
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);;
 
             participantsPerChannel[communityChannelId].Add(userConnectivity.Member.Address);
@@ -162,7 +207,7 @@ namespace DCL.Chat
 
         private void OnCommunitiesEventBusUserDisconnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
         {
-            Debug.Log("-PARTICIPANT: " + userConnectivity.Member.Address + ", " + userConnectivity.CommunityId + " " + userConnectivity.Status);
+            ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {userConnectivity.Member.Address}, {userConnectivity.CommunityId}, {userConnectivity.Status}");
             ChatChannel.ChannelId communityChannelId = ChatChannel.NewCommunityChannelId(userConnectivity.CommunityId);;
 
             participantsPerChannel[communityChannelId].Remove(userConnectivity.Member.Address);
@@ -177,12 +222,12 @@ namespace DCL.Chat
                 islandRoom.ConnectionStateChanged -= OnIslandRoomConnectionStateChanged;
 
                 IReadOnlyCollection<string> roomParticipants = islandRoom.Participants.RemoteParticipantIdentities();
-                Debug.Log("#PARTICIPANT: NEARBY CLEARED");
+                ReportHub.Log(ReportCategory.DEBUG, "#PARTICIPANT: NEARBY CLEARED");
                 participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Clear();
 
                 foreach (string roomParticipant in roomParticipants)
                 {
-                    Debug.Log("#PARTICIPANT: " + roomParticipant);
+                    ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {roomParticipant}");
                     participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Add(roomParticipant);
                 }
 
@@ -194,13 +239,13 @@ namespace DCL.Chat
         {
             if (update == UpdateFromParticipant.Connected)
             {
-                Debug.Log("+PARTICIPANT: " + participant.Identity + " " + update);
+                ReportHub.Log(ReportCategory.DEBUG, $"+PARTICIPANT: {participant.Identity}, {update}");
                 participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Add(participant.Identity);
                 UserConnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             }
             else if (update == UpdateFromParticipant.Disconnected)
             {
-                Debug.Log("-PARTICIPANT: " + participant.Identity + " " + update);
+                ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {participant.Identity}, {update}");
                 participantsPerChannel[ChatChannel.NEARBY_CHANNEL_ID].Remove(participant.Identity);
                 UserDisconnected?.Invoke(participant.Identity, ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             }
@@ -225,7 +270,7 @@ namespace DCL.Chat
                     {
                         if (chatChannel.Value.ChannelType == ChatChannel.ChatChannelType.USER && chatChannel.Key.Id == roomParticipant)
                         {
-                            Debug.Log("#PARTICIPANT: " + roomParticipant);
+                            ReportHub.Log(ReportCategory.DEBUG, $"#PARTICIPANT: {roomParticipant}");
                             participantsPerChannel[privateConversationOnlineUserListId].Add(roomParticipant);
                             ConversationInitialized?.Invoke(chatChannel.Key, ChatChannel.ChatChannelType.USER);
                         }
@@ -244,7 +289,7 @@ namespace DCL.Chat
             {
                 if (chatHistory.Channels.ContainsKey(channelId))
                 {
-                    Debug.Log("+PARTICIPANT: " + participant.Identity + " " + update);
+                    ReportHub.Log(ReportCategory.DEBUG, $"+PARTICIPANT: {participant.Identity}, {update}");
                     participantsPerChannel[privateConversationOnlineUserListId].Add(participant.Identity);
                     UserConnected?.Invoke(participant.Identity, channelId, ChatChannel.ChatChannelType.USER);
                 }
@@ -254,11 +299,17 @@ namespace DCL.Chat
             {
                 if (chatHistory.Channels.ContainsKey(channelId))
                 {
-                    Debug.Log("-PARTICIPANT: " + participant.Identity + " " + update);
+                    ReportHub.Log(ReportCategory.DEBUG, $"-PARTICIPANT: {participant.Identity}, {update}");
                     participantsPerChannel[privateConversationOnlineUserListId].Remove(participant.Identity);
                     UserDisconnected?.Invoke(participant.Identity, channelId, ChatChannel.ChatChannelType.USER);
                 }
             }
+        }
+
+        // Called when the user teleports
+        private void OnRealmNavigatorNavigationExecuted(Vector2Int obj)
+        {
+            OnIslandRoomConnectionStateChanged(ConnectionState.ConnConnected);
         }
     }
 }

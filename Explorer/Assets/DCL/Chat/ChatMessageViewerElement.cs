@@ -302,11 +302,15 @@ namespace DCL.Chat
             return false;
         }
 
+        /// <summary>
+        /// Checks all the chat entry instances (only those that are visible in the list) and greys them out if the user who sent them is not in the list of online users.
+        /// </summary>
+        /// <param name="ct">The cancellation token.</param>
         private async UniTaskVoid ApplyGreyOutAsync(CancellationToken ct)
         {
             try
             {
-                await UniTask.SwitchToMainThread();
+                await UniTask.SwitchToMainThread(ct);
 
                 for (int i = 0; i < loopList.ShownItemCount; ++i)
                 {
@@ -482,6 +486,11 @@ namespace DCL.Chat
             this.profileRepositoryWrapper = profileRepositoryWrapper;
         }
 
+        /// <summary>
+        /// Stores a list of users that are online (so if a user is not in it, it's offline). Visual elements (messages, profile pictures, etc.) of offline users
+        /// will be greyed out.
+        /// </summary>
+        /// <param name="onlineUserAddresses">A list of online user addresses.</param>
         public void SetOnlineUserAddresses(HashSet<string> onlineUserAddresses)
         {
             this.onlineUserAddresses = onlineUserAddresses;

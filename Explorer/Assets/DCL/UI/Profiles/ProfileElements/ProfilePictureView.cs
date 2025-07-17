@@ -142,6 +142,7 @@ namespace DCL.UI.ProfileElements
         {
             if (!initialized)
             {
+                // The method was called before Awake, it stores the value to be applied on Awake later
                 greyOutOpacity = opacity;
                 return;
             }

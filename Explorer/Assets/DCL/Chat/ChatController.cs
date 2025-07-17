@@ -456,6 +456,7 @@ namespace DCL.Chat
 
         public override void Dispose()
         {
+            userConnectivityInfoProvider.Dispose();
             viewInstance?.RemoveAllConversations();
             viewInstance?.Dispose();
             chatStorage?.UnloadAllFiles();
