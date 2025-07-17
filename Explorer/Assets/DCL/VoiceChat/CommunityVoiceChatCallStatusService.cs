@@ -27,8 +27,8 @@ namespace DCL.VoiceChat
             this.voiceChatService = voiceChatService;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
 
-            SubscribeToCommunityVoiceChatUpdatesAsync(cts.Token).Forget();
             cts = new CancellationTokenSource();
+            SubscribeToCommunityVoiceChatUpdatesAsync(cts.Token).Forget();
         }
 
         public override void StartCall(string communityId)
