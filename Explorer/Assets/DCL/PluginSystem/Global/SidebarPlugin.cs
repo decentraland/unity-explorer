@@ -49,9 +49,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly bool includeCameraReel;
-        private readonly bool includeFriends;
-        private readonly bool includeMarketplaceCredits;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -76,9 +73,6 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             Arch.Core.World world,
             Entity playerEntity,
-            bool includeCameraReel,
-            bool includeFriends,
-            bool includeMarketplaceCredits,
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileDataProvider,
             ISharedSpaceManager sharedSpaceManager,
@@ -102,9 +96,6 @@ namespace DCL.PluginSystem.Global
             this.profileCache = profileCache;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.includeCameraReel = includeCameraReel;
-            this.includeFriends = includeFriends;
-            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -143,9 +134,6 @@ namespace DCL.PluginSystem.Global
                 new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, skyboxSettings),
                 new ControlsPanelController(() => controlsPanelView, mvcManager),
                 webBrowser,
-                includeCameraReel,
-                includeFriends,
-                includeMarketplaceCredits,
                 mainUIView.ChatView,
                 chatHistory,
                 sharedSpaceManager,

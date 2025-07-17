@@ -152,7 +152,7 @@ namespace DCL.Settings
         {
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
-                if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
+                if (group.FeatureFlagName != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureFlagName))
                     return;
 
                 SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
