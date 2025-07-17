@@ -17,7 +17,7 @@ namespace DCL.VoiceChat
             ISocialServiceEventBus socialServiceEventBus)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
-            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC);
+            rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
             communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService);
             VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, communityVoiceChatCallStatusService, rpcPrivateVoiceChatService, rpcCommunityVoiceChatService);

@@ -5,6 +5,7 @@ using Decentraland.SocialService.V2;
 using Google.Protobuf.WellKnownTypes;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.VoiceChat.Services
 {
@@ -30,22 +31,69 @@ namespace DCL.VoiceChat.Services
         private const string SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES = "SubscribeToCommunityVoiceChatUpdates";
 
         private readonly IRPCSocialServices socialServiceRPC;
-
-        public event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
-
+        private readonly ISocialServiceEventBus socialServiceEventBus;
+        private CancellationTokenSource subscriptionCts = new();
         private bool isServiceDisabled = false;
 
-        public RPCCommunityVoiceChatService(IRPCSocialServices socialServiceRPC)
+        public event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
+        public event Action Reconnected;
+        public event Action Disconnected;
+
+        public RPCCommunityVoiceChatService(
+            IRPCSocialServices socialServiceRPC,
+            ISocialServiceEventBus socialServiceEventBus)
         {
             this.socialServiceRPC = socialServiceRPC;
+            this.socialServiceEventBus = socialServiceEventBus;
+
+            socialServiceEventBus.TransportClosed += OnTransportClosed;
+            socialServiceEventBus.RPCClientReconnected += OnTransportReconnected;
+            socialServiceEventBus.WebSocketConnectionEstablished += OnTransportConnected;
+        }
+
+        private void OnTransportConnected()
+        {
+            if (!isServiceDisabled)
+            {
+                SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+            }
         }
 
         public void Dispose()
         {
+            socialServiceEventBus.TransportClosed -= OnTransportClosed;
+            socialServiceEventBus.RPCClientReconnected -= OnTransportReconnected;
+            socialServiceEventBus.WebSocketConnectionEstablished -= OnTransportConnected;
+            subscriptionCts.SafeCancelAndDispose();
+        }
+
+        private void OnTransportClosed()
+        {
+            subscriptionCts = subscriptionCts.SafeRestart();
+            Disconnected?.Invoke();
+        }
+
+        private void OnTransportReconnected()
+        {
+            if (!isServiceDisabled)
+            {
+                Reconnected?.Invoke();
+                SubscribeToCommunityVoiceChatUpdatesAsync(subscriptionCts.Token).Forget();
+            }
+        }
+
+        private void ThrowIfServiceDisabled()
+        {
+            if (isServiceDisabled)
+            {
+                throw new InvalidOperationException("Voice chat service is disabled due to connection failures.");
+            }
         }
 
         public async UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
             var payload = new StartCommunityVoiceChatPayload
             {
@@ -62,6 +110,8 @@ namespace DCL.VoiceChat.Services
 
         public async UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
+            ThrowIfServiceDisabled();
+
             await socialServiceRPC.EnsureRpcConnectionAsync(ct);
             var payload = new JoinCommunityVoiceChatPayload()
             {
