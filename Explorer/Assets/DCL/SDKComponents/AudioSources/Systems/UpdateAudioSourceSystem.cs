@@ -115,12 +115,15 @@ namespace DCL.SDKComponents.AudioSources
             switch (sceneStateProvider.IsCurrent)
             {
                 case true when audio.volume < sdkVolume:
-                    audio.volume = Mathf.Min(sdkVolume, audio.volume + (dt * settings.FadeSpeed));
+                    audio.volume = Mathf.Lerp(audio.volume, sdkVolume, dt * settings.FadeSpeed);
                     return;
                 case false when audio.volume > 0:
-                    audio.volume = Mathf.Max(0, audio.volume - (dt * settings.FadeSpeed));
+                    audio.volume = Mathf.Lerp(audio.volume, 0f, dt * settings.FadeSpeed);
                     break;
             }
+
+            if (Mathf.Approximately(audio.volume, sdkVolume))
+                audio.volume = sdkVolume;
         }
 
         private void HandleSDKChanges(PBAudioSource sdkComponent, ref AudioSourceComponent component, PartitionComponent partitionComponent)

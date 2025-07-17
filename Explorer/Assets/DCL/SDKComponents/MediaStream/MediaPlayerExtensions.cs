@@ -17,11 +17,12 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.Events.RemoveAllListeners();
         }
 
-        public static void CrossfadeVolume(this MediaPlayer mediaPlayer, float targetVolume, float volumeDelta)
+        public static void CrossfadeVolume(this MediaPlayer mediaPlayer, float targetVolume, float speed)
         {
-            mediaPlayer.AudioVolume = mediaPlayer.AudioVolume > targetVolume
-                ? Mathf.Max(0, mediaPlayer.AudioVolume - volumeDelta)
-                : Mathf.Min(targetVolume, mediaPlayer.AudioVolume + volumeDelta);
+            mediaPlayer.AudioVolume = Mathf.Lerp(mediaPlayer.AudioVolume, targetVolume, speed);
+
+            if (Mathf.Approximately(mediaPlayer.AudioVolume, targetVolume))
+                mediaPlayer.AudioVolume = targetVolume;
         }
 
         public static void UpdatePlayback(this MediaPlayer mediaPlayer, bool hasPlaying, bool playing)
