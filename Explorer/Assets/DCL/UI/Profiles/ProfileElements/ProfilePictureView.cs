@@ -140,8 +140,11 @@ namespace DCL.UI.ProfileElements
 
         public void GreyOut(float opacity)
         {
-            if(!initialized)
+            if (!initialized)
+            {
+                greyOutOpacity = opacity;
                 return;
+            }
 
             if(thumbnailImageView != null)
                 thumbnailImageView.ImageColor = Color.Lerp(originalThumbnailImageColor, new Color(0.0f, 0.0f, 0.0f, originalThumbnailImageColor.a), opacity);
