@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Emotes
 {
-    public class EmotesDeduplication
+    public class EmotesScheduler
     {
         /// <summary>
         ///     As IDs are incremental we only need to store and play the latest one

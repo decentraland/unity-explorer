@@ -9,6 +9,7 @@ using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -142,8 +143,8 @@ namespace DCL.Chat
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled) : base(viewFactory)
+            IVoiceChatCallStatusService voiceChatCallStatusService
+            ) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -167,7 +168,7 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
-            this.isCallEnabled = isCallEnabled;
+            this.isCallEnabled =  FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -339,7 +340,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
-            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
+            if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, isUserAllowedInInitializationCts.Token))
                 await InitializeCommunityCoversationsAsync();
         }
 
@@ -1073,7 +1074,7 @@ namespace DCL.Chat
         {
             isUserAllowedInCommunitiesBusSubscriptionCts = isUserAllowedInCommunitiesBusSubscriptionCts.SafeRestart();
 
-            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInCommunitiesBusSubscriptionCts.Token))
+            if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, isUserAllowedInCommunitiesBusSubscriptionCts.Token))
             {
                 communitiesEventBus.UserConnectedToCommunity += OnCommunitiesEventBusUserConnectedToCommunity;
                 communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;
