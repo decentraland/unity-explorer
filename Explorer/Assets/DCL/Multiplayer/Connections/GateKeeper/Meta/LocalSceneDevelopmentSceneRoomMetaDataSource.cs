@@ -67,15 +67,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             if (string.IsNullOrWhiteSpace(id!))
                 return Result<MetaData>.ErrorResult("Id is empty or null");
 
-            // TODO Remove later
-            // using HashKey key = HashKey.FromString(id);
-            // id = HashUtility.ByteString(key.Hash.Memory).EnsureNotNull();
-
-            //id = id.Replace("-", string.Empty).Replace("=", string.Empty);
-
-            //id = id.Substring(0, 64);
-
-            return Result<MetaData>.SuccessResult(new MetaData(id, new MetaData.Input(id, Vector2Int.zero)));
+            return Result<MetaData>.SuccessResult(new MetaData(id, new MetaData.Input("LocalPreview", Vector2Int.zero)));
         }
 
         [Serializable]
