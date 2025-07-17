@@ -54,7 +54,7 @@ namespace DCL.UI
             {
                 view.Image.color = LOADING_COLOR;
 
-                view.LoadingObject.SetActive(true);
+                view.IsLoading = true;
 
                 Sprite? sprite = null;
 
@@ -93,7 +93,7 @@ namespace DCL.UI
             }
             finally
             {
-                view.LoadingObject.SetActive(false);
+                view.IsLoading = false;
                 view.Image.enabled = true;
             }
         }
@@ -104,7 +104,7 @@ namespace DCL.UI
         public void StopLoading()
         {
             cts.SafeCancelAndDispose();
-            view.LoadingObject.SetActive(false);
+            view.IsLoading = false;
         }
     }
 }

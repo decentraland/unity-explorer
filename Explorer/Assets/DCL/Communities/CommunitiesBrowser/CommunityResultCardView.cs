@@ -154,7 +154,7 @@ namespace DCL.Communities.CommunitiesBrowser
                 if (!friendExists) continue;
                 GetUserCommunitiesData.FriendInCommunity mutualFriend = communityData.friends[i];
                 mutualFriends.thumbnails[i].picture.Setup(profileDataProvider, ProfileNameColorHelper.GetNameColor(mutualFriend.name), mutualFriend.profilePictureUrl);
-                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.isVerified);
+                mutualFriends.thumbnails[i].profileNameTooltip.Setup(mutualFriend.name, mutualFriend.hasClaimedName);
 
                 if (mutualFriends.thumbnails[i].isPointerEventsSubscribed)
                     continue;
