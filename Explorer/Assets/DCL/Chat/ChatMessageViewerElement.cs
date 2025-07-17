@@ -230,7 +230,7 @@ namespace DCL.Chat
             }
 
             greyOutCts = greyOutCts.SafeRestart();
-            ApplyGreyOut(greyOutCts.Token).Forget();
+            ApplyGreyOutAsync(greyOutCts.Token).Forget();
 
             entriesPendingToAnimate = 0;
         }
@@ -302,7 +302,7 @@ namespace DCL.Chat
             return false;
         }
 
-        private async UniTaskVoid ApplyGreyOut(CancellationToken ct)
+        private async UniTaskVoid ApplyGreyOutAsync(CancellationToken ct)
         {
             try
             {
@@ -317,7 +317,12 @@ namespace DCL.Chat
                         continue;
                     }
 
-                    int messageIndex = loopList.GetIndexInShownItemList(item);
+                    bool isSeparatorIndex = IsSeparatorVisible && item.ItemIndex == CurrentSeparatorIndex;
+
+                    if(isSeparatorIndex)
+                        continue;
+
+                    int messageIndex = item.UserIntData1; // Message index taking the separator into account
                     ChatEntryView entry = item.GetComponent<ChatEntryView>();
 
                     if (entry != null)
@@ -358,10 +363,12 @@ namespace DCL.Chat
             bool isSeparatorIndex = IsSeparatorVisible && index == CurrentSeparatorIndex;
 
             if (isSeparatorIndex)
-
+            {
                 // Note: The separator is not part of the data, it is a view thing, so it is not a type of chat message, it is inserted by adding an extra item to the count and
                 //       faking it in this method, when it tries to create a new item
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.Separator].mItemPrefab.name);
+                item.UserIntData1 = -1;
+            }
             else
             {
                 bool isIndexAfterSeparator = IsSeparatorVisible && index > CurrentSeparatorIndex;
@@ -398,6 +405,9 @@ namespace DCL.Chat
                     messageOptionsButton?.onClick.AddListener(() =>
                         OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
                 }
+
+                // Stores the message index, which takes into account the slot of the separator
+                item.UserIntData1 = messageIndex;
             }
 
             return item;
@@ -464,7 +474,7 @@ namespace DCL.Chat
         {
             loopList.RefreshAllShownItem(); // This avoids artifacts when new items are added while the object is disabled
             greyOutCts = greyOutCts.SafeRestart();
-            ApplyGreyOut(greyOutCts.Token).Forget();
+            ApplyGreyOutAsync(greyOutCts.Token).Forget();
         }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileRepositoryWrapper)
@@ -476,7 +486,7 @@ namespace DCL.Chat
         {
             this.onlineUserAddresses = onlineUserAddresses;
             greyOutCts = greyOutCts.SafeRestart();
-            ApplyGreyOut(greyOutCts.Token).Forget();
+            ApplyGreyOutAsync(greyOutCts.Token).Forget();
         }
     }
 }
