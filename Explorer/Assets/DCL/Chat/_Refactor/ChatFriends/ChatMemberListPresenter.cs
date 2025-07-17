@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
@@ -40,7 +41,7 @@ public class ChatMemberListPresenter : IDisposable
         view.Show();
         cts = new CancellationTokenSource();
         memberListService.OnMemberListUpdated += HandleLiveUpdate;
-        HandleLiveUpdate(memberListService.LastKnownMemberList);
+        memberListService.RequestRefreshAsync().Forget();
     }
 
     private void OnMemberUpdated(ChatEvents.ChannelMemberUpdatedEvent evt)
@@ -53,14 +54,14 @@ public class ChatMemberListPresenter : IDisposable
         }
     }
 
-    private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> members)
+    private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
     {
         cts.Cancel();
         cts = new CancellationTokenSource();
 
         // Get the list of initial view models from the command.
         // The command will handle starting the thumbnail downloads.
-        currentMembers = getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(cts.Token);
+        currentMembers = getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(freshMembers, cts.Token);
 
         // Immediately display this list. Names appear instantly, pictures are loading.
         view.SetData(currentMembers);

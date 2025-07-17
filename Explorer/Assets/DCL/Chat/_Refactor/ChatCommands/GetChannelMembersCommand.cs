@@ -25,9 +25,9 @@ namespace DCL.Chat.ChatUseCases
             this.getProfileThumbnailCommand = getProfileThumbnailCommand;
         }
 
-        public List<ChatMemberListViewModel> GetInitialMembersAndStartLoadingThumbnails(CancellationToken ct)
+        public List<ChatMemberListViewModel> GetInitialMembersAndStartLoadingThumbnails(
+            IReadOnlyList<ChatMemberListView.MemberData> rawMembers, CancellationToken ct)
         {
-            IReadOnlyList<ChatMemberListView.MemberData> rawMembers = memberListService.LastKnownMemberList;
             var viewModels = new List<ChatMemberListViewModel>(rawMembers.Count);
 
             foreach (var member in rawMembers)
