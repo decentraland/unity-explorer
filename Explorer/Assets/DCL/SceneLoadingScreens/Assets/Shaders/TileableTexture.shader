@@ -2,6 +2,7 @@ Shader "Custom/AnimatedBackgroundMovingTexture"
 {
     Properties
     {
+        _MainTex ("Texture", 2D) = "white" {} // just placeholder to remove exception in the build
         _InnerColor ("Inner Color", Color) = (0.8,0.2,1,1)
         _OuterColor ("Outer Color", Color) = (0.3,0,0.5,1)
         _Radius ("Radius", Range(0,1)) = 0.35
