@@ -12,7 +12,6 @@ namespace DCL.PluginSystem.Global
         public MainUIPlugin(
             IMVCManager mvcManager,
             MainUIView mainUIView,
-            bool isFriendsEnabled,
             ISharedSpaceManager sharedSpaceManager)
         {
             this.mvcManager = mvcManager;
@@ -24,7 +23,6 @@ namespace DCL.PluginSystem.Global
                     return mainUIView;
                 },
                 mvcManager,
-                isFriendsEnabled,
                 sharedSpaceManager
             );
 

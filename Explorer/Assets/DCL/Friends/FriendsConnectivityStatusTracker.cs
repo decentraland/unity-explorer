@@ -1,3 +1,4 @@
+using DCL.FeatureFlags;
 using DCL.UI;
 using System;
 using System.Collections.Generic;
@@ -13,10 +14,11 @@ namespace DCL.Friends
         public event Action<FriendProfile>? OnFriendBecameAway;
         public event Action<FriendProfile>? OnFriendBecameOffline;
 
-        public FriendsConnectivityStatusTracker(IFriendsEventBus friendEventBus,
-            bool isConnectivityStatusEnabled)
+        public FriendsConnectivityStatusTracker(IFriendsEventBus friendEventBus)
         {
             this.friendEventBus = friendEventBus;
+
+            bool isConnectivityStatusEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_ONLINE_STATUS);
 
             if (!isConnectivityStatusEnabled) return;
 

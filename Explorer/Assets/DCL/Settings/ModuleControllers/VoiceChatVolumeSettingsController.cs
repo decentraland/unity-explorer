@@ -24,7 +24,7 @@ namespace DCL.Settings.ModuleControllers
             view.SliderView.Slider.onValueChanged.AddListener(SetVoiceChatVolumeSettings);
             SetVoiceChatVolumeSettings(view.SliderView.Slider.value);
 
-            view.SetActive(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.VOICE_CHAT));
+            view.SetActive(FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT));
         }
 
         private void SetVoiceChatVolumeSettings(float volumePercentage)
