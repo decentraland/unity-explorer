@@ -62,6 +62,7 @@ namespace DCL.VoiceChat
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly IVoiceService rpcPrivateVoiceChatService;
+        private readonly ICommunityVoiceService rpcCommunityVoiceChatService;
 
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
@@ -83,13 +84,16 @@ namespace DCL.VoiceChat
         public VoiceChatOrchestrator(
             PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
-            IVoiceService rpcPrivateVoiceChatService)
+            IVoiceService rpcPrivateVoiceChatService,
+            ICommunityVoiceService rpcCommunityVoiceChatService)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.rpcPrivateVoiceChatService = rpcPrivateVoiceChatService;
+            this.rpcCommunityVoiceChatService = rpcCommunityVoiceChatService;
 
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
+            rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
             privateStatusSubscription = privateVoiceChatCallStatusService.Status.Subscribe(OnPrivateVoiceChatStatusChanged);
             communityStatusSubscription = communityVoiceChatCallStatusService.Status.Subscribe(OnCommunityVoiceChatStatusChanged);
         }
@@ -97,6 +101,7 @@ namespace DCL.VoiceChat
         public void Dispose()
         {
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived -= OnPrivateVoiceChatUpdateReceived;
+            rpcCommunityVoiceChatService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
             privateStatusSubscription?.Dispose();
             communityStatusSubscription?.Dispose();
 
@@ -116,6 +121,18 @@ namespace DCL.VoiceChat
 
             SetActiveCallService(privateVoiceChatCallStatusService);
             privateVoiceChatCallStatusService.StartCall(walletId);
+        }
+
+        public void StartCommunityCall(string communityId)
+        {
+            if (currentVoiceChatType.Value == VoiceChatType.PRIVATE)
+            {
+                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Cannot start community call when in a private call");
+                return;
+            }
+
+            SetActiveCallService(communityVoiceChatCallStatusService);
+            communityVoiceChatCallStatusService.StartCall(communityId);
         }
 
         public void AcceptCall()
@@ -139,6 +156,11 @@ namespace DCL.VoiceChat
         public void HandleConnectionError()
         {
             activeCallStatusService?.HandleLivekitConnectionFailed();
+        }
+
+        private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate update)
+        {
+            communityVoiceChatCallStatusService.OnPrivateVoiceChatUpdateReceived(update);
         }
 
         private void OnPrivateVoiceChatUpdateReceived(PrivateVoiceChatUpdate update)

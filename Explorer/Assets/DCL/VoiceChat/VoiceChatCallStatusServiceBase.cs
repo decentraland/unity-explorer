@@ -16,7 +16,7 @@ namespace DCL.VoiceChat
         public string CallId { get; protected set; }
         public string RoomUrl { get; protected set; }
 
-        public abstract void StartCall(Web3Address userAddress);
+        public abstract void StartCall(string target);
         public abstract void HangUp();
         public abstract void HandleLivekitConnectionFailed();
 

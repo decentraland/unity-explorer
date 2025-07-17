@@ -153,7 +153,7 @@ namespace DCL.VoiceChat
         {
             //This state comes after a call to BE, so we won't show any tooltip until the reply arrives.
             //DO we need to add some loading/calling animation here??
-            if (newStatus == VoiceChatStatus.VOICE_CHAT_USER_BUSY)
+            if (newStatus == VoiceChatStatus.VOICE_CHAT_BUSY)
             {
                 ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
             }

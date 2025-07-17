@@ -20,7 +20,7 @@ namespace DCL.VoiceChat
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
             communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService);
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, communityVoiceChatCallStatusService, rpcPrivateVoiceChatService);
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, communityVoiceChatCallStatusService, rpcPrivateVoiceChatService, rpcCommunityVoiceChatService);
         }
 
         public void Dispose()
@@ -28,8 +28,8 @@ namespace DCL.VoiceChat
             privateVoiceChatCallStatusService?.Dispose();
             communityVoiceChatCallStatusService?.Dispose();
             rpcPrivateVoiceChatService?.Dispose();
-            rpcCommunityVoiceChatService?.Dispose();
             VoiceChatOrchestrator?.Dispose();
+            rpcCommunityVoiceChatService?.Dispose();
         }
     }
 }

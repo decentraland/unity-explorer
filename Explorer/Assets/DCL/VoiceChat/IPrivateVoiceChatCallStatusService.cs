@@ -7,6 +7,6 @@ namespace DCL.VoiceChat
     /// </summary>
     public interface IPrivateVoiceChatCallStatusService
     {
-        Web3Address CurrentTargetWallet { get; }
+        string CurrentTargetWallet { get; }
     }
 }

@@ -17,7 +17,7 @@ namespace DCL.VoiceChat
         //Local state when user rejects a call
         VOICE_CHAT_REJECTING_CALL,
         //Remote status when user is busy
-        VOICE_CHAT_USER_BUSY,
+        VOICE_CHAT_BUSY,
         //Generic error for unhandled exceptions
         VOICE_CHAT_GENERIC_ERROR,
     }

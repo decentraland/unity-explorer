@@ -1,11 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Utilities.Extensions;
 using DCL.VoiceChat.Services;
 using DCL.Web3;
 using Decentraland.SocialService.V2;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -17,77 +15,94 @@ namespace DCL.VoiceChat
     /// </summary>
     public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
     {
-        private readonly ICommunityVoiceService communityVoiceService;
+        private readonly ICommunityVoiceService voiceChatService;
         private CancellationTokenSource cts;
-        private readonly Dictionary<string, string> communityVoiceChatCalls = new();
-
-        public CommunityVoiceChatCallStatusService(ICommunityVoiceService communityVoiceService)
+        public CommunityVoiceChatCallStatusService(ICommunityVoiceService voiceChatService)
         {
-            this.communityVoiceService = communityVoiceService;
-            this.communityVoiceService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
+            this.voiceChatService = voiceChatService;
             cts = new CancellationTokenSource();
-
-            SubscribeToCommunityVoiceChatUpdatesAsync(cts.Token).Forget();
         }
 
-        public override void Dispose()
+        public override void StartCall(string communityId)
         {
-            if (communityVoiceService != null)
-            {
-                communityVoiceService.CommunityVoiceChatUpdateReceived -= OnCommunityVoiceChatUpdateReceived;
-                communityVoiceService.Dispose();
-            }
+            //We can start a call only if we are not connected or trying to start a call
+            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
 
-            cts.SafeCancelAndDispose();
-            base.Dispose();
+            cts = cts.SafeRestart();
+
+            //Setting starting call status to instantly disable call button
+            UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
+
+            StartCallAsync(communityId, cts.Token).Forget();
         }
 
-        private void OnCommunityVoiceChatUpdateReceived(CommunityVoiceChatUpdate communityUpdate)
-        {
-            if (string.IsNullOrEmpty(communityUpdate.CommunityId))
-            {
-                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "Received community voice chat update with empty community ID");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(communityUpdate.VoiceChatId))
-            {
-                // Remove community from dictionary if call_id is empty
-                if (communityVoiceChatCalls.Remove(communityUpdate.CommunityId))
-                {
-                    ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Removed community {communityUpdate.CommunityId} from voice chat calls");
-                }
-            }
-            else
-            {
-                // Add or update community with new call_id
-                communityVoiceChatCalls[communityUpdate.CommunityId] = communityUpdate.VoiceChatId;
-                ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Updated community {communityUpdate.CommunityId} with Voice Chat ID {communityUpdate.VoiceChatId}");
-            }
-        }
-
-        private async UniTaskVoid SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct)
+        private async UniTaskVoid StartCallAsync(string communityId, CancellationToken ct)
         {
             try
             {
-                await communityVoiceService.SubscribeToCommunityVoiceChatUpdatesAsync(ct)
-                    .SuppressToResultAsync(ReportCategory.COMMUNITY_VOICE_CHAT);
+                StartCommunityVoiceChatResponse response = await voiceChatService.StartCommunityVoiceChatAsync(communityId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    //When the call can be started
+                    case StartCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        RoomUrl = response.Ok.Credentials.ConnectionUrl;
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                        break;
+
+                    case StartCommunityVoiceChatResponse.ResponseOneofCase.InvalidRequest:
+                    case StartCommunityVoiceChatResponse.ResponseOneofCase.ConflictingError:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_BUSY);
+                        break;
+                    default:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                        break;
+                }
             }
-            catch (OperationCanceledException) { } // Expected, don't report
             catch (Exception e)
             {
-                ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
             }
-        }
-
-        public override void StartCall(Web3Address userAddress)
-        {
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Community voice chat StartCall not yet implemented");
         }
 
         public override void HangUp()
         {
-            ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Community voice chat HangUp not yet implemented");
+            //TODO: currently just exits, need to figure out how to handle hang up
+            UpdateStatus(VoiceChatStatus.DISCONNECTED);
+        }
+
+        public void JoinCommunityVoiceChat()
+        {
+            //We can start a call only if we are not connected or trying to start a call
+            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
+
+            cts = cts.SafeRestart();
+            UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
+            JoinCommunityVoiceChatAsync(CallId, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
+        {
+            try
+            {
+                JoinCommunityVoiceChatResponse response = await voiceChatService.JoinCommunityVoiceChatAsync(communityId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    case JoinCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        RoomUrl = response.Ok.Credentials.ConnectionUrl;
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
+                        break;
+                    default:
+                        ResetVoiceChatData();
+                        UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+            }
         }
 
         public override void HandleLivekitConnectionFailed()
@@ -96,15 +111,9 @@ namespace DCL.VoiceChat
             UpdateStatus(VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR);
         }
 
-        public bool HasActiveVoiceChatCall(string communityId, out string? callId)
+        public void OnPrivateVoiceChatUpdateReceived(CommunityVoiceChatUpdate update)
         {
-            if (string.IsNullOrEmpty(communityId))
-            {
-                callId = null;
-                return false;
-            }
-
-            return communityVoiceChatCalls.TryGetValue(communityId, out callId);
+            //Send the community voice chat started event
         }
     }
 }
