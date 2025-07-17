@@ -12,10 +12,10 @@ using Utility;
 
 namespace DCL.VoiceChat
 {
-    public class VoiceChatController : IDisposable
+    public class PrivateVoiceChatController : IDisposable
     {
         private readonly VoiceChatView view;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ProfileRepositoryWrapper profileDataProvider;
         private readonly IRoom voiceChatRoom;
         private readonly MicrophoneButtonController micController;
@@ -23,15 +23,15 @@ namespace DCL.VoiceChat
         private CancellationTokenSource cts;
         private IDisposable? statusSubscription;
 
-        public VoiceChatController(
+        public PrivateVoiceChatController(
             VoiceChatView view,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IVoiceChatOrchestrator voiceChatOrchestrator,
             VoiceChatMicrophoneHandler microphoneHandler,
             ProfileRepositoryWrapper profileDataProvider,
             IRoom voiceChatRoom)
         {
             this.view = view;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.profileDataProvider = profileDataProvider;
             this.voiceChatRoom = voiceChatRoom;
 
@@ -51,7 +51,7 @@ namespace DCL.VoiceChat
 
             micController = new MicrophoneButtonController(list, microphoneHandler, view.MuteMicrophoneAudio, view.UnMuteMicrophoneAudio);
 
-            statusSubscription = this.voiceChatCallStatusService.Status.Subscribe(OnVoiceChatStatusChanged);
+            statusSubscription = this.voiceChatOrchestrator.CurrentCallStatus.Subscribe(OnVoiceChatStatusChanged);
             this.voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             this.voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
@@ -109,23 +109,23 @@ namespace DCL.VoiceChat
             else
                 UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(view.CallTuneAudio);
 
-            view.SetActiveSection(status, voiceChatCallStatusService.CurrentTargetWallet, profileDataProvider);
+            view.SetActiveSection(status, voiceChatOrchestrator.PrivateStatusService.CurrentTargetWallet, profileDataProvider);
         }
 
         private void HangUp()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.LeaveCallAudio);
-            voiceChatCallStatusService.HangUp();
+            voiceChatOrchestrator.HangUp();
         }
 
         private void RefuseCall()
         {
-            voiceChatCallStatusService.RejectCall();
+            voiceChatOrchestrator.RejectCall();
         }
 
         private void AcceptCall()
         {
-            voiceChatCallStatusService.AcceptCall();
+            voiceChatOrchestrator.AcceptCall();
         }
 
         public void Dispose()

@@ -54,7 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
 
         private CancellationTokenSource friendServiceSubscriptionCts = new ();
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
@@ -97,7 +97,7 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<FriendsCache> friendsCacheProxy,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatOrchestrator voiceChatOrchestrator)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -111,7 +111,7 @@ namespace DCL.PluginSystem.Global
             this.appArgs = appArgs;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileRepositoryWrapper = profileDataProvider;
 
@@ -148,7 +148,7 @@ namespace DCL.PluginSystem.Global
                 isConnectivityStatusEnabled,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatCallStatusService
+                voiceChatOrchestrator
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);

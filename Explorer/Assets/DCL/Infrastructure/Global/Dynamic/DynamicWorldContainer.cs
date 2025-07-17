@@ -48,7 +48,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
-using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
@@ -88,7 +87,6 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.VoiceChat;
-using DCL.VoiceChat.Services;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
@@ -545,8 +543,7 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
-            IVoiceService voiceService = new RPCVoiceChatService(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
-            IVoiceChatCallStatusService voiceChatCallStatusService = new VoiceChatCallStatusService(voiceService);
+            VoiceChatContainer voiceChatContainer = new VoiceChatContainer(socialServiceContainer.socialServicesRPC, socialServiceEventBus);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
@@ -726,8 +723,9 @@ namespace Global.Dynamic
                     thumbnailCache,
                     mainUIView.WarningNotification,
                     communitiesEventBus,
-                    voiceChatCallStatusService,
-                    includeVoiceChat),
+                    voiceChatContainer.VoiceChatOrchestrator,
+                    includeVoiceChat
+                    ),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -862,7 +860,7 @@ namespace Global.Dynamic
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
-                    voiceChatCallStatusService
+                    voiceChatContainer.VoiceChatOrchestrator
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -876,11 +874,13 @@ namespace Global.Dynamic
                         assetsProvisioner,
                         roomHub,
                         mainUIView,
-                        voiceChatCallStatusService,
+                        voiceChatContainer,
                         profileRepositoryWrapper,
                         entityParticipantTable,
                         globalWorld,
-                        playerEntity));
+                        playerEntity
+                        )
+                    );
 
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
@@ -930,7 +930,7 @@ namespace Global.Dynamic
                     friendsCacheProxy,
                     userBlockingCacheProxy,
                     profileRepositoryWrapper,
-                    voiceChatCallStatusService
+                    voiceChatContainer.VoiceChatOrchestrator
                 );
 
                 globalPlugins.Add(friendsContainer);

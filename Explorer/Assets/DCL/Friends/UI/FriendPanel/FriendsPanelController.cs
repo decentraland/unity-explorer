@@ -70,7 +70,7 @@ namespace DCL.Friends.UI.FriendPanel
             bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
             this.chatEventBus = chatEventBus;
@@ -104,7 +104,7 @@ namespace DCL.Friends.UI.FriendPanel
                     chatEventBus,
                     sharedSpaceManager,
                     includeCall,
-                    voiceChatCallStatusService);
+                    voiceChatOrchestrator);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,

@@ -1,0 +1,171 @@
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.SocialService;
+using Decentraland.SocialService.V2;
+using Google.Protobuf.WellKnownTypes;
+using System;
+using System.Threading;
+
+namespace DCL.VoiceChat.Services
+{
+    public class RPCCommunityVoiceChatService : ICommunityVoiceService
+    {
+        /// <summary>
+        ///     Timeout used for foreground operations
+        /// </summary>
+        private const int FOREGROUND_TIMEOUT_SECONDS = 10;
+
+        /// <summary>
+        ///     Maximum number of retry attempts for server stream connection
+        /// </summary>
+        private const int MAX_STREAM_RETRY_ATTEMPTS = 5;
+
+        /// <summary>
+        ///     Base delay in seconds between retry attempts (will be exponentially increased)
+        /// </summary>
+        private const int BASE_RETRY_DELAY_SECONDS = 2;
+
+        private const string START_COMMUNITY_VOICE_CHAT = "StartCommunityVoiceChat";
+        private const string JOIN_COMMUNITY_VOICE_CHAT = "JoinCommunityVoiceChat";
+        private const string SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES = "SubscribeToCommunityVoiceChatUpdates";
+
+        private readonly IRPCSocialServices socialServiceRPC;
+
+        public event Action<CommunityVoiceChatUpdate> CommunityVoiceChatUpdateReceived;
+
+        private bool isServiceDisabled = false;
+
+        public RPCCommunityVoiceChatService(IRPCSocialServices socialServiceRPC)
+        {
+            this.socialServiceRPC = socialServiceRPC;
+        }
+
+        public void Dispose()
+        {
+        }
+
+        public async UniTask<StartCommunityVoiceChatResponse> StartCommunityVoiceChatAsync(string communityId, CancellationToken ct)
+        {
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+            var payload = new StartCommunityVoiceChatPayload
+            {
+                CommunityId = communityId
+            };
+
+            StartCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+                                                                              .CallUnaryProcedure<StartCommunityVoiceChatResponse>(START_COMMUNITY_VOICE_CHAT, payload)
+                                                                              .AttachExternalCancellation(ct)
+                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public async UniTask<JoinCommunityVoiceChatResponse> JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
+        {
+            await socialServiceRPC.EnsureRpcConnectionAsync(ct);
+            var payload = new JoinCommunityVoiceChatPayload()
+            {
+                CommunityId = communityId
+            };
+
+            JoinCommunityVoiceChatResponse? response = await socialServiceRPC.Module()!
+                                                                              .CallUnaryProcedure<JoinCommunityVoiceChatResponse>(JOIN_COMMUNITY_VOICE_CHAT, payload)
+                                                                              .AttachExternalCancellation(ct)
+                                                                              .Timeout(TimeSpan.FromSeconds(FOREGROUND_TIMEOUT_SECONDS));
+
+            return response;
+        }
+
+        public UniTask SubscribeToCommunityVoiceChatUpdatesAsync(CancellationToken ct)
+        {
+            return KeepServerStreamOpenAsync(OpenStreamAndProcessUpdatesAsync, ct);
+
+            async UniTask OpenStreamAndProcessUpdatesAsync()
+            {
+                int retryAttempt = 0;
+                bool streamOpened = false;
+
+                while (retryAttempt < MAX_STREAM_RETRY_ATTEMPTS && !ct.IsCancellationRequested)
+                {
+                    try
+                    {
+                        IUniTaskAsyncEnumerable<CommunityVoiceChatUpdate> stream =
+                            socialServiceRPC.Module()!.CallServerStream<CommunityVoiceChatUpdate>(SUBSCRIBE_TO_COMMUNITY_VOICE_CHAT_UPDATES, new Empty());
+
+                        streamOpened = true;
+                        ReportHub.Log(ReportCategory.VOICE_CHAT, "Successfully opened community voice chat updates stream");
+
+                        await foreach (CommunityVoiceChatUpdate? response in stream)
+                        {
+                            try
+                            {
+                                CommunityVoiceChatUpdateReceived?.Invoke(response);
+                            }
+                            // Do exception handling as we need to keep the stream open in case we have an internal error in the processing of the data
+                            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT)); }
+                        }
+
+                        // If we reach here, the stream has ended normally
+                        break;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Cancellation requested, exit the retry loop
+                        break;
+                    }
+                    catch (Exception e)
+                    {
+                        retryAttempt++;
+                        ReportHub.LogError($"Failed to open community voice chat updates stream (attempt {retryAttempt}/{MAX_STREAM_RETRY_ATTEMPTS} exception {e}", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+
+                        if (retryAttempt >= MAX_STREAM_RETRY_ATTEMPTS)
+                        {
+                            ReportHub.LogError($"Failed to open community voice chat updates stream after {MAX_STREAM_RETRY_ATTEMPTS} attempts. Disabling voice chat service.", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                            isServiceDisabled = true;
+                            break;
+                        }
+
+                        // Calculate exponential backoff delay
+                        int delaySeconds = BASE_RETRY_DELAY_SECONDS * (int)Math.Pow(2, retryAttempt - 1);
+                        ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, $"Retrying community voice chat updates stream connection in {delaySeconds} seconds...");
+
+                        try
+                        {
+                            await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken: ct);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // Cancellation requested during delay, exit the retry loop
+                            break;
+                        }
+                    }
+                }
+
+                if (!streamOpened && !ct.IsCancellationRequested)
+                {
+                    ReportHub.LogError("Failed to establish community voice chat updates stream after all retry attempts", new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                }
+            }
+        }
+
+        private async UniTask KeepServerStreamOpenAsync(Func<UniTask> openStreamFunc, CancellationToken ct)
+        {
+            // We try to keep the stream open until cancellation is requested
+            // If for any reason the rpc connection has a problem, we need to wait until it is restored, so we re-open the stream
+            while (!ct.IsCancellationRequested && !isServiceDisabled)
+            {
+                try
+                {
+                    // It's an endless [background] loop
+                    await socialServiceRPC.EnsureRpcConnectionAsync(int.MaxValue, ct);
+                    await openStreamFunc().AttachExternalCancellation(ct);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.COMMUNITY_VOICE_CHAT));
+                }
+            }
+        }
+    }
+}

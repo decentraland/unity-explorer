@@ -110,26 +110,27 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void SetActiveSection(VoiceChatStatus status, Web3Address walletId, ProfileRepositoryWrapper profileDataProvider)
+        public void SetActiveSection(VoiceChatStatus status, string walletId, ProfileRepositoryWrapper profileDataProvider)
         {
             cts = cts.SafeRestart();
             DisableAllSections();
+            Web3Address wallet = new Web3Address(walletId);
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_IN_CALL:
                     ConnectingView.gameObject.SetActive(true);
-                    ConnectingView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
-                    InCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
+                    ConnectingView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
+                    InCallView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
                     IncomingCallView.SetActive(true);
-                    IncomingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
+                    IncomingCallView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
                     break;
                 case VoiceChatStatus.VOICE_CHAT_STARTED_CALL:
                     OutgoingCallView.gameObject.SetActive(true);
-                    OutgoingCallView.ProfileView.SetupAsync(walletId, profileDataProvider, cts.Token).Forget();
+                    OutgoingCallView.ProfileView.SetupAsync(wallet, profileDataProvider, cts.Token).Forget();
                     break;
-                case VoiceChatStatus.VOICE_CHAT_USER_BUSY:
+                case VoiceChatStatus.VOICE_CHAT_BUSY:
                 case VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR:
                     ErrorView.SetActive(true);
                     ErrorView.StartErrorPanelDisableFlow();
