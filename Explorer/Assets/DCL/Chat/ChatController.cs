@@ -690,19 +690,17 @@ namespace DCL.Chat
 
         private async void OnViewCurrentChannelChangedAsync()
         {
-            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER)
+            if (chatHistory.Channels[viewInstance!.CurrentChannelId].ChannelType == ChatChannel.ChatChannelType.USER &&
+                chatStorage != null && !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
             {
-                if (chatStorage != null && !chatStorage.IsChannelInitialized(viewInstance.CurrentChannelId))
-                {
-                    await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
-                    chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
+                await chatStorage.InitializeChannelWithMessagesAsync(viewInstance.CurrentChannelId);
+                chatHistory.Channels[viewInstance.CurrentChannelId].MarkAllMessagesAsRead();
 
-                    if (chatHistory.Channels[viewInstance.CurrentChannelId].Messages.Count == 0)
-                        chatHistory.AddMessage(viewInstance.CurrentChannelId, chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
+                if (chatHistory.Channels[viewInstance.CurrentChannelId].Messages.Count == 0)
+                    chatHistory.AddMessage(viewInstance.CurrentChannelId, chatHistory.Channels[viewInstance.CurrentChannelId].ChannelType, ChatMessage.NewFromSystem(NEW_CHAT_MESSAGE));
 
-                    viewInstance.RefreshMessages();
-                }
-          }
+                viewInstance.RefreshMessages();
+            }
 
             // Note: The check is necessary because when the chat loads the Nearby participant list is not ready yet
             if(userConnectivityInfoProvider.HasConversation(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY))
@@ -938,11 +936,10 @@ namespace DCL.Chat
             inputBlock.Enable(InputMapComponent.BLOCK_USER_INPUT);
         }
 
-        private UniTask GetChannelMembersAsync(List<ChatUserData> outMembers, CancellationToken ct) =>
-            GetChannelMembersAsync(viewInstance!.CurrentChannelId, outMembers, ct);
-
-        private async UniTask GetChannelMembersAsync(ChatChannel.ChannelId channelId, List<ChatUserData> outMembers, CancellationToken ct)
+        private async UniTask GetChannelMembersAsync(List<ChatUserData> outMembers, CancellationToken ct)
         {
+            ChatChannel.ChannelId channelId = viewInstance!.CurrentChannelId;
+
             outMembers.Clear();
 
             if (chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.NEARBY)
