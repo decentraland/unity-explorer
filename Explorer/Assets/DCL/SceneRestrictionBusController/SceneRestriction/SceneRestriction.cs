@@ -40,10 +40,10 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
                 Action = action,
             };
 
-        public static SceneRestriction CreateSkyboxTimeLocked(SceneRestrictionsAction action) =>
+        public static SceneRestriction CreateSkyboxTimeUILocked(SceneRestrictionsAction action) =>
             new ()
             {
-                Type = SceneRestrictions.SKYBOX_TIME_BLOCKED,
+                Type = SceneRestrictions.SKYBOX_TIME_UI_BLOCKED,
                 Action = action,
             };
     }
@@ -55,7 +55,7 @@ namespace DCL.SceneRestrictionBusController.SceneRestriction
         AVATAR_MOVEMENTS_BLOCKED,
         PASSPORT_CANNOT_BE_OPENED,
         EXPERIENCES_BLOCKED,
-        SKYBOX_TIME_BLOCKED,
+        SKYBOX_TIME_UI_BLOCKED,
     }
 
     public enum SceneRestrictionsAction
