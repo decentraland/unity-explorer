@@ -24,7 +24,7 @@ namespace DCL.FeatureFlags
         ///     Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
         /// </summary>
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public async UniTask<bool> IsFeatureEnabledForUserAsync(CancellationToken ct)
+        public async UniTask<bool> IsFeatureEnabledAsync(CancellationToken ct)
         {
             if (storedResult != null)
                 return storedResult.Value;

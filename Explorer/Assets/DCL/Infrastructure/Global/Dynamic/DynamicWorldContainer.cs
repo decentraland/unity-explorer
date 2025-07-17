@@ -961,7 +961,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus));
             }
 
-            if (await FeaturesRegistry.Instance.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct))
+            if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct))
                 globalPlugins.Add(new CommunitiesPlugin(
                     mvcManager,
                     assetsProvisioner,

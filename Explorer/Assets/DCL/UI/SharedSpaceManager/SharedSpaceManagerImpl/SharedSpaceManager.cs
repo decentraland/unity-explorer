@@ -65,7 +65,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await FeaturesRegistry.Instance.IsEnabledForUserAsync(FeatureId.COMMUNITIES, ct);
+            isCommunitiesFeatureEnabled = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct);
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
 

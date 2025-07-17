@@ -181,9 +181,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager,
                 warningNotificationView,
                 communitiesEventBus,
-                voiceChatCallStatusService
-                )
-                ;
+                voiceChatCallStatusService);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
 

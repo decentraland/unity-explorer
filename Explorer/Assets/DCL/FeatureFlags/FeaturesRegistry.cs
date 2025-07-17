@@ -11,10 +11,10 @@ namespace DCL.FeatureFlags
     ///     Centralized feature enablement management with support for both global and user-specific features.
     ///     Usage:
     ///     - Use IsEnabled() for global features (FRIENDS, VOICE_CHAT, CAMERA_REEL)
-    ///     - Use IsEnabledForUserAsync() for user-specific features (COMMUNITIES)
+    ///     - Use IsEnabledAsync() for specific features that require complex logic (COMMUNITIES)
     ///     - Use GetFeatureProvider() for direct access to provider-specific methods
     ///     - Use RegisterFeatureProvider() to register user-specific feature providers
-    ///     - User-specific features are handled through registered IFeatureProvider implementations.
+    ///     - Specific features with complex logic are handled through registered IFeatureProvider implementations.
     /// </summary>
     [Singleton]
     public partial class FeaturesRegistry
@@ -71,11 +71,11 @@ namespace DCL.FeatureFlags
         ///     Examples of user-specific features: COMMUNITIES
         ///     For global features, this returns the same result as IsEnabled() but asynchronously.
         /// </summary>
-        public async UniTask<bool> IsEnabledForUserAsync(FeatureId featureId, CancellationToken ct)
+        public async UniTask<bool> IsEnabledAsync(FeatureId featureId, CancellationToken ct)
         {
             // Check if there's a registered provider for this feature
             if (featureProviders.TryGetValue(featureId, out IFeatureProvider? provider))
-                return await provider.IsFeatureEnabledForUserAsync(ct);
+                return await provider.IsFeatureEnabledAsync(ct);
 
             // For features without providers, return the cached global state
             return IsEnabled(featureId);
