@@ -1,5 +1,4 @@
-﻿// --- In a new file: Chat/Views/ChatMemberListItemView.cs ---
-using System;
+﻿using System;
 using DCL.Chat.ChatViewModels;
 using TMPro;
 using UnityEngine;
@@ -14,9 +13,9 @@ namespace DCL.Chat
         [Header("UI References")]
         [SerializeField] private TMP_Text userNameText;
         [SerializeField] private ChatProfilePictureView profilePictureView;
+        [SerializeField] private ChatUsernameView usernameView;
         [SerializeField] private GameObject onlineIndicator;
         [SerializeField] private Button contextMenuButton;
-        [SerializeField] private Image nameHighlightImage;
 
         private string currentUserId;
 
@@ -28,10 +27,9 @@ namespace DCL.Chat
         public void Setup(ChatMemberListViewModel model)
         {
             currentUserId = model.UserId;
-            userNameText.text = model.UserName;
             onlineIndicator.SetActive(model.IsOnline);
             profilePictureView.Setup(model.ProfilePicture, model.IsLoading);
-            // nameHighlightImage.color = model.ProfileColor;
+            usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, model.ProfileColor);
         }
     }
 }

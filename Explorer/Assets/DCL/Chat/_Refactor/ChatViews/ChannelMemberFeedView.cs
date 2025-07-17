@@ -1,4 +1,5 @@
-﻿using DCL.Chat.ChatViewModels;
+﻿using System;
+using DCL.Chat.ChatViewModels;
 using DCL.UI.Utilities;
 using SuperScrollView;
 using System.Collections.Generic;
@@ -12,8 +13,8 @@ namespace DCL.Chat
         [SerializeField] private LoopListView2 loopListView;
         [SerializeField] private GameObject loadingSpinner;
 
-        private List<ChatMemberListViewModel> members = new ();
-        public event System.Action<string> OnMemberContextMenuRequested;
+        private List<ChatMemberListViewModel> membersToDisplay = new ();
+        public event Action<string> OnMemberContextMenuRequested;
 
         private void Awake()
         {
@@ -29,18 +30,37 @@ namespace DCL.Chat
 
         public void SetData(List<ChatMemberListViewModel> memberList)
         {
-            members = memberList;
-            loopListView.SetListItemCount(members.Count, true);
+            membersToDisplay = memberList;
+
+            loopListView.SetListItemCount(membersToDisplay.Count);
             loopListView.RefreshAllShownItem();
             SetLoading(false);
         }
 
+        public void UpdateMember(ChatMemberListViewModel updatedViewModel)
+        {
+            for (int i = 0; i < membersToDisplay.Count; i++)
+            {
+                if (membersToDisplay[i].UserId == updatedViewModel.UserId)
+                {
+                    var item = loopListView.GetShownItemByItemIndex(i);
+                    if (item != null)
+                    {
+                        var itemComponent = item.GetComponent<ChannelMemberEntryView>();
+                        itemComponent.Setup(updatedViewModel);
+                    }
+
+                    break;
+                }
+            }
+        }
+
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
         {
-            if (index < 0 || index >= members.Count)
+            if (index < 0 || index >= membersToDisplay.Count)
                 return null;
 
-            ChatMemberListViewModel model = members[index];
+            var model = membersToDisplay[index];
             LoopListViewItem2 newItem = listView.NewListViewItem("ChatMemberListItem2");
 
             var itemComponent = newItem.GetComponent<ChannelMemberEntryView>();
@@ -59,10 +79,5 @@ namespace DCL.Chat
 
         public void Show() => gameObject.SetActive(true);
         public void Hide() => gameObject.SetActive(false);
-
-        public void SetMemberCount(int memberCount)
-        {
-            
-        }
     }
 }

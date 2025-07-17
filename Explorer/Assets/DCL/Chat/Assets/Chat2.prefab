@@ -3890,7 +3890,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   thumbnailImageView: {fileID: 3208443591853523293}
   thumbnailBackground: {fileID: 1905312500665395523}
-  loadingSpinner: {fileID: 0}
+  loadingSpinner: {fileID: 3116339072077745991}
 --- !u!114 &6499250143713956460
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -4,36 +4,44 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.Services;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Chat.EventBus;
 using UnityEngine;
+using Utilities;
 
 namespace DCL.Chat.ChatUseCases
 {
     public class GetChannelMembersCommand
     {
+        private readonly IEventBus eventBus;
         private readonly ChatMemberListService memberListService;
-        private readonly GetProfileThumbnailCommand _getProfileThumbnailCommand;
+        private readonly GetProfileThumbnailCommand getProfileThumbnailCommand;
 
-        public GetChannelMembersCommand( ChatMemberListService memberListService,
+        public GetChannelMembersCommand(IEventBus eventBus,
+            ChatMemberListService memberListService,
             GetProfileThumbnailCommand getProfileThumbnailCommand)
         {
+            this.eventBus = eventBus;
             this.memberListService = memberListService;
-            this._getProfileThumbnailCommand = getProfileThumbnailCommand;
+            this.getProfileThumbnailCommand = getProfileThumbnailCommand;
         }
-        
-        public async UniTask<List<ChatMemberListViewModel>> ExecuteAsync(CancellationToken ct)
+
+        public List<ChatMemberListViewModel> GetInitialMembersAndStartLoadingThumbnails(CancellationToken ct)
         {
             IReadOnlyList<ChatMemberListView.MemberData> rawMembers = memberListService.LastKnownMemberList;
             var viewModels = new List<ChatMemberListViewModel>(rawMembers.Count);
-            var tasks = new List<UniTask<ChatMemberListViewModel>>(rawMembers.Count);
 
             foreach (var member in rawMembers)
             {
-                tasks.Add(CreateViewModelAsync(member, ct));
+                var viewModel = new ChatMemberListViewModel
+                {
+                    UserId = member.Id, UserName = member.Name, ProfilePicture = null, IsOnline = member.ConnectionStatus == ChatMemberConnectionStatus.Online,
+                    ProfileColor = member.ProfileColor, HasClaimedName = member.HasClaimedName, IsLoading = true
+                };
+
+                viewModels.Add(viewModel);
+
+                FetchThumbnailAndUpdateAsync(viewModel, member.FaceSnapshotUrl, ct).Forget();
             }
-
-            var results = await UniTask.WhenAll(tasks);
-
-            viewModels.AddRange(results);
 
             viewModels.Sort((a, b) 
                 => string.Compare(a.UserName, b.UserName, StringComparison.OrdinalIgnoreCase));
@@ -41,17 +49,19 @@ namespace DCL.Chat.ChatUseCases
             return viewModels;
         }
 
-        private async UniTask<ChatMemberListViewModel> CreateViewModelAsync(ChatMemberListView.MemberData member, CancellationToken ct)
+        private async UniTaskVoid FetchThumbnailAndUpdateAsync(ChatMemberListViewModel viewModel, string faceSnapshotUrl, CancellationToken ct)
         {
-            Sprite thumbnail = await _getProfileThumbnailCommand.ExecuteAsync(member.Id, member.FaceSnapshotUrl, ct);
+            var thumbnail = await getProfileThumbnailCommand.ExecuteAsync(viewModel.UserId, faceSnapshotUrl, ct);
 
-            if (ct.IsCancellationRequested) return null; // Handle cancellation
+            if (ct.IsCancellationRequested) return;
 
-            return new ChatMemberListViewModel
+            viewModel.ProfilePicture = thumbnail;
+            viewModel.IsLoading = false;
+
+            eventBus.Publish(new ChatEvents.ChannelMemberUpdatedEvent
             {
-                UserId = member.Id, UserName = member.Name, ProfilePicture = thumbnail, IsOnline = member.ConnectionStatus == ChatMemberConnectionStatus.Online,
-                ProfileColor = member.ProfileColor
-            };
+                ViewModel = viewModel
+            });
         }
     }
 }

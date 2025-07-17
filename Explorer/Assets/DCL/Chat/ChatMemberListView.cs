@@ -26,6 +26,7 @@ namespace DCL.Chat
             public string WalletId;
             public ChatMemberConnectionStatus ConnectionStatus;
             public Color ProfileColor;
+            public bool HasClaimedName;
         }
 
         public delegate void VisibilityChangedDelegate(bool isVisible);

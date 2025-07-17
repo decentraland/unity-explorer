@@ -70,8 +70,9 @@ namespace DCL.Chat.ChatUseCases
             GetProfileThumbnail = new GetProfileThumbnailCommand(eventBus,
                 chatConfig,
                 profileRepositoryWrapper);
-            
-            GetChannelMembersCommand = new GetChannelMembersCommand(chatMemberListService,
+
+            GetChannelMembersCommand = new GetChannelMembersCommand(eventBus,
+                chatMemberListService,
                 GetProfileThumbnail);
             
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,

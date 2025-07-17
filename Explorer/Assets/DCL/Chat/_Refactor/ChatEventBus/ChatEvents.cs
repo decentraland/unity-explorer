@@ -163,7 +163,22 @@ namespace DCL.Chat.EventBus
         }
         
         #endregion
- 
+
+        #region Member List Events
+
+        /// <summary>
+        ///     Event:          ChannelMemberUpdatedEvent
+        ///     Triggered By:   GetChannelMembersCommand
+        ///     When:           An individual member's async data (like a profile thumbnail) has finished loading.
+        ///     Subscribers:    ChatMemberListPresenter: Finds the specific member entry in the view and updates its visuals.
+        /// </summary>
+        public struct ChannelMemberUpdatedEvent
+        {
+            public ChatMemberListViewModel ViewModel;
+        }
+
+        #endregion
+        
         #region Miscellaneous Events
         
         /// <summary>

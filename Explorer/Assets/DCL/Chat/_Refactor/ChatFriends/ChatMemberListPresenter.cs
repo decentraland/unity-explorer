@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatViewModels;
+using DCL.Chat.EventBus;
 using DCL.Chat.Services;
 using Utilities;
 using Utility;
@@ -12,11 +13,13 @@ public class ChatMemberListPresenter : IDisposable
 {
     private readonly ChannelMemberFeedView view;
     private readonly IEventBus eventBus;
-    private readonly GetChannelMembersCommand _getChannelMembersCommand;
+    private readonly GetChannelMembersCommand getChannelMembersCommand;
     private readonly ChatMemberListService memberListService;
     private readonly EventSubscriptionScope scope = new ();
     private CancellationTokenSource cts = new ();
 
+    private List<ChatMemberListViewModel> currentMembers = new ();
+    
     public ChatMemberListPresenter(
         ChannelMemberFeedView view,
         IEventBus eventBus,
@@ -26,45 +29,41 @@ public class ChatMemberListPresenter : IDisposable
         this.view = view;
         this.eventBus = eventBus;
         this.memberListService = memberListService;
-        this._getChannelMembersCommand = getChannelMembersCommand;
+        this.getChannelMembersCommand = getChannelMembersCommand;
         
         this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
+        scope.Add(eventBus.Subscribe<ChatEvents.ChannelMemberUpdatedEvent>(OnMemberUpdated));
     }
 
-    private async UniTaskVoid LoadMembersAsync()
+    public void ShowAndLoad()
     {
-        cts = cts.SafeRestart();
-        
-        try
-        {
-            view.SetLoading(true);
-            var memberViewModels = await _getChannelMembersCommand.ExecuteAsync(cts.Token);
-            if (cts.IsCancellationRequested) return;
-            view.SetData(memberViewModels);
-        }
-        catch (OperationCanceledException) { }
-        catch (Exception e)
-        {
-            view.SetLoading(false);
-        }
+        view.Show();
+        cts = new CancellationTokenSource();
+        memberListService.OnMemberListUpdated += HandleLiveUpdate;
+        HandleLiveUpdate(memberListService.LastKnownMemberList);
     }
-    
-    private void OnMemberCountUpdated(int memberCount)
+
+    private void OnMemberUpdated(ChatEvents.ChannelMemberUpdatedEvent evt)
     {
-        view.SetMemberCount(memberCount);
+        int index = currentMembers.FindIndex(m => m.UserId == evt.ViewModel.UserId);
+        if (index != -1)
+        {
+            currentMembers[index] = evt.ViewModel;
+            view.UpdateMember(evt.ViewModel);
+        }
     }
 
     private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> members)
     {
-        
-    }
-    
-    public void ShowAndLoad()
-    {
-        view.Show();
-        LoadMembersAsync().Forget();
-        // TODO: use memberListService.LastKnownMemberList
-        memberListService.OnMemberListUpdated += HandleLiveUpdate;
+        cts.Cancel();
+        cts = new CancellationTokenSource();
+
+        // Get the list of initial view models from the command.
+        // The command will handle starting the thumbnail downloads.
+        currentMembers = getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(cts.Token);
+
+        // Immediately display this list. Names appear instantly, pictures are loading.
+        view.SetData(currentMembers);
     }
     
     public void Show() => ShowAndLoad();
@@ -73,6 +72,11 @@ public class ChatMemberListPresenter : IDisposable
     {
         view.Hide();
         memberListService.OnMemberListUpdated -= HandleLiveUpdate;
+
+        currentMembers.Clear();
+        view.SetData(currentMembers);
+
+        cts.Cancel();
     }
 
     private void OnMemberContextMenuRequested(string obj)

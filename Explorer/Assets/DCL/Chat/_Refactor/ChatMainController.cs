@@ -25,7 +25,7 @@ namespace DCL.Chat
         private readonly IEventBus eventBus;
         private readonly ChatInputBlockingService chatInputBlockingService;
         private readonly ChatSettingsAsset chatSettingsAsset;
-        private readonly CommandRegistry _commandRegistry;
+        private readonly CommandRegistry commandRegistry;
         private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ChatMemberListService chatMemberListService;
@@ -63,7 +63,7 @@ namespace DCL.Chat
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
             this.chatSettingsAsset = chatSettingsAsset;
-            this._commandRegistry = commandRegistry;
+            this.commandRegistry = commandRegistry;
             this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
@@ -98,34 +98,34 @@ namespace DCL.Chat
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 eventBus,
                 chatMemberListService,
-                _commandRegistry.GetTitlebarViewModel);
+                commandRegistry.GetTitlebarViewModel);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
                 profileRepositoryWrapper,
-                _commandRegistry.SelectChannel,
-                _commandRegistry.LeaveChannel,
-                _commandRegistry.CreateChannelViewModel);
+                commandRegistry.SelectChannel,
+                commandRegistry.LeaveChannel,
+                commandRegistry.CreateChannelViewModel);
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
                 eventBus,
                 currentChannelService,
-                _commandRegistry.GetMessageHistory,
-                _commandRegistry.CreateMessageViewModel,
-                _commandRegistry.MarkChannelAsRead);
+                commandRegistry.GetMessageHistory,
+                commandRegistry.CreateMessageViewModel,
+                commandRegistry.MarkChannelAsRead);
 
             var inputPresenter = new ChatInputPresenter(
                 viewInstance.InputView,
                 eventBus,
                 currentChannelService,
-                _commandRegistry.GetUserChatStatus,
-                _commandRegistry.SendMessage);
+                commandRegistry.GetUserChatStatus,
+                commandRegistry.SendMessage);
             
             var memberListPresenter = new ChatMemberListPresenter(
                 viewInstance.MemberListView,
                 eventBus,
                 chatMemberListService,
-                _commandRegistry.GetChannelMembersCommand);
+                commandRegistry.GetChannelMembersCommand);
             
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
@@ -155,7 +155,7 @@ namespace DCL.Chat
         protected override void OnViewShow()
         {
             initCts = new CancellationTokenSource();
-            _commandRegistry.InitializeChat.ExecuteAsync(initCts.Token).Forget();
+            commandRegistry.InitializeChat.ExecuteAsync(initCts.Token).Forget();
             chatStateMachine?.OnViewShow();
         }
 

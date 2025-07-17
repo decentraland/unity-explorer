@@ -84,24 +84,18 @@ namespace DCL.Chat.Services
                         await UniTask.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
                         continue;
                     }
-
+                    
                     int currentParticipantCount = roomHub.ParticipantsCount();
-                    if (currentParticipantCount != lastKnownParticipantCount)
-                    {
-                        ReportHub.Log(ReportData.UNSPECIFIED, $"Participant count changed from {lastKnownParticipantCount} to {currentParticipantCount}.");
-                        
-                        lastKnownParticipantCount = currentParticipantCount;
-                        await UniTask.SwitchToMainThread(cts.Token);
-                        if (cts.IsCancellationRequested) continue;
-                        OnMemberCountUpdated?.Invoke(currentParticipantCount);
-                    }
-
                     string currentIslandSid = roomHub.IslandRoom().Info.Sid;
-                    if (currentIslandSid != lastKnownIslandSid)
+
+                    if (currentIslandSid != lastKnownIslandSid ||
+                        currentParticipantCount != lastKnownParticipantCount)
                     {
-                        ReportHub.Log(ReportData.UNSPECIFIED, $"World/Island changed from '{lastKnownIslandSid}' to '{currentIslandSid}'. Refreshing member list.");
-                        
+                        ReportHub.Log(ReportData.UNSPECIFIED, $"Member list change detected. Island: '{lastKnownIslandSid}' -> '{currentIslandSid}'. Count: {lastKnownParticipantCount} -> {currentParticipantCount}. Refreshing.");
+                
                         lastKnownIslandSid = currentIslandSid;
+                        lastKnownParticipantCount = currentParticipantCount;
+
                         await GenerateAndBroadcastFullListAsync(cts.Token);
                     }
 
@@ -169,7 +163,7 @@ namespace DCL.Chat.Services
             return new ChatMemberListView.MemberData
             {
                 Id = profile.UserId, Name = profile.ValidatedName, FaceSnapshotUrl = profile.Avatar.FaceSnapshotUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
-                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor
+                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, HasClaimedName = profile.HasClaimedName
             };
         }
 
