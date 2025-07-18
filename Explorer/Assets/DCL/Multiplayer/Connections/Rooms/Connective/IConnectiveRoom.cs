@@ -135,7 +135,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             {
                 IConnectiveRoom.ConnectionLoopHealth.Prewarming => "Prewarming",
                 IConnectiveRoom.ConnectionLoopHealth.PrewarmFailed => "PrewarmFailed",
-                IConnectiveRoom.ConnectionLoopHealth.Running => "PrewarmFailed",
+                IConnectiveRoom.ConnectionLoopHealth.Running => "Running",
                 IConnectiveRoom.ConnectionLoopHealth.Stopped => "Stopped",
                 IConnectiveRoom.ConnectionLoopHealth.CycleFailed => "CycleFailed",
                 _ => UNDEFINED,

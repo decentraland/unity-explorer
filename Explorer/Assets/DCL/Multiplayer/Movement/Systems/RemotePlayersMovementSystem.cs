@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
         {
-            transComp.Transform.position = firstRemote.position;
+            SetPositionAndRotation(transComp.Transform, firstRemote.position, firstRemote.rotationY);
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
@@ -174,7 +174,8 @@ namespace DCL.Multiplayer.Movement.Systems
                        && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
 
-            transComp.Transform.position = remote.position;
+            SetPositionAndRotation(transComp.Transform, remote.position, remote.rotationY);
+
             remotePlayerMovement.AddPassed(remote, characterControllerSettings, wasTeleported: true);
         }
 
@@ -208,10 +209,16 @@ namespace DCL.Multiplayer.Movement.Systems
             else if (intSettings.UseSpeedUp)
                 SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
 
-            transComp.Transform.position = intComp.Start.position;
+            SetPositionAndRotation(transComp.Transform, intComp.Start.position, intComp.Start.rotationY);
 
             // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
             float unusedTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
+        }
+
+        private static void SetPositionAndRotation(Transform transform, Vector3 position, float rotationY)
+        {
+            var newRotation = Quaternion.Euler(transform.rotation.x, rotationY, transform.rotation.z);
+            transform.SetPositionAndRotation(position, newRotation);
         }
 
         private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,

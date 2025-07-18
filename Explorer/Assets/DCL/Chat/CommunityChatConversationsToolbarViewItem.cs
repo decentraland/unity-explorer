@@ -21,5 +21,11 @@ namespace DCL.Chat
             if(imageUrl != null)
                 thumbnailView.GetComponent<CommunityThumbnailView>().LoadThumbnailAsync(thumbnailCache, imageUrl, ct).Forget();
         }
+
+        protected override void Start()
+        {
+            base.Start();
+            removeButton.gameObject.SetActive(true);
+        }
     }
 }
