@@ -18,7 +18,7 @@ using Utility.Types;
 namespace ECS.StreamableLoading.Common.Systems
 {
     public abstract class PartialDownloadSystemBase<TData, TIntention> : LoadSystemBase<TData, TIntention>
-        where TIntention: struct, ILoadingIntention
+        where TIntention: struct, ILoadingIntention, IEquatable<TIntention>
     {
         private const string PARTIALS_FILES_EXTENSION = "part";
 
