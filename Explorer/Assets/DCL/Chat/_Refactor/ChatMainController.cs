@@ -27,6 +27,7 @@ namespace DCL.Chat
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ChatMemberListService chatMemberListService;
         private readonly ICurrentChannelService currentChannelService;
+        private readonly ChatUserStateBridge chatUserStateBridge;
         private readonly ChatConfig chatConfig;
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
@@ -45,6 +46,7 @@ namespace DCL.Chat
             ChatConfig chatConfig,
             IEventBus eventBus,
             IChatUserStateEventBus userStateEventBus,
+            ChatUserStateBridge chatUserStateBridge,
             ICurrentChannelService currentChannelService,
             ChatInputBlockingService chatInputBlockingService,
             ChatSettingsAsset chatSettingsAsset,
@@ -57,6 +59,7 @@ namespace DCL.Chat
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
+            this.chatUserStateBridge = chatUserStateBridge;
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
             this.commandRegistry = commandRegistry;

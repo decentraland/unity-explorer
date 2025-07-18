@@ -126,7 +126,8 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
-            connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicator.color =
+                onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
         }
 
         /// <summary>

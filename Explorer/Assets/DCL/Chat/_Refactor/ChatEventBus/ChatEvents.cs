@@ -75,7 +75,7 @@ namespace DCL.Chat.EventBus
         /// </summary>
         public struct ChannelLeftEvent
         {
-            public ChatChannel.ChannelId ChannelId;
+            public ChatChannel Channel;
         }
 
         /// <summary>

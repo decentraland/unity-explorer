@@ -29,6 +29,7 @@ using MVC;
 using System.Threading;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.Services;
+using DCL.Chat.Services.DCL.Chat;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
@@ -171,6 +172,8 @@ namespace DCL.PluginSystem.Global
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
             var currentChannelService = new CurrentChannelService();
+            var chatUserStateBridge =
+                new ChatUserStateBridge(chatUserStateEventBus, eventBus, currentChannelService);
             
             var useCaseFactory = new CommandRegistry(
                 chatConfig,
@@ -198,6 +201,7 @@ namespace DCL.PluginSystem.Global
                 chatConfig,
                 eventBus,
                 chatUserStateEventBus,
+                chatUserStateBridge,
                 currentChannelService,
                 chatInputBlockingService,
                 chatSettingsAsset.Value,

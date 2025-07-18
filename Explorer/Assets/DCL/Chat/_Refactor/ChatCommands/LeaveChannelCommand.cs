@@ -11,7 +11,7 @@ namespace DCL.Chat.ChatUseCases
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
         private readonly ICurrentChannelService currentChannelService;
-        private readonly SelectChannelCommand _selectChannelCommand;
+        private readonly SelectChannelCommand selectChannelCommand;
 
         public LeaveChannelCommand(
             IEventBus eventBus,
@@ -22,7 +22,7 @@ namespace DCL.Chat.ChatUseCases
             this.eventBus = eventBus;
             this.chatHistory = chatHistory;
             this.currentChannelService = currentChannelService;
-            this._selectChannelCommand = selectChannelCommand;
+            this.selectChannelCommand = selectChannelCommand;
         }
 
         public void Execute(ChatChannel.ChannelId channelId)
@@ -34,12 +34,16 @@ namespace DCL.Chat.ChatUseCases
 
             if (currentChannelService.CurrentChannelId.Equals(channelId))
             {
-                _selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID);
+                selectChannelCommand.Execute(ChatChannel.NEARBY_CHANNEL_ID);
             }
 
             chatHistory.RemoveChannel(channelId);
 
-            eventBus.Publish(new ChatEvents.ChannelLeftEvent { ChannelId = channelId });
+            eventBus.Publish(new ChatEvents.ChannelLeftEvent
+            {
+                Channel = new ChatChannel(ChatChannel.ChatChannelType.USER,
+                    channelId.Id)
+            });
         }
     }
 }

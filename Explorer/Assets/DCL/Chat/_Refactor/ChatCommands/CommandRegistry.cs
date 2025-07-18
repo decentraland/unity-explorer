@@ -28,6 +28,7 @@ namespace DCL.Chat.ChatUseCases
         public SendMessageCommand SendMessage { get; }
         public LeaveChannelCommand LeaveChannel { get; }
         public CreateChannelViewModelCommand CreateChannelViewModel { get; }
+        public OpenPrivateConversationCommand OpenPrivateConversation { get; }
         public GetChannelMembersCommand GetChannelMembersCommand { get; set; }
 
         public CommandRegistry(
@@ -79,6 +80,10 @@ namespace DCL.Chat.ChatUseCases
             GetChannelMembersCommand = new GetChannelMembersCommand(eventBus,
                 chatMemberListService,
                 GetProfileThumbnail);
+
+            OpenPrivateConversation = new OpenPrivateConversationCommand(eventBus,
+                chatHistory,
+                SelectChannel);
             
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
                 profileRepositoryWrapper,

@@ -308,9 +308,14 @@ namespace DCL.Chat
             UpdateScrollButtonsVisibility();
         }
 
-        public void RemoveConversation(string channelId)
+        public void RemoveConversation(ChatChannel channel)
         {
-            
+            if (items.TryGetValue(channel.Id, out var itemToRemove))
+            {
+                UnityObjectUtils.SafeDestroyGameObject(itemToRemove);
+                items.Remove(channel.Id);
+                UpdateScrollButtonsVisibility(); // Refresh scrollbar state
+            } 
         }
 
         public void SetUnreadMessages(string channelId, int count)

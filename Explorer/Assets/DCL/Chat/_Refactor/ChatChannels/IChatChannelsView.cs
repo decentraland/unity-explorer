@@ -14,10 +14,10 @@ public interface IChatChannelsView
     public void Initialize(ProfileRepositoryWrapper profileRepositoryWrapper);
     RectTransform ItemsContainer { get; }
     void AddConversation(ChatChannelViewModel data);
-    void RemoveConversation(string channelId);
+    void RemoveConversation(ChatChannel channel);
     void SetUnreadMessages(string channelId, int count);
     void UpdateConversation(ChatChannelViewModel viewModel);
-    void SetOnlineStatus(string channelId, bool isOnline);
+    void SetOnlineStatus(string userId, bool isOnline);
     void SelectConversation(ChatChannel.ChannelId channelId);
     void AddItem(ChatConversationsToolbarViewItem item);
     void Clear();
