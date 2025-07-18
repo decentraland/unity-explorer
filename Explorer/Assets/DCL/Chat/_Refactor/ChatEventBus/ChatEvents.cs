@@ -109,7 +109,18 @@ namespace DCL.Chat.EventBus
         /// Subscribers:    (None currently) This event primarily signals a data model change. UI updates are handled by UnreadMessagesUpdatedEvent.
         /// </summary>
         public struct ChannelReadEvent { public ChatChannel.ChannelId ChannelId; }
-        
+
+        /// <summary>
+        ///     Event:          ChatHistoryClearedEvent
+        ///     Triggered By:   DeleteChatHistoryCommand
+        ///     When:           A user has confirmed they want to delete all messages in the current channel.
+        ///     Subscribers:    ChatMessageFeedPresenter: To clear the messages from its view.
+        /// </summary>
+        public struct ChatHistoryClearedEvent
+        {
+            public ChatChannel.ChannelId ChannelId;
+        }
+
         #endregion
 
         #region Memeber List Events

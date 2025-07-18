@@ -9,7 +9,11 @@ namespace DCL.Chat
         [SerializeField] private string DCL_SYSTEM_SENDER = "DCL System";
 
         [field: Header("General")]
+        [field: SerializeField]
         public Sprite DefaultProfileThumbnail { get; set; }
+
+        [field: SerializeField]
+        public Sprite ClearChatHistoryContextMenuIcon { get; set; }
         
         [field: Header("Prefabs")]
         [field: SerializeField]
@@ -31,6 +35,9 @@ namespace DCL.Chat
         [field: SerializeField]
         public Ease PanelsFadeEase { get; private set; } = Ease.OutQuad;
 
+        [Tooltip("Context menu text shown when clearing chat history.")]
+        public string DeleteChatHistoryContextMenuText = "Delete Chat History";
+
         [Header("Mask Messages")]
         [Tooltip("Message shown when the other user is offline.")]
         public string UserOfflineMessage = "The user you are trying to message is offline.";
@@ -43,5 +50,8 @@ namespace DCL.Chat
 
         [Tooltip("Message shown when your own settings prevent you from sending a DM.")]
         public string OnlyFriendsOwnUserMessage = "Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.";
+
+        [Tooltip("Message when status is being checked.")]
+        public string CheckingUserStatusMessage = "Checking user status...";
     }
 }

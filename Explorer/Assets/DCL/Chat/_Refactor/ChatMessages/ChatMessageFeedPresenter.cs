@@ -15,9 +15,9 @@ public class ChatMessageFeedPresenter : IDisposable
     private readonly IChatMessageFeedView view;
     private readonly IEventBus eventBus;
     private readonly ICurrentChannelService currentChannelService;
-    private readonly GetMessageHistoryCommand _getMessageHistoryCommand;
-    private readonly CreateMessageViewModelCommand _createMessageViewModelCommand;
-    private readonly MarkChannelAsReadCommand _markChannelAsReadCommand;
+    private readonly GetMessageHistoryCommand getMessageHistoryCommand;
+    private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
+    private readonly MarkChannelAsReadCommand markChannelAsReadCommand;
     
     private readonly EventSubscriptionScope scope = new();
     private CancellationTokenSource loadChannelCts = new();
@@ -32,18 +32,27 @@ public class ChatMessageFeedPresenter : IDisposable
         this.view = view;
         this.eventBus = eventBus;
         this.currentChannelService = currentChannelService;
-        this._getMessageHistoryCommand = getMessageHistoryCommand;
-        this._createMessageViewModelCommand = createMessageViewModelCommand;
-        this._markChannelAsReadCommand = markChannelAsReadCommand;
+        this.getMessageHistoryCommand = getMessageHistoryCommand;
+        this.createMessageViewModelCommand = createMessageViewModelCommand;
+        this.markChannelAsReadCommand = markChannelAsReadCommand;
         
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
         scope.Add(eventBus.Subscribe<ChatEvents.MessageReceivedEvent>(OnMessageReceived));
+        scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
     }
 
     private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
     {
         loadChannelCts = loadChannelCts.SafeRestart();
         LoadChannelAsync(evt.Channel.Id, loadChannelCts.Token).Forget();
+    }
+
+    private void OnChatHistoryCleared(ChatEvents.ChatHistoryClearedEvent evt)
+    {
+        if (currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
+        {
+            view.Clear();
+        }
     }
 
     public void Activate()
@@ -73,7 +82,7 @@ public class ChatMessageFeedPresenter : IDisposable
 
     private async UniTask LoadChannelAsync(ChatChannel.ChannelId channelId, CancellationToken token)
     {
-        var result = await _getMessageHistoryCommand.ExecuteAsync(channelId, token);
+        var result = await getMessageHistoryCommand.ExecuteAsync(channelId, token);
 
         if (token.IsCancellationRequested) return;
 
@@ -86,7 +95,7 @@ public class ChatMessageFeedPresenter : IDisposable
         if (!currentChannelService.CurrentChannelId.Equals(evt.ChannelId))
             return;
 
-        var viewModel = _createMessageViewModelCommand.Execute(evt.Message);
+        var viewModel = createMessageViewModelCommand.Execute(evt.Message);
         view.AppendMessage(viewModel, true);
 
         if (view.IsAtBottom())
@@ -95,7 +104,7 @@ public class ChatMessageFeedPresenter : IDisposable
 
     private void MarkCurrentChannelAsRead()
     {
-        _markChannelAsReadCommand.Execute(currentChannelService.CurrentChannelId);
+        markChannelAsReadCommand.Execute(currentChannelService.CurrentChannelId);
     }
     
     public void Dispose()

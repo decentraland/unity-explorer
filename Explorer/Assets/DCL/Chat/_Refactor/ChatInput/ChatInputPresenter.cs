@@ -12,6 +12,7 @@ using Utility;
 public class ChatInputPresenter : IDisposable
 {
     private readonly ChatInputView view;
+    private readonly ChatConfig chatConfig;
     private readonly IEventBus eventBus;
     private readonly ICurrentChannelService currentChannelService;
     private readonly GetUserChatStatusCommand getUserChatStatusCommand;
@@ -25,12 +26,14 @@ public class ChatInputPresenter : IDisposable
 
     public ChatInputPresenter(
         ChatInputView view,
+        ChatConfig chatConfig,
         IEventBus eventBus,
         ICurrentChannelService currentChannelService,
         GetUserChatStatusCommand getUserChatStatusCommand,
         SendMessageCommand sendMessageCommand)
     {
         this.view = view;
+        this.chatConfig = chatConfig;
         this.eventBus = eventBus;
         this.currentChannelService = currentChannelService;
         this.getUserChatStatusCommand = getUserChatStatusCommand;
@@ -128,30 +131,30 @@ public class ChatInputPresenter : IDisposable
                 return true;
             case ChatChannel.ChatChannelType.USER:
                 {
-                    view.SetBlocked("Checking user status...");
+                    view.SetBlocked(chatConfig.CheckingUserStatusMessage);
                     var status = await getUserChatStatusCommand.ExecuteAsync(channel.Id.Id, ct);
                     if (ct.IsCancellationRequested) return false;
 
                     switch (status)
                     {
                         case ChatUserStateUpdater.ChatUserState.CONNECTED:
-                            return true; // Yes, we can type!
+                            return true;
 
                         case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
-                            view.SetBlocked("To message this user you must first unblock them.");
+                            view.SetBlocked(chatConfig.BlockedByOwnUserMessage);
                             return false;
 
                         case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                            view.SetBlocked("Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.");
+                            view.SetBlocked(chatConfig.OnlyFriendsOwnUserMessage);
                             return false;
 
                         case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                            view.SetBlocked("The user you are trying to message only accepts DMs from friends.");
+                            view.SetBlocked(chatConfig.OnlyFriendsMessage);
                             return false;
 
                         case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
                         default:
-                            view.SetBlocked("The user you are trying to message is offline.");
+                            view.SetBlocked(chatConfig.UserOfflineMessage);
                             return false;
                     }
 

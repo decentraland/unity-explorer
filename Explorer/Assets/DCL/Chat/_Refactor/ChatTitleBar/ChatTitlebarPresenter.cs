@@ -11,19 +11,18 @@ using DCL.Diagnostics;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
-using UnityEngine;
 using Utilities;
 using Utility;
 
 public class ChatTitlebarPresenter : IDisposable
 {
     private readonly ChatTitlebarView2 view;
-    private readonly ChatConfig config;
+    private readonly ChatConfig chatConfig;
     private readonly IEventBus eventBus;
     private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
+    private readonly DeleteChatHistoryCommand deleteChatHistoryCommand;
     private readonly ChatContextMenuService chatContextMenuService;
     private readonly ChatMemberListService chatMemberListService;
-    private readonly ChatClickDetectionService chatClickDetectionService;
 
     private ChatTitlebarViewModel currentViewModel { get;  set; }
     CancellationTokenSource profileLoadCts = new ();
@@ -34,20 +33,21 @@ public class ChatTitlebarPresenter : IDisposable
 
     public ChatTitlebarPresenter(
         ChatTitlebarView2 view,
-        ChatConfig config,
+        ChatConfig chatConfig,
         IEventBus eventBus,
         ChatMemberListService chatMemberListService,
         ChatContextMenuService chatContextMenuService,
         ChatClickDetectionService chatClickDetectionService,
-        GetTitlebarViewModelCommand getTitlebarViewModel)
+        GetTitlebarViewModelCommand getTitlebarViewModel,
+        DeleteChatHistoryCommand deleteChatHistoryCommand)
     {
         this.view = view;
-        this.config = config;
+        this.chatConfig = chatConfig;
         this.eventBus = eventBus;
         this.chatMemberListService = chatMemberListService;
         this.chatContextMenuService = chatContextMenuService;
-        this.chatClickDetectionService = chatClickDetectionService;
         this.getTitlebarViewModel = getTitlebarViewModel;
+        this.deleteChatHistoryCommand = deleteChatHistoryCommand;
         
         view.Initialize();
         view.OnCloseRequested += OnCloseRequested;
@@ -71,16 +71,11 @@ public class ChatTitlebarPresenter : IDisposable
     {
         var options = new ChatOptionsContextMenuData
         {
-            DeleteChatHistoryText = "Delete Chat History", DeleteChatHistoryIcon = config.NearbyConversationIcon
+            DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon
         };
-
         
         data.contextMenuData = options;
-        data.OnDeleteHistory = () =>
-        {
-            Debug.Log("Delete Chat History");
-        };
-
+        data.OnDeleteHistory = deleteChatHistoryCommand.Execute;
         chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
     }
 
@@ -102,17 +97,18 @@ public class ChatTitlebarPresenter : IDisposable
         try
         {
             var loadingViewModel = ChatTitlebarViewModel
-                .CreateLoading(channel.ChannelType == ChatChannel.ChatChannelType.NEARBY ?
-                    Mode.Nearby : Mode.DirectMessage);
+                .CreateLoading(channel.ChannelType == ChatChannel.ChatChannelType.NEARBY ? Mode.Nearby : Mode.DirectMessage);
             view.defaultTitlebarView.Setup(loadingViewModel);
-            
+
             var finalViewModel = await getTitlebarViewModel.ExecuteAsync(channel, ct);
             if (ct.IsCancellationRequested) return;
 
             view.defaultTitlebarView.Setup(finalViewModel);
             currentViewModel = finalViewModel;
         }
-        catch (OperationCanceledException) { /* ignored */ }
+        catch (OperationCanceledException)
+        {
+        }
         catch (Exception e)
         {
             view.defaultTitlebarView.Setup(new ChatTitlebarViewModel

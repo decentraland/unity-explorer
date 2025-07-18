@@ -20,6 +20,7 @@ namespace DCL.Chat.ChatUseCases
         public CreateMessageViewModelCommand CreateMessageViewModel { get; }
         public GetUserChatStatusCommand GetUserChatStatus { get; }
         public SelectChannelCommand SelectChannel { get; }
+        public DeleteChatHistoryCommand DeleteChatHistory { get; }
         public GetMessageHistoryCommand GetMessageHistory { get; }
         public MarkChannelAsReadCommand MarkChannelAsRead { get; }
         public GetTitlebarViewModelCommand GetTitlebarViewModel { get; }
@@ -57,6 +58,10 @@ namespace DCL.Chat.ChatUseCases
                 eventBus);
             
             SelectChannel = new SelectChannelCommand(eventBus,
+                chatHistory,
+                currentChannelService);
+
+            DeleteChatHistory = new DeleteChatHistoryCommand(eventBus,
                 chatHistory,
                 currentChannelService);
             

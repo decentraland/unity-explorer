@@ -23,9 +23,7 @@ namespace DCL.Chat
     {
         private readonly IEventBus eventBus;
         private readonly ChatInputBlockingService chatInputBlockingService;
-        private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly CommandRegistry commandRegistry;
-        private readonly IChatHistory chatHistory;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly ChatMemberListService chatMemberListService;
         private readonly ICurrentChannelService currentChannelService;
@@ -34,7 +32,6 @@ namespace DCL.Chat
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
         private readonly ChatClickDetectionService chatClickDetectionService;
-        private ChatUserStateBridge chatUserStateBridge;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
         public event Action? PointerEntered;
@@ -62,15 +59,11 @@ namespace DCL.Chat
             this.eventBus = eventBus;
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
-            this.chatSettingsAsset = chatSettingsAsset;
             this.commandRegistry = commandRegistry;
-            this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
             this.chatContextMenuService = chatContextMenuService;
             this.chatClickDetectionService = chatClickDetectionService;
-            
-            chatUserStateBridge = new ChatUserStateBridge(userStateEventBus, eventBus, currentChannelService);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -103,7 +96,8 @@ namespace DCL.Chat
                 chatMemberListService,
                 chatContextMenuService,
                 chatClickDetectionService,
-                commandRegistry.GetTitlebarViewModel);
+                commandRegistry.GetTitlebarViewModel,
+                commandRegistry.DeleteChatHistory);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
@@ -121,6 +115,7 @@ namespace DCL.Chat
 
             var inputPresenter = new ChatInputPresenter(
                 viewInstance.InputView,
+                chatConfig,
                 eventBus,
                 currentChannelService,
                 commandRegistry.GetUserChatStatus,
