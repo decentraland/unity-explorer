@@ -82,6 +82,7 @@ namespace DCL.FeatureFlags
                        FeatureId.MARKETPLACE_CREDITS => FeatureFlagsStrings.MARKETPLACE_CREDITS,
                        FeatureId.MARKETPLACE_CREDITS_WALLETS_VARIANT => FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT,
                        FeatureId.COMMUNITIES => FeatureFlagsStrings.COMMUNITIES,
+                       FeatureId.COMMUNITIES_WHITE_LIST => FeatureFlagsStrings.COMMUNITIES,
                        FeatureId.COMMUNITIES_MEMBERS_COUNTER => FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER,
                        FeatureId.AUTH_CODE_VALIDATION => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
                        FeatureId.GPUI_ENABLED => FeatureFlagsStrings.GPUI_ENABLED,

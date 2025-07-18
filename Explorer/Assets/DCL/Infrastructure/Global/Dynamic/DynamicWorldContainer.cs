@@ -425,7 +425,7 @@ namespace Global.Dynamic
                 : livekitHealthCheck;
 
             var communitiesProvider = new CommunitiesFeatureProvider(identityCache);
-            FeaturesRegistry.Instance.RegisterFeatureProvider(FeatureId.COMMUNITIES, communitiesProvider);
+            FeaturesRegistry.Instance.RegisterFeatureProvider(FeatureId.COMMUNITIES_WHITE_LIST, communitiesProvider);
 
             var chatHistory = new ChatHistory();
             ISharedSpaceManager sharedSpaceManager = new SharedSpaceManager(mvcManager, globalWorld);

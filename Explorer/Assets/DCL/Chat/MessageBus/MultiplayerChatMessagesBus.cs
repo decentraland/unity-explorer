@@ -57,7 +57,7 @@ namespace DCL.Chat.MessageBus
         private async UniTaskVoid ConfigureMessagePipesHubAsync(CancellationToken ct)
         {
 
-            isCommunitiesIncluded = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct);
+            isCommunitiesIncluded = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES_WHITE_LIST, ct);
 
             messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
             messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Decentraland.Kernel.Comms.Rfc4.Packet.MessageOneofCase.Chat, OnMessageReceived);
