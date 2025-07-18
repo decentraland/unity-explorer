@@ -23,6 +23,12 @@ namespace DCL.Notifications.Serialization
         private const string STREAMING_PLACE_UPDATED = "streaming_place_updated";
         private const string REFERRAL_INVITED_USERS_ACCEPTED = "referral_invited_users_accepted";
         private const string REFERRAL_NEW_TIER_REACHED = "referral_new_tier_reached";
+        private const string SOCIAL_SERVICE_COMMUNITY_EVENT_CREATED_TYPE = "social_service_community_event_created";
+        private const string SOCIAL_SERVICE_COMMUNITY_EVENT_ABOUT_TO_START_TYPE = "social_service_community_event_about_to_start";
+        private const string SOCIAL_SERVICE_COMMUNITY_USER_REMOVED_TYPE = "social_service_community_user_removed";
+        private const string SOCIAL_SERVICE_COMMUNITY_USER_BANNED_TYPE = "social_service_community_user_banned";
+        private const string SOCIAL_SERVICE_COMMUNITY_RENAMED_TYPE = "social_service_community_renamed";
+        private const string SOCIAL_SERVICE_COMMUNITY_DELETED_TYPE = "social_service_community_deleted";
 
         private static readonly JArray EMPTY_J_ARRAY = new ();
 
@@ -83,6 +89,12 @@ namespace DCL.Notifications.Serialization
                     STREAMING_PLACE_UPDATED => new StreamingFeatureNotification(),
                     REFERRAL_INVITED_USERS_ACCEPTED => new ReferralNotification(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED),
                     REFERRAL_NEW_TIER_REACHED => new ReferralNotification(NotificationType.REFERRAL_NEW_TIER_REACHED),
+                    SOCIAL_SERVICE_COMMUNITY_EVENT_CREATED_TYPE => new CommunityEventCreatedNotification(),
+                    SOCIAL_SERVICE_COMMUNITY_EVENT_ABOUT_TO_START_TYPE => new CommunityEventSoonNotification(),
+                    SOCIAL_SERVICE_COMMUNITY_USER_REMOVED_TYPE => new CommunityUserRemovedNotification(),
+                    SOCIAL_SERVICE_COMMUNITY_USER_BANNED_TYPE => new CommunityUserBannedNotification(),
+                    SOCIAL_SERVICE_COMMUNITY_RENAMED_TYPE => new CommunityRenamedNotification(),
+                    SOCIAL_SERVICE_COMMUNITY_DELETED_TYPE => new CommunityDeletedNotification(),
                     _ => null,
                 };
 

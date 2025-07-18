@@ -982,6 +982,7 @@ namespace Global.Dynamic
                     chatEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
+                    notificationsBusController,
                     lambdasProfilesProvider,
                     identityCache));
 
