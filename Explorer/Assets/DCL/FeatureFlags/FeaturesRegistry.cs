@@ -53,7 +53,7 @@ namespace DCL.FeatureFlags
                 [FeatureId.AUTH_CODE_VALIDATION] = featureFlags.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION),
                 [FeatureId.GPUI_ENABLED] = featureFlags.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED),
                 [FeatureId.LOCAL_SCENE_DEVELOPMENT] = localSceneDevelopment,
-                // Note: COMMUNITIES feature is not cached here because it depends on user identity
+                [FeatureId.COMMUNITIES] = featureFlags.IsEnabled(FeatureFlagsStrings.COMMUNITIES)
             });
         }
 

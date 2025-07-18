@@ -48,7 +48,6 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
-using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Settings;
 using DCL.Multiplayer.Movement.Systems;
@@ -961,7 +960,7 @@ namespace Global.Dynamic
                     staticContainer.LoadingStatus));
             }
 
-            if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.COMMUNITIES))
                 globalPlugins.Add(new CommunitiesPlugin(
                     mvcManager,
                     assetsProvisioner,
