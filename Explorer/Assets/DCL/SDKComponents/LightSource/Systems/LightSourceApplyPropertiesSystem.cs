@@ -54,9 +54,8 @@ namespace DCL.SDKComponents.LightSource.Systems
             bool isActive = LightSourceHelper.IsPBLightSourceActive(pbLightSource);
             lightSourceInstance.enabled = isActive;
 
-            if (isActive)
-                // NOTE we reset the shadow quality every frame because culling and LOD systems can change it
-                lightSourceInstance.shadows = LightSourceHelper.GetShadowQualityFromPBLightSource(pbLightSource);
+            // NOTE we reset the shadow quality every frame because culling and LOD systems can change it
+            if (isActive) lightSourceInstance.shadows = pbLightSource.Shadow ? LightShadows.Soft : LightShadows.None;
 
             if (pbLightSource.IsDirty) ApplyPBLightSource(pbLightSource, ref lightSourceComponent);
         }
@@ -67,8 +66,8 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             lightSourceInstance.color = pbLightSource.Color.ToUnityColor();
 
-            if (pbLightSource.HasBrightness)
-                lightSourceInstance.intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(pbLightSource.Brightness);
+            if (pbLightSource.HasIntensity)
+                lightSourceInstance.intensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(pbLightSource.Intensity);
 
             if (pbLightSource.HasRange)
                 lightSourceInstance.range = pbLightSource.Range;
@@ -77,7 +76,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             {
                 case PBLightSource.TypeOneofCase.Spot:
                     ApplySpotLight(pbLightSource, lightSourceInstance);
-                    ApplyCookie(ref lightSourceComponent, pbLightSource.Spot.ShadowMaskTexture);
+                    ApplyCookie(ref lightSourceComponent, pbLightSource.ShadowMaskTexture);
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:

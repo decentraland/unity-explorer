@@ -101,7 +101,7 @@ namespace DCL.PluginSystem.World
             light.transform.SetParent(null);
             light.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
             light.color = lightSourceDefaults.color;
-            light.intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(lightSourceDefaults.brightness);
+            light.intensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(lightSourceDefaults.brightness);
             light.range = lightSourceDefaults.range;
             light.type = LightType.Spot;
             light.shadows = LightShadows.None;

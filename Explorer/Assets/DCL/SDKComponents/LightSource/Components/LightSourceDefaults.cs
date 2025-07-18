@@ -16,10 +16,10 @@ namespace DCL.SDKComponents.LightSource
         public float range;
 
         [Header("Point Settings")]
-        public PBLightSource.Types.ShadowType pointShadowType;
+        public bool pointShadows;
 
         [Header("Spot Settings")]
-        public PBLightSource.Types.ShadowType spotShadowType;
+        public bool spotShadows;
         public float innerAngle;
         public float outerAngle;
     }

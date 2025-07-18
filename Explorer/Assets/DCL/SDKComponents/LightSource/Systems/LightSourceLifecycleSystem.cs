@@ -56,7 +56,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceInstance.transform.localScale = Vector3.one;
             lightSourceInstance.transform.SetParent(transform.Transform, false);
 
-            float intensity = PrimitivesConversionExtensions.PBBrightnessInLumensToUnityCandels(pbLightSource.Brightness);
+            float intensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(pbLightSource.Intensity);
             var lightSourceComponent = new LightSourceComponent(lightSourceInstance, intensity);
             World.Add(entity, lightSourceComponent);
 
