@@ -176,12 +176,11 @@ namespace DCL.SDKComponents.MediaStream
             audioSource.SetVolume(target);
         }
 
-        public void CrossfadeVolume(float targetVolume, float speed)
+        public void CrossfadeVolume(float targetVolume, float volumeDelta)
         {
-            SetVolume(Mathf.Lerp(Volume, targetVolume, speed));
-
-            if (Mathf.Approximately(Volume, targetVolume))
-                Volume = targetVolume;
+            SetVolume(Volume > targetVolume
+                ? Mathf.Max(0, targetVolume - volumeDelta)
+                : Mathf.Min(targetVolume, Volume + volumeDelta));
         }
 
         public void PlaceAudioAt(Vector3 position)
