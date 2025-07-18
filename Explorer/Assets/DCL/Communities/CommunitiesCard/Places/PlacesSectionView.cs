@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
@@ -34,7 +35,6 @@ namespace DCL.Communities.CommunitiesCard.Places
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
         [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
         [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
 
         public event Action? NewDataRequested;
@@ -148,17 +148,18 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
-                                                                                                                      DELETE_PLACE_CANCEL_TEXT,
-                                                                                                                      DELETE_PLACE_CONFIRM_TEXT,
-                                                                                                                      deleteSprite,
-                                                                                                                      false, false,
-                                                                                                                      DELETE_PLACE_SUB_TEXT),
-                                                                                                                  ct)
-                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                ConfirmationResult result = ConfirmationResult.CANCEL;
+                EnumResult<TaskError> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
+                                                                                    DELETE_PLACE_CANCEL_TEXT,
+                                                                                    DELETE_PLACE_CONFIRM_TEXT,
+                                                                                    deleteSprite,
+                                                                                    false, false,
+                                                                                    res => result = res,
+                                                                                    DELETE_PLACE_SUB_TEXT),
+                                                                                ct)
+                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || result == ConfirmationResult.CANCEL) return;
 
                 ElementDeleteButtonClicked?.Invoke(placeInfo);
             }

@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Profiles.Helpers;
@@ -35,7 +36,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const string BAN_MEMBER_CANCEL_TEXT = "CANCEL";
         private const string BAN_MEMBER_CONFIRM_TEXT = "BAN";
 
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
         [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
         [field: SerializeField] private ScrollRect loopListScrollRect { get; set; } = null!;
         [field: SerializeField] private RectTransform sectionButtons { get; set; } = null!;
@@ -141,17 +141,18 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowKickConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityName),
-                                                                                                                      KICK_MEMBER_CANCEL_TEXT,
-                                                                                                                      KICK_MEMBER_CONFIRM_TEXT,
-                                                                                                                      kickSprite,
-                                                                                                                      false, false,
-                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
-                                                                                                                  ct)
-                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                ConfirmationResult result = ConfirmationResult.CANCEL;
+                EnumResult<TaskError> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(KICK_MEMBER_TEXT_FORMAT, profile.name, communityName),
+                                                                                    KICK_MEMBER_CANCEL_TEXT,
+                                                                                    KICK_MEMBER_CONFIRM_TEXT,
+                                                                                    kickSprite,
+                                                                                    false, false,
+                                                                                    res => result = res,
+                                                                                    userInfo: new ConfirmationDialogParameter.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                ct)
+                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || result == ConfirmationResult.CANCEL) return;
 
                 KickUserRequested?.Invoke(profile);
             }
@@ -165,17 +166,18 @@ namespace DCL.Communities.CommunitiesCard.Members
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
-                                                                                                                      BAN_MEMBER_CANCEL_TEXT,
-                                                                                                                      BAN_MEMBER_CONFIRM_TEXT,
-                                                                                                                      banSprite,
-                                                                                                                      false, false,
-                                                                                                                      userInfo: new ConfirmationDialogView.DialogData.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
-                                                                                                                  ct)
-                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                ConfirmationResult result = ConfirmationResult.CANCEL;
+                EnumResult<TaskError> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(BAN_MEMBER_TEXT_FORMAT, profile.name, communityName),
+                                                                                    BAN_MEMBER_CANCEL_TEXT,
+                                                                                    BAN_MEMBER_CONFIRM_TEXT,
+                                                                                    banSprite,
+                                                                                    false, false,
+                                                                                    res => result = res,
+                                                                                    userInfo: new ConfirmationDialogParameter.UserData(profile.memberAddress, profile.profilePictureUrl, profile.GetUserNameColor())),
+                                                                                ct)
+                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || result == ConfirmationResult.CANCEL) return;
 
                 BanUserRequested?.Invoke(profile);
             }

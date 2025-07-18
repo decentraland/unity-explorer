@@ -36,7 +36,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private readonly MembersListView view;
-        private readonly ConfirmationDialogView confirmationDialogView;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider communitiesDataProvider;
