@@ -36,9 +36,9 @@ namespace DCL.Chat
             clickDetection = new ChatClickDetectionService(context.ChatInputView.suggestionPanel.transform);
             inputField = context.ChatInputView.inputField;
 
-            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(context.EmojiNameMapping.Count);
+            emojiSuggestionsDictionary = new Dictionary<string, EmojiInputSuggestionData>(context.EmojiMapping.NameMapping.Count);
 
-            foreach (KeyValuePair<string, EmojiData> pair in context.EmojiNameMapping)
+            foreach (KeyValuePair<string, EmojiData> pair in context.EmojiMapping.NameMapping)
                 emojiSuggestionsDictionary.Add(pair.Key, new EmojiInputSuggestionData(pair.Value.EmojiCode, pair.Value.EmojiName));
         }
 
@@ -75,7 +75,7 @@ namespace DCL.Chat
 
             if (!inputField.IsWithinCharacterLimit(suggestion.Length - lastMatch.Groups[1].Length)) return;
 
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.addEmojiAudio);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(context.ChatInputView.emojiContainer.addEmojiAudio);
             int replaceAmount = lastMatch.Groups[1].Length;
             int replaceAt = wordMatchIndex + lastMatch.Groups[1].Index;
 

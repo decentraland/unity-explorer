@@ -142,7 +142,7 @@ namespace DCL.Chat
             this.GetParticipantProfiles = getParticipantProfiles;
 
             InitializeEmojiPanelController();
-            InitializeEmojiMapping(emojiPanelController!.EmojiNameMapping);
+            InitializeEmojiMapping(emojiPanelController!.EmojiMapping.NameMapping);
 
             suggestionPanelController = new InputSuggestionPanelController(suggestionPanel);
 
@@ -505,7 +505,7 @@ namespace DCL.Chat
             IsEmojiPanelVisible = !IsEmojiPanelVisible;
         }
 
-        private void InitializeEmojiMapping(Dictionary<string, EmojiData> emojiNameDataMapping)
+        private void InitializeEmojiMapping(IReadOnlyDictionary<string, EmojiData> emojiNameDataMapping)
         {
             foreach ((string emojiName, EmojiData emojiData) in emojiNameDataMapping)
                 emojiSuggestionsDictionary[emojiName] = new EmojiInputSuggestionData(emojiData.EmojiCode, emojiData.EmojiName);

@@ -8,7 +8,7 @@ using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
-using Utilities;
+
 using Utility;
 
 namespace DCL.Chat.ChatUseCases
@@ -66,7 +66,7 @@ namespace DCL.Chat.ChatUseCases
             DeleteChatHistory = new DeleteChatHistoryCommand(eventBus,
                 chatHistory,
                 currentChannelService);
-            
+
 
             GetMessageHistory = new GetMessageHistoryCommand(chatHistory,
                 chatHistoryStorage,
@@ -86,7 +86,7 @@ namespace DCL.Chat.ChatUseCases
             OpenPrivateConversation = new OpenPrivateConversationCommand(eventBus,
                 chatHistory,
                 SelectChannel);
-            
+
 
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
                 profileRepositoryWrapper,

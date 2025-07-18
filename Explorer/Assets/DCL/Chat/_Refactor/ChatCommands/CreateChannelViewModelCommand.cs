@@ -6,7 +6,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using Utilities;
+
 using Utility;
 
 public class CreateChannelViewModelCommand

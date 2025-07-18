@@ -6,7 +6,7 @@ namespace DCL.Chat
 {
     /// <summary>
     ///     Due to a reason writing to a user (private conversations) is not allowed.
-    ///     Blocked state doesn't change if it is unfocused
+    ///     Blocked State is valid only if teh chat view is focused
     /// </summary>
     public class BlockedChatInputState : ChatInputState
     {
@@ -52,7 +52,6 @@ namespace DCL.Chat
 
         protected override void OnInputUnblocked()
         {
-            // TODO I need to know the parent state in order to resolve the transition: to Unfocused state or to TypingEnabled state
             ChangeState<TypingEnabledChatInputState>();
         }
 

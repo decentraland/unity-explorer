@@ -4,9 +4,8 @@ using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
 using System;
-using System.Threading;
 using UnityEngine.EventSystems;
-using Utilities;
+using Utility;
 
 namespace DCL.Chat
 {
@@ -47,6 +46,8 @@ namespace DCL.Chat
             inputField.Clicked += InputFieldOnClicked;
             inputField.onValueChanged.AddListener(OnInputChanged);
             eventsScope.Add(context.InputEventBus.Subscribe<InputSuggestionsEvents.SuggestionSelectedEvent>(ReplaceSuggestionInText));
+
+            context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
         }
 
         public override void End()
@@ -55,11 +56,23 @@ namespace DCL.Chat
             inputField.onSubmit.RemoveListener(HandleMessageSubmitted);
             inputField.Clicked -= InputFieldOnClicked;
             inputField.onValueChanged.RemoveListener(OnInputChanged);
+            context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.RemoveListener(ToggleEmojiPanel);
 
             eventsScope.Dispose();
 
             pasteToastState!.TryDeactivate();
             suggestionPanelState!.TryDeactivate();
+            emojiPanelState!.TryDeactivate();
+        }
+
+        private void ToggleEmojiPanel()
+        {
+            if (!emojiPanelState!.IsActive)
+            {
+                emojiPanelState.TryActivate();
+                suggestionPanelState!.TryDeactivate();
+            }
+            else { emojiPanelState.TryDeactivate(); }
         }
 
         private void OnInputChanged(string inputText)

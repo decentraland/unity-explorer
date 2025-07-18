@@ -12,6 +12,19 @@ namespace DCL.Chat
 {
     public class ChatInputView : MonoBehaviour
     {
+        [Serializable]
+        public class EmojiContainer
+        {
+            [field: SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration { get; private set; }
+            [field: SerializeField] internal EmojiButton emojiButtonPrefab { get; private set; }
+            [field: SerializeField] internal TextAsset emojiMappingJson { get; private set; }
+            [field: SerializeField] internal EmojiSectionView emojiSectionViewPrefab { get; private set; }
+            [field: SerializeField] internal EmojiButtonView emojiPanelButton { get; private set; }
+            [field: SerializeField] internal EmojiPanelView emojiPanel { get; private set; }
+            [field: SerializeField] internal AudioClipConfig addEmojiAudio { get; private set; }
+            [field: SerializeField] internal AudioClipConfig openEmojiPanelAudio { get; private set; }
+        }
+
         [field: SerializeField] public CustomInputField inputField { get; private set; }
         [field: SerializeField] internal RectTransform pastePopupPosition { get; private set; }
 
@@ -36,16 +49,9 @@ namespace DCL.Chat
         [SerializeField] private Color unfocusedBackgroundColor;
 
         [field: Header("Emojis")]
-        [field: SerializeField] internal EmojiPanelConfigurationSO emojiPanelConfiguration { get; private set; }
-        [field: SerializeField] internal EmojiButton emojiButtonPrefab { get; private set; }
-        [field: SerializeField] internal TextAsset emojiMappingJson { get; private set; }
-        [field: SerializeField] internal EmojiSectionView emojiSectionViewPrefab { get; private set; }
-        [field: SerializeField] internal EmojiButtonView emojiPanelButton { get; private set; }
-        [field: SerializeField] internal EmojiPanelView emojiPanel { get; private set; }
+        [field: SerializeField] internal EmojiContainer emojiContainer { get; private set; }
 
         [field: Header("Audio")]
-        [field: SerializeField] internal AudioClipConfig addEmojiAudio { get; private set; }
-        [field: SerializeField] internal AudioClipConfig openEmojiPanelAudio { get; private set; }
         [field: SerializeField] internal AudioClipConfig chatInputTextAudio { get; private set; }
         [field: SerializeField] internal AudioClipConfig enterInputAudio { get; private set; }
 

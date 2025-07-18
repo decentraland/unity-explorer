@@ -3,7 +3,6 @@ using DCL.Chat.ChatStates;
 using DCL.Chat.EventBus;
 using MVC;
 using System;
-using Utilities;
 using Utility;
 
 namespace DCL.Chat._Refactor.ChatStates

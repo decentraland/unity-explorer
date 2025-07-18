@@ -11,7 +11,6 @@ using DCL.Diagnostics;
 using DCL.Web3;
 using DG.Tweening;
 using MVC;
-using Utilities;
 using Utility;
 
 public class ChatTitlebarPresenter : IDisposable
@@ -48,15 +47,15 @@ public class ChatTitlebarPresenter : IDisposable
         this.chatContextMenuService = chatContextMenuService;
         this.getTitlebarViewModel = getTitlebarViewModel;
         this.deleteChatHistoryCommand = deleteChatHistoryCommand;
-        
+
         view.Initialize();
         view.OnCloseRequested += OnCloseRequested;
         view.OnMembersToggleRequested += OnMembersToggleRequested;
         view.OnContextMenuRequested += OnChatContextMenuRequested;
         view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
-        
+
         chatMemberListService.OnMemberCountUpdated += OnChannelMembersUpdated;
-        
+
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
     }
 
@@ -73,7 +72,7 @@ public class ChatTitlebarPresenter : IDisposable
         {
             DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon
         };
-        
+
         data.contextMenuData = options;
         data.OnDeleteHistory = deleteChatHistoryCommand.Execute;
         chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
@@ -88,7 +87,7 @@ public class ChatTitlebarPresenter : IDisposable
     private void OnCloseRequested() => eventBus.Publish(new ChatEvents.CloseChatEvent());
     private void OnMembersToggleRequested() => eventBus.Publish(new ChatEvents.ToggleMembersEvent());
     private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt) => LoadTitlebarDataAsync(evt.Channel).Forget();
-    
+
     private async UniTaskVoid LoadTitlebarDataAsync(ChatChannel channel)
     {
         profileLoadCts = profileLoadCts.SafeRestart();

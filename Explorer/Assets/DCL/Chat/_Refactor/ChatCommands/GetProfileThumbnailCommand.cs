@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
-using Utilities;
+
 using Utility;
 
 namespace DCL.Chat.ChatUseCases

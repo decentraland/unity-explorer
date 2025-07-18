@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Chat.EventBus;
 using UnityEngine;
-using Utilities;
+
 using Utility;
 
 namespace DCL.Chat.ChatUseCases

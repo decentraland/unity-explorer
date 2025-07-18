@@ -4,7 +4,7 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
-using Utilities;
+
 using Utility;
 
 public class ChatChannelsPresenter : IDisposable
@@ -14,7 +14,7 @@ public class ChatChannelsPresenter : IDisposable
     private readonly SelectChannelCommand selectChannelCommand;
     private readonly LeaveChannelCommand leaveChannelCommand;
     private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
-    
+
     private EventSubscriptionScope scope = new();
 
     public ChatChannelsPresenter(IChatChannelsView view,
@@ -31,7 +31,7 @@ public class ChatChannelsPresenter : IDisposable
         this.selectChannelCommand = selectChannelCommand;
         this.leaveChannelCommand = leaveChannelCommand;
         this.createChannelViewModelCommand = createChannelViewModelCommand;
-        
+
         view.ConversationSelected += OnViewConversationSelected;
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
 

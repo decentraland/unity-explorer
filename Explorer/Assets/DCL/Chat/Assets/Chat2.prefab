@@ -422,14 +422,15 @@ MonoBehaviour:
   backgroundImage: {fileID: 4097775063419158369}
   focusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.8784314}
   unfocusedBackgroundColor: {r: 0, g: 0, b: 0, a: 0.57254905}
-  <emojiPanelConfiguration>k__BackingField: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
-  <emojiButtonPrefab>k__BackingField: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
-  <emojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
-  <emojiSectionViewPrefab>k__BackingField: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
-  <emojiPanelButton>k__BackingField: {fileID: 4878727913059724457}
-  <emojiPanel>k__BackingField: {fileID: 7220652965459227127}
-  <addEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
-  <openEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
+  <emojiContainer>k__BackingField:
+    <emojiPanelConfiguration>k__BackingField: {fileID: 11400000, guid: 51646f2adc3264ba7bf9b4f90febbd22, type: 2}
+    <emojiButtonPrefab>k__BackingField: {fileID: 8273076807335735701, guid: 7d0a647adf3334ee1a142e7bf69f128d, type: 3}
+    <emojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
+    <emojiSectionViewPrefab>k__BackingField: {fileID: 7843218067654608663, guid: d4552d3a2432742f58c63ba71bdfb50e, type: 3}
+    <emojiPanelButton>k__BackingField: {fileID: 4878727913059724457}
+    <emojiPanel>k__BackingField: {fileID: 7220652965459227127}
+    <addEmojiAudio>k__BackingField: {fileID: 11400000, guid: ab59a5b2a814f02419850961fc490805, type: 2}
+    <openEmojiPanelAudio>k__BackingField: {fileID: 11400000, guid: abc438e2962540549b414d54fbc89eed, type: 2}
   <chatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
   <enterInputAudio>k__BackingField: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
   <inputEventBus>k__BackingField: {fileID: 1790333821517342982}

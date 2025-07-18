@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using Utilities;
+
 using Utility;
 
 namespace DCL.Chat.ChatUseCases

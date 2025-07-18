@@ -12,7 +12,7 @@ namespace DCL.Chat
         public readonly GetParticipantProfilesCommand GetParticipantProfilesCommand;
         public readonly SendMessageCommand SendMessageCommand;
         public readonly ProfileRepositoryWrapper ProfileRepositoryWrapper;
-        public readonly IReadOnlyDictionary<string, EmojiData> EmojiNameMapping;
+        public readonly EmojiMapping EmojiMapping;
         public readonly IEventBus InputEventBus;
         public readonly IEventBus ChatEventBus;
 
@@ -22,14 +22,14 @@ namespace DCL.Chat
             GetParticipantProfilesCommand getParticipantProfilesCommand,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             SendMessageCommand sendMessageCommand,
-            IReadOnlyDictionary<string, EmojiData> emojiNameMapping)
+            EmojiMapping emojiMapping)
         {
             ChatInputView = chatInputView;
             GetParticipantProfilesCommand = getParticipantProfilesCommand;
             ProfileRepositoryWrapper = profileRepositoryWrapper;
             InputEventBus = inputEventBus;
             SendMessageCommand = sendMessageCommand;
-            EmojiNameMapping = emojiNameMapping;
+            EmojiMapping = emojiMapping;
             ChatEventBus = chatEventBus;
         }
     }

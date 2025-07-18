@@ -6,7 +6,7 @@ using DCL.Chat.History;
 using DCL.Chat.Services;
 using DCL.Friends;
 using DCL.Utilities;
-using Utilities;
+
 using Utility;
 
 namespace DCL.Chat.ChatUseCases

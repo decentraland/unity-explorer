@@ -8,13 +8,8 @@ using DCL.Chat.Services;
 using DCL.Emoji;
 using DCL.UI.Profiles.Helpers;
 using MVC;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using UnityEngine.TextCore.Text;
-using Utilities;
 using Utility;
 using Utility.Types;
-using TextAsset = UnityEngine.TextAsset;
 
 public class ChatInputPresenter : IDisposable
 {
@@ -37,7 +32,7 @@ public class ChatInputPresenter : IDisposable
         this.currentChannelService = currentChannelService;
 
         var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
-            CreateEmojiMapping(view.emojiMappingJson, view.emojiPanelConfiguration));
+            new EmojiMapping(view.emojiContainer.emojiMappingJson, view.emojiContainer.emojiPanelConfiguration));
 
         fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(context, new InitializingChatInputState());
 
@@ -48,21 +43,6 @@ public class ChatInputPresenter : IDisposable
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
         scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
-    }
-
-    private Dictionary<string, EmojiData> CreateEmojiMapping(TextAsset emojiMappingJson, EmojiPanelConfigurationSO emojiPanelConfiguration)
-    {
-        Dictionary<string, EmojiData> emojiNameMapping = new ();
-
-        foreach (KeyValuePair<string, string> emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
-        {
-            if (emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromName(emojiData.Value.ToUpper()) == -1)
-                continue;
-
-            emojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
-        }
-
-        return emojiNameMapping;
     }
 
     public void ShowUnfocused()

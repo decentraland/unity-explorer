@@ -35,7 +35,7 @@ using ECS;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utilities;
+
 using Utility;
 
 namespace DCL.PluginSystem.Global
@@ -183,15 +183,15 @@ namespace DCL.PluginSystem.Global
 
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
-            
-            
-            
+
+
+
             var getUserChatStatus = new GetUserChatStatusCommand(chatUserStateUpdater, eventBus);
 
             var currentChannelService = new CurrentChannelService(getUserChatStatus);
             var chatUserStateBridge =
                 new ChatUserStateBridge(chatUserStateEventBus, eventBus, currentChannelService);
-            
+
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
 
             var useCaseFactory = new CommandRegistry(
