@@ -424,6 +424,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        Badges3DCamera:
+          m_AssetGUID: 8a91951d2f71f174d998356f01a3603c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
           m_SubObjectName: 
