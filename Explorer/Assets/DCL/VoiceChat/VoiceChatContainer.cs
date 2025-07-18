@@ -1,3 +1,4 @@
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.SocialService;
 using DCL.VoiceChat.Services;
 using System;
@@ -10,17 +11,26 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceService rpcCommunityVoiceChatService;
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
+        private readonly VoiceChatParticipantManager participantManager;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
 
-        public VoiceChatContainer(
+                public VoiceChatContainer(
             IRPCSocialServices socialServiceRPC,
-            ISocialServiceEventBus socialServiceEventBus)
+            ISocialServiceEventBus socialServiceEventBus,
+            IRoomHub roomHub)
         {
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
             communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService);
-            VoiceChatOrchestrator = new VoiceChatOrchestrator(privateVoiceChatCallStatusService, communityVoiceChatCallStatusService, rpcPrivateVoiceChatService, rpcCommunityVoiceChatService);
+            participantManager = new VoiceChatParticipantManager(roomHub.VoiceChatRoom().Room());
+
+            VoiceChatOrchestrator = new VoiceChatOrchestrator(
+                privateVoiceChatCallStatusService,
+                communityVoiceChatCallStatusService,
+                rpcPrivateVoiceChatService,
+                rpcCommunityVoiceChatService,
+                participantManager);
         }
 
         public void Dispose()
@@ -30,6 +40,7 @@ namespace DCL.VoiceChat
             rpcPrivateVoiceChatService?.Dispose();
             VoiceChatOrchestrator?.Dispose();
             rpcCommunityVoiceChatService?.Dispose();
+            participantManager?.Dispose();
         }
     }
 }

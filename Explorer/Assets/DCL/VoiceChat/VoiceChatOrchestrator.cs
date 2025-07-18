@@ -55,6 +55,7 @@ namespace DCL.VoiceChat
         string CurrentRoomUrl { get; }
         IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
         ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
+        VoiceChatParticipantManager ParticipantManager { get; }
      }
 
     public class VoiceChatOrchestrator : IDisposable, IVoiceChatOrchestrator
@@ -63,6 +64,7 @@ namespace DCL.VoiceChat
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly IVoiceService rpcPrivateVoiceChatService;
         private readonly ICommunityVoiceService rpcCommunityVoiceChatService;
+        private readonly VoiceChatParticipantManager participantManager;
 
         private readonly IDisposable privateStatusSubscription;
         private readonly IDisposable communityStatusSubscription;
@@ -80,17 +82,20 @@ namespace DCL.VoiceChat
         public string CurrentRoomUrl => activeCallStatusService?.RoomUrl ?? string.Empty;
         public IPrivateVoiceChatCallStatusService PrivateStatusService => privateVoiceChatCallStatusService;
         public ICommunityVoiceChatCallStatusService CommunityStatusService => communityVoiceChatCallStatusService;
+        public VoiceChatParticipantManager ParticipantManager => participantManager;
 
         public VoiceChatOrchestrator(
             PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService,
             CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService,
             IVoiceService rpcPrivateVoiceChatService,
-            ICommunityVoiceService rpcCommunityVoiceChatService)
+            ICommunityVoiceService rpcCommunityVoiceChatService,
+            VoiceChatParticipantManager participantManager)
         {
             this.privateVoiceChatCallStatusService = privateVoiceChatCallStatusService;
             this.communityVoiceChatCallStatusService = communityVoiceChatCallStatusService;
             this.rpcPrivateVoiceChatService = rpcPrivateVoiceChatService;
             this.rpcCommunityVoiceChatService = rpcCommunityVoiceChatService;
+            this.participantManager = participantManager;
 
             rpcPrivateVoiceChatService.PrivateVoiceChatUpdateReceived += OnPrivateVoiceChatUpdateReceived;
 
@@ -110,6 +115,7 @@ namespace DCL.VoiceChat
             currentVoiceChatType?.Dispose();
             currentCallStatus?.Dispose();
             currentVoiceChatPanelSize?.Dispose();
+            participantManager?.Dispose();
         }
 
         public void StartPrivateCall(Web3Address walletId)
