@@ -45,16 +45,25 @@ namespace DCL.Rendering.GPUInstancing
         [Serializable]
         public class GPUInstancingRenderFeature_Settings
         {
+            public event Action<int> RoadsDistanceChanged;
+
             [SerializeField] private GPUInstancingSettings settings;
 
             public ComputeShader FrustumCullingAndLODGenComputeShader => settings.FrustumCullingAndLODGenComputeShader;
             public ComputeShader IndirectBufferGenerationComputeShader => settings.IndirectBufferGenerationComputeShader;
             public ComputeShader DrawArgsInstanceCountTransferComputeShader => settings.DrawArgsInstanceCountTransferComputeShader;
 
-            public float RenderDistScaleFactor { get => settings.RenderDistScaleFactor; set => settings.RenderDistScaleFactor = value;}
+            public int RenderDistanceInParcels
+            {
+                set
+                {
+                    settings.RenderDistanceInParcels = value;
+                    RoadsDistanceChanged?.Invoke(value);
+                }
+            }
 
-            public float RoadsSceneDistance(float envDistance) =>
-                settings.RoadsSceneDistance(envDistance);
+            public int RoadsSceneDistance() =>
+                settings.RoadsSceneDistance();
         }
     }
 }
