@@ -14,6 +14,10 @@ namespace DCL.UI.ConfirmationDialog
             this.mvcManager = mvcManager;
         }
 
+        /// <summary>
+        /// Opens a confirmation dialog with the provided parameters and returns the user's response.
+        /// WARNING: This method overrides the ResultCallback in the dialogData parameter.
+        /// </summary>
         public async UniTask<ConfirmationResult> OpenConfirmationDialogAsync(ConfirmationDialogParameter dialogData, CancellationToken ct)
         {
             ConfirmationResult result = ConfirmationResult.CANCEL;
