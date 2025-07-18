@@ -174,6 +174,7 @@ namespace DCL.Settings
                             realmPartitionSettingsAsset,
                             videoPrioritizationSettings,
                             landscapeData,
+                            roadsSettings,
                             generalAudioMixer,
                             qualitySettingsAsset,
                             controlsSettingsAsset,
