@@ -340,7 +340,7 @@ namespace DCL.Chat
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
             if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
-                await InitializeCommunityCoversationsAsync();
+                await InitializeCommunityConversationsAsync();
         }
 
         protected override void OnViewClose()
