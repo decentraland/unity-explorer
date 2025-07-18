@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using System;
 using System.Linq;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -46,7 +45,7 @@ namespace Utility.Tests
 
             using var processedParcels = new NativeHashSet<int2>(0, AllocatorManager.Persistent);
 
-            helper.StartParcelsRingSplit(int2.zero, 4, processedParcels, Array.Empty<int2>());
+            helper.StartParcelsRingSplit(int2.zero, 4, processedParcels);
             ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> result = ref helper.FinishParcelsRingSplit();
 
             Assert.That(helper.GetRing(0).Select(p => p.Parcel), Is.EquivalentTo(new[]
@@ -58,21 +57,6 @@ namespace Utility.Tests
             Assert.That(helper.GetRing(2).Select(p => p.Parcel), Is.EquivalentTo(EXPECTED_CELLS_N2));
             Assert.That(helper.GetRing(3).Select(p => p.Parcel), Is.EquivalentTo(EXPECTED_CELLS_N3));
             Assert.That(helper.GetRing(4).Select(p => p.Parcel), Is.EquivalentTo(EXPECTED_CELLS_N4));
-        }
-
-        [Test]
-        public void MarkPendingParcelsAsAlreadyProcessed()
-        {
-            using var helper = new ParcelMathJobifiedHelper();
-
-            using var processedParcels = new NativeHashSet<int2>(0, AllocatorManager.Persistent);
-
-            var pendingParcels = new int2[] { new (1, 0), new (-1, 1) };
-
-            helper.StartParcelsRingSplit(int2.zero, 1, processedParcels, pendingParcels);
-            ref readonly NativeArray<ParcelMathJobifiedHelper.ParcelInfo> result = ref helper.FinishParcelsRingSplit();
-
-            Assert.That(helper.GetRing(1).Where(p => !p.AlreadyProcessed).Select(p => p.Parcel), Is.EquivalentTo(EXPECTED_CELLS_N1.Except(pendingParcels)));
         }
     }
 }

@@ -97,7 +97,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 {
                     sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
                     input.Add(parcelInfo.Parcel);
-                    parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
+                    parcelInfo.AlreadyProcessed = true;
                     flatArray[i] = parcelInfo;
                 }
                 else

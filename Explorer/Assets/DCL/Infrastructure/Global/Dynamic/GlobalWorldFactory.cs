@@ -37,7 +37,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Profiles;
 using DCL.Roads.Systems;
-using SceneLifeCycle.IncreasingRadius;
 using SystemGroups.Visualiser;
 using UnityEngine;
 using Utility;
