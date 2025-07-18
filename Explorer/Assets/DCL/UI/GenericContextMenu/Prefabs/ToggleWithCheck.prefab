@@ -245,6 +245,7 @@ GameObject:
   - component: {fileID: 4151572650133112880}
   - component: {fileID: 7506631029325872581}
   - component: {fileID: 2163439709997765667}
+  - component: {fileID: 5824644084413069792}
   m_Layer: 5
   m_Name: ToggleWithCheck
   m_TagString: Untagged
@@ -385,3 +386,19 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 0
+--- !u!114 &5824644084413069792
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6449720775875921457}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5196be8495ee4ec3a582c0bae602414a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <RectTransformComponent>k__BackingField: {fileID: 5856922699228769623}
+  <HorizontalLayoutComponent>k__BackingField: {fileID: 7506631029325872581}
+  toggleComponent: {fileID: 2163439709997765667}
+  textComponent: {fileID: 8655627310085805794}
