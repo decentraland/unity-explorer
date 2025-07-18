@@ -2226,7 +2226,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""EmoteWheel"",
                     ""type"": ""Button"",
                     ""id"": ""3be778a1-cb40-43d3-a316-304e55aaa81c"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2271,7 +2271,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""ToggleSceneDebugConsoleLarger"",
                     ""type"": ""Button"",
                     ""id"": ""65d092fb-6cb5-423f-8b70-93f843b54813"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2289,7 +2289,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""OpenChatCommandLine"",
                     ""type"": ""Button"",
                     ""id"": ""df66082b-5afe-4795-a9eb-e5d25d40111e"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2298,7 +2298,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""name"": ""Controls"",
                     ""type"": ""Button"",
                     ""id"": ""ff9cdfbe-b880-4633-aaae-c5b3849d7f08"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -2469,7 +2469,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""936aa25d-52b8-4067-ab14-76c9c847d3f5"",
-                    ""path"": ""<Keyboard>/o"",
+                    ""path"": ""<Keyboard>/backslash"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
