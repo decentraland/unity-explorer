@@ -2,6 +2,7 @@
 using DCL.Landscape.Settings;
 using DCL.LOD;
 using DCL.Prefs;
+using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream.Settings;
 using ECS.Prioritization;
 using System;
@@ -25,6 +26,7 @@ namespace DCL.Quality.Runtime
         private readonly VideoPrioritizationSettings? videoPrioritizationSettings;
         private readonly ILODSettingsAsset? lodSettingsAsset;
         private readonly LandscapeData? landscapeData;
+        private readonly GPUInstancingSettings roadsSettings;
 
         public bool IsActive => true;
 
@@ -101,6 +103,7 @@ namespace DCL.Quality.Runtime
                 return;
 
             realmPartitionSettings.MaxLoadingDistanceInParcels = maxLoadingDistanceInParcels;
+            roadsSettings.RenderDistanceInParcels = maxLoadingDistanceInParcels;
         }
 
         private void SetMaxSimultaneousVideos(int maxSimultaneousVideos)

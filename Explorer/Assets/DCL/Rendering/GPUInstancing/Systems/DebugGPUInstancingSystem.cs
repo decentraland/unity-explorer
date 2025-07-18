@@ -20,14 +20,14 @@ namespace DCL.Rendering.GPUInstancing.Systems
 
         private readonly DebugWidgetVisibilityBinding visibilityBinding;
         private readonly ElementBinding<float> renderDistance;
-        private readonly float settingsScaleFactor;
+        private readonly float roadsDistanceInParcels;
 
         public DebugGPUInstancingSystem(World world, IDebugContainerBuilder debugBuilder, GPUInstancingService service) : base(world)
         {
             this.service = service;
             settings = this.service.Settings;
 
-            settingsScaleFactor = settings.RenderDistanceInParcels;
+            roadsDistanceInParcels = settings.RenderDistanceInParcels;
 
             visibilityBinding = new DebugWidgetVisibilityBinding(true);
             renderDistance = new ElementBinding<float>(settings.RenderDistanceInParcels);
@@ -40,7 +40,7 @@ namespace DCL.Rendering.GPUInstancing.Systems
 
         protected override void OnDispose()
         {
-            settings.RenderDistanceInParcels = settingsScaleFactor;
+            settings.RenderDistanceInParcels = roadsDistanceInParcels;
         }
 
         private void OnIsEnableToggled(ChangeEvent<bool> evt)

@@ -13,8 +13,9 @@ namespace DCL.Rendering.GPUInstancing
         public ComputeShader IndirectBufferGenerationComputeShader;
         public ComputeShader DrawArgsInstanceCountTransferComputeShader;
 
-        [Range(SCENE_DIST_MIN, SCENE_DIST_MAX)]
-        public float RenderDistanceInParcels = 70f;
+        [field: Range(SCENE_DIST_MIN, SCENE_DIST_MAX)]
+        [field: SerializeField]
+        public float RenderDistanceInParcels { get; set; } = 70f;
 
         public float RoadsSceneDistance() =>
             Mathf.Clamp(RenderDistanceInParcels, SCENE_DIST_MIN, SCENE_DIST_MAX) * ParcelMathHelper.PARCEL_SIZE;
