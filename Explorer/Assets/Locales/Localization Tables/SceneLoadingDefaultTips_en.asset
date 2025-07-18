@@ -18,87 +18,102 @@ MonoBehaviour:
   m_Metadata:
     m_Items: []
   m_TableData:
-  - m_Id: 13571710976
-    m_Localized: Genesis Plaza, heart of the city
-    m_Metadata:
-      m_Items: []
-  - m_Id: 712099487744
-    m_Localized: Genesis Plaza is built and maintained by the Decentraland Foundation
-      but is still in many ways a community project. Around here you'll find several
-      teleports that can take you directly to special scenes marked as points of
-      interest.
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078268747833344
-    m_Localized: MANA
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078297868886016
-    m_Localized: "MANA is Decentraland\u2019s virtual currency. Use it to buy LAND,
-      Unique NAMEs, Wearables, Emotes and vote on Decentraland\u2019s key policies
-      and pay platform fees."
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078455436304384
-    m_Localized: Creator Hub
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078488571305984
-    m_Localized: "It\u2019s intended for users of any knowledge level, combining
-      a graphical interface with code editing capabilities. Both technical and non-technical
-      creators will benefit from using it."
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078537170706432
-    m_Localized: LAND
-    m_Metadata:
-      m_Items: []
-  - m_Id: 1078590144765952
-    m_Localized: 'Decentraland is made up of over 90,000 LANDs: virtual spaces backed
-      by cryptographic tokens. Only LANDowners can determine the content that sits
-      on their LAND.'
+  - m_Id: 191273726208528384
+    m_Localized: Get rewarded for your time spent in Decentraland. Collect Credits
+      each week and use them in the Marketplace to get Wearables & Emotes for free!
     m_Metadata:
       m_Items: []
   - m_Id: 1078626870091776
-    m_Localized: Wearables & Emotes
+    m_Localized: Emotes
     m_Metadata:
       m_Items: []
   - m_Id: 1078683115708416
-    m_Localized: Each Wearable or Emote model has a limited supply. The rarest ones
-      can get to be super valuable. You can buy and sell them in the Marketplace.
+    m_Localized: Wave to friends or show off your moves using <b>'B'</b> to trigger
+      the Emote Wheel. Customize options from your Backpack so you're always ready
+      to go!
     m_Metadata:
       m_Items: []
   - m_Id: 1078715894194176
-    m_Localized: Decentraland DAO
+    m_Localized: Wearables
     m_Metadata:
       m_Items: []
   - m_Id: 1078768453017600
-    m_Localized: Decentraland is the first fully decentralized virtual world. By
-      voting through the DAO  ('Decentralized Autonomous Organization'), you are
-      in control of the policies created to determine how the world behaves.
+    m_Localized: Express yourself without limits! From accessories to full skins,
+      the Marketplace has thousands of community-made Wearables for crafting your
+      unique look.
     m_Metadata:
       m_Items: []
-  - m_Id: 161948706800656384
-    m_Localized: '<b><size=26><color #FF531A>NOW LIVE!</color></size></b>
-
-      <i>Connect
-      in Decentraland, Earn Credits,
-
-      Go Shopping!</i>'
+  - m_Id: 191273272888152064
+    m_Localized: <size=70>Marketplace Credits</size>
     m_Metadata:
       m_Items: []
-  - m_Id: 161948701922680832
-    m_Localized: Marketplace Credits
+  - m_Id: 191273924741713920
+    m_Localized: Genesis City
     m_Metadata:
       m_Items: []
-  - m_Id: 186916549694578688
-    m_Localized: "Decentraland Career Quest is your springboard into Web3 careers\u2014a
-      two-day event (July 16\u201317) designed to help you explore job paths, grow
-      your confidence, and meet the people shaping what\u2019s next in Web3."
+  - m_Id: 191273927132467200
+    m_Localized: "Decentraland's open-world metropolis is made up of thousands of
+      community-owned LAND parcels. Explore by foot or use the map to teleport\u2014there's
+      always something new to discover!"
     m_Metadata:
       m_Items: []
-  - m_Id: 186916418471583744
-    m_Localized: Build Your Future
+  - m_Id: 197019265204740096
+    m_Localized: Events
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197019292912312320
+    m_Localized: From movie nights to dance parties, Decentraland's community-driven
+      events are the best place to make friends! Browse the Event page and find what
+      interests you.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098386597339136
+    m_Localized: Camera
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098550963724288
+    m_Localized: "Save snapshots of your favorite moments in Decentraland. Use <b>'C'</b>
+      to open the Camera and <b>'Space Bar'</b> to take a shot\u2014don't forget
+      to strike a pose!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098607523913728
+    m_Localized: Badges
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098653933887488
+    m_Localized: "Unlock badges by excelling at what you love\u2014socializing, creating,
+      or styling the perfect look in Decentraland\u2014and show them off on your
+      profile!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098893369925632
+    m_Localized: Worlds
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197098927905824768
+    m_Localized: Get a NAME, unlock a whole World! Separate from Genesis City, use
+      your World to hang out, host events, or experiment with scene building.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197099039080046592
+    m_Localized: Communities
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197099055790153728
+    m_Localized: "<color=#FFFF00><size=30>COMING SOON!</size></color> \nExplore Communities
+      to connect over shared interests. Hang in the group chat, get event updates,
+      and enjoy that cozy sense of belonging!\n"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197397929998147584
+    m_Localized: Creator Hub
+    m_Metadata:
+      m_Items: []
+  - m_Id: 197397960180359168
+    m_Localized: Build anything you can imagine from the perfect hangout, to alien
+      worlds, or a full on gaming experience. Deploy to your World or LAND to invite
+      the community!
     m_Metadata:
       m_Items: []
   references:

@@ -123,7 +123,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnViewInstantiated();
 
-            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["profileName"];
+            profileNameLabel = (StringVariable)viewInstance!.ProfileNameLabel.StringReference["back_profileName"];
 
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
@@ -170,6 +170,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance!.FinalizeContainer.SetActive(false);
+            viewInstance!.JumpIntoWorldButton.interactable = true;
             web3Authenticator.SetVerificationListener(null);
 
             audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
@@ -328,8 +329,14 @@ namespace DCL.AuthenticationScreenFlow
             profile.IsDirty = true;
             // Catalysts don't manipulate this field, so at this point we assume that the user is connected to web3
             profile.HasConnectedWeb3 = true;
-            profileNameLabel!.Value = profile.Name;
+
+            profileNameLabel!.Value = IsNewUser() ? profile.Name : "back " + profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
+
+            return;
+
+            bool IsNewUser() =>
+                profile.Version == 1;
         }
 
         private void ChangeAccount()
@@ -375,7 +382,6 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
-                    viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -389,7 +395,6 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.LoginInProgress:
                     ResetAnimator(viewInstance!.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.Slides.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
                     viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
@@ -402,7 +407,6 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Loading:
                     viewInstance!.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.Slides.SetActive(true);
                     viewInstance.ProgressContainer.SetActive(true);
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
@@ -412,7 +416,6 @@ namespace DCL.AuthenticationScreenFlow
                     break;
                 case ViewState.Finalize:
                     ResetAnimator(viewInstance!.FinalizeAnimator);
-                    viewInstance.Slides.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);

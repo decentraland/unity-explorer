@@ -25,9 +25,8 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly ILoadingStatus loadingStatus;
 
-        
-        private ElementBinding<string> currentStageBinding = new ElementBinding<string>(string.Empty);
-        private ElementBinding<string> assetStateBinding = new ElementBinding<string>(string.Empty);
+        private readonly ElementBinding<string> currentStageBinding = new (string.Empty);
+        private readonly ElementBinding<string> assetStateBinding = new (string.Empty);
 
 
         public LoadingScreenPlugin(
@@ -53,26 +52,24 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LoadingScreenPluginSettings settings, CancellationToken ct)
         {
             SceneLoadingScreenView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LoadingScreenPrefab, ct: ct)).Value;
-            SceneTipsConfigurationSO fallbackTipsConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.FallbackTipsConfiguration, ct: ct)).Value;
 
             ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>.ViewFactoryMethod? authScreenFactory =
                 SceneLoadingScreenController.CreateLazily(prefab, null);
 
             var tipsProvider = new UnityLocalizationSceneTipsProvider(LocalizationSettings.StringDatabase, LocalizationSettings.AssetDatabase,
-                fallbackTipsConfig, settings.FallbackTipsTable, settings.FallbackImagesTable,
-                TimeSpan.FromSeconds(settings.TipDisplayDuration));
+                settings.FallbackTipsTable, settings.FallbackImagesTable, TimeSpan.FromSeconds(settings.TipDisplayDuration));
 
             await tipsProvider.InitializeAsync(ct);
-            
+
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
                 TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController, inputBlock));
 
             loadingStatus.CurrentStage.Subscribe(stage => currentStageBinding.Value = stage.ToString());
             loadingStatus.AssetState.Subscribe(assetState => assetStateBinding.Value = assetState);
-            
+
             currentStageBinding.Value= loadingStatus.CurrentStage.Value.ToString();
             assetStateBinding.Value = loadingStatus.AssetState.Value;
-            
+
             debugContainerBuilder
                 .TryAddWidget("Loading Screen")?
                 .AddCustomMarker("Current Stage", currentStageBinding)

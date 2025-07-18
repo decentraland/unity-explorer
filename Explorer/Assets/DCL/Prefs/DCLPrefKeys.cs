@@ -48,6 +48,8 @@ namespace DCL.Prefs
         public const string SETTINGS_WINDOW_MODE = "Settings_WindowMode";
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_UPSCALER = "Settings_Upscaler";
+
+        public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
         public const string SETTINGS_VOICE_CHAT_VOLUME = "Settings_VoiceChatVolume";
         public const string SETTINGS_MICROPHONE_DEVICE_NAME = "Settings_MicrophoneName";
 

@@ -20,11 +20,11 @@ MonoBehaviour:
     - rid: 1095376860581462025
   m_TableData:
   - m_Id: 679572660224
-    m_Localized: Start
+    m_Localized: SIGN IN
     m_Metadata:
       m_Items: []
   - m_Id: 91353005416448
-    m_Localized: shaped by its community of creators & explorers.
+    m_Localized: Explore, create, and make new friends in a world shaped by its community.
     m_Metadata:
       m_Items: []
   - m_Id: 92320304193536
@@ -62,7 +62,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 385401318531072
-    m_Localized: Welcome back {profileName}
+    m_Localized: Welcome {back_profileName}
     m_Metadata:
       m_Items:
       - rid: 1095376860581462025
@@ -71,12 +71,12 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 2611617878499328
-    m_Localized: Secure sign-in step
+    m_Localized: Secure Sign-in
     m_Metadata:
       m_Items: []
   - m_Id: 2611913090392064
-    m_Localized: "Remember the verification number below. \LYou\u2019ll be prompted
-      to confirm it in your web browser to securely link your sign in. "
+    m_Localized: A browser window should open for you to sign into Decentraland.
+      Check this number when prompted.
     m_Metadata:
       m_Items: []
   - m_Id: 2612271623692288

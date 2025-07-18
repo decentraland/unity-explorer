@@ -13,6 +13,8 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using Utility;
+using Utility.Storage;
+using DCL.Prefs;
 
 namespace DCL.SceneLoadingScreens
 {
@@ -26,11 +28,13 @@ namespace DCL.SceneLoadingScreens
         private readonly AudioMixerGroup audioMixerGroupController;
         private readonly List<UniTask> fadingTasks = new ();
 
-        private int currentTip;
         private SceneTips tips;
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
         private IntVariable? progressLabel;
+
+        private readonly PersistentSetting<int> currentTip =
+            PersistentSetting.CreateInt(DCLPrefKeys.SCENE_LOADING_LAST_TIP_INDEX, 0);
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -60,14 +64,14 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.ShowNextButton.onClick.AddListener(() =>
             {
-                ShowTipWithFade(currentTip + 1);
+                ShowTipWithFade(currentTip.Value + 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
 
             viewInstance.ShowPreviousButton.onClick.AddListener(() =>
             {
-                ShowTipWithFade(currentTip - 1);
+                ShowTipWithFade(currentTip.Value - 1);
                 tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
                 RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
             });
@@ -113,7 +117,7 @@ namespace DCL.SceneLoadingScreens
         {
             await LoadTipsAsync(ct);
 
-            ShowTip(0);
+            ShowTip(currentTip.Value);
 
             tipsRotationCancellationToken = tipsRotationCancellationToken.SafeRestart();
             RotateTipsOverTimeAsync(tips.Duration, tipsRotationCancellationToken.Token).Forget();
@@ -204,9 +208,7 @@ namespace DCL.SceneLoadingScreens
             viewInstance.HideAllTips();
             viewInstance.ShowTip(index);
 
-            viewInstance.ChangeBackgroundColor(tips.Tips[index].BackgroundColor);
-
-            currentTip = index;
+            currentTip.Value = index;
         }
 
         private void ShowTipWithFade(int index)
@@ -230,15 +232,10 @@ namespace DCL.SceneLoadingScreens
 
                 index %= tips.Tips.Count;
 
-                currentTip = index;
+                currentTip.Value = index;
 
                 await FadeOthers(ct);
-
-                await UniTask.WhenAll
-                (
-                    viewInstance.ChangeBackgroundColorFadeAsync(tips.Tips[index].BackgroundColor, DURATION, ct),
-                    viewInstance.ShowTipWithFadeAsync(index, DURATION, ct)
-                );
+                await viewInstance.ShowTipWithFadeAsync(index, DURATION, ct);
             }
 
             ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();
@@ -252,7 +249,7 @@ namespace DCL.SceneLoadingScreens
                 {
                     await UniTask.Delay(frequency, cancellationToken: ct);
 
-                    ShowTipWithFade(currentTip + 1);
+                    ShowTipWithFade(currentTip.Value + 1);
                 }
             }
             catch (OperationCanceledException) { }
