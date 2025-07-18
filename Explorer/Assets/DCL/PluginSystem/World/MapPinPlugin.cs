@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             //If the Map Pins feature is enabled or if it's a global PX we allow the Map Pins systems to run in them.
-            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.MAP_PINS) ||
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.MAP_PINS) ||
                 sharedDependencies.SceneData.SceneEntityDefinition.metadata.isPortableExperience)
             {
                 ResetDirtyFlagSystem<PBMapPin>.InjectToWorld(ref builder);
