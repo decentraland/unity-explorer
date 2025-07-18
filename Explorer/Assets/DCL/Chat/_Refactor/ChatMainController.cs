@@ -88,15 +88,6 @@ namespace DCL.Chat
 
             chatMemberListService.Start();
 
-            // Ignore buttons that would lead to the conflicting state
-            // TODO find a better way to handle this
-            chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
-                viewInstance.TitlebarView.CloseChatButton.transform,
-                viewInstance.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.inputField.transform);
-
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
                 eventBus,

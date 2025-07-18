@@ -49,7 +49,8 @@ namespace DCL.Chat._Refactor.ChatStates
             scope.Add(eventBus.Subscribe<ChatEvents.CloseChatEvent>(HandleCloseChatEvent));
             scope.Add(eventBus.Subscribe<ChatEvents.ToggleMembersEvent>(HandleToggleMembersEvent));
 
-            chatClickDetectionService.Activate(HandleClickInside, HandleClickOutside);
+            chatClickDetectionService.OnClickInside += HandleClickInside;
+            chatClickDetectionService.OnClickOutside += HandleClickOutside;
 
             MainController.PointerEntered += HandlePointerEntered;
             MainController.PointerExited += HandlePointerExited;
@@ -57,7 +58,8 @@ namespace DCL.Chat._Refactor.ChatStates
 
         public void Dispose()
         {
-            chatClickDetectionService.Deactivate();
+            chatClickDetectionService.OnClickInside -= HandleClickInside;
+            chatClickDetectionService.OnClickOutside -= HandleClickOutside;
 
             MainController.PointerEntered -= HandlePointerEntered;
             MainController.PointerExited -= HandlePointerExited;

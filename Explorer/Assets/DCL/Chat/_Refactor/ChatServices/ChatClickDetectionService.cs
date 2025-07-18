@@ -7,15 +7,20 @@ using UnityEngine.Pool; // Make sure this is included
 
 public class ChatClickDetectionService : IDisposable
 {
+    public event Action? OnClickInside;
+    public event Action? OnClickOutside;
+
     private readonly Transform targetArea;
-    private Action? onClickInside;
-    private Action? onClickOutside;
     private readonly HashSet<Transform> ignoredElementsSet;
+
+    private bool isPaused;
 
     public ChatClickDetectionService(Transform targetArea, params Transform[] ignoredElements)
     {
         this.targetArea = targetArea;
         ignoredElementsSet = new HashSet<Transform>(ignoredElements);
+
+        DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
     }
 
     public void Dispose()
@@ -23,25 +28,16 @@ public class ChatClickDetectionService : IDisposable
         DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
     }
 
-    public void Activate(Action? onClickInside, Action? onClickOutside)
-    {
-        this.onClickInside = onClickInside;
-        this.onClickOutside = onClickOutside;
+    public void Pause() =>
+        isPaused = true;
 
-        DCLInput.Instance.UI.Click.performed += HandleGlobalClick;
-    }
-
-    public void Deactivate()
-    {
-        onClickInside = null;
-        onClickOutside = null;
-
-        DCLInput.Instance.UI.Click.performed -= HandleGlobalClick;
-    }
+    public void Resume() =>
+        isPaused = false;
 
     private void HandleGlobalClick(InputAction.CallbackContext context)
     {
         if (EventSystem.current == null) return;
+        if (isPaused) return;
 
         var eventData = new PointerEventData(EventSystem.current) { position = Mouse.current.position.ReadValue() };
 
@@ -63,8 +59,8 @@ public class ChatClickDetectionService : IDisposable
             }
         }
 
-        if (clickedInside) onClickInside?.Invoke();
-        else onClickOutside?.Invoke();
+        if (clickedInside) OnClickInside?.Invoke();
+        else OnClickOutside?.Invoke();
     }
 
     private bool IsIgnored(GameObject clickedObject)

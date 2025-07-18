@@ -169,7 +169,17 @@ namespace DCL.PluginSystem.Global
                 friendsServiceProxy);
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
-            var chatClickDetectionService = new ChatClickDetectionService();
+
+            ChatMainView? viewInstance = mainUIView.ChatView2;
+
+            // Ignore buttons that would lead to the conflicting state
+            var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
+                viewInstance.TitlebarView.CloseChatButton.transform,
+                viewInstance.TitlebarView.CloseMemberListButton.transform,
+                viewInstance.TitlebarView.OpenMemberListButton.transform,
+                viewInstance.TitlebarView.BackFromMemberList.transform,
+                viewInstance.InputView.inputField.transform);
+
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
 

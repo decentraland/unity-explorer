@@ -89,14 +89,14 @@ namespace DCL.Chat
         {
             suggestionPanelController.SetPanelVisibility(true);
             inputField.UpAndDownArrowsEnabled = false;
-            clickDetection.Activate(onClickInside: null, onClickOutside: () => TryDeactivate());
+            clickDetection.OnClickOutside += Deactivate;
         }
 
         protected override void Deactivate()
         {
             suggestionPanelController.SetPanelVisibility(false);
             inputField.UpAndDownArrowsEnabled = true;
-            clickDetection.Deactivate();
+            clickDetection.OnClickOutside -= Deactivate;
             lastMatch = Match.Empty;
         }
 

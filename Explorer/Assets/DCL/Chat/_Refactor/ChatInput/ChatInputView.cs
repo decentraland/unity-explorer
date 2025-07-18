@@ -12,7 +12,7 @@ namespace DCL.Chat
 {
     public class ChatInputView : MonoBehaviour
     {
-        [field: SerializeField] internal CustomInputField inputField { get; private set; }
+        [field: SerializeField] public CustomInputField inputField { get; private set; }
         [field: SerializeField] internal RectTransform pastePopupPosition { get; private set; }
 
         [SerializeField] private GameObject inputFieldContainer;
