@@ -2,7 +2,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UI;
 using DCL.Friends.UI.BlockUserPrompt;
@@ -74,24 +73,26 @@ namespace DCL.UI.GenericContextMenu.Controllers
             IMVCManager mvcManager,
             GenericUserProfileContextMenuSettings contextMenuSettings,
             IAnalyticsController analytics,
+            bool includeUserBlocking,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
-            ISharedSpaceManager sharedSpaceManager)
+            ISharedSpaceManager sharedSpaceManager,
+            bool includeVoiceChat)
         {
             this.friendServiceProxy = friendServiceProxy;
             this.chatEventBus = chatEventBus;
             this.mvcManager = mvcManager;
             this.analytics = analytics;
+            this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.friendOnlineStatusCacheProxy = friendOnlineStatusCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.includeVoiceChat = includeVoiceChat;
+            this.includeUserBlocking = includeUserBlocking;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
-
-            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
-            this.includeVoiceChat = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
 
             userProfileControlSettings = new UserProfileContextMenuControlSettings(OnFriendsButtonClicked);
             openUserProfileButtonControlSettings = new ButtonWithDelegateContextMenuControlSettings<string>(contextMenuSettings.OpenUserProfileButtonConfig.Text, contextMenuSettings.OpenUserProfileButtonConfig.Sprite, new StringDelegate(OnShowUserPassportClicked));

@@ -53,7 +53,8 @@ namespace DCL.Settings.Configuration
             ISettingsModuleEventListener settingsEventListener,
             VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
-            WorldVolumeMacBus worldVolumeMacBus)
+            WorldVolumeMacBus worldVolumeMacBus,
+            bool isVoiceChatEnabled)
         {
             var viewInstance = Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -69,7 +70,7 @@ namespace DCL.Settings.Configuration
                                                        SliderFeatures.WORLD_SOUNDS_VOLUME_FEATURE => new WorldSoundsVolumeSettingsController(viewInstance, generalAudioMixer, worldVolumeMacBus),
                                                        SliderFeatures.UI_SOUNDS_VOLUME_FEATURE => new UISoundsVolumeSettingsController(viewInstance, generalAudioMixer),
                                                        SliderFeatures.AVATAR_SOUNDS_VOLUME_FEATURE => new AvatarSoundsVolumeSettingsController(viewInstance, generalAudioMixer),
-                                                       SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer),
+                                                       SliderFeatures.VOICE_CHAT_VOLUME_FEATURE => new VoiceChatVolumeSettingsController(viewInstance, generalAudioMixer, isVoiceChatEnabled),
                                                        SliderFeatures.UPSCALER_FEATURE => new UpscalingSettingsController(viewInstance, upscalingController),
                                                        // add other cases...
                                                        _ => throw new ArgumentOutOfRangeException(nameof(Feature), Feature, $"Unsupported feature: {Feature}"),
