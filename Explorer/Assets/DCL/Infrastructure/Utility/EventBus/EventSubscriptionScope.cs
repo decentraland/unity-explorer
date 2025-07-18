@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Utilities
+namespace Utility
 {
     public class EventSubscriptionScope : IDisposable
     {
-        private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
+        private readonly List<IDisposable> subscriptions = new ();
 
         public void Add(IDisposable subscription)
         {
-            _subscriptions.Add(subscription);
+            subscriptions.Add(subscription);
         }
 
         public void Dispose()
         {
-            foreach (var subscription in _subscriptions)
+            foreach (IDisposable? subscription in subscriptions)
             {
                 subscription.Dispose();
             }
-            _subscriptions.Clear();
+
+            subscriptions.Clear();
         }
     }
 }

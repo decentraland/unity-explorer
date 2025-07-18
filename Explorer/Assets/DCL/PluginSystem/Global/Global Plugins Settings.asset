@@ -882,6 +882,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
     - rid: 7621844642437005315
       type: {class: GenericPopupsPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

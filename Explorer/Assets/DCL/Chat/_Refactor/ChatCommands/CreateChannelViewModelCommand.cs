@@ -6,13 +6,14 @@ using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
-using Utilities;
+
+using Utility;
 
 public class CreateChannelViewModelCommand
 {
     private readonly IEventBus eventBus;
     private readonly ChatConfig chatConfig;
-    private readonly ProfileRepositoryWrapper profileRepository; 
+    private readonly ProfileRepositoryWrapper profileRepository;
 
     public CreateChannelViewModelCommand(
         IEventBus eventBus,
@@ -43,7 +44,7 @@ public class CreateChannelViewModelCommand
                 break;
 
             case ChatChannel.ChatChannelType.USER:
-                
+
                 initialViewModel.DisplayName = "Loading...";
                 FetchProfileAndUpdateAsync(initialViewModel, channel, CancellationToken.None).Forget();
                 break;
@@ -52,10 +53,10 @@ public class CreateChannelViewModelCommand
                 initialViewModel.DisplayName = channel.Id.Id;
                 break;
         }
-        
+
         return initialViewModel;
     }
-    
+
     private async UniTaskVoid FetchProfileAndUpdateAsync(ChatChannelViewModel viewModel, ChatChannel channel, CancellationToken ct)
     {
         Profile? profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
@@ -67,7 +68,7 @@ public class CreateChannelViewModelCommand
         viewModel.HasClaimedName = profile.HasClaimedName;
         viewModel.IsOnline = true;
         // You would get IsOnline from another service, e.g., ChatUserStateUpdater
-        // viewModel.IsOnline = ... 
+        // viewModel.IsOnline = ...
 
         eventBus.Publish(new ChatEvents.ChannelUpdatedEvent { ViewModel = viewModel });
     }

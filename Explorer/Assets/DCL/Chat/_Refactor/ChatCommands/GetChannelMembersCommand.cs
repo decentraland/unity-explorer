@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Chat.EventBus;
 using UnityEngine;
-using Utilities;
+
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {
@@ -44,7 +45,7 @@ namespace DCL.Chat.ChatUseCases
                 FetchThumbnailAndUpdateAsync(viewModel, member.FaceSnapshotUrl, ct).Forget();
             }
 
-            viewModels.Sort((a, b) 
+            viewModels.Sort((a, b)
                 => string.Compare(a.UserName, b.UserName, StringComparison.OrdinalIgnoreCase));
 
             return viewModels;

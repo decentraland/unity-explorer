@@ -6,7 +6,8 @@ using DCL.Chat.History;
 using DCL.Chat.Services;
 using DCL.Friends;
 using DCL.Utilities;
-using Utilities;
+
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {
@@ -35,38 +36,32 @@ namespace DCL.Chat.ChatUseCases
             this.currentChannelService = currentChannelService;
         }
 
-        public async UniTask ExecuteAsync(CancellationToken ct)
+        public async UniTaskVoid ExecuteAsync(CancellationToken ct)
         {
-            var nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+            ChatChannel nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+
             if (nearbyChannel.Messages.Count == 0)
-            {
                 chatHistory.AddMessage(nearbyChannel.Id, ChatMessage.NewFromSystem("Type /help for available commands."));
-            }
 
             if (!friendsServiceProxy.Configured) return;
 
             chatHistoryStorage?.LoadAllChannelsWithoutMessages();
-            
+
             var allLoadedChannels = new List<ChatChannel>(chatHistory.Channels.Count);
 
-            foreach (var channel in chatHistory.Channels.Values)
-            {
+            foreach (ChatChannel? channel in chatHistory.Channels.Values)
                 allLoadedChannels.Add(channel);
-            }
-        
+
             eventBus.Publish(new ChatEvents.InitialChannelsLoadedEvent { Channels = allLoadedChannels });
-            
+
             ct.ThrowIfCancellationRequested();
 
-            if (chatUserStateUpdater != null)
-            {
-                var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
-                eventBus.Publish(new ChatEvents.InitialUserStatusLoadedEvent { Users = connectedUsers });
-            }
-            
+            HashSet<string>? connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+            eventBus.Publish(new ChatEvents.InitialUserStatusLoadedEvent { Users = connectedUsers });
+
             SetDefaultChannel(nearbyChannel);
         }
-        
+
         private void SetDefaultChannel(ChatChannel nearbyChannel)
         {
             currentChannelService.SetCurrentChannel(nearbyChannel);

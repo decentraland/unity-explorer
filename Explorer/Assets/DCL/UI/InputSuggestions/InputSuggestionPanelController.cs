@@ -11,7 +11,7 @@ namespace DCL.UI.SuggestionPanel
 
     public class InputSuggestionPanelController
     {
-        public event SuggestionSelectedDelegate SuggestionSelected;
+        // public event SuggestionSelectedDelegate SuggestionSelected;
 
         private readonly InputSuggestionPanelView suggestionPanel;
 
@@ -22,13 +22,14 @@ namespace DCL.UI.SuggestionPanel
         {
             this.suggestionPanel = suggestionPanel;
             this.suggestionPanel.InjectDependencies();
-            this.suggestionPanel.SuggestionSelected += OnSuggestionSelected;
+
+            // this.suggestionPanel.SuggestionSelected += OnSuggestionSelected;
         }
 
-        private void OnSuggestionSelected(string suggestionId)
-        {
-            SuggestionSelected?.Invoke(suggestionId);
-        }
+        // private void OnSuggestionSelected(string suggestionId)
+        // {
+        //     SuggestionSelected?.Invoke(suggestionId);
+        // }
 
         public void SetPanelVisibility(bool isVisible)
         {
@@ -52,12 +53,13 @@ namespace DCL.UI.SuggestionPanel
             if (match.Success && match.Groups.Count > 1)
             {
                 searchCts = searchCts.SafeRestart();
-                SearchAndSetSuggestionsAsync<T>(match.Groups[1].Value, suggestionType, suggestionDataMap, searchCts.Token).Forget();
+                SearchAndSetSuggestionsAsync(match.Groups[1].Value, suggestionType, suggestionDataMap, searchCts.Token).Forget();
                 return match;
             }
 
-            if (suggestionPanel.IsActive)
-                SetPanelVisibility(false);
+            // State must be controlled from the upper layer
+            // if (suggestionPanel.IsActive)
+            //     SetPanelVisibility(false);
 
             return Match.Empty;
         }
@@ -65,11 +67,13 @@ namespace DCL.UI.SuggestionPanel
         private async UniTaskVoid SearchAndSetSuggestionsAsync<T>(string value, InputSuggestionType suggestionType, Dictionary<string, T> suggestionDataMap, CancellationToken ct) where T : IInputSuggestionElementData
         {
             var resultList = new List<T>();
-            await DictionaryUtils.GetKeysWithPrefixAsync<T>(suggestionDataMap, value, resultList, ct);
+            await DictionaryUtils.GetKeysWithPrefixAsync(suggestionDataMap, value, resultList, ct);
 
 
             suggestionPanel.SetSuggestionValues(suggestionType, resultList);
-            suggestionPanel.SetPanelVisibility(true);
+
+            // State must be controlled from the upper layer
+            // suggestionPanel.SetPanelVisibility(true);
         }
 
         public void Dispose()

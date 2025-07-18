@@ -3,7 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
-using Utilities;
+
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {
@@ -11,7 +12,7 @@ namespace DCL.Chat.ChatUseCases
     {
         private readonly IEventBus eventBus;
         private readonly ChatUserStateUpdater userStateUpdater;
-        
+
         public GetUserChatStatusCommand(ChatUserStateUpdater userStateUpdater, IEventBus eventBus)
         {
             this.eventBus = eventBus;
@@ -29,7 +30,7 @@ namespace DCL.Chat.ChatUseCases
                 eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent { UserId = userId, IsOnline = false });
                 return ChatUserStateUpdater.ChatUserState.DISCONNECTED;
             }
-            
+
             bool isOnline = result.Value.Result == ChatUserStateUpdater.ChatUserState.CONNECTED;
             eventBus.Publish(new ChatEvents.UserStatusUpdatedEvent { UserId = userId, IsOnline = isOnline });
 

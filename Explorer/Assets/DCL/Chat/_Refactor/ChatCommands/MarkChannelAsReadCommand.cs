@@ -1,6 +1,7 @@
 ﻿using DCL.Chat.EventBus;
 using DCL.Chat.History;
-using Utilities;
+
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {
@@ -8,7 +9,7 @@ namespace DCL.Chat.ChatUseCases
     {
         private readonly IEventBus eventBus;
         private readonly IChatHistory chatHistory;
-        
+
         public MarkChannelAsReadCommand(IEventBus eventBus, IChatHistory chatHistory)
         {
             this.eventBus = eventBus;

@@ -1,4 +1,4 @@
-﻿using Utilities;
+﻿using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {

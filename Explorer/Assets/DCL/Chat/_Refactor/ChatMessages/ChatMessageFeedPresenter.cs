@@ -7,7 +7,7 @@ using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.Services;
 using DG.Tweening;
-using Utilities;
+
 using Utility;
 
 public class ChatMessageFeedPresenter : IDisposable
@@ -18,7 +18,7 @@ public class ChatMessageFeedPresenter : IDisposable
     private readonly GetMessageHistoryCommand getMessageHistoryCommand;
     private readonly CreateMessageViewModelCommand createMessageViewModelCommand;
     private readonly MarkChannelAsReadCommand markChannelAsReadCommand;
-    
+
     private readonly EventSubscriptionScope scope = new();
     private CancellationTokenSource loadChannelCts = new();
 
@@ -35,7 +35,7 @@ public class ChatMessageFeedPresenter : IDisposable
         this.getMessageHistoryCommand = getMessageHistoryCommand;
         this.createMessageViewModelCommand = createMessageViewModelCommand;
         this.markChannelAsReadCommand = markChannelAsReadCommand;
-        
+
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
         scope.Add(eventBus.Subscribe<ChatEvents.MessageReceivedEvent>(OnMessageReceived));
         scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
@@ -57,11 +57,21 @@ public class ChatMessageFeedPresenter : IDisposable
         }
     }
 
+    public void Activate()
+    {
+        view.OnScrollToBottom += MarkCurrentChannelAsRead;
+    }
+
+    public void Deactivate()
+    {
+        view.OnScrollToBottom -= MarkCurrentChannelAsRead;
+    }
+
     public void Show()
     {
         view.Show();
     }
-    
+
     public void Hide()
     {
         view.Hide();
@@ -79,6 +89,7 @@ public class ChatMessageFeedPresenter : IDisposable
         if (token.IsCancellationRequested) return;
 
         view.SetMessages(result.Messages);
+        view.ScrollToBottom();
     }
 
     private void OnMessageReceived(ChatEvents.MessageReceivedEvent evt)
@@ -97,10 +108,11 @@ public class ChatMessageFeedPresenter : IDisposable
     {
         markChannelAsReadCommand.Execute(currentChannelService.CurrentChannelId);
     }
-    
+
     public void Dispose()
     {
         loadChannelCts.SafeCancelAndDispose();
+        Deactivate();
         scope.Dispose();
         if (view != null)
             view.OnScrollToBottom -= MarkCurrentChannelAsRead;

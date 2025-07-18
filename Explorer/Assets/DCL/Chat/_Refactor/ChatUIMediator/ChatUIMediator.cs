@@ -29,17 +29,17 @@
             this.chatInputPresenter = chatInputPresenter;
             this.memberListPresenter = memberListPresenter;
         }
-        
+
         public void SetupForDefaultState(bool animate)
         {
             titleBarPresenter.Show();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
-            
+
             channelListPresenter.Show();
             messageFeedPresenter.Show();
-            chatInputPresenter.Show();
+            chatInputPresenter.ShowUnfocused();
             memberListPresenter.Hide();
-            
+
             SetPanelsFocus(isFocused: false, animate);
         }
 
@@ -47,12 +47,12 @@
         {
             titleBarPresenter.Show();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
-            
+
             channelListPresenter.Show();
             messageFeedPresenter.Show();
-            chatInputPresenter.Show();
+            chatInputPresenter.ShowFocusedAsync().Forget();
             memberListPresenter.Hide();
-            
+
             SetPanelsFocus(isFocused: true, animate: false);
         }
 
@@ -60,7 +60,7 @@
         {
             titleBarPresenter.Show();
             titleBarPresenter.ShowMembersView(isMemberListVisible:true);
-            
+
             channelListPresenter.Hide();
             messageFeedPresenter.Hide();
             chatInputPresenter.Hide();
@@ -73,25 +73,25 @@
         {
             titleBarPresenter.Hide();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
-            
+
             channelListPresenter.Hide();
             messageFeedPresenter.Hide();
             memberListPresenter.Hide();
-            chatInputPresenter.Show();
-            
+            chatInputPresenter.ShowUnfocused();
+
             SetPanelsFocus(isFocused: false, animate: true);
         }
-        
+
         public void SetupForHiddenState()
         {
             titleBarPresenter.Hide();
             titleBarPresenter.ShowMembersView(isMemberListVisible:false);
-            
+
             channelListPresenter.Hide();
             messageFeedPresenter.Hide();
             chatInputPresenter.Hide();
             memberListPresenter.Hide();
-        
+
             SetPanelsFocus(isFocused: false, animate: false);
         }
 

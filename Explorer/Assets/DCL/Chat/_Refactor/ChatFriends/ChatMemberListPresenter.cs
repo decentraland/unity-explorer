@@ -10,7 +10,7 @@ using DCL.Chat.Services;
 using DCL.Web3;
 using MVC;
 using UnityEngine;
-using Utilities;
+
 using Utility;
 
 public class ChatMemberListPresenter : IDisposable
@@ -20,14 +20,14 @@ public class ChatMemberListPresenter : IDisposable
     private readonly GetChannelMembersCommand getChannelMembersCommand;
     private readonly ChatMemberListService memberListService;
     private readonly ChatContextMenuService chatContextMenuService;
-    
+
     private readonly EventSubscriptionScope scope = new ();
     private CancellationTokenSource lifeCts = new ();
     private CancellationTokenSource? activeMenuCts;
     private UniTaskCompletionSource? activeMenuTcs;
 
     private List<ChatMemberListViewModel> currentMembers = new ();
-    
+
     public ChatMemberListPresenter(
         ChannelMemberFeedView view,
         IEventBus eventBus,
@@ -40,7 +40,7 @@ public class ChatMemberListPresenter : IDisposable
         this.memberListService = memberListService;
         this.getChannelMembersCommand = getChannelMembersCommand;
         this.chatContextMenuService = chatContextMenuService;
-        
+
         this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelMemberUpdatedEvent>(OnMemberUpdated));
     }
@@ -76,7 +76,7 @@ public class ChatMemberListPresenter : IDisposable
         // Immediately display this list. Names appear instantly, pictures are loading.
         view.SetData(currentMembers);
     }
-    
+
     public void Show() => ShowAndLoad();
 
     public void Hide()
@@ -95,7 +95,7 @@ public class ChatMemberListPresenter : IDisposable
         chatContextMenuService
             .ShowUserProfileMenuAsync(data).Forget();
     }
-    
+
     public void Dispose()
     {
         if (memberListService != null)

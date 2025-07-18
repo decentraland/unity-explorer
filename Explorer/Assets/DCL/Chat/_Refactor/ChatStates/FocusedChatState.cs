@@ -7,8 +7,6 @@
             context.UIMediator.SetupForFocusedState();
 
             context.InputBlocker.Block();
-
-            context.UIMediator.chatInputPresenter.OnFocus();
         }
 
         public override void End()

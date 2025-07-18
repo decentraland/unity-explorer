@@ -14,7 +14,8 @@ using DCL.Chat.Services.DCL.Chat;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
-using Utilities;
+
+using Utility;
 
 namespace DCL.Chat
 {
@@ -40,7 +41,7 @@ namespace DCL.Chat
 
         public bool IsVisibleInSharedSpace =>
             State != ControllerState.ViewHidden;
-        
+
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
@@ -75,23 +76,13 @@ namespace DCL.Chat
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            
+
             uiScope = new EventSubscriptionScope();
-            
-            viewInstance.OnPointerEnterEvent += HandlePointerEnter;
+
+            viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
 
             chatMemberListService.Start();
-
-            chatClickDetectionService.Initialize(viewInstance.transform as RectTransform,
-                elementsToIgnore: new List<Transform>
-            {
-                viewInstance.TitlebarView.CloseChatButton.transform,
-                viewInstance.TitlebarView.CloseMemberListButton.transform,
-                viewInstance.TitlebarView.OpenMemberListButton.transform,
-                viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.InputField.transform
-            });
 
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
@@ -121,30 +112,31 @@ namespace DCL.Chat
                 chatConfig,
                 eventBus,
                 currentChannelService,
-                commandRegistry.GetUserChatStatus,
+                commandRegistry.GetParticipantProfilesCommand,
+                profileRepositoryWrapper,
                 commandRegistry.SendMessage);
-            
+
             var memberListPresenter = new ChatMemberListPresenter(
                 viewInstance.MemberListView,
                 eventBus,
                 chatMemberListService,
                 chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);
-            
+
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
             uiScope.Add(messageFeedPresenter);
             uiScope.Add(inputPresenter);
             uiScope.Add(memberListPresenter);
             uiScope.Add(chatClickDetectionService);
-            
+
             var mediator = new ChatUIMediator(
-                viewInstance, 
+                viewInstance,
                 chatConfig,
-                titleBarPresenter, 
-                channelListPresenter, 
-                messageFeedPresenter, 
-                inputPresenter, 
+                titleBarPresenter,
+                channelListPresenter,
+                messageFeedPresenter,
+                inputPresenter,
                 memberListPresenter);
 
             chatStateMachine = new ChatStateMachine(eventBus,
@@ -152,7 +144,7 @@ namespace DCL.Chat
                 chatInputBlockingService,
                 chatClickDetectionService,
                 this);
-            
+
             uiScope.Add(chatStateMachine);
         }
 
@@ -167,7 +159,7 @@ namespace DCL.Chat
         {
             chatStateMachine?.SetVisibility(isVisible);
         }
-        
+
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
         {
             if (State != ControllerState.ViewHidden)
@@ -192,7 +184,7 @@ namespace DCL.Chat
 
         private void HandlePointerEnter() => PointerEntered?.Invoke();
         private void HandlePointerExit() => PointerExited?.Invoke();
-        
+
         public override void Dispose()
         {
             if (viewInstance != null)
@@ -200,7 +192,7 @@ namespace DCL.Chat
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
             }
-            
+
             base.Dispose();
             initCts?.Cancel();
             initCts?.Dispose();
