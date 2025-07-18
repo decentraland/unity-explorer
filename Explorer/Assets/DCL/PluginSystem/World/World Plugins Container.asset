@@ -51,7 +51,7 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        FadeSpeed: 5
+        FadeSpeed: 1
     - rid: 847852733734322176
       type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
