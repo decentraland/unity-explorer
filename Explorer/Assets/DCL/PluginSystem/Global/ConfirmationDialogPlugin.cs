@@ -4,6 +4,7 @@ using DCL.AssetsProvision;
 using DCL.UI.ConfirmationDialog;
 using DCL.UI.Profiles.Helpers;
 using MVC;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -46,6 +47,7 @@ namespace DCL.PluginSystem.Global
         }
     }
 
+    [Serializable]
     public class ConfirmationDialogPluginSettings : IDCLPluginSettings
     {
         [field: Header("Confirmation dialog")]
