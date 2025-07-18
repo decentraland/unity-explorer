@@ -21,10 +21,10 @@ namespace DCL.SDKComponents.MediaStream
         {
             switch (isCurrentScene)
             {
-                case true when mediaPlayer.AudioVolume < targetVolume:
+                case true:
                     mediaPlayer.AudioVolume = Mathf.Min(targetVolume, mediaPlayer.AudioVolume + volumeDelta);
                     break;
-                case false when mediaPlayer.AudioVolume > 0:
+                case false:
                     mediaPlayer.AudioVolume = Mathf.Max(0, mediaPlayer.AudioVolume - volumeDelta);
                     break;
             }
