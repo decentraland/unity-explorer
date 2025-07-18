@@ -21,7 +21,17 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
         public static Color3 GetHairColor(this PBAvatarShape self) =>
             self.HairColor ?? new Color3(HAIR_DEFAULT_COLOR);
 
-        public static Color3 GetSkinColor(this PBAvatarShape self) =>
-            self.SkinColor ?? new Color3(NEUTRAL_COLOR);
+        public static Color4 GetSkinColor(this PBAvatarShape self)
+        {
+            Color3 rgb = self.SkinColor ?? NEUTRAL_COLOR;
+
+            return new Color4
+            {
+                A = self.HasSkinColorAlpha ? self.SkinColorAlpha : 1f,
+                R = rgb.R,
+                G = rgb.G,
+                B = rgb.B,
+            };
+        }
     }
 }
