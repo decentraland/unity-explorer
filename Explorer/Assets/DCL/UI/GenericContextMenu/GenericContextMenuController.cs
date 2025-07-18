@@ -100,9 +100,10 @@ namespace DCL.UI.GenericContextMenu
 
                 GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i, container.transform);
 
-                if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings)
+                if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
                 {
                     ControlsContainerView subContainer = controlsPoolManager.GetControlsContainer(container.transform);
+                    subMenuButtonView.SetContainer(subContainer);
                     ConfigureContextMenu(subContainer, subMenuButtonSettings.subMenu, component.transform.position, overlapRect);
                 }
 

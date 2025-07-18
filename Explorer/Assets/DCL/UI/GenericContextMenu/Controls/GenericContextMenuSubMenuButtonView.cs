@@ -12,6 +12,24 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
         [field: SerializeField] public Image ImageComponent { get; private set; }
 
+        private ControlsContainerView container;
+
+        public void SetContainer(ControlsContainerView container)
+        {
+            this.container = container;
+            container.gameObject.SetActive(false);
+        }
+
+        private void OnEnable()
+        {
+            ButtonComponent.onClick.AddListener(() => container.gameObject.SetActive(!container.gameObject.activeSelf));
+        }
+
+        private void OnDisable()
+        {
+            UnregisterListeners();
+        }
+
         public void Configure(SubMenuContextMenuButtonSettings settings)
         {
             TextComponent.SetText(settings!.buttonText);

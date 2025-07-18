@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1362902911226604175}
   - component: {fileID: 2951197268955641115}
   - component: {fileID: 8283334800344841663}
+  - component: {fileID: 2711059917953831877}
   m_Layer: 5
   m_Name: ControlsContainer
   m_TagString: Untagged
@@ -132,3 +133,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   controlsContainer: {fileID: 8137949506953210344}
   controlsLayoutGroup: {fileID: 1362902911226604175}
+--- !u!114 &2711059917953831877
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4314237914999204937}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 1
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
