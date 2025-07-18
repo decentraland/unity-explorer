@@ -97,11 +97,7 @@ Shader "Custom/AnimatedBackgroundMovingTexture"
             fixed4 frag (v2f i) : SV_Target
             {
                 // Vignette background
-                
-                // float2 uv = AspectCorrectUV(i.uv);
                 float2 centerUV = i.uv - 0.5;
-                // float2 centerUV = uv - 0.5;
-                centerUV.x *= _ScreenParams.y / _ScreenParams.x;
                 float radius = length(centerUV);
                 float mask = smoothstep(_Radius + _Smoothness, _Radius, radius);
                 float4 vignette = lerp(_OuterColor, _InnerColor, mask);
