@@ -126,7 +126,7 @@ namespace DCL.Chat.MessageBus
                 string walletId = receivedMessage.Payload.HasForwardedFrom ? receivedMessage.Payload.ForwardedFrom
                                                                            : receivedMessage.FromWalletId;
 
-                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Topic);
+                ChatMessage newMessage = messageFactory.CreateChatMessage(walletId, false, receivedMessage.Payload.Message, null, receivedMessage.Payload.Timestamp);
 
                 MessageAdded?.Invoke(parsedChannelId, channelType, newMessage);
             }
