@@ -7,9 +7,8 @@ warnings_to_ignore=(
 )
 
 # Determine path to the Unity Assets directory
-# Assumes this script is run from the project root
 assets_path="./Explorer/Assets"
-file_path="$assets_path/csc.rsp"
+rsp_files=("csc.rsp" "mcs.rsp" "gmcs.rsp" "smcs.rsp" "us.rsp")
 
 # Make sure the Assets directory exists
 if [[ ! -d "$assets_path" ]]; then
@@ -17,18 +16,20 @@ if [[ ! -d "$assets_path" ]]; then
     exit 1
 fi
 
-# Write the suppressions to csc.rsp
-{
-    for warning in "${warnings_to_ignore[@]}"; do
-        echo "-nowarn:$warning"
-    done
-} > "$file_path"
+# Write suppressions to each .rsp file
+for file_name in "${rsp_files[@]}"; do
+    file_path="$assets_path/$file_name"
 
-# Feedback
-if [[ $? -eq 0 ]]; then
-    echo "Successfully generated csc.rsp file at: $file_path"
-    echo "Added ${#warnings_to_ignore[@]} warning suppressions to the file."
-else
-    echo "Failed to generate csc.rsp file"
-    exit 1
-fi
+    {
+        for warning in "${warnings_to_ignore[@]}"; do
+            echo "-nowarn:$warning"
+        done
+    } > "$file_path"
+
+    if [[ $? -eq 0 ]]; then
+        echo "Successfully generated $file_name with ${#warnings_to_ignore[@]} warning suppressions."
+    else
+        echo "Failed to write to $file_name"
+        exit 1
+    fi
+done
