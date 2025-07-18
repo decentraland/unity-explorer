@@ -20,6 +20,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuButtonWithStringDelegateView> buttonWithStringDelegatePool;
         private readonly IObjectPool<GenericContextMenuTextView> textPool;
         private readonly IObjectPool<GenericContextMenuToggleWithCheckView> toggleWithCheckPool;
+        private readonly IObjectPool<GenericContextMenuSubMenuButtonView> subMenuButtonPool;
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
 
         public ControlsPoolManager(
@@ -32,7 +33,8 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuUserProfileView userProfilePrefab,
             GenericContextMenuButtonWithStringDelegateView buttonWithDelegatePrefab,
             GenericContextMenuTextView textPrefab,
-            GenericContextMenuToggleWithCheckView toggleWithCheckPrefab)
+            GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
+            GenericContextMenuSubMenuButtonView subMenuButtonPrefab)
         {
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => Object.Instantiate(separatorPrefab, controlsParent),
@@ -86,6 +88,12 @@ namespace DCL.UI.GenericContextMenu
                 actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
                 actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
                 actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
+
+            subMenuButtonPool = new ObjectPool<GenericContextMenuSubMenuButtonView>(
+                createFunc: () => Object.Instantiate(subMenuButtonPrefab, controlsParent),
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
+                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
+                actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
         }
 
         public void Dispose() =>
@@ -103,6 +111,7 @@ namespace DCL.UI.GenericContextMenu
                                                             UserProfileContextMenuControlSettings userProfileSettings => GetUserProfile(userProfileSettings),
                                                             ButtonWithDelegateContextMenuControlSettings<string> buttonWithDelegateSettings => GetButtonWithStringDelegate(buttonWithDelegateSettings),
                                                             TextContextMenuControlSettings textSettings => GetText(textSettings),
+                                                            SubMenuContextMenuButtonSettings subMenuButtonSettings => GetSubMenuButton(subMenuButtonSettings),
                                                             _ => throw new ArgumentOutOfRangeException(),
                                                         };
 
@@ -136,6 +145,14 @@ namespace DCL.UI.GenericContextMenu
             return separatorView;
         }
 
+        private GenericContextMenuComponentBase GetSubMenuButton(SubMenuContextMenuButtonSettings settings)
+        {
+            GenericContextMenuSubMenuButtonView subMenuButtonView = subMenuButtonPool.Get();
+            subMenuButtonView.Configure(settings);
+
+            return subMenuButtonView;
+        }
+
         private GenericContextMenuComponentBase GetToggle(ToggleContextMenuControlSettings settings)
         {
             GenericContextMenuToggleView separatorView = togglePool.Get();
@@ -146,10 +163,10 @@ namespace DCL.UI.GenericContextMenu
 
         private GenericContextMenuComponentBase GetToggleWithCheck(ToggleWithCheckContextMenuControlSettings settings)
         {
-            GenericContextMenuToggleWithCheckView separatorView = toggleWithCheckPool.Get();
-            separatorView.Configure(settings, settings.initialValue);
+            GenericContextMenuToggleWithCheckView toggleWithCheckView = toggleWithCheckPool.Get();
+            toggleWithCheckView.Configure(settings, settings.initialValue);
 
-            return separatorView;
+            return toggleWithCheckView;
         }
 
         private GenericContextMenuComponentBase GetButtonWithStringDelegate(ButtonWithDelegateContextMenuControlSettings<string> settings)
@@ -205,6 +222,9 @@ namespace DCL.UI.GenericContextMenu
                         break;
                     case GenericContextMenuToggleWithCheckView toggleWithCheckView:
                         toggleWithCheckPool.Release(toggleWithCheckView);
+                        break;
+                    case GenericContextMenuSubMenuButtonView subMenuButtonView:
+                        subMenuButtonPool.Release(subMenuButtonView);
                         break;
                 }
             }

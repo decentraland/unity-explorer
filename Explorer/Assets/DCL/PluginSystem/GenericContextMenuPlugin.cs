@@ -54,9 +54,12 @@ namespace DCL.PluginSystem
             GenericContextMenuButtonWithStringDelegateView buttonWithStringDelegatePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonWithStringDelegatePrefab, ct)).GetComponent<GenericContextMenuButtonWithStringDelegateView>();
             GenericContextMenuTextView textPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuTextPrefab, ct)).GetComponent<GenericContextMenuTextView>();
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuToggleWithCheckPrefab, ct)).GetComponent<GenericContextMenuToggleWithCheckView>();
+            GenericContextMenuSubMenuButtonView subMenuButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSubMenuButtonPrefab, ct)).GetComponent<GenericContextMenuSubMenuButtonView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
-                new ControlsPoolManager(profileRepositoryWrapper, panelView.ControlsContainer, separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab, textPrefab, toggleWithCheckPrefab));
+                new ControlsPoolManager(profileRepositoryWrapper, panelView.ControlsContainer,
+                    separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab, textPrefab, toggleWithCheckPrefab,
+                    subMenuButtonPrefab));
             mvcManager.RegisterController(genericContextMenuController);
         }
 
@@ -85,6 +88,8 @@ namespace DCL.PluginSystem
             public AssetReferenceGameObject GenericContextMenuTextPrefab;
             [field: SerializeField]
             public AssetReferenceGameObject GenericContextMenuToggleWithCheckPrefab;
+            [field: SerializeField]
+            public AssetReferenceGameObject GenericContextMenuSubMenuButtonPrefab;
         }
     }
 }
