@@ -341,7 +341,7 @@ namespace DCL.Chat
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
             if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, isUserAllowedInInitializationCts.Token))
-                await InitializeCommunityCoversationsAsync();
+                await InitializeCommunityConversationsAsync();
         }
 
         protected override void OnViewClose()
@@ -356,7 +356,7 @@ namespace DCL.Chat
 
 #region Communities
 
-        private async UniTask InitializeCommunityCoversationsAsync()
+        private async UniTask InitializeCommunityConversationsAsync()
         {
             // Obtains all the communities of the user
             const int ALL_COMMUNITIES_OF_USER = 100;
@@ -397,7 +397,7 @@ namespace DCL.Chat
             }
         }
 
-        private async UniTask AddCommunityCoversationAsync(string communityId, bool setAsCurrentChannel = false)
+        private async UniTask AddCommunityConversationAsync(string communityId, bool setAsCurrentChannel = false)
         {
             communitiesServiceCts = communitiesServiceCts.SafeRestart();
             Result<GetCommunityResponse> result = await communitiesDataProvider.GetCommunityAsync(communityId, communitiesServiceCts.Token).SuppressToResultAsync(ReportCategory.COMMUNITIES);
@@ -1090,7 +1090,7 @@ namespace DCL.Chat
         private void OnCommunitiesEventBusUserConnectedToCommunity(CommunityMemberConnectivityUpdate userConnectivity)
         {
             if(userConnectivity.Member.Address == web3IdentityCache.Identity!.Address)
-                AddCommunityCoversationAsync(userConnectivity.CommunityId).Forget();
+                AddCommunityConversationAsync(userConnectivity.CommunityId).Forget();
         }
 
         private void OnViewViewCommunityRequested(string communityId)
@@ -1196,7 +1196,7 @@ namespace DCL.Chat
             ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(channelId));
 
             if (!userCommunities.ContainsKey(channelId))
-                AddCommunityCoversationAsync(communityId, setAsCurrentChannel: true).Forget();
+                AddCommunityConversationAsync(communityId, setAsCurrentChannel: true).Forget();
             else
             {
                 chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
