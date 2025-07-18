@@ -78,7 +78,7 @@ MonoBehaviour:
           maxValue: 150
           wholeNumbers: 1
           defaultValue: 40
-        <Feature>k__BackingField: 10
+        <Feature>k__BackingField: 11
     - rid: 1708279571579404288
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
