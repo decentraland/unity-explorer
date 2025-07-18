@@ -22,8 +22,6 @@ namespace DCL.FeatureFlags
         public const string ONBOARDING_ENABLED_VARIANT = "enabled";
         public const string ONBOARDING_GREETINGS_VARIANT = "greetings";
         public const string GENESIS_STARTING_PARCEL = "alfa-genesis-spawn-parcel";
-        public const string SKYBOX_SETTINGS = "alfa-skybox-settings";
-        public const string SKYBOX_SETTINGS_VARIANT = "settings";
         public const string VIDEO_PRIORITIZATION = "alfa-video-prioritization";
         public const string ASSET_BUNDLE_FALLBACK = "alfa-asset-bundle-fallback";
         public const string CHAT_HISTORY_LOCAL_STORAGE = "alfa-chat-history-local-storage";
@@ -44,91 +42,51 @@ namespace DCL.FeatureFlags
         public const string COMMUNITIES_MEMBERS_COUNTER = "alfa-communities-members-counter";
 
         public const string AUTH_CODE_VALIDATION = "number-validation";
-
         public const string GPUI_ENABLED = "alfa-gpui";
-    }
-
-    public enum FeatureFlag
-    {
-        None = 0,
-        MultiplayerCompressionWin,
-        MultiplayerCompressionMac,
-        PortableExperience,
-        GlobalPortableExperience,
-        PortableExperienceChatCommands,
-        MapPins,
-        CustomMapPinsIcons,
-        UserAllowList,
-        CsvVariant,
-        StringVariant,
-        WalletsVariant,
-        Onboarding,
-        GreetingOnboarding,
-        OnboardingEnabledVariant,
-        OnboardingGreetingsVariant,
-        GenesisStartingParcel,
-        SkyboxSettings,
-        SkyboxSettingsVariant,
-        VideoPrioritization,
-        AssetBundleFallback,
-        ChatHistoryLocalStorage,
-        VoiceChat,
-        CommunityVoiceChat,
-        CameraReel,
-        Friends,
-        FriendsUserBlocking,
-        FriendsOnlineStatus,
-        ProfileNameEditor,
-        SceneMemoryLimit,
-        Ktx2Conversion,
-        MarketplaceCredits,
-        MarketplaceCreditsWalletsVariant,
-        AuthCodeValidation,
-        GpuiEnabled
     }
 
     public static class FeatureFlagExtensions
     {
-        public static string GetStringValue(this FeatureFlag flag)
+        public static string GetStringValue(this FeatureId id)
         {
-            return flag switch
-            {
-                FeatureFlag.MultiplayerCompressionWin => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN,
-                FeatureFlag.MultiplayerCompressionMac => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC,
-                FeatureFlag.PortableExperience => FeatureFlagsStrings.PORTABLE_EXPERIENCE,
-                FeatureFlag.GlobalPortableExperience => FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE,
-                FeatureFlag.PortableExperienceChatCommands => FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS,
-                FeatureFlag.MapPins => FeatureFlagsStrings.MAP_PINS,
-                FeatureFlag.CustomMapPinsIcons => FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS,
-                FeatureFlag.UserAllowList => FeatureFlagsStrings.USER_ALLOW_LIST,
-                FeatureFlag.CsvVariant => FeatureFlagsStrings.CSV_VARIANT,
-                FeatureFlag.StringVariant => FeatureFlagsStrings.STRING_VARIANT,
-                FeatureFlag.WalletsVariant => FeatureFlagsStrings.WALLETS_VARIANT,
-                FeatureFlag.Onboarding => FeatureFlagsStrings.ONBOARDING,
-                FeatureFlag.GreetingOnboarding => FeatureFlagsStrings.GREETING_ONBOARDING,
-                FeatureFlag.OnboardingEnabledVariant => FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT,
-                FeatureFlag.OnboardingGreetingsVariant => FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT,
-                FeatureFlag.GenesisStartingParcel => FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
-                FeatureFlag.SkyboxSettings => FeatureFlagsStrings.SKYBOX_SETTINGS,
-                FeatureFlag.SkyboxSettingsVariant => FeatureFlagsStrings.SKYBOX_SETTINGS_VARIANT,
-                FeatureFlag.VideoPrioritization => FeatureFlagsStrings.VIDEO_PRIORITIZATION,
-                FeatureFlag.AssetBundleFallback => FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK,
-                FeatureFlag.ChatHistoryLocalStorage => FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE,
-                FeatureFlag.VoiceChat => FeatureFlagsStrings.VOICE_CHAT,
-                FeatureFlag.CommunityVoiceChat => FeatureFlagsStrings.COMMUNITY_VOICE_CHAT,
-                FeatureFlag.CameraReel => FeatureFlagsStrings.CAMERA_REEL,
-                FeatureFlag.Friends => FeatureFlagsStrings.FRIENDS,
-                FeatureFlag.FriendsUserBlocking => FeatureFlagsStrings.FRIENDS_USER_BLOCKING,
-                FeatureFlag.FriendsOnlineStatus => FeatureFlagsStrings.FRIENDS_ONLINE_STATUS,
-                FeatureFlag.ProfileNameEditor => FeatureFlagsStrings.PROFILE_NAME_EDITOR,
-                FeatureFlag.SceneMemoryLimit => FeatureFlagsStrings.SCENE_MEMORY_LIMIT,
-                FeatureFlag.Ktx2Conversion => FeatureFlagsStrings.KTX2_CONVERSION,
-                FeatureFlag.MarketplaceCredits => FeatureFlagsStrings.MARKETPLACE_CREDITS,
-                FeatureFlag.MarketplaceCreditsWalletsVariant => FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT,
-                FeatureFlag.AuthCodeValidation => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
-                FeatureFlag.GpuiEnabled => FeatureFlagsStrings.GPUI_ENABLED,
-                _ => string.Empty
-            };
+            return id switch
+                   {
+                       FeatureId.MULTIPLAYER_COMPRESSION_WIN => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_WIN,
+                       FeatureId.MULTIPLAYER_COMPRESSION_MAC => FeatureFlagsStrings.MULTIPLAYER_COMPRESSION_MAC,
+                       FeatureId.PORTABLE_EXPERIENCE => FeatureFlagsStrings.PORTABLE_EXPERIENCE,
+                       FeatureId.GLOBAL_PORTABLE_EXPERIENCE => FeatureFlagsStrings.GLOBAL_PORTABLE_EXPERIENCE,
+                       FeatureId.PORTABLE_EXPERIENCE_CHAT_COMMANDS => FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS,
+                       FeatureId.MAP_PINS => FeatureFlagsStrings.MAP_PINS,
+                       FeatureId.CUSTOM_MAP_PINS_ICONS => FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS,
+                       FeatureId.USER_ALLOW_LIST => FeatureFlagsStrings.USER_ALLOW_LIST,
+                       FeatureId.CSV_VARIANT => FeatureFlagsStrings.CSV_VARIANT,
+                       FeatureId.STRING_VARIANT => FeatureFlagsStrings.STRING_VARIANT,
+                       FeatureId.WALLETS_VARIANT => FeatureFlagsStrings.WALLETS_VARIANT,
+                       FeatureId.ONBOARDING => FeatureFlagsStrings.ONBOARDING,
+                       FeatureId.GREETING_ONBOARDING => FeatureFlagsStrings.GREETING_ONBOARDING,
+                       FeatureId.ONBOARDING_ENABLED_VARIANT => FeatureFlagsStrings.ONBOARDING_ENABLED_VARIANT,
+                       FeatureId.ONBOARDING_GREETINGS_VARIANT => FeatureFlagsStrings.ONBOARDING_GREETINGS_VARIANT,
+                       FeatureId.GENESIS_STARTING_PARCEL => FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
+                       FeatureId.VIDEO_PRIORITIZATION => FeatureFlagsStrings.VIDEO_PRIORITIZATION,
+                       FeatureId.ASSET_BUNDLE_FALLBACK => FeatureFlagsStrings.ASSET_BUNDLE_FALLBACK,
+                       FeatureId.CHAT_HISTORY_LOCAL_STORAGE => FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE,
+                       FeatureId.VOICE_CHAT => FeatureFlagsStrings.VOICE_CHAT,
+                       FeatureId.COMMUNITY_VOICE_CHAT => FeatureFlagsStrings.COMMUNITY_VOICE_CHAT,
+                       FeatureId.CAMERA_REEL => FeatureFlagsStrings.CAMERA_REEL,
+                       FeatureId.FRIENDS => FeatureFlagsStrings.FRIENDS,
+                       FeatureId.FRIENDS_USER_BLOCKING => FeatureFlagsStrings.FRIENDS_USER_BLOCKING,
+                       FeatureId.FRIENDS_ONLINE_STATUS => FeatureFlagsStrings.FRIENDS_ONLINE_STATUS,
+                       FeatureId.PROFILE_NAME_EDITOR => FeatureFlagsStrings.PROFILE_NAME_EDITOR,
+                       FeatureId.SCENE_MEMORY_LIMIT => FeatureFlagsStrings.SCENE_MEMORY_LIMIT,
+                       FeatureId.KTX2_CONVERSION => FeatureFlagsStrings.KTX2_CONVERSION,
+                       FeatureId.MARKETPLACE_CREDITS => FeatureFlagsStrings.MARKETPLACE_CREDITS,
+                       FeatureId.MARKETPLACE_CREDITS_WALLETS_VARIANT => FeatureFlagsStrings.MARKETPLACE_CREDITS_WALLETS_VARIANT,
+                       FeatureId.COMMUNITIES => FeatureFlagsStrings.COMMUNITIES,
+                       FeatureId.COMMUNITIES_MEMBERS_COUNTER => FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER,
+                       FeatureId.AUTH_CODE_VALIDATION => FeatureFlagsStrings.AUTH_CODE_VALIDATION,
+                       FeatureId.GPUI_ENABLED => FeatureFlagsStrings.GPUI_ENABLED,
+                       _ => string.Empty,
+                   };
         }
     }
 }
