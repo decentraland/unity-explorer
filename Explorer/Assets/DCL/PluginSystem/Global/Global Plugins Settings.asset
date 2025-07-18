@@ -662,6 +662,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        ControlsContainerPrefab:
+          m_AssetGUID: 7a24101494a664ee59a8952e20b8f441
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         GenericContextMenuSeparatorPrefab:
           m_AssetGUID: 52bc5c5fe83f743cdba8dab60b247e96
           m_SubObjectName: 

@@ -12,6 +12,7 @@ namespace DCL.UI.GenericContextMenu
 {
     public class ControlsPoolManager : IDisposable
     {
+        private readonly IObjectPool<ControlsContainerView> controlsContainerPool;
         private readonly IObjectPool<GenericContextMenuSeparatorView> separatorPool;
         private readonly IObjectPool<GenericContextMenuButtonWithTextView> buttonPool;
         private readonly IObjectPool<GenericContextMenuToggleView> togglePool;
@@ -22,10 +23,12 @@ namespace DCL.UI.GenericContextMenu
         private readonly IObjectPool<GenericContextMenuToggleWithCheckView> toggleWithCheckPool;
         private readonly IObjectPool<GenericContextMenuSubMenuButtonView> subMenuButtonPool;
         private readonly List<GenericContextMenuComponentBase> currentControls = new ();
+        private readonly List<ControlsContainerView> currentContainers = new ();
 
         public ControlsPoolManager(
             ProfileRepositoryWrapper profileDataProvider,
             Transform controlsParent,
+            ControlsContainerView controlsContainerPrefab,
             GenericContextMenuSeparatorView separatorPrefab,
             GenericContextMenuButtonWithTextView buttonPrefab,
             GenericContextMenuToggleView togglePrefab,
@@ -36,6 +39,12 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab)
         {
+            controlsContainerPool = new ObjectPool<ControlsContainerView>(
+                createFunc: () => Object.Instantiate(controlsContainerPrefab, controlsParent),
+                actionOnGet: separatorView => separatorView.gameObject.SetActive(true),
+                actionOnRelease: separatorView => separatorView?.gameObject.SetActive(false),
+                actionOnDestroy: separatorView => Object.Destroy(separatorView.gameObject));
+
             separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
                 createFunc: () => Object.Instantiate(separatorPrefab, controlsParent),
                 actionOnGet: separatorView => separatorView.gameObject.SetActive(true),
@@ -99,7 +108,7 @@ namespace DCL.UI.GenericContextMenu
         public void Dispose() =>
             ReleaseAllCurrentControls();
 
-        public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, int index) where T: IContextMenuControlSettings
+        public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, int index, Transform parent) where T: IContextMenuControlSettings
         {
             GenericContextMenuComponentBase component = settings switch
                                                         {
@@ -115,10 +124,20 @@ namespace DCL.UI.GenericContextMenu
                                                             _ => throw new ArgumentOutOfRangeException(),
                                                         };
 
+            component.transform.SetParent(parent);
             component!.transform.SetSiblingIndex(index);
             currentControls.Add(component);
 
+
             return component;
+        }
+
+        public ControlsContainerView GetControlsContainer(Transform parent)
+        {
+            ControlsContainerView container = controlsContainerPool.Get();
+            currentContainers.Add(container);
+            container.transform.SetParent(parent);
+            return container;
         }
 
         private GenericContextMenuComponentBase GetUserProfile(UserProfileContextMenuControlSettings settings)
@@ -229,7 +248,11 @@ namespace DCL.UI.GenericContextMenu
                 }
             }
 
+            foreach (var containerView in currentContainers)
+                controlsContainerPool.Release(containerView);
+
             currentControls.Clear();
+            currentContainers.Clear();
         }
     }
 }

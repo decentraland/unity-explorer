@@ -14,7 +14,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         internal readonly bool horizontalLayoutReverseArrangement;
         internal readonly Color textColor;
         internal readonly Color iconColor;
-        internal readonly GenericContextMenuElement[] subMenuElements;
+        internal readonly GenericContextMenuParameter.GenericContextMenu subMenu;
 
         /// <summary>
         ///     Button component settings for the context menu.
@@ -22,7 +22,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         /// </summary>
         public SubMenuContextMenuButtonSettings(string buttonText,
             Sprite buttonIcon,
-            GenericContextMenuElement[] subMenuElements,
+            GenericContextMenuParameter.GenericContextMenu subMenu,
             RectOffset horizontalLayoutPadding = null,
             int horizontalLayoutSpacing = 10,
             bool horizontalLayoutReverseArrangement = false,
@@ -31,7 +31,7 @@ namespace DCL.UI.GenericContextMenu.Controls.Configs
         {
             this.buttonText = buttonText;
             this.buttonIcon = buttonIcon;
-            this.subMenuElements = subMenuElements;
+            this.subMenu = subMenu;
             this.horizontalLayoutPadding = horizontalLayoutPadding ?? new RectOffset(8, 8, 0, 0);
             this.horizontalLayoutSpacing = horizontalLayoutSpacing;
             this.horizontalLayoutReverseArrangement = horizontalLayoutReverseArrangement;

@@ -305,6 +305,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a24101494a664ee59a8952e20b8f441
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ControlsContainer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7a43321b8055d407ba2e871e873c7062
     m_Address: EmoteWheelRarityBackgrounds.asset
     m_ReadOnly: 0

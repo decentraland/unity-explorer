@@ -46,6 +46,7 @@ namespace DCL.PluginSystem
             GenericContextMenuView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuPrefab, ct: ct)).GetComponent<GenericContextMenuView>();
             ControllerBase<GenericContextMenuView, GenericContextMenuParameter>.ViewFactoryMethod viewFactoryMethod = GenericContextMenuController.Preallocate(panelViewAsset, null, out GenericContextMenuView panelView);
 
+            ControlsContainerView controlsContainerPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsContainerPrefab, ct)).GetComponent<ControlsContainerView>();
             GenericContextMenuSeparatorView separatorPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSeparatorPrefab, ct)).GetComponent<GenericContextMenuSeparatorView>();
             GenericContextMenuButtonWithTextView buttonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuButtonPrefab, ct)).GetComponent<GenericContextMenuButtonWithTextView>();
             GenericContextMenuToggleView togglePrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuTogglePrefab, ct)).GetComponent<GenericContextMenuToggleView>();
@@ -57,7 +58,8 @@ namespace DCL.PluginSystem
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.GenericContextMenuSubMenuButtonPrefab, ct)).GetComponent<GenericContextMenuSubMenuButtonView>();
 
             genericContextMenuController = new GenericContextMenuController(viewFactoryMethod,
-                new ControlsPoolManager(profileRepositoryWrapper, panelView.ControlsContainer,
+                new ControlsPoolManager(profileRepositoryWrapper, panelView.ControlsContainer.transform,
+                    controlsContainerPrefab,
                     separatorPrefab, buttonPrefab, togglePrefab, toggleWithIconPrefab, userProfilePrefab, buttonWithStringDelegatePrefab, textPrefab, toggleWithCheckPrefab,
                     subMenuButtonPrefab));
             mvcManager.RegisterController(genericContextMenuController);
@@ -69,6 +71,9 @@ namespace DCL.PluginSystem
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject GenericContextMenuPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject ControlsContainerPrefab;
 
             [field: Header("Controls prefabs")]
             [field: Space]
