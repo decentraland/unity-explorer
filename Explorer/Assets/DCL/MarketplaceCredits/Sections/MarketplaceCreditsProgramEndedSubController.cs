@@ -12,7 +12,7 @@ namespace DCL.MarketplaceCredits.Sections
         private const string TITLE_CREDITS_VALID = "Time to go shopping—you've completed the first Season of Marketplace Credits!";
         private const string TITLE_CREDITS_VALID_PART2 = "Spend your Credits before they expire on {0}.";
         private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_KNOWN = "Save the date—Marketplace Credits Return for Season {0}!";
-        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN = "The first Season of Marketplace Credits Has Closed";
+        private const string TITLE_CREDITS_EXPIRED_NEXT_SEASON_UNKNOWN = "The First Season of Marketplace Credits Has Closed";
         private const string TITLE_NO_FOUNDS_SEASON = "All Available Credits Claimed: The current Marketplace Credits Season is now closed";
         private const string TITLE_NO_FOUNDS_WEEK = "All Available Credits Claimed: The beta run of the Weekly Rewards program is now closed";
         private const string TITLE_MARKET_OFFLINE = "Marketplace Credits are Temporarily Offline";
