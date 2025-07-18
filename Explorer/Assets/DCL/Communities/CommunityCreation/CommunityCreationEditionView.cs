@@ -184,7 +184,7 @@ namespace DCL.Communities.CommunityCreation
             }
             else
             {
-                creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage);
+                creationPanelProfileSelectedImage.SetImage(creationPanelProfileDefaultSelectedImage, true);
             }
         }
 
@@ -217,10 +217,10 @@ namespace DCL.Communities.CommunityCreation
         private void OnPlacesDropdownOptionSelected(int index) =>
             AddPlaceButtonClicked?.Invoke(index);
 
-        public void AddPlaceTag(string id, bool isWorld, string placeName, bool isRemovalAllowed, bool updateScrollPosition = true)
+        public void AddPlaceTag(string id, bool isWorld, string placeName, string ownerName, bool isRemovalAllowed, bool updateScrollPosition = true)
         {
             CommunityPlaceTag placeTag = Instantiate(placeTagPrefab, placeTagsContainer);
-            placeTag.Setup(id, isWorld, placeName, isRemovalAllowed);
+            placeTag.Setup(id, isWorld, placeName, ownerName, isRemovalAllowed);
 
             void OnPlaceTagRemovedClicked()
             {

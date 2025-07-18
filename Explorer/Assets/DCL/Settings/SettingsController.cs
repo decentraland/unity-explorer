@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
@@ -39,6 +40,7 @@ namespace DCL.Settings
         private readonly LandscapeData landscapeData;
         private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
@@ -65,6 +67,7 @@ namespace DCL.Settings
             ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
+            VoiceChatSettingsAsset voiceChatSettings,
             WorldVolumeMacBus worldVolumeMacBus,
             UpscalingController upscalingController
         )
@@ -83,6 +86,7 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
@@ -152,6 +156,9 @@ namespace DCL.Settings
         {
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
+                if (group.FeatureFlagName != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureFlagName))
+                    return;
+
                 SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
@@ -160,10 +167,24 @@ namespace DCL.Settings
                     generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                {
-                    SettingsFeatureController controller = module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, roadsSettings, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, upscalingController, worldVolumeMacBus);
-                    controllers.Add(controller);
-                }
+                    if (module != null)
+                        controllers.Add(module.CreateModule
+                        (
+                            generalGroupView.ModulesContainer,
+                            realmPartitionSettingsAsset,
+                            videoPrioritizationSettings,
+                            landscapeData,
+                            generalAudioMixer,
+                            qualitySettingsAsset,
+                            controlsSettingsAsset,
+                            chatSettingsAsset,
+                            memoryCap,
+                            sceneLoadingLimit,
+                            userBlockingCacheProxy,
+                            this,
+                            voiceChatSettings,
+                            upscalingController,
+                            worldVolumeMacBus));
             }
         }
 

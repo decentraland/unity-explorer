@@ -23,6 +23,9 @@ namespace DCL.Settings.ModuleViews
         public override void SetInteractable(bool interactable) =>
             ToggleView.Toggle.interactable = interactable;
 
+        public override void SetActive(bool isActive) =>
+            gameObject.SetActive(isActive);
+
         protected override void Configure(Config configuration)
         {
             ToggleView.Toggle.interactable = configuration.IsEnabled;

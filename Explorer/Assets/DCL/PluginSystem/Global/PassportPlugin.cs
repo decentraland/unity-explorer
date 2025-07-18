@@ -23,6 +23,7 @@ using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -56,7 +57,6 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
-        private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -64,12 +64,10 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
-        private readonly bool enableFriends;
-        private readonly bool includeUserBlocking;
-        private readonly bool isNameEditorEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private PassportController? passportController;
 
@@ -94,7 +92,6 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
-            bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IOnlineUsersProvider onlineUsersProvider,
@@ -102,9 +99,10 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
-            bool enableFriends,
-            bool includeUserBlocking,
-            bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager, ProfileRepositoryWrapper profileDataProvider)
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -126,7 +124,6 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
-            this.enableCameraReel = enableCameraReel;
             this.friendsService = friendsService;
             this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -134,12 +131,10 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
-            this.enableFriends = enableFriends;
-            this.includeUserBlocking = includeUserBlocking;
-            this.isNameEditorEnabled = isNameEditorEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
         }
 
         public void Dispose()
@@ -158,6 +153,8 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
+            BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
+
 
             var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
@@ -193,13 +190,11 @@ namespace DCL.PluginSystem.Global
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
-                enableCameraReel,
-                enableFriends,
-                includeUserBlocking,
-                isNameEditorEnabled,
                 chatEventBus,
                 sharedSpaceManager,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                voiceChatCallStatusService,
+                passport3DPreviewCamera
             );
 
             mvcManager.RegisterController(passportController);
@@ -217,6 +212,9 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject PassportPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject Badges3DCamera;
 
             [field: SerializeField]
             public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; }

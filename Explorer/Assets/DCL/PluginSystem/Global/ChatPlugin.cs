@@ -27,6 +27,7 @@ using DCL.UI.MainUI;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using MVC;
 using System.Threading;
 using ECS.SceneLifeCycle.Realm;
@@ -62,11 +63,11 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly ICommunitiesDataProvider communityDataProvider;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly CommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
-
         private ChatController chatController;
 
         public ChatPlugin(
@@ -93,10 +94,11 @@ namespace DCL.PluginSystem.Global
             ChatMessageFactory chatMessageFactory,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            ICommunitiesDataProvider communityDataProvider,
+            CommunitiesDataProvider communityDataProvider,
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
-            CommunitiesEventBus communitiesEventBus)
+            CommunitiesEventBus communitiesEventBus,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -118,6 +120,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
             this.friendsServiceProxy = friendsServiceProxy;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
@@ -140,7 +143,7 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<ChatSettingsAsset> chatSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatSettingsAsset, ct);
             var privacySettings = new RPCChatPrivacyService(socialServiceProxy, chatSettingsAsset.Value);
 
-            if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
@@ -177,8 +180,8 @@ namespace DCL.PluginSystem.Global
                 thumbnailCache,
                 mvcManager,
                 warningNotificationView,
-                communitiesEventBus
-            );
+                communitiesEventBus,
+                voiceChatCallStatusService);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatController);
 

@@ -12,15 +12,16 @@ using UnityEngine.Networking;
 
 namespace DCL.Communities
 {
-    public class CommunitiesDataProvider : ICommunitiesDataProvider
+    public class CommunitiesDataProvider
     {
-        public event Action CommunityCreated;
+        public event Action<CreateOrUpdateCommunityResponse.CommunityData> CommunityCreated;
         public event Action<string> CommunityUpdated;
-        public event Action CommunityDeleted;
+        public event Action<string> CommunityDeleted;
         public event Action<string, bool> CommunityJoined;
         public event Action<string, bool> CommunityLeft;
+        public event Action<string> CommunityUserRemoved;
+        public event Action<string, string> CommunityUserBanned;
 
-        private readonly ICommunitiesDataProvider fakeDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly IDecentralandUrlsSource urlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -28,12 +29,10 @@ namespace DCL.Communities
         private string communitiesBaseUrl => urlsSource.Url(DecentralandUrl.Communities);
 
         public CommunitiesDataProvider(
-            ICommunitiesDataProvider fakeDataProvider,
             IWebRequestController webRequestController,
             IDecentralandUrlsSource urlsSource,
             IWeb3IdentityCache web3IdentityCache)
         {
-            this.fakeDataProvider = fakeDataProvider;
             this.webRequestController = webRequestController;
             this.urlsSource = urlsSource;
             this.web3IdentityCache = web3IdentityCache;
@@ -57,12 +56,6 @@ namespace DCL.Communities
 
             return response;
         }
-
-        public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetUserLandsAsync(userId, pageNumber, elementsPerPage, ct);
-
-        public UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct) =>
-            fakeDataProvider.GetUserWorldsAsync(userId, pageNumber, elementsPerPage, ct);
 
         public async UniTask<CreateOrUpdateCommunityResponse> CreateOrUpdateCommunityAsync(string communityId, string name, string description, byte[] thumbnail, List<string> lands, List<string> worlds, CancellationToken ct)
         {
@@ -101,7 +94,7 @@ namespace DCL.Communities
                 response = await webRequestController.SignedFetchPostAsync(communitiesBaseUrl, GenericPostArguments.CreateMultipartForm(formData), string.Empty, ct)
                                                      .CreateFromJson<CreateOrUpdateCommunityResponse>(WRJsonParser.Newtonsoft);
 
-                CommunityCreated?.Invoke();
+                CommunityCreated?.Invoke(response.data);
             }
             else
             {
@@ -133,9 +126,6 @@ namespace DCL.Communities
                                                                              .CreateFromJson<GetCommunityMembersResponse>(WRJsonParser.Newtonsoft);
             return response;
         }
-
-        public UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct) =>
-            fakeDataProvider.GetUserCommunitiesCompactAsync(ct);
 
         public async UniTask<GetCommunityMembersResponse> GetOnlineCommunityMembersAsync(string communityId, CancellationToken ct)
         {
@@ -184,6 +174,9 @@ namespace DCL.Communities
                                                    .WithNoOpAsync()
                                                    .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
+            if (result.Success)
+                CommunityUserBanned?.Invoke(communityId, userId);
+
             return result.Success;
         }
 
@@ -208,6 +201,8 @@ namespace DCL.Communities
 
             if (web3IdentityCache.Identity?.Address == userId)
                 CommunityLeft?.Invoke(communityId, result.Success);
+            else if (result.Success)
+                CommunityUserRemoved?.Invoke(communityId);
 
             return result.Success;
         }
@@ -237,7 +232,7 @@ namespace DCL.Communities
                                       .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (result.Success)
-                CommunityDeleted?.Invoke();
+                CommunityDeleted?.Invoke(communityId);
 
             return result.Success;
         }
@@ -263,5 +258,10 @@ namespace DCL.Communities
 
             return result.Success;
         }
+
+        // TODO: Pending to implement these methods:
+        //       public UniTask<GetUserLandsResponse> GetUserLandsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        //       public UniTask<GetUserWorldsResponse> GetUserWorldsAsync(string userId, int pageNumber, int elementsPerPage, CancellationToken ct)
+        //       public UniTask<GetUserCommunitiesCompactResponse> GetUserCommunitiesCompactAsync(CancellationToken ct)
     }
 }

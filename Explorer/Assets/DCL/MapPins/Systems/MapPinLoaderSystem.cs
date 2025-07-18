@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
             this.mapPinsEventBus = mapPinsEventBus;
-            useCustomMapPinIcons = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
+            useCustomMapPinIcons = FeaturesRegistry.Instance.IsEnabled(FeatureId.CUSTOM_MAP_PINS_ICONS);
         }
 
         protected override void Update(float t)
@@ -155,7 +155,8 @@ namespace DCL.SDKComponents.MapPins.Systems
                     textureComponentValue.WrapMode,
                     textureComponentValue.FilterMode,
                     textureComponentValue.TextureType,
-                    attemptsCount: ATTEMPTS_COUNT
+                    attemptsCount: ATTEMPTS_COUNT,
+                    reportSource: nameof(MapPinLoaderSystem)
                 ),
                 partitionComponent
             );

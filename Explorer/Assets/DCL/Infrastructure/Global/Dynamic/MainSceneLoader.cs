@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.ApplicationBlocklistGuard;
+using DCL.ApplicationGuards;
 using DCL.ApplicationMinimumSpecsGuard;
 using DCL.ApplicationVersionGuard;
 using DCL.Audio;
@@ -16,6 +17,8 @@ using DCL.FeatureFlags;
 using DCL.Infrastructure.Global;
 using DCL.Input.Component;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.HealthChecks;
+using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -51,6 +54,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility;
+using Utility.Types;
 using MinimumSpecsScreenView = DCL.ApplicationMinimumSpecsGuard.MinimumSpecsScreenView;
 
 namespace Global.Dynamic
@@ -216,6 +220,8 @@ namespace Global.Dynamic
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity,
                     bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                bootstrap.InitializeFeaturesRegistry();
+
                 bootstrap.ApplyFeatureFlagConfigs(FeatureFlagsConfiguration.Instance);
                 staticContainer.SceneLoadingLimit.SetEnabled(FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.SCENE_MEMORY_LIMIT));
 
@@ -242,12 +248,10 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await RegisterBlockedPopupAsync(bootstrapContainer.WebBrowser, ct);
+                if (!await InitialGuardsCheckSuccessAsync(applicationParametersParser, splashScreen, decentralandUrlsSource, ct))
+                    return;
 
                 await VerifyMinimumHardwareRequirementMetAsync(applicationParametersParser, bootstrapContainer.WebBrowser, bootstrapContainer.Analytics, ct);
-
-                if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
-                    return; // stop bootstrapping;
 
                 if (!await IsTrustedRealmAsync(decentralandUrlsSource, ct))
                 {
@@ -255,12 +259,7 @@ namespace Global.Dynamic
 
                     if (!await ShowUntrustedRealmConfirmationAsync(ct))
                     {
-#if UNITY_EDITOR
-                        EditorApplication.isPlaying = false;
-#else
-                        Application.Quit();
-#endif
-
+                        ExitUtils.Exit();
                         return;
                     }
 
@@ -342,6 +341,45 @@ namespace Global.Dynamic
             dynamicWorldContainer!.MvcManager.RegisterController(minimumSpecsScreenController);
             dynamicWorldContainer!.MvcManager.ShowAsync(MinimumSpecsScreenController.IssueCommand(), ct).Forget();
             await minimumSpecsScreenController.HoldingTask.Task;
+        }
+
+        private async UniTask<bool> InitialGuardsCheckSuccessAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, DecentralandUrlsSource dclSources,
+            CancellationToken ct)
+        {
+            //If Livekit is down, stop bootstrapping
+            if (await IsLIvekitDeadAsync(staticContainer!.WebRequestsContainer.WebRequestController, dclSources, ct))
+                return false;
+
+            //If application requires version update, stop bootstrapping
+            if (await DoesApplicationRequireVersionUpdateAsync(applicationParametersParser, splashScreen, ct))
+                return false;
+
+            //The BlockedGuard is registered here, but nothing to do. We need the user to be able to detect if block is required
+            await RegisterBlockedPopupAsync(bootstrapContainer!.WebBrowser, ct);
+
+            return true;
+        }
+
+        private async UniTask<bool> IsLIvekitDeadAsync(IWebRequestController webRequestController, DecentralandUrlsSource decentralandUrlsSource, CancellationToken ct)
+        {
+            SequentialHealthCheck healthCheck = new SequentialHealthCheck(
+                new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
+                    DecentralandUrl.ArchipelagoStatus,
+                    DecentralandUrl.GatekeeperStatus
+                ).WithRetries(3));
+
+            Result result = await healthCheck.IsRemoteAvailableAsync(ct);
+
+            if (result.Success) return false;
+
+            var livekitDownPrefab = await bootstrapContainer!.AssetsProvisioner!.ProvideMainAssetAsync(dynamicSettings.LivekitDownPrefab, ct);
+
+            ControllerBase<LivekitHealthGuardView, ControllerNoData>.ViewFactoryMethod viewFactory =
+                LivekitHealtGuardController.CreateLazily(livekitDownPrefab.Value.GetComponent<LivekitHealthGuardView>(), null);
+
+            dynamicWorldContainer!.MvcManager.RegisterController(new LivekitHealtGuardController(viewFactory));
+            dynamicWorldContainer!.MvcManager.ShowAsync(LivekitHealtGuardController.IssueCommand());
+            return true;
         }
 
         private async UniTask<bool> DoesApplicationRequireVersionUpdateAsync(IAppArgs applicationParametersParser, SplashScreen splashScreen, CancellationToken ct)

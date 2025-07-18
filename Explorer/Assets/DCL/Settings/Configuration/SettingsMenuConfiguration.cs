@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DCL.FeatureFlags;
+using UnityEngine.Serialization;
 
 namespace DCL.Settings.Configuration
 {
@@ -25,6 +27,8 @@ namespace DCL.Settings.Configuration
     public class SettingsGroup
     {
         [field: SerializeField] internal string GroupTitle { get; set; }
+
+        [field: SerializeField] internal FeatureId FeatureFlagName { get; set; }
 
         [field: SerializeReference] [field: SubclassSelector] internal List<SettingsModuleBindingBase> Modules { get; set; }
     }

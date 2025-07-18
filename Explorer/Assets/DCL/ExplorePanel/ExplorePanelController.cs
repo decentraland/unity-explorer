@@ -1,8 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
-using DCL.ExplorePanel.Components;
+using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -31,7 +30,6 @@ namespace DCL.ExplorePanel
         private readonly ProfileWidgetController profileWidgetController;
         private readonly ProfileMenuController profileMenuController;
         private readonly DCLInput dclInput;
-        private readonly IExplorePanelEscapeAction explorePanelEscapeAction;
         private readonly IInputBlock inputBlock;
         private readonly bool includeCameraReel;
         private bool includeCommunities;
@@ -65,10 +63,8 @@ namespace DCL.ExplorePanel
             ProfileWidgetController profileWidgetController,
             ProfileMenuController profileMenuController,
             CommunitiesBrowserController communitiesBrowserController,
-            IExplorePanelEscapeAction explorePanelEscapeAction,
             INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
-            bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
@@ -78,11 +74,10 @@ namespace DCL.ExplorePanel
             CameraReelController = cameraReelController;
             this.profileWidgetController = profileWidgetController;
             dclInput = DCLInput.Instance;
-            this.explorePanelEscapeAction = explorePanelEscapeAction;
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
             this.inputBlock = inputBlock;
-            this.includeCameraReel = includeCameraReel;
+            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
             this.sharedSpaceManager = sharedSpaceManager;
             CommunitiesBrowserController = communitiesBrowserController;
         }
@@ -130,7 +125,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            includeCommunities = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
@@ -209,7 +204,6 @@ namespace DCL.ExplorePanel
         private void RegisterHotkeys()
         {
             dclInput.Shortcuts.MainMenu.performed += OnCloseMainMenu;
-            explorePanelEscapeAction.RegisterEscapeAction(OnCloseMainMenu);
             dclInput.Shortcuts.Map.performed += OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed += OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed += OnBackpackHotkeyPressed;
@@ -309,7 +303,6 @@ namespace DCL.ExplorePanel
         private void UnRegisterHotkeys()
         {
             dclInput.Shortcuts.MainMenu.performed -= OnCloseMainMenu;
-            explorePanelEscapeAction.RemoveEscapeAction(OnCloseMainMenu);
             dclInput.Shortcuts.Map.performed -= OnMapHotkeyPressed;
             dclInput.Shortcuts.Settings.performed -= OnSettingsHotkeyPressed;
             dclInput.Shortcuts.Backpack.performed -= OnBackpackHotkeyPressed;

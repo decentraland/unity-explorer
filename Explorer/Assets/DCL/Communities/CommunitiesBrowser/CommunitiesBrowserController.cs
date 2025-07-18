@@ -8,6 +8,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.WebRequests;
@@ -34,7 +35,7 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly CommunitiesBrowserView view;
         private readonly RectTransform rectTransform;
         private readonly ICursor cursor;
-        private readonly ICommunitiesDataProvider dataProvider;
+        private readonly CommunitiesDataProvider dataProvider;
         private readonly IInputBlock inputBlock;
         private readonly WarningNotificationView warningNotificationView;
         private readonly IMVCManager mvcManager;
@@ -42,7 +43,6 @@ namespace DCL.Communities.CommunitiesBrowser
         private readonly ISelfProfile selfProfile;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ISpriteCache spriteCache;
-        private readonly ThumbnailLoader thumbnailLoader;
 
         private CancellationTokenSource? loadMyCommunitiesCts;
         private CancellationTokenSource? loadResultsCts;
@@ -63,7 +63,7 @@ namespace DCL.Communities.CommunitiesBrowser
         public CommunitiesBrowserController(
             CommunitiesBrowserView view,
             ICursor cursor,
-            ICommunitiesDataProvider dataProvider,
+            CommunitiesDataProvider dataProvider,
             IWebRequestController webRequestController,
             IInputBlock inputBlock,
             WarningNotificationView warningNotificationView,
@@ -87,8 +87,7 @@ namespace DCL.Communities.CommunitiesBrowser
 
             ConfigureMyCommunitiesList();
             ConfigureResultsGrid();
-            thumbnailLoader = new ThumbnailLoader(spriteCache);
-            view.SetThumbnailLoader(thumbnailLoader);
+            view.SetThumbnailLoader(new ThumbnailLoader(spriteCache));
 
             view.ViewAllMyCommunitiesButtonClicked += ViewAllMyCommunitiesResults;
             view.ResultsBackButtonClicked += LoadAllCommunitiesResults;
@@ -413,22 +412,38 @@ namespace DCL.Communities.CommunitiesBrowser
         private void OnCommunityLeft(string communityId, bool success) =>
             view.UpdateJoinedCommunity(communityId, false, success);
 
+        private void OnCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity) =>
+            ReloadBrowser();
+
+        private void OnCommunityDeleted(string communityId) =>
+            ReloadBrowser();
+
+        private void OnUserRemovedFromCommunity(string communityId) =>
+            view.RemoveOneMemberFromCounter(communityId);
+
+        private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
+            OnUserRemovedFromCommunity(communityId);
+
         private void SubscribeDataProviderEvents()
         {
-            dataProvider.CommunityCreated += ReloadBrowser;
-            dataProvider.CommunityDeleted += ReloadBrowser;
+            dataProvider.CommunityCreated += OnCommunityCreated;
+            dataProvider.CommunityDeleted += OnCommunityDeleted;
             dataProvider.CommunityUpdated += OnCommunityUpdated;
             dataProvider.CommunityJoined += OnCommunityJoined;
             dataProvider.CommunityLeft += OnCommunityLeft;
+            dataProvider.CommunityUserRemoved += OnUserRemovedFromCommunity;
+            dataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
         }
 
         private void UnsubscribeDataProviderEvents()
         {
-            dataProvider.CommunityCreated -= ReloadBrowser;
-            dataProvider.CommunityDeleted -= ReloadBrowser;
+            dataProvider.CommunityCreated -= OnCommunityCreated;
+            dataProvider.CommunityDeleted -= OnCommunityDeleted;
             dataProvider.CommunityUpdated -= OnCommunityUpdated;
             dataProvider.CommunityJoined -= OnCommunityJoined;
             dataProvider.CommunityLeft -= OnCommunityLeft;
+            dataProvider.CommunityUserRemoved -= OnUserRemovedFromCommunity;
+            dataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
         }
     }
 }

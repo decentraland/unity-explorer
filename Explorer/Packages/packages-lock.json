@@ -75,7 +75,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "8d05bfc7c7e1b74c34a0ad8397f55f91ccb7ea86"
+      "hash": "ff71e4556e471da577ec934cf75182d2b1c71339"
     },
     "com.decentraland.rpc-csharp": {
       "version": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
@@ -100,7 +100,7 @@
         "com.unity.collections": "1.2.0",
         "com.unity.mathematics": "1.2.0"
       },
-      "hash": "a9457c91aba8e0783db4928e54d6ae9bf9b7abef"
+      "hash": "d8112ca7ebc0c660d7850d72850d46a3e376dc08"
     },
     "com.gurbu.gpui-pro.terrain": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",

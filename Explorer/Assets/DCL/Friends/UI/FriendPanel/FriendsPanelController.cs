@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
+using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel.Sections.Blocked;
 using DCL.Friends.UI.FriendPanel.Sections.Friends;
 using DCL.Friends.UI.FriendPanel.Sections.Requests;
@@ -8,6 +9,7 @@ using DCL.Multiplayer.Connectivity;
 using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -37,7 +39,6 @@ namespace DCL.Friends.UI.FriendPanel
         private readonly FriendSectionController? friendSectionController;
         private readonly FriendsSectionDoubleCollectionController? friendSectionControllerConnectivity;
         private readonly RequestsSectionController requestsSectionController;
-        private readonly DCLInput dclInput;
         private readonly bool includeUserBlocking;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -65,18 +66,16 @@ namespace DCL.Friends.UI.FriendPanel
             IRealmNavigator realmNavigator,
             FriendsConnectivityStatusTracker friendsConnectivityStatusTracker,
             IChatEventBus chatEventBus,
-            bool includeUserBlocking,
-            bool isConnectivityStatusEnabled,
             ISharedSpaceManager sharedSpaceManager,
-            ProfileRepositoryWrapper profileDataProvider) : base(viewFactory)
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
         {
             this.sidebarRequestNotificationIndicator = sidebarRequestNotificationIndicator;
-            dclInput = DCLInput.Instance;
             this.chatEventBus = chatEventBus;
-            this.includeUserBlocking = includeUserBlocking;
+            this.includeUserBlocking = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.sharedSpaceManager = sharedSpaceManager;
 
-            if (isConnectivityStatusEnabled)
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_ONLINE_STATUS))
             {
                 friendSectionControllerConnectivity = new FriendsSectionDoubleCollectionController(instantiatedView.FriendsSection,
                     friendsService,
@@ -101,7 +100,8 @@ namespace DCL.Friends.UI.FriendPanel
                     onlineUsersProvider,
                     realmNavigator,
                     chatEventBus,
-                    sharedSpaceManager);
+                    sharedSpaceManager,
+                    voiceChatCallStatusService);
 
             requestsSectionController = new RequestsSectionController(instantiatedView.RequestsSection,
                 friendsService,
@@ -141,7 +141,6 @@ namespace DCL.Friends.UI.FriendPanel
             friendSectionController?.Dispose();
             friendSectionControllerConnectivity?.Dispose();
             requestsSectionController.Dispose();
-            UnregisterCloseHotkey();
         }
 
         public async UniTask OnHiddenInSharedSpaceAsync(CancellationToken ct)
@@ -170,16 +169,6 @@ namespace DCL.Friends.UI.FriendPanel
             blockedSectionController.Reset();
         }
 
-        private void RegisterCloseHotkey()
-        {
-            dclInput.UI.Close.performed += CloseFriendsPanel;
-        }
-
-        private void UnregisterCloseHotkey()
-        {
-            dclInput.UI.Close.performed -= CloseFriendsPanel;
-        }
-
         private void OnOpenConversationClicked(Web3Address web3Address)
         {
             OpenChatConversationAsync(web3Address).Forget();
@@ -196,7 +185,6 @@ namespace DCL.Friends.UI.FriendPanel
 
         protected override void OnViewShow()
         {
-            RegisterCloseHotkey();
             FriendsPanelOpened?.Invoke();
         }
 
@@ -207,13 +195,6 @@ namespace DCL.Friends.UI.FriendPanel
             closeTaskCompletionSource = new UniTaskCompletionSource();
 
             ToggleTabs(inputData.TabToShow);
-        }
-
-        protected override void OnViewClose()
-        {
-            base.OnViewClose();
-
-            UnregisterCloseHotkey();
         }
 
         protected override void OnViewInstantiated()

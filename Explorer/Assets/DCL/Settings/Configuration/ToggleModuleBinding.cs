@@ -42,6 +42,7 @@ namespace DCL.Settings.Configuration
             SceneLoadingLimit sceneLoadingLimit,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISettingsModuleEventListener settingsEventListener,
+            VoiceChatSettingsAsset voiceChatSettings,
             UpscalingController upscalingController,
             WorldVolumeMacBus worldVolumeMacBus = null)
         {
