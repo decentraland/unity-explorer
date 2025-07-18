@@ -1,11 +1,14 @@
 ﻿namespace DCL.Chat.ChatStates
 {
+    /// <summary>
+    ///     Blurred/Unfocused state of the chat.
+    /// </summary>
     public class DefaultChatState : ChatState
     {
         public override void Begin()
         {
             context.UIMediator.SetupForDefaultState(animate: true);
-            context.UIMediator.chatInputPresenter.OnDefocus();
+            context.UIMediator.chatInputPresenter.OnBlur();
         }
 
         public override void OnPointerEnter() =>

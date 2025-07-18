@@ -15,6 +15,7 @@ using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
 using Utilities;
+using Utility;
 
 namespace DCL.Chat
 {
@@ -33,7 +34,7 @@ namespace DCL.Chat
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
-        
+
         private ChatClickDetectionService chatClickDetectionService;
         private ChatUserStateBridge chatUserStateBridge;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
@@ -43,7 +44,7 @@ namespace DCL.Chat
 
         public bool IsVisibleInSharedSpace =>
             State != ControllerState.ViewHidden;
-        
+
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
@@ -68,7 +69,7 @@ namespace DCL.Chat
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
             this.chatContextMenuService = chatContextMenuService;
-            
+
             chatUserStateBridge = new ChatUserStateBridge(userStateEventBus, eventBus, currentChannelService);
         }
 
@@ -78,23 +79,22 @@ namespace DCL.Chat
         protected override void OnViewInstantiated()
         {
             base.OnViewInstantiated();
-            
+
             uiScope = new EventSubscriptionScope();
-            
-            viewInstance.OnPointerEnterEvent += HandlePointerEnter;
+
+            viewInstance!.OnPointerEnterEvent += HandlePointerEnter;
             viewInstance.OnPointerExitEvent += HandlePointerExit;
 
             chatMemberListService.Start();
-            
-            chatClickDetectionService = new ChatClickDetectionService(viewInstance.transform as RectTransform);
-            chatClickDetectionService.Initialize(elementsToIgnore: new List<Transform>
-            {
+
+            // Ignore buttons that would lead to the conflicting state
+            // TODO find a better way to handle this
+            chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
                 viewInstance.TitlebarView.CloseChatButton.transform,
                 viewInstance.TitlebarView.CloseMemberListButton.transform,
                 viewInstance.TitlebarView.OpenMemberListButton.transform,
                 viewInstance.TitlebarView.BackFromMemberList.transform,
-                viewInstance.InputView.InputField.transform
-            });
+                viewInstance.InputView.inputField.transform);
 
             var titleBarPresenter = new ChatTitlebarPresenter(viewInstance.TitlebarView,
                 chatConfig,
@@ -121,29 +121,30 @@ namespace DCL.Chat
                 viewInstance.InputView,
                 eventBus,
                 currentChannelService,
-                commandRegistry.GetUserChatStatus,
+                commandRegistry.GetParticipantProfilesCommand,
+                profileRepositoryWrapper,
                 commandRegistry.SendMessage);
-            
+
             var memberListPresenter = new ChatMemberListPresenter(
                 viewInstance.MemberListView,
                 eventBus,
                 chatMemberListService,
                 commandRegistry.GetChannelMembersCommand);
-            
+
             uiScope.Add(titleBarPresenter);
             uiScope.Add(channelListPresenter);
             uiScope.Add(messageFeedPresenter);
             uiScope.Add(inputPresenter);
             uiScope.Add(memberListPresenter);
             uiScope.Add(chatClickDetectionService);
-            
+
             var mediator = new ChatUIMediator(
-                viewInstance, 
+                viewInstance,
                 chatConfig,
-                titleBarPresenter, 
-                channelListPresenter, 
-                messageFeedPresenter, 
-                inputPresenter, 
+                titleBarPresenter,
+                channelListPresenter,
+                messageFeedPresenter,
+                inputPresenter,
                 memberListPresenter);
 
             chatStateMachine = new ChatStateMachine(eventBus,
@@ -151,7 +152,7 @@ namespace DCL.Chat
                 chatInputBlockingService,
                 chatClickDetectionService,
                 this);
-            
+
             uiScope.Add(chatStateMachine);
         }
 
@@ -166,11 +167,11 @@ namespace DCL.Chat
         {
             chatStateMachine?.SetVisibility(isVisible);
         }
-        
+
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
         {
             //SetVisibility(true);
-            
+
             if (State != ControllerState.ViewHidden)
             {
                 chatStateMachine?.SetInitialState(showParams.Focus);
@@ -193,7 +194,7 @@ namespace DCL.Chat
 
         private void HandlePointerEnter() => PointerEntered?.Invoke();
         private void HandlePointerExit() => PointerExited?.Invoke();
-        
+
         public override void Dispose()
         {
             if (viewInstance != null)
@@ -201,7 +202,7 @@ namespace DCL.Chat
                 viewInstance.OnPointerEnterEvent -= HandlePointerEnter;
                 viewInstance.OnPointerExitEvent -= HandlePointerExit;
             }
-            
+
             base.Dispose();
             initCts?.Cancel();
             initCts?.Dispose();

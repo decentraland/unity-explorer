@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.UI.Profiles.Helpers;
 using UnityEngine;
 using Utilities;
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {
@@ -13,7 +14,7 @@ namespace DCL.Chat.ChatUseCases
         private IEventBus eventBus;
         private readonly ChatConfig chatConfig;
         private readonly ProfileRepositoryWrapper profileRepository;
-        
+
         public GetProfileThumbnailCommand(IEventBus eventBus,
             ChatConfig chatConfig,
             ProfileRepositoryWrapper profileRepository)

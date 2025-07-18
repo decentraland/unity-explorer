@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.ControllerShowParams;
@@ -34,6 +35,7 @@ using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utilities;
+using Utility;
 
 namespace DCL.PluginSystem.Global
 {
@@ -143,13 +145,13 @@ namespace DCL.PluginSystem.Global
 
             var chatConfigAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.ChatConfig, ct);
             var chatConfig = chatConfigAsset.Value;
-            
+
             if (FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CHAT_HISTORY_LOCAL_STORAGE))
             {
                 string walletAddress = web3IdentityCache.Identity != null ? web3IdentityCache.Identity.Address : string.Empty;
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
-            
+
             var chatUserStateEventBus = new ChatUserStateEventBus();
             var chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
@@ -161,17 +163,23 @@ namespace DCL.PluginSystem.Global
                 roomHub.ChatRoom(),
                 friendsServiceProxy);
 
-            
+
             var chatMemberService = new ChatMemberListService(roomHub,
                 profileCache,
                 friendsServiceProxy);
-            
+
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
             var chatContextMenuService = new ChatContextMenuService(mvcManager);
-            var currentChannelService = new CurrentChannelService();
-            
+
+            var getUserChatStatus = new GetUserChatStatusCommand(chatUserStateUpdater, eventBus);
+
+            var currentChannelService = new CurrentChannelService(getUserChatStatus);
+
+            var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
+
             var useCaseFactory = new CommandRegistry(
                 chatConfig,
+                chatSettingsAsset.Value,
                 eventBus,
                 chatMessagesBus,
                 chatHistory,
@@ -180,12 +188,13 @@ namespace DCL.PluginSystem.Global
                 currentChannelService,
                 chatMemberService,
                 hyperlinkTextFormatter,
-                profileCache,
                 profileRepositoryWrapper,
-                friendsServiceProxy
+                friendsServiceProxy,
+                settings.ChatSendMessageAudio,
+                getParticipantProfilesCommand
             );
             pluginScope.Add(useCaseFactory);
-            
+
             chatMainController = new ChatMainController(
                 () =>
                 {
@@ -205,7 +214,7 @@ namespace DCL.PluginSystem.Global
                 chatMemberService,
                 chatContextMenuService
             );
-            
+
             pluginScope.Add(chatMainController);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
@@ -221,7 +230,7 @@ namespace DCL.PluginSystem.Global
                 mvcManagerMenusAccessFacade
             );
             mvcManager.RegisterController(contextMenuProxyController);
-            
+
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;
@@ -244,5 +253,8 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField] public AssetReferenceT<ChatSettingsAsset> ChatSettingsAsset { get; private set; }
         [field: SerializeField] public AssetReferenceT<ChatConfig> ChatConfig { get; private set; }
+
+        [Header("Audio")]
+        [field: SerializeField] public AudioClipConfig ChatSendMessageAudio { get; private set; }
     }
 }

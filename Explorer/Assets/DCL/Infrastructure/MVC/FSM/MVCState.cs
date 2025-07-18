@@ -1,3 +1,5 @@
+using System.Threading;
+
 namespace MVC
 {
     public abstract class MVCState<TBaseState, TContext> where TBaseState: MVCState<TBaseState, TContext>
@@ -6,10 +8,13 @@ namespace MVC
 
         protected TContext context { get; private set; }
 
-        internal void SetMachineAndContext(MVCStateMachine<TBaseState, TContext> machine, TContext context)
+        protected CancellationToken disposalCt { get; private set; }
+
+        internal void SetMachineAndContext(MVCStateMachine<TBaseState, TContext> machine, TContext context, CancellationToken disposalCt)
         {
             this.machine = machine;
             this.context = context;
+            this.disposalCt = disposalCt;
             OnInitialized();
         }
 
