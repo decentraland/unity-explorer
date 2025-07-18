@@ -65,9 +65,9 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           sliderType: 0
           minValue: 20
-          maxValue: 300
+          maxValue: 150
           wholeNumbers: 1
-          defaultValue: 70
+          defaultValue: 40
         <Feature>k__BackingField: 10
     - rid: 1708279571579404288
       type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
