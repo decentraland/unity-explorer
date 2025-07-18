@@ -26,6 +26,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IMVCManager mvcManager;
         private readonly ICursor cursor;
+        private readonly GalleryEventBus galleryEventBus;
 
         private CancellationTokenSource showCancellationTokenSource;
 
@@ -36,6 +37,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
             ICursor cursor,
+            GalleryEventBus galleryEventBus,
             string storageProgressBarLabelText)
         {
             this.view = view;
@@ -44,6 +46,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
             this.CameraReelGalleryController = cameraReelGalleryController;
             this.mvcManager = mvcManager;
             this.cursor = cursor;
+            this.galleryEventBus = galleryEventBus;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -61,8 +64,11 @@ namespace DCL.InWorldCamera.CameraReelGallery
             //TODO (Lorenzo): Close gallery and open camera
         }
 
-        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, true, reelDeleteIntention)));
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
+            Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
+                false, PhotoDetailParameter.CallerContext.CameraReel, reelDeleteIntention, 
+                reelListRefreshIntention, galleryEventBus)));
 
         private void StorageFullIconEnter() =>
             view.storageFullToast.DOFade(1f, view.storageFullToastFadeTime);

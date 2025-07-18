@@ -47,6 +47,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.InWorldCamera;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
@@ -107,6 +108,7 @@ namespace DCL.Passport
         private readonly INftNamesProvider nftNamesProvider;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
+        private readonly GalleryEventBus galleryEventBus;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly bool isVoiceChatEnabled;
@@ -185,7 +187,8 @@ namespace DCL.Passport
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            BadgePreviewCameraView badge3DPreviewCameraPrefab) : base(viewFactory)
+            BadgePreviewCameraView badge3DPreviewCameraPrefab,
+            GalleryEventBus galleryEventBus) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -220,6 +223,7 @@ namespace DCL.Passport
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.galleryEventBus = galleryEventBus;
 
             isVoiceChatEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
             isFriendsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
@@ -236,8 +240,11 @@ namespace DCL.Passport
             badge3DPreviewCamera.gameObject.SetActive(false);
         }
 
-        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
-            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, false, reelDeleteIntention)));
+        private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, 
+            Action<CameraReelResponseCompact> reelDeleteIntention, Action<CameraReelResponseCompact> reelListRefreshIntention) =>
+            mvcManager.ShowAsync(PhotoDetailController.IssueCommand(new PhotoDetailParameter(reels, index, 
+                !isOwnProfile, PhotoDetailParameter.CallerContext.Passport, reelDeleteIntention, 
+                reelListRefreshIntention, galleryEventBus)));
 
         protected override void OnViewInstantiated()
         {
@@ -245,15 +252,64 @@ namespace DCL.Passport
 
             passportErrorsController = new PassportErrorsController(viewInstance!.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, selfProfile, webBrowser, mvcManager, nftNamesProvider, decentralandUrlsSource, isProfileNameEditorEnabled);
+            characterPreviewController = new PassportCharacterPreviewController(
+                viewInstance.CharacterPreviewView, 
+                characterPreviewFactory, 
+                world, 
+                characterPreviewEventBus);
+            var userBasicInfoPassportModuleController = new UserBasicInfo_PassportModuleController(
+                viewInstance.UserBasicInfoModuleView, 
+                selfProfile, 
+                webBrowser, 
+                mvcManager, 
+                nftNamesProvider, 
+                decentralandUrlsSource, 
+                isProfileNameEditorEnabled);
             userBasicInfoPassportModuleController.NameClaimRequested += OnNameClaimRequested;
             commonPassportModules.Add(userBasicInfoPassportModuleController);
-            overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
-            overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
-            overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
+            overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(
+                viewInstance.UserDetailedInfoModuleView, 
+                mvcManager, 
+                selfProfile, 
+                viewInstance.AddLinkModal, 
+                passportErrorsController, 
+                passportProfileInfoController));
+            overviewPassportModules.Add(new EquippedItems_PassportModuleController(
+                viewInstance.EquippedItemsModuleView, 
+                world, 
+                rarityBackgrounds, 
+                rarityColors, 
+                categoryIcons, 
+                thumbnailProvider, 
+                webBrowser, 
+                decentralandUrlsSource, 
+                passportErrorsController));
+            overviewPassportModules.Add(new BadgesOverview_PassportModuleController(
+                viewInstance.BadgesOverviewModuleView, 
+                badgesAPIClient, 
+                passportErrorsController, 
+                webRequestController));
 
-            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile, badge3DPreviewCamera);
-            cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService, cameraReelScreenshotsStorage, new ReelGalleryConfigParams(gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, false, false), false);
+            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(
+                viewInstance.BadgesDetailsModuleView, 
+                viewInstance.BadgeInfoModuleView, 
+                badgesAPIClient, 
+                passportErrorsController, 
+                webRequestController, 
+                selfProfile,
+                badge3DPreviewCamera);
+            cameraReelGalleryController = new CameraReelGalleryController(
+                viewInstance.CameraReelGalleryModuleView, 
+                cameraReelStorageService, 
+                cameraReelScreenshotsStorage, 
+                new ReelGalleryConfigParams(
+                    gridLayoutFixedColumnCount, 
+                    thumbnailHeight, 
+                    thumbnailWidth, 
+                    false, 
+                    false), 
+                false, 
+                galleryEventBus: galleryEventBus);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
 

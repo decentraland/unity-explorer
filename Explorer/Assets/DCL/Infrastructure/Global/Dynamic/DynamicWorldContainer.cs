@@ -112,6 +112,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.InWorldCamera;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -305,6 +306,8 @@ namespace Global.Dynamic
             var profileRepository = new LogProfileRepository(
                 new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, profileCache)
             );
+            
+            GalleryEventBus galleryEventBus = new GalleryEventBus();
 
             static IMultiPool MultiPoolFactory() =>
                 new DCLMultiPool();
@@ -768,7 +771,8 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     upscaleController,
                     communitiesDataProvider,
-                    realmNftNamesProvider
+                    realmNftNamesProvider,
+                    galleryEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -844,7 +848,8 @@ namespace Global.Dynamic
                     chatEventBus,
                     sharedSpaceManager,
                     profileRepositoryWrapper,
-                    voiceChatCallStatusService
+                    voiceChatCallStatusService,
+                    galleryEventBus
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
@@ -944,7 +949,8 @@ namespace Global.Dynamic
                     nametagsData,
                     profileRepositoryWrapper,
                     sharedSpaceManager,
-                    identityCache));
+                    identityCache,
+                    galleryEventBus));
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS))
             {
@@ -983,6 +989,7 @@ namespace Global.Dynamic
                     eventsApiService,
                     sharedSpaceManager,
                     chatEventBus,
+                    galleryEventBus,
                     communitiesEventBus,
                     socialServiceContainer.socialServicesRPC,
                     lambdasProfilesProvider,
