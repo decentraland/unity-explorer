@@ -68,6 +68,22 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 335
       objectReference: {fileID: 0}
+    - target: {fileID: 5100226267730505936, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: <greyColor>k__BackingField.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5100226267730505936, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: <greyColor>k__BackingField.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5100226267730505936, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: <greyColor>k__BackingField.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5100226267730505936, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
+      propertyPath: <greyColor>k__BackingField.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5165924017890984536, guid: f1fd648453d9bf442949ea1b0d1844c7, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0

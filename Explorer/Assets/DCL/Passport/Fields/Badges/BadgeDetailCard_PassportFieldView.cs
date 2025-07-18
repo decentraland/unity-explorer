@@ -153,7 +153,7 @@ namespace DCL.Passport.Fields.Badges
 
         private void SetupBadgeImage(in BadgeInfo badgeInfo)
         {
-            BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
+            BadgeImage.ImageColor = badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
             imageController?.SetImage(DefaultBadgeSprite);
 
             string imageToLoad = !string.IsNullOrEmpty(badgeInfo.data.progress.lastCompletedTierImage) ?
