@@ -32,7 +32,7 @@ namespace DCL.UI.ConfirmationDialog
         {
             int index = await UniTask.WhenAny(viewInstance!.GetCloseTasks(ct));
 
-            inputData.ResultCallback.Invoke(index > 1 ? ConfirmationResult.CONFIRM : ConfirmationResult.CANCEL);
+            inputData.ResultCallback?.Invoke(index > 1 ? ConfirmationResult.CONFIRM : ConfirmationResult.CANCEL);
         }
     }
 }

@@ -5,6 +5,6 @@ namespace DCL.UI.ConfirmationDialog.Opener
 {
     public interface IConfirmationDialogOpener
     {
-        UniTask OpenConfirmationDialogAsync(ConfirmationDialogParameter dialogData, CancellationToken ct);
+        UniTask<ConfirmationResult> OpenConfirmationDialogAsync(ConfirmationDialogParameter dialogData, CancellationToken ct);
     }
 }

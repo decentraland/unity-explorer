@@ -148,18 +148,16 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                ConfirmationResult result = ConfirmationResult.CANCEL;
-                EnumResult<TaskError> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
-                                                                                    DELETE_PLACE_CANCEL_TEXT,
-                                                                                    DELETE_PLACE_CONFIRM_TEXT,
-                                                                                    deleteSprite,
-                                                                                    false, false,
-                                                                                    res => result = res,
-                                                                                    DELETE_PLACE_SUB_TEXT),
-                                                                                ct)
-                                                                           .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
+                                                                                         DELETE_PLACE_CANCEL_TEXT,
+                                                                                         DELETE_PLACE_CONFIRM_TEXT,
+                                                                                         deleteSprite,
+                                                                                         false, false,
+                                                                                         subText: DELETE_PLACE_SUB_TEXT),
+                                                                                     ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || result == ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
 
                 ElementDeleteButtonClicked?.Invoke(placeInfo);
             }

@@ -14,7 +14,12 @@ namespace DCL.UI.ConfirmationDialog
             this.mvcManager = mvcManager;
         }
 
-        public UniTask OpenConfirmationDialogAsync(ConfirmationDialogParameter dialogData, CancellationToken ct) =>
-            mvcManager.ShowAsync(ConfirmationDialogController.IssueCommand(dialogData), ct);
+        public async UniTask<ConfirmationResult> OpenConfirmationDialogAsync(ConfirmationDialogParameter dialogData, CancellationToken ct)
+        {
+            ConfirmationResult result = ConfirmationResult.CANCEL;
+            dialogData.ResultCallback = res => result = res;
+            await mvcManager.ShowAsync(ConfirmationDialogController.IssueCommand(dialogData), ct);
+            return result;
+        }
     }
 }

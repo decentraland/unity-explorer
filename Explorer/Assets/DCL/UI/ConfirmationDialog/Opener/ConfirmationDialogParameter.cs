@@ -27,10 +27,11 @@ namespace DCL.UI.ConfirmationDialog.Opener
         public readonly bool ShowImageRim;
         public readonly bool ShowQuitImage;
         public readonly UserData UserInfo;
-        public readonly Action<ConfirmationResult> ResultCallback;
+        public Action<ConfirmationResult>? ResultCallback;
 
         public ConfirmationDialogParameter(string text, string cancelButtonText, string confirmButtonText,
-            Sprite image, bool showImageRim, bool showQuitImage, Action<ConfirmationResult> resultCallback,
+            Sprite image, bool showImageRim, bool showQuitImage,
+            Action<ConfirmationResult>? resultCallback = null,
             string subText = "", UserData userInfo = default)
         {
             Text = text;
