@@ -43,7 +43,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             this.globalWorld = globalWorld;
             this.partitionComponent = partitionComponent;
             this.mapPinsEventBus = mapPinsEventBus;
-            useCustomMapPinIcons = FeaturesRegistry.Instance.IsEnabled(FeatureId.CUSTOM_MAP_PINS_ICONS);
+            useCustomMapPinIcons = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.CUSTOM_MAP_PINS_ICONS);
         }
 
         protected override void Update(float t)
