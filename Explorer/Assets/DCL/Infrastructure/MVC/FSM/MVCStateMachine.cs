@@ -1,14 +1,18 @@
 using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Utility;
 
 namespace MVC
 {
-    public class MVCStateMachine<TBaseState, TContext> where TBaseState: MVCState<TBaseState, TContext>
+    public class MVCStateMachine<TBaseState, TContext> : IDisposable where TBaseState: MVCState<TBaseState, TContext>
     {
         public event Action? OnStateChanged;
 
         private readonly Dictionary<Type, TBaseState> states = new ();
+
+        private readonly CancellationTokenSource disposalCts = new ();
 
         public MVCStateMachine(TContext context, TBaseState initialState)
         {
@@ -31,7 +35,7 @@ namespace MVC
         /// </summary>
         public void AddState(TBaseState state)
         {
-            state.SetMachineAndContext(this, context);
+            state.SetMachineAndContext(this, context, disposalCts.Token);
             states[state.GetType()] = state;
         }
 
@@ -98,6 +102,11 @@ namespace MVC
             OnStateChanged?.Invoke();
 
             return (R)CurrentState;
+        }
+
+        public void Dispose()
+        {
+            disposalCts.SafeCancelAndDispose();
         }
     }
 }

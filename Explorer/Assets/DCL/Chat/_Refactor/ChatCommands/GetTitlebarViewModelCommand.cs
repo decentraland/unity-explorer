@@ -6,6 +6,7 @@ using DCL.Profiles;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
 using Utilities;
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {

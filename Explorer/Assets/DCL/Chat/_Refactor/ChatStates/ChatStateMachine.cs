@@ -4,6 +4,7 @@ using DCL.Chat.EventBus;
 using MVC;
 using System;
 using Utilities;
+using Utility;
 
 namespace DCL.Chat._Refactor.ChatStates
 {
@@ -50,7 +51,7 @@ namespace DCL.Chat._Refactor.ChatStates
 
             chatClickDetectionService.OnClickInside += HandleClickInside;
             chatClickDetectionService.OnClickOutside += HandleClickOutside;
-            
+
             MainController.PointerEntered += HandlePointerEntered;
             MainController.PointerExited += HandlePointerExited;
         }
@@ -59,7 +60,7 @@ namespace DCL.Chat._Refactor.ChatStates
         {
             chatClickDetectionService.OnClickInside -= HandleClickInside;
             chatClickDetectionService.OnClickOutside -= HandleClickOutside;
-            
+
             MainController.PointerEntered -= HandlePointerEntered;
             MainController.PointerExited -= HandlePointerExited;
 
@@ -95,7 +96,7 @@ namespace DCL.Chat._Refactor.ChatStates
         {
             fsm.CurrentState.OnClickOutside();
         }
-        
+
         private void HandlePointerExited()
         {
             fsm.CurrentState.OnPointerExit();
@@ -118,7 +119,7 @@ namespace DCL.Chat._Refactor.ChatStates
             else
                 fsm.ChangeState<DefaultChatState>();
         }
-        
+
         /// <summary>
         /// NOTE: called from the SharedSpaceManager
         /// </summary>

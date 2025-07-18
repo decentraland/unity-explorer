@@ -1,11 +1,13 @@
 ﻿using System;
 using DCL.Chat.EventBus;
 using Utilities;
+using Utility;
 
 namespace DCL.Chat.Services
 {
     namespace DCL.Chat
     {
+        // It can be moved to ChatInputPresenter
         // This class listens to low-level user state events and translates them
         // into high-level events that the UI presenters can understand.
         public class ChatUserStateBridge : IDisposable
@@ -22,7 +24,7 @@ namespace DCL.Chat.Services
                 this.userStateEventBus = userStateEventBus;
                 this.eventBus = eventBus;
                 this.currentChannelService = currentChannelService;
-                
+
                 this.userStateEventBus.UserConnectionStateChanged += HandleUserConnectionStateChanged;
                 this.userStateEventBus.UserBlocked += HandleUserBlocked;
                 this.userStateEventBus.UserDisconnected += HandleUserDisconnected;

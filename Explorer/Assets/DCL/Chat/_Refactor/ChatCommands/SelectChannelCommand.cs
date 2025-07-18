@@ -2,6 +2,7 @@
 using DCL.Chat.History;
 using DCL.Chat.Services;
 using Utilities;
+using Utility;
 
 public class SelectChannelCommand
 {
@@ -32,7 +33,7 @@ public class SelectChannelCommand
 
             eventBus.Publish(new ChatEvents.ChannelSelectedEvent { Channel = channel });
         }
-        
+
         // If the channel doesn't exist, we simply do nothing.
         // We could also log an error here if this case is unexpected.
     }

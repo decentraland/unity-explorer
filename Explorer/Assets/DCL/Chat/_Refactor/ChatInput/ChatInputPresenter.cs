@@ -4,174 +4,125 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
-using DCL.Chat.History;
 using DCL.Chat.Services;
+using DCL.Emoji;
+using DCL.UI.Profiles.Helpers;
+using MVC;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using UnityEngine.TextCore.Text;
 using Utilities;
 using Utility;
+using Utility.Types;
+using TextAsset = UnityEngine.TextAsset;
 
 public class ChatInputPresenter : IDisposable
 {
-    private readonly ChatInputView view;
-    private readonly ChatConfig chatConfig;
-    private readonly IEventBus eventBus;
     private readonly ICurrentChannelService currentChannelService;
-    private readonly GetUserChatStatusCommand getUserChatStatusCommand;
-    private readonly SendMessageCommand sendMessageCommand;
     private readonly EventSubscriptionScope scope = new();
-
-    public event Action<string>? OnMessageSubmitted;
-    public event Action? OnFocusRequested;
 
     private CancellationTokenSource cts = new ();
 
+    private readonly MVCStateMachine<ChatInputState, ChatInputStateContext> fsm;
+
     public ChatInputPresenter(
         ChatInputView view,
-        ChatConfig chatConfig,
         IEventBus eventBus,
         ICurrentChannelService currentChannelService,
-        GetUserChatStatusCommand getUserChatStatusCommand,
+        GetParticipantProfilesCommand getParticipantProfilesCommand,
+        ProfileRepositoryWrapper profileRepositoryWrapper,
         SendMessageCommand sendMessageCommand)
     {
-        this.view = view;
-        this.chatConfig = chatConfig;
-        this.eventBus = eventBus;
         this.currentChannelService = currentChannelService;
-        this.getUserChatStatusCommand = getUserChatStatusCommand;
-        this.sendMessageCommand = sendMessageCommand;
-        
-        view.OnMessageSubmit += HandleMessageSubmitted;
-        view.OnFocusRequested += HandleFocusRequested;
+
+        var context = new ChatInputStateContext(view, view.inputEventBus, eventBus, getParticipantProfilesCommand, profileRepositoryWrapper, sendMessageCommand,
+            CreateEmojiMapping(view.emojiMappingJson, view.emojiPanelConfiguration));
+
+        fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(context, new InitializingChatInputState());
+
+        fsm.AddState(new HiddenChatInputState());
+        fsm.AddState(new BlockedChatInputState(currentChannelService));
+        fsm.AddState(new UnfocusedChatInputState());
+        fsm.AddState(new TypingEnabledChatInputState());
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
         scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
     }
 
-    public void Show()
+    private Dictionary<string, EmojiData> CreateEmojiMapping(TextAsset emojiMappingJson, EmojiPanelConfigurationSO emojiPanelConfiguration)
     {
-        view.Show();
+        Dictionary<string, EmojiData> emojiNameMapping = new ();
+
+        foreach (KeyValuePair<string, string> emojiData in JsonConvert.DeserializeObject<Dictionary<string, string>>(emojiMappingJson.text))
+        {
+            if (emojiPanelConfiguration.SpriteAsset.GetSpriteIndexFromName(emojiData.Value.ToUpper()) == -1)
+                continue;
+
+            emojiNameMapping.Add(emojiData.Key, new EmojiData($"\\U000{emojiData.Value.ToUpper()}", emojiData.Key));
+        }
+
+        return emojiNameMapping;
     }
-    
+
+    public void ShowUnfocused()
+    {
+        fsm.ChangeState<UnfocusedChatInputState>();
+    }
+
     public void Hide()
     {
-        view.Hide();
-    }
-    
-    private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
-    {
-        UpdateStateForChannel(evt.Channel);
-    }
-    
-    private void OnForceRefreshInputState(ChatEvents.CurrentChannelStateUpdatedEvent evt)
-    {
-        if (currentChannelService.CurrentChannel != null)
-        {
-            UpdateStateForChannel(currentChannelService.CurrentChannel);
-        }
+        fsm.ChangeState<HiddenChatInputState>();
     }
 
-    private void HandleMessageSubmitted(string message)
-    {
-        sendMessageCommand.Execute(new SendMessageCommandPayload { Body = message });
-        view.SetText("");
-    }
-
-    private void HandleFocusRequested()
-    {
-        eventBus.Publish(new ChatEvents.FocusRequestedEvent());
-    }
-    
-    public async UniTaskVoid OnFocus()
+    public async UniTaskVoid ShowFocusedAsync()
     {
         cts = cts.SafeRestart();
-        
-        bool canType = await CanTypeInChannelAsync(currentChannelService.CurrentChannel, cts.Token);
-        if (cts.IsCancellationRequested) return;
-        
-        if (canType)
-            view.SetActiveTyping();
+
+        fsm.ChangeState<InitializingChatInputState>();
+
+        Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
+
+        if (result is { Success: true, Value: ChatUserStateUpdater.ChatUserState.CONNECTED })
+            fsm.ChangeState<TypingEnabledChatInputState>();
+        else
+            fsm.ChangeState<BlockedChatInputState>();
     }
-    
-    public void OnDefocus()
+
+    private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
     {
-        cts.Cancel(); 
-        view.SetDefault();
+        UpdateStateForChannel().Forget();
+    }
+
+    private void OnForceRefreshInputState(ChatEvents.CurrentChannelStateUpdatedEvent evt)
+    {
+        UpdateStateForChannel().Forget();
+    }
+
+    public void OnBlur()
+    {
+        cts.Cancel();
+        fsm.ChangeState<UnfocusedChatInputState>();
     }
 
     public void OnMinimize()
     {
         cts.Cancel();
-        view.SetDefault();
+        fsm.ChangeState<UnfocusedChatInputState>();
     }
 
-    private async UniTask UpdateStateForChannel(ChatChannel channel)
+    private async UniTaskVoid UpdateStateForChannel()
     {
         cts = cts.SafeRestart();
 
-        bool canType = await CanTypeInChannelAsync(channel, cts.Token);
-        if (cts.IsCancellationRequested) return;
-
-        // If the user can type, we ensure the view is in its default, unblocked state.
-        // If they CANNOT type, we do nothing, because CanTypeInChannelAsync has already
-        // set the view to the correct blocked state. Overwriting it would be a bug.
-        if (canType)
-            view.SetDefault();
+        Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
+        fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: ChatUserStateUpdater.ChatUserState.CONNECTED });
     }
 
-    private async UniTask<bool> CanTypeInChannelAsync(ChatChannel channel, CancellationToken ct)
-    {
-        if (channel == null)
-        {
-            view.SetBlocked("No channel selected.");
-            return false;
-        }
-
-        switch (channel.ChannelType)
-        {
-            case ChatChannel.ChatChannelType.NEARBY:
-                return true;
-            case ChatChannel.ChatChannelType.USER:
-                {
-                    view.SetBlocked(chatConfig.CheckingUserStatusMessage);
-                    var status = await getUserChatStatusCommand.ExecuteAsync(channel.Id.Id, ct);
-                    if (ct.IsCancellationRequested) return false;
-
-                    switch (status)
-                    {
-                        case ChatUserStateUpdater.ChatUserState.CONNECTED:
-                            return true;
-
-                        case ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER:
-                            view.SetBlocked(chatConfig.BlockedByOwnUserMessage);
-                            return false;
-
-                        case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER:
-                            view.SetBlocked(chatConfig.OnlyFriendsOwnUserMessage);
-                            return false;
-
-                        case ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED:
-                            view.SetBlocked(chatConfig.OnlyFriendsMessage);
-                            return false;
-
-                        case ChatUserStateUpdater.ChatUserState.DISCONNECTED:
-                        default:
-                            view.SetBlocked(chatConfig.UserOfflineMessage);
-                            return false;
-                    }
-
-                    break;
-                }
-            default:
-                view.SetBlocked("This chat type is not supported yet.");
-                return false;
-        }
-    }
-    
     public void Dispose()
     {
-        view.OnMessageSubmit -= HandleMessageSubmitted;
-        view.OnFocusRequested -= HandleFocusRequested;
         scope.Dispose();
         cts.Cancel();
         cts.Dispose();
+        fsm.Dispose();
     }
 }

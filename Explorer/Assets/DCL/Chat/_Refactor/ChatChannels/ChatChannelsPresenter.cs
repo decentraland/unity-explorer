@@ -5,6 +5,7 @@ using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
 using Utilities;
+using Utility;
 
 public class ChatChannelsPresenter : IDisposable
 {
@@ -25,7 +26,7 @@ public class ChatChannelsPresenter : IDisposable
     {
         this.view = view;
         this.view.Initialize(profileRepositoryWrapper);
-        
+
         this.eventBus = eventBus;
         this.selectChannelCommand = selectChannelCommand;
         this.leaveChannelCommand = leaveChannelCommand;
@@ -33,7 +34,7 @@ public class ChatChannelsPresenter : IDisposable
         
         view.ConversationSelected += OnViewConversationSelected;
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
-        
+
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
@@ -87,17 +88,17 @@ public class ChatChannelsPresenter : IDisposable
         var initialModel = createChannelViewModelCommand.CreateViewModelAndFetch(channel);
         view.AddConversation(initialModel);
     }
-    
+
     private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
     {
         selectChannelCommand.Execute(channelId);
     }
-    
+
     private void OnViewConversationRemovalRequested(ChatChannel.ChannelId channelId)
     {
         leaveChannelCommand.Execute(channelId);
     }
-    
+
     public void Dispose()
     {
         view.ConversationSelected -= OnViewConversationSelected;
@@ -109,7 +110,7 @@ public class ChatChannelsPresenter : IDisposable
     {
         view.Show();
     }
-    
+
     public void Hide()
     {
         view.Hide();
