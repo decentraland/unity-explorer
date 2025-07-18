@@ -66,6 +66,15 @@ namespace DCL.MarketplaceCredits
             return $"Expire in {days} days";
         }
 
+        public static string FormatSecondsToMonthDays(uint timeLeftInSeconds)
+        {
+            DateTime startDate = DateTime.Now;
+            
+            DateTime targetDate = startDate.AddSeconds(timeLeftInSeconds);
+            
+            return targetDate.ToString("MMMM d", CultureInfo.InvariantCulture);
+        }
+
         /// <summary>
         /// Formats the season date range in a human-readable format.
         /// </summary>
