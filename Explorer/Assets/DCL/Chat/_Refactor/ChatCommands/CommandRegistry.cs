@@ -1,13 +1,15 @@
 ﻿using System;
+using DCL.Audio;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.Services;
 using DCL.Friends;
-using DCL.Profiles;
+using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using Utilities;
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {
@@ -26,11 +28,13 @@ namespace DCL.Chat.ChatUseCases
         public LeaveChannelCommand LeaveChannel { get; }
         public CreateChannelViewModelCommand CreateChannelViewModel { get; }
         public OpenPrivateConversationCommand OpenPrivateConversation { get; }
+        public DeleteChatHistoryCommand DeleteChatHistory { get; }
         public GetChannelMembersCommand GetChannelMembersCommand { get; }
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
 
         public CommandRegistry(
             ChatConfig chatConfig,
+            ChatSettingsAsset chatSettings,
             IEventBus eventBus,
             IChatMessagesBus chatMessageBus,
             IChatHistory chatHistory,

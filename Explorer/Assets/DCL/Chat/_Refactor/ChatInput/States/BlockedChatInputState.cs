@@ -10,10 +10,12 @@ namespace DCL.Chat
     /// </summary>
     public class BlockedChatInputState : ChatInputState
     {
+        private readonly ChatConfig config;
         private readonly ICurrentChannelService currentChannelService;
 
-        public BlockedChatInputState(ICurrentChannelService currentChannelService)
+        public BlockedChatInputState(ChatConfig config, ICurrentChannelService currentChannelService)
         {
+            this.config = config;
             this.currentChannelService = currentChannelService;
         }
 
@@ -29,10 +31,10 @@ namespace DCL.Chat
 
                 blockedReason = currentChannelService.InputState.Value switch
                                 {
-                                    ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER => "To message this user you must first unblock them.",
-                                    ChatUserStateUpdater.ChatUserState.DISCONNECTED => "The user you are trying to message is offline.",
-                                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => "Add this user as a friend to chat, or update your <b><u>DM settings</b></u> to connect with everyone.",
-                                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED => "To message this user you must first unblock them.",
+                    ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER => config.BlockedByOwnUserMessage,
+                    ChatUserStateUpdater.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
+                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
+                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
                                     _ => string.Empty,
                                 };
             }

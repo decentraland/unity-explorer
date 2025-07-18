@@ -27,6 +27,7 @@ public class ChatInputPresenter : IDisposable
 
     public ChatInputPresenter(
         ChatInputView view,
+        ChatConfig chatConfig,
         IEventBus eventBus,
         ICurrentChannelService currentChannelService,
         GetParticipantProfilesCommand getParticipantProfilesCommand,
@@ -41,7 +42,7 @@ public class ChatInputPresenter : IDisposable
         fsm = new MVCStateMachine<ChatInputState, ChatInputStateContext>(context, new InitializingChatInputState());
 
         fsm.AddState(new HiddenChatInputState());
-        fsm.AddState(new BlockedChatInputState(currentChannelService));
+        fsm.AddState(new BlockedChatInputState(chatConfig, currentChannelService));
         fsm.AddState(new UnfocusedChatInputState());
         fsm.AddState(new TypingEnabledChatInputState());
 

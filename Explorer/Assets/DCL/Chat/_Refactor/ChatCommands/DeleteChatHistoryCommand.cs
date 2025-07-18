@@ -1,7 +1,7 @@
 ﻿using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.Services;
-using Utilities;
+using Utility;
 
 namespace DCL.Chat.ChatUseCases
 {
