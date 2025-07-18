@@ -3,6 +3,9 @@ using DCL.Chat.ChatViewModels;
 using DCL.UI.Utilities;
 using SuperScrollView;
 using System.Collections.Generic;
+using DCL.Chat.Services;
+using DCL.Web3;
+using MVC;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +17,7 @@ namespace DCL.Chat
         [SerializeField] private GameObject loadingSpinner;
 
         private List<ChatMemberListViewModel> membersToDisplay = new ();
-        public event Action<string> OnMemberContextMenuRequested;
+        public event Action<UserProfileMenuRequest> OnMemberContextMenuRequested;
 
         private void Awake()
         {
@@ -72,9 +75,14 @@ namespace DCL.Chat
             return newItem;
         }
 
-        private void HandleItemContextMenuRequest(string userId)
+        private void HandleItemContextMenuRequest(MemberEntryContextMenuRequest request)
         {
-            OnMemberContextMenuRequested?.Invoke(userId);
+            var data = new UserProfileMenuRequest
+            {
+                WalletAddress = new Web3Address(request.UserId), Position = request.Position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
+            };
+
+            OnMemberContextMenuRequested?.Invoke(data);
         }
 
         public void Show() => gameObject.SetActive(true);

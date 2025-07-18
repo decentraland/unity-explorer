@@ -167,7 +167,9 @@ namespace DCL.PluginSystem.Global
                 friendsServiceProxy);
             
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
-            var chatContextMenuService = new ChatContextMenuService(mvcManager);
+            var chatClickDetectionService = new ChatClickDetectionService();
+            var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
+                chatClickDetectionService);
             var currentChannelService = new CurrentChannelService();
             
             var useCaseFactory = new CommandRegistry(
@@ -203,7 +205,8 @@ namespace DCL.PluginSystem.Global
                 chatHistory,
                 profileRepositoryWrapper,
                 chatMemberService,
-                chatContextMenuService
+                chatContextMenuService,
+                chatClickDetectionService
             );
             
             pluginScope.Add(chatMainController);
@@ -211,17 +214,6 @@ namespace DCL.PluginSystem.Global
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Chat, chatMainController);
             mvcManager.RegisterController(chatMainController);
 
-            var contextMenuProxyController = new ContextMenuProxyController(
-                () =>
-                {
-                    var view = new GameObject("ChatContextMenuProxy").AddComponent<ContextMenuProxyView>();
-                    view.gameObject.SetActive(false);
-                    return view;
-                },
-                mvcManagerMenusAccessFacade
-            );
-            mvcManager.RegisterController(contextMenuProxyController);
-            
             // Log out / log in
             web3IdentityCache.OnIdentityCleared += OnIdentityCleared;
             loadingStatus.CurrentStage.OnUpdate += OnLoadingStatusUpdate;

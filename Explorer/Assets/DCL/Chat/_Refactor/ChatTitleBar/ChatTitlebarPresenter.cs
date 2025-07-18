@@ -23,10 +23,13 @@ public class ChatTitlebarPresenter : IDisposable
     private readonly GetTitlebarViewModelCommand getTitlebarViewModel;
     private readonly ChatContextMenuService chatContextMenuService;
     private readonly ChatMemberListService chatMemberListService;
+    private readonly ChatClickDetectionService chatClickDetectionService;
 
     private ChatTitlebarViewModel currentViewModel { get;  set; }
     CancellationTokenSource profileLoadCts = new ();
     private readonly CancellationTokenSource lifeCts = new ();
+    private CancellationTokenSource? activeMenuCts;
+    private UniTaskCompletionSource? activeMenuTcs;
     private readonly EventSubscriptionScope scope = new();
 
     public ChatTitlebarPresenter(
@@ -35,6 +38,7 @@ public class ChatTitlebarPresenter : IDisposable
         IEventBus eventBus,
         ChatMemberListService chatMemberListService,
         ChatContextMenuService chatContextMenuService,
+        ChatClickDetectionService chatClickDetectionService,
         GetTitlebarViewModelCommand getTitlebarViewModel)
     {
         this.view = view;
@@ -42,16 +46,25 @@ public class ChatTitlebarPresenter : IDisposable
         this.eventBus = eventBus;
         this.chatMemberListService = chatMemberListService;
         this.chatContextMenuService = chatContextMenuService;
+        this.chatClickDetectionService = chatClickDetectionService;
         this.getTitlebarViewModel = getTitlebarViewModel;
         
         view.Initialize();
         view.OnCloseRequested += OnCloseRequested;
         view.OnMembersToggleRequested += OnMembersToggleRequested;
         view.OnContextMenuRequested += OnChatContextMenuRequested;
+        view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
         
         chatMemberListService.OnMemberCountUpdated += OnChannelMembersUpdated;
         
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
+    }
+
+    private void OnProfileContextMenuRequested(UserProfileMenuRequest request)
+    {
+        request.WalletAddress = new Web3Address(currentViewModel.Id);
+        chatContextMenuService
+            .ShowUserProfileMenuAsync(request).Forget();
     }
 
     private void OnChatContextMenuRequested(ChatContextMenuRequest data)
@@ -61,20 +74,14 @@ public class ChatTitlebarPresenter : IDisposable
             DeleteChatHistoryText = "Delete Chat History", DeleteChatHistoryIcon = config.NearbyConversationIcon
         };
 
+        
         data.contextMenuData = options;
         data.OnDeleteHistory = () =>
         {
             Debug.Log("Delete Chat History");
         };
 
-        chatContextMenuService.ShowMenuAsync(data, lifeCts.Token).Forget();
-    }
-
-    private void OnContextMenuRequested(UserProfileMenuRequest request)
-    {
-        request.WalletAddress = new Web3Address(currentViewModel.Id);
-        chatContextMenuService
-            .ShowMenuAsync(request, lifeCts.Token).Forget();
+        chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
     }
 
     private void OnChannelMembersUpdated(int memberCount)

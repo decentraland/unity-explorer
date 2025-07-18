@@ -9,13 +9,19 @@ public class ChatClickDetectionService : IDisposable
     public event Action OnClickInside;
     public event Action OnClickOutside;
 
-    private readonly RectTransform targetArea;
+    private RectTransform targetArea;
     private readonly DCLInput dclInput;
     private HashSet<Transform> ignoredElementsSet;
     private bool isPaused = false;
     public ChatClickDetectionService(RectTransform targetArea)
     {
         this.targetArea = targetArea;
+        dclInput = DCLInput.Instance;
+        ignoredElementsSet = new HashSet<Transform>();
+    }
+
+    public ChatClickDetectionService()
+    {
         dclInput = DCLInput.Instance;
         ignoredElementsSet = new HashSet<Transform>();
     }
@@ -27,6 +33,17 @@ public class ChatClickDetectionService : IDisposable
             dclInput.UI.Click.performed -= HandleGlobalClick;
         
         if (dclInput != null) 
+            dclInput.UI.Click.performed += HandleGlobalClick;
+    }
+
+    public void Initialize(RectTransform targetArea, IReadOnlyList<Transform> elementsToIgnore)
+    {
+        this.targetArea = targetArea;
+        ignoredElementsSet = new HashSet<Transform>(elementsToIgnore);
+        if (dclInput != null)
+            dclInput.UI.Click.performed -= HandleGlobalClick;
+
+        if (dclInput != null)
             dclInput.UI.Click.performed += HandleGlobalClick;
     }
 

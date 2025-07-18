@@ -10,14 +10,17 @@ public class ChatDefaultTitlebarView : MonoBehaviour
     public event Action OnCloseRequested;
     public event Action OnMembersRequested;
     public event Action OnContextMenuRequested;
+    public event Action OnProfileContextMenuRequested;
 
     public Button ButtonClose => buttonClose;
     public Button ButtonOpenMembers => buttonOpenMembers;
     public Button ButtonOpenContextMenu => buttonOpenContextMenu;
+    public Button ButtonOpenProfileContextMenu => buttonOpenProfileContextMenu;
     
     [SerializeField] private Button buttonClose;
     [SerializeField] private Button buttonOpenMembers;
     [SerializeField] private Button buttonOpenContextMenu;
+    [SerializeField] private Button buttonOpenProfileContextMenu;
     [SerializeField] private TMP_Text textChannelName;
     [SerializeField] private TMP_Text textMembersCount;
     [SerializeField] private ChatProfileView chatProfileView;
@@ -26,6 +29,7 @@ public class ChatDefaultTitlebarView : MonoBehaviour
     private void Awake()
     {
         buttonOpenContextMenu.onClick.AddListener(() => OnContextMenuRequested?.Invoke());
+        buttonOpenProfileContextMenu.onClick.AddListener(() => OnProfileContextMenuRequested?.Invoke());
         buttonClose.onClick.AddListener(() => OnCloseRequested?.Invoke());
         buttonOpenMembers.onClick.AddListener(() => OnMembersRequested?.Invoke());
     }
