@@ -26,7 +26,7 @@ namespace DCL.Quality.Runtime
         private readonly VideoPrioritizationSettings? videoPrioritizationSettings;
         private readonly ILODSettingsAsset? lodSettingsAsset;
         private readonly LandscapeData? landscapeData;
-        private readonly GPUInstancingSettings roadsSettings;
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings;
 
         public bool IsActive => true;
 
@@ -34,19 +34,15 @@ namespace DCL.Quality.Runtime
             RealmPartitionSettingsAsset? realmPartitionSettings,
             VideoPrioritizationSettings? videoPrioritizationSettings,
             ILODSettingsAsset? lodSettingsAsset,
-            LandscapeData? landscapeData)
+            LandscapeData? landscapeData,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings? roadsSettings
+        )
         {
-            if (realmPartitionSettings != null)
-                this.realmPartitionSettings = realmPartitionSettings;
-
-            if(videoPrioritizationSettings != null)
-                this.videoPrioritizationSettings = videoPrioritizationSettings;
-
-            if (lodSettingsAsset != null)
-                this.lodSettingsAsset = lodSettingsAsset;
-
-            if (landscapeData != null)
-                this.landscapeData = landscapeData;
+            if (roadsSettings != null) this.roadsSettings = roadsSettings;
+            if (realmPartitionSettings != null) this.realmPartitionSettings = realmPartitionSettings;
+            if (videoPrioritizationSettings != null) this.videoPrioritizationSettings = videoPrioritizationSettings;
+            if (lodSettingsAsset != null) this.lodSettingsAsset = lodSettingsAsset;
+            if (landscapeData != null) this.landscapeData = landscapeData;
         }
 
         public void SetActive(bool active) { }
@@ -56,7 +52,7 @@ namespace DCL.Quality.Runtime
         public void ApplyPreset(QualitySettingsAsset.QualityCustomLevel preset)
         {
             SetSceneLoadRadius(preset.environmentSettings.sceneLoadRadius);
-            sceneLoadRadius.Value = preset.environmentSettings.sceneLoadRadius;
+            sceneLoadRadius.Value = roadsSettings.RenderDistanceInParcels = preset.environmentSettings.sceneLoadRadius;
 
             SetLodThreshold(preset.environmentSettings.lod1Threshold, 0);
             lod1Threshold.Value = preset.environmentSettings.lod1Threshold;
@@ -85,7 +81,7 @@ namespace DCL.Quality.Runtime
             detailDensity = PersistentSetting.CreateFloat(DCLPrefKeys.PS_DETAIL_DENSITY, currentPreset.environmentSettings.detailDensity).WithSetForceDefaultValue();
             grassDistance = PersistentSetting.CreateFloat(DCLPrefKeys.PS_GRASS_DISTANCE, currentPreset.environmentSettings.grassDistance).WithSetForceDefaultValue();
             chunkCullDistance = PersistentSetting.CreateFloat(DCLPrefKeys.PS_CHUNK_CULL_DISTANCE, currentPreset.environmentSettings.chunkCullDistance).WithSetForceDefaultValue();
-            maxSimultaneousVideos = PersistentSetting.CreateInt(DCLPrefKeys.PS_MAX_SIMULTANEOUS_VIDEOS, currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
+            maxSimultaneousVideos = PersistentSetting.CreateInt(DCLPrefKeys.PS_MAX_SIMULTANEOUS_VIDEOS, currentPreset.environmentSettings.maxSimultaneousVideos).WithSetForceDefaultValue();
 
             // Apply settings
             SetSceneLoadRadius(sceneLoadRadius.Value);
@@ -122,7 +118,7 @@ namespace DCL.Quality.Runtime
             lodSettingsAsset.LodPartitionBucketThresholds[index] = lodThreshold;
         }
 
-        private void SetTerrainLodBias(float lodBias)
+        private static void SetTerrainLodBias(float lodBias)
         {
             float tempLodBias = lodBias / 100f;
             if (!(Math.Abs(QualitySettings.lodBias - tempLodBias) > 0.005f))
@@ -131,7 +127,7 @@ namespace DCL.Quality.Runtime
             QualitySettings.lodBias = tempLodBias;
         }
 
-        private void SetDetailDensity(float density)
+        private static void SetDetailDensity(float density)
         {
             float tempDensity = density / 100f;
             if (!(Math.Abs(QualitySettings.terrainDetailDensityScale - tempDensity) > 0.005f))
@@ -140,7 +136,7 @@ namespace DCL.Quality.Runtime
             QualitySettings.terrainDetailDensityScale = tempDensity;
         }
 
-        private void SetGrassDistance(float distance)
+        private static void SetGrassDistance(float distance)
         {
             if (!(Math.Abs(QualitySettings.terrainDetailDistance - distance) > 0.005f))
                 return;

@@ -1,5 +1,6 @@
 using DCL.Landscape.Settings;
 using DCL.LOD;
+using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream.Settings;
 using ECS.Prioritization;
 using System;
@@ -20,14 +21,18 @@ namespace DCL.Quality.Runtime
             RealmPartitionSettingsAsset? realmPartitionSettings = null,
             VideoPrioritizationSettings? videoPrioritizationSettings = null,
             ILODSettingsAsset? lodSettingsAsset = null,
-            LandscapeData? landscapeData = null)
+            LandscapeData? landscapeData = null,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings? roadsSettings = null
+        )
         {
-            var runtimes = new List<IQualitySettingRuntime>();
+            var runtimes = new List<IQualitySettingRuntime>
+            {
+                CreateFogRuntime(),
+                CreateLensFlareRuntime(),
+                CreateGlobalVolume(),
+                CreateEnvironmentRuntime(realmPartitionSettings, videoPrioritizationSettings, lodSettingsAsset, landscapeData, roadsSettings),
+            };
 
-            runtimes.Add(CreateFogRuntime());
-            runtimes.Add(CreateLensFlareRuntime());
-            runtimes.Add(CreateGlobalVolume());
-            runtimes.Add(CreateEnvironmentRuntime(realmPartitionSettings, videoPrioritizationSettings, lodSettingsAsset, landscapeData));
             CreateRendererFeaturesRuntimes(rendererFeaturesCache, settingsAsset, runtimes);
 
             return new QualityLevelController(runtimes, settingsAsset.customSettings);
@@ -43,8 +48,9 @@ namespace DCL.Quality.Runtime
             RealmPartitionSettingsAsset? realmPartitionSettings,
             VideoPrioritizationSettings? videoPrioritizationSettings,
             ILODSettingsAsset? lodSettingsAsset,
-            LandscapeData? landscapeData) =>
-            new EnvironmentSettingsRuntime(realmPartitionSettings, videoPrioritizationSettings, lodSettingsAsset, landscapeData);
+            LandscapeData? landscapeData,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings? roadsSettings) =>
+            new EnvironmentSettingsRuntime(realmPartitionSettings, videoPrioritizationSettings, lodSettingsAsset, landscapeData, roadsSettings);
 
         /// <summary>
         ///     Create a separate class for every renderer feature type possibly available

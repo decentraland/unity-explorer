@@ -16,31 +16,13 @@ namespace DCL.Rendering.GPUInstancing.Systems
     public partial class DebugGPUInstancingSystem : BaseUnityLoopSystem
     {
         private readonly GPUInstancingService service;
-        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings settings;
-
-        private readonly DebugWidgetVisibilityBinding visibilityBinding;
-        private readonly ElementBinding<float> renderDistance;
-        private readonly float roadsDistanceInParcels;
 
         public DebugGPUInstancingSystem(World world, IDebugContainerBuilder debugBuilder, GPUInstancingService service) : base(world)
         {
             this.service = service;
-            settings = this.service.Settings;
-
-            roadsDistanceInParcels = settings.RenderDistanceInParcels;
-
-            visibilityBinding = new DebugWidgetVisibilityBinding(true);
-            renderDistance = new ElementBinding<float>(settings.RenderDistanceInParcels);
 
             debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.GPU_INSTANCING)?
-                        .SetVisibilityBinding(visibilityBinding)
-                        .AddToggleField("Is Enabled", OnIsEnableToggled, service.IsEnabled)
-                        .AddFloatSliderField("Render distance [parcels] ", renderDistance, GPUInstancingSettings.SCENE_DIST_MIN, GPUInstancingSettings.SCENE_DIST_MAX);
-        }
-
-        protected override void OnDispose()
-        {
-            settings.RenderDistanceInParcels = roadsDistanceInParcels;
+               .AddToggleField("Is Enabled", OnIsEnableToggled, service.IsEnabled);
         }
 
         private void OnIsEnableToggled(ChangeEvent<bool> evt)
@@ -48,10 +30,6 @@ namespace DCL.Rendering.GPUInstancing.Systems
             service.IsEnabled = evt.newValue;
         }
 
-        protected override void Update(float _)
-        {
-            if (visibilityBinding.IsConnectedAndExpanded)
-                settings.RenderDistanceInParcels = renderDistance.Value;
-        }
+        protected override void Update(float t) { }
     }
 }

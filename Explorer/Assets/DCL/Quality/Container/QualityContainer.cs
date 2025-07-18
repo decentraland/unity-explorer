@@ -8,6 +8,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Quality.Debug;
 using DCL.Quality.Runtime;
+using DCL.Rendering.GPUInstancing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,13 +40,16 @@ namespace DCL.Quality
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
 
             var rendererFeaturesCache = new RendererFeaturesCache();
+
             IQualityLevelController controller = QualityRuntimeFactory.Create(
                 rendererFeaturesCache,
                 settings.QualitySettings,
                 realmPartitionSettings.Value,
                 videoPrioritizationSettings.Value,
                 lodSettingsAsset.Value,
-                landscapeData.Value);
+                landscapeData.Value,
+                rendererFeaturesCache.GetRendererFeature<GPUInstancingRenderFeature>().Settings
+            );
 
             return new QualityContainer
             {
