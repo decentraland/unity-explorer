@@ -78,6 +78,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SkyBox;
 using DCL.SocialService;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
@@ -611,7 +612,8 @@ namespace Global.Dynamic
                 clipboardManager,
                 dclCursor,
                 new ContextMenuOpener(mvcManager),
-                identityCache));
+                identityCache,
+                new ConfirmationDialogOpener(mvcManager)));
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
@@ -848,6 +850,7 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
+                new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
             };
 
             if (FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT))
