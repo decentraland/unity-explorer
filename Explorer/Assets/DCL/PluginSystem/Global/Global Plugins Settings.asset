@@ -704,6 +704,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        GenericContextMenuToggleWithCheckPrefab:
+          m_AssetGUID: 33891647b85dc47319f39490bb24594d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

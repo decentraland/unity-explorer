@@ -115,6 +115,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33891647b85dc47319f39490bb24594d
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithCheck.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 35aa85d68d15435418848a03a2db81ec
     m_Address: Assets/TextMesh Pro/Fonts & Materials/Inter-Regular SDF.asset
     m_ReadOnly: 0
