@@ -12,7 +12,7 @@ using Utility;
 
 public class ChatMessageFeedPresenter : IDisposable
 {
-    private readonly IChatMessageFeedView view;
+    private readonly ChatMessageFeedView view;
     private readonly IEventBus eventBus;
     private readonly ICurrentChannelService currentChannelService;
     private readonly GetMessageHistoryCommand getMessageHistoryCommand;
@@ -21,8 +21,8 @@ public class ChatMessageFeedPresenter : IDisposable
     
     private readonly EventSubscriptionScope scope = new();
     private CancellationTokenSource loadChannelCts = new();
-    
-    public ChatMessageFeedPresenter(IChatMessageFeedView view,
+
+    public ChatMessageFeedPresenter(ChatMessageFeedView view,
         IEventBus eventBus,
         ICurrentChannelService currentChannelService,
         GetMessageHistoryCommand getMessageHistoryCommand,
@@ -39,6 +39,8 @@ public class ChatMessageFeedPresenter : IDisposable
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
         scope.Add(eventBus.Subscribe<ChatEvents.MessageReceivedEvent>(OnMessageReceived));
         scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
+
+        view.OnScrollToBottom += MarkCurrentChannelAsRead;
     }
 
     private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
@@ -55,16 +57,6 @@ public class ChatMessageFeedPresenter : IDisposable
         }
     }
 
-    public void Activate()
-    {
-        view.OnScrollToBottom += MarkCurrentChannelAsRead;
-    }
-
-    public void Deactivate()
-    {
-        view.OnScrollToBottom -= MarkCurrentChannelAsRead;
-    }
-    
     public void Show()
     {
         view.Show();
@@ -87,7 +79,6 @@ public class ChatMessageFeedPresenter : IDisposable
         if (token.IsCancellationRequested) return;
 
         view.SetMessages(result.Messages);
-        view.ScrollToBottom();
     }
 
     private void OnMessageReceived(ChatEvents.MessageReceivedEvent evt)
@@ -110,6 +101,8 @@ public class ChatMessageFeedPresenter : IDisposable
     public void Dispose()
     {
         loadChannelCts.SafeCancelAndDispose();
-        Deactivate();
+        scope.Dispose();
+        if (view != null)
+            view.OnScrollToBottom -= MarkCurrentChannelAsRead;
     }
 }

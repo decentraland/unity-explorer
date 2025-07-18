@@ -1,30 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.History;
 using DCL.UI.Utilities;
+using DG.Tweening;
 using SuperScrollView;
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening; // Keep this for your SetFocusedState method
 
 namespace DCL.Chat
 {
-    public class ChatMessageFeedView : MonoBehaviour, IChatMessageFeedView
+    public class ChatMessageFeedView : MonoBehaviour
     {
-        private const string PREFAB_OTHER_USER = "ChatEntry_OtherUser";
-        private const string PREFAB_OWN = "ChatEntry_Own";
-        private const string PREFAB_SYSTEM = "ChatEntry_System";
-        private const string PREFAB_SEPARATOR = "UnreadMessagesSeparator";
+        private const string PREFAB_OTHER_USER = "ChatEntry";
+        private const string PREFAB_OWN = "ChatEntryOwn";
+        private const string PREFAB_SYSTEM = "SystemChatEntry";
+        private const string PREFAB_SEPARATOR = "Separator";
 
         [SerializeField] private GameObject messagesContainer;
         [SerializeField] private LoopListView2 loopListView;
         [SerializeField] private ScrollRect scrollRect;
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
+        [SerializeField] private CanvasGroup chatEntriesCanvasGroup;
 
         // The view's local copy of the data source
         private readonly List<ChatMessageViewModel> messages = new ();
+
         public event Action OnScrollToBottom;
+        public event Action<ChatMessageViewModel> OnMessageContextMenuRequested;
 
         private void Awake()
         {
@@ -32,8 +34,6 @@ namespace DCL.Chat
             scrollRect.SetScrollSensitivityBasedOnPlatform();
             scrollRect.onValueChanged.AddListener(pos =>
             {
-                // This event is only for marking messages as read, so it should
-                // fire when the user manually scrolls to the bottom.
                 if (IsAtBottom())
                     OnScrollToBottom?.Invoke();
             });
@@ -46,39 +46,42 @@ namespace DCL.Chat
             loopListView.SetListItemCount(messages.Count, false);
             ScrollToBottom();
         }
-        
-        
+
         public void AppendMessage(ChatMessageViewModel message, bool animated)
         {
             bool wasAtBottom = IsAtBottom();
-
-            // 1. Add the new message to the end of our local data list.
             messages.Add(message);
-
-            // 2. Tell the scroll view about the new total number of items.
             loopListView.SetListItemCount(messages.Count, false);
 
-            // 3. If we were already at the bottom, automatically scroll to the new message.
-            if (wasAtBottom)
+            if (animated)
             {
-                ScrollToBottom();
+                var newListItem = loopListView.GetShownItemByItemIndex(messages.Count - 1);
+                if (newListItem != null)
+                {
+                    var entryView = newListItem.GetComponent<ChatEntryView>();
+                    entryView?.AnimateChatEntry();
+                }
             }
+
+            if (wasAtBottom)
+                ScrollToBottom(animated);
         }
 
-        public void ScrollToBottom()
+        public void ScrollToBottom(bool animated = false)
         {
             if (messages.Count == 0) return;
 
-            // This is the correct call, mirroring the SuperScrollView demo exactly.
-            // It moves the panel so the last item in the data list is visible at the bottom.
-            loopListView.MovePanelToItemIndex(messages.Count - 1, 0);
+            if (animated)
+                loopListView.ScrollRect.DONormalizedPos(new Vector2(0.0f, 0.0f), 0.5f);
+            else
+                loopListView.MovePanelToItemIndex(messages.Count - 1, 0);
         }
 
         public bool IsAtBottom()
         {
-            // In 'Bottom To Top' mode, being at the bottom means the scrollbar's
-            // normalized position is at or very near 1.
-            return messages.Count == 0 || scrollRect.normalizedPosition.y >= 0.99f;
+            // In 'Bottom To Top' mode (which SuperScrollView often uses),
+            // being at the bottom means the scrollbar's normalized position is at or very near 0.
+            return messages.Count == 0 || scrollRect.normalizedPosition.y <= 0.001f;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
@@ -90,19 +93,28 @@ namespace DCL.Chat
             string prefabName = GetPrefabNameForMessage(data);
             LoopListViewItem2 item = listView.NewListViewItem(prefabName);
 
-            // The separator prefab won't have a ChatEntryView component.
             if (!data.IsSeparator)
             {
                 var entryView = item.GetComponent<ChatEntryView>();
                 if (entryView != null)
                 {
                     entryView.SetItemData(data);
-                    // This is still important to handle dynamic heights correctly!
-                    //loopListView.OnItemSizeChanged(item.ItemIndex);
+
+                    // Allow individual entries to request their context menu
+                    entryView.ChatEntryClicked -= HandleEntryClicked; // Unsubscribe first to prevent duplicates
+                    entryView.ChatEntryClicked += HandleEntryClicked;
                 }
             }
 
             return item;
+        }
+
+        private void HandleEntryClicked(string walletAddress, Vector2 position)
+        {
+            // For now, we don't have the full ViewModel here, but this is where you'd
+            // trigger the event if needed. A more robust implementation might have
+            // the ChatEntryView hold its ViewModel.
+            // OnMessageContextMenuRequested?.Invoke(...);
         }
 
         private static string GetPrefabNameForMessage(ChatMessageViewModel message)
@@ -130,10 +142,15 @@ namespace DCL.Chat
 
         public void SetFocusedState(bool isFocused, bool animate, float duration, Ease easing)
         {
-            // This implementation is fine.
             scrollbarCanvasGroup.DOKill();
-            float targetAlpha = isFocused ? 1.0f : 0.0f;
-            scrollbarCanvasGroup.DOFade(targetAlpha, animate ? duration : 0f).SetEase(easing);
+            chatEntriesCanvasGroup.DOKill();
+
+            float scrollbarTargetAlpha = isFocused ? 1.0f : 0.0f;
+            float entriesTargetAlpha = isFocused ? 1.0f : 0.4f;
+            float fadeDuration = animate ? duration : 0f;
+
+            scrollbarCanvasGroup.DOFade(scrollbarTargetAlpha, fadeDuration).SetEase(easing);
+            chatEntriesCanvasGroup.DOFade(entriesTargetAlpha, fadeDuration).SetEase(easing);
         }
     }
 }

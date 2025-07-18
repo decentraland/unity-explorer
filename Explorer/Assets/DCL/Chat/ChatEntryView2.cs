@@ -1,5 +1,4 @@
-using DCL.Chat.ChatViewModels;
-using DCL.Chat.History;
+﻿using DCL.Chat.ChatViewModels;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
 using UnityEngine;
@@ -7,27 +6,28 @@ using UnityEngine.UI;
 
 namespace DCL.Chat
 {
-    public class ChatEntryView : MonoBehaviour
+    public class ChatEntryView2 : MonoBehaviour
     {
         private const float PROFILE_BUTTON_Y_OFFSET = -18;
         private const float USERNAME_Y_OFFSET = -13f;
 
         public delegate void ChatEntryClickedDelegate(string walletAddress, Vector2 contextMenuPosition);
 
-        public ChatEntryClickedDelegate? ChatEntryClicked;
+        public event ChatEntryClickedDelegate? ChatEntryClicked;
 
         [field: SerializeField] internal RectTransform rectTransform { get; private set; }
         [field: SerializeField] internal CanvasGroup chatEntryCanvasGroup { get; private set; }
 
         [field: Header("Elements")]
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
+
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
 
         [field: Header("Avatar Profile")]
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
+
         [field: SerializeField] internal Button profileButton { get; private set; }
 
-        private ChatMessage chatMessage;
         private ChatMessageViewModel chatMessageViewModel;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
@@ -37,12 +37,12 @@ namespace DCL.Chat
             chatEntryCanvasGroup.DOFade(1, 0.5f);
         }
 
-        public void SetItemData(ChatMessage data)
+        public void SetItemData(ChatMessageViewModel data)
         {
-            chatMessage = data;
+            chatMessageViewModel = data;
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageBubbleElement.SetMessageData(data);
-            rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
         }
 
         private void Awake()
@@ -53,7 +53,7 @@ namespace DCL.Chat
 
         private void OnProfileButtonClicked()
         {
-            RectTransform buttonRect = profileButton.GetComponent<RectTransform>();
+            var buttonRect = profileButton.GetComponent<RectTransform>();
             buttonRect.GetWorldCorners(cornersCache);
 
             float posX = cornersCache[3].x;
@@ -74,7 +74,7 @@ namespace DCL.Chat
 
         private void OpenContextMenu(float posX, float posY)
         {
-            ChatEntryClicked?.Invoke(chatMessage.SenderWalletAddress, new Vector2(posX, posY));
+            ChatEntryClicked?.Invoke(chatMessageViewModel.SenderWalletAddress, new Vector2(posX, posY));
         }
     }
 }
