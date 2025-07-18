@@ -94,21 +94,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 component.RootGameObject = null;
 
                 if (World.Has<GltfNodeModifiers>(entity))
-                {
-                    foreach (Entity gltfNodeEntity in component.GltfNodeEntities!)
-                    {
-                        if (World.IsAlive(gltfNodeEntity))
-                        {
-                            if(World.Has<PBMaterial>(gltfNodeEntity))
-                                World.Remove<PBMaterial>(gltfNodeEntity); // ResetMaterialSystem takes care of the rest...
-                            else if (gltfNodeEntity != entity) // Don't destroy the container entity itself
-                                World.Destroy(gltfNodeEntity);
-                        }
-                    }
-                    World.Remove<GltfNodeModifiers>(entity);
-                    component.GltfNodeEntities.Clear();
-                    component.GltfNodeEntities = null;
-                }
+                    World.Add(entity, new GltfNodeModifiersCleanupIntention());
 
                 eventsBuffer.Add(entity, component);
                 RemoveAnimationMarker(entity);

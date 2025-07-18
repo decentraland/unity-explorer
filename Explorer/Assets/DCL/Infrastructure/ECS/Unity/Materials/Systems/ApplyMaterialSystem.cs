@@ -57,12 +57,12 @@ namespace ECS.Unity.Materials.Systems
             }
         }
 
-                [Query]
+        [Query]
         private void ApplyMaterialToGltfNode(ref GltfNode gltfNode, ref MaterialComponent materialComponent, in PBMaterial pbMaterial)
         {
             // Get the container entity to check its state
-            if (!World.TryGet<GltfContainerComponent>(gltfNode.ContainerEntity, out var gltfContainer) || 
-                gltfContainer.State != LoadingState.Finished) 
+            if (!World.TryGet<GltfContainerComponent>(gltfNode.ContainerEntity, out var gltfContainer) ||
+                gltfContainer.State != LoadingState.Finished)
                 return;
 
             switch (materialComponent.Status)

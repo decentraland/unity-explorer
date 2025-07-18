@@ -20,5 +20,12 @@ namespace ECS.Unity.GLTFContainer.Components
         ///     Reference to the entity that contains the GltfContainerComponent
         /// </summary>
         public Entity ContainerEntity { get; set; }
+        
+        /// <summary>
+        ///     The original path from the modifier that this node represents
+        ///     For global modifiers: empty string or null
+        ///     For specific modifiers: the path used to find the renderer
+        /// </summary>
+        public string? Path { get; set; }
     }
 } 

@@ -9,7 +9,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
-using ECS.Unity.Materials.Components;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -31,9 +30,10 @@ namespace ECS.Unity.GLTFContainer.Systems
         protected override void Update(float t)
         {
             HandleGltfNodeModifiersRemovalQuery(World);
+            HandleGltfNodeModifiersCleanupQuery(World);
 
             SetupGltfNodesQuery(World);
-            // UpdateGltfNodesQuery(World);
+            UpdateGltfNodesQuery(World);
         }
 
         [Query]
@@ -52,14 +52,10 @@ namespace ECS.Unity.GLTFContainer.Systems
             gltfContainer.OriginalMaterials ??= new Dictionary<Renderer, Material>();
 
             // Special case: single modifier with empty path applies to ALL renderers
-            if (gltfNodeModifiers.Modifiers.Count == 1 && string.IsNullOrEmpty(gltfNodeModifiers.Modifiers[0].Path))
-            {
+            if (IsGltfRootModifier(gltfNodeModifiers.Modifiers))
                 SetupGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref gltfContainer, result.Asset!);
-            }
             else
-            {
                 SetupIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref gltfContainer, partitionComponent);
-            }
 
             World.Add(entity, new GltfNodeModifiers());
         }
@@ -76,14 +72,13 @@ namespace ECS.Unity.GLTFContainer.Systems
             World.Add(containerEntity, new GltfNode
             {
                 Renderers = new List<Renderer>(asset.Renderers),
-                ContainerEntity = containerEntity
+                ContainerEntity = containerEntity,
+                Path = string.Empty
             });
 
-            // Handle global shadow override
             if (hasShadowOverride)
                 asset.SetCastingShadows(modifier.OverrideShadows);
 
-            // Handle material override
             if (hasMaterialOverride)
             {
                 StoreOriginalMaterials(ref gltfContainer, asset.Renderers);
@@ -100,30 +95,41 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             foreach (var modifier in modifiers)
             {
+                if (string.IsNullOrEmpty(modifier.Path)) continue; // Empty path only valid for global modifier
+
                 var (hasShadowOverride, hasMaterialOverride) = GetModifierOverrides(modifier);
                 if (!hasShadowOverride && !hasMaterialOverride) continue;
 
-                // Find the Renderer using the path
-                var renderer = FindRendererByPath(gltfContainer.RootGameObject!, modifier.Path);
-                if (renderer == null) continue;
-
-                Entity nodeEntity = this.World.Create();
-                World.Add(nodeEntity, new GltfNode { Renderers = new List<Renderer> { renderer }, ContainerEntity = containerEntity });
-
-                // Handle individual shadow override
-                if (hasShadowOverride)
-                    renderer.shadowCastingMode = modifier.OverrideShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
-
-                // Handle material override
-                if (hasMaterialOverride)
-                {
-                    StoreOriginalMaterials(ref gltfContainer, new[] { renderer });
-                    World.Add(nodeEntity, modifier.Material, partitionComponent);
-                }
-
-                gltfContainer.GltfNodeEntities!.Add(nodeEntity);
+                CreateNewGltfNodeEntity(containerEntity, modifier, ref gltfContainer, partitionComponent, hasShadowOverride, hasMaterialOverride);
             }
         }
+
+        [Query]
+        [All(typeof(GltfNodeModifiers))]
+        private void UpdateGltfNodes(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer, in PartitionComponent partitionComponent)
+        {
+            if (!gltfNodeModifiers.IsDirty
+                || gltfContainer.State != LoadingState.Finished
+                || gltfContainer.RootGameObject == null
+                || !gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result)
+                || !result.Succeeded
+                || gltfNodeModifiers.Modifiers.Count == 0)
+                return;
+
+            gltfNodeModifiers.IsDirty = false;
+
+            // Special case: single modifier with empty path applies to ALL renderers
+            if (IsGltfRootModifier(gltfNodeModifiers.Modifiers))
+                UpdateGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref gltfContainer, result.Asset!);
+            else
+                UpdateIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref gltfContainer, partitionComponent);
+        }
+
+        /// <summary>
+        ///     Checks if the modifiers represent a global root modifier (single modifier with empty path)
+        /// </summary>
+        private static bool IsGltfRootModifier(IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers)
+            => modifiers.Count == 1 && string.IsNullOrEmpty(modifiers[0].Path);
 
         /// <summary>
         ///     Gets the override flags for a modifier
@@ -153,7 +159,196 @@ namespace ECS.Unity.GLTFContainer.Systems
             return targetGameObject != null && targetGameObject.TryGetComponent(out Renderer renderer) ? renderer : null;
         }
 
-        // TODO: HANDLE GLTFCONTAINER REMOVAL ???
+        /// <summary>
+        ///     Updates the global modifier (single modifier with empty path)
+        /// </summary>
+        private void UpdateGlobalModifier(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref GltfContainerComponent gltfContainer, GltfContainerAsset asset)
+        {
+                        // Check if transitioning from individual modifiers to global modifier
+            if (gltfContainer.GltfNodeEntities != null && gltfContainer.GltfNodeEntities.Count > 0 &&
+                (gltfContainer.GltfNodeEntities.Count > 1 || gltfContainer.GltfNodeEntities[0] != containerEntity))
+            {
+                // Clean up individual modifier entities
+                foreach (Entity entityToCleanup in gltfContainer.GltfNodeEntities)
+                {
+                    CleanupGltfNodeEntity(entityToCleanup, containerEntity, in gltfContainer);
+                }
+                gltfContainer.GltfNodeEntities.Clear();
+
+                // Add global GltfNode component to container entity if transitioning from individual
+                if (!World.Has<GltfNode>(containerEntity))
+                {
+                    World.Add(containerEntity, new GltfNode
+                    {
+                        Renderers = new List<Renderer>(asset.Renderers),
+                        ContainerEntity = containerEntity,
+                        Path = string.Empty
+                    });
+                }
+                
+                gltfContainer.GltfNodeEntities!.Add(containerEntity);
+            }
+
+            var (hasShadowOverride, hasMaterialOverride) = GetModifierOverrides(modifier);
+
+            asset.SetCastingShadows(!hasShadowOverride || modifier.OverrideShadows);
+            if (hasMaterialOverride)
+            {
+                if (World.Has<PBMaterial>(containerEntity))
+                {
+                    var updatedMaterial = modifier.Material;
+                    updatedMaterial.IsDirty = true;
+                    World.Set(containerEntity, updatedMaterial);
+                }
+                else
+                {
+                    StoreOriginalMaterials(ref gltfContainer, asset.Renderers);
+                    World.Add(containerEntity, modifier.Material);
+                }
+            }
+            else
+            {
+                if (World.Has<PBMaterial>(containerEntity))
+                {
+                    // Material was removed, clean it up but don't destroy entity
+                    var gltfNode = World.Get<GltfNode>(containerEntity);
+                    World.Add(containerEntity, new GltfNodeMaterialCleanupIntention
+                    {
+                        Renderers = gltfNode.Renderers,
+                        ContainerEntity = gltfNode.ContainerEntity,
+                        Destroy = false
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Updates individual modifiers (multiple modifiers or specific paths)
+        /// </summary>
+        private void UpdateIndividualModifiers(Entity containerEntity, IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent)
+        {
+            if (gltfContainer.GltfNodeEntities == null) return;
+
+            // Check if transitioning from global modifier to individual modifiers
+            if (gltfContainer.GltfNodeEntities.Count == 1 && gltfContainer.GltfNodeEntities[0] == containerEntity)
+                CleanupGltfNodeEntity(containerEntity, containerEntity, in gltfContainer);
+
+            var existingGltfNodePaths = new Dictionary<string, Entity>();
+            foreach (var nodeEntity in gltfContainer.GltfNodeEntities)
+            {
+                if (nodeEntity == containerEntity) continue;
+
+                existingGltfNodePaths[World.Get<GltfNode>(nodeEntity).Path!] = nodeEntity;
+            }
+
+            foreach (var modifier in modifiers)
+            {
+                if (string.IsNullOrEmpty(modifier.Path)) continue; // Empty path only valid for global modifier
+
+                var (hasShadowOverride, hasMaterialOverride) = GetModifierOverrides(modifier);
+                if (!hasShadowOverride && !hasMaterialOverride) continue;
+
+                if (existingGltfNodePaths.TryGetValue(modifier.Path, out var existingEntity))
+                {
+                    UpdateExistingGltfNodeEntity(existingEntity, modifier, hasMaterialOverride, partitionComponent);
+                    existingGltfNodePaths.Remove(modifier.Path); // Mark as processed
+                }
+                else
+                {
+                    CreateNewGltfNodeEntity(containerEntity, modifier, ref gltfContainer, partitionComponent, hasShadowOverride, hasMaterialOverride);
+                }
+            }
+
+            // Clean up entities that no longer have corresponding modifiers
+            foreach (var orphanedEntity in existingGltfNodePaths.Values)
+            {
+                CleanupGltfNodeEntity(orphanedEntity, containerEntity, in gltfContainer);
+                gltfContainer.GltfNodeEntities!.Remove(orphanedEntity);
+            }
+        }
+
+        /// <summary>
+        ///     Updates an existing GltfNode entity with new modifier data
+        /// </summary>
+        private void UpdateExistingGltfNodeEntity(Entity nodeEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, bool hasMaterialOverride, PartitionComponent partitionComponent)
+        {
+            var gltfNode = World.Get<GltfNode>(nodeEntity);
+            foreach (var renderer in gltfNode.Renderers)
+                renderer.shadowCastingMode = !modifier.HasOverrideShadows || modifier.OverrideShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+
+            if (hasMaterialOverride)
+            {
+                if (World.Has<PBMaterial>(nodeEntity))
+                {
+                    var updatedMaterial = modifier.Material;
+                    updatedMaterial.IsDirty = true;
+                    World.Set(nodeEntity, updatedMaterial);
+                }
+                else
+                {
+                    World.Add(nodeEntity, modifier.Material, partitionComponent);
+                }
+            }
+            else
+            {
+                if (World.Has<PBMaterial>(nodeEntity))
+                {
+                    // Material was removed, clean it up but don't destroy entity
+                    World.Add(nodeEntity, new GltfNodeMaterialCleanupIntention
+                    {
+                        Renderers = gltfNode.Renderers,
+                        ContainerEntity = gltfNode.ContainerEntity,
+                        Destroy = false
+                    });
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Creates a new GltfNode entity for a new modifier
+        /// </summary>
+        private void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent, bool hasShadowOverride, bool hasMaterialOverride)
+        {
+            var renderer = FindRendererByPath(gltfContainer.RootGameObject!, modifier.Path);
+            if (renderer == null) return;
+
+            Entity nodeEntity = this.World.Create();
+            World.Add(nodeEntity, new GltfNode
+            {
+                Renderers = new List<Renderer> { renderer },
+                ContainerEntity = containerEntity,
+                Path = modifier.Path
+            });
+
+            if (hasShadowOverride)
+                renderer.shadowCastingMode = modifier.OverrideShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+
+            if (hasMaterialOverride)
+            {
+                StoreOriginalMaterials(ref gltfContainer, new[] { renderer });
+                World.Add(nodeEntity, modifier.Material, partitionComponent);
+            }
+
+            gltfContainer.GltfNodeEntities!.Add(nodeEntity);
+        }
+
+        [Query]
+        [All(typeof(GltfNodeModifiersCleanupIntention), typeof(GltfNodeModifiers))]
+        private void HandleGltfNodeModifiersCleanup(Entity containerEntity, ref GltfContainerComponent gltfContainer)
+        {
+            if (gltfContainer.GltfNodeEntities == null || gltfContainer.GltfNodeEntities.Count == 0) return;
+
+            foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities)
+            {
+                CleanupGltfNodeEntity(gltfNodeEntity, containerEntity, in gltfContainer);
+            }
+
+            gltfContainer.GltfNodeEntities.Clear();
+            gltfContainer.GltfNodeEntities = null;
+            World.Remove<GltfNodeModifiers>(containerEntity);
+            World.Remove<GltfNodeModifiersCleanupIntention>(containerEntity);
+        }
+
         [Query]
         [All(typeof(GltfNodeModifiers))]
         [None(typeof(PBGltfNodeModifiers))]
@@ -163,7 +358,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
             foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities)
             {
-                CleanupGltfNodeEntity(gltfNodeEntity, containerEntity);
+                CleanupGltfNodeEntity(gltfNodeEntity, containerEntity, in gltfContainer);
             }
 
             gltfContainer.GltfNodeEntities.Clear();
@@ -173,16 +368,24 @@ namespace ECS.Unity.GLTFContainer.Systems
         /// <summary>
         ///     Cleans up a single GltfNode entity during removal
         /// </summary>
-        private void CleanupGltfNodeEntity(Entity gltfNodeEntity, Entity containerEntity)
+        private void CleanupGltfNodeEntity(Entity gltfNodeEntity, Entity containerEntity, in GltfContainerComponent gltfContainer)
         {
+            ResetShadowCasting(gltfNodeEntity);
+
             if (World.Has<PBMaterial>(gltfNodeEntity))
             {
-                World.Remove<PBMaterial>(gltfNodeEntity); // ResetMaterialSystem takes care of the rest...
+                // Add cleanup intention for ResetMaterialSystem to handle
+                var gltfNode = World.Get<GltfNode>(gltfNodeEntity);
+                World.Add(gltfNodeEntity, new GltfNodeMaterialCleanupIntention
+                {
+                    Renderers = gltfNode.Renderers,
+                    ContainerEntity = gltfNode.ContainerEntity,
+                    Destroy = true
+                });
+                World.Remove<GltfNode>(gltfNodeEntity);
             }
             else
             {
-                ResetShadowCasting(gltfNodeEntity);
-
                 if (gltfNodeEntity != containerEntity) // Don't destroy the container entity itself
                     World.Destroy(gltfNodeEntity);
             }
@@ -193,7 +396,8 @@ namespace ECS.Unity.GLTFContainer.Systems
         /// </summary>
         private void ResetShadowCasting(Entity gltfNodeEntity)
         {
-            foreach (Renderer renderer in World.Get<GltfNode>(gltfNodeEntity).Renderers)
+            var gltfNode = World.Get<GltfNode>(gltfNodeEntity);
+            foreach (Renderer renderer in gltfNode.Renderers)
             {
                 renderer.shadowCastingMode = ShadowCastingMode.On;
             }
@@ -207,36 +411,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (string.IsNullOrEmpty(path))
                 return root;
 
-            // Unity's Transform.Find already supports path navigation with '/' separators
             Transform? found = root.transform.Find(path);
             return found?.gameObject;
         }
-
-        /*        // [Query]
-        // [All(typeof(MaterialComponent), typeof(PBMaterial), typeof(GltfNodeModifiers))]
-        // private void UpdateGltfNodes(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer)
-        // {
-        //     if (!gltfNodeModifiers.IsDirty
-        //         || gltfContainer.State != LoadingState.Finished
-        //         || !gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result)
-        //         || !result.Succeeded
-        //         || gltfNodeModifiers.Modifiers.Count == 0)
-        //         return;
-        //     gltfNodeModifiers.IsDirty = false;
-        //     var rootGltfNodeModifier = gltfNodeModifiers.Modifiers[0];
-        //
-        //     result.Asset!.SetCastingShadows(!rootGltfNodeModifier.HasOverrideShadows || rootGltfNodeModifier.OverrideShadows);
-        //
-        //     if (rootGltfNodeModifier.Material == null
-        //         || rootGltfNodeModifier.Material.MaterialCase == PBMaterial.MaterialOneofCase.None)
-        //     {
-        //         gltfContainer.ResetOriginalMaterials();
-        //         return;
-        //     }
-        //
-        //     var pbMaterial = rootGltfNodeModifier.Material;
-        //     pbMaterial.IsDirty = true;
-        //     World.Set(entity, pbMaterial);
-        // }*/
     }
 }

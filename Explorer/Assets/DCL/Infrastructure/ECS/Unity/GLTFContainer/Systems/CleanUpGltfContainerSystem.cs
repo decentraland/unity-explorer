@@ -12,6 +12,7 @@ using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using System;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
@@ -34,15 +35,15 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in ENTITY_DESTROY_QUERY, ref releaseOnEntityDestroy);
+            World.InlineEntityQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in ENTITY_DESTROY_QUERY, ref releaseOnEntityDestroy);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in new QueryDescription().WithAll<GltfContainerComponent>(), ref releaseOnEntityDestroy);
+            World.InlineEntityQuery<ReleaseOnEntityDestroy, GltfContainerComponent>(in new QueryDescription().WithAll<GltfContainerComponent>(), ref releaseOnEntityDestroy);
         }
 
-        private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent>
+        private readonly struct ReleaseOnEntityDestroy : IForEachWithEntity<GltfContainerComponent>
         {
             private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
             private readonly IGltfContainerAssetsCache cache;
@@ -55,7 +56,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 this.entityCollidersSceneCache = entityCollidersSceneCache;
             }
 
-            public void Update(ref GltfContainerComponent component)
+            public void Update(Entity entity, ref GltfContainerComponent component)
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
@@ -69,22 +70,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                         result.Asset.Dispose();
                 }
 
-                // Clean up GLTF node entities
-                if (component.GltfNodeEntities != null)
-                {
-                    foreach (Entity gltfNodeEntity in component.GltfNodeEntities)
-                    {
-                        if (world.IsAlive(gltfNodeEntity))
-                        {
-                            if(world.Has<PBMaterial>(gltfNodeEntity))
-                                world.Remove<PBMaterial>(gltfNodeEntity); // ResetMaterialSystem takes care of the rest...
-                            else if(world.Get<GltfNode>(gltfNodeEntity).ContainerEntity != gltfNodeEntity) // Don't destroy the container entity itself
-                                world.Destroy(gltfNodeEntity);
-                        }
-                    }
-                    component.GltfNodeEntities.Clear();
-                    component.GltfNodeEntities = null;
-                }
+                if (world.Has<GltfNodeModifiers>(entity))
+                    world.Add(entity, new GltfNodeModifiersCleanupIntention());
 
                 // Clear the root GameObject reference
                 component.RootGameObject = null;
