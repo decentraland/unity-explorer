@@ -52,7 +52,7 @@ namespace DCL.WebRequests.Analytics
             this.requestTypes = requestTypes;
 
             DebugWidgetBuilder? widget = debugContainerBuilder
-                                       .TryAddWidget("Web Requests")
+                                       .TryAddWidget(IDebugContainerBuilder.Categories.WEB_REQUESTS)
                                       ?.SetVisibilityBinding(visibilityBinding = new DebugWidgetVisibilityBinding(true));
 
             foreach (RequestType requestType in requestTypes)

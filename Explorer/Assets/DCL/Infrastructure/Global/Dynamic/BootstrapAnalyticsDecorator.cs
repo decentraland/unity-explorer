@@ -97,7 +97,6 @@ namespace Global.Dynamic
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
             await core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
-
             FeatureFlagsConfiguration configuration = FeatureFlagsConfiguration.Instance;
 
             var enabledFeatureFlags = new JsonArray();
@@ -171,6 +170,11 @@ namespace Global.Dynamic
             core.ApplyFeatureFlagConfigs(featureFlagsConfigurationCache);
 
             //No analytics to track on this step
+        }
+
+        public void InitializeFeaturesRegistry()
+        {
+            core.InitializeFeaturesRegistry();
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld globalWorld, Entity playerEntity, CancellationToken ct)

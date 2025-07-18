@@ -132,6 +132,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                 textureComponentValue.WrapMode,
                 textureComponentValue.FilterMode,
                 textureComponentValue.TextureType,
+                nameof(LightSourceApplyPropertiesSystem),
                 attemptsCount: GET_TEXTURE_MAX_ATTEMPT_COUNT);
 
             promise = TexturePromise.Create(World, intention, partitionComponent);

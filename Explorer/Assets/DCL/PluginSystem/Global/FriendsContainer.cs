@@ -24,6 +24,7 @@ using DCL.UI.MainUI;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
@@ -47,11 +48,11 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
         private readonly bool includeUserBlocking;
-        private readonly IAppArgs appArgs;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private CancellationTokenSource friendServiceSubscriptionCts = new ();
         private UnfriendConfirmationPopupController? unfriendConfirmationPopupController;
@@ -79,7 +80,6 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
-            bool includeUserBlocking,
             IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
@@ -91,7 +91,9 @@ namespace DCL.PluginSystem.Global
             ObjectProxy<IFriendsService> friendServiceProxy,
             ObjectProxy<FriendsConnectivityStatusTracker> friendsConnectivityStatusTrackerProxy,
             ObjectProxy<FriendsCache> friendsCacheProxy,
-            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy, ProfileRepositoryWrapper profileDataProvider)
+            ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.mainUIView = mainUIView;
             this.mvcManager = mvcManager;
@@ -100,10 +102,10 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
-            this.includeUserBlocking = includeUserBlocking;
-            this.appArgs = appArgs;
+            this.includeUserBlocking =  FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.profileRepositoryWrapper = profileDataProvider;
 
@@ -114,9 +116,7 @@ namespace DCL.PluginSystem.Global
 
             this.socialServiceEventBus.TransportClosed += OnTransportClosed;
 
-            bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
-
-            friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
+            friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus);
 
             friendsPanelController = new FriendsPanelController(() =>
                 {
@@ -135,10 +135,9 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 chatEventBus,
-                includeUserBlocking,
-                isConnectivityStatusEnabled,
                 sharedSpaceManager,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                voiceChatCallStatusService
             );
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Friends, friendsPanelController);
@@ -262,10 +261,6 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        private bool IsConnectivityStatusEnabled() =>
-            appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
-            || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
-
         private void OnRPCClientReconnected()
         {
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
@@ -284,7 +279,7 @@ namespace DCL.PluginSystem.Global
         {
             rpcFriendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
 
-            if (IsConnectivityStatusEnabled())
+            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_ONLINE_STATUS))
                 rpcFriendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
             if (includeUserBlocking)

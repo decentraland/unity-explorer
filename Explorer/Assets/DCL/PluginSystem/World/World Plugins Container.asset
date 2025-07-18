@@ -29,6 +29,7 @@ MonoBehaviour:
   - rid: 1970080267461197826
   - rid: 3414978285727645698
   - rid: 3414978285727645699
+  - rid: 6144113899072913497
   references:
     version: 2
     RefIds:
@@ -183,11 +184,6 @@ MonoBehaviour:
     - rid: 3414978285727645699
       type: {class: LightSourcePlugin/LightSourceSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        LightsPerParcel: 1
-        HardMaxLightCount: 10
-        MaxPointLightShadows: 1
-        MaxSpotLightShadows: 3
-        FadeDuration: 0.25
         LightSourcePrefab:
           m_AssetGUID: 7f09a2d0d9adc4e43b67879ab9cdf360
           m_SubObjectName: 
@@ -200,53 +196,6 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
-        SpotLightsLods:
-        - Distance: 0
-          IsCulled: 0
-          Shadows: 2
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 10
-          IsCulled: 0
-          Shadows: 2
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 20
-          IsCulled: 0
-          Shadows: 1
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 30
-          IsCulled: 0
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 40
-          IsCulled: 1
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        PointLightsLods:
-        - Distance: 0
-          IsCulled: 0
-          Shadows: 2
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 10
-          IsCulled: 0
-          Shadows: 1
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 20
-          IsCulled: 0
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
-        - Distance: 40
-          IsCulled: 1
-          Shadows: 0
-          OverrideShadowMapResolution: 0
-          ShadowMapResolution: 128
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -268,6 +217,15 @@ MonoBehaviour:
         <FadeSpeed>k__BackingField: 1
         VideoPrioritizationSettings:
           m_AssetGUID: 12f48d0297bd3f746b92a97878478086
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+    - rid: 6144113899072913497
+      type: {class: SkyboxTimePlugin/SkyboxTimeSettings, ns: DCL.SDKComponents.SkyboxTime, asm: DCL.Plugins}
+      data:
+        <Settings>k__BackingField:
+          m_AssetGUID: 9891b090dc6dc574d9415313003375f0
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

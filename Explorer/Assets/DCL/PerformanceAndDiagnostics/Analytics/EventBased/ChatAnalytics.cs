@@ -20,7 +20,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.EventBased
         }
 
         public void Dispose()
-        { }
+        {
+            chatController.ConversationOpened -= OnConversationOpened;
+            chatController.ConversationClosed -= OnConversationClosed;
+        }
 
         private void OnConversationClosed()
         {

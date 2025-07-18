@@ -239,7 +239,7 @@ PrefabInstance:
     - target: {fileID: -4035003925719990260, guid: 6f9ec2ee8e139bd4c9ba99c3fab49f90, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[1].SharedMaterial
       value: 
-      objectReference: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+      objectReference: {fileID: 2100000, guid: 4b09b64dee8b53b4a9bc1155c05102aa, type: 2}
     - target: {fileID: -4035003925719990260, guid: 6f9ec2ee8e139bd4c9ba99c3fab49f90, type: 3}
       propertyPath: CombinedLodsRenderers.Array.data[5].SharedMaterial
       value: 

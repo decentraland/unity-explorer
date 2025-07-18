@@ -3,6 +3,7 @@ using DCL.Chat.ControllerShowParams;
 using DCL.Chat.EventBus;
 using DCL.Multiplayer.Connectivity;
 using DCL.UI.SharedSpaceManager;
+using DCL.VoiceChat;
 using DCL.Web3;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -17,6 +18,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private readonly IPassportBridge passportBridge;
         private readonly IOnlineUsersProvider onlineUsersProvider;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly string[] getUserPositionBuffer = new string[1];
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
@@ -31,13 +33,15 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
             IChatEventBus chatEventBus,
-            ISharedSpaceManager sharedSpaceManager) : base(view, requestManager)
+            ISharedSpaceManager sharedSpaceManager,
+            IVoiceChatCallStatusService voiceChatCallStatusService) : base(view, requestManager)
         {
             this.passportBridge = passportBridge;
             this.onlineUsersProvider = onlineUsersProvider;
             this.realmNavigator = realmNavigator;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
 
             requestManager.ContextMenuClicked += ContextMenuClicked;
             requestManager.JumpInClicked += JumpInClicked;
@@ -81,7 +85,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         private async UniTaskVoid OnOpenConversationAsync(FriendProfile profile)
         {
             await sharedSpaceManager.ShowAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
-            chatEventBus.OpenConversationUsingUserId(profile.Address);
+            chatEventBus.OpenPrivateConversationUsingUserId(profile.Address);
         }
     }
 }

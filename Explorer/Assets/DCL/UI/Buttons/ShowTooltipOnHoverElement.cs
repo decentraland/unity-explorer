@@ -37,5 +37,10 @@ namespace DCL.UI.Buttons
         {
             tooltip.SetActive(show);
         }
+
+        private void OnDisable()
+        {
+            HideTooltip();
+        }
     }
 }
