@@ -21,6 +21,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
@@ -48,7 +49,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly ICameraReelStorageService cameraReelStorageService;
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly IWebRequestController webRequestController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IPlacesAPIService placesAPIService;
@@ -58,6 +59,7 @@ namespace DCL.Communities.CommunitiesCard
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly GalleryEventBus galleryEventBus;
 
         private CameraReelGalleryController? cameraReelGalleryController;
@@ -80,7 +82,7 @@ namespace DCL.Communities.CommunitiesCard
             ICameraReelStorageService cameraReelStorageService,
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             IWebRequestController webRequestController,
             ProfileRepositoryWrapper profileDataProvider,
             IPlacesAPIService placesAPIService,
@@ -90,6 +92,7 @@ namespace DCL.Communities.CommunitiesCard
             IEventsApiService eventsApiService,
             ISharedSpaceManager sharedSpaceManager,
             IChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache,
             GalleryEventBus galleryEventBus)
             : base(viewFactory)
         {
@@ -107,11 +110,15 @@ namespace DCL.Communities.CommunitiesCard
             this.eventsApiService = eventsApiService;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
             this.galleryEventBus = galleryEventBus;
             this.thumbnailLoader = new ThumbnailLoader(null);
 
             chatEventBus.OpenPrivateConversationRequested += CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated += OnCommunityUpdated;
+            communitiesDataProvider.CommunityUserRemoved += OnCommunityUserRemoved;
+            communitiesDataProvider.CommunityLeft += OnCommunityLeft;
+            communitiesDataProvider.CommunityUserBanned += OnUserBannedFromCommunity;
         }
 
         public override void Dispose()
@@ -129,6 +136,9 @@ namespace DCL.Communities.CommunitiesCard
 
             chatEventBus.OpenPrivateConversationRequested -= CloseCardOnConversationRequested;
             communitiesDataProvider.CommunityUpdated -= OnCommunityUpdated;
+            communitiesDataProvider.CommunityUserRemoved -= OnCommunityUserRemoved;
+            communitiesDataProvider.CommunityLeft -= OnCommunityLeft;
+            communitiesDataProvider.CommunityUserBanned -= OnUserBannedFromCommunity;
 
             sectionCancellationTokenSource.SafeCancelAndDispose();
             panelCancellationTokenSource.SafeCancelAndDispose();
@@ -141,6 +151,23 @@ namespace DCL.Communities.CommunitiesCard
             membersListController?.Dispose();
             placesSectionController?.Dispose();
             eventListController?.Dispose();
+        }
+
+        private void OnUserBannedFromCommunity(string communityId, string userAddress) =>
+            OnCommunityUserRemoved(communityId);
+
+        private void OnCommunityLeft(string communityId, bool success)
+        {
+            if (success)
+                OnCommunityUserRemoved(communityId);
+        }
+
+        private void OnCommunityUserRemoved(string communityId)
+        {
+            if (communityData.id != communityId) return;
+
+            communityData.DecreaseMembersCount();
+            viewInstance?.UpdateMemberCount(communityData);
         }
 
         private void OnCommunityUpdated(string communityId)
@@ -221,7 +248,8 @@ namespace DCL.Communities.CommunitiesCard
                 communitiesDataProvider,
                 viewInstance.warningNotificationView,
                 sharedSpaceManager,
-                chatEventBus);
+                chatEventBus,
+                web3IdentityCache);
 
             placesSectionController = new PlacesSectionController(viewInstance.PlacesSectionView,
                 thumbnailLoader,
@@ -263,6 +291,8 @@ namespace DCL.Communities.CommunitiesCard
             async UniTaskVoid LoadCommunityDataAsync(CancellationToken ct)
             {
                 viewInstance!.SetLoadingState(true);
+                //Since it's the tab that is automatically selected when the community card is opened, we set it to loading.
+                viewInstance.MembersListView.SetLoadingStateActive(true);
 
                 if (spriteCache == null)
                 {
@@ -295,7 +325,7 @@ namespace DCL.Communities.CommunitiesCard
             spriteCache = null;
 
             ResetSubControllers();
-            viewInstance.ResetToggle(false);
+            viewInstance!.ResetToggle(false);
         }
 
         private void ResetSubControllers()
@@ -359,7 +389,14 @@ namespace DCL.Communities.CommunitiesCard
                     return;
                 }
 
-                viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.member);
+                communityData.IncreaseMembersCount();
+                viewInstance!.UpdateMemberCount(communityData);
+
+                //Reset member list and fetch the data again so that we pop inside the member list
+                membersListController?.Reset();
+                membersListController?.ShowMembersList(communityData, sectionCancellationTokenSource.Token);
+
+                viewInstance.ConfigureInteractionButtons(CommunityMemberRole.member);
             }
         }
 
@@ -383,6 +420,8 @@ namespace DCL.Communities.CommunitiesCard
                                        .SuppressToResultAsync(ReportCategory.COMMUNITIES);
                     return;
                 }
+
+                membersListController?.TryRemoveLocalUser();
 
                 viewInstance!.ConfigureInteractionButtons(CommunityMemberRole.none);
             }

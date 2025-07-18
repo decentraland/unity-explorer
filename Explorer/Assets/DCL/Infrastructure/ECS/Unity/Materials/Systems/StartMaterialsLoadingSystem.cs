@@ -216,7 +216,8 @@ namespace ECS.Unity.Materials.Systems
                         textureComponentValue.FilterMode,
                         textureComponentValue.TextureType,
                         attemptsCount: attemptsCount,
-                        isAvatarTexture: textureComponentValue.IsAvatarTexture
+                        isAvatarTexture: textureComponentValue.IsAvatarTexture,
+                        reportSource: nameof(StartMaterialsLoadingSystem)
                     ),
                     partitionComponent
                 );

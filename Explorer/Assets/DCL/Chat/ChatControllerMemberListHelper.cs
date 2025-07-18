@@ -20,7 +20,7 @@ namespace DCL.Chat
         private readonly ChatController controller;
         private readonly IChatHistory chatHistory;
         private readonly Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private CancellationTokenSource memberListCts = new();
         private ChatView viewInstance;
         private GetChannelMembersDelegate getParticipantProfiles;
@@ -34,7 +34,7 @@ namespace DCL.Chat
             ChatController controller,
             IChatHistory chatHistory,
             Dictionary<ChatChannel.ChannelId, GetUserCommunitiesData.CommunityData> communities,
-            ICommunitiesDataProvider communitiesDataProvider)
+            CommunitiesDataProvider communitiesDataProvider)
         {
             this.roomHub = roomHub;
             this.membersBuffer = membersBuffer;
@@ -130,7 +130,7 @@ namespace DCL.Chat
             }
         }
 
-        public async UniTask RefreshCommunityMemberCountAsync(string communityId, ICommunitiesDataProvider dataProvider, CancellationToken ct)
+        public async UniTask RefreshCommunityMemberCountAsync(string communityId, CommunitiesDataProvider dataProvider, CancellationToken ct)
         {
              Result<int> result = await dataProvider.GetOnlineMemberCountAsync(communityId, ct).SuppressToResultAsync(ReportCategory.COMMUNITIES);
 

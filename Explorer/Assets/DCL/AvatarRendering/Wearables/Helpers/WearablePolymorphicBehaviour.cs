@@ -284,6 +284,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                     {
                         // If cancellation token source was not provided a new one will be created
                         CommonArguments = new CommonLoadingArguments(URLAddress.FromString(wearable.DTO.ContentDownloadUrl+content.hash), cancellationTokenSource: intention.CancellationTokenSource),
+                        ReportSource = nameof(WearablePolymorphicBehaviour),
                     },
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);

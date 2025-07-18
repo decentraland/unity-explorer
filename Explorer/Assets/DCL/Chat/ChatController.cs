@@ -9,6 +9,7 @@ using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
+using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -78,7 +79,7 @@ namespace DCL.Chat
         private readonly IRoomHub roomHub;
         private CallButtonController callButtonController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly IMVCManager mvcManager;
         private readonly WarningNotificationView warningNotificationView;
@@ -136,13 +137,13 @@ namespace DCL.Chat
             ChatHistoryStorage chatStorage,
             ObjectProxy<IFriendsService> friendsService,
             ProfileRepositoryWrapper profileDataProvider,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             ISpriteCache thumbnailCache,
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled) : base(viewFactory)
+            IVoiceChatCallStatusService voiceChatCallStatusService
+            ) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -166,7 +167,7 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
-            this.isCallEnabled = isCallEnabled;
+            this.isCallEnabled =  FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -338,7 +339,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
-            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token))
+            if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, isUserAllowedInInitializationCts.Token))
                 await InitializeCommunityCoversationsAsync();
         }
 
@@ -503,13 +504,13 @@ namespace DCL.Chat
 
             viewInstance.Focus();
         }
-        
+
         private void OnStartCall(string userId)
         {
             voiceChatCallStatusService.StartCall(new Web3Address(userId));
-            
+
         }
-        
+
         private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
         {
             ChatChannel.ChannelId channelId = ChatChannel.NewCommunityChannelId(newCommunity.id);
@@ -1080,7 +1081,7 @@ namespace DCL.Chat
         {
             isUserAllowedInCommunitiesBusSubscriptionCts = isUserAllowedInCommunitiesBusSubscriptionCts.SafeRestart();
 
-            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInCommunitiesBusSubscriptionCts.Token))
+            if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, isUserAllowedInCommunitiesBusSubscriptionCts.Token))
             {
                 communitiesEventBus.UserConnectedToCommunity += OnCommunitiesEventBusUserConnectedToCommunity;
                 communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;

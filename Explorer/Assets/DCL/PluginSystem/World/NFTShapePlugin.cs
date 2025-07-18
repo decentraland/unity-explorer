@@ -131,7 +131,7 @@ namespace DCL.PluginSystem.World
         {
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
 
-            bool isKtxEnabled = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.KTX2_CONVERSION);
+            bool isKtxEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.KTX2_CONVERSION);
 
             LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, diskCache, isKtxEnabled, videoTexturePool, decentralandUrlsSource);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource(decentralandUrlsSource));
