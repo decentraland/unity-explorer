@@ -7,6 +7,9 @@ using DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.Services;
+using DCL.Web3;
+using MVC;
+using UnityEngine;
 using Utilities;
 using Utility;
 
@@ -16,8 +19,12 @@ public class ChatMemberListPresenter : IDisposable
     private readonly IEventBus eventBus;
     private readonly GetChannelMembersCommand getChannelMembersCommand;
     private readonly ChatMemberListService memberListService;
+    private readonly ChatContextMenuService chatContextMenuService;
+    
     private readonly EventSubscriptionScope scope = new ();
-    private CancellationTokenSource cts = new ();
+    private CancellationTokenSource lifeCts = new ();
+    private CancellationTokenSource? activeMenuCts;
+    private UniTaskCompletionSource? activeMenuTcs;
 
     private List<ChatMemberListViewModel> currentMembers = new ();
     
@@ -25,12 +32,14 @@ public class ChatMemberListPresenter : IDisposable
         ChannelMemberFeedView view,
         IEventBus eventBus,
         ChatMemberListService memberListService,
+        ChatContextMenuService chatContextMenuService,
         GetChannelMembersCommand getChannelMembersCommand)
     {
         this.view = view;
         this.eventBus = eventBus;
         this.memberListService = memberListService;
         this.getChannelMembersCommand = getChannelMembersCommand;
+        this.chatContextMenuService = chatContextMenuService;
         
         this.view.OnMemberContextMenuRequested += OnMemberContextMenuRequested;
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelMemberUpdatedEvent>(OnMemberUpdated));
@@ -39,7 +48,7 @@ public class ChatMemberListPresenter : IDisposable
     public void ShowAndLoad()
     {
         view.Show();
-        cts = new CancellationTokenSource();
+        lifeCts = new CancellationTokenSource();
         memberListService.OnMemberListUpdated += HandleLiveUpdate;
         memberListService.RequestRefreshAsync().Forget();
     }
@@ -56,12 +65,13 @@ public class ChatMemberListPresenter : IDisposable
 
     private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
     {
-        cts.Cancel();
-        cts = new CancellationTokenSource();
+        lifeCts.Cancel();
+        lifeCts = new CancellationTokenSource();
 
         // Get the list of initial view models from the command.
         // The command will handle starting the thumbnail downloads.
-        currentMembers = getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(freshMembers, cts.Token);
+        currentMembers = getChannelMembersCommand
+            .GetInitialMembersAndStartLoadingThumbnails(freshMembers, lifeCts.Token);
 
         // Immediately display this list. Names appear instantly, pictures are loading.
         view.SetData(currentMembers);
@@ -77,20 +87,21 @@ public class ChatMemberListPresenter : IDisposable
         currentMembers.Clear();
         view.SetData(currentMembers);
 
-        cts.Cancel();
+        lifeCts.Cancel();
     }
 
-    private void OnMemberContextMenuRequested(string obj)
+    private void OnMemberContextMenuRequested(UserProfileMenuRequest data)
     {
-        
+        chatContextMenuService
+            .ShowUserProfileMenuAsync(data).Forget();
     }
     
     public void Dispose()
     {
         if (memberListService != null)
             memberListService.OnMemberListUpdated -= HandleLiveUpdate;
-        
-        cts.SafeCancelAndDispose();
+
+        lifeCts.SafeCancelAndDispose();
         scope.Dispose();
     }
 }

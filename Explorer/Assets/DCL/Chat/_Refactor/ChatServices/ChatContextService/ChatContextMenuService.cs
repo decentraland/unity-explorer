@@ -1,42 +1,100 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using MVC;
 
 namespace DCL.Chat.Services
 {
-    public interface IContextMenuRequest
+    public class ChatContextMenuService : IDisposable
     {
-    }
+        private readonly IMVCManagerMenusAccessFacade mvcFacade;
+        private readonly ChatClickDetectionService chatClickDetectionService;
 
-    public interface IContextMenuService
-    {
-        UniTask ShowMenuAsync<TRequest>(TRequest request, CancellationToken ct) where TRequest : IContextMenuRequest;
-    }
+        private CancellationTokenSource? activeMenuCts;
+        private UniTaskCompletionSource? activeMenuTcs;
 
-    public class ChatContextMenuService : IContextMenuService
-    {
-        private readonly IMVCManager mvcManager;
-
-        public ChatContextMenuService(IMVCManager mvcManager)
+        public ChatContextMenuService(IMVCManagerMenusAccessFacade mvcFacade,
+            ChatClickDetectionService chatClickDetectionService)
         {
-            this.mvcManager = mvcManager;
+            this.mvcFacade = mvcFacade;
+            this.chatClickDetectionService = chatClickDetectionService;
         }
 
-        // The method signature stays the same, providing a clean interface.
-        public async UniTask ShowMenuAsync<TRequest>(TRequest request, CancellationToken ct) where TRequest : IContextMenuRequest
+        /// <summary>
+        ///     Show user profile context menu.
+        ///     Pause and Resume click detection service to prevent
+        ///     clicks from being registered while the menu is open.
+        /// </summary>
+        /// <param name="request"></param>
+        public async UniTask ShowUserProfileMenuAsync(UserProfileMenuRequest request)
         {
-            // Create the input data for our proxy controller
-            var proxyInput = new ContextMenuProxyInput
+            RestartLifecycleControls();
+
+            chatClickDetectionService.Pause();
+
+            try
             {
-                RealRequest = request
-            };
+                await mvcFacade.ShowUserProfileContextMenuFromWalletIdAsync(
+                    request.WalletAddress,
+                    request.Position,
+                    default,
+                    activeMenuCts.Token,
+                    activeMenuTcs.Task,
+                    onHide: () => activeMenuTcs.TrySetResult(),
+                    request.AnchorPoint
+                );
+            }
+            finally
+            {
+                chatClickDetectionService.Resume();
+            }
+        }
 
-            // Create the command to show our proxy controller
-            var command = new ShowCommand<ContextMenuProxyView, ContextMenuProxyInput>(proxyInput);
+        /// <summary>
+        ///     Show channel options context menu.
+        ///     Pause and Resume click detection service to prevent
+        ///     clicks from being registered while the menu is open.
+        /// </summary>
+        /// <param name="request"></param>
+        public async UniTask ShowChannelOptionsAsync(ChatContextMenuRequest request)
+        {
+            RestartLifecycleControls();
 
-            // Tell the MVCManager to show our proxy controller as a popup.
-            // The MVCManager will now handle the blocker, input, and stacking for us!
-            await mvcManager.ShowAsync(command, ct);
+            chatClickDetectionService.Pause();
+
+            try
+            {
+                mvcFacade.ShowChatContextMenuAsync(
+                    request.Position,
+                    request.contextMenuData,
+                    request.OnDeleteHistory,
+                    onContextMenuHide: () => activeMenuTcs!.TrySetResult(),
+                    closeMenuTask: activeMenuTcs.Task
+                );
+
+                await activeMenuTcs.Task;
+            }
+            finally
+            {
+                chatClickDetectionService.Resume();
+            }
+        }
+
+        private void RestartLifecycleControls()
+        {
+            activeMenuCts?.Cancel();
+            activeMenuTcs?.TrySetResult();
+            activeMenuCts?.Dispose();
+
+            activeMenuCts = new CancellationTokenSource();
+            activeMenuTcs = new UniTaskCompletionSource();
+        }
+
+        public void Dispose()
+        {
+            activeMenuCts?.Cancel();
+            activeMenuTcs?.TrySetResult();
+            activeMenuCts?.Dispose();
         }
     }
 }

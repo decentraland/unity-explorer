@@ -34,8 +34,7 @@ namespace DCL.Chat
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
-
-        private ChatClickDetectionService chatClickDetectionService;
+        private readonly ChatClickDetectionService chatClickDetectionService;
         private ChatUserStateBridge chatUserStateBridge;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
 
@@ -57,7 +56,8 @@ namespace DCL.Chat
             IChatHistory chatHistory,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ChatMemberListService chatMemberListService,
-            ChatContextMenuService chatContextMenuService) : base(viewFactory)
+            ChatContextMenuService chatContextMenuService,
+            ChatClickDetectionService chatClickDetectionService) : base(viewFactory)
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
@@ -69,6 +69,7 @@ namespace DCL.Chat
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
             this.chatContextMenuService = chatContextMenuService;
+            this.chatClickDetectionService = chatClickDetectionService;
 
             chatUserStateBridge = new ChatUserStateBridge(userStateEventBus, eventBus, currentChannelService);
         }
@@ -101,6 +102,7 @@ namespace DCL.Chat
                 eventBus,
                 chatMemberListService,
                 chatContextMenuService,
+                chatClickDetectionService,
                 commandRegistry.GetTitlebarViewModel);
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
@@ -129,6 +131,7 @@ namespace DCL.Chat
                 viewInstance.MemberListView,
                 eventBus,
                 chatMemberListService,
+                chatContextMenuService,
                 commandRegistry.GetChannelMembersCommand);
 
             uiScope.Add(titleBarPresenter);
@@ -170,8 +173,6 @@ namespace DCL.Chat
 
         public async UniTask OnShownInSharedSpaceAsync(CancellationToken ct, ChatControllerShowParams showParams)
         {
-            //SetVisibility(true);
-
             if (State != ControllerState.ViewHidden)
             {
                 chatStateMachine?.SetInitialState(showParams.Focus);

@@ -13,6 +13,7 @@ namespace DCL.Chat
         public event Action OnCloseRequested;
         public event Action OnMembersToggleRequested;
         public event Action<ChatContextMenuRequest> OnContextMenuRequested;
+        public event Action<UserProfileMenuRequest> OnProfileContextMenuRequested;
 
         public Button CloseChatButton => defaultTitlebarView.ButtonClose;
         public Button OpenMemberListButton => defaultTitlebarView.ButtonOpenMembers;
@@ -28,6 +29,7 @@ namespace DCL.Chat
         public void Initialize()
         {
             defaultTitlebarView.OnContextMenuRequested += OnContextMenuButtonClicked;
+            defaultTitlebarView.OnProfileContextMenuRequested += OnProfileContextMenuClicked;
             defaultTitlebarView.OnCloseRequested += () => OnCloseRequested?.Invoke();
             defaultTitlebarView.OnMembersRequested += () => OnMembersToggleRequested?.Invoke();
             membersTitlebarView.OnCloseRequested += () => OnCloseRequested?.Invoke();
@@ -37,20 +39,21 @@ namespace DCL.Chat
 
         private void OnContextMenuButtonClicked()
         {
-            // var data = new UserProfileMenuRequest
-            // {
-            //     WalletAddress = new Web3Address(""),
-            //     Position = defaultTitlebarView.ButtonOpenContextMenu.transform.position,
-            //     AnchorPoint = MenuAnchorPoint.TOP_RIGHT,
-            //     Offset = Vector2.zero
-            // };
-
             var data = new ChatContextMenuRequest
             {
                 Position = defaultTitlebarView.ButtonOpenContextMenu.transform.position
             };
 
             OnContextMenuRequested?.Invoke(data);
+        }
+
+        private void OnProfileContextMenuClicked()
+        {
+            var data = new UserProfileMenuRequest
+            {
+                WalletAddress = new Web3Address(""), Position = defaultTitlebarView.ButtonOpenProfileContextMenu.transform.position, AnchorPoint = MenuAnchorPoint.TOP_RIGHT, Offset = Vector2.zero
+            };
+            OnProfileContextMenuRequested?.Invoke(data);
         }
 
         public void SetMemberListMode(bool isMemberListVisible)

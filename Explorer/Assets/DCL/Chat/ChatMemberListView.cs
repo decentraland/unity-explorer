@@ -130,7 +130,15 @@ namespace DCL.Chat
             contextMenuTask = new UniTaskCompletionSource();
             contextMenuCts = contextMenuCts.SafeRestart();
             IsContextMenuOpen = true;
-            await ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, contextMenuTask.Task, onMenuHide);
+            await ViewDependencies
+                .GlobalUIViews
+                .ShowUserProfileContextMenuFromWalletIdAsync(
+                    new Web3Address(listItem.Id),
+                    buttonPosition.position,
+                    default,
+                    contextMenuCts.Token,
+                    contextMenuTask.Task,
+                    onMenuHide);
             IsContextMenuOpen = false;
         }
 

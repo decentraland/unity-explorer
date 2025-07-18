@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using DCL.Web3;
 using MVC;
 using UnityEngine;
@@ -9,16 +11,19 @@ namespace DCL.Chat.Services
     /// Used to request showing the context menu for a specific user.
     /// Triggered by: Clicking on a user's name or profile picture in a chat message or member list.
     /// </summary>
-    public struct UserProfileMenuRequest : IContextMenuRequest
+    public struct UserProfileMenuRequest
     {
         public Web3Address WalletAddress;
         public Vector2 Position;
         public Vector2 Offset;
         public MenuAnchorPoint AnchorPoint;
+
+        public CancellationTokenSource CancellationTokenSource;
+        public UniTaskCompletionSource CloseCompletionSource;
     }
 
 
-    public struct ChatContextMenuRequest : IContextMenuRequest
+    public struct ChatContextMenuRequest
     {
         public Vector2 Position;
         public ChatOptionsContextMenuData contextMenuData;
@@ -29,7 +34,7 @@ namespace DCL.Chat.Services
     /// Used to request showing the options for a specific chat message (e.g., copy text).
     /// Triggered by: Clicking the "three dots" button on a chat entry.
     /// </summary>
-    public struct ChatMessageMenuRequest : IContextMenuRequest
+    public struct ChatMessageMenuRequest
     {
         public readonly Vector2 Position;
         public readonly string MessageText;
@@ -40,7 +45,7 @@ namespace DCL.Chat.Services
     /// Used to request showing the options for the current channel (e.g., delete history).
     /// Triggered by: Clicking the "three dots" button in the chat's title bar.
     /// </summary>
-    public struct ChannelMenuRequest : IContextMenuRequest
+    public struct ChannelMenuRequest
     {
         public readonly Vector2 Position;
         public readonly MenuAnchorPoint AnchorPoint;
@@ -50,7 +55,7 @@ namespace DCL.Chat.Services
     /// Used to request showing the "Paste" toast/popup.
     /// Triggered by: Right-clicking inside the chat input box.
     /// </summary>
-    public struct PasteMenuRequest : IContextMenuRequest
+    public struct PasteMenuRequest
     {
         public readonly Vector2 Position;
     }
