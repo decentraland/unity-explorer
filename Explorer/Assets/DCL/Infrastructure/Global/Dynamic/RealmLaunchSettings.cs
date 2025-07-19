@@ -164,6 +164,10 @@ namespace Global.Dynamic
             if (appArgs.HasFlag(AppArgsFlags.POSITION))
                 return;
 
+            //If we are on editor, and we set a target scene, we dont want it to be overriden
+            if (Application.isEditor && targetScene.magnitude != 0)
+                return;
+
             //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
             // (https://features.decentraland.systems/#/features/strategies/explorer-alfa-genesis-spawn-parcel)
             string? parcelToTeleportOverride = null;
