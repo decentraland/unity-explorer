@@ -15,11 +15,13 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.Utilities;
+using DCL.Utils.Time;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Global.AppArgs;
 using MVC;
 using PortableExperiences.Controller;
+using UnityEngine;
 using Utility;
 using Utility.Types;
 
@@ -149,28 +151,35 @@ namespace DCL.UserInAppInitializationFlow
                         = startParcel.Peek().ParcelToPositionFlat();
                 UniTask<EnumResult<TaskError>> livekitHandshake = ensureLivekitConnectionStartupOperation.LaunchLivekitConnectionAsync(ct);
 
+                var timeProfiler = new TimeProfiler(true);
+
                 var loadingResult = await LoadingScreen(parameters.ShowLoading)
                     .ShowWhileExecuteTaskAsync(
                         async (parentLoadReport, ct) =>
                         {
-                            //Create a child report to be able to hold the parallel livekit operation
-                            AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
-                            EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);
+                            Debug.Log("JUANI LOADING SCREEN START");
 
-                            // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
-                            if (operationResult.Error is { Exception: UserBlockedException })
-                                mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
-                            else
+                            using (timeProfiler.Measure(ms => Debug.Log($"JUANI LOADING SCREEN ENDED {ms} ms")))
                             {
-                                //Wait for livekit to end handshake
-                                operationResult = await livekitHandshake;
+                                //Create a child report to be able to hold the parallel livekit operation
+                                AsyncLoadProcessReport sequentialFlowReport = parentLoadReport.CreateChildReport(0.95f);
+                                EnumResult<TaskError> operationResult = await flowToRun.ExecuteAsync(parameters.LoadSource.ToString(), 1, new IStartupOperation.Params(sequentialFlowReport, parameters), ct);
 
-                                if (operationResult.Success)
-                                    parentLoadReport.SetProgress(
-                                        loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                                // HACK: Game is irrecoverably dead. We dont care anything that goes beyond this
+                                if (operationResult.Error is { Exception: UserBlockedException })
+                                    mvcManager.ShowAsync(BlockedScreenController.IssueCommand(), ct);
+                                else
+                                {
+                                    //Wait for livekit to end handshake
+                                    operationResult = await livekitHandshake;
+
+                                    if (operationResult.Success)
+                                        parentLoadReport.SetProgress(
+                                            loadingStatus.SetCurrentStage(LoadingStatus.LoadingStage.Completed));
+                                }
+
+                                return operationResult;
                             }
-
-                            return operationResult;
                         },
                         ct
                     );

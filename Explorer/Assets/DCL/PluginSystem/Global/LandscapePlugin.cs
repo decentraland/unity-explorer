@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.DebugUtilities;
-using DCL.FeatureFlags;
 using DCL.Landscape;
 using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
@@ -18,7 +17,6 @@ using ECS.SceneLifeCycle;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
@@ -67,7 +65,7 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
-            this.enableLandscape = enableLandscape;
+            this.enableLandscape = false;
             isGPUIEnabledFF = isGpuiEnabledFf;
             this.isZone = isZone;
             this.terrainGenerator = terrainGenerator;

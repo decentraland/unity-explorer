@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            if (sceneStateProvider.TickNumber < FRAMES_COUNT || !LoadGltfContainerSystem.bigFileLoaded)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
             {
                 eventsBuffer.ForEach(forEachEvent);
             }

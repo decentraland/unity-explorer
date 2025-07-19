@@ -31,6 +31,8 @@ namespace DCL.FeatureFlags
 
             bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
+            return result;
+
             if (result)
             {
                 await UniTask.WaitUntil(() => web3IdentityCache.Identity != null, cancellationToken: ct);
