@@ -171,7 +171,7 @@ namespace DCL.UserInAppInitializationFlow
                                 else
                                 {
                                     //Wait for livekit to end handshake
-                                    operationResult = await livekitHandshake;
+                                    //operationResult = await livekitHandshake;
 
                                     if (operationResult.Success)
                                         parentLoadReport.SetProgress(

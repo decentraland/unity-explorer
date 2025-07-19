@@ -610,7 +610,7 @@ MonoBehaviour:
         <FallbackTipsTable>k__BackingField: SceneLoadingDefaultTips
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
-        <MinimumScreenDisplayDuration>k__BackingField: 3
+        <MinimumScreenDisplayDuration>k__BackingField: 0.1
     - rid: 4132209997426458630
       type: {class: InputSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
