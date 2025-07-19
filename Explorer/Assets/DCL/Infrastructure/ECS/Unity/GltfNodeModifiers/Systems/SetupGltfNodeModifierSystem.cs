@@ -5,11 +5,13 @@ using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Diagnostics;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GltfNodeModifiers.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ECS.Unity.GltfNodeModifiers.Systems
 {
@@ -21,9 +23,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class SetupGltfNodeModifierSystem : GltfNodeModifierSystemBase
     {
-        public SetupGltfNodeModifierSystem(World world) : base(world)
-        {
-        }
+        public SetupGltfNodeModifierSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -34,12 +34,12 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         [None(typeof(Components.GltfNodeModifiers))]
         private void SetupGltfNodes(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer, in PartitionComponent partitionComponent)
         {
-            if (gltfNodeModifiers.Modifiers.Count == 0 || !IsGltfContainerReady(ref gltfContainer, out var result))
+            if (gltfNodeModifiers.Modifiers.Count == 0 || !IsGltfContainerReady(ref gltfContainer, out StreamableLoadingResult<GltfContainerAsset> result))
                 return;
 
             gltfNodeModifiers.IsDirty = false;
             gltfContainer.GltfNodeEntities ??= new List<Entity>();
-            gltfContainer.OriginalMaterials ??= new Dictionary<UnityEngine.Renderer, UnityEngine.Material>();
+            gltfContainer.OriginalMaterials ??= new Dictionary<Renderer, Material>();
 
             // Store original materials for all renderers (only happens once)
             if (gltfContainer.OriginalMaterials.Count == 0)
@@ -59,7 +59,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         private void SetupGlobalModifier(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref GltfContainerComponent gltfContainer, GltfContainerAsset asset)
         {
-            var (hasShadowOverride, hasMaterialOverride) = GetModifierOverrides(modifier);
+            (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
 
             // Add GltfNode to the container entity itself with all renderers
             CreateGlobalGltfNode(containerEntity, asset);
@@ -77,11 +77,11 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         private void SetupIndividualModifiers(Entity containerEntity, IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent)
         {
-            foreach (var modifier in modifiers)
+            foreach (PBGltfNodeModifiers.Types.GltfNodeModifier? modifier in modifiers)
             {
                 if (string.IsNullOrEmpty(modifier.Path)) continue; // Empty path only valid for global modifier
 
-                var (hasShadowOverride, hasMaterialOverride) = GetModifierOverrides(modifier);
+                (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
 
                 CreateNewGltfNodeEntity(containerEntity, modifier, ref gltfContainer, partitionComponent, hasShadowOverride, hasMaterialOverride);
             }

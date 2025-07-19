@@ -17,23 +17,21 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
     /// </summary>
     public abstract class GltfNodeModifierSystemBase : BaseUnityLoopSystem
     {
-        protected GltfNodeModifierSystemBase(World world) : base(world)
-        {
-        }
+        protected GltfNodeModifierSystemBase(World world) : base(world) { }
 
         /// <summary>
         ///     Checks if the modifiers represent a global root modifier (single modifier with empty path)
         /// </summary>
-        protected static bool IsGltfRootModifier(IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers)
-            => modifiers.Count == 1 && string.IsNullOrEmpty(modifiers[0].Path);
+        protected static bool IsGltfRootModifier(IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers) =>
+            modifiers.Count == 1 && string.IsNullOrEmpty(modifiers[0].Path);
 
         /// <summary>
         ///     Gets the override flags for a modifier
         /// </summary>
         protected static (bool hasShadowOverride, bool hasMaterialOverride) GetModifierOverrides(PBGltfNodeModifiers.Types.GltfNodeModifier modifier)
         {
-            var hasShadowOverride = modifier.HasOverrideShadows;
-            var hasMaterialOverride = modifier.Material != null && modifier.Material.MaterialCase != PBMaterial.MaterialOneofCase.None;
+            bool hasShadowOverride = modifier.HasOverrideShadows;
+            bool hasMaterialOverride = modifier.Material != null && modifier.Material.MaterialCase != PBMaterial.MaterialOneofCase.None;
             return (hasShadowOverride, hasMaterialOverride);
         }
 
@@ -42,7 +40,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected static void StoreOriginalMaterials(ref GltfContainerComponent gltfContainer, IEnumerable<Renderer> renderers)
         {
-            foreach (var renderer in renderers)
+            foreach (Renderer? renderer in renderers)
                 gltfContainer.OriginalMaterials![renderer] = renderer.sharedMaterial;
         }
 
@@ -64,11 +62,9 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected void ResetShadowCasting(Entity gltfNodeEntity)
         {
-            var gltfNode = World.Get<GltfNode>(gltfNodeEntity);
-            foreach (Renderer renderer in gltfNode.Renderers)
-            {
-                renderer.shadowCastingMode = ShadowCastingMode.On;
-            }
+            GltfNode gltfNode = World.Get<GltfNode>(gltfNodeEntity);
+
+            foreach (Renderer renderer in gltfNode.Renderers) { renderer.shadowCastingMode = ShadowCastingMode.On; }
         }
 
         /// <summary>
@@ -81,7 +77,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             if (World.Has<PBMaterial>(gltfNodeEntity))
             {
                 // Add cleanup intention for ResetMaterialSystem to handle
-                var gltfNode = World.Get<GltfNode>(gltfNodeEntity);
+                GltfNode gltfNode = World.Get<GltfNode>(gltfNodeEntity);
                 CreateMaterialCleanupIntention(gltfNodeEntity, gltfNode.Renderers, gltfNode.ContainerEntity, true);
                 World.Remove<GltfNode>(gltfNodeEntity);
             }
@@ -99,10 +95,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         {
             if (gltfContainer.GltfNodeEntities == null || gltfContainer.GltfNodeEntities.Count == 0) return;
 
-            foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities)
-            {
-                CleanupGltfNodeEntity(gltfNodeEntity, containerEntity);
-            }
+            foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities) { CleanupGltfNodeEntity(gltfNodeEntity, containerEntity); }
+
             gltfContainer.GltfNodeEntities.Clear();
         }
 
@@ -111,7 +105,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected bool IsGltfContainerReady(ref GltfContainerComponent gltfContainer, out StreamableLoadingResult<GltfContainerAsset> result)
         {
-            result = default;
+            result = default(StreamableLoadingResult<GltfContainerAsset>);
+
             return gltfContainer.State == LoadingState.Finished
                    && gltfContainer.RootGameObject != null
                    && gltfContainer.Promise.TryGetResult(World, out result)
@@ -127,7 +122,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             {
                 Renderers = new List<Renderer>(asset.Renderers),
                 ContainerEntity = containerEntity,
-                Path = string.Empty
+                Path = string.Empty,
             });
         }
 
@@ -138,7 +133,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         {
             if (World.Has<PBMaterial>(entity))
             {
-                var updatedMaterial = material;
+                PBMaterial updatedMaterial = material;
                 updatedMaterial.IsDirty = true;
                 World.Set(entity, updatedMaterial);
             }
@@ -160,27 +155,29 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             {
                 Renderers = renderers,
                 ContainerEntity = containerEntity,
-                Destroy = destroy
+                Destroy = destroy,
             });
         }
 
         /// <summary>
         ///     Creates a new GltfNode entity for a new modifier
         /// </summary>
-        protected void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent, bool hasShadowOverride, bool hasMaterialOverride)
+        protected void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent, bool hasShadowOverride,
+            bool hasMaterialOverride)
         {
-            var renderer = FindRendererByPath(gltfContainer.RootGameObject!, modifier.Path);
+            Renderer? renderer = FindRendererByPath(gltfContainer.RootGameObject!, modifier.Path);
             if (renderer == null) return;
 
             Entity nodeEntity = this.World.Create();
+
             World.Add(nodeEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { renderer },
                 ContainerEntity = containerEntity,
-                Path = modifier.Path
+                Path = modifier.Path,
             });
 
-            renderer.shadowCastingMode = (!hasShadowOverride || modifier.OverrideShadows) ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            renderer.shadowCastingMode = !hasShadowOverride || modifier.OverrideShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
             if (hasMaterialOverride)
                 World.Add(nodeEntity, modifier.Material, partitionComponent);

@@ -4,9 +4,6 @@ using UnityEngine;
 
 namespace ECS.Unity.GltfNodeModifiers.Components
 {
-    /// <summary>
-    ///     Component to mark entities that represent GLTF nodes and hold references to their Unity components
-    /// </summary>
     public struct GltfNode
     {
         /// <summary>
@@ -15,12 +12,12 @@ namespace ECS.Unity.GltfNodeModifiers.Components
         ///     For global modifiers (path=""): contains all renderers in the GLTF asset
         /// </summary>
         public List<Renderer> Renderers { get; set; }
-        
+
         /// <summary>
         ///     Reference to the entity that contains the GltfContainerComponent
         /// </summary>
         public Entity ContainerEntity { get; set; }
-        
+
         /// <summary>
         ///     The original path from the modifier that this node represents
         ///     For global modifiers: empty string or null
@@ -28,4 +25,4 @@ namespace ECS.Unity.GltfNodeModifiers.Components
         /// </summary>
         public string? Path { get; set; }
     }
-} 
+}

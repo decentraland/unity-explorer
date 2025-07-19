@@ -54,10 +54,13 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         {
             if (rootGameObject != null)
                 Object.DestroyImmediate(rootGameObject);
+
             if (originalRootMaterial != null)
                 Object.DestroyImmediate(originalRootMaterial);
+
             if (originalChildMaterial != null)
                 Object.DestroyImmediate(originalChildMaterial);
+
             if (testMaterial != null)
                 Object.DestroyImmediate(testMaterial);
         }
@@ -84,8 +87,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 OriginalMaterials = new Dictionary<Renderer, Material>
                 {
                     { rootRenderer, originalRootMaterial },
-                    { childRenderer, originalChildMaterial }
-                }
+                    { childRenderer, originalChildMaterial },
+                },
             };
         }
 
@@ -93,47 +96,52 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void UpdateGlobalModifier_TransitionFromIndividualToGlobal()
         {
             // Arrange - Start with individual modifier setup (simulating SetupGltfNodeModifierSystem outcome)
-            var gltfContainer = CreateGltfContainer();
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false, // Setup system would have set this to false
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        Material = CreatePbrMaterial(Color.green)
-                    }
-                }
+                        Material = CreatePbrMaterial(Color.green),
+                    },
+                },
             };
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome for individual modifier
-            var childEntity = world.Create();
+            Entity childEntity = world.Create();
+
             world.Add(childEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { childRenderer },
                 ContainerEntity = entity,
-                Path = "Child"
+                Path = "Child",
             });
+
             world.Add(childEntity, CreatePbrMaterial(Color.green), PartitionComponent.TOP_PRIORITY);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(childEntity);
             world.Set(entity, updatedContainer);
 
             // Act - Update to global modifier
-             var globalModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = true,
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "",
-                         Material = CreatePbrMaterial(Color.red)
-                     }
-                 }
-             };
+            var globalModifiers = new PBGltfNodeModifiers
+            {
+                IsDirty = true,
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "",
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
+            };
 
             world.Set(entity, globalModifiers);
             system.Update(0);
@@ -147,7 +155,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(1));
             Assert.That(updatedContainer.GltfNodeEntities[0], Is.EqualTo(entity));
 
-            var gltfNode = world.Get<GltfNode>(entity);
+            GltfNode gltfNode = world.Get<GltfNode>(entity);
             Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2)); // Should have all renderers
         }
 
@@ -155,46 +163,50 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void UpdateIndividualModifiers_TransitionFromGlobalToIndividual()
         {
             // Arrange - Start with global modifier setup (simulating SetupGltfNodeModifierSystem outcome)
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = false, // Setup system would have set this to false
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "",
-                         Material = CreatePbrMaterial(Color.red)
-                     }
-                 }
-             };
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            var gltfNodeModifiers = new PBGltfNodeModifiers
+            {
+                IsDirty = false, // Setup system would have set this to false
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "",
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
+            };
+
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome for global modifier
             world.Add(entity, new GltfNode
             {
                 Renderers = new List<Renderer> { rootRenderer, childRenderer },
                 ContainerEntity = entity,
-                Path = string.Empty
+                Path = string.Empty,
             });
+
             world.Add(entity, CreatePbrMaterial(Color.red)); // Add material without PartitionComponent for global
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(entity);
             world.Set(entity, updatedContainer);
 
             // Act - Update to individual modifiers
-             var individualModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = true,
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.green)
-                     }
-                 }
-             };
+            var individualModifiers = new PBGltfNodeModifiers
+            {
+                IsDirty = true,
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "Child",
+                        Material = CreatePbrMaterial(Color.green),
+                    },
+                },
+            };
 
             world.Set(entity, individualModifiers);
             system.Update(0);
@@ -206,41 +218,45 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             updatedContainer = world.Get<GltfContainerComponent>(entity);
             Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(1));
 
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
+            Entity childNodeEntity = updatedContainer.GltfNodeEntities[0];
             Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
         }
 
         [Test]
         public void UpdateExistingGltfNodeEntity_ModifyMaterial()
-         {
-             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = false, // Setup system would have set this to false
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.green)
-                     }
-                 }
-             };
+        {
+            // Arrange - Simulate SetupGltfNodeModifierSystem outcome
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            var gltfNodeModifiers = new PBGltfNodeModifiers
+            {
+                IsDirty = false, // Setup system would have set this to false
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "Child",
+                        Material = CreatePbrMaterial(Color.green),
+                    },
+                },
+            };
+
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
-            var childEntity = world.Create();
+            Entity childEntity = world.Create();
+
             world.Add(childEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { childRenderer },
                 ContainerEntity = entity,
-                Path = "Child"
+                Path = "Child",
             });
+
             world.Add(childEntity, CreatePbrMaterial(Color.green), PartitionComponent.TOP_PRIORITY);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(childEntity);
             world.Set(entity, updatedContainer);
 
@@ -248,13 +264,14 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             var updatedModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = true,
-                Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreateUnlitMaterial(Color.blue)
-                     }
-                }
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "Child",
+                        Material = CreateUnlitMaterial(Color.blue),
+                    },
+                },
             };
 
             world.Set(entity, updatedModifiers);
@@ -262,41 +279,45 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             // Assert
             Assert.That(world.Has<PBMaterial>(childEntity), Is.True);
-            var pbMaterial = world.Get<PBMaterial>(childEntity);
-             Assert.That(pbMaterial.Unlit, Is.Not.Null);
+            PBMaterial pbMaterial = world.Get<PBMaterial>(childEntity);
+            Assert.That(pbMaterial.Unlit, Is.Not.Null);
             Assert.That(pbMaterial.IsDirty, Is.True);
         }
 
-         [Test]
-         public void CleanupOrphanedEntities_WhenModifiersRemoved()
-         {
-             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = false, // Setup system would have set this to false
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.green)
-                     }
-                 }
-             };
+        [Test]
+        public void CleanupOrphanedEntities_WhenModifiersRemoved()
+        {
+            // Arrange - Simulate SetupGltfNodeModifierSystem outcome
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            var gltfNodeModifiers = new PBGltfNodeModifiers
+            {
+                IsDirty = false, // Setup system would have set this to false
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "Child",
+                        Material = CreatePbrMaterial(Color.green),
+                    },
+                },
+            };
+
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
-            var childEntity = world.Create();
+            Entity childEntity = world.Create();
+
             world.Add(childEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { childRenderer },
                 ContainerEntity = entity,
-                Path = "Child"
+                Path = "Child",
             });
+
             world.Add(childEntity, CreatePbrMaterial(Color.green), PartitionComponent.TOP_PRIORITY);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(childEntity);
             world.Set(entity, updatedContainer);
 
@@ -304,7 +325,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             var emptyModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = true,
-                Modifiers = { } // Empty list
             };
 
             world.Set(entity, emptyModifiers);
@@ -321,26 +341,29 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void SkipUpdateWhenNotDirty()
         {
             // Arrange
-            var gltfContainer = CreateGltfContainer();
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false, // Not dirty
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        Material = CreatePbrMaterial(Color.red)
-                    }
-                }
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
             };
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Act
             system.Update(0);
 
             // Assert
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
+
             // Should not create any new entities because isDirty is false
             Assert.That(updatedContainer.GltfNodeEntities, Is.Null.Or.Empty);
         }
@@ -349,32 +372,36 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void UpdateMaterialFromPbrToUnlit()
         {
             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-            var gltfContainer = CreateGltfContainer();
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false, // Setup system would have set this to false
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        Material = CreatePbrMaterial(Color.red)
-                    }
-                }
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
             };
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
-            var childEntity = world.Create();
+            Entity childEntity = world.Create();
+
             world.Add(childEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { childRenderer },
                 ContainerEntity = entity,
-                Path = "Child"
+                Path = "Child",
             });
+
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(childEntity);
             world.Set(entity, updatedContainer);
 
@@ -382,20 +409,21 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             var updatedModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = true,
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        Material = CreateUnlitMaterial(Color.blue)
-                    }
-                }
+                        Material = CreateUnlitMaterial(Color.blue),
+                    },
+                },
             };
 
             world.Set(entity, updatedModifiers);
             system.Update(0);
 
             // Assert
-            var pbMaterial = world.Get<PBMaterial>(childEntity);
+            PBMaterial pbMaterial = world.Get<PBMaterial>(childEntity);
             Assert.That(pbMaterial.Pbr, Is.Null);
             Assert.That(pbMaterial.Unlit, Is.Not.Null);
             Assert.That(pbMaterial.IsDirty, Is.True);
@@ -405,32 +433,36 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void RemoveMaterialFromExistingEntity()
         {
             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-            var gltfContainer = CreateGltfContainer();
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false, // Setup system would have set this to false
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        Material = CreatePbrMaterial(Color.red)
-                    }
-                }
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
             };
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
-            var childEntity = world.Create();
+            Entity childEntity = world.Create();
+
             world.Add(childEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { childRenderer },
                 ContainerEntity = entity,
-                Path = "Child"
+                Path = "Child",
             });
+
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(childEntity);
             world.Set(entity, updatedContainer);
 
@@ -438,14 +470,16 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             var updatedModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = true,
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        OverrideShadows = true
+                        OverrideShadows = true,
+
                         // No material
-                    }
-                }
+                    },
+                },
             };
 
             world.Set(entity, updatedModifiers);
@@ -454,7 +488,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Assert
             Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
 
-            var cleanupIntention = world.Get<GltfNodeMaterialCleanupIntention>(childEntity);
+            GltfNodeMaterialCleanupIntention cleanupIntention = world.Get<GltfNodeMaterialCleanupIntention>(childEntity);
             Assert.That(cleanupIntention.Destroy, Is.False); // Should not destroy entity, just clean up material
         }
 
@@ -462,33 +496,38 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void UpdateShadowOverrideFromDefaultToExplicit()
         {
             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-            var gltfContainer = CreateGltfContainer();
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false, // Setup system would have set this to false
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        Material = CreatePbrMaterial(Color.red)
+                        Material = CreatePbrMaterial(Color.red),
+
                         // No shadow override initially - defaults to casting shadows
-                    }
-                }
+                    },
+                },
             };
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
-            var childEntity = world.Create();
+            Entity childEntity = world.Create();
+
             world.Add(childEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { childRenderer },
                 ContainerEntity = entity,
-                Path = "Child"
+                Path = "Child",
             });
+
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(childEntity);
             world.Set(entity, updatedContainer);
 
@@ -496,14 +535,15 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             var updatedModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = true,
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
                         Material = CreatePbrMaterial(Color.blue),
-                        OverrideShadows = false
-                    }
-                }
+                        OverrideShadows = false,
+                    },
+                },
             };
 
             world.Set(entity, updatedModifiers);
@@ -518,32 +558,36 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void UpdateModifierWithoutAnyOverrides()
         {
             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-            var gltfContainer = CreateGltfContainer();
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false, // Setup system would have set this to false
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        Material = CreatePbrMaterial(Color.red)
-                    }
-                }
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
             };
 
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, new Components.GltfNodeModifiers());
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
-            var childEntity = world.Create();
+            Entity childEntity = world.Create();
+
             world.Add(childEntity, new GltfNode
             {
                 Renderers = new List<Renderer> { childRenderer },
                 ContainerEntity = entity,
-                Path = "Child"
+                Path = "Child",
             });
+
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             updatedContainer.GltfNodeEntities.Add(childEntity);
             world.Set(entity, updatedContainer);
 
@@ -551,13 +595,15 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             var updatedModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = true,
-                Modifiers = {
+                Modifiers =
+                {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
-                        Path = "Child"
+                        Path = "Child",
+
                         // No material or shadow overrides
-                    }
-                }
+                    },
+                },
             };
 
             world.Set(entity, updatedModifiers);
@@ -565,30 +611,27 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             // Assert
             Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
+
             // Shadow should default to On since no override specified
             Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On));
         }
 
-        private static PBMaterial CreatePbrMaterial(Color color)
-        {
-            return new PBMaterial
+        private static PBMaterial CreatePbrMaterial(Color color) =>
+            new()
             {
                 Pbr = new PBMaterial.Types.PbrMaterial
                 {
-                    AlbedoColor = new Color4 { R = color.r, G = color.g, B = color.b, A = color.a }
-                }
+                    AlbedoColor = new Color4 { R = color.r, G = color.g, B = color.b, A = color.a },
+                },
             };
-        }
 
-        private static PBMaterial CreateUnlitMaterial(Color color)
-        {
-            return new PBMaterial
+        private static PBMaterial CreateUnlitMaterial(Color color) =>
+            new()
             {
                 Unlit = new PBMaterial.Types.UnlitMaterial
                 {
-                    DiffuseColor = new Color4 { R = color.r, G = color.g, B = color.b, A = color.a }
-                }
+                    DiffuseColor = new Color4 { R = color.r, G = color.g, B = color.b, A = color.a },
+                },
             };
-        }
     }
 }

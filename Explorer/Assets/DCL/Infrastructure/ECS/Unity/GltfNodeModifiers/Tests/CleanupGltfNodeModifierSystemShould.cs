@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using Decentraland.Common;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
@@ -52,10 +53,13 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         {
             if (rootGameObject != null)
                 Object.DestroyImmediate(rootGameObject);
+
             if (originalRootMaterial != null)
                 Object.DestroyImmediate(originalRootMaterial);
+
             if (originalChildMaterial != null)
                 Object.DestroyImmediate(originalChildMaterial);
+
             if (testMaterial != null)
                 Object.DestroyImmediate(testMaterial);
         }
@@ -82,123 +86,131 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 OriginalMaterials = new Dictionary<Renderer, Material>
                 {
                     { rootRenderer, originalRootMaterial },
-                    { childRenderer, originalChildMaterial }
-                }
+                    { childRenderer, originalChildMaterial },
+                },
             };
         }
 
-                [Test]
-         public void HandleGltfNodeModifiersRemoval_CleanupAllEntities()
-         {
-             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = false,
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.red)
-                     }
-                 }
-             };
-
-             // Create entity with components (simulating setup completion)
-             var entity = world.Create();
-             world.Add(entity, gltfNodeModifiers);
-             world.Add(entity, gltfContainer);
-             world.Add(entity, new Components.GltfNodeModifiers());
-             world.Add(entity, PartitionComponent.TOP_PRIORITY);
-
-             // Manually simulate SetupGltfNodeModifierSystem outcome
-             var childEntity = world.Create();
-             world.Add(childEntity, new GltfNode
-             {
-                 Renderers = new System.Collections.Generic.List<Renderer> { childRenderer },
-                 ContainerEntity = entity,
-                 Path = "Child"
-             });
-             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
-
-             var updatedContainer = world.Get<GltfContainerComponent>(entity);
-             updatedContainer.GltfNodeEntities.Add(childEntity);
-             world.Set(entity, updatedContainer);
-
-             // Act - Remove PBGltfNodeModifiers to trigger HandleGltfNodeModifiersRemoval query
-             world.Remove<PBGltfNodeModifiers>(entity);
-             system.Update(0);
-
-             // Assert
-             Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
-             Assert.That(world.Has<GltfNode>(childEntity), Is.False);
-             Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.False); // Should be removed by system
-             updatedContainer = world.Get<GltfContainerComponent>(entity);
-             Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
-        }
-
-                [Test]
-         public void HandleGltfNodeModifiersCleanup_WithCleanupIntention()
-         {
-             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = false,
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.blue)
-                     }
-                 }
-             };
-
-             // Create entity with all required components for HandleGltfNodeModifiersCleanup query
-             var entity = world.Create();
-             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
-             world.Add(entity, gltfContainer);
-             world.Add(entity, new Components.GltfNodeModifiers());
-
-             // Manually simulate SetupGltfNodeModifierSystem outcome
-             var childEntity = world.Create();
-             world.Add(childEntity, new GltfNode
-             {
-                 Renderers = new System.Collections.Generic.List<Renderer> { childRenderer },
-                 ContainerEntity = entity,
-                 Path = "Child"
-             });
-             world.Add(childEntity, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY);
-
-             var updatedContainer = world.Get<GltfContainerComponent>(entity);
-             updatedContainer.GltfNodeEntities.Add(childEntity);
-             world.Set(entity, updatedContainer);
-
-             // Act - Add cleanup intention to trigger HandleGltfNodeModifiersCleanup query
-             world.Add(entity, new GltfNodeModifiersCleanupIntention());
-             system.Update(0);
-
-             // Assert
-             Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
-             Assert.That(world.Has<GltfNode>(childEntity), Is.False);
-             Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False); // Should be removed
-             updatedContainer = world.Get<GltfContainerComponent>(entity);
-             Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
-        }
-
-                        [Test]
-        public void HandleCleanupWithNoGltfNodeEntities()
+        [Test]
+        public void HandleGltfNodeModifiersRemoval_CleanupAllEntities()
         {
-            // Arrange - Entity with components but no actual GltfNode entities (simulating empty setup)
-            var gltfContainer = CreateGltfContainer();
+            // Arrange - Simulate SetupGltfNodeModifierSystem outcome
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false,
-                Modifiers = { } // Empty modifiers
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "Child",
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
+            };
+
+            // Create entity with components (simulating setup completion)
+            Entity entity = world.Create();
+            world.Add(entity, gltfNodeModifiers);
+            world.Add(entity, gltfContainer);
+            world.Add(entity, new Components.GltfNodeModifiers());
+            world.Add(entity, PartitionComponent.TOP_PRIORITY);
+
+            // Manually simulate SetupGltfNodeModifierSystem outcome
+            Entity childEntity = world.Create();
+
+            world.Add(childEntity, new GltfNode
+            {
+                Renderers = new List<Renderer> { childRenderer },
+                ContainerEntity = entity,
+                Path = "Child",
+            });
+
+            world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
+
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
+            updatedContainer.GltfNodeEntities.Add(childEntity);
+            world.Set(entity, updatedContainer);
+
+            // Act - Remove PBGltfNodeModifiers to trigger HandleGltfNodeModifiersRemoval query
+            world.Remove<PBGltfNodeModifiers>(entity);
+            system.Update(0);
+
+            // Assert
+            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
+            Assert.That(world.Has<GltfNode>(childEntity), Is.False);
+            Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.False); // Should be removed by system
+            updatedContainer = world.Get<GltfContainerComponent>(entity);
+            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HandleGltfNodeModifiersCleanup_WithCleanupIntention()
+        {
+            // Arrange - Simulate SetupGltfNodeModifierSystem outcome
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
+            var gltfNodeModifiers = new PBGltfNodeModifiers
+            {
+                IsDirty = false,
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "Child",
+                        Material = CreatePbrMaterial(Color.blue),
+                    },
+                },
             };
 
             // Create entity with all required components for HandleGltfNodeModifiersCleanup query
-            var entity = world.Create();
+            Entity entity = world.Create();
+            world.Add(entity, gltfNodeModifiers); // Required for cleanup query
+            world.Add(entity, gltfContainer);
+            world.Add(entity, new Components.GltfNodeModifiers());
+
+            // Manually simulate SetupGltfNodeModifierSystem outcome
+            Entity childEntity = world.Create();
+
+            world.Add(childEntity, new GltfNode
+            {
+                Renderers = new List<Renderer> { childRenderer },
+                ContainerEntity = entity,
+                Path = "Child",
+            });
+
+            world.Add(childEntity, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY);
+
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
+            updatedContainer.GltfNodeEntities.Add(childEntity);
+            world.Set(entity, updatedContainer);
+
+            // Act - Add cleanup intention to trigger HandleGltfNodeModifiersCleanup query
+            world.Add(entity, new GltfNodeModifiersCleanupIntention());
+            system.Update(0);
+
+            // Assert
+            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
+            Assert.That(world.Has<GltfNode>(childEntity), Is.False);
+            Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False); // Should be removed
+            updatedContainer = world.Get<GltfContainerComponent>(entity);
+            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void HandleCleanupWithNoGltfNodeEntities()
+        {
+            // Arrange - Entity with components but no actual GltfNode entities (simulating empty setup)
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
+
+            var gltfNodeModifiers = new PBGltfNodeModifiers
+            {
+                IsDirty = false,
+            };
+
+            // Create entity with all required components for HandleGltfNodeModifiersCleanup query
+            Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
             world.Add(entity, gltfContainer);
             world.Add(entity, new Components.GltfNodeModifiers());
@@ -209,25 +221,24 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             // Assert
             Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False); // Should be removed
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
             Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0)); // Should remain empty
         }
 
-                [Test]
+        [Test]
         public void HandleCleanupWithNullGltfNodeEntities()
         {
             // Arrange - Entity with components but null GltfNodeEntities
-            var gltfContainer = CreateGltfContainer();
+            GltfContainerComponent gltfContainer = CreateGltfContainer();
             gltfContainer.GltfNodeEntities = null; // Explicitly null
 
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false,
-                Modifiers = { } // Empty modifiers
             };
 
             // Create entity with all required components for HandleGltfNodeModifiersCleanup query
-            var entity = world.Create();
+            Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
             world.Add(entity, gltfContainer);
             world.Add(entity, new Components.GltfNodeModifiers());
@@ -240,17 +251,13 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False); // Should be removed
         }
 
-
-
-        private static PBMaterial CreatePbrMaterial(Color color)
-        {
-            return new PBMaterial
+        private static PBMaterial CreatePbrMaterial(Color color) =>
+            new()
             {
                 Pbr = new PBMaterial.Types.PbrMaterial
                 {
-                    AlbedoColor = new Decentraland.Common.Color4 { R = color.r, G = color.g, B = color.b, A = color.a }
-                }
+                    AlbedoColor = new Color4 { R = color.r, G = color.g, B = color.b, A = color.a },
+                },
             };
-        }
-     }
+    }
 }

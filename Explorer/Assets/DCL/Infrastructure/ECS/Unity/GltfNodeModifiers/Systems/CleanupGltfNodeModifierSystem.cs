@@ -19,9 +19,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CleanupGltfNodeModifierSystem : GltfNodeModifierSystemBase
     {
-        public CleanupGltfNodeModifierSystem(World world) : base(world)
-        {
-        }
+        public CleanupGltfNodeModifierSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
@@ -47,6 +45,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             if (World.Has<GltfNodeModifiersCleanupIntention>(containerEntity))
                 World.Remove<GltfNodeModifiersCleanupIntention>(containerEntity);
+
             World.Remove<Components.GltfNodeModifiers>(containerEntity);
         }
     }
