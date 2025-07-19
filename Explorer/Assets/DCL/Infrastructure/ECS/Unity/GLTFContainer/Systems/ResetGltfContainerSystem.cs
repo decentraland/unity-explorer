@@ -59,6 +59,9 @@ namespace ECS.Unity.GLTFContainer.Systems
             component.Promise.ForgetLoading(World);
             ecsToCRDTWriter.DeleteMessage<PBGltfContainerLoadingState>(sdkEntity);
             RemoveAnimationMarker(entity);
+
+            if (World.Has<GltfNodeModifiers>(entity))
+                World.Add(entity, new GltfNodeModifiersCleanupIntention());
         }
 
         private void TryReleaseAsset(ref GltfContainerComponent component)
