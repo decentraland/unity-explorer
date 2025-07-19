@@ -23,7 +23,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public readonly AssetBundleMetrics? Metrics;
 
-        private readonly string description;
+        public string description;
 
 
         private bool unloaded;

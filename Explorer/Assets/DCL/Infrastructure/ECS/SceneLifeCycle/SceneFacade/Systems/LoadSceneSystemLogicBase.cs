@@ -4,11 +4,16 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Utils.Time;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using Global.AppArgs;
 using SceneRunner;
 using SceneRunner.Scene;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Networking;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -18,10 +23,14 @@ namespace ECS.SceneLifeCycle.Systems
         protected readonly URLDomain assetBundleURL;
         protected readonly IWebRequestController webRequestController;
 
+        private readonly TimeProfiler timeProfiler;
+
+
         protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, URLDomain assetBundleURL)
         {
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
+            timeProfiler = new TimeProfiler(true);
         }
 
         public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, ReportData reportCategory, IPartitionComponent partition, CancellationToken ct)
@@ -48,13 +57,18 @@ namespace ECS.SceneLifeCycle.Systems
 
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
 
+            // Launch at the end of the frame
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
+
+            Dictionary<string, GameObject> staticSceneGameObjects = new ();
+
+            if (definitionComponent.Definition.id.Equals("bafkreifqcraqxctg4krbklm6jsbq2x5tueevhmvxx354obl4ogu5owkbqu") && ApplicationParametersParser.HasFlagStatic("compression"))
+                await LoadBigAssetBundle(staticSceneGameObjects);
+
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
-                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
-
-            // Launch at the end of the frame
-            await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt), staticSceneGameObjects);
 
             ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
 
@@ -63,6 +77,28 @@ namespace ECS.SceneLifeCycle.Systems
             sceneFacade.Initialize();
             ReportHub.LogProductionInfo($"Loading scene {(sceneFacade.SceneData.IsPortableExperience() ? "(PX)" : "")} '{definition.GetLogSceneName()}' ended");
             return sceneFacade;
+        }
+
+        private async UniTask LoadBigAssetBundle(Dictionary<string, GameObject> staticSceneGameObjects)
+        {
+            ApplicationParametersParser.TryGetValueStatic("compression", out string compressionValue);
+            UnityWebRequest unityWebRequest;
+
+            using (timeProfiler.Measure(ms => UnityEngine.Debug.Log($"JUANI DOWNLOADED ENDED {ms} ms {compressionValue}")))
+            {
+                unityWebRequest =
+                    UnityWebRequestAssetBundle.GetAssetBundle($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_{compressionValue}", Hash128.Compute(compressionValue));
+
+                await unityWebRequest.SendWebRequest();
+            }
+
+            using (timeProfiler.Measure(ms => UnityEngine.Debug.Log($"JUANI LOADED ENDED {ms} ms {compressionValue}")))
+            {
+                AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(unityWebRequest);
+
+                foreach (GameObject loadAllAsset in assetBundle.LoadAllAssets<GameObject>())
+                    staticSceneGameObjects.Add(loadAllAsset.name, loadAllAsset);
+            }
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

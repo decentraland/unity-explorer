@@ -10,14 +10,11 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Global.Versioning;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Diagnostics;
-using UnityEngine.UIElements;
-using Utility.Types;
 using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
@@ -146,12 +143,14 @@ namespace DCL.Profiling.ECS
                 }
 
 
+
                 debugBuilder.TryAddWidget(IDebugContainerBuilder.Categories.CRASH)?
-                            .AddSingleButton("FatalError", () => { Utils.ForceCrash(ForcedCrashCategory.FatalError); })
-                            .AddSingleButton("Abort", () => { Utils.ForceCrash(ForcedCrashCategory.Abort); })
-                            .AddSingleButton("MonoAbort", () => { Utils.ForceCrash(ForcedCrashCategory.MonoAbort); })
-                            .AddSingleButton("AccessViolation", () => { Utils.ForceCrash(ForcedCrashCategory.AccessViolation); })
-                            .AddSingleButton("PureVirtualFunction", () => { Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction); });
+                            .AddSingleButton("FatalError", () => { UnityEngine.Diagnostics.Utils.ForceCrash(ForcedCrashCategory.FatalError); })
+                            .AddSingleButton("Abort", () => { UnityEngine.Diagnostics.Utils.ForceCrash(ForcedCrashCategory.Abort); })
+                            .AddSingleButton("MonoAbort", () => { UnityEngine.Diagnostics.Utils.ForceCrash(ForcedCrashCategory.MonoAbort); })
+                            .AddSingleButton("AccessViolation", () => { UnityEngine.Diagnostics.Utils.ForceCrash(ForcedCrashCategory.AccessViolation); })
+                            .AddSingleButton("PureVirtualFunction", () => { UnityEngine.Diagnostics.Utils.ForceCrash(ForcedCrashCategory.PureVirtualFunction); });
+
             }
         }
 
