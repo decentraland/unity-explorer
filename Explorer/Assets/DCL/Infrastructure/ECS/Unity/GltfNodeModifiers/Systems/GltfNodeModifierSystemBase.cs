@@ -120,7 +120,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         {
             World.Add(containerEntity, new GltfNode
             {
-                Renderers = new List<Renderer>(asset.Renderers),
+                Renderers = asset.Renderers, // Direct reference - zero allocation!
                 ContainerEntity = containerEntity,
                 Path = string.Empty,
             });
@@ -149,7 +149,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Creates a material cleanup intention for an entity
         /// </summary>
-        protected void CreateMaterialCleanupIntention(Entity entity, List<Renderer> renderers, Entity containerEntity, bool destroy)
+        protected void CreateMaterialCleanupIntention(Entity entity, IReadOnlyList<Renderer> renderers, Entity containerEntity, bool destroy)
         {
             World.Add(entity, new GltfNodeMaterialCleanupIntention
             {
@@ -172,7 +172,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             World.Add(nodeEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { renderer },
+                Renderers = new[] { renderer }, // Array - minimal allocation
                 ContainerEntity = containerEntity,
                 Path = modifier.Path,
             });

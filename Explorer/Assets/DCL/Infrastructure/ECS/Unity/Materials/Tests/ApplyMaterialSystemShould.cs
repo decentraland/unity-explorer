@@ -102,7 +102,7 @@ namespace ECS.Unity.Materials.Tests
 
             var gltfNode = new GltfNode
             {
-                Renderers = new List<Renderer> { meshRenderer },
+                Renderers = new[] { meshRenderer },
                 ContainerEntity = containerEntity,
                 Path = "TestNode"
             };

@@ -7,9 +7,9 @@ namespace ECS.Unity.GltfNodeModifiers.Components
     public struct GltfNodeMaterialCleanupIntention
     {
         /// <summary>
-        ///     List of Unity Renderer components that need material reset
+        ///     Collection of Unity Renderer components that need material reset
         /// </summary>
-        public List<Renderer> Renderers { get; set; }
+        public IReadOnlyList<Renderer> Renderers { get; set; }
 
         /// <summary>
         ///     Reference to the entity that contains the GltfContainerComponent

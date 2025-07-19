@@ -118,7 +118,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
@@ -183,7 +183,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Manually simulate SetupGltfNodeModifierSystem outcome for global modifier
             world.Add(entity, new GltfNode
             {
-                Renderers = new List<Renderer> { rootRenderer, childRenderer },
+                Renderers = new[] { rootRenderer, childRenderer },
                 ContainerEntity = entity,
                 Path = string.Empty,
             });
@@ -249,7 +249,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
@@ -310,7 +310,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
@@ -394,7 +394,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
@@ -455,7 +455,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
@@ -520,7 +520,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
@@ -580,7 +580,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });

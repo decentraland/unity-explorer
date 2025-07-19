@@ -94,7 +94,7 @@ namespace ECS.Unity.Materials.Tests
 
             var cleanupIntention = new GltfNodeMaterialCleanupIntention
             {
-                Renderers = new List<Renderer> { meshRenderer },
+                Renderers = new[] { meshRenderer },
                 ContainerEntity = containerEntity,
                 Destroy = true
             };

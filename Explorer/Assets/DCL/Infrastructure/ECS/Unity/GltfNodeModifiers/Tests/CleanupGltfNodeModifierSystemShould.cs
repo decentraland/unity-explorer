@@ -122,7 +122,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
@@ -175,7 +175,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, new GltfNode
             {
-                Renderers = new List<Renderer> { childRenderer },
+                Renderers = new[] { childRenderer },
                 ContainerEntity = entity,
                 Path = "Child",
             });
