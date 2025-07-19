@@ -26,7 +26,7 @@ namespace Global.Dynamic
 
         [SerializeField] internal InitialRealm initialRealm;
         [SerializeField] internal Vector2Int targetScene;
-        [SerializeField] internal bool overrideSceneStartPositionEditor = true;
+        [SerializeField] internal bool EditorSceneStartPosition = true;
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
@@ -167,7 +167,7 @@ namespace Global.Dynamic
 
             //If this bool is true in editor, we want the position to be the one that has been serialized
             //This avoid the feature flag from overriding the dev's start position
-            if (Application.isEditor && overrideSceneStartPositionEditor)
+            if (Application.isEditor && EditorSceneStartPosition)
                 return;
 
             //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration
