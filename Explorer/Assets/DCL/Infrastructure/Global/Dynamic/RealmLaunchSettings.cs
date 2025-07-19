@@ -175,7 +175,6 @@ namespace Global.Dynamic
             string? parcelToTeleportOverride = null;
 
             //If not, we check the feature flag usage
-            //If we are in editor, we ignore the feature flag override
             var featureFlagOverride =
                 featureFlagsConfigurationCache.IsEnabled(FeatureFlagsStrings.GENESIS_STARTING_PARCEL) &&
                 featureFlagsConfigurationCache.TryGetTextPayload(FeatureFlagsStrings.GENESIS_STARTING_PARCEL,
