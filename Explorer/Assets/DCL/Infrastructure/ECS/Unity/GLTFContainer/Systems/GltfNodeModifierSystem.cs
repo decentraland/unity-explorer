@@ -339,8 +339,6 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             CleanupAllGltfNodeEntities(containerEntity, in gltfContainer);
 
-            gltfContainer.GltfNodeEntities = null;
-            World.Remove<GltfNodeModifiers>(containerEntity);
             World.Remove<GltfNodeModifiersCleanupIntention>(containerEntity);
         }
 

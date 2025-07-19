@@ -51,9 +51,6 @@ namespace ECS.Unity.Materials.Systems
             var gltfContainer = World.TryGetRef<GltfContainerComponent>(cleanupIntention.ContainerEntity, out bool exists);
             if (!exists) return;
 
-            // Remove the PBMaterial component
-            World.Remove<PBMaterial>(entity);
-
             // Reset all renderers to their original state
             foreach (var renderer in cleanupIntention.Renderers)
             {
@@ -63,6 +60,7 @@ namespace ECS.Unity.Materials.Systems
 
             // Clean up the material component and remove the entity
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
+            World.Remove<PBMaterial>(entity);
             World.Remove<MaterialComponent>(entity);
             World.Remove<GltfNodeMaterialCleanupIntention>(entity);
 
