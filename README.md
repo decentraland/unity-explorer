@@ -48,7 +48,6 @@ Unity Explorer is the official desktop client implementation for Decentraland 2.
 
 2. Open the project in Unity
 
-
 ## 🎮 Quick Start
 
 - After installation, open Unity-Explorer via Unity.
@@ -67,6 +66,18 @@ The Unity Explorer follows a component-based architecture designed for flexibili
 Find specific guidance on development topics in our [How To Guide](https://github.com/decentraland/unity-explorer/wiki/How-To).
 
 ## 🔧 Troubleshooting
+
+### Plugins not compiling (e.g. "The type or namespace name 'Google' could not be found" error)
+
+That happens if you haven't got GIT LFS installed. 
+
+A simple way to confirm that is looking at this [Google.Api.CommonProtos.dll file](https://github.com/decentraland/unity-explorer/blob/50ddf83a3ff7eb76c6036904390d3298a24e2f88/Explorer/Assets/Protocol/Plugins/Google.Api.CommonProtos.dll) here in Github and compare its size (348KB) with the size of the one you have in your cloned version of the repo (it would be a 'placeholder' file with only 131 bytes aprox).
+
+1. Make sure you have git-lfs installed, for example you can install it with `brew install git-lfs`.
+2. Close Unity and step into the cloned repo root directory.
+3. run `git lfs install` and `git lfs pull`.
+4. Just in case delete the `Explorer/Library/` folder.
+5. Open the Unity project again and this time it should compile correctly.
 
 ## 🛣️ Roadmap
 
