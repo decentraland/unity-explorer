@@ -93,7 +93,10 @@ namespace DCL.Landscape.Systems
             if (cliffsJobHandle.IsCompleted && cliffsUpdated)
             {
                 Profiler.BeginSample("UpdateCliffsVisibility.Schedule");
-                var job = new UpdateBoundariesCullingJob(cliffsBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.DetailDistance);
+
+                var job = new UpdateBoundariesCullingJob(cliffsBoundaries, nativeFrustumPlanes,
+                    cameraPosition, landscapeData.EnvironmentDistance);
+
                 cliffsJobHandle = job.Schedule(cliffsBoundaries.Length, 32, cliffsJobHandle);
                 cliffsUpdated = false;
                 Profiler.EndSample();
@@ -102,7 +105,10 @@ namespace DCL.Landscape.Systems
             if (waterJobHandle.IsCompleted && waterUpdated)
             {
                 Profiler.BeginSample("UpdateWaterVisibility.Schedule");
-                var job = new UpdateBoundariesCullingJob(waterBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.DetailDistance);
+
+                var job = new UpdateBoundariesCullingJob(waterBoundaries, nativeFrustumPlanes,
+                    cameraPosition, landscapeData.EnvironmentDistance);
+
                 waterJobHandle = job.Schedule(waterBoundaries.Length, 32, waterJobHandle);
                 waterUpdated = false;
                 Profiler.EndSample();

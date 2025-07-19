@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - LongRoad
+  - Terrain
   layers:
   - Default
   - TransparentFX
