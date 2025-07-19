@@ -107,7 +107,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                                 AlbedoColor = new Color4 { R = 1f, G = 0f, B = 0f, A = 1f },
                             },
                         },
-                        OverrideShadows = true,
+                        CastShadows = true,
                     },
                 },
             };
@@ -250,7 +250,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        OverrideShadows = false,
+                        CastShadows = false,
                     },
                 },
             };
@@ -375,7 +375,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        OverrideShadows = false,
+                        CastShadows = false,
 
                         // No material override
                     },
@@ -475,7 +475,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "",
-                        OverrideShadows = false, // Turn off shadows globally
+                        CastShadows = false, // Turn off shadows globally
                     },
                 },
             };
@@ -554,7 +554,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "", // Root
-                        OverrideShadows = false,
+                        CastShadows = false,
                     },
                 },
             };

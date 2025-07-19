@@ -26,18 +26,18 @@ namespace DCL.ECSComponents {
           string.Concat(
             "CjVkZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvZ2x0Zl9ub2RlX21vZGlm",
             "aWVycy5wcm90bxIbZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzGipkZWNl",
-            "bnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvbWF0ZXJpYWwucHJvdG8ijwIKE1BC",
+            "bnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvbWF0ZXJpYWwucHJvdG8ihwIKE1BC",
             "R2x0Zk5vZGVNb2RpZmllcnMSVAoJbW9kaWZpZXJzGAEgAygLMkEuZGVjZW50",
             "cmFsYW5kLnNkay5jb21wb25lbnRzLlBCR2x0Zk5vZGVNb2RpZmllcnMuR2x0",
-            "Zk5vZGVNb2RpZmllchqhAQoQR2x0Zk5vZGVNb2RpZmllchIMCgRwYXRoGAEg",
-            "ASgJEh0KEG92ZXJyaWRlX3NoYWRvd3MYAiABKAhIAIgBARI+CghtYXRlcmlh",
-            "bBgDIAEoCzInLmRlY2VudHJhbGFuZC5zZGsuY29tcG9uZW50cy5QQk1hdGVy",
-            "aWFsSAGIAQFCEwoRX292ZXJyaWRlX3NoYWRvd3NCCwoJX21hdGVyaWFsQhSq",
-            "AhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "Zk5vZGVNb2RpZmllchqZAQoQR2x0Zk5vZGVNb2RpZmllchIMCgRwYXRoGAEg",
+            "ASgJEhkKDGNhc3Rfc2hhZG93cxgCIAEoCEgAiAEBEj4KCG1hdGVyaWFsGAMg",
+            "ASgLMicuZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRzLlBCTWF0ZXJpYWxI",
+            "AYgBAUIPCg1fY2FzdF9zaGFkb3dzQgsKCV9tYXRlcmlhbEIUqgIRRENMLkVD",
+            "U0NvbXBvbmVudHNiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::DCL.ECSComponents.MaterialReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBGltfNodeModifiers), global::DCL.ECSComponents.PBGltfNodeModifiers.Parser, new[]{ "Modifiers" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBGltfNodeModifiers.Types.GltfNodeModifier), global::DCL.ECSComponents.PBGltfNodeModifiers.Types.GltfNodeModifier.Parser, new[]{ "Path", "OverrideShadows", "Material" }, new[]{ "OverrideShadows", "Material" }, null, null, null)})
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBGltfNodeModifiers), global::DCL.ECSComponents.PBGltfNodeModifiers.Parser, new[]{ "Modifiers" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBGltfNodeModifiers.Types.GltfNodeModifier), global::DCL.ECSComponents.PBGltfNodeModifiers.Types.GltfNodeModifier.Parser, new[]{ "Path", "CastShadows", "Material" }, new[]{ "CastShadows", "Material" }, null, null, null)})
           }));
     }
     #endregion
@@ -262,7 +262,7 @@ namespace DCL.ECSComponents {
         public GltfNodeModifier(GltfNodeModifier other) : this() {
           _hasBits0 = other._hasBits0;
           path_ = other.path_;
-          overrideShadows_ = other.overrideShadows_;
+          castShadows_ = other.castShadows_;
           material_ = other.material_ != null ? other.material_.Clone() : null;
           _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
         }
@@ -285,28 +285,28 @@ namespace DCL.ECSComponents {
           }
         }
 
-        /// <summary>Field number for the "override_shadows" field.</summary>
-        public const int OverrideShadowsFieldNumber = 2;
-        private bool overrideShadows_;
+        /// <summary>Field number for the "cast_shadows" field.</summary>
+        public const int CastShadowsFieldNumber = 2;
+        private bool castShadows_;
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool OverrideShadows {
-          get { if ((_hasBits0 & 1) != 0) { return overrideShadows_; } else { return false; } }
+        public bool CastShadows {
+          get { if ((_hasBits0 & 1) != 0) { return castShadows_; } else { return false; } }
           set {
             _hasBits0 |= 1;
-            overrideShadows_ = value;
+            castShadows_ = value;
           }
         }
-        /// <summary>Gets whether the "override_shadows" field is set</summary>
+        /// <summary>Gets whether the "cast_shadows" field is set</summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public bool HasOverrideShadows {
+        public bool HasCastShadows {
           get { return (_hasBits0 & 1) != 0; }
         }
-        /// <summary>Clears the value of the "override_shadows" field</summary>
+        /// <summary>Clears the value of the "cast_shadows" field</summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-        public void ClearOverrideShadows() {
+        public void ClearCastShadows() {
           _hasBits0 &= ~1;
         }
 
@@ -338,7 +338,7 @@ namespace DCL.ECSComponents {
             return true;
           }
           if (Path != other.Path) return false;
-          if (OverrideShadows != other.OverrideShadows) return false;
+          if (CastShadows != other.CastShadows) return false;
           if (!object.Equals(Material, other.Material)) return false;
           return Equals(_unknownFields, other._unknownFields);
         }
@@ -348,7 +348,7 @@ namespace DCL.ECSComponents {
         public override int GetHashCode() {
           int hash = 1;
           if (Path.Length != 0) hash ^= Path.GetHashCode();
-          if (HasOverrideShadows) hash ^= OverrideShadows.GetHashCode();
+          if (HasCastShadows) hash ^= CastShadows.GetHashCode();
           if (material_ != null) hash ^= Material.GetHashCode();
           if (_unknownFields != null) {
             hash ^= _unknownFields.GetHashCode();
@@ -372,9 +372,9 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(10);
             output.WriteString(Path);
           }
-          if (HasOverrideShadows) {
+          if (HasCastShadows) {
             output.WriteRawTag(16);
-            output.WriteBool(OverrideShadows);
+            output.WriteBool(CastShadows);
           }
           if (material_ != null) {
             output.WriteRawTag(26);
@@ -394,9 +394,9 @@ namespace DCL.ECSComponents {
             output.WriteRawTag(10);
             output.WriteString(Path);
           }
-          if (HasOverrideShadows) {
+          if (HasCastShadows) {
             output.WriteRawTag(16);
-            output.WriteBool(OverrideShadows);
+            output.WriteBool(CastShadows);
           }
           if (material_ != null) {
             output.WriteRawTag(26);
@@ -415,7 +415,7 @@ namespace DCL.ECSComponents {
           if (Path.Length != 0) {
             size += 1 + pb::CodedOutputStream.ComputeStringSize(Path);
           }
-          if (HasOverrideShadows) {
+          if (HasCastShadows) {
             size += 1 + 1;
           }
           if (material_ != null) {
@@ -436,8 +436,8 @@ namespace DCL.ECSComponents {
           if (other.Path.Length != 0) {
             Path = other.Path;
           }
-          if (other.HasOverrideShadows) {
-            OverrideShadows = other.OverrideShadows;
+          if (other.HasCastShadows) {
+            CastShadows = other.CastShadows;
           }
           if (other.material_ != null) {
             if (material_ == null) {
@@ -465,7 +465,7 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 16: {
-                OverrideShadows = input.ReadBool();
+                CastShadows = input.ReadBool();
                 break;
               }
               case 26: {
@@ -495,7 +495,7 @@ namespace DCL.ECSComponents {
                 break;
               }
               case 16: {
-                OverrideShadows = input.ReadBool();
+                CastShadows = input.ReadBool();
                 break;
               }
               case 26: {

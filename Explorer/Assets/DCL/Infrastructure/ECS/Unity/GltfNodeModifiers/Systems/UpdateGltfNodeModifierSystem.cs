@@ -76,7 +76,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
 
-            asset.SetCastingShadows(!hasShadowOverride || modifier.OverrideShadows);
+            asset.SetCastingShadows(!hasShadowOverride || modifier.CastShadows);
 
             if (hasMaterialOverride) { AddOrUpdateMaterial(containerEntity, modifier.Material); }
             else
@@ -138,7 +138,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             GltfNode gltfNode = World.Get<GltfNode>(nodeEntity);
 
             foreach (Renderer? renderer in gltfNode.Renderers)
-                renderer.shadowCastingMode = !hasShadowOverride || modifier.OverrideShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+                renderer.shadowCastingMode = !hasShadowOverride || modifier.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
             if (hasMaterialOverride) { AddOrUpdateMaterial(nodeEntity, modifier.Material, partitionComponent); }
             else if (World.Has<PBMaterial>(nodeEntity))

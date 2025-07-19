@@ -475,7 +475,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
-                        OverrideShadows = true,
+                        CastShadows = true,
 
                         // No material
                     },
@@ -541,7 +541,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                     {
                         Path = "Child",
                         Material = CreatePbrMaterial(Color.blue),
-                        OverrideShadows = false,
+                        CastShadows = false,
                     },
                 },
             };

@@ -64,7 +64,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             // Add GltfNode to the container entity itself with all renderers
             CreateGlobalGltfNode(containerEntity, asset);
 
-            asset.SetCastingShadows(!hasShadowOverride || modifier.OverrideShadows);
+            asset.SetCastingShadows(!hasShadowOverride || modifier.CastShadows);
 
             if (hasMaterialOverride)
                 World.Add(containerEntity, modifier.Material);

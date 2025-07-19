@@ -30,7 +30,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected static (bool hasShadowOverride, bool hasMaterialOverride) GetModifierOverrides(PBGltfNodeModifiers.Types.GltfNodeModifier modifier)
         {
-            bool hasShadowOverride = modifier.HasOverrideShadows;
+            bool hasShadowOverride = modifier.HasCastShadows;
             bool hasMaterialOverride = modifier.Material != null && modifier.Material.MaterialCase != PBMaterial.MaterialOneofCase.None;
             return (hasShadowOverride, hasMaterialOverride);
         }
@@ -177,7 +177,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
                 Path = modifier.Path,
             });
 
-            renderer.shadowCastingMode = !hasShadowOverride || modifier.OverrideShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            renderer.shadowCastingMode = !hasShadowOverride || modifier.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
             if (hasMaterialOverride)
                 World.Add(nodeEntity, modifier.Material, partitionComponent);
