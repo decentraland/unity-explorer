@@ -11,6 +11,7 @@ using UnityEngine.Rendering;
 using Utility.Primitives;
 using System.Collections.Generic;
 using ECS.Unity.GLTFContainer.Components;
+using DCL.ECSComponents;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -65,35 +66,57 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(world.Has<MaterialComponent>(entity), Is.False);
         }
 
-        /*[Test]
-        public void ResetGltfContainerMaterial()
+                [Test]
+        public void ResetGltfNodeMaterial()
         {
             // Arrange
             var originalMaterial = new Material(DefaultMaterial.Get());
             var newMaterial = new Material(DefaultMaterial.Get());
-            var meshRenderer = new GameObject("TestRenderer").AddComponent<MeshRenderer>();
+            var testGameObject = new GameObject("TestRenderer");
+            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = newMaterial;
 
+            // Create container entity with original materials
+            var containerEntity = world.Create();
             var gltfContainerComponent = new GltfContainerComponent
             {
-                OriginalMaterials = new List<(Renderer renderer, Material material)> { (meshRenderer, originalMaterial) }
+                OriginalMaterials = new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } }
             };
+            world.Add(containerEntity, gltfContainerComponent);
 
+            // Create GltfNode entity with cleanup intention
             var materialComponent = new MaterialComponent
             {
                 Result = newMaterial,
                 Status = StreamableLoading.LifeCycle.Applied
             };
 
-            var gltfEntity = world.Create(gltfContainerComponent, materialComponent);
+            var cleanupIntention = new GltfNodeMaterialCleanupIntention
+            {
+                Renderers = new List<Renderer> { meshRenderer },
+                ContainerEntity = containerEntity,
+                Destroy = true
+            };
+
+            var gltfNodeEntity = world.Create(cleanupIntention, materialComponent, new PBMaterial
+            {
+                Pbr = new PBMaterial.Types.PbrMaterial
+                {
+                    AlbedoColor = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f }
+                }
+            });
 
             // Act
             system.Update(0);
 
             // Assert
             Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
-            Assert.IsFalse(world.Has<MaterialComponent>(gltfEntity));
-            Assert.IsNull(world.Get<GltfContainerComponent>(gltfEntity).OriginalMaterials);
-        }*/
+            Assert.That(world.IsAlive(gltfNodeEntity), Is.False); // Entity should be destroyed
+
+            // Cleanup
+            Object.DestroyImmediate(testGameObject);
+            Object.DestroyImmediate(originalMaterial);
+            Object.DestroyImmediate(newMaterial);
+        }
     }
 }

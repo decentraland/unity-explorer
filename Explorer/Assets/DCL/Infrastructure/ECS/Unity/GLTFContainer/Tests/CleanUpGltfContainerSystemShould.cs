@@ -53,16 +53,18 @@ namespace ECS.Unity.GLTFContainer.Tests
             collidersSceneCache.Received(2).Remove(Arg.Any<Collider>());
         }
 
-        /*[Test]
-        public void ResetMaterialOnDestroy()
+        [Test]
+        public void AddGltfNodeModifiersCleanupIntentionOnDestroy()
         {
             // Arrange
             var originalMaterial = new Material(DefaultMaterial.Get());
             var newMaterial = new Material(DefaultMaterial.Get());
-            var meshRenderer = new GameObject("TestRenderer").AddComponent<MeshRenderer>();
+            var testGameObject = new GameObject("TestRenderer");
+            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = newMaterial;
 
-            var asset = GltfContainerAsset.Create(new GameObject(), null);
+            var rootGameObject = new GameObject();
+            var asset = GltfContainerAsset.Create(rootGameObject, null);
             asset.Renderers.Add(meshRenderer);
 
             var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
@@ -72,16 +74,26 @@ namespace ECS.Unity.GLTFContainer.Tests
             {
                 Promise = promise,
                 State = LoadingState.Finished,
-                OriginalMaterials = new List<(Renderer renderer, Material material)> { (meshRenderer, originalMaterial) }
+                OriginalMaterials = new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } },
+                GltfNodeEntities = new List<Entity>()
             };
 
-            var entity = world.Create(gltfContainerComponent, new DeleteEntityIntention());
+            // Add the GltfNodeModifiers component to simulate an entity with node modifiers
+            var entity = world.Create(gltfContainerComponent, new DeleteEntityIntention(), new GltfNodeModifiers());
 
             // Act
             system.Update(0);
 
             // Assert
-            Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
-        }*/
+            Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.True);
+            Assert.That(world.TryGet(entity, out GltfContainerComponent component), Is.True);
+            Assert.IsTrue(component.Promise.Entity == Entity.Null || !world.IsAlive(component.Promise.Entity));
+
+            // Cleanup
+            Object.DestroyImmediate(testGameObject);
+            Object.DestroyImmediate(rootGameObject);
+            Object.DestroyImmediate(originalMaterial);
+            Object.DestroyImmediate(newMaterial);
+        }
     }
 }

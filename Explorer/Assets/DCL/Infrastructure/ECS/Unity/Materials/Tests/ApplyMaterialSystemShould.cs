@@ -15,6 +15,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.StreamableLoading.Common;
+using System.Collections.Generic;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -64,45 +65,68 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(renderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
         }
 
-        /*[Test]
-        public void ApplyMaterialToGltfContainer()
+        [Test]
+        public void ApplyMaterialToGltfNode()
         {
             // Arrange
             var originalMaterial = new Material(DefaultMaterial.Get());
             var newMaterial = new Material(DefaultMaterial.Get());
-            var meshRenderer = new GameObject("TestRenderer").AddComponent<MeshRenderer>();
+            var testGameObject = new GameObject("TestRenderer");
+            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = originalMaterial;
 
-            var asset = GltfContainerAsset.Create(new GameObject(), null);
+            var rootGameObject = new GameObject();
+            var asset = GltfContainerAsset.Create(rootGameObject, null);
             asset.Renderers.Add(meshRenderer);
 
             var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention(), new PartitionComponent());
             world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
 
+            // Create container entity
+            var containerEntity = world.Create();
             var gltfContainerComponent = new GltfContainerComponent
             {
                 Promise = promise,
-                State = LoadingState.Finished
+                State = LoadingState.Finished,
+                OriginalMaterials = new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } }
             };
+            world.Add(containerEntity, gltfContainerComponent);
 
+            // Create GltfNode entity
             var materialComponent = new MaterialComponent
             {
                 Result = newMaterial,
                 Status = StreamableLoading.LifeCycle.LoadingFinished
             };
 
-            var entity = world.Create(gltfContainerComponent, materialComponent, new PBMaterial());
+            var gltfNode = new GltfNode
+            {
+                Renderers = new List<Renderer> { meshRenderer },
+                ContainerEntity = containerEntity,
+                Path = "TestNode"
+            };
+
+            var gltfNodeEntity = world.Create(gltfNode, materialComponent, new PBMaterial
+            {
+                Pbr = new PBMaterial.Types.PbrMaterial
+                {
+                    AlbedoColor = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f }
+                }
+            });
 
             // Act
             system.Update(0);
 
             // Assert
-            var updatedGltfContainer = world.Get<GltfContainerComponent>(entity);
             Assert.AreEqual(newMaterial, meshRenderer.sharedMaterial);
-            Assert.IsNotNull(updatedGltfContainer.OriginalMaterials);
-            Assert.AreEqual(1, updatedGltfContainer.OriginalMaterials.Count);
-            Assert.AreEqual(originalMaterial, updatedGltfContainer.OriginalMaterials[0].material);
-            Assert.AreEqual(StreamableLoading.LifeCycle.Applied, world.Get<MaterialComponent>(entity).Status);
-        }*/
+            Assert.AreEqual(StreamableLoading.LifeCycle.Applied, world.Get<MaterialComponent>(gltfNodeEntity).Status);
+            Assert.That(meshRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off)); // Default material behavior
+
+            // Cleanup
+            Object.DestroyImmediate(testGameObject);
+            Object.DestroyImmediate(rootGameObject);
+            Object.DestroyImmediate(originalMaterial);
+            Object.DestroyImmediate(newMaterial);
+        }
     }
 }
