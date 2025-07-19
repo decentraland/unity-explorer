@@ -4,11 +4,12 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace ECS.Unity.Materials.Systems
 {
@@ -31,16 +32,41 @@ namespace ECS.Unity.Materials.Systems
 
         protected override void Update(float t)
         {
-            ResetQuery(World);
-            World.Remove<PrimitiveMeshRendererComponent>(in Reset_QueryDescription);
+            ResetPrimitiveMeshQuery(World);
+            ResetGltfNodeQuery(World);
         }
 
         [Query]
         [None(typeof(PBMaterial))]
-        private void Reset(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
+        private void ResetPrimitiveMesh(Entity entity, ref PrimitiveMeshRendererComponent meshRendererComponent, ref MaterialComponent materialComponent)
         {
             meshRendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes, sceneData.Geometry.Height);
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
+            World.Remove<MaterialComponent>(entity);
+        }
+
+        [Query]
+        private void ResetGltfNode(Entity entity, ref GltfNodeMaterialCleanupIntention cleanupIntention, ref MaterialComponent materialComponent)
+        {
+            var gltfContainer = World.TryGetRef<GltfContainerComponent>(cleanupIntention.ContainerEntity, out bool exists);
+            if (!exists) return;
+
+            // Reset all renderers to their original state
+            foreach (var renderer in cleanupIntention.Renderers)
+            {
+                if (gltfContainer.OriginalMaterials!.TryGetValue(renderer, out var originalMaterial))
+                    renderer.sharedMaterial = originalMaterial;
+            }
+
+            // Clean up the material component and remove the entity
+            ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
+            World.Remove<PBMaterial>(entity);
+            World.Remove<MaterialComponent>(entity);
+            World.Remove<GltfNodeMaterialCleanupIntention>(entity);
+
+            // Destroy the entity if requested and it's not the container entity itself
+            if (cleanupIntention.Destroy && entity != cleanupIntention.ContainerEntity)
+                World.Destroy(entity);
         }
     }
 }

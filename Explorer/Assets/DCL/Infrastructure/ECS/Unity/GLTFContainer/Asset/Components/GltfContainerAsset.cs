@@ -6,6 +6,7 @@ using ECS.Unity.SceneBoundsChecker;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Components
@@ -70,6 +71,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             Animators = animators;
 
             ProfilingCounters.GltfContainerAssetsAmount.Value++;
+        }
+
+        public void SetCastingShadows(bool newValue)
+        {
+            for (var i = 0; i < Renderers.Count; i++)
+            {
+                Renderers[i].shadowCastingMode = newValue ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            }
         }
 
         public void Dispose()

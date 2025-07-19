@@ -7,12 +7,12 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GltfNodeModifiers.Components;
 using System;
 using System.Runtime.CompilerServices;
 using Utility.Arch;
@@ -60,12 +60,16 @@ namespace ECS.Unity.GLTFContainer.Systems
             component.Promise.ForgetLoading(World);
             ecsToCRDTWriter.DeleteMessage<PBGltfContainerLoadingState>(sdkEntity);
             RemoveAnimationMarker(entity);
+
+            if (World.Has<GltfNodeModifiers.Components.GltfNodeModifiers>(entity))
+                World.Add(entity, new GltfNodeModifiersCleanupIntention());
         }
 
         private void TryReleaseAsset(ref GltfContainerComponent component)
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
+                component.ResetOriginalMaterials();
                 cache.Dereference(component.Hash, result.Asset);
                 entityCollidersSceneCache.Remove(result.Asset);
             }
@@ -91,6 +95,11 @@ namespace ECS.Unity.GLTFContainer.Systems
                 // It will be a signal to create a new promise
                 component.State = LoadingState.Unknown;
                 component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
+                component.RootGameObject = null;
+
+                if (World.Has<GltfNodeModifiers.Components.GltfNodeModifiers>(entity))
+                    World.Add(entity, new GltfNodeModifiersCleanupIntention());
+
                 eventsBuffer.Add(entity, component);
                 RemoveAnimationMarker(entity);
             }

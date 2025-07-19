@@ -9,6 +9,10 @@ using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Utility.Primitives;
+using System.Collections.Generic;
+using ECS.Unity.GLTFContainer.Components;
+using DCL.ECSComponents;
+using ECS.Unity.GltfNodeModifiers.Components;
 
 namespace ECS.Unity.Materials.Tests
 {
@@ -60,7 +64,60 @@ namespace ECS.Unity.Materials.Tests
         {
             system.Update(0);
 
-            Assert.That(world.Has<PrimitiveMeshRendererComponent>(entity), Is.False);
+            Assert.That(world.Has<MaterialComponent>(entity), Is.False);
+        }
+
+                [Test]
+        public void ResetGltfNodeMaterial()
+        {
+            // Arrange
+            var originalMaterial = new Material(DefaultMaterial.Get());
+            var newMaterial = new Material(DefaultMaterial.Get());
+            var testGameObject = new GameObject("TestRenderer");
+            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = newMaterial;
+
+            // Create container entity with original materials
+            var containerEntity = world.Create();
+            var gltfContainerComponent = new GltfContainerComponent
+            {
+                OriginalMaterials = new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } }
+            };
+            world.Add(containerEntity, gltfContainerComponent);
+
+            // Create GltfNode entity with cleanup intention
+            var materialComponent = new MaterialComponent
+            {
+                Result = newMaterial,
+                Status = StreamableLoading.LifeCycle.Applied
+            };
+
+            var cleanupIntention = new GltfNodeMaterialCleanupIntention
+            {
+                Renderers = new[] { meshRenderer },
+                ContainerEntity = containerEntity,
+                Destroy = true
+            };
+
+            var gltfNodeEntity = world.Create(cleanupIntention, materialComponent, new PBMaterial
+            {
+                Pbr = new PBMaterial.Types.PbrMaterial
+                {
+                    AlbedoColor = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f }
+                }
+            });
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
+            Assert.That(world.IsAlive(gltfNodeEntity), Is.False); // Entity should be destroyed
+
+            // Cleanup
+            Object.DestroyImmediate(testGameObject);
+            Object.DestroyImmediate(originalMaterial);
+            Object.DestroyImmediate(newMaterial);
         }
     }
 }

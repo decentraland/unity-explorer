@@ -8,12 +8,14 @@ namespace ECS.StreamableLoading.GLTF
 {
     public class GLTFData : StreamableRefCountData<GltfImport>
     {
-        public readonly GameObject containerGameObject;
+        public readonly GameObject ContainerGameObject;
+        public readonly GameObject RootGameObject;
 
         public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject)
             : base(gltfImportedData, ReportCategory.GLTF_CONTAINER)
         {
-            this.containerGameObject = containerGameObject;
+            this.ContainerGameObject = containerGameObject;
+            RootGameObject = containerGameObject.transform.GetChild(0).gameObject;
         }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.GltfDataAmount;
@@ -26,8 +28,8 @@ namespace ECS.StreamableLoading.GLTF
             Asset?.Dispose();
 
             // Destroy the container GameObject
-            if (containerGameObject != null)
-                Object.Destroy(containerGameObject);
+            if (ContainerGameObject != null)
+                Object.Destroy(ContainerGameObject);
         }
     }
 }
