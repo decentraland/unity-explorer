@@ -48,9 +48,12 @@ namespace Global.Editor
 
         private static Rect DrawTargetScene(Rect propertyPosition, SerializedProperty parent, InitialRealm initialRealm)
         {
+            SerializedProperty overrideSceneStartPosition = parent.FindPropertyRelative(nameof(RealmLaunchSettings.overrideSceneStartPositionEditor));
+            EditorGUI.PropertyField(propertyPosition, overrideSceneStartPosition, new GUIContent("Editor Override Start Position", "If this is on, the feature flag position will not be set"), true);
+            propertyPosition.y += singleLineHeight;
+
             Rect fieldPosition = propertyPosition;
             SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.targetScene));
-
             const float BUTTON_WIDTH = 80f;
 
             if (TEST_REALMS.Contains(initialRealm))
