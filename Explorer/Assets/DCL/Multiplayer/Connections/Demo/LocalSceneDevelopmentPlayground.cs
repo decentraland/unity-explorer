@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.Connections.Demo
             IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource, new Web3AccountFactory());
             var webRequests = new LogWebRequestController(new WebRequestController(new WebRequestsAnalyticsContainer(), identityCache, new RequestHub(urlsSource)));
 
-            var metaDataSource = new ConstSceneRoomMetaDataSource("random-name").WithLog();
+            var metaDataSource = new LocalSceneDevelopmentSceneRoomMetaDataSource(webRequests).WithLog();
             var options = new GateKeeperSceneRoomOptions(launchMode, urlsSource, metaDataSource, metaDataSource);
 
             new GateKeeperSceneRoom(

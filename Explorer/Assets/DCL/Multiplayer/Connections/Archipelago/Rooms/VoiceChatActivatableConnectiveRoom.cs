@@ -184,18 +184,18 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Chat
             // Create a fresh room instance each time to ensure clean state
             var freshRoom = CreateFreshRoom();
 
-            bool connectResult = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
+            (bool success, string? errorMessage) connectResult = await freshRoom.ConnectAsync(credentials.Url, credentials.AuthToken, ct, true);
 
-            AttemptToConnectState connectionState = connectResult ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
+            AttemptToConnectState connectionState = connectResult.success ? AttemptToConnectState.SUCCESS : AttemptToConnectState.ERROR;
             attemptToConnectState.Set(connectionState);
 
-            if (connectResult)
+            if (connectResult.success)
             {
                 room.Assign(freshRoom, out IRoom _);
                 roomState.Set(IConnectiveRoom.State.Running);
             }
 
-            return connectResult;
+            return connectResult.success;
         }
 
         private static IRoom CreateFreshRoom()
