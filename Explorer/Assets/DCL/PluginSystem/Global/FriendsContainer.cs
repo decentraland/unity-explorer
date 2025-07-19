@@ -48,6 +48,8 @@ namespace DCL.PluginSystem.Global
         private readonly ILoadingStatus loadingStatus;
         private readonly IInputBlock inputBlock;
         private readonly bool includeUserBlocking;
+        private readonly bool includeCall;
+        private readonly IAppArgs appArgs;
         private readonly ISocialServiceEventBus socialServiceEventBus;
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
@@ -80,6 +82,8 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             IOnlineUsersProvider onlineUsersProvider,
             IRealmNavigator realmNavigator,
+            bool includeUserBlocking,
+            bool includeCall,
             IAppArgs appArgs,
             bool useAnalytics,
             IAnalyticsController? analyticsController,
@@ -102,7 +106,9 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.loadingStatus = loadingStatus;
             this.inputBlock = inputBlock;
-            this.includeUserBlocking =  FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_USER_BLOCKING);
+            this.includeUserBlocking = includeUserBlocking;
+            this.includeCall = includeCall;
+            this.appArgs = appArgs;
             this.socialServiceEventBus = socialServiceEventBus;
             this.friendsEventBus = friendsEventBus;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
@@ -116,7 +122,9 @@ namespace DCL.PluginSystem.Global
 
             this.socialServiceEventBus.TransportClosed += OnTransportClosed;
 
-            friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus);
+            bool isConnectivityStatusEnabled = IsConnectivityStatusEnabled();
+
+            friendsConnectivityStatusTracker = new FriendsConnectivityStatusTracker(friendsEventBus, isConnectivityStatusEnabled);
 
             friendsPanelController = new FriendsPanelController(() =>
                 {
@@ -135,6 +143,9 @@ namespace DCL.PluginSystem.Global
                 realmNavigator,
                 friendsConnectivityStatusTracker,
                 chatEventBus,
+                includeUserBlocking,
+                includeCall,
+                isConnectivityStatusEnabled,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
                 voiceChatCallStatusService
@@ -261,6 +272,10 @@ namespace DCL.PluginSystem.Global
             }
         }
 
+        private bool IsConnectivityStatusEnabled() =>
+            appArgs.HasFlag(AppArgsFlags.FRIENDS_ONLINE_STATUS)
+            || FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.FRIENDS_ONLINE_STATUS);
+
         private void OnRPCClientReconnected()
         {
             friendServiceSubscriptionCts = friendServiceSubscriptionCts.SafeRestart();
@@ -279,7 +294,7 @@ namespace DCL.PluginSystem.Global
         {
             rpcFriendsService.SubscribeToIncomingFriendshipEventsAsync(ct).Forget();
 
-            if (FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS_ONLINE_STATUS))
+            if (IsConnectivityStatusEnabled())
                 rpcFriendsService.SubscribeToConnectivityStatusAsync(ct).Forget();
 
             if (includeUserBlocking)

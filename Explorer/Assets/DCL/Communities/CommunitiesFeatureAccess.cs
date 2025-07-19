@@ -1,42 +1,45 @@
+using CodeLess.Attributes;
 using Cysharp.Threading.Tasks;
-using DCL.Web3;
+using DCL.FeatureFlags;
 using DCL.Web3.Identities;
 using System;
 using System.Threading;
 
-namespace DCL.FeatureFlags
+namespace DCL.Communities
 {
-    /// <summary>
-    ///     Handles complex communities feature logic including identity-based allowlists.
-    /// </summary>
-    public class CommunitiesFeatureProvider : IFeatureProvider
+    [Singleton]
+    public partial class CommunitiesFeatureAccess
     {
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private bool? storedResult;
 
-        public CommunitiesFeatureProvider(IWeb3IdentityCache web3IdentityCache)
+        private bool? storedResult;
+        private bool? storedMembersCounterResult;
+
+        public CommunitiesFeatureAccess(IWeb3IdentityCache web3IdentityCache)
         {
             this.web3IdentityCache = web3IdentityCache;
+
             web3IdentityCache.OnIdentityChanged += OnIdentityCacheChanged;
         }
 
         /// <summary>
-        ///     Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
+        /// Checks if the Communities feature flag is activated and if the user is allowed to use the feature based on the allowlist from the feature flag.
         /// </summary>
         /// <returns>True if the user is allowed to use the feature, false otherwise.</returns>
-        public async UniTask<bool> IsFeatureEnabledAsync(CancellationToken ct)
+        public async UniTask<bool> IsUserAllowedToUseTheFeatureAsync(CancellationToken ct, bool ignoreAllowedList = false, bool cacheResult = true)
         {
+            if (!cacheResult)
+                storedResult = null;
+
             if (storedResult != null)
                 return storedResult.Value;
 
             bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES);
 
-            return result;
-
-            if (result)
+            if (result && !ignoreAllowedList)
             {
                 await UniTask.WaitUntil(() => web3IdentityCache.Identity != null, cancellationToken: ct);
-                Web3Address ownWalletId = web3IdentityCache.Identity!.Address;
+                var ownWalletId = web3IdentityCache.Identity!.Address;
 
                 if (string.IsNullOrEmpty(ownWalletId))
                     result = false;
@@ -44,9 +47,20 @@ namespace DCL.FeatureFlags
                 {
                     FeatureFlagsConfiguration.Instance.TryGetTextPayload(FeatureFlagsStrings.COMMUNITIES, FeatureFlagsStrings.COMMUNITIES_WALLETS_VARIANT, out string? walletsAllowlist);
                     result = string.IsNullOrEmpty(walletsAllowlist) || walletsAllowlist.Contains(ownWalletId, StringComparison.OrdinalIgnoreCase);
-                }            }
+                }
+            }
 
-            storedResult = result;
+            storedResult = cacheResult ? result : null;
+            return result;
+        }
+
+        public bool CanMembersCounterBeDisplayer()
+        {
+            if (storedMembersCounterResult != null)
+                return storedMembersCounterResult.Value;
+
+            bool result = FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.COMMUNITIES_MEMBERS_COUNTER);
+            storedMembersCounterResult = result;
             return result;
         }
 
