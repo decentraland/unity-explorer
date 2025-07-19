@@ -113,11 +113,16 @@ namespace ECS.Unity.GLTFContainer.Systems
                 || gltfContainer.State != LoadingState.Finished
                 || gltfContainer.RootGameObject == null
                 || !gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result)
-                || !result.Succeeded
-                || gltfNodeModifiers.Modifiers.Count == 0)
+                || !result.Succeeded)
                 return;
 
             gltfNodeModifiers.IsDirty = false;
+
+            if (gltfNodeModifiers.Modifiers.Count == 0)
+            {
+                CleanupAllGltfNodeEntities(entity, in gltfContainer);
+                return;
+            }
 
             // Special case: single modifier with empty path applies to ALL renderers
             if (IsGltfRootModifier(gltfNodeModifiers.Modifiers))
@@ -332,14 +337,8 @@ namespace ECS.Unity.GLTFContainer.Systems
         [All(typeof(GltfNodeModifiersCleanupIntention), typeof(GltfNodeModifiers))]
         private void HandleGltfNodeModifiersCleanup(Entity containerEntity, ref GltfContainerComponent gltfContainer)
         {
-            if (gltfContainer.GltfNodeEntities == null || gltfContainer.GltfNodeEntities.Count == 0) return;
+            CleanupAllGltfNodeEntities(containerEntity, in gltfContainer);
 
-            foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities)
-            {
-                CleanupGltfNodeEntity(gltfNodeEntity, containerEntity);
-            }
-
-            gltfContainer.GltfNodeEntities.Clear();
             gltfContainer.GltfNodeEntities = null;
             World.Remove<GltfNodeModifiers>(containerEntity);
             World.Remove<GltfNodeModifiersCleanupIntention>(containerEntity);
@@ -350,19 +349,27 @@ namespace ECS.Unity.GLTFContainer.Systems
         [None(typeof(PBGltfNodeModifiers))]
         private void HandleGltfNodeModifiersRemoval(Entity containerEntity, in GltfContainerComponent gltfContainer)
         {
+            CleanupAllGltfNodeEntities(containerEntity, in gltfContainer);
+
+            World.Remove<GltfNodeModifiers>(containerEntity);
+        }
+
+        /// <summary>
+        ///     Cleans up ALL GltfNode entities
+        /// </summary>
+        private void CleanupAllGltfNodeEntities(Entity containerEntity, in GltfContainerComponent gltfContainer)
+        {
             if (gltfContainer.GltfNodeEntities == null || gltfContainer.GltfNodeEntities.Count == 0) return;
 
             foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities)
             {
                 CleanupGltfNodeEntity(gltfNodeEntity, containerEntity);
             }
-
             gltfContainer.GltfNodeEntities.Clear();
-            World.Remove<GltfNodeModifiers>(containerEntity);
         }
 
         /// <summary>
-        ///     Cleans up a single GltfNode entity during removal
+        ///     Cleans up a single GltfNode entity
         /// </summary>
         private void CleanupGltfNodeEntity(Entity gltfNodeEntity, Entity containerEntity)
         {
