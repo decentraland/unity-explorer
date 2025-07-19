@@ -1,9 +1,7 @@
 ﻿using Arch.Core;
 using CRDT;
-using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.GLTFContainer.Asset.Components;
-using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Textures.Components;
 using System.Collections.Generic;
@@ -44,7 +42,7 @@ namespace ECS.Unity.Textures.Utils
             {
                 // Use the first renderer for VideoRenderer (for backward compatibility)
                 info.VideoRenderer = gltfNode.Renderers.Count > 0 ? gltfNode.Renderers[0] : null;
-                
+
                 // Add all renderers as consumers
                 foreach (var renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);

@@ -1,5 +1,5 @@
 
-namespace ECS.Unity.GLTFContainer.Components
+namespace ECS.Unity.GltfNodeModifiers.Components
 {
     public struct GltfNodeModifiers
     {

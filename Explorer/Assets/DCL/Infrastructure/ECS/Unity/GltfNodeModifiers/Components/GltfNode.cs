@@ -2,7 +2,7 @@ using Arch.Core;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ECS.Unity.GLTFContainer.Components
+namespace ECS.Unity.GltfNodeModifiers.Components
 {
     /// <summary>
     ///     Component to mark entities that represent GLTF nodes and hold references to their Unity components

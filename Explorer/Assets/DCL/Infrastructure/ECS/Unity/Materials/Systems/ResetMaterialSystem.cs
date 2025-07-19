@@ -5,11 +5,11 @@ using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
-using UnityEngine.Rendering;
 
 namespace ECS.Unity.Materials.Systems
 {

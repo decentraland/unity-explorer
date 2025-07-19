@@ -2,7 +2,7 @@ using Arch.Core;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ECS.Unity.GLTFContainer.Components
+namespace ECS.Unity.GltfNodeModifiers.Components
 {
     /// <summary>
     ///     Component to mark GltfNode entities that require material cleanup

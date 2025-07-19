@@ -12,7 +12,7 @@ using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.Materials.Components.Defaults;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -22,7 +22,6 @@ using ECS.Unity.Textures.Utils;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Entity = Arch.Core.Entity;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 

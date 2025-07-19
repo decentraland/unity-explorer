@@ -10,6 +10,7 @@ using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
+using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;
@@ -79,7 +80,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             };
 
             // Add the GltfNodeModifiers component to simulate an entity with node modifiers
-            var entity = world.Create(gltfContainerComponent, new DeleteEntityIntention(), new GltfNodeModifiers());
+            var entity = world.Create(gltfContainerComponent, new DeleteEntityIntention(), new GltfNodeModifiers.Components.GltfNodeModifiers());
 
             // Act
             system.Update(0);

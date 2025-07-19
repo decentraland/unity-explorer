@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GltfNodeModifiers.Components;
 using System;
 using System.Runtime.CompilerServices;
 using Utility.Arch;
@@ -60,7 +61,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             ecsToCRDTWriter.DeleteMessage<PBGltfContainerLoadingState>(sdkEntity);
             RemoveAnimationMarker(entity);
 
-            if (World.Has<GltfNodeModifiers>(entity))
+            if (World.Has<GltfNodeModifiers.Components.GltfNodeModifiers>(entity))
                 World.Add(entity, new GltfNodeModifiersCleanupIntention());
         }
 
@@ -96,7 +97,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
                 component.RootGameObject = null;
 
-                if (World.Has<GltfNodeModifiers>(entity))
+                if (World.Has<GltfNodeModifiers.Components.GltfNodeModifiers>(entity))
                     World.Add(entity, new GltfNodeModifiersCleanupIntention());
 
                 eventsBuffer.Add(entity, component);

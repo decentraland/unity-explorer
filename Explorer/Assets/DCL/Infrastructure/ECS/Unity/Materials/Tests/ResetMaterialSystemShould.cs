@@ -12,6 +12,7 @@ using Utility.Primitives;
 using System.Collections.Generic;
 using ECS.Unity.GLTFContainer.Components;
 using DCL.ECSComponents;
+using ECS.Unity.GltfNodeModifiers.Components;
 
 namespace ECS.Unity.Materials.Tests
 {

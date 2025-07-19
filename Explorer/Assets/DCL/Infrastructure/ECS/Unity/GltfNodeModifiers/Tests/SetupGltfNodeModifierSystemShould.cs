@@ -6,7 +6,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
-using ECS.Unity.GLTFContainer.Systems;
+using ECS.Unity.GltfNodeModifiers.Components;
+using ECS.Unity.GltfNodeModifiers.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
@@ -14,9 +15,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Utility.Primitives;
 
-namespace ECS.Unity.GLTFContainer.Tests
+namespace ECS.Unity.GltfNodeModifiers.Tests
 {
-    public class GltfNodeModifierSystemShould : UnitySystemTestBase<GltfNodeModifierSystem>
+    public class SetupGltfNodeModifierSystemShould : UnitySystemTestBase<SetupGltfNodeModifierSystem>
     {
         private GameObject rootGameObject;
         private GameObject childGameObject;
@@ -29,7 +30,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new GltfNodeModifierSystem(world);
+            system = new SetupGltfNodeModifierSystem(world);
 
             // Create test GameObjects with renderers
             rootGameObject = new GameObject("Root");
@@ -108,7 +109,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeModifiers>(entity), Is.True);
+            Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.True);
             Assert.That(world.Has<GltfNode>(entity), Is.True);
             Assert.That(world.Has<PBMaterial>(entity), Is.True);
 
@@ -153,7 +154,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeModifiers>(entity), Is.True);
+            Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.True);
             Assert.That(world.Has<GltfNode>(entity), Is.False);
 
             var updatedContainer = world.Get<GltfContainerComponent>(entity);
@@ -169,280 +170,6 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(gltfNode.Renderers[0], Is.EqualTo(childRenderer));
             Assert.That(gltfNode.ContainerEntity, Is.EqualTo(entity));
             Assert.That(gltfNode.Path, Is.EqualTo("Child"));
-        }
-
-        [Test]
-        public void UpdateGlobalModifier_TransitionFromIndividualToGlobal()
-        {
-            // Arrange - Start with individual modifier
-            var gltfContainer = CreateGltfContainer();
-            var gltfNodeModifiers = new PBGltfNodeModifiers
-            {
-                Modifiers = {
-                    new PBGltfNodeModifiers.Types.GltfNodeModifier
-                    {
-                        Path = "Child",
-                        Material = new PBMaterial
-                        {
-                            Pbr = new PBMaterial.Types.PbrMaterial
-                            {
-                                AlbedoColor = new Decentraland.Common.Color4 { R = 0f, G = 1f, B = 0f, A = 1f }
-                            }
-                        }
-                    }
-                }
-            };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
-
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            var originalChildEntity = updatedContainer.GltfNodeEntities[0];
-
-            // Act - Update to global modifier
-             var globalModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = true,
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "",
-                         Material = new PBMaterial
-                         {
-                             Pbr = new PBMaterial.Types.PbrMaterial
-                             {
-                                 AlbedoColor = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f }
-                             }
-                         }
-                     }
-                 }
-             };
-
-            world.Set(entity, globalModifiers);
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(originalChildEntity), Is.True);
-            Assert.That(world.Has<GltfNode>(originalChildEntity), Is.False);
-            Assert.That(world.Has<GltfNode>(entity), Is.True); // Container should now have GltfNode
-
-            updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(1));
-            Assert.That(updatedContainer.GltfNodeEntities[0], Is.EqualTo(entity));
-
-            var gltfNode = world.Get<GltfNode>(entity);
-            Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2)); // Should have all renderers
-        }
-
-        [Test]
-        public void UpdateIndividualModifiers_TransitionFromGlobalToIndividual()
-        {
-            // Arrange - Start with global modifier
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "",
-                         Material = new PBMaterial
-                         {
-                             Pbr = new PBMaterial.Types.PbrMaterial
-                             {
-                                 AlbedoColor = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f }
-                             }
-                         }
-                     }
-                 }
-             };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
-
-            // Act - Update to individual modifiers
-             var individualModifiers = new PBGltfNodeModifiers
-             {
-                 IsDirty = true,
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = new PBMaterial
-                         {
-                             Pbr = new PBMaterial.Types.PbrMaterial
-                             {
-                                 AlbedoColor = new Decentraland.Common.Color4 { R = 0f, G = 1f, B = 0f, A = 1f }
-                             }
-                         }
-                     }
-                 }
-             };
-
-            world.Set(entity, individualModifiers);
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<GltfNode>(entity), Is.False);
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(entity), Is.True);
-
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(1));
-
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
-            Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
-            Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
-        }
-
-        [Test]
-        public void UpdateExistingGltfNodeEntity_ModifyMaterial()
-         {
-             // Arrange
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.green)
-                     }
-                 }
-             };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
-
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
-
-            // Act - Update with new material
-            var updatedModifiers = new PBGltfNodeModifiers
-            {
-                IsDirty = true,
-                Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreateUnlitMaterial(Color.blue)
-                     }
-                }
-            };
-
-            world.Set(entity, updatedModifiers);
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
-            var pbMaterial = world.Get<PBMaterial>(childNodeEntity);
-             Assert.That(pbMaterial.Unlit, Is.Not.Null);
-            Assert.That(pbMaterial.IsDirty, Is.True);
-        }
-
-         [Test]
-         public void CleanupOrphanedEntities_WhenModifiersRemoved()
-         {
-             // Arrange
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.green)
-                     }
-                 }
-             };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
-
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
-
-            // Act - Remove all modifiers
-            var emptyModifiers = new PBGltfNodeModifiers
-            {
-                IsDirty = true,
-                Modifiers = { } // Empty list
-            };
-
-            world.Set(entity, emptyModifiers);
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childNodeEntity), Is.True);
-            Assert.That(world.Has<GltfNode>(childNodeEntity), Is.False);
-            updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
-        }
-
-        [Test]
-         public void HandleGltfNodeModifiersRemoval_CleanupAllEntities()
-         {
-             // Arrange
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.green)
-                     }
-                 }
-             };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
-
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
-
-            // Act - Remove PBGltfNodeModifiers component
-            world.Remove<PBGltfNodeModifiers>(entity);
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childNodeEntity), Is.True);
-            Assert.That(world.Has<GltfNode>(childNodeEntity), Is.False);
-            Assert.That(world.Has<GltfNodeModifiers>(entity), Is.False);
-            updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
-        }
-
-        [Test]
-         public void HandleGltfNodeModifiersCleanup_WithCleanupIntention()
-         {
-             // Arrange
-             var gltfContainer = CreateGltfContainer();
-             var gltfNodeModifiers = new PBGltfNodeModifiers
-             {
-                 Modifiers = {
-                     new PBGltfNodeModifiers.Types.GltfNodeModifier
-                     {
-                         Path = "Child",
-                         Material = CreatePbrMaterial(Color.green)
-                     }
-                 }
-             };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
-
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
-
-            // Act - Add cleanup intention
-            world.Add(entity, new GltfNodeModifiersCleanupIntention());
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childNodeEntity), Is.True);
-            Assert.That(world.Has<GltfNode>(childNodeEntity), Is.False);
-            Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False);
-            updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.IsTrue(updatedContainer.GltfNodeEntities.Count.Equals(0));
         }
 
         [Test]
@@ -551,30 +278,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(world.Has<GltfNode>(entity), Is.False);
         }
 
-        private static PBMaterial CreatePbrMaterial(Color color)
-        {
-            return new PBMaterial
-            {
-                Pbr = new PBMaterial.Types.PbrMaterial
-                {
-                    AlbedoColor = new Decentraland.Common.Color4 { R = color.r, G = color.g, B = color.b, A = color.a }
-                }
-            };
-        }
-
-        private static PBMaterial CreateUnlitMaterial(Color color)
-        {
-            return new PBMaterial
-            {
-                Unlit = new PBMaterial.Types.UnlitMaterial
-                {
-                    DiffuseColor = new Decentraland.Common.Color4 { R = color.r, G = color.g, B = color.b, A = color.a }
-                }
-            };
-        }
-
         [Test]
-        public void IgnoreModifiersWithoutOverrides()
+        public void CreateEntityEvenWithoutOverrides()
         {
             // Arrange
             var gltfContainer = CreateGltfContainer();
@@ -596,7 +301,14 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             // Assert
             var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0)); // No entities should be created
+            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(1)); // Entity should be created even without overrides
+
+            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
+            Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
+            Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.False); // No material should be added
+
+            // Shadow should default to On since no override was specified
+            Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On));
         }
 
         [Test]
@@ -658,32 +370,36 @@ namespace ECS.Unity.GLTFContainer.Tests
         }
 
         [Test]
-        public void SkipUpdateWhenNotDirty()
+        public void HandleDefaultShadowBehavior()
         {
             // Arrange
             var gltfContainer = CreateGltfContainer();
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
-                IsDirty = false, // Not dirty
                 Modifiers = {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
                         Path = "Child",
                         Material = CreatePbrMaterial(Color.red)
+                        // No shadow override - should default to casting shadows
                     }
                 }
             };
 
             var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            world.Add(entity, new GltfNodeModifiers()); // Add to simulate existing setup
 
             // Act
             system.Update(0);
 
             // Assert
             var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            // Should not create any new entities because isDirty is false
-            Assert.That(updatedContainer.GltfNodeEntities, Is.Null.Or.Empty);
+            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(1));
+
+            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
+            Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
+            Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
+            // Should default to casting shadows when no override specified
+            Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On));
         }
 
         [Test]
@@ -710,11 +426,11 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeModifiers>(entity), Is.False); // Should not be added
+            Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.False); // Should not be added
         }
 
         [Test]
-        public void UpdateMaterialFromPbrToUnlit()
+        public void HandleGlobalModifierShadowOverride()
         {
             // Arrange
             var gltfContainer = CreateGltfContainer();
@@ -723,43 +439,28 @@ namespace ECS.Unity.GLTFContainer.Tests
                 Modifiers = {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
-                        Path = "Child",
-                        Material = CreatePbrMaterial(Color.red)
+                        Path = "",
+                        OverrideShadows = false // Turn off shadows globally
                     }
                 }
             };
 
             var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
-
-            // Act - Update to Unlit material
-            var updatedModifiers = new PBGltfNodeModifiers
-            {
-                IsDirty = true,
-                Modifiers = {
-                    new PBGltfNodeModifiers.Types.GltfNodeModifier
-                    {
-                        Path = "Child",
-                        Material = CreateUnlitMaterial(Color.blue)
-                    }
-                }
-            };
-
-            world.Set(entity, updatedModifiers);
+            // Act
             system.Update(0);
 
             // Assert
-            var pbMaterial = world.Get<PBMaterial>(childNodeEntity);
-            Assert.That(pbMaterial.Pbr, Is.Null);
-            Assert.That(pbMaterial.Unlit, Is.Not.Null);
-            Assert.That(pbMaterial.IsDirty, Is.True);
+            // Both renderers should have shadows turned off
+            Assert.That(rootRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
+            Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
+
+            var gltfNode = world.Get<GltfNode>(entity);
+            Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2)); // Should include all renderers
         }
 
         [Test]
-        public void RemoveMaterialFromExistingEntity()
+        public void HandleGlobalModifierWithoutOverrides()
         {
             // Arrange
             var gltfContainer = CreateGltfContainer();
@@ -768,40 +469,33 @@ namespace ECS.Unity.GLTFContainer.Tests
                 Modifiers = {
                     new PBGltfNodeModifiers.Types.GltfNodeModifier
                     {
-                        Path = "Child",
-                        Material = CreatePbrMaterial(Color.red)
+                        Path = ""
+                        // No material or shadow overrides - should still create global node
                     }
                 }
             };
 
             var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-            system.Update(0);
 
-            var updatedContainer = world.Get<GltfContainerComponent>(entity);
-            var childNodeEntity = updatedContainer.GltfNodeEntities[0];
-
-            // Act - Update to modifier without material (shadow only)
-            var updatedModifiers = new PBGltfNodeModifiers
-            {
-                IsDirty = true,
-                Modifiers = {
-                    new PBGltfNodeModifiers.Types.GltfNodeModifier
-                    {
-                        Path = "Child",
-                        OverrideShadows = true
-                        // No material
-                    }
-                }
-            };
-
-            world.Set(entity, updatedModifiers);
+            // Act
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childNodeEntity), Is.True);
+            Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.True);
+            Assert.That(world.Has<GltfNode>(entity), Is.True);
+            Assert.That(world.Has<PBMaterial>(entity), Is.False); // No material should be added
 
-            var cleanupIntention = world.Get<GltfNodeMaterialCleanupIntention>(childNodeEntity);
-            Assert.That(cleanupIntention.Destroy, Is.False); // Should not destroy entity, just clean up material
+            var updatedContainer = world.Get<GltfContainerComponent>(entity);
+            Assert.That(updatedContainer.GltfNodeEntities, Is.Not.Null);
+            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(1));
+            Assert.That(updatedContainer.GltfNodeEntities[0], Is.EqualTo(entity));
+
+            var gltfNode = world.Get<GltfNode>(entity);
+            Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2)); // Should include all renderers
+
+            // Should default to casting shadows when no override specified
+            Assert.That(rootRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On));
+            Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On));
         }
 
         [Test]
@@ -840,67 +534,26 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
         }
 
-        [Test]
-        public void HandleCleanupWithNoGltfNodeEntities()
+        private static PBMaterial CreatePbrMaterial(Color color)
         {
-            // Arrange
-            var gltfContainer = CreateGltfContainer();
-            var gltfNodeModifiers = new PBGltfNodeModifiers
+            return new PBMaterial
             {
-                Modifiers = {
-                    new PBGltfNodeModifiers.Types.GltfNodeModifier
-                    {
-                        Path = "NON-EXISTENT",
-                    },
+                Pbr = new PBMaterial.Types.PbrMaterial
+                {
+                    AlbedoColor = new Decentraland.Common.Color4 { R = color.r, G = color.g, B = color.b, A = color.a }
                 }
             };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-
-            // Act - First normal update
-            system.Update(0);
-
-            gltfContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.IsTrue(gltfContainer.GltfNodeEntities.Count.Equals(0));
-
-            // Add cleanup intention after normal operation
-            world.Add(entity, new GltfNodeModifiersCleanupIntention());
-
-            // Act - Second update with cleanup intention - Should not throw
-            Assert.DoesNotThrow(() => system.Update(0));
-
-            // Assert
-            Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False);
         }
 
-        [Test]
-        public void HandleGlobalModifierShadowOverride()
+        private static PBMaterial CreateUnlitMaterial(Color color)
         {
-            // Arrange
-            var gltfContainer = CreateGltfContainer();
-            var gltfNodeModifiers = new PBGltfNodeModifiers
+            return new PBMaterial
             {
-                Modifiers = {
-                    new PBGltfNodeModifiers.Types.GltfNodeModifier
-                    {
-                        Path = "",
-                        OverrideShadows = false // Turn off shadows globally
-                    }
+                Unlit = new PBMaterial.Types.UnlitMaterial
+                {
+                    DiffuseColor = new Decentraland.Common.Color4 { R = color.r, G = color.g, B = color.b, A = color.a }
                 }
             };
-
-            var entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            // Both renderers should have shadows turned off
-            Assert.That(rootRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
-            Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
-
-            var gltfNode = world.Get<GltfNode>(entity);
-            Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2)); // Should include all renderers
         }
     }
 }

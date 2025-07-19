@@ -1,4 +1,4 @@
-namespace ECS.Unity.GLTFContainer.Components
+namespace ECS.Unity.GltfNodeModifiers.Components
 {
     /// <summary>
     ///     Component to mark entities that require GltfNodeModifiers cleanup

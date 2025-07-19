@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.RealmNavigation;
@@ -7,7 +6,6 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.LifeCycle;
-using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.Systems;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -20,6 +18,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.GLTF;
 using Global.Dynamic.LaunchModes;
 using ECS.StreamableLoading.GLTF.DownloadProvider;
+using ECS.Unity.GltfNodeModifiers.Systems;
 
 namespace DCL.PluginSystem.World
 {
@@ -83,7 +82,11 @@ namespace DCL.PluginSystem.World
             LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache);
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
-            GltfNodeModifierSystem.InjectToWorld(ref builder);
+
+            // GLTF Node Modifier Systems
+            SetupGltfNodeModifierSystem.InjectToWorld(ref builder);
+            UpdateGltfNodeModifierSystem.InjectToWorld(ref builder);
+            CleanupGltfNodeModifierSystem.InjectToWorld(ref builder);
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);

@@ -12,6 +12,7 @@ using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GltfNodeModifiers.Components;
 using System;
 
 namespace ECS.Unity.GLTFContainer.Systems
@@ -70,7 +71,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                         result.Asset.Dispose();
                 }
 
-                if (world.Has<GltfNodeModifiers>(entity))
+                if (world.Has<GltfNodeModifiers.Components.GltfNodeModifiers>(entity))
                     world.Add(entity, new GltfNodeModifiersCleanupIntention());
 
                 // Clear the root GameObject reference
