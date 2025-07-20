@@ -37,13 +37,13 @@ namespace DCL.Chat
             chatEntryCanvasGroup.DOFade(1, 0.5f);
         }
 
-        public void SetItemData(ChatMessageViewModel data)
-        {
-            chatMessageViewModel = data;
-            usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
-            messageBubbleElement.SetMessageData(data);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-        }
+        // public void SetItemData(ChatMessageViewModel data)
+        // {
+        //     chatMessageViewModel = data;
+        //     usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
+        //     messageBubbleElement.SetMessageData(data);
+        //     LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+        // }
 
         private void Awake()
         {

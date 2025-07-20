@@ -47,13 +47,6 @@ namespace DCL.Chat.ChatUseCases
 
             chatHistoryStorage?.LoadAllChannelsWithoutMessages();
 
-            var allLoadedChannels = new List<ChatChannel>(chatHistory.Channels.Count);
-
-            foreach (ChatChannel? channel in chatHistory.Channels.Values)
-                allLoadedChannels.Add(channel);
-
-            eventBus.Publish(new ChatEvents.InitialChannelsLoadedEvent { Channels = allLoadedChannels });
-
             ct.ThrowIfCancellationRequested();
 
             HashSet<string>? connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);

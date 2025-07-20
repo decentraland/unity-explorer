@@ -448,6 +448,7 @@ GameObject:
   - component: {fileID: 2232783587231390383}
   - component: {fileID: 7876013243935759455}
   - component: {fileID: 7665502455413759823}
+  - component: {fileID: 1807510319441030586}
   m_Layer: 5
   m_Name: ChatMessageViewerElement2
   m_TagString: Untagged
@@ -594,7 +595,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3c4e7208792420abc59acba4eb77b2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  messagesContainer: {fileID: 0}
-  loopListView: {fileID: 7876013243935759455}
-  scrollRect: {fileID: 2232783587231390383}
+  chatEntriesFadeTime: 3
+  chatEntriesWaitBeforeFading: 10000
   scrollbarCanvasGroup: {fileID: 2190985324859330998}
+  chatEntriesCanvasGroup: {fileID: 1807510319441030586}
+  loopList: {fileID: 7876013243935759455}
+  scrollRect: {fileID: 2232783587231390383}
+--- !u!225 &1807510319441030586
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6563487890893190376}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0

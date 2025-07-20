@@ -8,6 +8,7 @@ using System.Threading;
 using DCL.Chat._Refactor.ChatStates;
 using DCL.Chat.ChatMediator;
 using DCL.Chat.ChatUseCases;
+using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Chat.Services;
 using DCL.Chat.Services.DCL.Chat;
@@ -30,6 +31,8 @@ namespace DCL.Chat
         private readonly ICurrentChannelService currentChannelService;
         private readonly ChatUserStateBridge chatUserStateBridge;
         private readonly ChatConfig chatConfig;
+        private readonly IChatHistory chatHistory;
+        private readonly IChatEventBus chatEventBus;
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
@@ -46,6 +49,7 @@ namespace DCL.Chat
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
             IEventBus eventBus,
+            IChatEventBus chatEventBus,
             IChatUserStateEventBus userStateEventBus,
             ChatUserStateBridge chatUserStateBridge,
             ICurrentChannelService currentChannelService,
@@ -60,10 +64,12 @@ namespace DCL.Chat
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
+            this.chatEventBus = chatEventBus;
             this.chatUserStateBridge = chatUserStateBridge;
             this.currentChannelService = currentChannelService;
             this.chatInputBlockingService = chatInputBlockingService;
             this.commandRegistry = commandRegistry;
+            this.chatHistory = chatHistory;
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.chatMemberListService = chatMemberListService;
             this.chatContextMenuService = chatContextMenuService;
@@ -95,14 +101,19 @@ namespace DCL.Chat
 
             var channelListPresenter = new ChatChannelsPresenter(viewInstance.ConversationToolbarView2,
                 eventBus,
+                chatEventBus,
+                chatHistory,
                 profileRepositoryWrapper,
                 commandRegistry.SelectChannel,
                 commandRegistry.LeaveChannel,
+                commandRegistry.OpenPrivateConversation,
                 commandRegistry.CreateChannelViewModel);
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
                 eventBus,
                 currentChannelService,
+                chatContextMenuService,
+                profileRepositoryWrapper,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
                 commandRegistry.MarkChannelAsRead);

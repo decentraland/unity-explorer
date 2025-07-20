@@ -63,9 +63,9 @@ public class GetMessageHistoryUseCaseShould
 
         var result = await _command.ExecuteAsync(new ChatChannel.ChannelId("test-channel"), CancellationToken.None);
 
-        Assert.AreEqual(11, result.Messages.Count);
-        Assert.IsTrue(result.Messages[5].IsSeparator, "The separator was not at the expected index 5.");
-        Assert.IsFalse(result.Messages[4].IsSeparator);
-        Assert.IsFalse(result.Messages[6].IsSeparator);
+        Assert.AreEqual(11, result.ViewModelMessages.Count);
+        Assert.IsTrue(result.ViewModelMessages[5].IsSeparator, "The separator was not at the expected index 5.");
+        Assert.IsFalse(result.ViewModelMessages[4].IsSeparator);
+        Assert.IsFalse(result.ViewModelMessages[6].IsSeparator);
     }
 }

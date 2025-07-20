@@ -8,7 +8,7 @@ namespace DCL.Chat.ChatUseCases
 {
     public class MessageHistoryResult
     {
-        public List<ChatMessageViewModel> Messages { get; set; }
+        public List<ChatMessageViewModel> ViewModelMessages { get; set; }
     }
 
     public class GetMessageHistoryCommand
@@ -27,21 +27,60 @@ namespace DCL.Chat.ChatUseCases
             this._createMessageViewModelCommand = createMessageViewModelCommand;
         }
 
-        public async UniTask<MessageHistoryResult> ExecuteAsync(ChatChannel.ChannelId channelId, CancellationToken token)
+        public async UniTask<IReadOnlyList<ChatMessage>> GetChatMessagesExecuteAsync(ChatChannel.ChannelId channelId, CancellationToken token)
         {
-            // 1. Ensure messages are loaded from disk if necessary
             if (chatHistoryStorage != null && !chatHistoryStorage.IsChannelInitialized(channelId))
-            {
                 await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
+
+            token.ThrowIfCancellationRequested();
+
+            if (!chatHistory.Channels.TryGetValue(channelId, out var channel))
+                return new List<ChatMessage>();
+
+            var processedMessages = new List<ChatMessage>();
+            var originalMessages = channel.Messages;
+
+            int nonPaddingReadCount = 0;
+            int nonPaddingTotalCount = 0;
+            foreach (var msg in originalMessages)
+                if (!msg.IsPaddingElement)
+                    nonPaddingTotalCount++;
+
+            int unreadCount = nonPaddingTotalCount - channel.ReadMessages;
+            bool needsSeparator = unreadCount > 0 && channel.ReadMessages > 0;
+            bool separatorInserted = false;
+
+            for (int i = 0; i < originalMessages.Count; i++)
+            {
+                var msg = originalMessages[i];
+
+                if (!msg.IsPaddingElement)
+                {
+                    if (needsSeparator && !separatorInserted && originalMessages.Count - i <= unreadCount)
+                    {
+                        processedMessages.Add(ChatMessage.NewSeparator());
+                        separatorInserted = true;
+                    }
+                }
+
+                processedMessages.Add(msg);
             }
 
+            return processedMessages;
+        }
+        
+        public async UniTask<MessageHistoryResult> ExecuteAsync(ChatChannel.ChannelId channelId, CancellationToken token)
+        {
+            if (chatHistoryStorage != null && !chatHistoryStorage.IsChannelInitialized(channelId))
+                await chatHistoryStorage.InitializeChannelWithMessagesAsync(channelId);
+            
             token.ThrowIfCancellationRequested();
 
             if (!chatHistory.Channels.TryGetValue(channelId, out var channel))
             {
                 return new MessageHistoryResult
                 {
-                    Messages = new List<ChatMessageViewModel>()
+                    ViewModelMessages = new List<ChatMessageViewModel>()
                 };
             }
 
@@ -75,7 +114,7 @@ namespace DCL.Chat.ChatUseCases
 
             return new MessageHistoryResult
             {
-                Messages = viewModels
+                ViewModelMessages = viewModels
             };
         }
     }

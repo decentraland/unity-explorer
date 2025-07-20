@@ -66,8 +66,7 @@ namespace DCL.Chat.ChatUseCases
             DeleteChatHistory = new DeleteChatHistoryCommand(eventBus,
                 chatHistory,
                 currentChannelService);
-
-
+            
             GetMessageHistory = new GetMessageHistoryCommand(chatHistory,
                 chatHistoryStorage,
                 CreateMessageViewModel);
@@ -86,8 +85,7 @@ namespace DCL.Chat.ChatUseCases
             OpenPrivateConversation = new OpenPrivateConversationCommand(eventBus,
                 chatHistory,
                 SelectChannel);
-
-
+            
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
                 profileRepositoryWrapper,
                 GetProfileThumbnail,

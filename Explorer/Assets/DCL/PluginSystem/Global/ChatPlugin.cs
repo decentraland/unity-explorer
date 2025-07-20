@@ -221,6 +221,7 @@ namespace DCL.PluginSystem.Global
                 },
                 chatConfig,
                 eventBus,
+                chatEventBus,
                 chatUserStateEventBus,
                 chatUserStateBridge,
                 currentChannelService,

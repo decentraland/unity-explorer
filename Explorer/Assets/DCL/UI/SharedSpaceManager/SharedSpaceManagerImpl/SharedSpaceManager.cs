@@ -103,7 +103,7 @@ namespace DCL.UI.SharedSpaceManager
             try
             {
                 await HideAllAsync(panelToIgnore: PanelsSharingSpace.Chat);
-
+                
                 PanelRegistration<TParams> registration = registrations[panel].GetByParams<TParams>();
                 IPanelInSharedSpace<TParams> panelInSharedSpace = registration.instance;
 

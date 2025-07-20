@@ -11,30 +11,41 @@ public class ChatChannelsPresenter : IDisposable
 {
     private readonly IChatChannelsView view;
     private readonly IEventBus eventBus;
+    private readonly IChatEventBus chatEventBus;
+    private readonly IChatHistory chatHistory;
     private readonly SelectChannelCommand selectChannelCommand;
     private readonly LeaveChannelCommand leaveChannelCommand;
+    private readonly OpenPrivateConversationCommand openPrivateConversationCommand;
     private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
 
     private EventSubscriptionScope scope = new();
 
     public ChatChannelsPresenter(IChatChannelsView view,
         IEventBus eventBus,
+        IChatEventBus chatEventBus,
+        IChatHistory chatHistory,
         ProfileRepositoryWrapper profileRepositoryWrapper,
         SelectChannelCommand selectChannelCommand,
         LeaveChannelCommand leaveChannelCommand,
+        OpenPrivateConversationCommand openPrivateConversationCommand,
         CreateChannelViewModelCommand createChannelViewModelCommand)
     {
         this.view = view;
         this.view.Initialize(profileRepositoryWrapper);
 
         this.eventBus = eventBus;
+        this.chatEventBus = chatEventBus;
         this.selectChannelCommand = selectChannelCommand;
         this.leaveChannelCommand = leaveChannelCommand;
+        this.openPrivateConversationCommand = openPrivateConversationCommand;
         this.createChannelViewModelCommand = createChannelViewModelCommand;
 
         view.ConversationSelected += OnViewConversationSelected;
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
 
+        chatHistory.ChannelAdded += AddChannelToView;
+        chatEventBus.OpenConversation += OnOpenConversationUsingUserId;
+        
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
@@ -42,6 +53,11 @@ public class ChatChannelsPresenter : IDisposable
         scope.Add(this.eventBus.Subscribe<ChatEvents.UnreadMessagesUpdatedEvent>(OnUnreadMessagesUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnUserStatusUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
+    }
+
+    private void OnOpenConversationUsingUserId(string userId)
+    {
+        openPrivateConversationCommand.Execute(userId);
     }
 
     private void OnChannelUpdated(ChatEvents.ChannelUpdatedEvent evt)
@@ -101,6 +117,7 @@ public class ChatChannelsPresenter : IDisposable
 
     public void Dispose()
     {
+        chatEventBus.OpenConversation -= OnOpenConversationUsingUserId;
         view.ConversationSelected -= OnViewConversationSelected;
         view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
         scope.Dispose();
