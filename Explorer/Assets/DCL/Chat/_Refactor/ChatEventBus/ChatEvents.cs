@@ -10,7 +10,7 @@ namespace DCL.Chat.EventBus
         
         /// <summary>
         /// Event:          InitialUserStatusLoadedEvent (NOT-USED)
-        /// Triggered By:   InitializeChatSystemUseCase
+        /// Triggered By:   InitializeChatSystemCommand
         /// When:           After initial channels are loaded, when the online status for relevant users has been fetched.
         /// Subscribers:    ChatChannelsPresenter (indirectly): Relies on the resulting UserStatusUpdatedEvents to set initial online states.
         /// </summary>
@@ -21,7 +21,7 @@ namespace DCL.Chat.EventBus
         
         /// <summary>
         /// Event:          InitialChannelsLoadedEvent
-        /// Triggered By:   InitializeChatSystemUseCase
+        /// Triggered By:   InitializeChatSystemCommand
         /// When:           The application starts, and the initial list of channels has been loaded from storage.
         /// Subscribers:    ChatChannelsPresenter: Receives the full list and populates the conversation toolbar for the first time.
         /// </summary>
@@ -36,7 +36,7 @@ namespace DCL.Chat.EventBus
         
         /// <summary>
         /// Event:          ChannelUpdatedEvent
-        /// Triggered By:   CreateChannelViewModelUseCase
+        /// Triggered By:   CreateChannelViewModelCommand
         /// When:           A channel's view-specific data (e.g., a user's profile name/picture) has finished loading asynchronously.
         /// Subscribers:    ChatChannelsPresenter: Finds the channel item in its view and updates its visuals (name, image, etc.).
         /// </summary>
@@ -47,7 +47,7 @@ namespace DCL.Chat.EventBus
         
         /// <summary>
         /// Event:          ChannelSelectedEvent
-        /// Triggered By:   SelectChannelUseCase (on user click) or InitializeChatSystemUseCase (on startup).
+        /// Triggered By:   SelectChannelCommand (on user click) or InitializeChatSystemCommand (on startup).
         /// When:           A user selects a channel from the list, or the system sets the default channel.
         /// Subscribers:    - ChatChannelsPresenter: Highlights the selected channel in the UI.
         ///                 - ChatMessageFeedPresenter: Clears old messages and loads the history for the new channel.
@@ -58,7 +58,7 @@ namespace DCL.Chat.EventBus
         
         /// <summary>
         /// Event:          ChannelAddedEvent
-        /// Triggered By:   (Future) A use case like OpenPrivateConversationUseCase.
+        /// Triggered By:   (Future) A use case like OpenPrivateConversationCommand.
         /// When:           A new conversation (e.g., a new DM) is started for the first time.
         /// Subscribers:    ChatChannelsPresenter: Adds a new channel item to the conversation list.
         /// </summary>
@@ -69,7 +69,7 @@ namespace DCL.Chat.EventBus
 
         /// <summary>
         /// Event:          ChannelLeftEvent
-        /// Triggered By:   LeaveChannelUseCase
+        /// Triggered By:   LeaveChannelCommand
         /// When:           A user chooses to leave a channel (e.g., by closing a DM conversation).
         /// Subscribers:    ChatChannelsPresenter: Removes the corresponding channel item from the conversation list.
         /// </summary>
@@ -104,7 +104,7 @@ namespace DCL.Chat.EventBus
         
         /// <summary>
         /// Event:          ChannelReadEvent (NOT-USED)
-        /// Triggered By:   MarkChannelAsReadUseCase
+        /// Triggered By:   MarkChannelAsReadCommand
         /// When:           A user has read all messages in a channel (e.g., by scrolling to the bottom).
         /// Subscribers:    (None currently) This event primarily signals a data model change. UI updates are handled by UnreadMessagesUpdatedEvent.
         /// </summary>
@@ -157,7 +157,7 @@ namespace DCL.Chat.EventBus
         /// <summary>
         /// Event:          MessageSentEvent (NOT-USED)
         /// Triggered By:   (Future) A service that confirms a message was successfully sent to the backend.
-        /// When:           After the SendMessageUseCase successfully dispatches a message.
+        /// When:           After the SendMessageCommand successfully dispatches a message.
         /// Subscribers:    Could be used for analytics or to update a message's UI from "sending..." to "sent".
         /// </summary>
         public struct MessageSentEvent { public string MessageBody; }
@@ -168,9 +168,21 @@ namespace DCL.Chat.EventBus
         /// When:           A new message arrives from the server for any channel.
         /// Subscribers:    ChatMessageFeedPresenter: If the message is for the active channel, it appends it to the view.
         /// </summary>
-        public struct MessageReceivedEvent {
+        public struct MessageReceivedEvent
+        {
             public ChatMessage Message;
             public ChatChannel.ChannelId ChannelId;
+        }
+
+        /// <summary>
+        ///     Event:          MessageReceivedEvent
+        ///     Triggered By:   LoadAndDisplayMessagesCommand
+        ///     When:           When channel history is loaded, or when a new message arrives.
+        ///     Subscribers:    ChatMessageFeedPresenter: finds the message in the list and updates its visuals (thumbnail)
+        /// </summary>
+        public struct ChatMessageUpdatedEvent
+        {
+            public ChatMessageViewModel ViewModel;
         }
         
         #endregion

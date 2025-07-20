@@ -5729,6 +5729,10 @@ PrefabInstance:
       propertyPath: m_Alpha
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2232783587231390383, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
+      propertyPath: m_MovementType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2311876475218739460, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -5779,10 +5783,6 @@ PrefabInstance:
       objectReference: {fileID: 2491885013440900026}
     - target: {fileID: 7876013243935759455, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
       propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7876013243935759455, guid: 0d98575771130ec4aadb06d078d09d26, type: 3}
-      propertyPath: mItemSnapEnable
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:

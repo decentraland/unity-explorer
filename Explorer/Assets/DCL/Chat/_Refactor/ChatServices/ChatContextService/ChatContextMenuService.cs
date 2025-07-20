@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.UI;
 using MVC;
 
 namespace DCL.Chat.Services
@@ -73,6 +74,22 @@ namespace DCL.Chat.Services
                 );
 
                 await activeMenuTcs.Task;
+            }
+            finally
+            {
+                chatClickDetectionService.Resume();
+            }
+        }
+
+        public async UniTask ShowChatOptionsAsync(ChatEntryMenuPopupData request)
+        {
+            RestartLifecycleControls();
+
+            chatClickDetectionService.Pause();
+
+            try
+            {
+                await mvcFacade.ShowChatEntryMenuPopupAsync(request, activeMenuCts.Token);
             }
             finally
             {

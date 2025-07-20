@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DCL.Chat._Refactor.ChatMessages.ScrollLists;
+using DCL.Chat.ChatMessages;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.History;
 using DCL.Profiles;
@@ -23,10 +25,20 @@ namespace DCL.Chat
             ChatEntry, ChatEntryOwn, Padding, SystemChatEntry, Separator, BlockedUser
         }
 
+        public Action OnFakeMessageRequested;
+        public event Action<string, ChatEntryView> OnChatContextMenuRequested;
+        public event Action<string, Vector2> OnProfileContextMenuRequested;
+        
         public event Action OnScrollToBottom;
         public event Action OnSeparatorBecameVisible;
         public event Action<string, ChatEntryView> OnMessageContextMenuRequested;
 
+        // NOTE: IChatListViewController is an interface that defines the
+        // NOTE: methods and properties needed for the chat list view controller.
+        // NOTE: can be implemented by any class that manages the chat list view
+        // NOTE: SuperScrollView or for example OptimizedScrollViewAdapter
+        [SerializeField] private IChatListViewController listController;
+        
         [SerializeField] private float chatEntriesFadeTime = 3f;
         [SerializeField] private int chatEntriesWaitBeforeFading = 10000;
         [SerializeField] private CanvasGroup scrollbarCanvasGroup;
@@ -49,8 +61,8 @@ namespace DCL.Chat
         public void Initialize()
         {
             loopList.InitListView(0, OnGetItemByIndex);
-            scrollRect.SetScrollSensitivityBasedOnPlatform();
             loopList.ScrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
+            scrollRect.SetScrollSensitivityBasedOnPlatform();
         }
 
         public void SetExternalDependencies(ProfileRepositoryWrapper profileRepo, CreateMessageViewModelCommand viewModelCommand)
@@ -59,14 +71,23 @@ namespace DCL.Chat
             createMessageViewModelCommand = viewModelCommand;
         }
 
+        
         public void SetData(IReadOnlyList<ChatMessage> newMessages)
         {
+            //listController.SetItems(newMessages);
+            
             messages.Clear();
             messages.AddRange(newMessages);
-            loopList.SetListItemCount(messages.Count, false);
-            //ScrollToBottom();
+            loopList.SetListItemCount(0, false);
+            loopList.SetListItemCount(messages.Count);
+            loopList.RefreshAllShownItem();
         }
 
+        public IReadOnlyList<ChatMessage> GetCurrentMessages()
+        {
+            return messages;
+        }
+        
         public void AppendMessage(ChatMessage message, bool animated)
         {
             bool wasAtBottom = IsAtBottom();
@@ -93,7 +114,7 @@ namespace DCL.Chat
         public void ShowLastMessage(bool useSmoothScroll = false)
         {
             if (messages.Count == 0) return;
-            loopList.MovePanelToItemIndex(messages.Count - 1, 0);
+            loopList.MovePanelToItemIndex(0, 0);
         }
 
         public void RefreshAllVisibleItems()
@@ -126,9 +147,9 @@ namespace DCL.Chat
                 StartChatEntriesFadeout();
         }
 
-        private bool IsAtBottom()
+        public bool IsAtBottom()
         {
-            return messages.Count == 0 || scrollRect.normalizedPosition.y <= 0.001f;
+            return messages.Count == 0 || loopList.ScrollRect.normalizedPosition.y <= 0.001f;
         }
 
         private LoopListViewItem2 OnGetItemByIndex(LoopListView2 listView, int index)
@@ -158,7 +179,10 @@ namespace DCL.Chat
                 // var viewModel = createMessageViewModelCommand.Execute(itemData);
                 // itemScript.SetItemData(viewModel);
                 itemScript.SetItemData(itemData);
-
+                var messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
+                messageOptionsButton?.onClick.RemoveAllListeners();
+                messageOptionsButton?.onClick.AddListener(() =>
+                    OnChatMessageOptionsButtonClicked(itemData.Message, itemScript));
                 SetupProfilePictureAsync(itemData, itemScript).Forget();
 
                 if (entriesPendingToAnimate > 0)
@@ -173,6 +197,11 @@ namespace DCL.Chat
             }
 
             return item;
+        }
+
+        private void OnChatMessageOptionsButtonClicked(string itemDataMessage, ChatEntryView itemScript)
+        {
+            OnChatContextMenuRequested?.Invoke(itemDataMessage, itemScript);
         }
 
         private async UniTaskVoid SetupProfilePictureAsync(ChatMessage itemData, ChatEntryView itemView)
@@ -193,9 +222,7 @@ namespace DCL.Chat
 
         private void OnEntryClicked(string walletAddress, Vector2 position)
         {
-            // This is simplified. Ideally you'd find the full ChatMessage/ViewModel to pass up.
-            // For now, we assume the menu can be shown with just this info.
-            // A proper implementation might involve the ChatEntryView holding its own ViewModel.
+            OnProfileContextMenuRequested?.Invoke(walletAddress, position);
         }
 
         private void OnScrollRectValueChanged(Vector2 scrollPosition)
@@ -239,6 +266,12 @@ namespace DCL.Chat
         public void Dispose()
         {
             fadeoutCts.SafeCancelAndDispose();
+        }
+
+        [ContextMenu("Fake Message")]
+        public void FakeMessage()
+        {
+            OnFakeMessageRequested?.Invoke();
         }
     }
 }

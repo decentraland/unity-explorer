@@ -26,10 +26,12 @@ namespace DCL.Chat.ChatUseCases
         public GetProfileThumbnailCommand GetProfileThumbnail { get; }
         public SendMessageCommand SendMessage { get; }
         public LeaveChannelCommand LeaveChannel { get; }
+        public LoadAndDisplayMessagesCommand LoadAndDisplayMessages { get; }
         public CreateChannelViewModelCommand CreateChannelViewModel { get; }
         public OpenPrivateConversationCommand OpenPrivateConversation { get; }
         public DeleteChatHistoryCommand DeleteChatHistory { get; }
         public GetChannelMembersCommand GetChannelMembersCommand { get; }
+        public ProcessAndAddMessageCommand ProcessAndAddMessage { get; }
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
 
         public CommandRegistry(
@@ -82,6 +84,10 @@ namespace DCL.Chat.ChatUseCases
                 chatMemberListService,
                 GetProfileThumbnail);
 
+            LoadAndDisplayMessages = new LoadAndDisplayMessagesCommand(eventBus,
+                GetMessageHistory,
+                GetProfileThumbnail);
+
             OpenPrivateConversation = new OpenPrivateConversationCommand(eventBus,
                 chatHistory,
                 SelectChannel);
@@ -105,6 +111,12 @@ namespace DCL.Chat.ChatUseCases
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 chatConfig,
                 profileRepositoryWrapper);
+
+            ProcessAndAddMessage = new ProcessAndAddMessageCommand(eventBus,
+                chatHistory,
+                textFormatter,
+                CreateMessageViewModel,
+                GetProfileThumbnail);
         }
 
         public void Dispose()

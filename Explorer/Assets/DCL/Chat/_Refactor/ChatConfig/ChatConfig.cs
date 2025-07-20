@@ -31,6 +31,15 @@ namespace DCL.Chat
         [field: SerializeField]
         public float PanelsFadeDuration { get; private set; } = 0.2f;
 
+        [field: Tooltip("The time in seconds before chat messages are starting to fade out.")]
+        [field: SerializeField] [field: Range(0f, 20f)]
+        public float chatEntriesWaitBeforeFading { get; private set; } = 10f;
+
+        [field: Tooltip("Chat messages fade out duration in seconds.")]
+        [field: SerializeField] [field: Range(0f, 20f)]
+        public float chatEntriesFadeTime { get; private set; } = 3f;
+        
+
         [field: Tooltip("The easing function to use for the panel fade animation.")]
         [field: SerializeField]
         public Ease PanelsFadeEase { get; private set; } = Ease.OutQuad;

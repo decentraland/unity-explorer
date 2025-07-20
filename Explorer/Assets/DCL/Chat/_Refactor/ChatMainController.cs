@@ -10,6 +10,7 @@ using DCL.Chat.ChatMediator;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.Chat.Services;
 using DCL.Chat.Services.DCL.Chat;
 using DCL.Settings.Settings;
@@ -33,6 +34,7 @@ namespace DCL.Chat
         private readonly ChatConfig chatConfig;
         private readonly IChatHistory chatHistory;
         private readonly IChatEventBus chatEventBus;
+        private readonly IChatMessagesBus chatMessagesBus;
         private ChatStateMachine? chatStateMachine;
         private EventSubscriptionScope uiScope;
         private readonly ChatContextMenuService chatContextMenuService;
@@ -49,6 +51,7 @@ namespace DCL.Chat
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
             IEventBus eventBus,
+            IChatMessagesBus chatMessagesBus,
             IChatEventBus chatEventBus,
             IChatUserStateEventBus userStateEventBus,
             ChatUserStateBridge chatUserStateBridge,
@@ -64,6 +67,7 @@ namespace DCL.Chat
         {
             this.chatConfig = chatConfig;
             this.eventBus = eventBus;
+            this.chatMessagesBus = chatMessagesBus;
             this.chatEventBus = chatEventBus;
             this.chatUserStateBridge = chatUserStateBridge;
             this.currentChannelService = currentChannelService;
@@ -111,11 +115,14 @@ namespace DCL.Chat
 
             var messageFeedPresenter = new ChatMessageFeedPresenter(viewInstance.MessageFeedView,
                 eventBus,
+                chatMessagesBus,
                 currentChannelService,
                 chatContextMenuService,
                 profileRepositoryWrapper,
                 commandRegistry.GetMessageHistory,
                 commandRegistry.CreateMessageViewModel,
+                commandRegistry.LoadAndDisplayMessages,
+                commandRegistry.ProcessAndAddMessage,
                 commandRegistry.MarkChannelAsRead);
 
             var inputPresenter = new ChatInputPresenter(
