@@ -149,9 +149,27 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             string name = originalMaterial.name;
 
             if (name.Contains(ComputeShaderConstants.SKIN_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase))
+            {
                 avatarMaterial.SetColor(BASE_COLOR, avatarShapeComponent.SkinColor);
+
+                if (avatarShapeComponent.SkinColor.a < 1f)
+                {
+                    avatarMaterial.EnableKeyword("_IS_CLIPPING_MODE");
+                    avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");
+                    avatarMaterial.SetFloat(CLIPPING_LEVEL, 0.1f);
+                }
+            }
             else if (name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase))
+            {
                 avatarMaterial.SetColor(BASE_COLOR, avatarShapeComponent.HairColor);
+
+                if (avatarShapeComponent.HairColor.a < 1f)
+                {
+                    avatarMaterial.EnableKeyword("_IS_CLIPPING_MODE");
+                    avatarMaterial.DisableKeyword("_IS_CLIPPING_TRANSMODE");
+                    avatarMaterial.SetFloat(CLIPPING_LEVEL, 0.1f);
+                }
+            }
 
             //Force back-face culling for all avatar materials
             avatarMaterial.SetInt(CULL_MODE, 2);
