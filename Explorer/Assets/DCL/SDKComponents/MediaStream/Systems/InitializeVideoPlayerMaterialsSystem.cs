@@ -27,35 +27,32 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         public void InitializeMaterial(Entity entity, in InitializeVideoPlayerMaterialRequest request)
         {
-            //Media Player Component not yet initialized
-            if (!World.TryGet(request.MediaPlayerComponentEntity, out MediaPlayerComponent mediaPlayerComponent))
-                return;
-
-            if (!TryHandleRequest<InitializeVideoPlayerMaterialRequest>(entity, mediaPlayerComponent, out Vector2 texScale)) return;
+            if (!TryHandleRequest<InitializeVideoPlayerMaterialRequest>(entity, request.MediaPlayerComponentEntity, out Vector2 texScale)) return;
 
             var material = request.Renderer.sharedMaterial;
             material.SetTextureScale(ShaderUtils.BaseMap, texScale);
             material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
-
-            //This lingering entity can be destroyed
-            World.Destroy(entity);
         }
 
         [Query]
-        public void InitializeNftMaterial(Entity entity, in MediaPlayerComponent mediaPlayerComponent, in InitializeNftVideoMaterialRequest request)
+        public void InitializeNftMaterial(Entity entity, in InitializeNftVideoMaterialRequest request)
         {
-            if (!TryHandleRequest<InitializeNftVideoMaterialRequest>(entity, mediaPlayerComponent, out Vector2 texScale)) return;
+            if (!TryHandleRequest<InitializeNftVideoMaterialRequest>(entity, request.MediaPlayerComponentEntity, out Vector2 texScale)) return;
 
             request.Renderer.SetTextureScale(texScale);
         }
 
-        private bool TryHandleRequest<T>(Entity entity, in MediaPlayerComponent mediaPlayerComponent, out Vector2 texScale)
+        private bool TryHandleRequest<T>(Entity entity, in Entity mediaPlayerComponentEntity, out Vector2 texScale)
         {
             texScale = Vector2.zero;
 
+            //Media Player Component not yet initialized
+            if (!World.TryGet(mediaPlayerComponentEntity, out MediaPlayerComponent mediaPlayerComponent))
+                return false;
+
             if (!mediaPlayerComponent.MediaPlayer.IsAvProPlayer(out var avPro))
             {
-                World.Remove<T>(entity);
+                World.Destroy(entity);
                 return false;
             }
 
@@ -70,7 +67,7 @@ namespace DCL.SDKComponents.MediaStream
             float vScale = textureProducer.RequiresVerticalFlip() ? -1 : 1;
             texScale = new Vector2(1, vScale);
 
-            World.Remove<T>(entity);
+            World.Destroy(entity);
 
             return true;
         }
