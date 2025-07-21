@@ -35,6 +35,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
+            this.view.PromoteToSpeaker += OnPromoteToSpeaker;
+            this.view.DemoteSpeaker += OnDemoteSpeaker;
+            this.view.Kick += OnKickUser;
+            this.view.Ban += OnBanUser;
 
             playerEntriesPool = new ObjectPool<PlayerEntryView>(
                 () => Object.Instantiate(playerEntry),
@@ -47,6 +51,29 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+
+            AddSpeaker();
+            AddSpeaker();
+            AddSpeaker();
+            AddListener();
+            AddListener();
+        }
+
+        private void OnPromoteToSpeaker(VoiceChatMember member)
+        {
+        }
+
+        private void OnDemoteSpeaker(VoiceChatMember member)
+        {
+        }
+
+        private void OnKickUser(VoiceChatMember member)
+        {
+
+        }
+
+        private void OnBanUser(VoiceChatMember member)
+        {
         }
 
         private void OnVoiceChatTypeChanged(VoiceChatType voiceChatType)
@@ -110,7 +137,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries.Add(entryView);
-            entryView.profileView.SetupAsync(new Web3Address(""), profileRepositoryWrapper, CancellationToken.None).Forget();
+            //entryView.profileView.SetupAsync(new Web3Address(""), profileRepositoryWrapper, CancellationToken.None).Forget();
+            view.SubscribeContextMenu(entryView);
             return entryView;
         }
 
@@ -124,6 +152,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         public void Dispose()
         {
+            view.CollapseButtonClicked -= OnCollapsedButtonClicked;
+            view.PromoteToSpeaker -= OnPromoteToSpeaker;
+            view.DemoteSpeaker -= OnDemoteSpeaker;
+            view.Kick -= OnKickUser;
+            view.Ban -= OnBanUser;
+
             voiceChatTypeSubscription?.Dispose();
             communityVoiceChatSearchController?.Dispose();
             ClearPool();
