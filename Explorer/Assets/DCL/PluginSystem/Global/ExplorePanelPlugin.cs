@@ -137,6 +137,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
+        private readonly bool isVoiceChatEnabled;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -190,7 +191,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider, bool isVoiceChatEnabled)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -245,6 +246,7 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
+            this.isVoiceChatEnabled = isVoiceChatEnabled;
         }
 
         public void Dispose()
@@ -255,6 +257,7 @@ namespace DCL.PluginSystem.Global
             backpackSubPlugin?.Dispose();
             placeInfoPanelController?.Dispose();
             communitiesBrowserController?.Dispose();
+            upscalingController?.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -368,7 +371,8 @@ namespace DCL.PluginSystem.Global
                 sceneLoadingLimit,
                 voiceChatSettings.Value,
                 worldVolumeMacBus,
-                upscalingController);
+                upscalingController,
+                isVoiceChatEnabled);
 
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
