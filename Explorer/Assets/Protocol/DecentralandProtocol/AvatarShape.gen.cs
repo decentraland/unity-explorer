@@ -26,24 +26,24 @@ namespace DCL.ECSComponents {
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX3NoYXBlLnBy",
             "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJhbGFu",
-            "ZC9jb21tb24vY29sb3JzLnByb3RvIq8ECg1QQkF2YXRhclNoYXBlEgoKAmlk",
+            "ZC9jb21tb24vY29sb3JzLnByb3RvIrEECg1QQkF2YXRhclNoYXBlEgoKAmlk",
             "GAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIXCgpib2R5X3NoYXBlGAMgASgJ",
             "SAGIAQESNAoKc2tpbl9jb2xvchgEIAEoCzIbLmRlY2VudHJhbGFuZC5jb21t",
-            "b24uQ29sb3IzSAKIAQESHQoQc2tpbl9jb2xvcl9hbHBoYRgMIAEoAkgDiAEB",
-            "EjQKCmhhaXJfY29sb3IYBSABKAsyGy5kZWNlbnRyYWxhbmQuY29tbW9uLkNv",
-            "bG9yM0gEiAEBEjMKCWV5ZV9jb2xvchgGIAEoCzIbLmRlY2VudHJhbGFuZC5j",
-            "b21tb24uQ29sb3IzSAWIAQESIgoVZXhwcmVzc2lvbl90cmlnZ2VyX2lkGAcg",
-            "ASgJSAaIAQESKQocZXhwcmVzc2lvbl90cmlnZ2VyX3RpbWVzdGFtcBgIIAEo",
-            "A0gHiAEBEhQKB3RhbGtpbmcYCSABKAhICIgBARIRCgl3ZWFyYWJsZXMYCiAD",
-            "KAkSDgoGZW1vdGVzGAsgAygJQgcKBV9uYW1lQg0KC19ib2R5X3NoYXBlQg0K",
-            "C19za2luX2NvbG9yQhMKEV9za2luX2NvbG9yX2FscGhhQg0KC19oYWlyX2Nv",
-            "bG9yQgwKCl9leWVfY29sb3JCGAoWX2V4cHJlc3Npb25fdHJpZ2dlcl9pZEIf",
-            "Ch1fZXhwcmVzc2lvbl90cmlnZ2VyX3RpbWVzdGFtcEIKCghfdGFsa2luZ0IU",
-            "qgIRRENMLkVDU0NvbXBvbmVudHNiBnByb3RvMw=="));
+            "b24uQ29sb3IzSAKIAQESNAoKaGFpcl9jb2xvchgFIAEoCzIbLmRlY2VudHJh",
+            "bGFuZC5jb21tb24uQ29sb3IzSAOIAQESMwoJZXllX2NvbG9yGAYgASgLMhsu",
+            "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjNIBIgBARIiChVleHByZXNzaW9u",
+            "X3RyaWdnZXJfaWQYByABKAlIBYgBARIpChxleHByZXNzaW9uX3RyaWdnZXJf",
+            "dGltZXN0YW1wGAggASgDSAaIAQESFAoHdGFsa2luZxgJIAEoCEgHiAEBEhEK",
+            "CXdlYXJhYmxlcxgKIAMoCRIOCgZlbW90ZXMYCyADKAkSHgoRaXNfc2tpbl9p",
+            "bnZpc2libGUYDCABKAhICIgBAUIHCgVfbmFtZUINCgtfYm9keV9zaGFwZUIN",
+            "Cgtfc2tpbl9jb2xvckINCgtfaGFpcl9jb2xvckIMCgpfZXllX2NvbG9yQhgK",
+            "Fl9leHByZXNzaW9uX3RyaWdnZXJfaWRCHwodX2V4cHJlc3Npb25fdHJpZ2dl",
+            "cl90aW1lc3RhbXBCCgoIX3RhbGtpbmdCFAoSX2lzX3NraW5faW52aXNpYmxl",
+            "QhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "SkinColorAlpha", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes" }, new[]{ "Name", "BodyShape", "SkinColor", "SkinColorAlpha", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes", "IsSkinInvisible" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "IsSkinInvisible" }, null, null, null)
           }));
     }
     #endregion
@@ -100,7 +100,6 @@ namespace DCL.ECSComponents {
       name_ = other.name_;
       bodyShape_ = other.bodyShape_;
       skinColor_ = other.skinColor_ != null ? other.skinColor_.Clone() : null;
-      skinColorAlpha_ = other.skinColorAlpha_;
       hairColor_ = other.hairColor_ != null ? other.hairColor_.Clone() : null;
       eyeColor_ = other.eyeColor_ != null ? other.eyeColor_.Clone() : null;
       expressionTriggerId_ = other.expressionTriggerId_;
@@ -108,6 +107,7 @@ namespace DCL.ECSComponents {
       talking_ = other.talking_;
       wearables_ = other.wearables_.Clone();
       emotes_ = other.emotes_.Clone();
+      isSkinInvisible_ = other.isSkinInvisible_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -199,34 +199,6 @@ namespace DCL.ECSComponents {
       set {
         skinColor_ = value;
       }
-    }
-
-    /// <summary>Field number for the "skin_color_alpha" field.</summary>
-    public const int SkinColorAlphaFieldNumber = 12;
-    private float skinColorAlpha_;
-    /// <summary>
-    /// Value ranges: [0~1]. Default: 1
-    /// </summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float SkinColorAlpha {
-      get { if ((_hasBits0 & 4) != 0) { return skinColorAlpha_; } else { return 0F; } }
-      set {
-        _hasBits0 |= 4;
-        skinColorAlpha_ = value;
-      }
-    }
-    /// <summary>Gets whether the "skin_color_alpha" field is set</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasSkinColorAlpha {
-      get { return (_hasBits0 & 4) != 0; }
-    }
-    /// <summary>Clears the value of the "skin_color_alpha" field</summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearSkinColorAlpha() {
-      _hasBits0 &= ~4;
     }
 
     /// <summary>Field number for the "hair_color" field.</summary>
@@ -378,6 +350,34 @@ namespace DCL.ECSComponents {
       get { return emotes_; }
     }
 
+    /// <summary>Field number for the "is_skin_invisible" field.</summary>
+    public const int IsSkinInvisibleFieldNumber = 12;
+    private bool isSkinInvisible_;
+    /// <summary>
+    /// hides the skin + hair + facial features (default: false)
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool IsSkinInvisible {
+      get { if ((_hasBits0 & 4) != 0) { return isSkinInvisible_; } else { return false; } }
+      set {
+        _hasBits0 |= 4;
+        isSkinInvisible_ = value;
+      }
+    }
+    /// <summary>Gets whether the "is_skin_invisible" field is set</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool HasIsSkinInvisible {
+      get { return (_hasBits0 & 4) != 0; }
+    }
+    /// <summary>Clears the value of the "is_skin_invisible" field</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearIsSkinInvisible() {
+      _hasBits0 &= ~4;
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -397,7 +397,6 @@ namespace DCL.ECSComponents {
       if (Name != other.Name) return false;
       if (BodyShape != other.BodyShape) return false;
       if (!object.Equals(SkinColor, other.SkinColor)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(SkinColorAlpha, other.SkinColorAlpha)) return false;
       if (!object.Equals(HairColor, other.HairColor)) return false;
       if (!object.Equals(EyeColor, other.EyeColor)) return false;
       if (ExpressionTriggerId != other.ExpressionTriggerId) return false;
@@ -405,6 +404,7 @@ namespace DCL.ECSComponents {
       if (Talking != other.Talking) return false;
       if(!wearables_.Equals(other.wearables_)) return false;
       if(!emotes_.Equals(other.emotes_)) return false;
+      if (IsSkinInvisible != other.IsSkinInvisible) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -416,7 +416,6 @@ namespace DCL.ECSComponents {
       if (HasName) hash ^= Name.GetHashCode();
       if (HasBodyShape) hash ^= BodyShape.GetHashCode();
       if (skinColor_ != null) hash ^= SkinColor.GetHashCode();
-      if (HasSkinColorAlpha) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SkinColorAlpha);
       if (hairColor_ != null) hash ^= HairColor.GetHashCode();
       if (eyeColor_ != null) hash ^= EyeColor.GetHashCode();
       if (HasExpressionTriggerId) hash ^= ExpressionTriggerId.GetHashCode();
@@ -424,6 +423,7 @@ namespace DCL.ECSComponents {
       if (HasTalking) hash ^= Talking.GetHashCode();
       hash ^= wearables_.GetHashCode();
       hash ^= emotes_.GetHashCode();
+      if (HasIsSkinInvisible) hash ^= IsSkinInvisible.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -480,9 +480,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(output, _repeated_wearables_codec);
       emotes_.WriteTo(output, _repeated_emotes_codec);
-      if (HasSkinColorAlpha) {
-        output.WriteRawTag(101);
-        output.WriteFloat(SkinColorAlpha);
+      if (HasIsSkinInvisible) {
+        output.WriteRawTag(96);
+        output.WriteBool(IsSkinInvisible);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -532,9 +532,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(ref output, _repeated_wearables_codec);
       emotes_.WriteTo(ref output, _repeated_emotes_codec);
-      if (HasSkinColorAlpha) {
-        output.WriteRawTag(101);
-        output.WriteFloat(SkinColorAlpha);
+      if (HasIsSkinInvisible) {
+        output.WriteRawTag(96);
+        output.WriteBool(IsSkinInvisible);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -558,9 +558,6 @@ namespace DCL.ECSComponents {
       if (skinColor_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(SkinColor);
       }
-      if (HasSkinColorAlpha) {
-        size += 1 + 4;
-      }
       if (hairColor_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(HairColor);
       }
@@ -578,6 +575,9 @@ namespace DCL.ECSComponents {
       }
       size += wearables_.CalculateSize(_repeated_wearables_codec);
       size += emotes_.CalculateSize(_repeated_emotes_codec);
+      if (HasIsSkinInvisible) {
+        size += 1 + 1;
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -605,9 +605,6 @@ namespace DCL.ECSComponents {
         }
         SkinColor.MergeFrom(other.SkinColor);
       }
-      if (other.HasSkinColorAlpha) {
-        SkinColorAlpha = other.SkinColorAlpha;
-      }
       if (other.hairColor_ != null) {
         if (hairColor_ == null) {
           HairColor = new global::Decentraland.Common.Color3();
@@ -631,6 +628,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.Add(other.wearables_);
       emotes_.Add(other.emotes_);
+      if (other.HasIsSkinInvisible) {
+        IsSkinInvisible = other.IsSkinInvisible;
+      }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -699,8 +699,8 @@ namespace DCL.ECSComponents {
             emotes_.AddEntriesFrom(input, _repeated_emotes_codec);
             break;
           }
-          case 101: {
-            SkinColorAlpha = input.ReadFloat();
+          case 96: {
+            IsSkinInvisible = input.ReadBool();
             break;
           }
         }
@@ -771,8 +771,8 @@ namespace DCL.ECSComponents {
             emotes_.AddEntriesFrom(ref input, _repeated_emotes_codec);
             break;
           }
-          case 101: {
-            SkinColorAlpha = input.ReadFloat();
+          case 96: {
+            IsSkinInvisible = input.ReadBool();
             break;
           }
         }
