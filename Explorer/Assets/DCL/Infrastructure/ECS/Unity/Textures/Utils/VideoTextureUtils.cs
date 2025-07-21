@@ -40,10 +40,7 @@ namespace ECS.Unity.Textures.Utils
             }
             else if (world.TryGet(entity, out GltfNode gltfNode))
             {
-                // Use the first renderer for VideoRenderer (for backward compatibility)
                 info.VideoRenderer = gltfNode.Renderers.Count > 0 ? gltfNode.Renderers[0] : null;
-
-                // Add all renderers as consumers
                 foreach (var renderer in gltfNode.Renderers)
                     consumer.AddConsumer(renderer);
             }
