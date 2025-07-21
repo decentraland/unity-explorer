@@ -25,13 +25,20 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        public void InitializeMaterial(Entity entity, in MediaPlayerComponent mediaPlayerComponent, in InitializeVideoPlayerMaterialRequest request)
+        public void InitializeMaterial(Entity entity, in InitializeVideoPlayerMaterialRequest request)
         {
+            //Media Player Component not yet initialized
+            if (!World.TryGet(request.MediaPlayerComponentEntity, out MediaPlayerComponent mediaPlayerComponent))
+                return;
+
             if (!TryHandleRequest<InitializeVideoPlayerMaterialRequest>(entity, mediaPlayerComponent, out Vector2 texScale)) return;
 
             var material = request.Renderer.sharedMaterial;
             material.SetTextureScale(ShaderUtils.BaseMap, texScale);
             material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+
+            //This lingering entity can be destroyed
+            World.Destroy(entity);
         }
 
         [Query]

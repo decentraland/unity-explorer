@@ -17,12 +17,7 @@ namespace ECS.Unity.Textures.Components.Extensions
 
             if (self.IsVideoTexture())
             {
-                var textureComponent = new TextureComponent(URLAddress.EMPTY, string.Empty, self.GetWrapMode(), self.GetFilterMode(),
-                    textureOffset: self.GetOffset(),
-                    textureTiling: self.GetTiling(),
-                    isVideoTexture: true, videoPlayerEntity: self.GetVideoTextureId());
-
-
+                var textureComponent = new TextureComponent(URLAddress.EMPTY, string.Empty, self.GetWrapMode(), self.GetFilterMode(), isVideoTexture: true, videoPlayerEntity: self.GetVideoTextureId());
                 return textureComponent;
             }
 
