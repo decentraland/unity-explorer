@@ -48,6 +48,7 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
+        private readonly bool isVoiceChatEnabled;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -66,8 +67,7 @@ namespace DCL.Settings
             SceneLoadingLimit sceneLoadingLimit,
             VoiceChatSettingsAsset voiceChatSettings,
             WorldVolumeMacBus worldVolumeMacBus,
-            UpscalingController upscalingController
-        )
+            UpscalingController upscalingController, bool isVoiceChatEnabled)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -84,6 +84,7 @@ namespace DCL.Settings
             this.sceneLoadingLimit = sceneLoadingLimit;
             this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
+            this.isVoiceChatEnabled = isVoiceChatEnabled;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -152,7 +153,7 @@ namespace DCL.Settings
         {
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
-                if (group.FeatureFlagName != FeatureId.NONE && !FeaturesRegistry.Instance.IsEnabled(group.FeatureFlagName))
+                if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
                     return;
 
                 SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
@@ -180,7 +181,8 @@ namespace DCL.Settings
                             this,
                             voiceChatSettings,
                             upscalingController,
-                            worldVolumeMacBus));
+                            worldVolumeMacBus,
+                            isVoiceChatEnabled));
             }
         }
 

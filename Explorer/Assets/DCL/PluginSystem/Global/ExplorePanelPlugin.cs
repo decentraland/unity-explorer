@@ -42,7 +42,9 @@ using DCL.Chat.MessageBus;
 using DCL.Clipboard;
 using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
+using DCL.Communities.CommunityCreation;
 using DCL.EventsApi;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Navmap.ScriptableObjects;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -120,7 +122,7 @@ namespace DCL.PluginSystem.Global
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly INftNamesProvider nftNamesProvider;
 
-
+        private readonly bool includeCameraReel;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -135,6 +137,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly UpscalingController upscalingController;
         private CommunitiesBrowserController? communitiesBrowserController;
+        private readonly bool isVoiceChatEnabled;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -178,6 +181,7 @@ namespace DCL.PluginSystem.Global
             IUserCalendar userCalendar,
             ISystemClipboard clipboard,
             ObjectProxy<INavmapBus> explorePanelNavmapBus,
+            bool includeCameraReel,
             IAppArgs appArgs,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             ISharedSpaceManager sharedSpaceManager,
@@ -187,7 +191,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             UpscalingController upscalingController,
             CommunitiesDataProvider communitiesDataProvider,
-            INftNamesProvider nftNamesProvider)
+            INftNamesProvider nftNamesProvider, bool isVoiceChatEnabled)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -231,7 +235,7 @@ namespace DCL.PluginSystem.Global
             this.userCalendar = userCalendar;
             this.clipboard = clipboard;
             this.explorePanelNavmapBus = explorePanelNavmapBus;
-
+            this.includeCameraReel = includeCameraReel;
             this.appArgs = appArgs;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.sharedSpaceManager = sharedSpaceManager;
@@ -242,6 +246,7 @@ namespace DCL.PluginSystem.Global
             this.upscalingController = upscalingController;
             this.communitiesDataProvider = communitiesDataProvider;
             this.nftNamesProvider = nftNamesProvider;
+            this.isVoiceChatEnabled = isVoiceChatEnabled;
         }
 
         public void Dispose()
@@ -366,7 +371,8 @@ namespace DCL.PluginSystem.Global
                 sceneLoadingLimit,
                 voiceChatSettings.Value,
                 worldVolumeMacBus,
-                upscalingController);
+                upscalingController,
+                isVoiceChatEnabled);
 
             navmapController = new NavmapController(
                 navmapView: explorePanelView.GetComponentInChildren<NavmapView>(),
@@ -418,7 +424,7 @@ namespace DCL.PluginSystem.Global
                 ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, cameraReelController,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                     new ProfileMenuController(() => explorePanelView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                    communitiesBrowserController, notificationsBusController, inputBlock, sharedSpaceManager);
+                    communitiesBrowserController, notificationsBusController, inputBlock, includeCameraReel, sharedSpaceManager);
 
             sharedSpaceManager.RegisterPanel(PanelsSharingSpace.Explore, explorePanelController);
             mvcManager.RegisterController(explorePanelController);
