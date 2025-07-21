@@ -38,9 +38,6 @@ namespace DCL.VoiceChat
 
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            for (var i = 0; i < data.Length; i++)
-                data[i] *= amplify;
-
             if (!isPlaying || streams.Count == 0)
             {
                 data.AsSpan().Clear();
@@ -87,7 +84,7 @@ namespace DCL.VoiceChat
                 float norm = 1f / activeStreams;
 
                 for (var i = 0; i < data.Length; i++)
-                    data[i] *= norm;
+                    data[i] *= norm * amplify;
             }
         }
 
