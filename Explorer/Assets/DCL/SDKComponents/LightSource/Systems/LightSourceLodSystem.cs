@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,13 +20,15 @@ namespace DCL.SDKComponents.LightSource.Systems
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
     public partial class LightSourceLodSystem : BaseUnityLoopSystem
     {
-        private List<LodSettings> spotLightsSettings;
-        private List<LodSettings> pointLightsSettings;
+        private readonly LightSourceSettings settings;
+        private readonly List<LodSettings> spotLightLods;
+        private readonly List<LodSettings> pointLightLods;
 
-        public LightSourceLodSystem(World world, List<LodSettings> spotLightsSettings, List<LodSettings> pointLightsSettings) : base(world)
+        public LightSourceLodSystem(World world, LightSourceSettings settings, List<LodSettings> spotLightLods, List<LodSettings> pointLightLods) : base(world)
         {
-            this.spotLightsSettings = spotLightsSettings;
-            this.pointLightsSettings = pointLightsSettings;
+            this.settings = settings;
+            this.spotLightLods = spotLightLods;
+            this.pointLightLods = pointLightLods;
         }
 
         protected override void Update(float t)
@@ -36,7 +39,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         [Query]
         private void SelectLOD(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
-            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource)) return;
+            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             if (!TryGetLodSettings(pbLightSource, out List<LodSettings> lodSettings)) return;
 
@@ -50,11 +53,11 @@ namespace DCL.SDKComponents.LightSource.Systems
             switch (pbLightSource.TypeCase)
             {
                 case PBLightSource.TypeOneofCase.Spot:
-                    lodSettings = spotLightsSettings;
+                    lodSettings = spotLightLods;
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
-                    lodSettings = pointLightsSettings;
+                    lodSettings = pointLightLods;
                     break;
 
                 default:
@@ -62,7 +65,7 @@ namespace DCL.SDKComponents.LightSource.Systems
                     return false;
             }
 
-            return true;
+            return lodSettings.Count > 0;
         }
 
         private int FindLOD(List<LodSettings> lodSettings,  LightSourceComponent lightSourceComponent)
@@ -82,7 +85,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             light.shadows = LightSourceHelper.ClampShadowQuality(light.shadows, lodSetting.Shadows);
 
-            // NOTE setting the resolution to 0 allows unity to decide on the resolution (tiers are defined in the URP asset)
+            // NOTE setting the resolution to 0 allows unity to decide on it (tiers are defined in the URP asset)
             light.shadowCustomResolution = lodSetting.OverrideShadowMapResolution ? lodSetting.ShadowMapResolution : 0;
         }
 

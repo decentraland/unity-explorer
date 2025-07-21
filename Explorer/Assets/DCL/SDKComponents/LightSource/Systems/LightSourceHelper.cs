@@ -11,9 +11,9 @@ namespace DCL.SDKComponents.LightSource.Systems
         /// Whether the given PB light source should be considered active.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsPBLightSourceActive(in PBLightSource pbLightSource)
+        public static bool IsPBLightSourceActive(in PBLightSource pbLightSource, bool activeByDefault = true)
         {
-            return !pbLightSource.HasActive || pbLightSource.Active;
+            return pbLightSource.HasActive ? pbLightSource.Active : activeByDefault;
         }
 
         /// <summary>

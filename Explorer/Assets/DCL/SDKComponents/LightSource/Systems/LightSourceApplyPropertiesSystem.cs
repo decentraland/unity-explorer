@@ -14,7 +14,9 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.ColorComponent;
 using ECS.Unity.Textures.Components;
 using ECS.Unity.Textures.Components.Extensions;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 using TexturePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -33,11 +35,13 @@ namespace DCL.SDKComponents.LightSource.Systems
 
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent partitionComponent;
+        private readonly LightSourceSettings settings;
 
-        public LightSourceApplyPropertiesSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent) : base(world)
+        public LightSourceApplyPropertiesSystem(World world, ISceneData sceneData, IPartitionComponent partitionComponent, LightSourceSettings settings) : base(world)
         {
             this.sceneData = sceneData;
             this.partitionComponent = partitionComponent;
+            this.settings = settings;
         }
 
         protected override void Update(float t)
@@ -51,11 +55,15 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            bool isActive = LightSourceHelper.IsPBLightSourceActive(pbLightSource);
+            bool isActive = LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active);
             lightSourceInstance.enabled = isActive;
 
             // NOTE we reset the shadow quality every frame because culling and LOD systems can change it
-            if (isActive) lightSourceInstance.shadows = pbLightSource.Shadow ? LightShadows.Soft : LightShadows.None;
+            if (isActive)
+            {
+                bool shadows = pbLightSource.HasShadow ? pbLightSource.Shadow : settings.DefaultValues.Shadows;
+                lightSourceInstance.shadows = shadows ? LightShadows.Soft :  LightShadows.None;
+            }
 
             if (pbLightSource.IsDirty) ApplyPBLightSource(pbLightSource, ref lightSourceComponent);
         }
@@ -64,13 +72,18 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             var lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            lightSourceInstance.color = pbLightSource.Color.ToUnityColor();
+            if (pbLightSource.Color != null)
+                lightSourceInstance.color = pbLightSource.Color.ToUnityColor();
 
-            if (pbLightSource.HasIntensity)
-                lightSourceInstance.intensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(pbLightSource.Intensity);
-
-            if (pbLightSource.HasRange)
-                lightSourceInstance.range = pbLightSource.Range;
+            float intensity = pbLightSource.HasIntensity ? pbLightSource.Intensity : settings.DefaultValues.Intensity;
+            float intensityScale = pbLightSource.TypeCase switch
+                                   {
+                                       PBLightSource.TypeOneofCase.Spot => settings.SpotLightIntensityScale,
+                                       PBLightSource.TypeOneofCase.Point => settings.PointLightIntensityScale,
+                                       _ => 1
+                                   };
+            intensity *= intensityScale;
+            lightSourceComponent.MaxIntensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(intensity);
 
             switch (pbLightSource.TypeCase)
             {

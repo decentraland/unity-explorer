@@ -181,7 +181,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 52c856180dc5d6447b902f06d38f4161
-    m_Address: LightSourceDefaults
+    m_Address: LightSourceSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

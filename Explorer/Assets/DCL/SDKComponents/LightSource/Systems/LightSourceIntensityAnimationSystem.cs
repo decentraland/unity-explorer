@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -16,20 +17,20 @@ namespace DCL.SDKComponents.LightSource.Systems
     [UpdateAfter(typeof(LightSourceCullingSystem))]
     [UpdateAfter(typeof(LightSourceLodSystem))]
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
-    public partial class LightSourcePostCullingUpdateSystem : BaseUnityLoopSystem
+    public partial class LightSourceIntensityAnimationSystem : BaseUnityLoopSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly float fadeDuration;
+        private readonly LightSourceSettings settings;
 
-        public LightSourcePostCullingUpdateSystem(World world, ISceneStateProvider sceneStateProvider, float fadeDuration) : base(world)
+        public LightSourceIntensityAnimationSystem(World world, ISceneStateProvider sceneStateProvider, LightSourceSettings settings) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
-            this.fadeDuration = fadeDuration;
+            this.settings = settings;
         }
 
         protected override void Update(float t)
         {
-            AnimateLightSourceIntensityQuery(World,  fadeDuration > 0 ? Time.unscaledDeltaTime / fadeDuration : 1);
+            AnimateLightSourceIntensityQuery(World,  settings.FadeDuration > 0 ? Time.unscaledDeltaTime / settings.FadeDuration : 1);
         }
 
         [Query]
@@ -37,7 +38,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
-            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource)) return;
+            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             bool isLightOn = sceneStateProvider.IsCurrent && !lightSourceComponent.IsCulled;
             lightSourceComponent.TargetIntensity = isLightOn ? lightSourceComponent.MaxIntensity : 0;
@@ -46,6 +47,9 @@ namespace DCL.SDKComponents.LightSource.Systems
             lightSourceComponent.CurrentIntensity = Mathf.MoveTowards(lightSourceComponent.CurrentIntensity, lightSourceComponent.TargetIntensity, delta);
 
             lightSourceInstance.intensity = lightSourceComponent.CurrentIntensity;
+
+            bool shouldOverrideRange = pbLightSource.HasRange && pbLightSource.Range > 0;
+            lightSourceInstance.range = shouldOverrideRange ? pbLightSource.Range : Mathf.Pow(lightSourceComponent.CurrentIntensity, settings.RangeFormulaExponent);
 
             lightSourceInstance.enabled = lightSourceComponent.CurrentIntensity > 0;
         }

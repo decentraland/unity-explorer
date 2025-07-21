@@ -8,6 +8,7 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.Unity.Transforms.Components;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -21,13 +22,9 @@ namespace DCL.SDKComponents.LightSource.Systems
     public partial class LightSourceLifecycleSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;
-
         private readonly IComponentPool<Light> poolRegistry;
 
-        public LightSourceLifecycleSystem(World world,
-            ISceneStateProvider sceneStateProvider,
-            IComponentPool<Light> poolRegistry
-        ) : base(world)
+        public LightSourceLifecycleSystem(World world, ISceneStateProvider sceneStateProvider, IComponentPool<Light> poolRegistry) : base(world)
         {
             this.sceneStateProvider = sceneStateProvider;
             this.poolRegistry = poolRegistry;
@@ -51,13 +48,10 @@ namespace DCL.SDKComponents.LightSource.Systems
             }
 
             Light lightSourceInstance = poolRegistry.Get();
-            lightSourceInstance.intensity = 0;
-
             lightSourceInstance.transform.localScale = Vector3.one;
             lightSourceInstance.transform.SetParent(transform.Transform, false);
 
-            float intensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(pbLightSource.Intensity);
-            var lightSourceComponent = new LightSourceComponent(lightSourceInstance, intensity);
+            var lightSourceComponent = new LightSourceComponent(lightSourceInstance);
             World.Add(entity, lightSourceComponent);
 
             pbLightSource.IsDirty = true;

@@ -8,7 +8,7 @@ namespace DCL.SDKComponents.LightSource
     {
         public readonly Light LightSourceInstance;
 
-        public readonly float MaxIntensity;
+        public float MaxIntensity;
 
         public float CurrentIntensity;
 
@@ -30,18 +30,9 @@ namespace DCL.SDKComponents.LightSource
 
         public bool IsCulled => Culling != CullingFlags.None;
 
-        public LightSourceComponent(Light lightSourceInstance, float maxIntensity, float initialIntensity = 0)
+        public LightSourceComponent(Light lightSourceInstance) : this()
         {
             LightSourceInstance = lightSourceInstance;
-            MaxIntensity = maxIntensity;
-            CurrentIntensity = TargetIntensity = initialIntensity;
-            DistanceToPlayer = 0;
-            Index = -1;
-            Rank = -1;
-            TypeRank = -1;
-            LOD = -1;
-            Culling = CullingFlags.None;
-            TextureMaskPromise = null;
         }
 
         [Flags]

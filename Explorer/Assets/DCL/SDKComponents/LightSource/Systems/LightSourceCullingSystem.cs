@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Unity.Transforms.Components;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using Unity.Burst;
@@ -26,26 +27,13 @@ namespace DCL.SDKComponents.LightSource.Systems
     {
         private readonly ISceneData sceneData;
         private readonly ICharacterObject characterObject;
-        private readonly float lightsPerParcel;
-        private readonly int hardMaxLightCount;
-        private readonly int maxPointLightShadows;
-        private readonly int maxSpotLightShadows;
+        private readonly LightSourceSettings settings;
 
-        public LightSourceCullingSystem(
-            World world,
-            ISceneData sceneData,
-            ICharacterObject characterObject,
-            float lightsPerParcel,
-            int hardMaxLightCount,
-            int maxPointLightShadows,
-            int maxSpotLightShadows) : base(world)
+        public LightSourceCullingSystem(World world, ISceneData sceneData, ICharacterObject characterObject, LightSourceSettings settings) : base(world)
         {
             this.sceneData = sceneData;
             this.characterObject = characterObject;
-            this.lightsPerParcel = lightsPerParcel;
-            this.hardMaxLightCount = hardMaxLightCount;
-            this.maxPointLightShadows = maxPointLightShadows;
-            this.maxSpotLightShadows = maxSpotLightShadows;
+            this.settings = settings;
         }
 
         protected override void Update(float t)
@@ -56,7 +44,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         }
 
         [Query]
-        private void ClearLightSourceCulling(in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
+        private void ClearLightSourceCulling(ref LightSourceComponent lightSourceComponent)
         {
             lightSourceComponent.Index = -1;
             lightSourceComponent.Rank = -1;
@@ -67,7 +55,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         [Query]
         private void ComputeDistanceToPlayer(in TransformComponent transform, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
-            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource)) return;
+            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             lightSourceComponent.DistanceToPlayer = math.distance(transform.Transform.position, characterObject.Position);
         }
@@ -80,14 +68,14 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             SortByDistanceToPlayer(lightData, out var ranks);
 
-            int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * lightsPerParcel), hardMaxLightCount);
+            int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * settings.LightsPerParcel), settings.HardMaxLightCount);
             CullLightSourcesQuery(World, ranks, maxLightCount);
         }
 
         [Query]
         private void CollectActiveLightSources([Data] ref NativeList<LightData> lightData, in PBLightSource pbLightSource, ref LightSourceComponent lightSourceComponent)
         {
-            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource)) return;
+            if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             lightSourceComponent.Index = lightData.Length;
             lightData.AddNoResize(new LightData(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayer));
@@ -135,8 +123,8 @@ namespace DCL.SDKComponents.LightSource.Systems
             if (lightSourceComponent.Rank >= maxLightCount)
                 lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.TooManyLightSources;
 
-            bool shouldDisableShadows = (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Point && lightSourceComponent.TypeRank >= maxPointLightShadows) ||
-                                        (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot && lightSourceComponent.TypeRank >= maxSpotLightShadows);
+            bool shouldDisableShadows = (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Point && lightSourceComponent.TypeRank >= settings.MaxPointLightShadows) ||
+                                        (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot && lightSourceComponent.TypeRank >= settings.MaxSpotLightShadows);
             if (shouldDisableShadows)
                 lightSourceComponent.LightSourceInstance.shadows = LightShadows.None;
         }

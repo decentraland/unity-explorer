@@ -1,5 +1,4 @@
 using Arch.SystemGroups;
-using CrdtEcsBridge.Components.Conversion;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
@@ -20,7 +19,7 @@ using Object = UnityEngine.Object;
 
 namespace DCL.PluginSystem.World
 {
-    public class LightSourcePlugin : IDCLWorldPlugin<LightSourcePlugin.LightSourceSettings>
+    public class LightSourcePlugin : IDCLWorldPlugin<LightSourcePlugin.LightSourcePluginSettings>
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -29,8 +28,9 @@ namespace DCL.PluginSystem.World
         private readonly Arch.Core.World globalWorld;
         private readonly bool hasDebugFlag;
 
-        private LightSourceSettings? pluginSettings;
-        private LightSourceDefaults? lightSourceDefaults;
+        private LightSourcePluginSettings? pluginSettings;
+        private Light? lightSourcePrefab;
+        private LightSourceSettings? lightSourceSettings;
         private IComponentPool<Light>? lightPoolRegistry;
 
         public LightSourcePlugin(
@@ -63,28 +63,27 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBLightSource>.InjectToWorld(ref builder);
 
             var lifecycleSystem = LightSourceLifecycleSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightPoolRegistry);
-            LightSourceApplyPropertiesSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition);
-            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, pluginSettings!.LightsPerParcel, pluginSettings.HardMaxLightCount, pluginSettings.MaxPointLightShadows, pluginSettings.MaxSpotLightShadows);
-            LightSourceLodSystem.InjectToWorld(ref builder, pluginSettings.SpotLightsLods, pluginSettings.PointLightsLods);
-            LightSourcePostCullingUpdateSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, pluginSettings.FadeDuration);
+            LightSourceApplyPropertiesSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.ScenePartition, lightSourceSettings);
+            LightSourceCullingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, characterObject, lightSourceSettings);
+            LightSourceLodSystem.InjectToWorld(ref builder, lightSourceSettings, pluginSettings!.SpotLightsLods, pluginSettings.PointLightsLods);
+            LightSourceIntensityAnimationSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, lightSourceSettings);
 
             if (hasDebugFlag) LightSourceDebugSystem.InjectToWorld(ref builder, globalWorld);
 
             finalizeWorldSystems.Add(lifecycleSystem);
         }
 
-        public async UniTask InitializeAsync(LightSourceSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(LightSourcePluginSettings settings, CancellationToken ct)
         {
             pluginSettings = settings;
+            lightSourceSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.LightSourceSettings, ct)).Value;
 
             await CreateLightSourcePoolAsync(ct);
         }
 
         private async UniTask CreateLightSourcePoolAsync(CancellationToken ct)
         {
-            lightSourceDefaults = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.LightSourceDefaultValues, ct: ct)).Value;
-
-            Light lightPrefab = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings.LightSourcePrefab, ct: ct)).Value.GetComponent<Light>();
+            Light lightPrefab = (await assetsProvisioner.ProvideMainAssetAsync(pluginSettings!.LightSourcePrefab, ct)).Value.GetComponent<Light>();
             lightPoolRegistry = poolsRegistry.AddGameObjectPool(() => Object.Instantiate(lightPrefab, Vector3.zero, quaternion.identity), onRelease: OnPoolRelease, onGet: OnPoolGet);
 
             cacheCleaner.Register(lightPoolRegistry);
@@ -97,34 +96,25 @@ namespace DCL.PluginSystem.World
 
         private void OnPoolGet(Light light)
         {
-            light.enabled = lightSourceDefaults!.active;
+            var defaultValues = lightSourceSettings!.DefaultValues;
+
+            light.enabled = false;
+            light.color = defaultValues.Color;
+            light.intensity = 0;
+            light.range = defaultValues.Range;
+            light.innerSpotAngle = defaultValues.InnerAngle;
+            light.spotAngle = defaultValues.OuterAngle;
+            light.cookie = null;
+
             light.transform.SetParent(null);
             light.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-            light.color = lightSourceDefaults.color;
-            light.intensity = PrimitivesConversionExtensions.PBIntensityInLumensToUnityCandels(lightSourceDefaults.brightness);
-            light.range = lightSourceDefaults.range;
-            light.type = LightType.Spot;
-            light.shadows = LightShadows.None;
-            light.innerSpotAngle = lightSourceDefaults.innerAngle;
-            light.spotAngle = lightSourceDefaults.outerAngle;
-            light.cookie = null;
         }
 
-        public class LightSourceSettings : IDCLPluginSettings
+        public class LightSourcePluginSettings : IDCLPluginSettings
         {
-            public float LightsPerParcel = 1;
-
-            public int HardMaxLightCount = 10;
-
-            public int MaxPointLightShadows = 1;
-
-            public int MaxSpotLightShadows = 3;
-
-            public float FadeDuration = 0.25f;
-
             public AssetReferenceGameObject LightSourcePrefab;
 
-            public AssetReferenceT<LightSourceDefaults> LightSourceDefaultValues;
+            public AssetReferenceT<LightSourceSettings> LightSourceSettings;
 
             public List<LightSourceLodSystem.LodSettings> SpotLightsLods;
 
