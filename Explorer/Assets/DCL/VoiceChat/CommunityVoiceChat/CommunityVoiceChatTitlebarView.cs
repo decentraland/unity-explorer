@@ -1,5 +1,10 @@
+using DCL.Communities.CommunitiesCard.Members;
+using DCL.UI.GenericContextMenu.Controls.Configs;
+using DCL.UI.GenericContextMenuParameter;
 using DG.Tweening;
+using MVC;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -41,9 +46,48 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public CommunityVoiceChatSearchView CommunityVoiceChatSearchView { get; private set; }
 
+        [field: Header("Assets")]
+        [field: SerializeField] private CommunityVoiceChatContextMenuConfiguration contextMenuSettings = null!;
+
+        public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
+        public event Action<VoiceChatMember>? DemoteSpeaker;
+        public event Action<VoiceChatMember>? PromoteToSpeaker;
+        public event Action<VoiceChatMember>? Kick;
+        public event Action<VoiceChatMember>? Ban;
+
+        private GenericContextMenu? contextMenu;
+        private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
+        private GenericContextMenuElement? demoteSpeakerButton;
+        private GenericContextMenuElement? promoteToSpeakerButton;
+        private GenericContextMenuElement? kickFromStreamButton;
+        private GenericContextMenuElement? banFromCommunityButton;
+        private VoiceChatMember lastClickedProfile = null!;
+        private CancellationToken cancellationToken;
+
         private void Start()
         {
+            cancellationToken = new CancellationToken();
             CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
+
+            contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing)
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus)))
+                         .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
+                         .AddControl(demoteSpeakerButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.DemoteSpeakerText, contextMenuSettings.DemoteSpeakerSprite, () => DemoteSpeaker?.Invoke(lastClickedProfile!))))
+                         .AddControl(promoteToSpeakerButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.PromoteToSpeakerText, contextMenuSettings.PromoteToSpeakerSprite, () => PromoteToSpeaker?.Invoke(lastClickedProfile!))))
+                         .AddControl(kickFromStreamButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.KickFromStreamText, contextMenuSettings.KickFromStreamSprite, () => Kick?.Invoke(lastClickedProfile!))))
+                         .AddControl(banFromCommunityButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => Ban?.Invoke(lastClickedProfile!))));
+        }
+
+        private void OnContextMenuButtonClicked(VoiceChatMember voiceChatMember, Vector2 buttonPosition, PlayerEntryView elementView)
+        {
+            lastClickedProfile = voiceChatMember;
+
+            promoteToSpeakerButton!.Enabled = voiceChatMember.IsModerator && !voiceChatMember.IsSpeaker;
+            demoteSpeakerButton!.Enabled = voiceChatMember.IsModerator && voiceChatMember.IsSpeaker;
+            kickFromStreamButton!.Enabled = voiceChatMember.IsModerator;
+            banFromCommunityButton!.Enabled = voiceChatMember.IsModerator;
+
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition), cancellationToken);
         }
 
         public void SetCollapsedButtonState(bool isCollapsed)

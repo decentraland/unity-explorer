@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81b5d5a304d44b63bc9f33518163c755, type: 3}
+  m_Name: CommunityVoiceChatContextMenuSettings
+  m_EditorClassIdentifier: 
+  <ContextMenuWidth>k__BackingField: 250
+  <ElementsSpacing>k__BackingField: 5
+  <SeparatorHeight>k__BackingField: 20
+  <VerticalPadding>k__BackingField:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  <KickFromStreamSprite>k__BackingField: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
+  <KickFromStreamText>k__BackingField: Remove from stream
+  <DemoteSpeakerSprite>k__BackingField: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
+  <DemoteSpeakerText>k__BackingField: Demote speaker
+  <PromoteToSpeakerSprite>k__BackingField: {fileID: 21300000, guid: 68f9eff02d2384f72b6d01286cf5cff8, type: 3}
+  <PromoteToSpeakerText>k__BackingField: Promote to speaker
+  <BanUserSprite>k__BackingField: {fileID: 21300000, guid: 8557338c4494e434487bffb04a91e9e9, type: 3}
+  <BanUserText>k__BackingField: Ban from community

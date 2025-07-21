@@ -82,6 +82,7 @@ MonoBehaviour:
   <FooterContainer>k__BackingField: {fileID: 4895001121833812381}
   <CommunityVoiceChatInCallView>k__BackingField: {fileID: 3886185350859594567}
   <CommunityVoiceChatSearchView>k__BackingField: {fileID: 604609896276587201}
+  contextMenuSettings: {fileID: 11400000, guid: f3988fe058c9e463580d97c75e2b574d, type: 2}
 --- !u!1001 &3557489126270227469
 PrefabInstance:
   m_ObjectHideFlags: 0
