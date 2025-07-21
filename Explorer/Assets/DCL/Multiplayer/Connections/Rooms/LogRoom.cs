@@ -45,6 +45,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event Room.MetaDelegate? RoomMetadataChanged;
 
         public event Room.SidDelegate? RoomSidChanged;
+        public event DisconnectionDelegate? Disconnected;
 
         public LogRoom() : this(new Room()) { }
 
@@ -73,6 +74,16 @@ namespace DCL.Multiplayer.Connections.Rooms
             this.origin.ConnectionUpdated += OriginOnConnectionUpdated;
             this.origin.RoomMetadataChanged += OriginOnRoomMetadataChanged;
             this.origin.RoomSidChanged += OriginOnRoomSidChanged;
+            this.origin.Disconnected += OriginOnDisconnected;
+        }
+
+        private void OriginOnDisconnected(IRoom room, DisconnectReason disconnectReason)
+        {
+            ReportHub
+               .WithReport(ReportCategory.LIVEKIT)
+               .Log($"{PREFIX} disconnected with reason {disconnectReason}");
+
+            Disconnected?.Invoke(room, disconnectReason);
         }
 
         private void OriginOnRoomSidChanged(string sid)
