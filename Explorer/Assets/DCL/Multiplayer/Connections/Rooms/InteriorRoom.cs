@@ -54,7 +54,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event ConnectionQualityChangeDelegate? ConnectionQualityChanged;
         public event ConnectionStateChangeDelegate? ConnectionStateChanged;
         public event ConnectionDelegate? ConnectionUpdated;
-        public event DisconnectionDelegate? Disconnected;
 
         /// <summary>
         ///     It's not safe to call this method as the previous room can be "forgotten" without notifications
@@ -171,7 +170,6 @@ namespace DCL.Multiplayer.Connections.Rooms
             room.ConnectionQualityChanged += RoomOnConnectionQualityChanged;
             room.ConnectionStateChanged += RoomOnConnectionStateChanged;
             room.ConnectionUpdated += RoomOnConnectionUpdated;
-            room.Disconnected += RoomOnDisconnected;
         }
 
         private void Unsubscribe(IRoom previous)
@@ -189,12 +187,6 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionQualityChanged -= RoomOnConnectionQualityChanged;
             previous.ConnectionStateChanged -= RoomOnConnectionStateChanged;
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
-            previous.Disconnected -= RoomOnDisconnected;
-        }
-
-        private void RoomOnDisconnected(IRoom room, DisconnectReason disconnectReason)
-        {
-            Disconnected?.Invoke(room, disconnectReason);
         }
 
         private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)

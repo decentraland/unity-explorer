@@ -38,7 +38,6 @@ namespace DCL.Multiplayer.Connections.Rooms
         public event ConnectionDelegate? ConnectionUpdated;
         public event Room.MetaDelegate? RoomMetadataChanged;
         public event Room.SidDelegate? RoomSidChanged;
-        public event DisconnectionDelegate? Disconnected;
 
         public void UpdateLocalMetadata(string metadata)
         {
