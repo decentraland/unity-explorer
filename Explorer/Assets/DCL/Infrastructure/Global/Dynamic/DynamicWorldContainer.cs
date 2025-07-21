@@ -524,6 +524,7 @@ namespace Global.Dynamic
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
+                new AppArgsCommand(appArgs)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
