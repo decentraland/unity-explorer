@@ -165,10 +165,7 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
-            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
-
-
 
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
@@ -177,7 +174,6 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    DefaultStartingRealm = defaultStartingRealm,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
@@ -185,7 +181,6 @@ namespace Global.Dynamic
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
-                    AppParameters = appArgs,
                 },
                 backgroundMusic,
                 world,

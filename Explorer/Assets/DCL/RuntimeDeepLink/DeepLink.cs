@@ -1,4 +1,5 @@
 using Global.AppArgs;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,6 +40,9 @@ namespace DCL.RuntimeDeepLink
             map.TryGetValue(key, out string? value);
             return value;
         }
+
+        public override string ToString() =>
+            JsonConvert.SerializeObject(map);
 
         [Serializable]
         private struct DeepLinkDTO
