@@ -14,7 +14,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatParticipantManager participantManager;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
 
-                public VoiceChatContainer(
+        public VoiceChatContainer(
             IRPCSocialServices socialServiceRPC,
             ISocialServiceEventBus socialServiceEventBus,
             IRoomHub roomHub)
