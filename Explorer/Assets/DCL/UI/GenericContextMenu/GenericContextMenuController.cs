@@ -132,7 +132,9 @@ namespace DCL.UI.GenericContextMenu
                 + container.controlsLayoutGroup.padding.top
                 + (container.controlsLayoutGroup.spacing * (contextMenuConfig.contextMenuSettings.Count - 1)));
 
-            container.controlsContainer.localPosition = GetControlsPosition(container, anchorPosition, contextMenuConfig.offsetFromTarget, overlapRect, contextMenuConfig.anchorPoint);
+            Vector3 calculatedPosition = GetControlsPosition(container, anchorPosition, contextMenuConfig.offsetFromTarget, overlapRect, contextMenuConfig.anchorPoint);
+            Vector3 worldPosition = viewRectTransform.TransformPoint(calculatedPosition);
+            container.controlsContainer.localPosition = container.transform.parent.InverseTransformPoint(worldPosition);
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(container.controlsContainer);
 
