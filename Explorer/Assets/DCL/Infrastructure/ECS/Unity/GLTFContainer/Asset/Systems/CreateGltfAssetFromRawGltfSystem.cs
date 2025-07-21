@@ -54,7 +54,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
         {
-            var result = GltfContainerAsset.Create(gltfData.RootGameObject, gltfData);
+            var result = GltfContainerAsset.Create(gltfData.RootGameObject, gltfData, gltfData.HierarchyPaths);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())

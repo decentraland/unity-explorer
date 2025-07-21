@@ -1,6 +1,7 @@
 using DCL.Diagnostics;
 using DCL.Profiling;
 using GLTFast;
+using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
 
@@ -10,12 +11,14 @@ namespace ECS.StreamableLoading.GLTF
     {
         public readonly GameObject ContainerGameObject;
         public readonly GameObject RootGameObject;
+        public readonly IReadOnlyList<string>? HierarchyPaths;
 
-        public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject)
+        public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject, IReadOnlyList<string>? hierarchyPaths = null)
             : base(gltfImportedData, ReportCategory.GLTF_CONTAINER)
         {
             this.ContainerGameObject = containerGameObject;
             RootGameObject = containerGameObject.transform.GetChild(0).gameObject;
+            HierarchyPaths = hierarchyPaths;
         }
 
         protected override ref ProfilerCounterValue<int> totalCount => ref ProfilingCounters.GltfDataAmount;

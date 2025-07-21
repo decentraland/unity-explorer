@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -47,14 +48,28 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Finds a renderer by path, returning null if not found
         /// </summary>
-        protected static Renderer? FindRendererByPath(GameObject rootGameObject, string path)
+        protected static Renderer? FindRendererByPath(GameObject rootGameObject, string path, IReadOnlyList<string>? availablePaths = null)
         {
             if (string.IsNullOrEmpty(path))
                 return null;
 
             Transform? rendererTransform = rootGameObject.transform.Find(path);
 
-            return rendererTransform != null && rendererTransform.TryGetComponent(out Renderer renderer) ? renderer : null;
+            if (rendererTransform != null && rendererTransform.TryGetComponent(out Renderer renderer))
+                return renderer;
+
+            ReportHub.LogError(ReportCategory.GLTF_CONTAINER,
+                $"GLTF Node path '{path}' not found.");
+
+            // Debug logging for local scene development when path is not found
+            if (availablePaths is { Count: > 0 })
+            {
+                var pathsMessage = string.Join("\n  - ", availablePaths);
+                ReportHub.LogError(ReportCategory.GLTF_CONTAINER,
+                    $"GLTF Node available paths with renderers:\n  - {pathsMessage}");
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -120,7 +135,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         {
             World.Add(containerEntity, new GltfNode
             {
-                Renderers = asset.Renderers, // Direct reference - zero allocation!
+                Renderers = asset.Renderers,
                 ContainerEntity = containerEntity,
                 Path = string.Empty,
             });
@@ -163,16 +178,16 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         ///     Creates a new GltfNode entity for a new modifier
         /// </summary>
         protected void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent, bool hasShadowOverride,
-            bool hasMaterialOverride)
+            bool hasMaterialOverride, IReadOnlyList<string>? availablePaths = null)
         {
-            Renderer? renderer = FindRendererByPath(gltfContainer.RootGameObject!, modifier.Path);
+            Renderer? renderer = FindRendererByPath(gltfContainer.RootGameObject!, modifier.Path, availablePaths);
             if (renderer == null) return;
 
             Entity nodeEntity = this.World.Create();
 
             World.Add(nodeEntity, new GltfNode
             {
-                Renderers = new[] { renderer }, // Array - minimal allocation
+                Renderers = new[] { renderer },
                 ContainerEntity = containerEntity,
                 Path = modifier.Path,
             });

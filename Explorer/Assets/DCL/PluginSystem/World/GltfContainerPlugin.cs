@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
             in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
+            bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
             LoadGLTFSystem.InjectToWorld(
@@ -66,9 +67,8 @@ namespace DCL.PluginSystem.World
                 webRequestController,
                 false,
                 false,
+                localSceneDevelopment,
                 new GltFastSceneDownloadStrategy(sharedDependencies.SceneData));
-
-            bool localSceneDevelopment = launchMode.CurrentMode is LaunchMode.LocalSceneDevelopment;
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment, useRemoteAssetBundles);
