@@ -1,8 +1,10 @@
-﻿namespace MVC
+﻿using System;
+
+namespace MVC
 {
-    public interface IWindowsStackManager
+    public interface IWindowsStackManager : IDisposable
     {
-        IController TopMostPopup { get; }
+        (IController controller, int orderInLayer) TopMostPopup { get; }
 
         IController CurrentFullscreenController { get; }
 

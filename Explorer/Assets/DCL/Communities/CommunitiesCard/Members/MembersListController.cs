@@ -14,6 +14,7 @@ using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -35,13 +36,13 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private readonly MembersListView view;
-        private readonly ConfirmationDialogView confirmationDialogView;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
-        private readonly ICommunitiesDataProvider communitiesDataProvider;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly WarningNotificationView inWorldWarningNotificationView;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly SectionFetchData<MemberData> allMembersFetchData = new (PAGE_SIZE);
         private readonly SectionFetchData<MemberData> bannedMembersFetchData = new (PAGE_SIZE);
@@ -58,10 +59,11 @@ namespace DCL.Communities.CommunitiesCard.Members
             ProfileRepositoryWrapper profileDataProvider,
             IMVCManager mvcManager,
             ObjectProxy<IFriendsService> friendServiceProxy,
-            ICommunitiesDataProvider communitiesDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             WarningNotificationView inWorldWarningNotificationView,
             ISharedSpaceManager sharedSpaceManager,
-            IChatEventBus chatEventBus) : base(view, PAGE_SIZE)
+            IChatEventBus chatEventBus,
+            IWeb3IdentityCache web3IdentityCache) : base(view, PAGE_SIZE)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -70,6 +72,7 @@ namespace DCL.Communities.CommunitiesCard.Members
             this.inWorldWarningNotificationView = inWorldWarningNotificationView;
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatEventBus = chatEventBus;
+            this.web3IdentityCache = web3IdentityCache;
 
             this.view.InitGrid();
             this.view.ActiveSectionChanged += OnMemberListSectionChanged;
@@ -135,8 +138,8 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 if (sectionData.PageNumber == 0)
                     FetchNewDataAsync(cancellationToken).Forget();
-                else
-                    RefreshGrid(true);
+
+                RefreshGrid(true);
             }
         }
 
@@ -185,7 +188,7 @@ namespace DCL.Communities.CommunitiesCard.Members
 
                 MembersSorter.SortMembersList(memberList);
 
-                RefreshGrid(false);
+                RefreshGrid(true);
             }
         }
 
@@ -211,8 +214,21 @@ namespace DCL.Communities.CommunitiesCard.Members
                 }
 
                 allMembersFetchData.Items.Remove(profile);
-                RefreshGrid(false);
+                RefreshGrid(true);
             }
+        }
+
+        public void TryRemoveLocalUser()
+        {
+            string? userAddress = web3IdentityCache.Identity?.Address;
+            for (int i = 0; i < allMembersFetchData.Items.Count; i++)
+                if (allMembersFetchData.Items[i].memberAddress.Equals(userAddress, StringComparison.OrdinalIgnoreCase))
+                {
+                    allMembersFetchData.Items.RemoveAt(i);
+                    if (currentSection == MembersListView.MemberListSections.ALL)
+                        RefreshGrid(true);
+                    break;
+                }
         }
 
         private void AddModerator(MemberData profile)

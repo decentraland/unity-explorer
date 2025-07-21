@@ -5,20 +5,19 @@ using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Chat.History;
-using DCL.Communities;
-using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
-using DCL.UI.Profiles.Helpers;
 using DCL.Profiles.Self;
 using DCL.SceneRestrictionBusController.SceneRestrictionBus;
-using DCL.StylizedSkybox.Scripts;
+using DCL.SkyBox;
 using DCL.UI.Controls;
 using DCL.UI.MainUI;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles;
+using DCL.UI.Profiles.Helpers;
 using DCL.UI.SharedSpaceManager;
 using DCL.UI.Sidebar;
 using DCL.UI.Skybox;
@@ -60,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IRealmData realmData;
         private readonly ISceneRestrictionBusController sceneRestrictionBusController;
+        private readonly IDecentralandUrlsSource decentralandUrls;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -85,7 +85,8 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             ISelfProfile selfProfile,
             IRealmData realmData,
-            ISceneRestrictionBusController sceneRestrictionBusController)
+            ISceneRestrictionBusController sceneRestrictionBusController,
+            IDecentralandUrlsSource decentralandUrls)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -111,6 +112,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.realmData = realmData;
             this.sceneRestrictionBusController = sceneRestrictionBusController;
+            this.decentralandUrls = decentralandUrls;
         }
 
         public void Dispose() { }
@@ -125,6 +127,8 @@ namespace DCL.PluginSystem.Global
             ControlsPanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ControlsPanelPrefab, ct)).GetComponent<ControlsPanelView>();
             ControlsPanelController.Preallocate(panelViewAsset, null!, out ControlsPanelView controlsPanelView);
 
+            SkyboxSettingsAsset skyboxSettings = (await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsAsset, ct)).Value;
+
             mvcManager.RegisterController(new SidebarController(() =>
                 {
                     SidebarView view = mainUIView.SidebarView;
@@ -133,10 +137,10 @@ namespace DCL.PluginSystem.Global
                 },
                 mvcManager,
                 notificationsBusController,
-                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache),
+                new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, rarityBackgroundMapping, web3IdentityCache, profileRepositoryWrapper),
                 new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, profileChangesBus, profileRepositoryWrapper),
                 new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, profileRepositoryWrapper),
-                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, settings.SkyboxSettingsAsset),
+                new SkyboxMenuController(() => mainUIView.SidebarView.SkyboxMenuView, skyboxSettings),
                 new ControlsPanelController(() => controlsPanelView, mvcManager),
                 webBrowser,
                 includeCameraReel,
@@ -147,7 +151,8 @@ namespace DCL.PluginSystem.Global
                 sharedSpaceManager,
                 selfProfile,
                 realmData,
-                sceneRestrictionBusController
+                sceneRestrictionBusController,
+                decentralandUrls
             ));
         }
 
@@ -160,7 +165,7 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
 
             [field: SerializeField]
-            public StylizedSkyboxSettingsAsset SkyboxSettingsAsset { get; private set; }
+            public AssetReferenceT<SkyboxSettingsAsset> SettingsAsset { get; private set; }
 
             [field: SerializeField]
             public AssetReferenceGameObject ControlsPanelPrefab;

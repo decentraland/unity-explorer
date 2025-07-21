@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1dbd1decb60282248bd089c32bec5d02
+    m_Address: SkyboxRenderController
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1f557ed079be146f9aeb090104c115c9
     m_Address: Assets/DCL/MapRenderer/Addressables/SceneOfInterest.prefab
     m_ReadOnly: 0
@@ -210,11 +215,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
-    m_Address: StylizedSkyboxController
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5ed0eaf7428cb4135baf7d2e09a9430a
     m_Address: PageSelector
     m_ReadOnly: 0
@@ -300,6 +300,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b075576ea612439bb40436f7c0fdff0
+    m_Address: Assets/DCL/UI/ConfirmationDialog/Prefabs/ConfirmationDialog.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7e150ada146ad0749b39e65968780157
     m_Address: MapParcelHighlightMarker
     m_ReadOnly: 0
@@ -317,6 +322,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 875491fc8a6c64fe2aa217d9a750e8a3
     m_Address: LANDImg
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8a91951d2f71f174d998356f01a3603c
+    m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

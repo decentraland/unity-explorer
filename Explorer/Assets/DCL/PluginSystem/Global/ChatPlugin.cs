@@ -65,7 +65,7 @@ namespace DCL.PluginSystem.Global
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly bool isCallEnabled;
-        private readonly ICommunitiesDataProvider communityDataProvider;
+        private readonly CommunitiesDataProvider communityDataProvider;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
@@ -95,7 +95,7 @@ namespace DCL.PluginSystem.Global
             ChatMessageFactory chatMessageFactory,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            ICommunitiesDataProvider communityDataProvider,
+            CommunitiesDataProvider communityDataProvider,
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,

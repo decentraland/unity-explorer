@@ -118,7 +118,7 @@ namespace DCL.Passport
         private Profile? targetProfile;
         private bool isOwnProfile;
         private string? currentUserId;
-        private CancellationTokenSource? openPassportFromBadgeNotificationCts;
+        private CancellationTokenSource? openPassportFromNotificationCts;
         private CancellationTokenSource? characterPreviewLoadingCts;
         private CancellationTokenSource? photoLoadingCts;
         private CancellationTokenSource? friendshipStatusCts;
@@ -137,6 +137,7 @@ namespace DCL.Passport
         private UniTaskCompletionSource? contextMenuCloseTask;
         private UniTaskCompletionSource? passportCloseTask;
         private CancellationTokenSource jumpToFriendLocationCts = new ();
+        private readonly BadgePreviewCameraView badge3DPreviewCamera;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
@@ -186,7 +187,8 @@ namespace DCL.Passport
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService) : base(viewFactory)
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            BadgePreviewCameraView badge3DPreviewCameraPrefab) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -213,6 +215,7 @@ namespace DCL.Passport
             this.realmNavigator = realmNavigator;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.badge3DPreviewCamera = GameObject.Instantiate(badge3DPreviewCameraPrefab);
             this.nftNamesProvider = nftNamesProvider;
             this.gridLayoutFixedColumnCount = gridLayoutFixedColumnCount;
             this.thumbnailHeight = thumbnailHeight;
@@ -229,8 +232,10 @@ namespace DCL.Passport
             passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
             notificationBusController.SubscribeToNotificationTypeReceived(NotificationType.BADGE_GRANTED, OnBadgeNotificationReceived);
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.BADGE_GRANTED, OnBadgeNotificationClicked);
+            notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REFERRAL_INVITED_USERS_ACCEPTED, OnReferralUserAcceptedNotificationClicked);
 
             userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((_, _) => { });
+            badge3DPreviewCamera.gameObject.SetActive(false);
         }
 
         private void ThumbnailClicked(List<CameraReelResponseCompact> reels, int index, Action<CameraReelResponseCompact> reelDeleteIntention) =>
@@ -249,7 +254,7 @@ namespace DCL.Passport
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController, webRequestController));
 
-            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile);
+            badgesDetailsPassportModuleController = new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController, webRequestController, selfProfile, badge3DPreviewCamera);
             cameraReelGalleryController = new CameraReelGalleryController(viewInstance.CameraReelGalleryModuleView, cameraReelStorageService, cameraReelScreenshotsStorage, new ReelGalleryConfigParams(gridLayoutFixedColumnCount, thumbnailHeight, thumbnailWidth, false, false), false);
             cameraReelGalleryController.ThumbnailClicked += ThumbnailClicked;
             badgesPassportModules.Add(badgesDetailsPassportModuleController);
@@ -352,6 +357,7 @@ namespace DCL.Passport
             isOwnProfile = inputData.IsOwnProfile;
             alreadyLoadedSections = PassportSection.NONE;
             cursor.Unlock();
+
             if (string.IsNullOrEmpty(inputData.BadgeIdSelected))
                 OpenOverviewSection();
             else
@@ -371,6 +377,7 @@ namespace DCL.Passport
                 ShowMutualFriends();
             }
             PassportOpened?.Invoke(currentUserId, isOwnProfile);
+            badge3DPreviewCamera.gameObject.SetActive(true);
         }
 
         protected override void OnViewClose()
@@ -394,6 +401,7 @@ namespace DCL.Passport
 
             currentSection = PassportSection.NONE;
             contextMenuCloseTask?.TrySetResult();
+            badge3DPreviewCamera.gameObject.SetActive(false);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -407,7 +415,7 @@ namespace DCL.Passport
         public override void Dispose()
         {
             passportErrorsController?.Hide(true);
-            openPassportFromBadgeNotificationCts.SafeCancelAndDispose();
+            openPassportFromNotificationCts.SafeCancelAndDispose();
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController?.Dispose();
             friendshipStatusCts.SafeCancelAndDispose();
@@ -549,8 +557,24 @@ namespace DCL.Passport
             if (parameters.Length > 0 && parameters[0] is BadgeGrantedNotification badgeNotification)
                 badgeIdToOpen = badgeNotification.Metadata.Id;
 
-            openPassportFromBadgeNotificationCts = openPassportFromBadgeNotificationCts.SafeRestart();
-            OpenPassportFromBadgeNotificationAsync(badgeIdToOpen, openPassportFromBadgeNotificationCts.Token).Forget();
+            openPassportFromNotificationCts = openPassportFromNotificationCts.SafeRestart();
+            OpenPassportFromBadgeNotificationAsync(badgeIdToOpen, openPassportFromNotificationCts.Token).Forget();
+        }
+
+        private void OnReferralUserAcceptedNotificationClicked(object[] parameters)
+        {
+            if (parameters.Length <= 0) return;
+            ReferralNotification notification = (ReferralNotification) parameters[0];
+            openPassportFromNotificationCts = openPassportFromNotificationCts.SafeRestart();
+            OpenPassportAsync(openPassportFromNotificationCts.Token).Forget();
+            return;
+
+            async UniTaskVoid OpenPassportAsync(CancellationToken ct)
+            {
+                try { await mvcManager.ShowAsync(IssueCommand(new Params(notification.Metadata.invitedUserAddress)), ct); }
+                catch (OperationCanceledException) { }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.PROFILE); }
+            }
         }
 
         private async UniTaskVoid OpenPassportFromBadgeNotificationAsync(string badgeIdToOpen, CancellationToken ct)
@@ -597,6 +621,7 @@ namespace DCL.Passport
             {
                 // Fetch our own profile since inputData.IsOwnProfile sometimes is wrong
                 Profile? ownProfile = await selfProfile.ProfileAsync(ct);
+
                 // Dont show any interaction for our own user
                 if (ownProfile?.UserId == inputData.UserId) return;
 
@@ -653,6 +678,7 @@ namespace DCL.Passport
         private void BlockUserClicked()
         {
             BlockUserClickedAsync(friendshipStatusCts!.Token).Forget();
+
             async UniTaskVoid BlockUserClickedAsync(CancellationToken ct)
             {
                 await mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(new Web3Address(targetProfile!.UserId), targetProfile.Name, BlockUserPromptParams.UserBlockAction.BLOCK)), ct);

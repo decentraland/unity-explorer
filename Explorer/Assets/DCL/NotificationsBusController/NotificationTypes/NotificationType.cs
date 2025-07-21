@@ -41,5 +41,9 @@ namespace DCL.NotificationsBusController.NotificationTypes
         STREAMING_KEY_EXPIRED,
         STREAMING_TIME_EXCEEDED,
         STREAMING_PLACE_UPDATED,
+
+        // Referral
+        REFERRAL_INVITED_USERS_ACCEPTED,
+        REFERRAL_NEW_TIER_REACHED,
     }
 }

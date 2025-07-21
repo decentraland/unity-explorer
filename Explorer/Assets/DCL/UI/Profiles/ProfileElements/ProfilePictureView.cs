@@ -4,13 +4,17 @@ using DCL.UI.Profiles.Helpers;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utility;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfilePictureView : MonoBehaviour, IDisposable
+    public class ProfilePictureView : MonoBehaviour, IDisposable, IPointerEnterHandler, IPointerExitHandler
     {
+        public event Action? PointerEnter;
+        public event Action? PointerExit;
+
         [SerializeField] private ImageView thumbnailImageView;
         [SerializeField] private Image thumbnailBackground;
         [SerializeField] private Sprite defaultEmptyThumbnail;
@@ -105,5 +109,11 @@ namespace DCL.UI.ProfileElements
                 await SetThumbnailImageWithAnimationAsync(defaultEmptyThumbnail, cts.Token);
             }
         }
+
+        public void OnPointerEnter(PointerEventData eventData) =>
+            PointerEnter?.Invoke();
+
+        public void OnPointerExit(PointerEventData eventData) =>
+            PointerExit?.Invoke();
     }
 }
