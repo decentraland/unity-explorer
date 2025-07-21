@@ -24,16 +24,13 @@ namespace DCL.AuthenticationScreenFlow
         public Button LoginButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public GameObject ConnectingToServerContainer { get; private set; } = null!;
+        public GameObject LoadingSpinner { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject PendingAuthentication { get; private set; } = null!;
 
         [field: SerializeField]
         public Button CancelAuthenticationProcess { get; private set; } = null!;
-
-        [field: SerializeField]
-        public GameObject ProgressContainer { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject FinalizeContainer { get; private set; } = null!;

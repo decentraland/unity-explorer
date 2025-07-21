@@ -265,7 +265,7 @@ namespace DCL.AuthenticationScreenFlow
                     CurrentRequestID = string.Empty;
 
                     viewInstance!.ErrorPopupRoot.SetActive(false);
-                    viewInstance!.ConnectingToServerContainer.SetActive(true);
+                    viewInstance!.LoadingSpinner.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
@@ -382,48 +382,55 @@ namespace DCL.AuthenticationScreenFlow
                 case ViewState.Login:
                     ResetAnimator(viewInstance!.LoginAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
+
                     viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.ProgressContainer.SetActive(false);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = true;
+
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
 
                     CurrentState.Value = AuthenticationStatus.Login;
                     break;
-                case ViewState.LoginInProgress:
-                    ResetAnimator(viewInstance!.VerificationAnimator);
-                    viewInstance.PendingAuthentication.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
-                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.ProgressContainer.SetActive(false);
+                case ViewState.Loading:
+                    viewInstance!.PendingAuthentication.SetActive(false);
+
+                    viewInstance.LoginContainer.SetActive(true);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.LoadingSpinner.SetActive(true);
+                    viewInstance.LoginButton.interactable = true;
+
                     viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
-                case ViewState.Loading:
-                    viewInstance!.PendingAuthentication.SetActive(false);
-                    viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.ProgressContainer.SetActive(true);
-                    viewInstance.FinalizeContainer.SetActive(false);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
-                    viewInstance.VerificationCodeHintContainer.SetActive(false);
+                case ViewState.LoginInProgress:
+                    ResetAnimator(viewInstance!.VerificationAnimator);
+
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+                    viewInstance.LoadingSpinner.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+
+                    viewInstance.PendingAuthentication.SetActive(true);
+                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
+                    viewInstance.FinalizeContainer.SetActive(false);
+                    viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
                     ResetAnimator(viewInstance!.FinalizeAnimator);
                     viewInstance.PendingAuthentication.SetActive(false);
+
                     viewInstance.LoginContainer.SetActive(false);
-                    viewInstance.ProgressContainer.SetActive(false);
+                    viewInstance.LoadingSpinner.SetActive(false);
+                    viewInstance.LoginButton.interactable = false;
+
                     viewInstance.FinalizeContainer.SetActive(true);
                     viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
-                    viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
-                    viewInstance.LoginButton.interactable = false;
                     viewInstance.RestrictedUserContainer.SetActive(false);
                     viewInstance.JumpIntoWorldButton.interactable = true;
                     characterPreviewController?.OnShow();
