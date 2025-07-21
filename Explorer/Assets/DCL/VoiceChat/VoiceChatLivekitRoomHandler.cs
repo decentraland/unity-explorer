@@ -60,8 +60,8 @@ namespace DCL.VoiceChat
             this.voiceChatMicrophoneStateManager = voiceChatMicrophoneStateManager;
 
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
-            voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
-            voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
+            //voiceChatRoom.LocalTrackPublished += OnLocalTrackPublished;
+            //voiceChatRoom.LocalTrackUnpublished += OnLocalTrackUnpublished;
             statusSubscription = voiceChatCallStatusService.Status.Subscribe(OnCallStatusChanged);
         }
 
@@ -70,8 +70,8 @@ namespace DCL.VoiceChat
             if (isDisposed) return;
             isDisposed = true;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
-            voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
-            voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
+            //voiceChatRoom.LocalTrackPublished -= OnLocalTrackPublished;
+            //voiceChatRoom.LocalTrackUnpublished -= OnLocalTrackUnpublished;
             statusSubscription?.Dispose();
             reconnectionCts.SafeCancelAndDispose();
             CloseMedia();
