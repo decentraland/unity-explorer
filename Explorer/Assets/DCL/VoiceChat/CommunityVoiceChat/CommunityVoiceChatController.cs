@@ -84,7 +84,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void AddSpeaker()
         {
             PlayerEntryView entryView = GetAndConfigurePlayerEntry();
-            entryView.transform.parent = view.SpeakersParent;
+            entryView.transform.parent = view.CommunityVoiceChatInCallView.SpeakersParent;
         }
 
         private void AddListener()

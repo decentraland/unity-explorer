@@ -27,7 +27,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public RectTransform FooterContainer { get; private set; }
 
         [field: SerializeField]
-        public RectTransform SpeakersParent { get; private set; }
+        public CommunityVoiceChatInCallView CommunityVoiceChatInCallView { get; private set; }
 
         [field: SerializeField]
         public CommunityVoiceChatSearchView CommunityVoiceChatSearchView { get; private set; }
