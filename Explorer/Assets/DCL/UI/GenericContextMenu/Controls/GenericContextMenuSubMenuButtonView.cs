@@ -77,7 +77,7 @@ namespace DCL.UI.GenericContextMenu.Controls
                 if (!isHovering)
                     container.gameObject.SetActive(false);
             }
-            catch (OperationCanceledException) { }
+            catch (Exception) { }
         }
     }
 }
