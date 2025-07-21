@@ -7,6 +7,7 @@ using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.TrackPublications;
 using LiveKit.Rooms.Tracks;
+using LiveKit.Proto;
 using System;
 using System.Threading;
 using Utility.Types;
@@ -165,7 +166,7 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to disconnect from room: {ex.Message}"); }
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection update: {connectionUpdate}");
 

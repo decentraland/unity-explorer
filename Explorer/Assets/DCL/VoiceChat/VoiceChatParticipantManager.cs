@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using DCL.Utilities;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -32,7 +33,7 @@ namespace DCL.VoiceChat
 
         public IReadOnlyCollection<string> ConnectedParticipants => connectedParticipants;
         public IReadOnlyCollection<string> ActiveSpeakers => activeSpeakers;
-        
+
         public string LocalParticipantId => voiceChatRoom.Participants.LocalParticipant().Identity;
 
         public ParticipantState? GetParticipantState(string participantId)
@@ -116,7 +117,7 @@ namespace DCL.VoiceChat
             activeSpeakers = newActiveSpeakers;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
             switch (connectionUpdate)
             {
@@ -166,7 +167,7 @@ namespace DCL.VoiceChat
         private ParticipantState CreateParticipantState(Participant participant)
         {
             ParticipantCallMetadata? metadata = null;
-            
+
             if (!string.IsNullOrEmpty(participant.Metadata))
             {
                 try

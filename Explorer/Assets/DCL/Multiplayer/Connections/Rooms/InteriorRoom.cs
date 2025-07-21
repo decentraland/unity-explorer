@@ -144,7 +144,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                 };
 
             // TODO check the order of these messages
-            ConnectionUpdated?.Invoke(assigned, connectionUpdate);
+            ConnectionUpdated?.Invoke(assigned, connectionUpdate, null);
             ConnectionStateChanged?.Invoke(currentState);
         }
 
@@ -189,9 +189,9 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
         }
 
-        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, DisconnectReason? disconnectReason = null)
         {
-            ConnectionUpdated?.Invoke(room, connectionupdate);
+            ConnectionUpdated?.Invoke(room, connectionupdate, disconnectReason);
         }
 
         private void RoomOnConnectionStateChanged(ConnectionState connectionstate)

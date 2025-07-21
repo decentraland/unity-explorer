@@ -5,6 +5,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
+using LiveKit.Proto;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -57,7 +58,7 @@ namespace DCL.VoiceChat
             this.voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
         }
 
-        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate)
+        private void OnConnectionUpdated(IRoom room, ConnectionUpdate connectionUpdate, DisconnectReason? disconnectReason = null)
         {
             if (connectionUpdate == ConnectionUpdate.Connected)
                 view.SetInCallSection();
