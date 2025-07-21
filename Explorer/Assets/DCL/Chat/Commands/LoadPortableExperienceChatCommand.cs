@@ -42,7 +42,7 @@ namespace DCL.Chat.Commands
 
         public async UniTask<string> ExecuteCommandAsync(string[] parameters, CancellationToken ct)
         {
-            if (!FeaturesRegistry.Instance.IsEnabled(FeatureId.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
+            if (!FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.PORTABLE_EXPERIENCE_CHAT_COMMANDS))
                 return "🔴 Error. Portable Experiences Chat Commands are disabled";
 
             string pxName = parameters[0];

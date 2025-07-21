@@ -1,5 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.FeatureFlags;
+using DCL.Chat.ControllerShowParams;
 using DCL.Friends.UI.FriendPanel;
 using DCL.Friends.UI.PushNotifications;
 using DCL.Minimap;
@@ -31,7 +31,7 @@ namespace DCL.UI.MainUI
         private bool waitingToHideSidebar;
         private bool showingSidebar;
         private bool sidebarBlockStatus;
-        private bool autoHideSidebar;
+        private bool autoHideSidebar = false;
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
@@ -40,18 +40,19 @@ namespace DCL.UI.MainUI
         public MainUIController(
             ViewFactoryMethod viewFactory,
             IMVCManager mvcManager,
+            bool isFriendsEnabled,
             ISharedSpaceManager sharedSpaceManager) : base(viewFactory)
         {
             this.mvcManager = mvcManager;
-            this.isFriendsEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
+            this.isFriendsEnabled = isFriendsEnabled;
             this.sharedSpaceManager = sharedSpaceManager;
         }
 
         protected override void OnViewInstantiated()
         {
-            viewInstance!.SidebarView.BlockStatusChanged += OnSidebarBlockStatusChanged;
+            viewInstance.SidebarView.BlockStatusChanged += OnSidebarBlockStatusChanged;
             viewInstance.SidebarView.AutohideStatusChanged += OnSidebarAutohideStatusChanged;
-            viewInstance.pointerDetectionArea.OnEnterArea += OnPointerEnter;
+            viewInstance!.pointerDetectionArea.OnEnterArea += OnPointerEnter;
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
