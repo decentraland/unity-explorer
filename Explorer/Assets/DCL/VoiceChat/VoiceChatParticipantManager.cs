@@ -3,6 +3,7 @@ using DCL.Utilities;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
 using LiveKit.Proto;
+using LiveKit.Rooms.TrackPublications;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -26,10 +27,11 @@ namespace DCL.VoiceChat
 
         public delegate void ParticipantJoinedUpdate(string participantId, ParticipantState participantState);
         public delegate void ParticipantLeftUpdate(string participantId);
+        public delegate void ParticipantBatchUpdate(List<(string participantId, ParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
 
-        // Events for external consumers
         public event ParticipantJoinedUpdate ParticipantJoined;
         public event ParticipantLeftUpdate ParticipantLeft;
+        public event ParticipantBatchUpdate ParticipantBatchUpdated;
 
         public IReadOnlyCollection<string> ConnectedParticipants => connectedParticipants;
         public IReadOnlyCollection<string> ActiveSpeakers => activeSpeakers;
@@ -48,6 +50,8 @@ namespace DCL.VoiceChat
             voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
+            voiceChatRoom.TrackPublished += OnTrackPublished;
+            voiceChatRoom.TrackUnpublished += OnTrackUnpublished;
         }
 
         public void Dispose()
@@ -58,6 +62,8 @@ namespace DCL.VoiceChat
             voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
+            voiceChatRoom.TrackPublished -= OnTrackPublished;
+            voiceChatRoom.TrackUnpublished -= OnTrackUnpublished;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
@@ -121,12 +127,72 @@ namespace DCL.VoiceChat
         {
             switch (connectionUpdate)
             {
+                case ConnectionUpdate.Connected:
+                case ConnectionUpdate.Reconnected:
+                    RefreshAllParticipantStates();
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection {connectionUpdate}, refreshed participant states");
+                    break;
+
                 case ConnectionUpdate.Disconnected:
-                    connectedParticipants.Clear();
-                    activeSpeakers.Clear();
-                    ClearAllParticipantStates();
+                    HandleDisconnection(disconnectReason);
                     break;
             }
+        }
+
+        private void HandleDisconnection(DisconnectReason? disconnectReason)
+        {
+            var shouldClearData = ShouldClearDataOnDisconnect(disconnectReason);
+            
+            if (shouldClearData)
+            {
+                connectedParticipants.Clear();
+                activeSpeakers.Clear();
+                ClearAllParticipantStates();
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disconnected with reason {disconnectReason}, cleared all participant data");
+            }
+            else
+            {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disconnected with reason {disconnectReason}, keeping participant data for potential reconnection");
+            }
+        }
+
+        private bool ShouldClearDataOnDisconnect(DisconnectReason? disconnectReason)
+        {
+            if (!disconnectReason.HasValue)
+                return false;
+            
+            return disconnectReason.Value switch
+            {
+                DisconnectReason.RoomDeleted => true,
+                DisconnectReason.RoomClosed => true,
+                DisconnectReason.ParticipantRemoved => true,
+                DisconnectReason.DuplicateIdentity => true,
+                DisconnectReason.ServerShutdown => true,
+                DisconnectReason.ClientInitiated => true,
+                DisconnectReason.JoinFailure => true,
+                DisconnectReason.UserRejected => true,
+
+                DisconnectReason.SignalClose => true,
+                DisconnectReason.ConnectionTimeout => true,
+                DisconnectReason.StateMismatch => false,
+                DisconnectReason.Migration => false,
+                DisconnectReason.UnknownReason => false,
+                DisconnectReason.UserUnavailable => false,
+                DisconnectReason.SipTrunkFailure => false,
+                _ => false
+            };
+        }
+
+        private void OnTrackPublished(TrackPublication publication, Participant participant)
+        {
+            UpdateParticipantSpeakerStatus(participant.Identity, true);
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track published for {participant.Identity}");
+        }
+
+        private void OnTrackUnpublished(TrackPublication publication, Participant participant)
+        {
+            UpdateParticipantSpeakerStatus(participant.Identity, false);
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unpublished for {participant.Identity}");
         }
 
         private void OnParticipantMetadataChanged(string participantId, string metadata)
@@ -164,6 +230,11 @@ namespace DCL.VoiceChat
             return connectedParticipants.Contains(participantId);
         }
 
+        public bool IsParticipantSpeaker(string participantId)
+        {
+            return participantStates.TryGetValue(participantId, out var state) && state.IsSpeaker.Value;
+        }
+
         private ParticipantState CreateParticipantState(Participant participant)
         {
             ParticipantCallMetadata? metadata = null;
@@ -187,7 +258,8 @@ namespace DCL.VoiceChat
                 Name = new ReactiveProperty<string?>(metadata?.name),
                 HasClaimedName = new ReactiveProperty<bool?>(metadata?.hasClaimedName),
                 ProfilePictureUrl = new ReactiveProperty<string?>(metadata?.profilePictureUrl),
-                IsRequestingToSpeak = new ReactiveProperty<bool?>(metadata?.isRequestingToSpeak)
+                IsRequestingToSpeak = new ReactiveProperty<bool?>(metadata?.isRequestingToSpeak),
+                IsSpeaker = new ReactiveProperty<bool>(HasTracks(participant))
             };
 
             participantStates[participant.Identity] = state;
@@ -203,6 +275,7 @@ namespace DCL.VoiceChat
                 state.HasClaimedName?.Dispose();
                 state.ProfilePictureUrl?.Dispose();
                 state.IsRequestingToSpeak?.Dispose();
+                state.IsSpeaker?.Dispose();
                 participantStates.Remove(participantId);
             }
         }
@@ -216,8 +289,87 @@ namespace DCL.VoiceChat
                 state.HasClaimedName?.Dispose();
                 state.ProfilePictureUrl?.Dispose();
                 state.IsRequestingToSpeak?.Dispose();
+                state.IsSpeaker?.Dispose();
             }
             participantStates.Clear();
+        }
+
+        private void RefreshAllParticipantStates()
+        {
+            var currentParticipants = new List<Participant>();
+            
+            var localParticipant = voiceChatRoom.Participants.LocalParticipant();
+            if (localParticipant != null)
+                currentParticipants.Add(localParticipant);
+            
+            foreach (var participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
+            {
+                var participant = voiceChatRoom.Participants.RemoteParticipant(participantId);
+                currentParticipants.Add(participant);
+            }
+
+            var participantsToRemove = new List<string>();
+            foreach (var participantId in participantStates.Keys)
+            {
+                if (voiceChatRoom.Participants.RemoteParticipant(participantId) == null)
+                {
+                    participantsToRemove.Add(participantId);
+                }
+            }
+            
+            var localParticipantId = voiceChatRoom.Participants.LocalParticipant()?.Identity;
+            participantsToRemove.RemoveAll(id => id == localParticipantId);
+            
+            foreach (var participantId in participantsToRemove)
+            {
+                RemoveParticipantState(participantId);
+                connectedParticipants.Remove(participantId);
+                activeSpeakers.Remove(participantId);
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Removed disconnected participant during refresh: {participantId}");
+            }
+            
+            var joinedParticipants = new List<(string participantId, ParticipantState state)>();
+            foreach (var participant in currentParticipants)
+            {
+                if (participantStates.TryGetValue(participant.Identity, out var existingState))
+                {
+                    RefreshParticipantState(participant, existingState);
+                }
+                else
+                {
+                    var state = CreateParticipantState(participant);
+                    connectedParticipants.Add(participant.Identity);
+                    joinedParticipants.Add((participant.Identity, state));
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Participant joined during refresh: {participant.Identity}");
+                }
+            }
+
+            if (joinedParticipants.Count > 0 || participantsToRemove.Count > 0)
+            {
+                ParticipantBatchUpdated?.Invoke(joinedParticipants, participantsToRemove);
+            }
+        }
+
+        private void RefreshParticipantState(Participant participant, ParticipantState existingState)
+        {
+            ParticipantCallMetadata? metadata = null;
+            if (!string.IsNullOrEmpty(participant.Metadata))
+            {
+                try
+                {
+                    metadata = JsonUtility.FromJson<ParticipantCallMetadata>(participant.Metadata);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogError(ReportCategory.VOICE_CHAT, $"{TAG} Failed to parse metadata for {participant.Identity}: {e.Message}");
+                }
+            }
+
+            existingState.Name.Value = metadata?.name;
+            existingState.HasClaimedName.Value = metadata?.hasClaimedName;
+            existingState.ProfilePictureUrl.Value = metadata?.profilePictureUrl;
+            existingState.IsRequestingToSpeak.Value = metadata?.isRequestingToSpeak;
+            existingState.IsSpeaker.Value = HasTracks(participant);
         }
 
         private void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
@@ -239,6 +391,19 @@ namespace DCL.VoiceChat
             }
         }
 
+        private void UpdateParticipantSpeakerStatus(string participantId, bool isSpeaker)
+        {
+            if (participantStates.TryGetValue(participantId, out var state))
+            {
+                state.IsSpeaker.Value = isSpeaker;
+            }
+        }
+
+        private bool HasTracks(Participant participant)
+        {
+            return participant.Tracks.Count > 0;
+        }
+
         public struct ParticipantState
         {
             public ReactiveProperty<bool> IsSpeaking { get; set; }
@@ -246,6 +411,7 @@ namespace DCL.VoiceChat
             public ReactiveProperty<bool?> HasClaimedName { get; set; }
             public ReactiveProperty<string?> ProfilePictureUrl { get; set; }
             public ReactiveProperty<bool?> IsRequestingToSpeak { get; set; }
+            public ReactiveProperty<bool> IsSpeaker { get; set; }
         }
 
         [Serializable]
