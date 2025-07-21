@@ -1,7 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
+using DCL.Communities;
 using DCL.Communities.CommunitiesBrowser;
-using DCL.FeatureFlags;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.InWorldCamera.CameraReelGallery;
@@ -65,6 +65,7 @@ namespace DCL.ExplorePanel
             CommunitiesBrowserController communitiesBrowserController,
             INotificationsBusController notificationBusController,
             IInputBlock inputBlock,
+            bool includeCameraReel,
             ISharedSpaceManager sharedSpaceManager)
             : base(viewFactory)
         {
@@ -77,7 +78,7 @@ namespace DCL.ExplorePanel
             this.profileMenuController = profileMenuController;
             notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, p => OnRewardAssignedAsync(p).Forget());
             this.inputBlock = inputBlock;
-            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            this.includeCameraReel = includeCameraReel;
             this.sharedSpaceManager = sharedSpaceManager;
             CommunitiesBrowserController = communitiesBrowserController;
         }
@@ -125,7 +126,7 @@ namespace DCL.ExplorePanel
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
-            includeCommunities = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct);
+            includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
 
             lastShownSection = includeCommunities ? ExploreSections.Communities : ExploreSections.Navmap;
 
