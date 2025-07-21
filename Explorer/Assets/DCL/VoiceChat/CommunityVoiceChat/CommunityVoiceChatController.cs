@@ -64,6 +64,19 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             }
         }
 
+        private void OnVoiceChatStatusChanged(VoiceChatStatus status)
+        {
+            switch (status)
+            {
+                case VoiceChatStatus.VOICE_CHAT_IN_CALL:
+                    view.Show();
+                    break;
+                case VoiceChatStatus.DISCONNECTED or VoiceChatStatus.VOICE_CHAT_ENDING_CALL:
+                    view.Hide();
+                    break;
+            }
+        }
+
         private void Show()
         {
             view.gameObject.SetActive(true);
