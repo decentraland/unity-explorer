@@ -150,6 +150,14 @@ namespace DCL.VoiceChat
                 ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "AcceptCall not supported for current voice chat type");
         }
 
+        public void KickPlayer(string communityId, string walletId)
+        {
+            if (activeCallStatusService is CommunityVoiceChatCallStatusService communityService)
+                communityService.KickPlayer(communityId, walletId);
+            else
+                ReportHub.LogWarning(ReportCategory.COMMUNITY_VOICE_CHAT, "KickPlayer is not supported for current voice chat type");
+        }
+
         public void HangUp() => activeCallStatusService?.HangUp();
 
         public void RejectCall()

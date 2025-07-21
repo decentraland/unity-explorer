@@ -110,6 +110,110 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void RequestToSpeak(string communityId)
+        {
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            RequestToSpeakAsync(communityId, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid RequestToSpeakAsync(string communityId, CancellationToken ct)
+        {
+            try
+            {
+                RequestToSpeakInCommunityVoiceChatResponse response = await voiceChatService.RequestToSpeakInCommunityVoiceChatAsync(communityId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    case RequestToSpeakInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        //Handle raise hand logic
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
+        public void PromoteToSpeaker(string communityId, string walletId)
+        {
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            PromoteToSpeakerAsync(communityId, walletId, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid PromoteToSpeakerAsync(string communityId, string walletId, CancellationToken ct)
+        {
+            try
+            {
+                PromoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.PromoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    case PromoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        //Handle promote logic here
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
+        public void DemoteFromSpeaker(string communityId, string walletId)
+        {
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            DemoteFromSpeakerAsync(communityId, walletId, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid DemoteFromSpeakerAsync(string communityId, string walletId, CancellationToken ct)
+        {
+            try
+            {
+                DemoteSpeakerInCommunityVoiceChatResponse response = await voiceChatService.DemoteSpeakerInCommunityVoiceChatAsync(communityId, walletId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    case DemoteSpeakerInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        //Handle demote logic here
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
+        public void KickPlayer(string communityId, string walletId)
+        {
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            cts = cts.SafeRestart();
+            KickPlayerAsync(communityId, walletId, cts.Token).Forget();
+        }
+
+        private async UniTaskVoid KickPlayerAsync(string communityId, string walletId, CancellationToken ct)
+        {
+            try
+            {
+                KickPlayerFromCommunityVoiceChatResponse response = await voiceChatService.KickPlayerFromCommunityVoiceChatAsync(communityId, walletId, ct);
+
+                switch (response.ResponseCase)
+                {
+                    case KickPlayerFromCommunityVoiceChatResponse.ResponseOneofCase.Ok:
+                        //Handle kick logic
+                        break;
+                }
+            }
+            catch (Exception e)
+            {
+            }
+        }
+
         public override void HandleLivekitConnectionFailed()
         {
             ReportHub.Log(ReportCategory.COMMUNITY_VOICE_CHAT, "Community voice chat HandleLivekitConnectionFailed not yet implemented");
