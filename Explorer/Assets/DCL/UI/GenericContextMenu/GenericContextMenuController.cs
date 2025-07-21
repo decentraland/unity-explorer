@@ -3,17 +3,31 @@ using DCL.UI.GenericContextMenu.Controls;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using MVC;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.UI.GenericContextMenu
 {
     public class GenericContextMenuController : ControllerBase<GenericContextMenuView, GenericContextMenuParameter.GenericContextMenuParameter>
     {
+        private struct DeferredConfig
+        {
+            public readonly GenericContextMenuParameter.GenericContextMenu Config;
+            public readonly GenericContextMenuSubMenuButtonView ParentComponent;
+
+            public DeferredConfig(GenericContextMenuParameter.GenericContextMenu config, GenericContextMenuSubMenuButtonView parentComponent)
+            {
+                Config = config;
+                ParentComponent = parentComponent;
+            }
+        }
+
         private const float SEVERE_BOUNDARY_VIOLATION_THRESHOLD = 0.4f;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
@@ -21,6 +35,7 @@ namespace DCL.UI.GenericContextMenu
         private readonly ControlsPoolManager controlsPoolManager;
         private NativeArray<float3> worldRectCorners;
         private readonly ContextMenuOpenDirection[] openDirections = EnumUtils.Values<ContextMenuOpenDirection>();
+        private readonly Queue<DeferredConfig> deferredConfigs = new ();
 
         private NativeArray<ContextMenuOpenDirection> fallbackDirectionsCache;
         private int fallbackDirectionsCount;
@@ -101,11 +116,7 @@ namespace DCL.UI.GenericContextMenu
                 GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i, container.transform);
 
                 if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
-                {
-                    ControlsContainerView subContainer = controlsPoolManager.GetControlsContainer(subMenuButtonView.transform);
-                    subMenuButtonView.SetContainer(subContainer);
-                    ConfigureContextMenu(subContainer, subMenuButtonSettings.subMenu, component.transform.position, overlapRect);
-                }
+                    deferredConfigs.Enqueue(new DeferredConfig(subMenuButtonSettings.subMenu, subMenuButtonView));
 
                 component.RegisterCloseListener(TriggerContextMenuClose);
 
@@ -122,6 +133,16 @@ namespace DCL.UI.GenericContextMenu
                 + (container.controlsLayoutGroup.spacing * (contextMenuConfig.contextMenuSettings.Count - 1)));
 
             container.controlsContainer.localPosition = GetControlsPosition(container, anchorPosition, contextMenuConfig.offsetFromTarget, overlapRect, contextMenuConfig.anchorPoint);
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(container.controlsContainer);
+
+            if (deferredConfigs.Count > 0)
+            {
+                DeferredConfig queuedDeferredConfig = deferredConfigs.Dequeue();
+                ControlsContainerView subContainer = controlsPoolManager.GetControlsContainer(queuedDeferredConfig.ParentComponent.transform);
+                queuedDeferredConfig.ParentComponent.SetContainer(subContainer);
+                ConfigureContextMenu(subContainer, queuedDeferredConfig.Config, queuedDeferredConfig.ParentComponent.transform.position, overlapRect);
+            }
         }
 
         [BurstCompile]
