@@ -89,7 +89,7 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.World)
             {
-                SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.targetWorld));
+                SerializedProperty property = parent.FindPropertyRelative("targetWorld");
 
                 EditorGUI.PropertyField(position, property);
                 position.y += singleLineHeight;

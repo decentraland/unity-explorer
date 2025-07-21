@@ -27,7 +27,7 @@ namespace Global.Dynamic
         [SerializeField] internal InitialRealm initialRealm;
         [SerializeField] internal Vector2Int targetScene;
         [SerializeField] internal PredefinedScenes predefinedScenes;
-        [SerializeField] internal string targetWorld = "MetadyneLabs.dcl.eth";
+        [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
         [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
@@ -47,6 +47,8 @@ namespace Global.Dynamic
                                          || initialRealm == InitialRealm.Localhost
             ? LaunchMode.LocalSceneDevelopment
             : LaunchMode.Play;
+
+        public string TargetWorld => targetWorld;
 
         public IReadOnlyList<int2> GetPredefinedParcels()
         {
