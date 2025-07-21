@@ -9,6 +9,8 @@ namespace DCL.VoiceChat
     public class VoiceChatCombinedStreamsAudioSource : MonoBehaviour
     {
         [field: SerializeField] private AudioSource audioSource;
+        [field: SerializeField] private float amplify = 2;
+
         private const int DEFAULT_LIVEKIT_CHANNELS = 1;
 
         private readonly HashSet<WeakReference<IAudioStream>> streams = new ();
@@ -25,6 +27,7 @@ namespace DCL.VoiceChat
         private void OnDisable()
         {
             AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
+
             if (tempBuffer != null)
                 Array.Clear(tempBuffer, 0, tempBuffer.Length);
 
@@ -35,16 +38,16 @@ namespace DCL.VoiceChat
 
         private void OnAudioFilterRead(float[] data, int channels)
         {
+            for (var i = 0; i < data.Length; i++)
+                data[i] *= amplify;
+
             if (!isPlaying || streams.Count == 0)
             {
                 data.AsSpan().Clear();
                 return;
             }
 
-            if (tempBuffer == null || tempBuffer.Length != (channels == 2 ? data.Length / 2 : data.Length))
-            {
-                tempBuffer = new float[channels == 2 ? data.Length / 2 : data.Length];
-            }
+            if (tempBuffer == null || tempBuffer.Length != (channels == 2 ? data.Length / 2 : data.Length)) { tempBuffer = new float[channels == 2 ? data.Length / 2 : data.Length]; }
 
             Span<float> dataSpan = data.AsSpan();
             dataSpan.Clear();
@@ -64,7 +67,7 @@ namespace DCL.VoiceChat
                         // Upmix mono to stereo
                         for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                         {
-                            data[i] += tempBuffer[j];     // Left
+                            data[i] += tempBuffer[j]; // Left
                             data[i + 1] += tempBuffer[j]; // Right
                         }
                     }
@@ -82,6 +85,7 @@ namespace DCL.VoiceChat
             if (activeStreams > 1)
             {
                 float norm = 1f / activeStreams;
+
                 for (var i = 0; i < data.Length; i++)
                     data[i] *= norm;
             }
