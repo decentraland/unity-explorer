@@ -7,9 +7,6 @@ using DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.Services;
-using DCL.Web3;
-using MVC;
-using UnityEngine;
 
 using Utility;
 
@@ -23,8 +20,6 @@ public class ChatMemberListPresenter : IDisposable
 
     private readonly EventSubscriptionScope scope = new ();
     private CancellationTokenSource lifeCts = new ();
-    private CancellationTokenSource? activeMenuCts;
-    private UniTaskCompletionSource? activeMenuTcs;
 
     private List<ChatMemberListViewModel> currentMembers = new ();
 
@@ -50,7 +45,7 @@ public class ChatMemberListPresenter : IDisposable
         view.Show();
         lifeCts = new CancellationTokenSource();
         memberListService.OnMemberListUpdated += HandleLiveUpdate;
-        memberListService.RequestRefreshAsync().Forget();
+        memberListService.RequestRefresh();
     }
 
     private void OnMemberUpdated(ChatEvents.ChannelMemberUpdatedEvent evt)
@@ -59,19 +54,17 @@ public class ChatMemberListPresenter : IDisposable
         if (index != -1)
         {
             currentMembers[index] = evt.ViewModel;
-            view.UpdateMember(evt.ViewModel);
+            view.UpdateMember(index);
         }
     }
 
     private void HandleLiveUpdate(IReadOnlyList<ChatMemberListView.MemberData> freshMembers)
     {
-        lifeCts.Cancel();
-        lifeCts = new CancellationTokenSource();
+        lifeCts = lifeCts.SafeRestart();
 
         // Get the list of initial view models from the command.
         // The command will handle starting the thumbnail downloads.
-        currentMembers = getChannelMembersCommand
-            .GetInitialMembersAndStartLoadingThumbnails(freshMembers, lifeCts.Token);
+        getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(freshMembers, currentMembers, lifeCts.Token);
 
         // Immediately display this list. Names appear instantly, pictures are loading.
         view.SetData(currentMembers);
@@ -98,9 +91,7 @@ public class ChatMemberListPresenter : IDisposable
 
     public void Dispose()
     {
-        if (memberListService != null)
-            memberListService.OnMemberListUpdated -= HandleLiveUpdate;
-
+        memberListService.OnMemberListUpdated -= HandleLiveUpdate;
         lifeCts.SafeCancelAndDispose();
         scope.Dispose();
     }

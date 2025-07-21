@@ -26,29 +26,25 @@ namespace DCL.Chat.ChatUseCases
             this.getProfileThumbnailCommand = getProfileThumbnailCommand;
         }
 
-        public List<ChatMemberListViewModel> GetInitialMembersAndStartLoadingThumbnails(
-            IReadOnlyList<ChatMemberListView.MemberData> rawMembers, CancellationToken ct)
+        public void GetInitialMembersAndStartLoadingThumbnails(
+            IReadOnlyList<ChatMemberListView.MemberData> rawMembers,
+            List<ChatMemberListViewModel> targetList,
+            CancellationToken ct)
         {
-            var viewModels = new List<ChatMemberListViewModel>(rawMembers.Count);
+            targetList.Clear();
 
             foreach (var member in rawMembers)
             {
-                var viewModel = new ChatMemberListViewModel
-                {
-                    UserId = member.Id, WalletId = member.WalletId, UserName = member.Name, ProfilePicture = null,
-                    IsOnline = member.ConnectionStatus == ChatMemberConnectionStatus.Online,
-                    ProfileColor = member.ProfileColor, HasClaimedName = member.HasClaimedName, IsLoading = true
-                };
+                var viewModel = new ChatMemberListViewModel(member.Id, member.WalletId, member.Name,
+                    member.ConnectionStatus == ChatMemberConnectionStatus.Online, member.ProfileColor, member.HasClaimedName);
 
-                viewModels.Add(viewModel);
+                targetList.Add(viewModel);
 
                 FetchThumbnailAndUpdateAsync(viewModel, member.FaceSnapshotUrl, ct).Forget();
             }
 
-            viewModels.Sort((a, b)
+            targetList.Sort(static (a, b)
                 => string.Compare(a.UserName, b.UserName, StringComparison.OrdinalIgnoreCase));
-
-            return viewModels;
         }
 
         private async UniTaskVoid FetchThumbnailAndUpdateAsync(ChatMemberListViewModel viewModel, string faceSnapshotUrl, CancellationToken ct)

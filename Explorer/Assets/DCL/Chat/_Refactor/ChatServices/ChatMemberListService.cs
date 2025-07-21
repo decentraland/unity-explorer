@@ -7,6 +7,7 @@ using System.Threading;
 using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Utilities;
+using System.Threading.Tasks;
 using Utility;
 
 namespace DCL.Chat.Services
@@ -14,7 +15,7 @@ namespace DCL.Chat.Services
     /// <summary>
     /// Monitors Continuously: It starts a background task (UpdateLoopAsync)
     ///     to monitor the underlying data source
-    ///  
+    ///
     /// Efficient Polling: It checks for changes in participant count and the current island SID every 500ms.
     ///     It only rebuilds the full, detailed member list when the island changes
     ///     which is much more efficient than rebuilding it constantly.
@@ -34,7 +35,6 @@ namespace DCL.Chat.Services
         public IReadOnlyList<ChatMemberListView.MemberData> LastKnownMemberList => membersBuffer;
 
         public event Action<IReadOnlyList<ChatMemberListView.MemberData>>? OnMemberListUpdated;
-        public event Action<int>? OnMemberCountUpdated;
 
         private readonly IRoomHub roomHub;
         private readonly IProfileCache profileCache;
@@ -65,7 +65,7 @@ namespace DCL.Chat.Services
             }
 
             cts = cts.SafeRestart();
-            UniTask.RunOnThreadPool(UpdateLoopAsync).Forget();
+            Task.Run(UpdateLoopAsync);
         }
 
         public void Stop()
@@ -73,9 +73,11 @@ namespace DCL.Chat.Services
             cts.SafeCancelAndDispose();
         }
 
-        private async UniTask UpdateLoopAsync()
+        private async Task UpdateLoopAsync()
         {
             const int WAIT_TIME_MS = 500;
+
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
             while (!cts.IsCancellationRequested)
             {
@@ -83,25 +85,25 @@ namespace DCL.Chat.Services
                 {
                     if (!roomHub.HasAnyRoomConnected())
                     {
-                        await UniTask.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
+                        await Task.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
                         continue;
                     }
-                    
+
                     int currentParticipantCount = roomHub.ParticipantsCount();
                     string currentIslandSid = roomHub.IslandRoom().Info.Sid;
 
                     if (currentIslandSid != lastKnownIslandSid ||
                         currentParticipantCount != lastKnownParticipantCount)
                     {
-                        ReportHub.Log(ReportData.UNSPECIFIED, $"Member list change detected. Island: '{lastKnownIslandSid}' -> '{currentIslandSid}'. Count: {lastKnownParticipantCount} -> {currentParticipantCount}. Refreshing.");
-                
+                        // ReportHub.Log(ReportCategory.UI, $"Member list change detected. Island: '{lastKnownIslandSid}' -> '{currentIslandSid}'. Count: {lastKnownParticipantCount} -> {currentParticipantCount}. Refreshing.");
+
                         lastKnownIslandSid = currentIslandSid;
                         lastKnownParticipantCount = currentParticipantCount;
 
-                        await GenerateAndBroadcastFullListAsync(cts.Token);
+                        GenerateAndBroadcastFullListAsync(cts.Token);
                     }
 
-                    await UniTask.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
+                    await Task.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -109,20 +111,19 @@ namespace DCL.Chat.Services
                 }
                 catch (Exception ex)
                 {
-                    ReportHub.LogError(ReportData.UNSPECIFIED, $"[ChatMemberListService] UpdateLoop error: {ex}");
+                    ReportHub.LogError(ReportCategory.UI, $"[{nameof(ChatMemberListService)}] UpdateLoop error: {ex}");
                 }
             }
         }
 
-
-        public async UniTask RequestRefreshAsync()
+        public void RequestRefresh()
         {
-            await GenerateAndBroadcastFullListAsync(cts.Token);
+            GenerateAndBroadcastFullListAsync(cts.Token);
         }
 
-        private async UniTask GenerateAndBroadcastFullListAsync(CancellationToken ct)
+        private void GenerateAndBroadcastFullListAsync(CancellationToken ct)
         {
-            List<ChatMemberListView.MemberData> newMembers = new();
+            membersBuffer.Clear();
             profilesBuffer.Clear();
 
             GetProfilesFromParticipants(profilesBuffer);
@@ -130,24 +131,21 @@ namespace DCL.Chat.Services
             foreach (var profile in profilesBuffer)
             {
                 if (ct.IsCancellationRequested) return;
-                newMembers.Add(CreateMemberDataFromProfile(profile));
+                membersBuffer.Add(CreateMemberDataFromProfile(profile));
             }
 
-            newMembers.Sort((a, b) =>
+            membersBuffer.Sort(static (a, b) =>
                 string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
-            await UniTask.SwitchToMainThread(ct);
             if (ct.IsCancellationRequested) return;
 
-            membersBuffer.Clear();
-            membersBuffer.AddRange(newMembers);
+            PlayerLoopHelper.AddContinuation(PlayerLoopTiming.Update, () =>
+            {
+                if (ct.IsCancellationRequested)
+                    return;
 
-            ReportHub.Log(ReportCategory.UNSPECIFIED, $"Broadcasting updated member list for World '{lastKnownIslandSid}'. Count: {membersBuffer.Count}\n");
-            foreach (var member in membersBuffer)
-                ReportHub.Log(ReportCategory.UNSPECIFIED,$"  - {member.Name} ({member.Id})");
-            
-            OnMemberListUpdated?.Invoke(membersBuffer);
-            OnMemberCountUpdated?.Invoke(membersBuffer.Count);
+                OnMemberListUpdated?.Invoke(membersBuffer);
+            });
         }
 
         private void GetProfilesFromParticipants(List<Profile> outProfiles)

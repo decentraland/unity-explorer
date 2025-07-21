@@ -4,13 +4,28 @@ namespace DCL.Chat.ChatViewModels
 {
     public class ChatMemberListViewModel
     {
-        public string UserId { get; set; }
-        public string WalletId { get; set; }
-        public string UserName { get; set; }
-        public Sprite? ProfilePicture { get; set; }
-        public bool IsOnline { get; set; }
-        public Color ProfileColor { get; set; }
-        public bool IsLoading { get; set; }
-        public bool HasClaimedName { get; set; }
+        public readonly string UserId;
+        public readonly string WalletId;
+        public readonly string UserName;
+        public readonly bool IsOnline;
+        public readonly Color ProfileColor;
+        public readonly bool HasClaimedName;
+
+        public bool IsLoading;
+        public Sprite? ProfilePicture;
+
+        public ChatMemberListViewModel(string userId, string walletId, string userName, bool isOnline, Color profileColor,
+            bool hasClaimedName)
+        {
+            UserId = userId;
+            WalletId = walletId;
+            UserName = userName;
+            IsOnline = isOnline;
+            ProfileColor = profileColor;
+            HasClaimedName = hasClaimedName;
+
+            ProfilePicture = null;
+            IsLoading = true;
+        }
     }
 }
