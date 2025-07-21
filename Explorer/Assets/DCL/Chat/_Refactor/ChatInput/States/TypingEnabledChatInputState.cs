@@ -45,6 +45,7 @@ namespace DCL.Chat
             inputField.onSubmit.AddListener(HandleMessageSubmitted);
             inputField.Clicked += InputFieldOnClicked;
             inputField.onValueChanged.AddListener(OnInputChanged);
+            inputField.PasteShortcutPerformed += OnPasteShortcut;
             eventsScope.Add(context.InputEventBus.Subscribe<InputSuggestionsEvents.SuggestionSelectedEvent>(ReplaceSuggestionInText));
 
             context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.AddListener(ToggleEmojiPanel);
@@ -56,6 +57,7 @@ namespace DCL.Chat
             inputField.onSubmit.RemoveListener(HandleMessageSubmitted);
             inputField.Clicked -= InputFieldOnClicked;
             inputField.onValueChanged.RemoveListener(OnInputChanged);
+            inputField.PasteShortcutPerformed -= OnPasteShortcut;
             context.ChatInputView.emojiContainer.emojiPanelButton.Button.onClick.RemoveListener(ToggleEmojiPanel);
 
             eventsScope.Dispose();
@@ -87,6 +89,11 @@ namespace DCL.Chat
                 suggestionPanelState.TryActivate();
             else
                 suggestionPanelState.TryDeactivate();
+        }
+
+        private void OnPasteShortcut()
+        {
+            ViewDependencies.ClipboardManager.Paste(this);
         }
 
         private void HandleMessageSubmitted(string message)
