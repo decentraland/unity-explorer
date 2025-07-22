@@ -3,9 +3,11 @@ using DCL.Utilities;
 using DCL.Web3;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Threading;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
@@ -125,12 +127,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             PlayerEntryView entryView = GetAndConfigurePlayerEntry();
             entryView.transform.parent = view.CommunityVoiceChatInCallView.SpeakersParent;
+            entryView.transform.localScale = Vector3.one;
         }
 
         private void AddListener()
         {
             PlayerEntryView entryView = GetAndConfigurePlayerEntry();
             entryView.transform.parent = view.CommunityVoiceChatSearchView.ListenersParent;
+            entryView.transform.localScale = Vector3.one;
         }
 
         private PlayerEntryView GetAndConfigurePlayerEntry()
