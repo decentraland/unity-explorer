@@ -1,6 +1,7 @@
 ﻿using CodeLess.Attributes;
 using DCL.Clipboard;
 using DCL.Input;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Opener;
 using DCL.Web3.Identities;
 
@@ -19,11 +20,12 @@ namespace MVC
         internal ICursor cursor { get; }
         internal IContextMenuOpener contextMenuOpener { get; }
         private IWeb3IdentityCache web3IdentityCache { get; }
+        internal IConfirmationDialogOpener confirmationDialogOpener { get; }
 
         public static IWeb3Identity? CurrentIdentity => Instance.web3IdentityCache.Identity;
 
         public ViewDependencies(IEventSystem eventSystem, IMVCManagerMenusAccessFacade globalUIViews, ClipboardManager clipboardManager, ICursor cursor,
-            IContextMenuOpener contextMenuOpener, IWeb3IdentityCache web3IdentityCache)
+            IContextMenuOpener contextMenuOpener, IWeb3IdentityCache web3IdentityCache, IConfirmationDialogOpener confirmationDialogOpener)
         {
             this.eventSystem = eventSystem;
             this.globalUIViews = globalUIViews;
@@ -31,6 +33,7 @@ namespace MVC
             this.cursor = cursor;
             this.contextMenuOpener = contextMenuOpener;
             this.web3IdentityCache = web3IdentityCache;
+            this.confirmationDialogOpener = confirmationDialogOpener;
         }
     }
 }

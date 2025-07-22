@@ -78,6 +78,7 @@ using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SkyBox;
 using DCL.SocialService;
 using DCL.UI;
+using DCL.UI.ConfirmationDialog;
 using DCL.UI.GenericContextMenu;
 using DCL.UI.GenericContextMenu.Controllers;
 using DCL.UI.InputFieldFormatting;
@@ -523,6 +524,7 @@ namespace Global.Dynamic
                 new VersionChatCommand(dclVersion),
                 new RoomsChatCommand(roomHub),
                 new LogsChatCommand(),
+                new AppArgsCommand(appArgs)
             };
 
             chatCommands.Add(new HelpChatCommand(chatCommands, appArgs));
@@ -561,7 +563,7 @@ namespace Global.Dynamic
             var remoteMetadata = new DebounceRemoteMetadata(new RemoteMetadata(roomHub, staticContainer.RealmData));
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
-            var upscaleController = new UpscalingController(characterPreviewEventBus);
+            var upscaleController = new UpscalingController(mvcManager);
 
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
@@ -582,7 +584,7 @@ namespace Global.Dynamic
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache, includeFriends);
             notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
-            DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, realmNavigator, ct);
+            DeepLinkHandle deepLinkHandleImplementation = new DeepLinkHandle(dynamicWorldParams.StartParcel, chatTeleporter, ct);
             deepLinkHandleImplementation.StartListenForDeepLinksAsync(ct).Forget();
 
             var friendServiceProxy = new ObjectProxy<IFriendsService>();
@@ -623,7 +625,8 @@ namespace Global.Dynamic
                 clipboardManager,
                 dclCursor,
                 new ContextMenuOpener(mvcManager),
-                identityCache));
+                identityCache,
+                new ConfirmationDialogOpener(mvcManager)));
 
             var realmNftNamesProvider = new RealmNftNamesProvider(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
@@ -781,7 +784,8 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     upscaleController,
                     communitiesDataProvider,
-                    realmNftNamesProvider
+                    realmNftNamesProvider,
+                    includeVoiceChat
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -868,6 +872,7 @@ namespace Global.Dynamic
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
+                new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
             };
 
             if (includeVoiceChat)

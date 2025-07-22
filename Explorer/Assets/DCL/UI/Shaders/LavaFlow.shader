@@ -2,6 +2,7 @@ Shader "Custom/LavaFlow"
 {
     Properties 
     {
+        _MainTex ("Texture", 2D) = "white" {} // just placeholder to remove exception in the build
         _Color1 ("Color 1", Color) = (.957, .804, .623)
         _Color2 ("Color 2", Color) = (.192, .384, .933)
         _Color3 ("Color 3", Color) = (.910, .510, .800)
