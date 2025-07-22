@@ -359,21 +359,23 @@ namespace DCL.AuthenticationScreenFlow
         {
             viewInstance!.JumpIntoWorldButton.interactable = false;
 
-            if (characterPreviewController is { IsAvatarInstantiated: true })
-                AnimateAndAwaitAsync().Forget();
-
-            characterPreviewController?.OnHide();
-            lifeCycleTask?.TrySetResult();
-            lifeCycleTask = null;
-
+            AnimateAndAwaitAsync().Forget();
             return;
 
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
-                //Disabled animation until proper animation is setup, otherwise we get animation hash errors
-                //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
-                await UniTask.Delay(ANIMATION_DELAY);
+                if (characterPreviewController is { IsAvatarLoaded: true })
+                {
+                    await (characterPreviewController?.PlayJumpInEmoteAndAwaitItAsync() ?? UniTask.CompletedTask);
+
+                    //Disabled animation until proper animation is setup, otherwise we get animation hash errors
+                    //viewInstance!.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
+                    await UniTask.Delay(ANIMATION_DELAY);
+                }
+
+                characterPreviewController?.OnHide();
+                lifeCycleTask?.TrySetResult();
+                lifeCycleTask = null;
             }
         }
 
