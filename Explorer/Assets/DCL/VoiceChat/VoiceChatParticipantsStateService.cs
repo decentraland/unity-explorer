@@ -17,9 +17,9 @@ namespace DCL.VoiceChat
     /// </summary>
     public class VoiceChatParticipantsStateService : IDisposable
     {
-        public delegate void ParticipantJoinedUpdate(string participantId, ParticipantState participantState);
-        public delegate void ParticipantLeftUpdate(string participantId);
-        public delegate void ParticipantBatchUpdate(List<(string participantId, ParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
+        public delegate void ParticipantJoinedDelegate(string participantId, ParticipantState participantState);
+        public delegate void ParticipantLeftDelegate(string participantId);
+        public delegate void ParticipantsStateRefreshDelegate(List<(string participantId, ParticipantState state)> joinedParticipants, List<string> leftParticipantIds);
         private const string TAG = nameof(VoiceChatParticipantsStateService);
 
         private readonly IRoom voiceChatRoom;
@@ -35,9 +35,21 @@ namespace DCL.VoiceChat
 
         public string LocalParticipantId => voiceChatRoom.Participants.LocalParticipant().Identity;
 
-        public event ParticipantJoinedUpdate ParticipantJoined;
-        public event ParticipantLeftUpdate ParticipantLeft;
-        public event ParticipantBatchUpdate ParticipantBatchUpdated;
+        /// <summary>
+        ///     Raised when a new participant joins the voice chat room.
+        /// </summary>
+        public event ParticipantJoinedDelegate ParticipantJoined;
+
+        /// <summary>
+        ///     Raised when a participant leaves the voice chat room.
+        /// </summary>
+        public event ParticipantLeftDelegate ParticipantLeft;
+
+        /// <summary>
+        ///     Raised when participant states are refreshed after connection or reconnection.
+        ///     Provides lists of newly joined participants and participants that have left.
+        /// </summary>
+        public event ParticipantsStateRefreshDelegate ParticipantsStateRefreshed;
 
         public VoiceChatParticipantsStateService(IRoom voiceChatRoom)
         {
@@ -336,7 +348,7 @@ namespace DCL.VoiceChat
                 }
             }
 
-            if (joinedParticipants.Count > 0 || participantsToRemove.Count > 0) { ParticipantBatchUpdated?.Invoke(joinedParticipants, participantsToRemove); }
+            if (joinedParticipants.Count > 0 || participantsToRemove.Count > 0) { ParticipantsStateRefreshed?.Invoke(joinedParticipants, participantsToRemove); }
         }
 
         private void RefreshParticipantState(Participant participant, ParticipantState existingState)
