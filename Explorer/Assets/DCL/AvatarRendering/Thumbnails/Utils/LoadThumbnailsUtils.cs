@@ -10,6 +10,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
@@ -19,13 +20,17 @@ using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Utils
 {
     public static class LoadThumbnailsUtils
     {
         internal static readonly SpriteData DEFAULT_THUMBNAIL = new (new Texture2DData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
-        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity: 2);
+
+        //TODO: Check if this breaks thumbnails. There was a pool here previously
+        private static readonly URLBuilder urlBuilder = new ();
+
 
         public static async UniTask<Sprite> WaitForThumbnailAsync(this IAvatarAttachment avatarAttachment, int checkInterval, CancellationToken ct)
         {
@@ -35,31 +40,20 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             return avatarAttachment.ThumbnailAssetResult.Value.Asset;
         }
 
-        public static async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
-            string hash, ReportData reportCategory, CancellationToken ct)
-        {
-            using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
-            urlBuilder!.Clear();
-
-            urlBuilder.AppendDomain(assetBundleURL)
-                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
-                      .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
-
-            var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
-                                                       .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
-
-            AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
-
-            return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
-        }
-
-        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(IWebRequestController requestController, URLDomain assetBundleURL, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
+        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(World world, IPartitionComponent partitionComponent, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
         {
             if (attachment.ManifestResult?.Asset == null)
                 try
                 {
-                    var asset = await LoadAssetBundleManifestAsync(requestController, assetBundleURL, attachment.DTO.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? CancellationToken.None);
-                    attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(asset);
+                    //TODO: Ask about this cancellation token handling
+                    AssetBundleManifestPromise promise = AssetBundleManifestPromise.Create(world,
+                        GetAssetBundleManifestIntention.Create(attachment.DTO.GetHash(), new CommonLoadingArguments(attachment.DTO.GetHash(), cancellationTokenSource: cancellationTokenSource)),
+                        partitionComponent);
+
+                    AssetBundleManifestPromise awaitedPromise = await promise.ToUniTaskAsync(world, cancellationToken: cancellationTokenSource?.Token ?? CancellationToken.None);
+
+                    if (awaitedPromise.Result is { Succeeded: true, Asset: not null })
+                        attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(awaitedPromise.Result.Value.Asset);
                 }
                 catch (Exception) { return false; }
 
@@ -75,8 +69,6 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             CancellationTokenSource? cancellationTokenSource = null
         )
         {
-            using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();
-            var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
             urlBuilder.AppendDomain(attachment.DTO.ContentDownloadUrl != null ? URLDomain.FromString(attachment.DTO.ContentDownloadUrl) : realmData.Ipfs.ContentBaseUrl)
                       .AppendPath(thumbnailPath);
@@ -118,7 +110,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            if (!await TryResolveAssetBundleManifestAsync(requestController, assetBundleURL, attachment, cancellationTokenSource))
+            if (!await TryResolveAssetBundleManifestAsync(world, partitionComponent, attachment, cancellationTokenSource))
             {
                 ReportHub.Log(
                     ReportCategory.THUMBNAILS,

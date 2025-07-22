@@ -33,7 +33,6 @@ namespace DCL.AvatarRendering.Wearables
         private static readonly URLSubdirectory EXPLORER_SUBDIRECTORY = URLSubdirectory.FromString("/explorer/");
         private static readonly URLSubdirectory WEARABLES_COMPLEMENT_URL = URLSubdirectory.FromString("/wearables/");
         private static readonly URLSubdirectory WEARABLES_EMBEDDED_SUBDIRECTORY = URLSubdirectory.FromString("/Wearables/");
-        private readonly URLDomain assetBundleURL;
         private readonly string builderContentURL;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWebRequestController webRequestController;
@@ -47,7 +46,6 @@ namespace DCL.AvatarRendering.Wearables
         public WearablePlugin(IAssetsProvisioner assetsProvisioner,
             IWebRequestController webRequestController,
             IRealmData realmData,
-            URLDomain assetBundleURL,
             CacheCleaner cacheCleaner,
             IWearableStorage wearableStorage,
             string builderContentURL,
@@ -57,7 +55,6 @@ namespace DCL.AvatarRendering.Wearables
             this.assetsProvisioner = assetsProvisioner;
             this.webRequestController = webRequestController;
             this.realmData = realmData;
-            this.assetBundleURL = assetBundleURL;
             this.builderContentURL = builderContentURL;
             this.builderCollectionsPreview = builderCollectionsPreview;
 
@@ -86,7 +83,6 @@ namespace DCL.AvatarRendering.Wearables
         {
             LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableStorage, builderContentURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
-            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset, wearableStorage);
 
             FinalizeAssetBundleWearableLoadingSystem.InjectToWorld(ref builder, wearableStorage, realmData);
