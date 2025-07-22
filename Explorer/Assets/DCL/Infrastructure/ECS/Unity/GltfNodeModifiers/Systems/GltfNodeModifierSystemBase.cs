@@ -53,7 +53,10 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             if (string.IsNullOrEmpty(path))
                 return null;
 
-            Transform? rendererTransform = rootGameObject.transform.Find(path);
+            // There's always 1 child GameObject in both AB or Raw GLTF instantiated GltfContainer...
+            // AB: The GO name is "AB:hash"
+            // Raw GLTF: the GO name is "Scene"
+            Transform? rendererTransform = rootGameObject.transform.GetChild(0).Find(path);
 
             if (rendererTransform != null && rendererTransform.TryGetComponent(out Renderer renderer))
                 return renderer;

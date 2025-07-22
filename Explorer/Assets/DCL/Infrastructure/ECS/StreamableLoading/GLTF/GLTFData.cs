@@ -9,8 +9,7 @@ namespace ECS.StreamableLoading.GLTF
 {
     public class GLTFData : StreamableRefCountData<GltfImport>
     {
-        public readonly GameObject ContainerGameObject;
-        public readonly GameObject RootGameObject;
+        public readonly GameObject Root;
         public readonly IReadOnlyList<string>? HierarchyPaths;
 
         public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject, IReadOnlyList<string>? hierarchyPaths = null)
@@ -18,11 +17,7 @@ namespace ECS.StreamableLoading.GLTF
         {
             if (containerGameObject == null) return;
 
-            ContainerGameObject = containerGameObject;
-
-            if (containerGameObject.transform.childCount == 0) return;
-
-            RootGameObject = containerGameObject.transform.GetChild(0).gameObject;
+            Root = containerGameObject;
             HierarchyPaths = hierarchyPaths;
         }
 
@@ -36,8 +31,8 @@ namespace ECS.StreamableLoading.GLTF
             Asset?.Dispose();
 
             // Destroy the container GameObject
-            if (ContainerGameObject != null)
-                Object.Destroy(ContainerGameObject);
+            if (Root != null)
+                Object.Destroy(Root);
         }
     }
 }

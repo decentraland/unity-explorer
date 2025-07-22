@@ -76,9 +76,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             container.SetActive(false);
             Transform containerTransform = container.transform;
 
-            GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
+            var result = GltfContainerAsset.Create(container, assetBundleData);
 
-            var result = GltfContainerAsset.Create(instance, assetBundleData);
+            GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
 
             // Collect all renderers, they are needed for Visibility system
             using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
