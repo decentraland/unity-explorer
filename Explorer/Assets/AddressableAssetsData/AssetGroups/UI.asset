@@ -60,6 +60,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44b3d3fa43f2d2247b3784803389bbb1
+    m_Address: Authentication.spriteatlas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 506fef2fcce22b54ba4571ced3af5dc6
     m_Address: LoadingAtlast.spriteatlasv2
     m_ReadOnly: 0
@@ -162,11 +167,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7887090193b1ec4c994ad22169b86db
     m_Address: MainUIContainer
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d2b6974d311b52d418b15738f4ef38dc
-    m_Address: Authentication.spriteatlas
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

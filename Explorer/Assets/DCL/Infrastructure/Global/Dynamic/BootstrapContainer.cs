@@ -257,7 +257,7 @@ namespace Global.Dynamic
 
     internal class AuthCodeVerificationFeatureFlag : DappWeb3Authenticator.ICodeVerificationFeatureFlag
     {
-        public bool ShouldWaitForCodeVerificationFromServer => FeaturesRegistry.Instance.IsEnabled(FeatureId.AUTH_CODE_VALIDATION);
+        public bool ShouldWaitForCodeVerificationFromServer => FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.AUTH_CODE_VALIDATION);
     }
 
     [Serializable]

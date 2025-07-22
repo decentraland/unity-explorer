@@ -3,9 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
+using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
-using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.InWorldCamera;
 using MVC;
@@ -39,12 +39,12 @@ namespace DCL.UI.SharedSpaceManager
 
         private bool isExplorePanelVisible => registrations[PanelsSharingSpace.Explore].panel.IsVisibleInSharedSpace;
 
-        public SharedSpaceManager(IMVCManager mvcManager, World world)
+        public SharedSpaceManager(IMVCManager mvcManager, World world, bool isFriendsEnabled, bool isCameraReelEnabled)
         {
             this.mvcManager = mvcManager;
             dclInput = DCLInput.Instance;
-            isFriendsFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            isCameraReelFeatureEnabled = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            isFriendsFeatureEnabled = isFriendsEnabled;
+            isCameraReelFeatureEnabled = isCameraReelEnabled;
             ecsWorld = world;
 
             configureShortcutsCts = configureShortcutsCts.SafeRestart();
@@ -65,7 +65,7 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            isCommunitiesFeatureEnabled = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct);
+            isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             if (isCommunitiesFeatureEnabled)
                 dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
 
