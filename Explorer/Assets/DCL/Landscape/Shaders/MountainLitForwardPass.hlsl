@@ -258,8 +258,7 @@ void LitPassFragmentSimple(
 
     InitializeBakedGIData(input, inputData);
 
-    surfaceData.albedo = SplatmapMix(input.uv).xyz;
-    half4 color = UniversalFragmentBlinnPhong(inputData, surfaceData);
+    half4 color = UniversalFragmentPBR(inputData, surfaceData.albedo, 0.0, /* specular */ half3(0.0h, 0.0h, 0.0h), 0.0, surfaceData.occlusion, /* emission */ half3(0, 0, 0), surfaceData.alpha);
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
     color.a = OutputAlpha(color.a, IsSurfaceTypeTransparent(_Surface));
 

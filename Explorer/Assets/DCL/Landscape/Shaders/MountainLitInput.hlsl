@@ -129,60 +129,9 @@ half4 SampleSpecularSmoothness(float2 uv, half alpha, half4 specColor, TEXTURE2D
     return specularSmoothness;
 }
 
-inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
-{
-    outSurfaceData = (SurfaceData)0;
-
-    half4 albedoAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
-    outSurfaceData.alpha = albedoAlpha.a * _BaseColor.a;
-    outSurfaceData.alpha = AlphaDiscard(outSurfaceData.alpha, _Cutoff);
-
-    outSurfaceData.albedo = albedoAlpha.rgb * _BaseColor.rgb;
-    outSurfaceData.albedo = AlphaModulate(outSurfaceData.albedo, outSurfaceData.alpha);
-
-    half4 specularSmoothness = SampleSpecularSmoothness(uv, outSurfaceData.alpha, _SpecColor, TEXTURE2D_ARGS(_SpecGlossMap, sampler_SpecGlossMap));
-    outSurfaceData.metallic = 0.0; // unused
-    outSurfaceData.specular = specularSmoothness.rgb;
-    outSurfaceData.smoothness = specularSmoothness.a;
-    outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
-    outSurfaceData.occlusion = 1.0;
-    outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
-}
-
 float GetOccupancy(float2 UV_Coords, float4 TerrainBounds, int ParcelSize)
 {
     return SAMPLE_TEXTURE2D_LOD(_OccupancyMap, sampler_OccupancyMap, UV_Coords, 0.0).r;
-}
-
-// Alternative version with more control over blending thresholds
-float4 BlendTexturesByColorAdvanced(float2 uv, float redThreshold, float yellowThreshold, float blendSmoothness)
-{
-    float4 mask = SAMPLE_TEXTURE2D(_TerrainMaskMap, sampler_TerrainMaskMap, TRANSFORM_TEX(uv, _TerrainMaskMap));
-    float4 texA = SAMPLE_TEXTURE2D(_GroundDetailMap, sampler_GroundDetailMap, TRANSFORM_TEX(uv, _GroundDetailMap));
-    float4 texB = SAMPLE_TEXTURE2D(_SandDetailMap, sampler_SandDetailMap, TRANSFORM_TEX(uv, _SandDetailMap));
-
-    // More precise color detection
-    float redStrength = mask.r * (1.0f - mask.g) * (1.0f - mask.b);
-    float yellowStrength = min(mask.r, mask.g) * (1.0f - mask.b);
-
-    // Apply thresholds with smooth transitions
-    float weightA = smoothstep(redThreshold - blendSmoothness, redThreshold + blendSmoothness, redStrength);
-    float weightB = smoothstep(yellowThreshold - blendSmoothness, yellowThreshold + blendSmoothness, yellowStrength);
-
-    // Normalize weights for overlapping areas
-    float totalWeight = weightA + weightB;
-    if (totalWeight > 1.0f)
-    {
-        weightA /= totalWeight;
-        weightB /= totalWeight;
-    }
-
-    // Blend textures
-    float4 result = texA; // Start with base mask
-    result = lerp(result, texA, weightA);
-    result = lerp(result, texB, weightB);
-
-    return result;
 }
 
 // void NormalMapMix(float4 uvSplat01, float4 uvSplat23, inout half4 splatControl, inout half3 mixedNormal)
@@ -237,18 +186,18 @@ half4 SplatmapMix(float2 uv)
     float4 _DiffuseRemapScale2 = float4(1.0f, 1.0f, 1.0f, 1.0f);
     float4 _DiffuseRemapScale3 = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    if(_NumLayersCount <= 4)
-    {
-        // 20.0 is the number of steps in inputAlphaMask (Density mask. We decided 20 empirically)
-        half4 opacityAsDensity = saturate((half4(diffAlbedo[0].a, diffAlbedo[1].a, diffAlbedo[2].a, diffAlbedo[3].a) - (1 - splatControl)) * 20.0);
-        opacityAsDensity += 0.001h * splatControl;      // if all weights are zero, default to what the blend mask says
-        half4 useOpacityAsDensityParam = { _DiffuseRemapScale0.w, _DiffuseRemapScale1.w, _DiffuseRemapScale2.w, _DiffuseRemapScale3.w }; // 1 is off
-        splatControl = lerp(opacityAsDensity, splatControl, useOpacityAsDensityParam);
-    }
+    // if(_NumLayersCount <= 4)
+    // {
+    //     // 20.0 is the number of steps in inputAlphaMask (Density mask. We decided 20 empirically)
+    //     half4 opacityAsDensity = saturate((half4(diffAlbedo[0].a, diffAlbedo[1].a, diffAlbedo[2].a, diffAlbedo[3].a) - (1 - splatControl)) * 20.0);
+    //     opacityAsDensity += 0.001h * splatControl;      // if all weights are zero, default to what the blend mask says
+    //     half4 useOpacityAsDensityParam = { _DiffuseRemapScale0.w, _DiffuseRemapScale1.w, _DiffuseRemapScale2.w, _DiffuseRemapScale3.w }; // 1 is off
+    //     splatControl = lerp(opacityAsDensity, splatControl, useOpacityAsDensityParam);
+    // }
 
 
     // Now that splatControl has changed, we can compute the final weight and normalize
-    weight = dot(splatControl, 1.0h);
+    //weight = dot(splatControl, 1.0h);
 
 // #ifdef TERRAIN_SPLAT_ADDPASS
 //     clip(weight <= 0.005h ? -1.0h : 1.0h);
@@ -263,11 +212,36 @@ half4 SplatmapMix(float2 uv)
     mixedDiffuse = 0.0h;
     mixedDiffuse += diffAlbedo[0] * half4(_DiffuseRemapScale0.rgb * splatControl.rrr, 1.0h);
     mixedDiffuse += diffAlbedo[1] * half4(_DiffuseRemapScale1.rgb * splatControl.ggg, 1.0h);
-    // mixedDiffuse += diffAlbedo[2] * half4(_DiffuseRemapScale2.rgb * splatControl.bbb, 1.0h);
-    // mixedDiffuse += diffAlbedo[3] * half4(_DiffuseRemapScale3.rgb * splatControl.aaa, 1.0h);
+    mixedDiffuse += diffAlbedo[2] * half4(_DiffuseRemapScale2.rgb * splatControl.bbb, 1.0h);
+    mixedDiffuse += diffAlbedo[3] * half4(_DiffuseRemapScale3.rgb * splatControl.aaa, 1.0h);
 
     return mixedDiffuse;
     //NormalMapMix(uvSplat01, uvSplat23, splatControl, mixedNormal);
 }
+
+inline void InitializeSimpleLitSurfaceData(float2 uv, out SurfaceData outSurfaceData)
+{
+    outSurfaceData = (SurfaceData)0;
+
+    half4 albedoAlpha = half4(SplatmapMix(uv).xyz, 1.0f);
+    outSurfaceData.alpha = albedoAlpha.a * _BaseColor.a;
+    outSurfaceData.alpha = AlphaDiscard(outSurfaceData.alpha, _Cutoff);
+
+    outSurfaceData.albedo = albedoAlpha.rgb * _BaseColor.rgb;
+    outSurfaceData.albedo = AlphaModulate(outSurfaceData.albedo, outSurfaceData.alpha);
+
+    half4 specularSmoothness = SampleSpecularSmoothness(uv, outSurfaceData.alpha, _SpecColor, TEXTURE2D_ARGS(_SpecGlossMap, sampler_SpecGlossMap));
+    outSurfaceData.metallic = 0.0; // unused
+    outSurfaceData.specular = specularSmoothness.rgb;
+    outSurfaceData.smoothness = specularSmoothness.a;
+    outSurfaceData.normalTS = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
+    outSurfaceData.occlusion = 1.0;
+    outSurfaceData.emission = SampleEmission(uv, _EmissionColor.rgb, TEXTURE2D_ARGS(_EmissionMap, sampler_EmissionMap));
+}
+
+
+
+
+
 
 #endif
