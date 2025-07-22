@@ -121,8 +121,25 @@ namespace DCL.Roads.Settings
 
         private void ProcessCandidates(List<GPUInstancingLODGroupWithBuffer> sourceCandidates, Matrix4x4 roadRoot, Dictionary<GPUInstancingLODGroupWithBuffer, HashSet<PerInstanceBuffer>> targetDict)
         {
-            foreach (GPUInstancingLODGroupWithBuffer candidate in sourceCandidates)
+            foreach (GPUInstancingLODGroupWithBuffer myCandidate in sourceCandidates)
             {
+                GPUInstancingLODGroupWithBuffer candidate;
+
+                if (myCandidate.Name.StartsWith("RoadTile"))
+                {
+                    if (roadTileCandidate.LODGroup == null)
+                    {
+                        roadTileCandidate.LODGroup = myCandidate.LODGroup;
+                        roadTileCandidate.LODGroup.Name = "RoadTile";
+                        roadTileCandidate.Name = "RoadTile";
+                    }
+
+                    roadTileCandidate.InstancesBuffer = myCandidate.InstancesBuffer;
+                    candidate = roadTileCandidate;
+                }
+                else
+                    candidate = myCandidate;
+
                 if (!targetDict.TryGetValue(candidate, out HashSet<PerInstanceBuffer> matrices))
                 {
                     matrices = new HashSet<PerInstanceBuffer>();
@@ -130,9 +147,11 @@ namespace DCL.Roads.Settings
                 }
 
                 foreach (PerInstanceBuffer instanceData in candidate.InstancesBuffer)
-                    matrices.Add(new PerInstanceBuffer(roadRoot * instanceData.instMatrix));
+                    matrices.Add(new PerInstanceBuffer(roadRoot * instanceData.instMatrix, instanceData.tiling, instanceData.offset));
             }
         }
+
+        private GPUInstancingLODGroupWithBuffer roadTileCandidate = new ();
 #endif
     }
 }
