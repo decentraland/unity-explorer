@@ -38,6 +38,7 @@ namespace DCL.UI.GenericContextMenu.Controls
         {
             hoverCts.SafeCancelAndDispose();
             UnregisterListeners();
+            container.gameObject.SetActive(false);
         }
 
         public void Configure(SubMenuContextMenuButtonSettings settings)
