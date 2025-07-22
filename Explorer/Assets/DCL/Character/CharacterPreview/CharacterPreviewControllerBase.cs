@@ -275,7 +275,7 @@ namespace DCL.CharacterPreview
 
         protected async UniTask PlayEmoteAndAwaitItAsync(string emoteURN, CancellationToken ct)
         {
-            if (previewController == null) return;
+            if (previewController == null || !previewController.Value.IsAvatarLoaded()) return;
 
             PlayEmote(emoteURN);
 
