@@ -23,7 +23,7 @@ MonoBehaviour:
   <MaxHeight>k__BackingField: 40
   <OccupancyMap>k__BackingField: {fileID: 0}
   <TreeSpacing>k__BackingField: 20
-  <TreeDensity>k__BackingField: 0.1
+  <TreeDensity>k__BackingField: 0.2
   <DetailDistance>k__BackingField: 200
   <RenderGround>k__BackingField: 1
   <RenderTreesAndDetail>k__BackingField: 1
