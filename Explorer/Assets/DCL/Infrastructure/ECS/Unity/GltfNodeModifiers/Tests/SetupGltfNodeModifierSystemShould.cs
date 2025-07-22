@@ -14,6 +14,7 @@ using NUnit.Framework;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.TestTools;
 using Utility.Primitives;
 using Entity = Arch.Core.Entity;
 
@@ -354,6 +355,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
 
+            // Expect error log for invalid path
+            LogAssert.Expect(LogType.Error, "GLTF Node path 'NonExistentPath' not found.");
+
             // Act
             system.Update(0);
 
@@ -572,6 +576,55 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             GltfNode gltfNode = world.Get<GltfNode>(childNodeEntity);
             Assert.That(gltfNode.Path, Is.EqualTo("Child"));
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
+        }
+
+        [Test]
+        public void IgnoreModifiersWithInvalidPath_LocalDevelopment_ShowsAvailablePaths()
+        {
+            // Arrange - Create container with hierarchy paths (simulating local development mode)
+            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
+                world,
+                new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()),
+                PartitionComponent.TOP_PRIORITY);
+
+            var hierarchyPaths = new[] { "Child", "Root" }; // Simulate captured hierarchy paths
+            var asset = GltfContainerAsset.Create(rootGameObject, null, hierarchyPaths);
+            asset.Renderers.Add(rootRenderer);
+            asset.Renderers.Add(childRenderer);
+
+            world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
+
+            var gltfContainer = new GltfContainerComponent
+            {
+                Promise = promise,
+                State = LoadingState.Finished,
+                RootGameObject = rootGameObject,
+            };
+
+            var gltfNodeModifiers = new PBGltfNodeModifiers
+            {
+                Modifiers =
+                {
+                    new PBGltfNodeModifiers.Types.GltfNodeModifier
+                    {
+                        Path = "InvalidPath",
+                        Material = CreatePbrMaterial(Color.red),
+                    },
+                },
+            };
+
+            Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY);
+
+            // Expect error logs for invalid path (both error messages)
+            LogAssert.Expect(LogType.Error, "GLTF Node path 'InvalidPath' not found.");
+            LogAssert.Expect(LogType.Error, "GLTF Node available paths with renderers:\n  - Child\n  - Root");
+
+            // Act
+            system.Update(0);
+
+            // Assert
+            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
+            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0)); // No entities should be created for invalid path
         }
 
         private static PBMaterial CreatePbrMaterial(Color color) =>
