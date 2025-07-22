@@ -66,6 +66,7 @@ namespace DCL.Landscape
             terrainModel = new TerrainModel(occupied, none, none, parcelSize,
                 terrainGenData.borderPadding, 0.05f);
 
+            terrainModel.UpdateTerrainData(terrainData);
             rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
             rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
 
@@ -73,8 +74,6 @@ namespace DCL.Landscape
 
             boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
             boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
-
-            terrainModel.UpdateTerrainData(terrainData);
 
             processReport?.SetProgress(1f);
         }

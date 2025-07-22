@@ -91,12 +91,12 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
+            terrainModel.UpdateTerrainData(terrainData);
+
             if (RootObject != null)
                 RootObject.gameObject.SetActive(true);
 
-            terrainModel.UpdateTerrainData(terrainData);
             IsTerrainShown = true;
-
             postRealmLoadReport.SetProgress(1f);
         }
 
@@ -118,6 +118,7 @@ namespace DCL.Landscape
             terrainModel = new TerrainModel(roads, occupied, empty, parcelSize,
                 terrainGenData.borderPadding);
 
+            terrainModel.UpdateTerrainData(terrainData);
             float startMemory = profilingProvider.SystemUsedMemoryInBytes / (1024 * 1024);
 
             try
@@ -132,8 +133,6 @@ namespace DCL.Landscape
                         Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
                         boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
                     }
-
-                    terrainModel.UpdateTerrainData(terrainData);
 
                     if (processReport != null) processReport.SetProgress(1f);
                 }
