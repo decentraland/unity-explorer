@@ -39,71 +39,32 @@ namespace DCL.UI.GenericContextMenu
             GenericContextMenuToggleWithCheckView toggleWithCheckPrefab,
             GenericContextMenuSubMenuButtonView subMenuButtonPrefab)
         {
-            controlsContainerPool = new ObjectPool<ControlsContainerView>(
-                createFunc: () => Object.Instantiate(controlsContainerPrefab, controlsParent),
-                actionOnGet: separatorView => separatorView.gameObject.SetActive(true),
-                actionOnRelease: separatorView => separatorView?.gameObject.SetActive(false),
-                actionOnDestroy: separatorView => Object.Destroy(separatorView.gameObject));
-
-            separatorPool = new ObjectPool<GenericContextMenuSeparatorView>(
-                createFunc: () => Object.Instantiate(separatorPrefab, controlsParent),
-                actionOnGet: separatorView => separatorView.gameObject.SetActive(true),
-                actionOnRelease: separatorView => separatorView?.gameObject.SetActive(false),
-                actionOnDestroy: separatorView => Object.Destroy(separatorView.gameObject));
-
-            buttonPool = new ObjectPool<GenericContextMenuButtonWithTextView>(
-                createFunc: () => Object.Instantiate(buttonPrefab, controlsParent),
-                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
-                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
-                actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
-
-            togglePool = new ObjectPool<GenericContextMenuToggleView>(
-                createFunc: () => Object.Instantiate(togglePrefab, controlsParent),
-                actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
-                actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
-                actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
-
-            toggleWithIconPool = new ObjectPool<GenericContextMenuToggleWithIconView>(
-                createFunc: () => Object.Instantiate(toggleWithIconPrefab, controlsParent),
-                actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
-                actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
-                actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
-
-            userProfilePool = new ObjectPool<GenericContextMenuUserProfileView>(
-                createFunc: () =>
-                {
-                    GenericContextMenuUserProfileView profileView = Object.Instantiate(userProfilePrefab, controlsParent);
-                    profileView.SetProfileDataProvider(profileDataProvider);
-                    return profileView;
-                },
-                actionOnGet: userProfileView => userProfileView.gameObject.SetActive(true),
-                actionOnRelease: userProfileView => userProfileView?.gameObject.SetActive(false),
-                actionOnDestroy: userProfileView => Object.Destroy(userProfileView.gameObject));
-
-            buttonWithStringDelegatePool = new ObjectPool<GenericContextMenuButtonWithStringDelegateView>(
-                createFunc: () => Object.Instantiate(buttonWithDelegatePrefab, controlsParent),
-                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
-                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
-                actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
-
-            textPool = new ObjectPool<GenericContextMenuTextView>(
-                createFunc:  () => Object.Instantiate(textPrefab, controlsParent),
-                actionOnGet: textView => textView.gameObject.SetActive(true),
-                actionOnRelease: textView => textView?.gameObject.SetActive(false),
-                actionOnDestroy: textView => Object.Destroy(textView.gameObject));
-
-            toggleWithCheckPool = new ObjectPool<GenericContextMenuToggleWithCheckView>(
-                createFunc: () => Object.Instantiate(toggleWithCheckPrefab, controlsParent),
-                actionOnGet: toggleView => toggleView.gameObject.SetActive(true),
-                actionOnRelease: toggleView => toggleView?.gameObject.SetActive(false),
-                actionOnDestroy: toggleView => Object.Destroy(toggleView.gameObject));
-
-            subMenuButtonPool = new ObjectPool<GenericContextMenuSubMenuButtonView>(
-                createFunc: () => Object.Instantiate(subMenuButtonPrefab, controlsParent),
-                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
-                actionOnRelease: buttonView => buttonView?.gameObject.SetActive(false),
-                actionOnDestroy: buttonView => Object.Destroy(buttonView.gameObject));
+            controlsContainerPool = CreateObjectPool(controlsContainerPrefab, controlsParent);
+            separatorPool = CreateObjectPool(separatorPrefab, controlsParent);
+            buttonPool = CreateObjectPool(buttonPrefab, controlsParent);
+            togglePool = CreateObjectPool(togglePrefab, controlsParent);
+            toggleWithIconPool = CreateObjectPool(toggleWithIconPrefab, controlsParent);
+            userProfilePool = CreateObjectPool(() =>
+            {
+                GenericContextMenuUserProfileView profileView = Object.Instantiate(userProfilePrefab, controlsParent);
+                profileView.SetProfileDataProvider(profileDataProvider);
+                return profileView;
+            });
+            buttonWithStringDelegatePool = CreateObjectPool(buttonWithDelegatePrefab, controlsParent);
+            textPool = CreateObjectPool(textPrefab, controlsParent);
+            toggleWithCheckPool = CreateObjectPool(toggleWithCheckPrefab, controlsParent);
+            subMenuButtonPool = CreateObjectPool(subMenuButtonPrefab, controlsParent);
         }
+
+        private static ObjectPool<T> CreateObjectPool<T>(T prefab, Transform parent) where T: MonoBehaviour =>
+            CreateObjectPool(() => Object.Instantiate(prefab, parent));
+
+        private static ObjectPool<T> CreateObjectPool<T>(Func<T> createFunc) where T: MonoBehaviour =>
+            new (
+                createFunc: createFunc,
+                actionOnGet: component => component.gameObject.SetActive(true),
+                actionOnRelease: component => component?.gameObject.SetActive(false),
+                actionOnDestroy: component => Object.Destroy(component.gameObject));
 
         public void Dispose() =>
             ReleaseAllCurrentControls();
