@@ -10,6 +10,15 @@ namespace DCL.VoiceChat
 {
     public class CallButtonController
     {
+        public enum OtherUserCallStatus
+        {
+            USER_OFFLINE,
+            USER_REJECTS_CALLS,
+            USER_AVAILABLE,
+            OWN_USER_IN_CALL,
+            OWN_USER_REJECTS_CALLS,
+        }
+
         private const string USER_OFFLINE_TOOLTIP_TEXT = "User is offline.";
         private const string USER_REJECTS_CALLS_TOOLTIP_TEXT = "User only accepts calls from friends.";
         private const string OWN_USER_REJECTS_CALLS_TOOLTIP_TEXT = "Add User as a friend, or update your DM & Call settings to connect with everyone.";
@@ -23,15 +32,15 @@ namespace DCL.VoiceChat
         private readonly IDisposable orchestratorTypeSubscription;
         private readonly IDisposable privateVoiceChatAvailableSubscription;
 
-        public event Action<string> StartCall;
-        public string CurrentUserId { get; private set; }
-
         private readonly CallButtonView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
         private readonly IChatEventBus chatEventBus;
         private bool isClickedOnce;
         private OtherUserCallStatus otherUserStatus;
         private CancellationTokenSource cts;
+        public string CurrentUserId { get; private set; }
+
+        public event Action<string> StartCall;
 
         public CallButtonController(CallButtonView view, IVoiceChatOrchestratorState voiceChatState, IChatEventBus chatEventBus)
         {
@@ -103,7 +112,10 @@ namespace DCL.VoiceChat
             }
 
             // Check if we're already in a call
-            if (voiceChatState.CurrentCallStatus.Value is VoiceChatStatus.VOICE_CHAT_IN_CALL or VoiceChatStatus.VOICE_CHAT_STARTED_CALL or VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
+            if (voiceChatState.CurrentCallStatus.Value is
+                VoiceChatStatus.VOICE_CHAT_IN_CALL or
+                VoiceChatStatus.VOICE_CHAT_STARTED_CALL or
+                VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
                 await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct);
                 return;
@@ -151,12 +163,7 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus newStatus)
         {
-            //This state comes after a call to BE, so we won't show any tooltip until the reply arrives.
-            //DO we need to add some loading/calling animation here??
-            if (newStatus == VoiceChatStatus.VOICE_CHAT_BUSY)
-            {
-                ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget();
-            }
+            if (newStatus == VoiceChatStatus.VOICE_CHAT_BUSY) { ShowTooltipWithAutoCloseAsync(USER_ALREADY_IN_CALL_TOOLTIP_TEXT, cts.Token).Forget(); }
         }
 
         public void Dispose()
@@ -166,15 +173,6 @@ namespace DCL.VoiceChat
             privateVoiceChatAvailableSubscription?.Dispose();
             chatEventBus.StartCall -= OnChatEventBusStartCall;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
-        }
-
-        public enum OtherUserCallStatus
-        {
-            USER_OFFLINE,
-            USER_REJECTS_CALLS,
-            USER_AVAILABLE,
-            OWN_USER_IN_CALL,
-            OWN_USER_REJECTS_CALLS
         }
     }
 }
