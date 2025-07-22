@@ -16,7 +16,12 @@ namespace ECS.StreamableLoading.GLTF
         public GLTFData(GltfImport gltfImportedData, GameObject containerGameObject, IReadOnlyList<string>? hierarchyPaths = null)
             : base(gltfImportedData, ReportCategory.GLTF_CONTAINER)
         {
-            this.ContainerGameObject = containerGameObject;
+            if (containerGameObject == null) return;
+
+            ContainerGameObject = containerGameObject;
+
+            if (containerGameObject.transform.childCount == 0) return;
+
             RootGameObject = containerGameObject.transform.GetChild(0).gameObject;
             HierarchyPaths = hierarchyPaths;
         }
