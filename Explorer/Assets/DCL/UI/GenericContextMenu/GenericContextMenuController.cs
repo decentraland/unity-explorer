@@ -149,6 +149,7 @@ namespace DCL.UI.GenericContextMenu
                 subContainer.controlsContainer.anchoredPosition = GetSubContainerPosition(queuedDeferredConfig.ParentComponent.RightAnchor == subContainerAnchor, queuedDeferredConfig.Config);
                 queuedDeferredConfig.ParentComponent.SetContainer(subContainer);
 
+                // The sub container position is already set using the anchors of the parent as above. We can ignore the anchor position by passing 0.
                 ConfigureContextMenu(subContainer, queuedDeferredConfig.Config, Vector2.zero, overlapRect);
             }
         }
