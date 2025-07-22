@@ -133,7 +133,15 @@ namespace DCL.WebRequests
                 case 502: // Bad Gateway. Reverse proxy/CDN got a bad response from upstream
                 case 503: // Service Unavailable. Overload, maintenance window
                 case 504: // Gateway Timeout. Upstream didn’t respond in time
+
+                // CDN Specific Errors
+                case 521:
+                case 522:
+                case 523:
+                case 525:
+                case 526:
                     return false;
+
                 default:
                     return true;
             }
