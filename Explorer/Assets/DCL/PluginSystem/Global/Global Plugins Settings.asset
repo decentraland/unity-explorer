@@ -51,9 +51,19 @@ MonoBehaviour:
   - rid: 1766526334245273896
   - rid: 3511243270148325472
   - rid: 6144113899072913496
+  - rid: 648265872610426982
   references:
     version: 2
     RefIds:
+    - rid: 648265872610426982
+      type: {class: ConfirmationDialogPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ConfirmationDialogPrefab>k__BackingField:
+          m_AssetGUID: 7b075576ea612439bb40436f7c0fdff0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -424,6 +434,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        Badges3DCamera:
+          m_AssetGUID: 8a91951d2f71f174d998356f01a3603c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
           m_SubObjectName: 
@@ -597,12 +613,6 @@ MonoBehaviour:
       data:
         <LoadingScreenPrefab>k__BackingField:
           m_AssetGUID: 605506dac7ec04ed09953980478e93d4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <FallbackTipsConfiguration>k__BackingField:
-          m_AssetGUID: dc412497f06504faeb6e30b848c0842d
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 

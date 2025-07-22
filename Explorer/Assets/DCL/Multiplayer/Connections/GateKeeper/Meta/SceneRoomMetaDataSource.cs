@@ -24,6 +24,31 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
 
         private readonly bool forceSceneIsolation;
 
+        private Vector2Int previousParcel = new (int.MaxValue, int.MaxValue);
+
+        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
+
+        public bool MetadataIsDirty
+        {
+            get
+            {
+                CanBeDirty<Vector3> characterPosition = characterTransform.Position;
+
+                bool positionIsDirty = !realmData.ScenesAreFixed && characterPosition.IsDirty;
+
+                if (!positionIsDirty)
+                    return false;
+
+                Vector2Int parcel = characterPosition.ToParcel();
+
+                if (parcel == previousParcel)
+                    return false;
+
+                previousParcel = parcel;
+                return true;
+            }
+        }
+
         public SceneRoomMetaDataSource(IRealmData realmData, IExposedTransform characterTransform, World world, bool forceSceneIsolation)
         {
             this.realmData = realmData;
@@ -31,8 +56,6 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
             this.world = world;
             this.forceSceneIsolation = forceSceneIsolation;
         }
-
-        public bool ScenesCommunicationIsIsolated => forceSceneIsolation || !realmData.ScenesAreFixed;
 
         public MetaData.Input GetMetadataInput() =>
             new (
@@ -69,7 +92,5 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
                     : new MetaData(null, input)
             );
         }
-
-        public bool MetadataIsDirty => !realmData.ScenesAreFixed && characterTransform.Position.IsDirty;
     }
 }

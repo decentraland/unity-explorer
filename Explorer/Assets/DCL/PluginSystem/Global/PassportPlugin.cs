@@ -168,6 +168,8 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
+            BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
+
 
             var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
@@ -211,7 +213,8 @@ namespace DCL.PluginSystem.Global
                 chatEventBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
-                voiceChatOrchestrator
+                voiceChatOrchestrator,
+                passport3DPreviewCamera
             );
 
             mvcManager.RegisterController(passportController);
@@ -229,6 +232,9 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject PassportPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject Badges3DCamera;
 
             [field: SerializeField]
             public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; }
