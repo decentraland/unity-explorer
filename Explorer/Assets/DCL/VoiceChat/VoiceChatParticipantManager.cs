@@ -50,8 +50,6 @@ namespace DCL.VoiceChat
             voiceChatRoom.Participants.UpdatesFromParticipant += OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
-            voiceChatRoom.TrackPublished += OnTrackPublished;
-            voiceChatRoom.TrackUnpublished += OnTrackUnpublished;
         }
 
         public void Dispose()
@@ -62,8 +60,6 @@ namespace DCL.VoiceChat
             voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
-            voiceChatRoom.TrackPublished -= OnTrackPublished;
-            voiceChatRoom.TrackUnpublished -= OnTrackUnpublished;
 
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Disposed");
         }
@@ -183,18 +179,6 @@ namespace DCL.VoiceChat
             };
         }
 
-        private void OnTrackPublished(TrackPublication publication, Participant participant)
-        {
-            UpdateParticipantSpeakerStatus(participant.Identity, true);
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track published for {participant.Identity}");
-        }
-
-        private void OnTrackUnpublished(TrackPublication publication, Participant participant)
-        {
-            UpdateParticipantSpeakerStatus(participant.Identity, false);
-            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Track unpublished for {participant.Identity}");
-        }
-
         private void OnParticipantMetadataChanged(string participantId, string metadata)
         {
             try
@@ -259,7 +243,7 @@ namespace DCL.VoiceChat
                 HasClaimedName = new ReactiveProperty<bool?>(metadata?.hasClaimedName),
                 ProfilePictureUrl = new ReactiveProperty<string?>(metadata?.profilePictureUrl),
                 IsRequestingToSpeak = new ReactiveProperty<bool?>(metadata?.isRequestingToSpeak),
-                IsSpeaker = new ReactiveProperty<bool>(HasTracks(participant))
+                IsSpeaker = new ReactiveProperty<bool>(metadata?.isSpeaker ?? false)
             };
 
             participantStates[participant.Identity] = state;
@@ -369,7 +353,7 @@ namespace DCL.VoiceChat
             existingState.HasClaimedName.Value = metadata?.hasClaimedName;
             existingState.ProfilePictureUrl.Value = metadata?.profilePictureUrl;
             existingState.IsRequestingToSpeak.Value = metadata?.isRequestingToSpeak;
-            existingState.IsSpeaker.Value = HasTracks(participant);
+            existingState.IsSpeaker.Value = metadata?.isSpeaker ?? false;
         }
 
         private void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
@@ -388,20 +372,8 @@ namespace DCL.VoiceChat
                 state.HasClaimedName.Value = metadata.hasClaimedName;
                 state.ProfilePictureUrl.Value = metadata.profilePictureUrl;
                 state.IsRequestingToSpeak.Value = metadata.isRequestingToSpeak;
+                state.IsSpeaker.Value = metadata.isSpeaker ?? false;
             }
-        }
-
-        private void UpdateParticipantSpeakerStatus(string participantId, bool isSpeaker)
-        {
-            if (participantStates.TryGetValue(participantId, out var state))
-            {
-                state.IsSpeaker.Value = isSpeaker;
-            }
-        }
-
-        private bool HasTracks(Participant participant)
-        {
-            return participant.Tracks.Count > 0;
         }
 
         public struct ParticipantState
@@ -421,9 +393,10 @@ namespace DCL.VoiceChat
             public bool? hasClaimedName;
             public string? profilePictureUrl;
             public bool? isRequestingToSpeak;
+            public bool? isSpeaker;
 
             public override string ToString() =>
-                $"(Name: {name}, HasClaimedName: {hasClaimedName}, ProfilePictureUrl: {profilePictureUrl}, IsRequestingToSpeak: {isRequestingToSpeak})";
+                $"(Name: {name}, HasClaimedName: {hasClaimedName}, ProfilePictureUrl: {profilePictureUrl}, IsRequestingToSpeak: {isRequestingToSpeak}, IsSpeaker: {isSpeaker})";
         }
     }
 }
