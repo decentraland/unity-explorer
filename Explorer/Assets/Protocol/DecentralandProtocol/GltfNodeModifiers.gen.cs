@@ -44,6 +44,16 @@ namespace DCL.ECSComponents {
 
   }
   #region Messages
+  /// <summary>
+  /// GltfNodeModifiers component is to be used attached to entities that have the GltfContainer component.
+  ///
+  /// This allows to override either the Material or the Casting Shadows behaviour of the target GLTF Node.
+  /// 
+  /// * If the 'path' of the first modifier in the collection is an empty string: the configuration will
+  /// affect all of the GLTF Nodes (as a global modifier).
+  /// * Otherwise, for the modifiers whose 'path' is found in the GLTF hierarchy, the modifier will affect only
+  /// the target Nodes.
+  /// </summary>
   public sealed partial class PBGltfNodeModifiers : pb::IMessage<PBGltfNodeModifiers>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -276,6 +286,9 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "path" field.</summary>
         public const int PathFieldNumber = 1;
         private string path_ = "";
+        /// <summary>
+        /// The GLTF hierarchy path of the target Node to be affected
+        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public string Path {
@@ -288,6 +301,9 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "cast_shadows" field.</summary>
         public const int CastShadowsFieldNumber = 2;
         private bool castShadows_;
+        /// <summary>
+        /// The casting shadows enabled override
+        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public bool CastShadows {
@@ -313,6 +329,9 @@ namespace DCL.ECSComponents {
         /// <summary>Field number for the "material" field.</summary>
         public const int MaterialFieldNumber = 3;
         private global::DCL.ECSComponents.PBMaterial material_;
+        /// <summary>
+        /// The Material that will be overridden on the target Node
+        /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
         public global::DCL.ECSComponents.PBMaterial Material {
