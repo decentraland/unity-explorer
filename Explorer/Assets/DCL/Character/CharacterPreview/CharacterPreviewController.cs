@@ -26,7 +26,7 @@ using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRenderi
 
 namespace DCL.CharacterPreview
 {
-    public readonly struct CharacterPreviewController : IDisposable
+    public struct CharacterPreviewController : IDisposable
     {
         private const string CHARACTER_PREVIEW_NAME = "CharacterPreview";
 
@@ -36,6 +36,8 @@ namespace DCL.CharacterPreview
         private readonly Entity characterPreviewEntity;
         private readonly World globalWorld;
         private readonly bool builderEmotesPreview;
+
+        public bool IsAvatarInstantiated { get; private set; }
 
         public CharacterPreviewController(World world, RectTransform renderImage, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
@@ -58,6 +60,8 @@ namespace DCL.CharacterPreview
                 new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
                 new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent());
+
+            IsAvatarInstantiated = false;
         }
 
         public void AddHeadIK() =>
@@ -84,6 +88,8 @@ namespace DCL.CharacterPreview
 
         public UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {
+            IsAvatarInstantiated = false;
+
             ct.ThrowIfCancellationRequested();
 
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
@@ -128,6 +134,8 @@ namespace DCL.CharacterPreview
                 avatarBase.RigBuilder.enabled = true;
                 avatarBase.HeadIKRig.weight = 1f;
             }
+
+            IsAvatarInstantiated = true;
             return;
 
             bool IsAvatarLoaded()

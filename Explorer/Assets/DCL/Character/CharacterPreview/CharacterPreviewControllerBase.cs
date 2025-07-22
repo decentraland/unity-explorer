@@ -37,7 +37,7 @@ namespace DCL.CharacterPreview
         protected bool rotateEnabled = true;
         private readonly Func<bool> isPlayingEmoteDelegate;
 
-        public bool IsInitialized => initialized;
+        public bool IsAvatarInstantiated => previewController is { IsAvatarInstantiated: true };
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
