@@ -10,6 +10,24 @@
     /// </summary>
     public readonly struct RetryPolicy
     {
+        public enum Strictness : byte
+        {
+            /// <summary>
+            ///     Repetitions can follow the default rules
+            /// </summary>
+            NONE = 0,
+
+            /// <summary>
+            ///     Repetitions can only be done if the server explicitly requires it
+            /// </summary>
+            RETRY_AFTER_REQUIRED = 1,
+
+            /// <summary>
+            ///     Repetitions are manually enforced
+            /// </summary>
+            ENFORCED = 2,
+        }
+
         public const int MAX_RETRIES_COUNT = 2;
 
         public const int MIN_DELAY_BETWEEN_ATTEMPTS_MS = 1000;
@@ -18,21 +36,23 @@
 
         public const int BACKOFF_MULTIPLIER = 3;
 
-        public static readonly RetryPolicy NONE = new (0, false);
+        public static readonly RetryPolicy NONE = new (0, Strictness.NONE);
 
-        public static readonly RetryPolicy DEFAULT = new (MAX_RETRIES_COUNT, false);
+        public static readonly RetryPolicy DEFAULT = new (MAX_RETRIES_COUNT, Strictness.NONE);
+
+        public static readonly RetryPolicy HEADER_REQUIRED = new (MAX_RETRIES_COUNT, Strictness.RETRY_AFTER_REQUIRED);
 
         internal readonly int minDelayBetweenAttemptsMs;
         internal readonly int backoffMultiplier;
         internal readonly int maxRetriesCount;
-        internal readonly bool enforced;
+        internal readonly Strictness strictness;
 
-        private RetryPolicy(int maxRetriesCount, bool enforce, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER)
+        private RetryPolicy(int maxRetriesCount, Strictness strictness, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER)
         {
             this.maxRetriesCount = maxRetriesCount;
             this.minDelayBetweenAttemptsMs = minDelayBetweenAttemptsMs;
             this.backoffMultiplier = backoffMultiplier;
-            enforced = enforce;
+            this.strictness = strictness;
         }
 
         /// <summary>
@@ -40,12 +60,12 @@
         /// </summary>
         /// <returns></returns>
         public static RetryPolicy Enforce(int retriesCount = MAX_RETRIES_COUNT) =>
-            new (retriesCount, true);
+            new (retriesCount, Strictness.ENFORCED);
 
         public static RetryPolicy WithRetries(int retriesCount, int minDelayBetweenAttemptsMs = MIN_DELAY_BETWEEN_ATTEMPTS_MS, int backoffMultiplier = BACKOFF_MULTIPLIER) =>
-            new (retriesCount, false, minDelayBetweenAttemptsMs, backoffMultiplier);
+            new (retriesCount, Strictness.NONE, minDelayBetweenAttemptsMs, backoffMultiplier);
 
         public override string ToString() =>
-            $"MaxRetriesCount={maxRetriesCount}, Enforced={enforced}, MinDelayBetweenAttemptsMs={minDelayBetweenAttemptsMs}, BackoffMultiplier={backoffMultiplier}";
+            $"MaxRetriesCount={maxRetriesCount}, Strictness={strictness}, MinDelayBetweenAttemptsMs={minDelayBetweenAttemptsMs}, BackoffMultiplier={backoffMultiplier}";
     }
 }
