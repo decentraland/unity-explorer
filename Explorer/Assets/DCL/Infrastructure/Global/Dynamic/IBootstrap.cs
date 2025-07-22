@@ -11,6 +11,7 @@ using Global.AppArgs;
 using SceneRunner.Debugging;
 using System.Threading;
 using DCL.FeatureFlags;
+using DCL.Utilities;
 using Global.Versioning;
 using UnityEngine.UIElements;
 using Utility;
@@ -65,7 +66,5 @@ namespace Global.Dynamic
         UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct);
 
         void ApplyFeatureFlagConfigs(FeatureFlagsConfiguration featureFlagsConfigurationCache);
-
-        void InitializeFeaturesRegistry();
     }
 }

@@ -167,10 +167,7 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
-            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
-
-
 
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
@@ -179,7 +176,6 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    DefaultStartingRealm = defaultStartingRealm,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
@@ -187,7 +183,6 @@ namespace Global.Dynamic
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
-                    AppParameters = appArgs,
                 },
                 backgroundMusic,
                 world,
@@ -230,11 +225,6 @@ namespace Global.Dynamic
                 FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
-        }
-
-        public void InitializeFeaturesRegistry()
-        {
-            FeaturesRegistry.Initialize(new FeaturesRegistry(appArgs, realmLaunchSettings.CurrentMode is LaunchMode.LocalSceneDevelopment));
         }
 
         public GlobalWorld CreateGlobalWorld(
