@@ -323,6 +323,12 @@ MonoBehaviour:
       grassDistance: 75
       chunkCullDistance: 1000
       maxSimultaneousVideos: 1
+    dynamicLights:
+      sceneLimitations:
+        LightsPerParcel: 1
+        HardMaxLightCount: 3
+        MaxPointLightShadows: 1
+        MaxSpotLightShadows: 1
   - volumeProfile: {fileID: -4880458653563171804}
     fogSettings:
       m_Fog: 1
@@ -336,6 +342,12 @@ MonoBehaviour:
       grassDistance: 150
       chunkCullDistance: 3000
       maxSimultaneousVideos: 5
+    dynamicLights:
+      sceneLimitations:
+        LightsPerParcel: 1
+        HardMaxLightCount: 10
+        MaxPointLightShadows: 1
+        MaxSpotLightShadows: 3
   - volumeProfile: {fileID: 8971067228855834029}
     fogSettings:
       m_Fog: 1
@@ -349,6 +361,12 @@ MonoBehaviour:
       grassDistance: 300
       chunkCullDistance: 7000
       maxSimultaneousVideos: 10
+    dynamicLights:
+      sceneLimitations:
+        LightsPerParcel: 1
+        HardMaxLightCount: 10
+        MaxPointLightShadows: 2
+        MaxSpotLightShadows: 3
   allRendererFeatures:
   - {fileID: 5020021736804485952, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: 2915607160997281497, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
@@ -368,7 +386,6 @@ MonoBehaviour:
   - {fileID: 5175788798212861771, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -7326921190901022776, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
   - {fileID: -4991993260910906933, guid: fef5685522a9f2e4181cc4c31f10f100, type: 2}
-  updateInEditor: 1
 --- !u!114 &627882838885633079
 MonoBehaviour:
   m_ObjectHideFlags: 3

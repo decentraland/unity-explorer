@@ -68,7 +68,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             SortByDistanceToPlayer(lightData, out var ranks);
 
-            int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * settings.LightsPerParcel), settings.HardMaxLightCount);
+            int maxLightCount = math.min((int)math.floor(sceneData.Parcels.Count * settings.SceneLimitations.LightsPerParcel), settings.SceneLimitations.HardMaxLightCount);
             CullLightSourcesQuery(World, ranks, maxLightCount);
         }
 
@@ -123,8 +123,8 @@ namespace DCL.SDKComponents.LightSource.Systems
             if (lightSourceComponent.Rank >= maxLightCount)
                 lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.TooManyLightSources;
 
-            bool shouldDisableShadows = (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Point && lightSourceComponent.TypeRank >= settings.MaxPointLightShadows) ||
-                                        (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot && lightSourceComponent.TypeRank >= settings.MaxSpotLightShadows);
+            bool shouldDisableShadows = (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Point && lightSourceComponent.TypeRank >= settings.SceneLimitations.MaxPointLightShadows) ||
+                                        (pbLightSource.TypeCase == PBLightSource.TypeOneofCase.Spot && lightSourceComponent.TypeRank >= settings.SceneLimitations.MaxSpotLightShadows);
             if (shouldDisableShadows)
                 lightSourceComponent.LightSourceInstance.shadows = LightShadows.None;
         }

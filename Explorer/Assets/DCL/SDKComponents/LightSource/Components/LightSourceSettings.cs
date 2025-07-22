@@ -7,23 +7,6 @@ namespace DCL.SDKComponents.LightSource
     [Serializable]
     public class LightSourceSettings : ScriptableObject
     {
-        [Tooltip("Default values used when a property isn't defined in a protocol object.")]
-        public DefaultValuesSettings DefaultValues = new ();
-
-        [Header("Scene Limitations")]
-        [Tooltip("Multiplied by the parcel count to compute the maximum number of active lights that can be active in a scene at any time.")]
-        public float LightsPerParcel = 1;
-
-        [Tooltip("Hard limit to the number of active lights in a scene.")]
-        public int HardMaxLightCount = 10;
-
-        [Tooltip("Maximum number of Point Lights that can cast shadows at any time.")]
-        public int MaxPointLightShadows = 1;
-
-        [Tooltip("Maximum number of Spot Lights that can cast shadows at any time.")]
-        public int MaxSpotLightShadows = 3;
-
-        [Header("Other")]
         [Tooltip("Exponent used in the formula: { Range = Intensity ^ Exponent }.")]
         public float RangeFormulaExponent = 0.25f;
 
@@ -35,6 +18,35 @@ namespace DCL.SDKComponents.LightSource
 
         [Tooltip("Multiplied by the intensity of Point Lights.")]
         public float PointLightIntensityScale = 1;
+
+        [Tooltip("Default values used when a property isn't defined in a protocol object.")]
+        public DefaultValuesSettings DefaultValues = new();
+
+        [NonSerialized] public SceneLimitationsSettings SceneLimitations = new();
+
+        [Serializable]
+        public class SceneLimitationsSettings
+        {
+            [Tooltip("Multiplied by the parcel count to compute the maximum number of active lights that can be active in a scene at any time.")]
+            public float LightsPerParcel = 1;
+
+            [Tooltip("Hard limit to the number of active lights in a scene.")]
+            public int HardMaxLightCount = 10;
+
+            [Tooltip("Maximum number of Point Lights that can cast shadows at any time.")]
+            public int MaxPointLightShadows = 1;
+
+            [Tooltip("Maximum number of Spot Lights that can cast shadows at any time.")]
+            public int MaxSpotLightShadows = 3;
+
+            public static void Copy(SceneLimitationsSettings copyTo, SceneLimitationsSettings copyFrom)
+            {
+                copyTo.LightsPerParcel = copyFrom.LightsPerParcel;
+                copyTo.HardMaxLightCount = copyFrom.HardMaxLightCount;
+                copyTo.MaxPointLightShadows = copyFrom.MaxPointLightShadows;
+                copyTo.MaxSpotLightShadows = copyFrom.MaxSpotLightShadows;
+            }
+        }
 
         [Serializable]
         public class DefaultValuesSettings
@@ -54,6 +66,11 @@ namespace DCL.SDKComponents.LightSource
             public float InnerAngle;
 
             public float OuterAngle;
+        }
+
+        public void ApplyQualitySettings(SceneLimitationsSettings sceneLimitations)
+        {
+            SceneLimitationsSettings.Copy(SceneLimitations, sceneLimitations);
         }
     }
 }
