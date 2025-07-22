@@ -359,7 +359,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             viewInstance!.JumpIntoWorldButton.interactable = false;
 
-            if(characterPreviewController is { IsInitialized: true })
+            if (characterPreviewController is { IsInitialized: true })
                 AnimateAndAwaitAsync().Forget();
 
             characterPreviewController?.OnHide();
