@@ -34,16 +34,16 @@ namespace DCL.ECSComponents {
             "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjNIBIgBARIiChVleHByZXNzaW9u",
             "X3RyaWdnZXJfaWQYByABKAlIBYgBARIpChxleHByZXNzaW9uX3RyaWdnZXJf",
             "dGltZXN0YW1wGAggASgDSAaIAQESFAoHdGFsa2luZxgJIAEoCEgHiAEBEhEK",
-            "CXdlYXJhYmxlcxgKIAMoCRIOCgZlbW90ZXMYCyADKAkSHgoRaXNfc2tpbl9p",
+            "CXdlYXJhYmxlcxgKIAMoCRIOCgZlbW90ZXMYCyADKAkSHgoRaXNfYm9keV9p",
             "bnZpc2libGUYDCABKAhICIgBAUIHCgVfbmFtZUINCgtfYm9keV9zaGFwZUIN",
             "Cgtfc2tpbl9jb2xvckINCgtfaGFpcl9jb2xvckIMCgpfZXllX2NvbG9yQhgK",
             "Fl9leHByZXNzaW9uX3RyaWdnZXJfaWRCHwodX2V4cHJlc3Npb25fdHJpZ2dl",
-            "cl90aW1lc3RhbXBCCgoIX3RhbGtpbmdCFAoSX2lzX3NraW5faW52aXNpYmxl",
+            "cl90aW1lc3RhbXBCCgoIX3RhbGtpbmdCFAoSX2lzX2JvZHlfaW52aXNpYmxl",
             "QhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes", "IsSkinInvisible" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "IsSkinInvisible" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes", "IsBodyInvisible" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "IsBodyInvisible" }, null, null, null)
           }));
     }
     #endregion
@@ -107,7 +107,7 @@ namespace DCL.ECSComponents {
       talking_ = other.talking_;
       wearables_ = other.wearables_.Clone();
       emotes_ = other.emotes_.Clone();
-      isSkinInvisible_ = other.isSkinInvisible_;
+      isBodyInvisible_ = other.isBodyInvisible_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -350,31 +350,31 @@ namespace DCL.ECSComponents {
       get { return emotes_; }
     }
 
-    /// <summary>Field number for the "is_skin_invisible" field.</summary>
-    public const int IsSkinInvisibleFieldNumber = 12;
-    private bool isSkinInvisible_;
+    /// <summary>Field number for the "is_body_invisible" field.</summary>
+    public const int IsBodyInvisibleFieldNumber = 12;
+    private bool isBodyInvisible_;
     /// <summary>
     /// hides the skin + hair + facial features (default: false)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool IsSkinInvisible {
-      get { if ((_hasBits0 & 4) != 0) { return isSkinInvisible_; } else { return false; } }
+    public bool IsBodyInvisible {
+      get { if ((_hasBits0 & 4) != 0) { return isBodyInvisible_; } else { return false; } }
       set {
         _hasBits0 |= 4;
-        isSkinInvisible_ = value;
+        isBodyInvisible_ = value;
       }
     }
-    /// <summary>Gets whether the "is_skin_invisible" field is set</summary>
+    /// <summary>Gets whether the "is_body_invisible" field is set</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasIsSkinInvisible {
+    public bool HasIsBodyInvisible {
       get { return (_hasBits0 & 4) != 0; }
     }
-    /// <summary>Clears the value of the "is_skin_invisible" field</summary>
+    /// <summary>Clears the value of the "is_body_invisible" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearIsSkinInvisible() {
+    public void ClearIsBodyInvisible() {
       _hasBits0 &= ~4;
     }
 
@@ -404,7 +404,7 @@ namespace DCL.ECSComponents {
       if (Talking != other.Talking) return false;
       if(!wearables_.Equals(other.wearables_)) return false;
       if(!emotes_.Equals(other.emotes_)) return false;
-      if (IsSkinInvisible != other.IsSkinInvisible) return false;
+      if (IsBodyInvisible != other.IsBodyInvisible) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -423,7 +423,7 @@ namespace DCL.ECSComponents {
       if (HasTalking) hash ^= Talking.GetHashCode();
       hash ^= wearables_.GetHashCode();
       hash ^= emotes_.GetHashCode();
-      if (HasIsSkinInvisible) hash ^= IsSkinInvisible.GetHashCode();
+      if (HasIsBodyInvisible) hash ^= IsBodyInvisible.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -480,9 +480,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(output, _repeated_wearables_codec);
       emotes_.WriteTo(output, _repeated_emotes_codec);
-      if (HasIsSkinInvisible) {
+      if (HasIsBodyInvisible) {
         output.WriteRawTag(96);
-        output.WriteBool(IsSkinInvisible);
+        output.WriteBool(IsBodyInvisible);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -532,9 +532,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(ref output, _repeated_wearables_codec);
       emotes_.WriteTo(ref output, _repeated_emotes_codec);
-      if (HasIsSkinInvisible) {
+      if (HasIsBodyInvisible) {
         output.WriteRawTag(96);
-        output.WriteBool(IsSkinInvisible);
+        output.WriteBool(IsBodyInvisible);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -575,7 +575,7 @@ namespace DCL.ECSComponents {
       }
       size += wearables_.CalculateSize(_repeated_wearables_codec);
       size += emotes_.CalculateSize(_repeated_emotes_codec);
-      if (HasIsSkinInvisible) {
+      if (HasIsBodyInvisible) {
         size += 1 + 1;
       }
       if (_unknownFields != null) {
@@ -628,8 +628,8 @@ namespace DCL.ECSComponents {
       }
       wearables_.Add(other.wearables_);
       emotes_.Add(other.emotes_);
-      if (other.HasIsSkinInvisible) {
-        IsSkinInvisible = other.IsSkinInvisible;
+      if (other.HasIsBodyInvisible) {
+        IsBodyInvisible = other.IsBodyInvisible;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -700,7 +700,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 96: {
-            IsSkinInvisible = input.ReadBool();
+            IsBodyInvisible = input.ReadBool();
             break;
           }
         }
@@ -772,7 +772,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 96: {
-            IsSkinInvisible = input.ReadBool();
+            IsBodyInvisible = input.ReadBool();
             break;
           }
         }

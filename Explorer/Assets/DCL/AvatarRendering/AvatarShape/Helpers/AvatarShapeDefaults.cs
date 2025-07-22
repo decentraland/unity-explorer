@@ -58,8 +58,8 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
         {
             var alpha = 1f;
 
-            if (self.HasIsSkinInvisible)
-                alpha = self.IsSkinInvisible ? 0f : 1f;
+            if (self.HasIsBodyInvisible)
+                alpha = self.IsBodyInvisible ? 0f : 1f;
 
             return alpha;
         }
