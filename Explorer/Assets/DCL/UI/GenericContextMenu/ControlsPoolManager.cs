@@ -137,6 +137,7 @@ namespace DCL.UI.GenericContextMenu
             ControlsContainerView container = controlsContainerPool.Get();
             currentContainers.Add(container);
             container.transform.SetParent(parent);
+            container.controlsContainer.pivot = new Vector2(0f, 1f);
             return container;
         }
 

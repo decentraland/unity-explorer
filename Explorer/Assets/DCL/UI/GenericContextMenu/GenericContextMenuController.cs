@@ -132,19 +132,43 @@ namespace DCL.UI.GenericContextMenu
                 + container.controlsLayoutGroup.padding.top
                 + (container.controlsLayoutGroup.spacing * (contextMenuConfig.contextMenuSettings.Count - 1)));
 
-            Vector3 calculatedPosition = GetControlsPosition(container, anchorPosition, contextMenuConfig.offsetFromTarget, overlapRect, contextMenuConfig.anchorPoint);
-            Vector3 worldPosition = viewRectTransform.TransformPoint(calculatedPosition);
-            container.controlsContainer.localPosition = container.transform.parent.InverseTransformPoint(worldPosition);
+            if (container == viewInstance.ControlsContainer)
+                container.controlsContainer.localPosition = GetControlsPosition(container, anchorPosition, contextMenuConfig.offsetFromTarget, overlapRect, contextMenuConfig.anchorPoint);
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(container.controlsContainer);
 
             if (deferredConfigs.Count > 0)
             {
                 DeferredConfig queuedDeferredConfig = deferredConfigs.Dequeue();
-                ControlsContainerView subContainer = controlsPoolManager.GetControlsContainer(queuedDeferredConfig.ParentComponent.transform);
+
+                // Decide the anchor for the sub container in order to avoid overlap with the screen edges.
+                RectTransform subContainerAnchor = GetSubContainerAnchor(queuedDeferredConfig.ParentComponent.RightAnchor, queuedDeferredConfig.ParentComponent.LeftAnchor, queuedDeferredConfig.Config);
+
+                ControlsContainerView subContainer = controlsPoolManager.GetControlsContainer(subContainerAnchor);
+
+                subContainer.controlsContainer.anchoredPosition = GetSubContainerPosition(queuedDeferredConfig.ParentComponent.RightAnchor == subContainerAnchor, queuedDeferredConfig.Config);
                 queuedDeferredConfig.ParentComponent.SetContainer(subContainer);
-                ConfigureContextMenu(subContainer, queuedDeferredConfig.Config, queuedDeferredConfig.ParentComponent.transform.position, overlapRect);
+
+                ConfigureContextMenu(subContainer, queuedDeferredConfig.Config, Vector2.zero, overlapRect);
             }
+        }
+
+        private RectTransform GetSubContainerAnchor(RectTransform rightAnchor, RectTransform leftAnchor, GenericContextMenuParameter.GenericContextMenu contextMenuConfig)
+        {
+            Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(null, rightAnchor.position);
+
+            if (screenPos.x + contextMenuConfig.width + contextMenuConfig.offsetFromTarget.x <= Screen.width)
+                return rightAnchor;
+
+            return leftAnchor;
+        }
+
+        private Vector2 GetSubContainerPosition(bool rightAnchor, GenericContextMenuParameter.GenericContextMenu contextMenuConfig)
+        {
+            if (rightAnchor) return contextMenuConfig.offsetFromTarget;
+
+            return new Vector2(-contextMenuConfig.width - contextMenuConfig.offsetFromTarget.x,
+                contextMenuConfig.offsetFromTarget.y);
         }
 
         [BurstCompile]

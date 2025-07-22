@@ -16,6 +16,8 @@ namespace DCL.UI.GenericContextMenu.Controls
         [field: SerializeField] public TMP_Text TextComponent { get; private set; }
         [field: SerializeField] public Image ImageComponent { get; private set; }
         [field: SerializeField] public int UnHoverDebounceDurationMs { get; private set; } = 300;
+        [field: SerializeField] public RectTransform RightAnchor { get; private set; }
+        [field: SerializeField] public RectTransform LeftAnchor { get; private set; }
 
         private ControlsContainerView container;
         private bool isHovering;
@@ -47,6 +49,8 @@ namespace DCL.UI.GenericContextMenu.Controls
             HorizontalLayoutComponent.padding = settings.horizontalLayoutPadding;
             HorizontalLayoutComponent.spacing = settings.horizontalLayoutSpacing;
             HorizontalLayoutComponent.reverseArrangement = settings.horizontalLayoutReverseArrangement;
+            RightAnchor.anchoredPosition = new Vector2(settings.anchorPadding, RightAnchor.anchoredPosition.y);
+            LeftAnchor.anchoredPosition = new Vector2(-settings.anchorPadding, LeftAnchor.anchoredPosition.y);
         }
 
         public override void UnregisterListeners() =>
