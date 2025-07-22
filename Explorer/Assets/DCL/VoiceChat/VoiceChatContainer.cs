@@ -11,7 +11,7 @@ namespace DCL.VoiceChat
         private readonly ICommunityVoiceService rpcCommunityVoiceChatService;
         private readonly PrivateVoiceChatCallStatusService privateVoiceChatCallStatusService;
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
-        private readonly VoiceChatParticipantManager participantManager;
+        private readonly VoiceChatParticipantsStateService participantsStateService;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
 
         public VoiceChatContainer(
@@ -23,14 +23,14 @@ namespace DCL.VoiceChat
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
             communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService);
-            participantManager = new VoiceChatParticipantManager(roomHub.VoiceChatRoom().Room());
+            participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room());
 
             VoiceChatOrchestrator = new VoiceChatOrchestrator(
                 privateVoiceChatCallStatusService,
                 communityVoiceChatCallStatusService,
                 rpcPrivateVoiceChatService,
                 rpcCommunityVoiceChatService,
-                participantManager);
+                participantsStateService);
         }
 
         public void Dispose()
@@ -40,7 +40,7 @@ namespace DCL.VoiceChat
             rpcPrivateVoiceChatService?.Dispose();
             VoiceChatOrchestrator?.Dispose();
             rpcCommunityVoiceChatService?.Dispose();
-            participantManager?.Dispose();
+            participantsStateService?.Dispose();
         }
     }
 }

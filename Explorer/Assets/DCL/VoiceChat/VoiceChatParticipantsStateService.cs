@@ -14,9 +14,9 @@ namespace DCL.VoiceChat
     /// Manages voice chat participant events and state, providing a centralized interface
     /// for participant-related operations and notifications.
     /// </summary>
-    public class VoiceChatParticipantManager : IDisposable
+    public class VoiceChatParticipantsStateService : IDisposable
     {
-        private const string TAG = nameof(VoiceChatParticipantManager);
+        private const string TAG = nameof(VoiceChatParticipantsStateService);
 
         private readonly IRoom voiceChatRoom;
 
@@ -43,7 +43,7 @@ namespace DCL.VoiceChat
             return participantStates.TryGetValue(participantId, out var state) ? state : null;
         }
 
-        public VoiceChatParticipantManager(IRoom voiceChatRoom)
+        public VoiceChatParticipantsStateService(IRoom voiceChatRoom)
         {
             this.voiceChatRoom = voiceChatRoom;
 
@@ -138,7 +138,7 @@ namespace DCL.VoiceChat
         private void HandleDisconnection(DisconnectReason? disconnectReason)
         {
             var shouldClearData = ShouldClearDataOnDisconnect(disconnectReason);
-            
+
             if (shouldClearData)
             {
                 connectedParticipants.Clear();
@@ -156,7 +156,7 @@ namespace DCL.VoiceChat
         {
             if (!disconnectReason.HasValue)
                 return false;
-            
+
             return disconnectReason.Value switch
             {
                 DisconnectReason.RoomDeleted => true,
@@ -281,11 +281,11 @@ namespace DCL.VoiceChat
         private void RefreshAllParticipantStates()
         {
             var currentParticipants = new List<Participant>();
-            
+
             var localParticipant = voiceChatRoom.Participants.LocalParticipant();
             if (localParticipant != null)
                 currentParticipants.Add(localParticipant);
-            
+
             foreach (var participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
                 var participant = voiceChatRoom.Participants.RemoteParticipant(participantId);
@@ -300,10 +300,10 @@ namespace DCL.VoiceChat
                     participantsToRemove.Add(participantId);
                 }
             }
-            
+
             var localParticipantId = voiceChatRoom.Participants.LocalParticipant()?.Identity;
             participantsToRemove.RemoveAll(id => id == localParticipantId);
-            
+
             foreach (var participantId in participantsToRemove)
             {
                 RemoveParticipantState(participantId);
@@ -311,7 +311,7 @@ namespace DCL.VoiceChat
                 activeSpeakers.Remove(participantId);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Removed disconnected participant during refresh: {participantId}");
             }
-            
+
             var joinedParticipants = new List<(string participantId, ParticipantState state)>();
             foreach (var participant in currentParticipants)
             {
