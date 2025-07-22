@@ -155,6 +155,8 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                         || name.Contains(ComputeShaderConstants.HAIR_MATERIAL_NAME, StringComparison.OrdinalIgnoreCase))
                         meshData.Renderer.enabled = false;
                 }
+                else
+                    meshData.Renderer.enabled = true;
             }
 
             return list;
