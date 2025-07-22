@@ -77,6 +77,9 @@ namespace DCL.SDKComponents.AudioSources
 
                 audioSource.Stop();
 
+                if (!sceneStateProvider.IsCurrent)
+                    audioSource.volume = 0f;
+
                 if (audioSource.clip != null)
                     if (sdkAudioSource is {HasPlaying: true, Playing: true })
                         audioSource.Play();
@@ -102,20 +105,20 @@ namespace DCL.SDKComponents.AudioSources
             HandleSDKChanges(sdkComponent, ref component, partitionComponent);
 
             if (component.AudioSourceAssigned)
-                FadeVolumeOnSceneChange(sdkComponent, component.AudioSource!, dt);
+                CrossfadeVolumeOnSceneChange(sdkComponent, component.AudioSource!, dt);
         }
 
-        private void FadeVolumeOnSceneChange(PBAudioSource sdkComponent, AudioSource audio, float dt)
+        private void CrossfadeVolumeOnSceneChange(PBAudioSource sdkComponent, AudioSource audio, float dt)
         {
             float sdkVolume = sdkComponent.GetVolume();
 
             switch (sceneStateProvider.IsCurrent)
             {
                 case true when audio.volume < sdkVolume:
-                    audio.volume = Mathf.Min(sdkVolume, audio.volume + (dt * settings.FadeSpeed * sdkVolume));
+                    audio.volume = Mathf.Min(sdkVolume, audio.volume + (dt * settings.FadeSpeed));
                     return;
                 case false when audio.volume > 0:
-                    audio.volume = Mathf.Max(0, audio.volume - (dt * settings.FadeSpeed * sdkVolume));
+                    audio.volume = Mathf.Max(0, audio.volume - (dt * settings.FadeSpeed));
                     break;
             }
         }
