@@ -22,7 +22,8 @@ namespace DCL.Quality.Runtime
 
         public void ApplyPreset(QualitySettingsAsset.QualityCustomLevel preset)
         {
-            lightSourceSettings?.ApplyQualitySettings(preset.dynamicLights.sceneLimitations);
+            DynamicLightsSettings settings = preset.dynamicLights;
+            lightSourceSettings?.ApplyQualitySettings(settings.SceneLimitations, settings.SpotLightsLods, settings.PointLightsLods);
         }
 
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset)

@@ -21,14 +21,10 @@ namespace DCL.SDKComponents.LightSource.Systems
     public partial class LightSourceLodSystem : BaseUnityLoopSystem
     {
         private readonly LightSourceSettings settings;
-        private readonly List<LodSettings> spotLightLods;
-        private readonly List<LodSettings> pointLightLods;
 
-        public LightSourceLodSystem(World world, LightSourceSettings settings, List<LodSettings> spotLightLods, List<LodSettings> pointLightLods) : base(world)
+        public LightSourceLodSystem(World world, LightSourceSettings settings) : base(world)
         {
             this.settings = settings;
-            this.spotLightLods = spotLightLods;
-            this.pointLightLods = pointLightLods;
         }
 
         protected override void Update(float t)
@@ -41,23 +37,23 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
-            if (!TryGetLodSettings(pbLightSource, out List<LodSettings> lodSettings)) return;
+            if (!TryGetLodSettings(pbLightSource, out List<LightSourceSettings.LodSettings> lodSettings)) return;
 
             lightSourceComponent.LOD = FindLOD(lodSettings, lightSourceComponent);
 
             ApplyLOD(ref lightSourceComponent, lodSettings[lightSourceComponent.LOD]);
         }
 
-        private bool TryGetLodSettings(PBLightSource pbLightSource, out List<LodSettings> lodSettings)
+        private bool TryGetLodSettings(PBLightSource pbLightSource, out List<LightSourceSettings.LodSettings> lodSettings)
         {
             switch (pbLightSource.TypeCase)
             {
                 case PBLightSource.TypeOneofCase.Spot:
-                    lodSettings = spotLightLods;
+                    lodSettings = settings.SpotLightsLods;
                     break;
 
                 case PBLightSource.TypeOneofCase.Point:
-                    lodSettings = pointLightLods;
+                    lodSettings = settings.PointLightsLods;
                     break;
 
                 default:
@@ -68,16 +64,16 @@ namespace DCL.SDKComponents.LightSource.Systems
             return lodSettings.Count > 0;
         }
 
-        private int FindLOD(List<LodSettings> lodSettings,  LightSourceComponent lightSourceComponent)
+        private int FindLOD(List<LightSourceSettings.LodSettings> lodSettings,  LightSourceComponent lightSourceComponent)
         {
             for (var lod = 0; lod < lodSettings.Count - 1; lod++)
-                if (lightSourceComponent.DistanceToPlayer < lodSettings[lod + 1].Distance)
+                if (lightSourceComponent.DistanceToPlayer < lodSettings[lod].Distance)
                     return lod;
 
             return lodSettings.Count - 1;
         }
 
-        private void ApplyLOD(ref LightSourceComponent lightSourceComponent, LodSettings lodSetting)
+        private void ApplyLOD(ref LightSourceComponent lightSourceComponent, LightSourceSettings.LodSettings lodSetting)
         {
             if (lodSetting.IsCulled) lightSourceComponent.Culling |= LightSourceComponent.CullingFlags.CulledByLOD;
 
@@ -87,20 +83,6 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             // NOTE setting the resolution to 0 allows unity to decide on it (tiers are defined in the URP asset)
             light.shadowCustomResolution = lodSetting.OverrideShadowMapResolution ? lodSetting.ShadowMapResolution : 0;
-        }
-
-        [Serializable]
-        public class LodSettings
-        {
-            public float Distance;
-
-            public bool IsCulled;
-
-            public LightShadows Shadows = LightShadows.None;
-
-            public bool OverrideShadowMapResolution;
-
-            public int ShadowMapResolution = 256;
         }
     }
 }

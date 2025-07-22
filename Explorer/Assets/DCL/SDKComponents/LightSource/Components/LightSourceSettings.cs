@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.SDKComponents.LightSource
@@ -24,32 +25,23 @@ namespace DCL.SDKComponents.LightSource
 
         [NonSerialized] public SceneLimitationsSettings SceneLimitations = new();
 
-        [Serializable]
-        public class SceneLimitationsSettings
+        [NonSerialized] public List<LodSettings> SpotLightsLods = new();
+
+        [NonSerialized] public List<LodSettings> PointLightsLods = new();
+
+        public void ApplyQualitySettings(in SceneLimitationsSettings sceneLimitations, List<LodSettings> spotLightsLods, List<LodSettings> pointLightsLods)
         {
-            [Tooltip("Multiplied by the parcel count to compute the maximum number of active lights that can be active in a scene at any time.")]
-            public float LightsPerParcel = 1;
+            SceneLimitations = sceneLimitations;
 
-            [Tooltip("Hard limit to the number of active lights in a scene.")]
-            public int HardMaxLightCount = 10;
+            SpotLightsLods.Clear();
+            SpotLightsLods.AddRange(spotLightsLods);
 
-            [Tooltip("Maximum number of Point Lights that can cast shadows at any time.")]
-            public int MaxPointLightShadows = 1;
-
-            [Tooltip("Maximum number of Spot Lights that can cast shadows at any time.")]
-            public int MaxSpotLightShadows = 3;
-
-            public static void Copy(SceneLimitationsSettings copyTo, SceneLimitationsSettings copyFrom)
-            {
-                copyTo.LightsPerParcel = copyFrom.LightsPerParcel;
-                copyTo.HardMaxLightCount = copyFrom.HardMaxLightCount;
-                copyTo.MaxPointLightShadows = copyFrom.MaxPointLightShadows;
-                copyTo.MaxSpotLightShadows = copyFrom.MaxSpotLightShadows;
-            }
+            PointLightsLods.Clear();
+            PointLightsLods.AddRange(pointLightsLods);
         }
 
         [Serializable]
-        public class DefaultValuesSettings
+        public struct DefaultValuesSettings
         {
             [Header("Common")]
             public bool Active;
@@ -68,9 +60,34 @@ namespace DCL.SDKComponents.LightSource
             public float OuterAngle;
         }
 
-        public void ApplyQualitySettings(SceneLimitationsSettings sceneLimitations)
+        [Serializable]
+        public struct SceneLimitationsSettings
         {
-            SceneLimitationsSettings.Copy(SceneLimitations, sceneLimitations);
+            [Tooltip("Multiplied by the parcel count to compute the maximum number of active lights that can be active in a scene at any time.")]
+            public float LightsPerParcel;
+
+            [Tooltip("Hard limit to the number of active lights in a scene.")]
+            public int HardMaxLightCount;
+
+            [Tooltip("Maximum number of Point Lights that can cast shadows at any time.")]
+            public int MaxPointLightShadows;
+
+            [Tooltip("Maximum number of Spot Lights that can cast shadows at any time.")]
+            public int MaxSpotLightShadows;
+        }
+
+        [Serializable]
+        public struct LodSettings
+        {
+            public float Distance;
+
+            public bool IsCulled;
+
+            public LightShadows Shadows;
+
+            public bool OverrideShadowMapResolution;
+
+            public int ShadowMapResolution;
         }
     }
 }

@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using JetBrains.Annotations;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -14,7 +13,6 @@ namespace DCL.SDKComponents.LightSource.Systems
     /// Updates the properties of existing light sources.
     /// </summary>
     [UpdateInGroup(typeof(LightSourcesGroup))]
-    [UpdateAfter(typeof(LightSourceCullingSystem))]
     [UpdateAfter(typeof(LightSourceLodSystem))]
     [LogCategory(ReportCategory.LIGHT_SOURCE)]
     public partial class LightSourceIntensityAnimationSystem : BaseUnityLoopSystem

@@ -324,11 +324,43 @@ MonoBehaviour:
       chunkCullDistance: 1000
       maxSimultaneousVideos: 1
     dynamicLights:
-      sceneLimitations:
+      SceneLimitations:
         LightsPerParcel: 1
         HardMaxLightCount: 3
         MaxPointLightShadows: 1
         MaxSpotLightShadows: 1
+      SpotLightsLods:
+      - Distance: 20
+        IsCulled: 0
+        Shadows: 1
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 30
+        IsCulled: 0
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 40
+        IsCulled: 1
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      PointLightsLods:
+      - Distance: 10
+        IsCulled: 0
+        Shadows: 1
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 20
+        IsCulled: 0
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 40
+        IsCulled: 1
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
   - volumeProfile: {fileID: -4880458653563171804}
     fogSettings:
       m_Fog: 1
@@ -343,11 +375,53 @@ MonoBehaviour:
       chunkCullDistance: 3000
       maxSimultaneousVideos: 5
     dynamicLights:
-      sceneLimitations:
+      SceneLimitations:
         LightsPerParcel: 1
         HardMaxLightCount: 10
         MaxPointLightShadows: 1
         MaxSpotLightShadows: 3
+      SpotLightsLods:
+      - Distance: 10
+        IsCulled: 0
+        Shadows: 2
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 20
+        IsCulled: 0
+        Shadows: 1
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 30
+        IsCulled: 0
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 40
+        IsCulled: 1
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      PointLightsLods:
+      - Distance: 5
+        IsCulled: 0
+        Shadows: 2
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 10
+        IsCulled: 0
+        Shadows: 1
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 20
+        IsCulled: 0
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 40
+        IsCulled: 1
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
   - volumeProfile: {fileID: 8971067228855834029}
     fogSettings:
       m_Fog: 1
@@ -362,11 +436,53 @@ MonoBehaviour:
       chunkCullDistance: 7000
       maxSimultaneousVideos: 10
     dynamicLights:
-      sceneLimitations:
+      SceneLimitations:
         LightsPerParcel: 1
         HardMaxLightCount: 10
         MaxPointLightShadows: 2
         MaxSpotLightShadows: 3
+      SpotLightsLods:
+      - Distance: 10
+        IsCulled: 0
+        Shadows: 2
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 20
+        IsCulled: 0
+        Shadows: 1
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 30
+        IsCulled: 0
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 40
+        IsCulled: 1
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      PointLightsLods:
+      - Distance: 5
+        IsCulled: 0
+        Shadows: 2
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 10
+        IsCulled: 0
+        Shadows: 1
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 20
+        IsCulled: 0
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
+      - Distance: 40
+        IsCulled: 1
+        Shadows: 0
+        OverrideShadowMapResolution: 0
+        ShadowMapResolution: 128
   allRendererFeatures:
   - {fileID: 5020021736804485952, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
   - {fileID: 2915607160997281497, guid: 0c7b9d3b12885d541a70add26520ccdb, type: 2}
