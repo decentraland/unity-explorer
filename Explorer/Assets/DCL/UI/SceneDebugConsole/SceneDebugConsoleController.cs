@@ -18,6 +18,7 @@ namespace DCL.UI.SceneDebugConsole
         private VisualElement uiDocumentRoot;
         private ListView consoleListView;
         private ScrollView scrollView;
+        private Button clearButton;
         private bool isInputSelected;
 
         public SceneDebugConsoleController(
@@ -61,6 +62,9 @@ namespace DCL.UI.SceneDebugConsole
             consoleListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
 
             scrollView = consoleListView.Q<ScrollView>();
+
+            clearButton = uiDocumentRoot.Q<Button>(name: "ClearButton");
+            clearButton.clicked += ClearLogEntries;
         }
 
         public void Dispose()
@@ -68,14 +72,16 @@ namespace DCL.UI.SceneDebugConsole
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             logEntriesBus.MessageAdded -= OnEntryBusEntryAdded;
             logsHistory.LogMessageAdded -= OnLogsHistoryEntryAdded;
+            clearButton.clicked -= ClearLogEntries;
 
             DCLInput.Instance.Shortcuts.ToggleSceneDebugConsole.performed -= OnToggleConsoleShortcutPerformed;
             // DCLInput.Instance.UI.Submit.performed -= OnSubmitShortcutPerformed;
         }
 
-        private void Clear()
+        private void ClearLogEntries()
         {
             logsHistory.ClearLogMessages();
+            RefreshListViewAsync(IsScrollAtBottom()).Forget();
         }
 
         private void OnLogsHistoryEntryAdded(SceneDebugConsoleLogEntry logEntry)
@@ -83,11 +89,6 @@ namespace DCL.UI.SceneDebugConsole
             Debug.Log($"PRAVS - Controller.OnLogsHistoryEntryAdded({logEntry.Message})");
             RefreshListViewAsync(IsScrollAtBottom()).Forget();
         }
-
-        /*private void OnViewFoldingChanged(bool isUnfolded)
-        {
-            ConsoleVisibilityChanged?.Invoke(isUnfolded);
-        }*/
 
         /*private void DisableUnwantedInputs()
         {
@@ -112,7 +113,7 @@ namespace DCL.UI.SceneDebugConsole
             uiDocumentRoot.visible = !uiDocumentRoot.visible;
         }
 
-        // TODO: IS THE LOG MESSAGEBUS + HISTORY NEEDED? CAN WE HAVE ONLY 1 BUS ??
+        // TODO: IS THE LOG MESSAGEBUS + HISTORY NEEDED? CAN WE HAVE ONLY 1 COLLECTION ??
         private void OnEntryBusEntryAdded(SceneDebugConsoleLogEntry entry)
         {
             logsHistory.AddLogMessage(entry);
