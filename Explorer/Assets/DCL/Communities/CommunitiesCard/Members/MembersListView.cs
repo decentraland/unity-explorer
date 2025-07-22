@@ -94,7 +94,7 @@ namespace DCL.Communities.CommunitiesCard.Members
                 sectionMapping.Button.onClick.AddListener(() => ToggleSection(sectionMapping.Section));
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing)
-                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus)))
+                         .AddControl(userProfileContextMenuControlSettings = new UserProfileContextMenuControlSettings((user, friendshipStatus) => ContextMenuUserProfileButtonClicked?.Invoke(user, friendshipStatus), showProfilePicture: false))
                          .AddControl(new SeparatorContextMenuControlSettings(contextMenuSettings.SeparatorHeight, -contextMenuSettings.VerticalPadding.left, -contextMenuSettings.VerticalPadding.right))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ViewProfileText, contextMenuSettings.ViewProfileSprite, () => OpenProfilePassportRequested?.Invoke(lastClickedProfileCtx!)))
                          .AddControl(new ButtonContextMenuControlSettings(contextMenuSettings.ChatText, contextMenuSettings.ChatSprite, () => OpenUserChatRequested?.Invoke(lastClickedProfileCtx!)))
