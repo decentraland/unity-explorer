@@ -106,6 +106,7 @@ namespace DCL.UI.GenericContextMenu
         private void ConfigureContextMenu(ControlsContainerView container, GenericContextMenuParameter.GenericContextMenu contextMenuConfig, Vector2 anchorPosition, Rect? overlapRect)
         {
             float totalHeight = 0;
+            bool needsLayoutRebuild = false;
 
             for (var i = 0; i < contextMenuConfig.contextMenuSettings.Count; i++)
             {
@@ -116,7 +117,10 @@ namespace DCL.UI.GenericContextMenu
                 GenericContextMenuComponentBase component = controlsPoolManager.GetContextMenuComponent(config.setting, i, container.transform);
 
                 if (config.setting is SubMenuContextMenuButtonSettings subMenuButtonSettings && component is GenericContextMenuSubMenuButtonView subMenuButtonView)
+                {
                     deferredConfigs.Enqueue(new DeferredConfig(subMenuButtonSettings.subMenu, subMenuButtonView));
+                    needsLayoutRebuild = true;
+                }
 
                 component.RegisterCloseListener(TriggerContextMenuClose);
 
@@ -132,10 +136,12 @@ namespace DCL.UI.GenericContextMenu
                 + container.controlsLayoutGroup.padding.top
                 + (container.controlsLayoutGroup.spacing * (contextMenuConfig.contextMenuSettings.Count - 1)));
 
+            // Only the main container needs to be positioned based on the anchor position. Sub-menus are positioned relative to their parent.
             if (container == viewInstance.ControlsContainer)
                 container.controlsContainer.localPosition = GetControlsPosition(container, anchorPosition, contextMenuConfig.offsetFromTarget, overlapRect, contextMenuConfig.anchorPoint);
 
-            LayoutRebuilder.ForceRebuildLayoutImmediate(container.controlsContainer);
+            if (needsLayoutRebuild)
+                LayoutRebuilder.ForceRebuildLayoutImmediate(container.controlsContainer);
 
             if (deferredConfigs.Count > 0)
             {
