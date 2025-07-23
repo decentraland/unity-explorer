@@ -69,7 +69,7 @@ namespace DCL.UI.GenericContextMenu
         public void Dispose() =>
             ReleaseAllCurrentControls();
 
-        public GenericContextMenuComponentBase GetContextMenuComponent<T>(T settings, int index, Transform parent) where T: IContextMenuControlSettings
+        public GenericContextMenuComponentBase GetContextMenuComponent(IContextMenuControlSettings settings, int index, Transform parent)
         {
             GenericContextMenuComponentBase component = settings switch
                                                         {
