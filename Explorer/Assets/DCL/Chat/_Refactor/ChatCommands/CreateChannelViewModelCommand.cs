@@ -1,7 +1,11 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatUseCases.DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels;
+using DCL.Chat.ChatViewModels.ChannelViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.Communities;
@@ -17,95 +21,101 @@ public class CreateChannelViewModelCommand
     private readonly ICommunityDataService communityDataService;
     private readonly ChatConfig chatConfig;
     private readonly ProfileRepositoryWrapper profileRepository;
+    private readonly GetProfileThumbnailCommand getProfileThumbnailCommand;
+    private readonly GetCommunityThumbnailCommand getCommunityThumbnailCommand;
 
     public CreateChannelViewModelCommand(
         IEventBus eventBus,
         ICommunityDataService communityDataService,
         ChatConfig chatConfig,
-        ProfileRepositoryWrapper profileRepository)
+        ProfileRepositoryWrapper profileRepository,
+        GetProfileThumbnailCommand getProfileThumbnailCommand,
+        GetCommunityThumbnailCommand getCommunityThumbnailCommand)
     {
         this.eventBus = eventBus;
         this.communityDataService = communityDataService;
         this.chatConfig = chatConfig;
         this.profileRepository = profileRepository;
+        this.getProfileThumbnailCommand = getProfileThumbnailCommand;
+        this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
     }
 
-    public ChatChannelViewModel CreateViewModelAndFetch(ChatChannel channel)
+    public BaseChannelViewModel CreateViewModelAndFetch(ChatChannel channel, CancellationToken ct)
     {
-        var initialViewModel = new ChatChannelViewModel
+        BaseChannelViewModel viewModel = channel.ChannelType switch
         {
-            Id = channel.Id, ChannelType = channel.ChannelType,
-            UnreadMessagesCount = channel.Messages.Count - channel.ReadMessages,
-            IsSelected = false,
-            IsDirectMessage = channel.ChannelType == ChatChannel.ChatChannelType.USER
+            ChatChannel.ChatChannelType.NEARBY =>
+                new NearbyChannelViewModel(channel.Id, chatConfig.NearbyConversationName, chatConfig.NearbyConversationIcon),
+
+            ChatChannel.ChatChannelType.USER =>
+                CreateUserChannelViewModel(channel, ct),
+
+            ChatChannel.ChatChannelType.COMMUNITY =>
+                CreateCommunityChannelViewModel(channel, ct),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(channel.ChannelType), "Unsupported channel type")
         };
 
-        switch (channel.ChannelType)
-        {
-            case ChatChannel.ChatChannelType.NEARBY:
-                initialViewModel.DisplayName = chatConfig.NearbyConversationName;
-                initialViewModel.FallbackIcon = chatConfig.NearbyConversationIcon;
-                initialViewModel.IsOnline = true;
-                break;
-
-            case ChatChannel.ChatChannelType.USER:
-
-                initialViewModel.DisplayName = "Loading...";
-                FetchProfileAndUpdateAsync(initialViewModel, channel, CancellationToken.None).Forget();
-                break;
-
-            case ChatChannel.ChatChannelType.COMMUNITY:
-                initialViewModel.DisplayName = "Loading...";
-                FetchCommunityDataAndUpdate(initialViewModel, channel.Id);
-                break;
-            
-            default:
-                initialViewModel.DisplayName = channel.Id.Id;
-                break;
-        }
-
-        return initialViewModel;
+        viewModel.UnreadMessagesCount = channel.Messages.Count - channel.ReadMessages;
+        return viewModel;
     }
 
-    private void FetchCommunityDataAndUpdate(ChatChannelViewModel viewModel, ChatChannel.ChannelId channelId)
+    private UserChannelViewModel CreateUserChannelViewModel(ChatChannel channel, CancellationToken ct)
     {
-        // Get the data from our cache service
-        if (communityDataService.TryGetCommunity(channelId, out var communityData))
+        var viewModel = new UserChannelViewModel(channel.Id);
+        FetchProfileAndUpdateAsync(viewModel, ct).Forget();
+        return viewModel;
+    }
+
+    private CommunityChannelViewModel CreateCommunityChannelViewModel(ChatChannel channel, CancellationToken ct)
+    {
+        var viewModel = new CommunityChannelViewModel(channel.Id);
+        if (communityDataService.TryGetCommunity(channel.Id, out var communityData))
         {
             viewModel.DisplayName = communityData.name;
             viewModel.ImageUrl = communityData.thumbnails?.raw;
-            viewModel.IsOnline = true;
+            FetchCommunityThumbnailAndUpdateAsync(viewModel, ct).Forget();
+        }
 
-            // Since this is a synchronous update from cached data, we can publish the event immediately.
-            // No async operation is needed here, which simplifies things.
-            eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
-            {
-                ViewModel = viewModel
-            });
-        }
-        else
-        {
-            // This case might happen if a community channel was created from an event
-            // before its data was fully fetched. The UI will show "Loading..."
-            // and we can add a mechanism to retry fetching later.
-            // For now, we can just log it.
-            ReportHub.LogWarning(ReportCategory.COMMUNITIES, $"Could not find community data for channel {channelId.Id}");
-        }
+        return viewModel;
     }
-    
-    private async UniTaskVoid FetchProfileAndUpdateAsync(ChatChannelViewModel viewModel, ChatChannel channel, CancellationToken ct)
+
+    private async UniTaskVoid FetchCommunityThumbnailAndUpdateAsync(CommunityChannelViewModel viewModel, CancellationToken ct)
     {
-        Profile? profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
+        var thumbnail = await getCommunityThumbnailCommand
+            .ExecuteAsync(viewModel.ImageUrl, ct);
+
+        if (ct.IsCancellationRequested) return;
+
+        viewModel.Thumbnail = thumbnail;
+
+        eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+        {
+            ViewModel = viewModel
+        });
+    }
+
+    private async UniTaskVoid FetchProfileAndUpdateAsync(UserChannelViewModel viewModel, CancellationToken ct)
+    {
+        var profile = await profileRepository.GetProfileAsync(viewModel.Id.Id, ct);
         if (ct.IsCancellationRequested || profile == null) return;
 
         viewModel.DisplayName = profile.ValidatedName;
-        viewModel.ImageUrl = profile.Avatar.FaceSnapshotUrl;
         viewModel.ProfileColor = profile.UserNameColor;
         viewModel.HasClaimedName = profile.HasClaimedName;
         viewModel.IsOnline = true;
-        // You would get IsOnline from another service, e.g., ChatUserStateUpdater
-        // viewModel.IsOnline = ...
+        viewModel.ImageUrl = profile.Avatar.FaceSnapshotUrl;
 
-        eventBus.Publish(new ChatEvents.ChannelUpdatedEvent { ViewModel = viewModel });
+        var thumbnail = await getProfileThumbnailCommand
+            .ExecuteAsync(profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+
+        if (ct.IsCancellationRequested) return;
+
+        viewModel.ProfilePicture = thumbnail;
+
+        eventBus.Publish(new ChatEvents.ChannelUpdatedEvent
+        {
+            ViewModel = viewModel
+        });
     }
 }

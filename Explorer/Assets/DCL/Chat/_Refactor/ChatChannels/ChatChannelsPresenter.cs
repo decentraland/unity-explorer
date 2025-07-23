@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using DCL.Chat.ChatUseCases;
+using DCL.Chat.ChatViewModels.ChannelViewModels;
 using DCL.Chat.EventBus;
 using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
@@ -17,9 +20,13 @@ public class ChatChannelsPresenter : IDisposable
     private readonly LeaveChannelCommand leaveChannelCommand;
     private readonly OpenPrivateConversationCommand openPrivateConversationCommand;
     private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
+    private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new();
 
+    private bool isInitialized  ;
+
+    private CancellationTokenSource lifeCts;
     private EventSubscriptionScope scope = new();
-
+    
     public ChatChannelsPresenter(IChatChannelsView view,
         IEventBus eventBus,
         IChatEventBus chatEventBus,
@@ -40,13 +47,15 @@ public class ChatChannelsPresenter : IDisposable
         this.openPrivateConversationCommand = openPrivateConversationCommand;
         this.createChannelViewModelCommand = createChannelViewModelCommand;
 
+        lifeCts = new CancellationTokenSource();
+        
         view.ConversationSelected += OnViewConversationSelected;
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
 
-        chatHistory.ChannelAdded += AddChannelToView;
+        chatHistory.ChannelAdded += OnRuntimeChannelAdded;
         chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
 
-        //scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
+        scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
@@ -62,16 +71,36 @@ public class ChatChannelsPresenter : IDisposable
 
     private void OnChannelUpdated(ChatEvents.ChannelUpdatedEvent evt)
     {
-        view.UpdateConversation(evt.ViewModel);
+        if (viewModels.TryGetValue(evt.ViewModel.Id, out _))
+        {
+            viewModels[evt.ViewModel.Id] = evt.ViewModel;
+            view.UpdateConversation(evt.ViewModel);
+        }
     }
 
     private void OnInitialChannelsLoaded(ChatEvents.InitialChannelsLoadedEvent evt)
     {
+        if (isInitialized) return;
+
+        lifeCts.Cancel();
+        lifeCts.Dispose();
+        lifeCts = new CancellationTokenSource();
+        
         view.Clear();
+        viewModels.Clear();
+
         foreach (var channel in evt.Channels)
         {
             AddChannelToView(channel);
         }
+
+        isInitialized = true;
+    }
+
+    private void OnRuntimeChannelAdded(ChatChannel channel)
+    {
+        if (!isInitialized) return;
+        AddChannelToView(channel);
     }
 
     private void OnChannelAdded(ChatEvents.ChannelAddedEvent evt)
@@ -81,6 +110,7 @@ public class ChatChannelsPresenter : IDisposable
 
     private void OnChannelLeft(ChatEvents.ChannelLeftEvent evt)
     {
+        viewModels.Remove(evt.Channel.Id);
         view.RemoveConversation(evt.Channel);
     }
 
@@ -101,8 +131,9 @@ public class ChatChannelsPresenter : IDisposable
 
     private void AddChannelToView(ChatChannel channel)
     {
-        var initialModel = createChannelViewModelCommand.CreateViewModelAndFetch(channel);
-        view.AddConversation(initialModel);
+        var viewModel = createChannelViewModelCommand.CreateViewModelAndFetch(channel, lifeCts.Token);
+        viewModels[viewModel.Id] = viewModel;
+        view.AddConversation(viewModel);
     }
 
     private void OnViewConversationSelected(ChatChannel.ChannelId channelId)
@@ -117,6 +148,9 @@ public class ChatChannelsPresenter : IDisposable
 
     public void Dispose()
     {
+        chatHistory.ChannelAdded -= OnRuntimeChannelAdded;
+        lifeCts.SafeCancelAndDispose();
+        
         chatEventBus.OpenPrivateConversationRequested -= OnOpenConversationUsingUserId;
         view.ConversationSelected -= OnViewConversationSelected;
         view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;

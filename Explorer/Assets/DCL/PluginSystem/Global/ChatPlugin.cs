@@ -224,6 +224,7 @@ namespace DCL.PluginSystem.Global
                 communityDataService,
                 hyperlinkTextFormatter,
                 profileRepositoryWrapper,
+                thumbnailCache,
                 friendsServiceProxy,
                 settings.ChatSendMessageAudio,
                 getParticipantProfilesCommand

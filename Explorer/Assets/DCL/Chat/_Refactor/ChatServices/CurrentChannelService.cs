@@ -46,6 +46,7 @@ namespace DCL.Chat.Services
             switch (CurrentChannel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.NEARBY:
+                case ChatChannel.ChatChannelType.COMMUNITY:
                     return InputState = Result<ChatUserStateUpdater.ChatUserState>.SuccessResult(ChatUserStateUpdater.ChatUserState.CONNECTED);
                 case ChatChannel.ChatChannelType.USER:
                 {

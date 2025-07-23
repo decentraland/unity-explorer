@@ -14,7 +14,7 @@ namespace DCL.Chat.ChatUseCases
     {
         private readonly IEventBus eventBus;
         private readonly ProfileRepositoryWrapper profileRepository;
-        private readonly GetProfileThumbnailCommand _getThumbnailCommand;
+        private readonly GetProfileThumbnailCommand getThumbnailCommand;
         private readonly ChatConfig chatConfig;
 
         public GetTitlebarViewModelCommand(
@@ -25,7 +25,7 @@ namespace DCL.Chat.ChatUseCases
         {
             this.eventBus = eventBus;
             this.profileRepository = profileRepository;
-            this._getThumbnailCommand = getThumbnailCommand;
+            this.getThumbnailCommand = getThumbnailCommand;
             this.chatConfig = chatConfig;
         }
 
@@ -53,7 +53,7 @@ namespace DCL.Chat.ChatUseCases
                 viewModel.HasClaimedName = profile.HasClaimedName;
                 viewModel.WalletId = profile.WalletId;
                 viewModel.ProfileColor = profile.UserNameColor;
-                viewModel.ProfileSprite = await _getThumbnailCommand.ExecuteAsync(
+                viewModel.ProfileSprite = await getThumbnailCommand.ExecuteAsync(
                     profile.UserId,
                     profile.Avatar.FaceSnapshotUrl,
                     ct

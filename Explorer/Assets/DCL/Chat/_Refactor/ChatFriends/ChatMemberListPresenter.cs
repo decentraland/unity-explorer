@@ -64,7 +64,8 @@ public class ChatMemberListPresenter : IDisposable
 
         // Get the list of initial view models from the command.
         // The command will handle starting the thumbnail downloads.
-        getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(freshMembers, currentMembers, lifeCts.Token);
+        getChannelMembersCommand.GetInitialMembersAndStartLoadingThumbnails(freshMembers,
+            currentMembers, lifeCts.Token);
 
         // Immediately display this list. Names appear instantly, pictures are loading.
         view.SetData(currentMembers);

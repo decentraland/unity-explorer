@@ -87,7 +87,6 @@ namespace DCL.Chat.ChatUseCases
 
         private async UniTask InitializeCommunityConversationsAsync(CancellationToken ct)
         {
-            // Feature flag check (good practice to keep it)
             if (!await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct))
                 return;
 

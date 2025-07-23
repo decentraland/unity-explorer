@@ -1,11 +1,13 @@
 ﻿using System;
 using DCL.Audio;
+using DCL.Chat.ChatUseCases.DCL.Chat.ChatUseCases;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.Services;
 using DCL.Communities;
 using DCL.Friends;
 using DCL.Settings.Settings;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
@@ -25,6 +27,7 @@ namespace DCL.Chat.ChatUseCases
         public MarkChannelAsReadCommand MarkChannelAsRead { get; }
         public GetTitlebarViewModelCommand GetTitlebarViewModel { get; }
         public GetProfileThumbnailCommand GetProfileThumbnail { get; }
+        public GetCommunityThumbnailCommand GetCommunityThumbnail { get; }
         public SendMessageCommand SendMessage { get; }
         public LeaveChannelCommand LeaveChannel { get; }
         public LoadAndDisplayMessagesCommand LoadAndDisplayMessages { get; }
@@ -50,6 +53,7 @@ namespace DCL.Chat.ChatUseCases
             ICommunityDataService communityDataService,
             ITextFormatter textFormatter,
             ProfileRepositoryWrapper profileRepositoryWrapper,
+            ISpriteCache spriteCache,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             AudioClipConfig sendMessageSound,
             GetParticipantProfilesCommand getParticipantProfilesCommand)
@@ -87,6 +91,9 @@ namespace DCL.Chat.ChatUseCases
                 chatConfig,
                 profileRepositoryWrapper);
 
+            GetCommunityThumbnail = new GetCommunityThumbnailCommand(spriteCache,
+                chatConfig);
+
             GetChannelMembersCommand = new GetChannelMembersCommand(eventBus,
                 chatMemberListService,
                 GetProfileThumbnail);
@@ -118,7 +125,9 @@ namespace DCL.Chat.ChatUseCases
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
                 communityDataService,
                 chatConfig,
-                profileRepositoryWrapper);
+                profileRepositoryWrapper,
+                GetProfileThumbnail,
+                GetCommunityThumbnail);
 
             ProcessAndAddMessage = new ProcessAndAddMessageCommand(eventBus,
                 chatHistory,

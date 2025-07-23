@@ -36,13 +36,13 @@ namespace DCL.Chat
                 Assert.IsTrue(currentChannelService.InputState.Value != ChatUserStateUpdater.ChatUserState.CONNECTED);
 
                 blockedReason = currentChannelService.InputState.Value switch
-                                {
-                                    ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER => config.BlockedByOwnUserMessage,
-                                    ChatUserStateUpdater.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
-                                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
-                                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
-                                    _ => string.Empty,
-                                };
+                {
+                    ChatUserStateUpdater.ChatUserState.BLOCKED_BY_OWN_USER => config.BlockedByOwnUserMessage,
+                    ChatUserStateUpdater.ChatUserState.DISCONNECTED => config.UserOfflineMessage,
+                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED_BY_OWN_USER => config.OnlyFriendsOwnUserMessage,
+                    ChatUserStateUpdater.ChatUserState.PRIVATE_MESSAGES_BLOCKED => config.OnlyFriendsMessage,
+                    _ => string.Empty
+                };
             }
             else
                 blockedReason = currentChannelService.InputState.ErrorMessage!;

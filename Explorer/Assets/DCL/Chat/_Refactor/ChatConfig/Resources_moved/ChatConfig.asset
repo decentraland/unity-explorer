@@ -14,14 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DCL_SYSTEM_SENDER: DCL System
   <DefaultProfileThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
+  <DefaultCommunityThumbnail>k__BackingField: {fileID: 21300000, guid: b296cda0724854cf0861c9ff691847c2, type: 3}
   <ClearChatHistoryContextMenuIcon>k__BackingField: {fileID: 21300000, guid: 1fd5346f8c379443886cb2219a95d139, type: 3}
   <ItemPrefab>k__BackingField: {fileID: 7176691815093756675, guid: 918d043c7a901cd458ff04ab88561f38, type: 3}
   <NearbyConversationIcon>k__BackingField: {fileID: 21300000, guid: d2bc0e4246537449fbc27b863cc9b0c3, type: 3}
   <NearbyConversationName>k__BackingField: Nearby
   <PanelsFadeDuration>k__BackingField: 0.4
+  <chatEntriesWaitBeforeFading>k__BackingField: 10
+  <chatEntriesFadeTime>k__BackingField: 3
   <PanelsFadeEase>k__BackingField: 6
+  DeleteChatHistoryContextMenuText: Delete Chat History
   UserOfflineMessage: The user you are trying to message is offline.
   OnlyFriendsMessage: The user you are trying to message only accepts DMs from friends.
   BlockedByOwnUserMessage: To message this user you must first unblock them.
   OnlyFriendsOwnUserMessage: Add this user as a friend to chat, or update your <b><u>DM
     settings</b></u> to connect with everyone.
+  CheckingUserStatusMessage: Checking user status...

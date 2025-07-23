@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
+using DCL.Chat.ChatViewModels.ChannelViewModels;
 using DCL.Chat.History;
 using DCL.Profiles;
 using DCL.UI;
@@ -184,13 +185,11 @@ namespace DCL.Chat
         {
             if (scrollView.content.rect.height > scrollView.viewport.rect.height)
             {
-                // It may show one or both
                 scrollUpButton.gameObject.SetActive(scrollView.normalizedPosition.y < 0.9999f);
                 scrollDownButton.gameObject.SetActive(scrollView.normalizedPosition.y > 0.0001f);
             }
             else
             {
-                // Hidden if there is no scroll to be done
                 scrollUpButton.gameObject.SetActive(false);
                 scrollDownButton.gameObject.SetActive(false);
             }
@@ -227,35 +226,54 @@ namespace DCL.Chat
         public event Action<string>? OnChannelSelected;
         public event Action<string>? OnChannelRemoved;
 
-        public void AddConversation(ChatChannelViewModel viewModel)
+        public void AddConversation(BaseChannelViewModel viewModel)
         {
             var newItem = Instantiate(itemPrefab, itemsContainer);
             newItem.Initialize();
             newItem.Id = viewModel.Id;
+            newItem.SetUnreadMessages(viewModel.UnreadMessagesCount);
             
             newItem.OpenButtonClicked += OpenButtonClicked;
             newItem.RemoveButtonClicked += OnRemoveButtonClicked;
             newItem.TooltipShown += OnItemTooltipShown;
-            
-            newItem.SetConversationName(viewModel.DisplayName);
-            newItem.SetUnreadMessages(viewModel.UnreadMessagesCount);
-            newItem.SetConversationType(viewModel.IsDirectMessage);
-            newItem.SetClaimedNameIconVisibility(viewModel.HasClaimedName);
-            newItem.SetConnectionStatus(viewModel.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
-            
-            if (viewModel.IsDirectMessage && !string.IsNullOrEmpty(viewModel.ImageUrl))
+
+            switch (viewModel)
             {
-                newItem.SetProfileData(
-                    profileRepositoryWrapper,
-                    viewModel.ProfileColor,
-                    viewModel.ImageUrl,
-                    viewModel.Id.Id
-                );
-            }
-            else
-            {
-                // We are using a fallback icon (e.g., for Nearby).
-                newItem.SetConversationIcon(viewModel.FallbackIcon);
+                case NearbyChannelViewModel nearby:
+                    newItem.SetConversationName(nearby.DisplayName);
+                    newItem.SetConversationIcon(nearby.Icon);
+                    newItem.SetConversationType(isPrivate: false);
+                    newItem.SetConnectionStatus(OnlineStatus.ONLINE);
+                    break;
+
+                case UserChannelViewModel user:
+                    newItem.SetConversationName(user.DisplayName);
+                    newItem.SetConversationType(isPrivate: true);
+                    newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
+                    newItem.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+                    if (!string.IsNullOrEmpty(user.ImageUrl))
+                    {
+                        newItem.SetPicture(user.ProfilePicture);
+                        // newItem.SetProfileData(
+                        //     profileRepositoryWrapper,
+                        //     user.ProfileColor,
+                        //     user.ImageUrl,
+                        //     user.Id.Id
+                        // );
+                    }
+
+                    break;
+
+                case CommunityChannelViewModel community:
+                    newItem.SetConversationName(community.DisplayName);
+                    newItem.SetConversationType(isPrivate: true);
+                    newItem.SetConnectionStatus(OnlineStatus.ONLINE);
+                    if (!string.IsNullOrEmpty(community.ImageUrl))
+                    {
+                        newItem.SetPicture(community.Thumbnail);
+                    }
+
+                    break;
             }
             
             items.Add(viewModel.Id, newItem);
@@ -277,22 +295,31 @@ namespace DCL.Chat
             
         }
 
-        public void UpdateConversation(ChatChannelViewModel viewModel)
+        public void UpdateConversation(BaseChannelViewModel viewModel)
         {
-            if (items.TryGetValue(viewModel.Id, out var itemToUpdate))
+            if (!items.TryGetValue(viewModel.Id, out var itemToUpdate)) return;
+
+            switch (viewModel)
             {
-                itemToUpdate.SetConversationName(viewModel.DisplayName);
-                itemToUpdate.SetClaimedNameIconVisibility(viewModel.HasClaimedName);
-            
-                if (viewModel.IsDirectMessage && !string.IsNullOrEmpty(viewModel.ImageUrl))
-                {
-                    itemToUpdate.SetProfileData(
-                        profileRepositoryWrapper,
-                        viewModel.ProfileColor,
-                        viewModel.ImageUrl,
-                        viewModel.Id.Id
-                    );
-                }
+                case UserChannelViewModel user:
+                    itemToUpdate.SetConversationName(user.DisplayName);
+                    itemToUpdate.SetClaimedNameIconVisibility(user.HasClaimedName);
+                    if (!string.IsNullOrEmpty(user.ImageUrl))
+                    {
+                        itemToUpdate.SetPicture(user.ProfilePicture);
+                        // itemToUpdate.SetProfileData(
+                        //     profileRepositoryWrapper,
+                        //     user.ProfileColor,
+                        //     user.ImageUrl,
+                        //     user.Id.Id
+                        // );
+                    }
+
+                    break;
+                case CommunityChannelViewModel community:
+                    itemToUpdate.SetConversationName(community.DisplayName);
+                    itemToUpdate.SetPicture(community.Thumbnail);
+                    break;
             }
         }
 

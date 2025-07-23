@@ -13,6 +13,9 @@ namespace DCL.Chat
         public Sprite DefaultProfileThumbnail { get; set; }
 
         [field: SerializeField]
+        public Sprite DefaultCommunityThumbnail { get; set; }
+
+        [field: SerializeField]
         public Sprite ClearChatHistoryContextMenuIcon { get; set; }
         
         [field: Header("Prefabs")]

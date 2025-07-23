@@ -1,3 +1,4 @@
+using System.Threading;
 using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI;
@@ -173,6 +174,20 @@ namespace DCL.Chat
             tooltipText.color = userColor;
         }
 
+        public void SetPicture(Sprite? sprite)
+        {
+            if (sprite != null)
+            {
+                profilePictureView.gameObject.SetActive(true);
+                customIcon.gameObject.SetActive(false);
+                profilePictureView.SetImage(sprite);
+            }
+            else
+            {
+                profilePictureView.SetLoadingState(true);
+            }
+        }
+
         /// <summary>
         /// Replaces the profile picture with a custom icon.
         /// </summary>
@@ -245,6 +260,10 @@ namespace DCL.Chat
             tooltip.gameObject.SetActive(false);
             removeButton.gameObject.SetActive(false);
             connectionStatusIndicatorContainer.gameObject.SetActive(false);
+        }
+
+        public void SetCommunityThumbnailData(ISpriteCache spriteCache, string communityImageUrl, CancellationToken none)
+        {
         }
     }
 }

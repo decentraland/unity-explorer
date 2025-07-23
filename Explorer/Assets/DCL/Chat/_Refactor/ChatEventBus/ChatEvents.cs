@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using DCL.Chat.ChatViewModels;
+using DCL.Chat.ChatViewModels.ChannelViewModels;
 using DCL.Chat.History;
 
 namespace DCL.Chat.EventBus
@@ -42,7 +43,7 @@ namespace DCL.Chat.EventBus
         /// </summary>
         public struct ChannelUpdatedEvent
         {
-            public ChatChannelViewModel ViewModel;
+            public BaseChannelViewModel ViewModel;
         }
         
         /// <summary>
