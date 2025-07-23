@@ -24,6 +24,7 @@ public class ChatInputPresenter : IDisposable
         ChatInputView view,
         ChatConfig chatConfig,
         IEventBus eventBus,
+        IChatEventBus chatEventBus,
         ICurrentChannelService currentChannelService,
         GetParticipantProfilesCommand getParticipantProfilesCommand,
         ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -39,7 +40,7 @@ public class ChatInputPresenter : IDisposable
         fsm.AddState(new HiddenChatInputState());
         fsm.AddState(new BlockedChatInputState(chatConfig, currentChannelService));
         fsm.AddState(new UnfocusedChatInputState());
-        fsm.AddState(new TypingEnabledChatInputState());
+        fsm.AddState(new TypingEnabledChatInputState(chatEventBus));
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
         scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));

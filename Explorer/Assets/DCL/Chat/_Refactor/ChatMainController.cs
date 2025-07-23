@@ -126,6 +126,7 @@ namespace DCL.Chat
                 viewInstance.InputView,
                 chatConfig,
                 eventBus,
+                chatEventBus,
                 currentChannelService,
                 commandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
