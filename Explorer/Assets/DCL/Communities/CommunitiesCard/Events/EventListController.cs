@@ -77,7 +77,7 @@ namespace DCL.Communities.CommunitiesCard.Events
             this.mvcManager = mvcManager;
             this.thumbnailLoader = thumbnailLoader;
 
-            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?communityId={{0}}";
+            createEventFormat = $"{decentralandUrlsSource.Url(DecentralandUrl.EventsWebpage)}/submit?community_id={{0}}";
 
             view.InitList(thumbnailLoader, cancellationToken);
 
