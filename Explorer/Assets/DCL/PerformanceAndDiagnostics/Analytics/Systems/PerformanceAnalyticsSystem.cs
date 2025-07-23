@@ -53,7 +53,7 @@ namespace DCL.Analytics.Systems
 
         protected override void Update(float t)
         {
-            if (!realmData.Configured || loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed)
+            if (!realmData.Configured || loadingStatus.CurrentStage.Value != LoadingStatus.LoadingStage.Completed || !Application.isFocused)
             {
                 if (profiler.IsCollectingFrameData) profiler.StopFrameTimeDataCollection();
                 return;

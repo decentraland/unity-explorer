@@ -214,7 +214,7 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.NotificationImage.SetImage(null);
 
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
-                notificationView.NotificationImage.SetImage(thumbnailSprite);
+                notificationView.NotificationImage.SetImage(thumbnailSprite, true);
             else
                 LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts!.Token).Forget();
 
@@ -285,7 +285,7 @@ namespace DCL.Notifications.NotificationsMenu
                 if (profileThumbnail != null)
                 {
                     notificationThumbnailCache.TryAdd(notificationData.Id, profileThumbnail);
-                    notificationImage.NotificationImage.SetImage(profileThumbnail);
+                    notificationImage.NotificationImage.SetImage(profileThumbnail, true);
                 }
 
                 return;
@@ -306,7 +306,7 @@ namespace DCL.Notifications.NotificationsMenu
             //Try add has been added in case it happens that BE returns duplicated notifications id
             //In that case we will just use the same thumbnail for each notification with the same id
             notificationThumbnailCache.TryAdd(notificationData.Id, thumbnailSprite);
-            notificationImage.NotificationImage.SetImage(thumbnailSprite);
+            notificationImage.NotificationImage.SetImage(thumbnailSprite, true);
 
             return;
 
