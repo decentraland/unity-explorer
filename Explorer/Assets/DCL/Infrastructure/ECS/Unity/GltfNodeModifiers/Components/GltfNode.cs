@@ -11,18 +11,25 @@ namespace ECS.Unity.GltfNodeModifiers.Components
         ///     For specific path modifiers: contains one renderer
         ///     For global modifiers (path=""): contains all renderers in the GLTF asset
         /// </summary>
-        public IReadOnlyList<Renderer> Renderers { get; set; }
+        public readonly IReadOnlyList<Renderer> Renderers;
 
         /// <summary>
         ///     Reference to the entity that contains the GltfContainerComponent
         /// </summary>
-        public Entity ContainerEntity { get; set; }
+        public readonly Entity ContainerEntity;
 
         /// <summary>
         ///     The original path from the modifier that this node represents
         ///     For global modifiers: empty string or null
         ///     For specific modifiers: the path used to find the renderer
         /// </summary>
-        public string? Path { get; set; }
+        public readonly string? Path;
+
+        public GltfNode(IReadOnlyList<Renderer> renderers, Entity containerEntity, string? path = null)
+        {
+            Renderers = renderers;
+            ContainerEntity = containerEntity;
+            Path = path;
+        }
     }
 }

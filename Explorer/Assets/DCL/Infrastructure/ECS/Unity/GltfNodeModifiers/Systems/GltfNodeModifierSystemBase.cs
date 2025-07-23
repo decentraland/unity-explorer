@@ -137,12 +137,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected void CreateGlobalGltfNode(Entity containerEntity, GltfContainerAsset asset)
         {
-            World.Add(containerEntity, new GltfNode
-            {
-                Renderers = asset.Renderers,
-                ContainerEntity = containerEntity,
-                Path = string.Empty,
-            });
+            World.Add(containerEntity, new GltfNode(asset.Renderers, containerEntity, string.Empty));
         }
 
         /// <summary>
@@ -189,12 +184,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             Entity nodeEntity = this.World.Create();
 
-            World.Add(nodeEntity, new GltfNode
-            {
-                Renderers = new[] { renderer },
-                ContainerEntity = containerEntity,
-                Path = modifier.Path,
-            });
+            World.Add(nodeEntity, new GltfNode(new[] { renderer }, containerEntity, modifier.Path));
 
             renderer.shadowCastingMode = !hasShadowOverride || modifier.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 

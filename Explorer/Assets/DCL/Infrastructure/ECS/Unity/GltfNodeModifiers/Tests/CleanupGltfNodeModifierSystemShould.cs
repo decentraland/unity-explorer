@@ -120,12 +120,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Manually simulate SetupGltfNodeModifierSystem outcome
             Entity childEntity = world.Create();
 
-            world.Add(childEntity, new GltfNode
-            {
-                Renderers = new[] { childRenderer },
-                ContainerEntity = entity,
-                Path = "Child",
-            });
+            world.Add(childEntity, new GltfNode(new[] { childRenderer }, entity, "Child"));
 
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
@@ -173,12 +168,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Manually simulate SetupGltfNodeModifierSystem outcome
             Entity childEntity = world.Create();
 
-            world.Add(childEntity, new GltfNode
-            {
-                Renderers = new[] { childRenderer },
-                ContainerEntity = entity,
-                Path = "Child",
-            });
+            world.Add(childEntity, new GltfNode(new[] { childRenderer }, entity, "Child"));
 
             world.Add(childEntity, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY);
 

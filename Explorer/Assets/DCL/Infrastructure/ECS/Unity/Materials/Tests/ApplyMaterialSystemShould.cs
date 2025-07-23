@@ -100,12 +100,7 @@ namespace ECS.Unity.Materials.Tests
                 Status = StreamableLoading.LifeCycle.LoadingFinished
             };
 
-            var gltfNode = new GltfNode
-            {
-                Renderers = new[] { meshRenderer },
-                ContainerEntity = containerEntity,
-                Path = "TestNode"
-            };
+            var gltfNode = new GltfNode(new[] { meshRenderer }, containerEntity, "TestNode");
 
             var gltfNodeEntity = world.Create(gltfNode, materialComponent, new PBMaterial
             {
