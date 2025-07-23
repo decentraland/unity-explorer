@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Loading.DTO;
 using DCL.AvatarRendering.Loading.Systems.Abstract;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;

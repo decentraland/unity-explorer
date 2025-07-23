@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using DCL.WebRequests;
 using ECS;
@@ -20,7 +21,7 @@ using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.Ipfs.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Utils
 {
@@ -28,7 +29,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
     {
         internal static readonly SpriteData DEFAULT_THUMBNAIL = new (new Texture2DData(Texture2D.grayTexture), Sprite.Create(Texture2D.grayTexture!, new Rect(0, 0, 1, 1), new Vector2()));
 
-        //TODO: Check if this breaks thumbnails. There was a pool here previously
+        //TODO (JUANI): Check if this breaks thumbnails. There was a pool here previously
         private static readonly URLBuilder urlBuilder = new ();
 
 
@@ -45,7 +46,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             if (attachment.ManifestResult?.Asset == null)
                 try
                 {
-                    //TODO: Ask about this cancellation token handling
+                    //TODO  (JUANI): Ask about this cancellation token handling
                     AssetBundleManifestPromise promise = AssetBundleManifestPromise.Create(world,
                         GetAssetBundleManifestIntention.Create(attachment.DTO.GetHash(), new CommonLoadingArguments(attachment.DTO.GetHash(), cancellationTokenSource: cancellationTokenSource)),
                         partitionComponent);

@@ -28,7 +28,6 @@ namespace SceneRunner.Scene
         public bool SceneLoadingConcluded { get; set; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
-        public SceneAssetBundleManifest AssetBundleManifest { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
 
         public Dictionary<string, GameObject> StaticSceneGameObjects { get; }
@@ -36,7 +35,6 @@ namespace SceneRunner.Scene
         public SceneData(
             ISceneContent sceneContent,
             SceneEntityDefinition sceneDefinition,
-            SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
@@ -45,7 +43,6 @@ namespace SceneRunner.Scene
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
-            AssetBundleManifest = assetBundleManifest;
             StaticSceneMessages = staticSceneMessages;
             StaticSceneGameObjects = staticSceneGameObjects;
             Parcels = parcels;

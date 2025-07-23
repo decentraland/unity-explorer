@@ -25,10 +25,7 @@ namespace SceneRunner.Scene
         /// </summary>
         ParcelMathHelper.SceneGeometry Geometry { get; }
 
-        SceneAssetBundleManifest AssetBundleManifest { get; }
-
         Dictionary<string, GameObject> StaticSceneGameObjects { get; }
-
 
         /// <summary>
         ///     Main.crdt file that should be applied first before launching the scene

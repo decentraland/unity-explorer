@@ -51,11 +51,10 @@ namespace ECS.SceneLifeCycle.Systems
             var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
-            var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
-            (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
+            (_, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt);
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
@@ -67,7 +66,8 @@ namespace ECS.SceneLifeCycle.Systems
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
-            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
+
+            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
                 definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt), staticSceneGameObjects);
 
             ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);

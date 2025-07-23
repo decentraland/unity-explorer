@@ -1,5 +1,6 @@
 ﻿using AssetManagement;
 using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Cache.Disk.Cacheables;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;

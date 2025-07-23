@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
-namespace SceneRunner.Scene
+namespace DCL.Ipfs
 {
     public class SceneAssetBundleManifest
     {

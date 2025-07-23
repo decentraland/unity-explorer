@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using DCL.Ipfs;
 using System;
 using UnityEngine;
 

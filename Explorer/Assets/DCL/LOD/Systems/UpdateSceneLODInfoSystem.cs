@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Abstract;

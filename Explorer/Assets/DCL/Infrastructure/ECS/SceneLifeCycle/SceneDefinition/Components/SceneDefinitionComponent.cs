@@ -2,6 +2,7 @@
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.IncreasingRadius;
 using Org.BouncyCastle.Utilities.Collections;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,7 +31,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public float EstimatedMemoryUsageInMB;
         public float EstimatedMemoryUsageForLODMB;
         public float EstimatedMemoryUsageForQualityReductedLODMB;
-
 
         public SceneDefinitionComponent(
             SceneEntityDefinition definition,

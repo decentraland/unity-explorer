@@ -15,6 +15,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using AssetManagement;
+using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;

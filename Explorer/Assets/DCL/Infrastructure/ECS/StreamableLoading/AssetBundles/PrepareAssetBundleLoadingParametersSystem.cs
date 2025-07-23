@@ -34,7 +34,7 @@ namespace ECS.StreamableLoading.AssetBundles
         // If loading is not started yet and there is no result
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            assetBundleIntention.Manifest = sceneData.AssetBundleManifest;
+            assetBundleIntention.Manifest = sceneData.SceneEntityDefinition.AssetBundleManifest;
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

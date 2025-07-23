@@ -1,9 +1,9 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
-using SceneRunner.Scene;
 
 namespace DCL.AvatarRendering.Loading.Components
 {

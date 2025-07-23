@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Loading.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.Ipfs;
 using DCL.Multiplayer.Emotes;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -91,7 +92,7 @@ namespace CrdtEcsBridge.RestrictedActions
             {
                 await TriggerSceneEmoteFromRealmAsync(
                     sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
-                    sceneData.AssetBundleManifest, hash, loop, ct);
+                    sceneData.SceneEntityDefinition.AssetBundleManifest, hash, loop, ct);
             }
         }
 
