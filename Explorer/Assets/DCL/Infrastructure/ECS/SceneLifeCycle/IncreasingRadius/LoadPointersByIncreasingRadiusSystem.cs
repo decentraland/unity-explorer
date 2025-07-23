@@ -71,7 +71,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         /// </summary>
         [Query]
         [None(typeof(FixedScenePointers))]
-        private void StartLoadingFromVolatilePointers(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers)
+        private void StartLoadingFromVolatilePointers(ref RealmComponent realm, ref VolatileScenePointers volatileScenePointers, ref ProcessedScenePointers processedScenePointers)
         {
             if (!splitIsPending) return;
 
@@ -93,11 +93,16 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 if (parcelInfo.AlreadyProcessed)
                     continue;
 
+                // Already processed won't be set for the pointers there were being processed at the moment of the split
+                // but as we maintain only one active promise at a time, here the processed pointers will contain all pointers that were already processed
+                if (processedScenePointers.Value.Contains(parcelInfo.Parcel))
+                    continue;
+
                 if (input.Count < realmPartitionSettings.ScenesDefinitionsRequestBatchSize)
                 {
                     sqrDistances![input.Count] = parcelInfo.RingSqrDistance;
                     input.Add(parcelInfo.Parcel);
-                    parcelInfo.AlreadyProcessed = true;
+                    parcelInfo.AlreadyProcessed = true; // it will set the flag until the next split only
                     flatArray[i] = parcelInfo;
                 }
                 else

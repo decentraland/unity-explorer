@@ -9,7 +9,6 @@ using DCL.Chat.EventBus;
 using DCL.Diagnostics;
 using DCL.Communities;
 using DCL.Communities.CommunitiesCard;
-using DCL.FeatureFlags;
 using DCL.Friends;
 using DCL.Friends.UserBlocking;
 using DCL.Input;
@@ -146,6 +145,7 @@ namespace DCL.Chat
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
+            bool isCallEnabled,
             IRealmNavigator realmNavigator
             ) : base(viewFactory)
         {
@@ -171,7 +171,7 @@ namespace DCL.Chat
             this.mvcManager = mvcManager;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
-            this.isCallEnabled =  FeaturesRegistry.Instance.IsEnabled(FeatureId.VOICE_CHAT);
+            this.isCallEnabled = isCallEnabled;
 
             chatUserStateEventBus = new ChatUserStateEventBus();
             var chatRoom = roomHub.ChatRoom();
@@ -343,7 +343,7 @@ namespace DCL.Chat
             }
 
             isUserAllowedInInitializationCts = isUserAllowedInInitializationCts.SafeRestart();
-            bool isCommunityEnabled = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, isUserAllowedInInitializationCts.Token);
+            bool isCommunityEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInInitializationCts.Token);
 
             if (isCommunityEnabled)
                 await InitializeCommunityCoversationsAsync();
@@ -1086,7 +1086,7 @@ namespace DCL.Chat
         {
             isUserAllowedInCommunitiesBusSubscriptionCts = isUserAllowedInCommunitiesBusSubscriptionCts.SafeRestart();
 
-            if (await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, isUserAllowedInCommunitiesBusSubscriptionCts.Token))
+            if (await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(isUserAllowedInCommunitiesBusSubscriptionCts.Token))
                 communitiesEventBus.UserDisconnectedFromCommunity += OnCommunitiesEventBusUserDisconnectedToCommunity;
         }
 
