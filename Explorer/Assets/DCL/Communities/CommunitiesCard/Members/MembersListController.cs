@@ -445,11 +445,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             FetchNewDataAsync(ct).Forget();
         }
 
-        private void OnMainButtonClicked(MemberData profile)
-        {
-            // Handle main button click
-            // Debug.Log("MainButtonClicked: " + profile.id);
-        }
+        private void OnMainButtonClicked(MemberData profile) =>
+            OpenProfilePassport(profile);
 
         private void OnFriendButtonClicked(MemberData profile) =>
             HandleContextMenuUserProfileButtonAsync(profile.ToUserData(), profile.friendshipStatus.Convert());
