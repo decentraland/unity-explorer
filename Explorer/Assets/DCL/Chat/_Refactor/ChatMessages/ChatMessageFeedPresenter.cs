@@ -82,9 +82,10 @@ public class ChatMessageFeedPresenter : IDisposable
         if (!currentChannelService.CurrentChannelId.Equals(channelId))
             return;
 
-        var viewModel = processAndAddMessageCommand.Execute(channelId, currentChannelService.CurrentChannelType, message, loadChannelCts.Token);
-        ReportHub.Log(ReportData.UNSPECIFIED, $"OnMessageAdded: {viewModel.Message} in channel {channelId.Id}");
-        //view.AppendMessage(viewModel);
+        // var viewModel = processAndAddMessageCommand.Execute(channelId, currentChannelService.CurrentChannelType, message, loadChannelCts.Token);
+        // ReportHub.Log(ReportData.UNSPECIFIED, $"OnMessageAdded: {viewModel.Message} in channel {channelId.Id}");
+        // view.AppendMessage(viewModel);
+        view.AppendMessage(message, true);
     }
 
     private void OnProfileContextMenuRequested(string userId, Vector2 position)

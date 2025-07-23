@@ -120,6 +120,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b17a8a5ab9ee104899eb22c70935c38
+    m_Address: Assets/DCL/StylizedSkybox/Animations/DirectionalLightCycle.anim
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3c3c8d365c6ef4acfa3665168b5737a9
     m_Address: ButtonWithTextAndIcon
     m_ReadOnly: 0
@@ -432,6 +437,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e8cf73ccd47a385498b71ec58534d03c
     m_Address: Assets/DCL/AvatarRendering/AvatarShape/Assets/ComputeShaderSkinning.compute
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e8f593404f0a19749bc68df2b5064215
+    m_Address: StylizedSkyboxAnimation
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

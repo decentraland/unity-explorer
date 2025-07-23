@@ -65,6 +65,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 506fef2fcce22b54ba4571ced3af5dc6
+    m_Address: LoadingAtlast.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 542424588a68b46f688ef5c667aa0c68
     m_Address: ControlsPanel
     m_ReadOnly: 0
@@ -92,6 +97,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 6b1f7cd8901871f42a19a8244244839e
     m_Address: ChangeRealmPrompt
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dfe28bda416549a9b6598e822044ba1
+    m_Address: CommonTexturesAtlas.spriteatlasv2
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
