@@ -44,7 +44,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             gltfContainer.GltfNodeEntities ??= ListPool<Entity>.Get();
             gltfContainer.OriginalMaterials ??= new Dictionary<Renderer, Material>();
 
-            // Store original materials for all renderers (only happens once)
+            // Store original materials for all renderers
             if (gltfContainer.OriginalMaterials.Count == 0)
                 StoreOriginalMaterials(ref gltfContainer, result.Asset!.Renderers);
 

@@ -125,10 +125,11 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         {
             result = default(StreamableLoadingResult<GltfContainerAsset>);
 
-            return gltfContainer.State == LoadingState.Finished
-                   && gltfContainer.RootGameObject != null
-                   && gltfContainer.Promise.TryGetResult(World, out result)
-                   && result.Succeeded;
+            if (gltfContainer.State != LoadingState.Finished) return false;
+
+            result = gltfContainer.Promise.Result!.Value;
+
+            return result.Succeeded;
         }
 
         /// <summary>
