@@ -10,6 +10,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GLTFContainer.Systems;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -22,6 +23,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [ThrottlingEnabled]
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
+    [UpdateAfter(typeof(FinalizeGltfContainerLoadingSystem))]
     public partial class SetupGltfNodeModifierSystem : GltfNodeModifierSystemBase
     {
         public SetupGltfNodeModifierSystem(World world) : base(world) { }
