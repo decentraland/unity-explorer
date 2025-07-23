@@ -142,8 +142,9 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [All(typeof(CameraModeAreaComponent))]
         private void FinalizeComponents(Entity entity)
         {
-            OnExitedCameraModeArea();
-            activeAreas.Remove(entity);
+            if (activeAreas.Remove(entity))
+                OnExitedCameraModeArea();
+
             World.Remove<CameraModeAreaComponent>(entity);
         }
 

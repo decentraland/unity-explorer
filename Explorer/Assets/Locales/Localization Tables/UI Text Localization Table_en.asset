@@ -40,6 +40,10 @@ MonoBehaviour:
     m_Localized: Gallery
     m_Metadata:
       m_Items: []
+  - m_Id: 208414847697555456
+    m_Localized: Communities
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:

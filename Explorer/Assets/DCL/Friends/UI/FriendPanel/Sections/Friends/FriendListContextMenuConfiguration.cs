@@ -15,6 +15,9 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         [SerializeField] private Sprite jumpToLocationSprite;
         [SerializeField] private string jumpToLocationText = "Jump to Location";
         [Space(10)]
+        [SerializeField] private Sprite callSprite;
+        [SerializeField] private string callText = "Call";
+        [Space(10)]
         [SerializeField] private Sprite blockSprite;
         [SerializeField] private string blockText = "Block";
 
@@ -23,6 +26,8 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
         public string ViewProfileText => viewProfileText;
         public Sprite JumpToLocationSprite => jumpToLocationSprite;
         public string JumpToLocationText => jumpToLocationText;
+        public Sprite CallSprite => callSprite;
+        public string CallText => callText;
         public Sprite BlockSprite => blockSprite;
         public string BlockText => blockText;
     }

@@ -648,7 +648,8 @@ PlayerSettings:
   enableCrashReportAPI: 0
   cameraUsageDescription: 
   locationUsageDescription: 
-  microphoneUsageDescription: 
+  microphoneUsageDescription: This app requires access to the microphone for voice
+    chat functionality.
   bluetoothUsageDescription: 
   macOSTargetOSVersion: 11.0
   switchNMETAOverride: 
@@ -905,7 +906,24 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 0
   scriptingDefineSymbols:
-    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS
+    Android: CT_FB
+    EmbeddedLinux: CT_FB
+    GameCoreScarlett: CT_FB
+    GameCoreXboxOne: CT_FB
+    Kepler: CT_FB
+    LinuxHeadlessSimulation: CT_FB
+    Nintendo Switch: CT_FB
+    PS4: CT_FB
+    PS5: CT_FB
+    QNX: CT_FB
+    ReservedCFE: CT_FB
+    Standalone: UNITASK_DOTWEEN_SUPPORT;UNITY_PIPELINE_URP;DOTWEEN_ENABLED;VERBOSE_LOGS;CT_FB
+    VisionOS: CT_FB
+    WebGL: CT_FB
+    Windows Store Apps: CT_FB
+    XboxOne: CT_FB
+    iPhone: CT_FB
+    tvOS: CT_FB
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

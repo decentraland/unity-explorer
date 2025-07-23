@@ -1,20 +1,17 @@
 using Arch.SystemGroups;
-using Cysharp.Threading.Tasks;
 using DCL.Minimap;
 using MVC;
-using System.Threading;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MinimapPlugin : IDCLGlobalPlugin<MinimapPlugin.MinimapSettings>
+    public class MinimapPlugin : IDCLGlobalPluginWithoutSettings
     {
-        private readonly IMVCManager mvcManager;
         private readonly MinimapController minimapController;
 
         public MinimapPlugin(IMVCManager mvcManager, MinimapController minimapController)
         {
-            this.mvcManager = mvcManager;
             this.minimapController = minimapController;
+            mvcManager.RegisterController(minimapController);
         }
 
         public void Dispose()
@@ -27,13 +24,5 @@ namespace DCL.PluginSystem.Global
             TrackPlayerPositionSystem? trackPlayerPositionSystem = TrackPlayerPositionSystem.InjectToWorld(ref builder);
             minimapController.HookPlayerPositionTrackingSystem(trackPlayerPositionSystem);
         }
-
-        public UniTask InitializeAsync(MinimapSettings settings, CancellationToken ct)
-        {
-            mvcManager.RegisterController(minimapController);
-            return UniTask.CompletedTask;
-        }
-
-        public class MinimapSettings : IDCLPluginSettings { }
     }
 }

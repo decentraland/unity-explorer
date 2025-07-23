@@ -17,6 +17,8 @@ namespace DCL.Prefs
 
         public const string CAMERA_SENSITIVITY = "CameraSensitivity";
 
+        public const string CLOSED_COMMUNITY_CHATS = "ClosedCommunityChats";
+
         public const string PS_RENDERER_FEATURE_ACTIVE = "RendererFeature_{0}";
         public const string PS_FOG_ACTIVE = "FogActive";
         public const string PS_LENS_FLARE_ENABLED = "LensFlare_Enabled";
@@ -40,7 +42,6 @@ namespace DCL.Prefs
         public const string SETTINGS_MEMORY_CAP = "Settings_MemoryCap";
         public const string SETTINGS_HORIZONTAL_MOUSE_SENSITIVITY = "Settings_HorizontalMouseSensitivity";
         public const string SETTINGS_VERTICAL_MOUSE_SENSITIVITY = "Settings_VerticalMouseSensitivity";
-        public const string SETTINGS_MUSIC_VOLUME = "Settings_MusicVolume";
         public const string SETTINGS_RESOLUTION = "Settings_Resolution";
         public const string SETTINGS_SCENE_DISTANCE = "Settings_SceneDistance";
         public const string SETTINGS_UI_VOLUME = "Settings_UIVolume";
@@ -48,6 +49,9 @@ namespace DCL.Prefs
         public const string SETTINGS_WORLD_VOLUME = "Settings_WorldVolume";
         public const string SETTINGS_UPSCALER = "Settings_Upscaler";
 
+        public const string SCENE_LOADING_LAST_TIP_INDEX = "SceneLoading_LastTipIndex";
+        public const string SETTINGS_VOICE_CHAT_VOLUME = "Settings_VoiceChatVolume";
+        public const string SETTINGS_MICROPHONE_DEVICE_NAME = "Settings_MicrophoneName";
 
         public const string WEB_REQUEST_ARTIFICIAL_DELAY_ENABLED = "webRequestsArtificialDelayEnable";
         public const string WEB_REQUEST_ARTIFICIAL_DELAY_SECONDS = "webRequestsArtificialDelaySeconds";

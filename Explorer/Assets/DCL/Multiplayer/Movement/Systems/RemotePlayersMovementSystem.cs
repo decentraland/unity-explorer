@@ -38,7 +38,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void HandleFirstMessage(ref CharacterTransform transComp, in NetworkMovementMessage firstRemote, ref RemotePlayerMovementComponent remotePlayerMovement)
         {
-            transComp.Transform.position = firstRemote.position;
+            SetPositionAndRotation(transComp.Transform, firstRemote.position, firstRemote.rotationY);
 
             remotePlayerMovement.AddPassed(firstRemote, characterControllerSettings, wasTeleported: true);
             remotePlayerMovement.Initialized = true;
@@ -79,9 +79,11 @@ namespace DCL.Multiplayer.Movement.Systems
                 playerInbox.Dequeue();
 
             // When there is no messages, we extrapolate
-            if (settings.UseExtrapolation && playerInbox.Count == 0 && remotePlayerMovement is { Initialized: true, WasTeleported: false })
+            if (settings.UseExtrapolation && playerInbox.Count == 0
+                                          && remotePlayerMovement is { Initialized: true, WasTeleported: false, PastMessage: { isInstant: false } })
             {
                 float sqrMinSpeed = settings.ExtrapolationSettings.MinSpeed * settings.ExtrapolationSettings.MinSpeed;
+
                 if (!extComp.Enabled && remotePlayerMovement.PastMessage.velocitySqrMagnitude > sqrMinSpeed)
                     extComp.Restart(from: remotePlayerMovement.PastMessage, settings.ExtrapolationSettings.TotalMoveDuration);
 
@@ -102,6 +104,7 @@ namespace DCL.Multiplayer.Movement.Systems
             NetworkMovementMessage remote = playerInbox.Dequeue();
 
             var isBlend = false;
+
             if (extComp.Enabled)
             {
                 // if we success with stop of extrapolation, then we can start to blend
@@ -151,6 +154,8 @@ namespace DCL.Multiplayer.Movement.Systems
                     isSliding = extComp.Start.isSliding,
                     animState = extComp.Start.animState,
                     isStunned = extComp.Start.isStunned,
+                    isInstant = extComp.Start.isInstant,
+                    isEmoting = extComp.Start.isEmoting,
                 };
 
                 remotePlayerMovement.AddPassed(local, characterControllerSettings);
@@ -169,7 +174,8 @@ namespace DCL.Multiplayer.Movement.Systems
                        && Vector3.SqrMagnitude(playerInbox.First.position - remote.position) < settings.MinPositionDelta)
                     remote = playerInbox.Dequeue();
 
-            transComp.Transform.position = remote.position;
+            SetPositionAndRotation(transComp.Transform, remote.position, remote.rotationY);
+
             remotePlayerMovement.AddPassed(remote, characterControllerSettings, wasTeleported: true);
         }
 
@@ -203,16 +209,23 @@ namespace DCL.Multiplayer.Movement.Systems
             else if (intSettings.UseSpeedUp)
                 SpeedUpForCatchingUp(ref intComp, settings.InboxCount);
 
-            transComp.Transform.position = intComp.Start.position;
+            SetPositionAndRotation(transComp.Transform, intComp.Start.position, intComp.Start.rotationY);
 
             // TODO (Vit): Restart in loop until (unusedTime <= 0) ?
             float unusedTime = Interpolate(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp);
         }
 
+        private static void SetPositionAndRotation(Transform transform, Vector3 position, float rotationY)
+        {
+            var newRotation = Quaternion.Euler(transform.rotation.x, rotationY, transform.rotation.z);
+            transform.SetPositionAndRotation(position, newRotation);
+        }
+
         private float Interpolate(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
             ref InterpolationComponent intComp)
         {
-            float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp, settings.InterpolationSettings.LookAtTimeDelta, characterControllerSettings.RotationSpeed);
+            float unusedTime = Interpolation.Execute(deltaTime, ref transComp, ref intComp,
+                settings.InterpolationSettings.LookAtTimeDelta, characterControllerSettings.RotationSpeed);
 
             if (intComp.Time < intComp.TotalDuration)
                 return -1;
@@ -248,6 +261,7 @@ namespace DCL.Multiplayer.Movement.Systems
             float distance = Vector3.Distance(intComp.Start.position, intComp.End.position);
 
             MovementKind movementKind = MovementKind.RUN;
+
             if (distance < settings.MoveKindByDistance[MovementKind.WALK])
                 movementKind = MovementKind.WALK;
             else if (distance < settings.MoveKindByDistance[MovementKind.JOG])
@@ -259,8 +273,9 @@ namespace DCL.Multiplayer.Movement.Systems
             intComp.UseMessageRotation = false;
 
             intComp.Start.movementKind = movementKind;
-            intComp.Start.animState.MovementBlendValue = (int)movementKind;
-            intComp.End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue( intComp.TotalDuration,  intComp.Start.animState.MovementBlendValue,
+            intComp.Start.animState.MovementBlendValue = (uint)movementKind;
+
+            intComp.End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(intComp.TotalDuration, intComp.Start.animState.MovementBlendValue,
                 intComp.End.movementKind, intComp.End.velocitySqrMagnitude, characterControllerSettings);
         }
     }
