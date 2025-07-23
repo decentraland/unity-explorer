@@ -565,8 +565,8 @@ RectTransform:
   m_Children:
   - {fileID: 1355487916901650505}
   - {fileID: 1572714093034108347}
-  - {fileID: 298761833657374106}
   - {fileID: 996816119135186131}
+  - {fileID: 298761833657374106}
   - {fileID: 860685452429630900}
   m_Father: {fileID: 7935310760175425802}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
