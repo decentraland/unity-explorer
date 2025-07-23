@@ -13,7 +13,6 @@ using DCL.UI;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Utility;
@@ -50,7 +49,6 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         private CommunityData? communityData = null;
         private CancellationTokenSource eventCardOperationsCts = new ();
-        private string[] communityPlaceIds;
 
         protected override SectionFetchData<PlaceAndEventDTO> currentSectionFetchData => eventsFetchData;
 
@@ -185,7 +183,7 @@ namespace DCL.Communities.CommunitiesCard.Events
 
         protected override async UniTask<int> FetchDataAsync(CancellationToken ct)
         {
-            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetEventsByPlaceIdsAsync(communityPlaceIds, eventsFetchData.PageNumber, PAGE_SIZE, ct)
+            Result<EventWithPlaceIdDTOListResponse> eventResponse = await eventsApiService.GetCommunityEvents(communityData!.Value.id, eventsFetchData.PageNumber, PAGE_SIZE, ct)
                                                                                                  .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
             if (ct.IsCancellationRequested)
@@ -238,11 +236,10 @@ namespace DCL.Communities.CommunitiesCard.Events
             return eventResponse.Value.data.total;
         }
 
-        public void ShowEvents(CommunityData community, string[] placeIds, CancellationToken token)
+        public void ShowEvents(CommunityData community, CancellationToken token)
         {
             cancellationToken = token;
             communityData = community;
-            communityPlaceIds = placeIds;
             view.SetCanModify(community.role is CommunityMemberRole.owner or CommunityMemberRole.moderator);
             FetchNewDataAsync(token).Forget();
         }
