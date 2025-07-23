@@ -12,6 +12,7 @@ using DCL.Communities.EventInfo;
 using DCL.EventsApi;
 using DCL.Friends;
 using DCL.InWorldCamera.CameraReelStorageService;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
@@ -50,6 +51,8 @@ namespace DCL.PluginSystem.Global
         private readonly IEventsApiService eventsApiService;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly IChatEventBus chatEventBus;
+        private readonly IRPCCommunitiesService rpcCommunitiesService;
+        private readonly NotificationHandler notificationHandler;
         private readonly LambdasProfilesProvider lambdasProfilesProvider;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -57,7 +60,6 @@ namespace DCL.PluginSystem.Global
         private CommunityCardController? communityCardController;
         private CommunityCreationEditionController? communityCreationEditionController;
         private EventInfoController? eventInfoController;
-        private IRPCCommunitiesService rpcCommunitiesService;
 
         public CommunitiesPlugin(
             IMVCManager mvcManager,
@@ -79,6 +81,7 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             CommunitiesEventBus communitiesEventBus,
             IRPCSocialServices rpcSocialServices,
+            INotificationsBusController notificationsBusController,
             LambdasProfilesProvider lambdasProfilesProvider,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache)
@@ -104,6 +107,7 @@ namespace DCL.PluginSystem.Global
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
             rpcCommunitiesService = new RPCCommunitiesService(rpcSocialServices, communitiesEventBus);
+            notificationHandler = new NotificationHandler(notificationsBusController, mvcManager, realmNavigator);
         }
 
         public void Dispose()
@@ -111,6 +115,7 @@ namespace DCL.PluginSystem.Global
             communityCardController?.Dispose();
             communityCreationEditionController?.Dispose();
             eventInfoController?.Dispose();
+            notificationHandler.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
