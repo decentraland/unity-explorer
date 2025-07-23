@@ -5,17 +5,17 @@ namespace DCL.NotificationsBusController.NotificationTypes
 {
     public class CommunityUserBannedNotification : NotificationBase
     {
-        private const string NOTIFICATION_HEADER = "{0}";
-        private const string NOTIFICATION_TITLE = "You have been banned from the community";
+        private const string NOTIFICATION_HEADER = "Banned From Community";
+        private const string NOTIFICATION_TITLE = "You've been banned from the <b>[{0}]</b> Community.";
 
         [JsonProperty("metadata")]
         public CommunityUserBannedNotificationMetadata Metadata { get; set; }
 
         public override string GetHeader() =>
-            string.Format(NOTIFICATION_HEADER, Metadata.CommunityName);
+            NOTIFICATION_HEADER;
 
         public override string GetTitle() =>
-            NOTIFICATION_TITLE;
+            string.Format(NOTIFICATION_TITLE, Metadata.CommunityName);
 
         public override string GetThumbnail() =>
             Metadata.ThumbnailUrl;
@@ -27,7 +27,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("community_name")]
         public string CommunityName { get; set; }
 
-        [JsonProperty("thumbnail_url")]
+        [JsonProperty("thumbnailUrl")]
         public string ThumbnailUrl { get; set; }
     }
 }

@@ -5,14 +5,14 @@ namespace DCL.NotificationsBusController.NotificationTypes
 {
     public class CommunityRenamedNotification : NotificationBase
     {
-        private const string NOTIFICATION_HEADER = "{0}";
-        private const string NOTIFICATION_TITLE = "[{0}] Community is now [{1}]";
+        private const string NOTIFICATION_HEADER = "Community Renamed";
+        private const string NOTIFICATION_TITLE = "The <b>[{0}]</b> Community has been renamed to <b>[{1}]</b>.";
 
         [JsonProperty("metadata")]
         public CommunityRenamedNotificationMetadata Metadata { get; set; }
 
         public override string GetHeader() =>
-            string.Format(NOTIFICATION_HEADER, Metadata.OldCommunityName);
+            NOTIFICATION_HEADER;
 
         public override string GetTitle() =>
             string.Format(NOTIFICATION_TITLE, Metadata.OldCommunityName, Metadata.NewCommunityName);
@@ -30,7 +30,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("new_community_name")]
         public string NewCommunityName { get; set; }
 
-        [JsonProperty("thumbnail_url")]
+        [JsonProperty("thumbnailUrl")]
         public string ThumbnailUrl { get; set; }
     }
 }

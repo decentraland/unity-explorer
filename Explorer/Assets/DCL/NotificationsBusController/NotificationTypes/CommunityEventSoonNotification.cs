@@ -6,14 +6,14 @@ namespace DCL.NotificationsBusController.NotificationTypes
     [Serializable]
     public class CommunityEventSoonNotification : NotificationBase
     {
-        private const string NOTIFICATION_HEADER = "{0} Event";
-        private const string NOTIFICATION_TITLE = "An event of the community [{0}] is about to start";
+        private const string NOTIFICATION_HEADER = "Community Event Starting";
+        private const string NOTIFICATION_TITLE = "A <b>[{0}]</b> community event is about to start.";
 
         [JsonProperty("metadata")]
         public CommunityEventSoonNotificationMetadata Metadata { get; set; }
 
         public override string GetHeader() =>
-            string.Format(NOTIFICATION_HEADER, Metadata.CommunityName);
+            NOTIFICATION_HEADER;
 
         public override string GetTitle() =>
             string.Format(NOTIFICATION_TITLE, Metadata.CommunityName);
@@ -28,7 +28,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("community_name")]
         public string CommunityName { get; set; }
 
-        [JsonProperty("thumbnail_url")]
+        [JsonProperty("thumbnailUrl")]
         public string ThumbnailUrl { get; set; }
 
         [JsonProperty("world")]
