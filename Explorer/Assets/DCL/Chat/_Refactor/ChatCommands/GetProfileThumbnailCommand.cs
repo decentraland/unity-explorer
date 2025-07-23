@@ -31,7 +31,7 @@ namespace DCL.Chat.ChatUseCases
 
             try
             {
-                Sprite? downloadedSprite = await profileRepository.GetProfileThumbnailAsync(userId, faceSnapshotUrl, ct);
+                var downloadedSprite = await profileRepository.GetProfileThumbnailAsync(faceSnapshotUrl, ct);
                 return downloadedSprite ?? chatConfig.DefaultProfileThumbnail;
             }
             catch (Exception e)

@@ -24,6 +24,10 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using CommunicationData.URLHelpers;
+using DCL.Communities;
+using DCL.Diagnostics;
+using DCL.Profiles;
 using UnityEngine;
 using Utility;
 
@@ -319,6 +323,13 @@ namespace DCL.UI.Sidebar
             viewInstance?.marketplaceCreditsButton.gameObject.SetActive(includeMarketplaceCredits);
             if (includeMarketplaceCredits)
                 viewInstance?.marketplaceCreditsButton.Button.onClick.AddListener(OnMarketplaceCreditsButtonClickedAsync);
+        }
+
+        private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
+        {
+            viewInstance?.communitiesButton.gameObject.SetActive(false);
+            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 
         #region Sidebar button handlers

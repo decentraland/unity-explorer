@@ -37,7 +37,7 @@ namespace DCL.Chat.ChatUseCases
             this.getProfileThumbnailCommand = getProfileThumbnailCommand;
         }
 
-        public ChatMessageViewModel Execute(ChatChannel.ChannelId channelId, ChatMessage rawMessage, CancellationToken ct)
+        public ChatMessageViewModel Execute(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType? channelType, ChatMessage rawMessage, CancellationToken ct)
         {
             // 1. Process the message (e.g., format text)
             // This replicates the logic from the old OnChatBusMessageAdded
@@ -45,7 +45,7 @@ namespace DCL.Chat.ChatUseCases
             var processedMessage = ChatMessage.CopyWithNewMessage(formattedText, rawMessage);
 
             // 2. Add the processed message to the "source of truth" history service
-            chatHistory.AddMessage(channelId, processedMessage);
+            chatHistory.AddMessage(channelId, channelType, processedMessage);
 
             // 3. Create the initial ViewModel
             var viewModel = createMessageViewModelCommand.Execute(processedMessage);

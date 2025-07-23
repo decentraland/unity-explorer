@@ -41,7 +41,7 @@ namespace DCL.Chat.ChatUseCases
             ChatChannel nearbyChannel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
 
             if (nearbyChannel.Messages.Count == 0)
-                chatHistory.AddMessage(nearbyChannel.Id, ChatMessage.NewFromSystem("Type /help for available commands."));
+                chatHistory.AddMessage(nearbyChannel.Id, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem("Type /help for available commands."));
 
             if (!friendsServiceProxy.Configured) return;
 

@@ -62,52 +62,6 @@ namespace DCL.Chat
         }
 
         /// <summary>
-        /// Creates a new item and adds it to the last position of the toolbar. It does not change any data.
-        /// </summary>
-        /// <param name="channel">The channel the item will represent. The visual aspect of the item depends on the type of channel.</param>
-        /// <param name="icon">An icon to show instead of a profile picture.</param>
-        public void AddConversation(ChatChannel channel, Sprite icon = null)
-        {
-            if (items.TryGetValue(channel.Id, out var item)) return;
-
-            ChatConversationsToolbarViewItem newItem = Instantiate(itemPrefab, itemsContainer);
-            newItem.Initialize();
-            newItem.OpenButtonClicked += OpenButtonClicked;
-            newItem.RemoveButtonClicked += OnRemoveButtonClicked;
-            newItem.TooltipShown += OnItemTooltipShown;
-            newItem.Id = channel.Id;
-
-            switch (channel.ChannelType)
-            {
-                case ChatChannel.ChatChannelType.NEARBY:
-                    newItem.SetConversationIcon(icon);
-                    newItem.SetConversationName("Nearby"); // TODO: Localization
-                    newItem.SetClaimedNameIconVisibility(false);
-                    newItem.SetConversationType(false);
-                    break;
-                case ChatChannel.ChatChannelType.USER:
-                    SetupUserConversationItemAsync(newItem).Forget();
-                    break;
-                case ChatChannel.ChatChannelType.COMMUNITY:
-                    // TODO in future shapes
-                    newItem.SetConversationIcon(/*TODO*/icon);
-                    newItem.SetConversationName("TODO");
-                    newItem.SetClaimedNameIconVisibility(false);
-                    newItem.SetConversationType(false);
-                    break;
-            }
-
-            newItem.SetConversationType(channel.ChannelType == ChatChannel.ChatChannelType.USER);
-            
-            items.Add(channel.Id, newItem);
-
-            if(items.Count == 1)
-                SelectConversation(channel.Id);
-
-            UpdateScrollButtonsVisibility();
-        }
-
-        /// <summary>
         /// Removes a conversation item from the toolbar UI. It does not change any data.
         /// </summary>
         /// <param name="channelId">The Id of the conversation to find the item.</param>
@@ -257,18 +211,18 @@ namespace DCL.Chat
             tooltip.transform.SetParent(transform, true);
         }
 
-        private async UniTaskVoid SetupUserConversationItemAsync(ChatConversationsToolbarViewItem newItem)
-        {
-            Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
-
-            if (profile != null)
-            {
-                newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
-                newItem.SetConversationName(profile.ValidatedName);
-                newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
-                newItem.SetConversationType(true);
-            }
-        }
+        // private async UniTaskVoid SetupUserConversationItemAsync(ChatConversationsToolbarViewItem newItem)
+        // {
+        //     Profile? profile = await profileRepositoryWrapper.GetProfileAsync(newItem.Id.Id, CancellationToken.None);
+        //
+        //     if (profile != null)
+        //     {
+        //         newItem.SetProfileData(profileRepositoryWrapper, profile.UserNameColor, profile.Avatar.FaceSnapshotUrl, profile.UserId);
+        //         newItem.SetConversationName(profile.ValidatedName);
+        //         newItem.SetClaimedNameIconVisibility(profile.HasClaimedName);
+        //         newItem.SetConversationType(true);
+        //     }
+        // }
 
         public event Action<string>? OnChannelSelected;
         public event Action<string>? OnChannelRemoved;

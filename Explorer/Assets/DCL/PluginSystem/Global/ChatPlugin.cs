@@ -33,6 +33,7 @@ using DCL.Audio;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.Services;
 using DCL.Chat.Services.DCL.Chat;
+using DCL.Communities;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
@@ -78,14 +79,13 @@ namespace DCL.PluginSystem.Global
         private ChatController chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
-        private IRealmData realmData;
-        private IRealmNavigator realmNavigator;
         private ChatUserStateUpdater chatUserStateUpdater;
         private readonly IEventBus eventBus = new EventBus();
         private readonly EventSubscriptionScope pluginScope = new ();
 
         public ChatPlugin(
             IMVCManager mvcManager,
+            IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade,
             IChatMessagesBus chatMessagesBus,
             IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -108,49 +108,43 @@ namespace DCL.PluginSystem.Global
             ChatMessageFactory chatMessageFactory,
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
-            IRealmData realmData,
-            IRealmNavigator realmNavigator,
-            IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade)
-            CommunitiesDataProvider communityDataProvider,
+            CommunitiesDataProvider communitiesDataProvider,
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
             IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled)
+            bool includeVoiceChat)
         {
             this.mvcManager = mvcManager;
-            this.chatHistory = chatHistory;
+            this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
             this.chatMessagesBus = chatMessagesBus;
+            this.chatHistory = chatHistory;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
+            this.mainUIView = mainUIView;
             this.inputBlock = inputBlock;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.roomHub = roomHub;
             this.assetsProvisioner = assetsProvisioner;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
             this.profileCache = profileCache;
             this.chatEventBus = chatEventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.loadingStatus = loadingStatus;
-            this.mainUIView = mainUIView;
-            this.inputBlock = inputBlock;
-            this.roomHub = roomHub;
             this.sharedSpaceManager = sharedSpaceManager;
-            this.chatMessageFactory = chatMessageFactory;
-            this.friendsServiceProxy = friendsServiceProxy;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
-            this.isCallEnabled = isCallEnabled;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
-            this.socialServiceProxy = socialServiceProxy;
+            this.socialServiceProxy = socialServiceProxy; //
             this.friendsEventBus = friendsEventBus;
+            this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.friendsServiceProxy = friendsServiceProxy;
             this.communityDataProvider = communityDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
-            this.realmData = realmData;
-            this.realmNavigator = realmNavigator;
-            this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            isCallEnabled = isCallEnabled;
         }
 
         public void Dispose()

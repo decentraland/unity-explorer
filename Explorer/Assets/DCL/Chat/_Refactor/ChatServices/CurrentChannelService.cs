@@ -9,6 +9,7 @@ namespace DCL.Chat.Services
     public interface ICurrentChannelService
     {
         ChatChannel? CurrentChannel { get; }
+        ChatChannel.ChatChannelType? CurrentChannelType => CurrentChannel?.ChannelType;
         ChatChannel.ChannelId CurrentChannelId { get; }
 
         Result<ChatUserStateUpdater.ChatUserState> InputState { get; }

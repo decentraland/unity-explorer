@@ -6,6 +6,7 @@ using DCL.Minimap;
 using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.Controls;
 using DCL.UI.Sidebar;
+using DCL.VoiceChat;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;

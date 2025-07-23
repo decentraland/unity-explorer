@@ -44,7 +44,7 @@ public class ChatChannelsPresenter : IDisposable
         view.ConversationRemovalRequested += OnViewConversationRemovalRequested;
 
         chatHistory.ChannelAdded += AddChannelToView;
-        chatEventBus.OpenConversation += OnOpenConversationUsingUserId;
+        chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
         
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
@@ -117,7 +117,7 @@ public class ChatChannelsPresenter : IDisposable
 
     public void Dispose()
     {
-        chatEventBus.OpenConversation -= OnOpenConversationUsingUserId;
+        chatEventBus.OpenPrivateConversationRequested -= OnOpenConversationUsingUserId;
         view.ConversationSelected -= OnViewConversationSelected;
         view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
         scope.Dispose();

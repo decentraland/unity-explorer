@@ -53,7 +53,7 @@ namespace DCL.Emoji
             view.SectionSelected += OnSectionSelected;
         }
 
-        [Obsolete]
+        [Obsolete("This constructor is obsolete, use the one that takes an EmojiMapping object instead.")]
         public EmojiPanelController(
             EmojiPanelView view,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
@@ -74,6 +74,7 @@ namespace DCL.Emoji
 
         private async UniTaskVoid OnSearchTextChangedAsync(string searchText, CancellationToken ct)
         {
+            // Uses the new EmojiMapping class, as per the July 17th refactor
             await DictionaryUtils.GetKeysContainingTextAsync(EmojiMapping.NameMapping, searchText, foundEmojis, ct);
             emojiSearchController.SetValues(foundEmojis);
         }
@@ -111,8 +112,6 @@ namespace DCL.Emoji
             }
         }
 
-        //This function is called at the first panel open, necessary due to the need of having the gameobject active to
-        //calculate the proper sizing and positions
         private void SetUiSizes(EmojiSectionView sectionView)
         {
             LayoutRebuilder.ForceRebuildLayoutImmediate(sectionView.EmojiContainer);
@@ -137,6 +136,7 @@ namespace DCL.Emoji
                 emojiButton.EmojiImage.text = $"\\U000{emojiCode:X}";
                 emojiButton.EmojiSelected += OnEmojiSelected;
 
+                // Uses the new EmojiMapping class, as per the July 17th refactor
                 if (EmojiMapping.ValueMapping.TryGetValue(emojiCode, out string emojiValue))
                     emojiButton.TooltipText.text = emojiValue;
                 else
@@ -155,7 +155,7 @@ namespace DCL.Emoji
             view.EmojiFirstOpen -= ConfigureEmojiSectionSizes;
             view.SectionSelected -= OnSectionSelected;
             emojiSearchController?.Dispose();
-            
+
             foreach (EmojiSectionView sectionView in emojiSectionViews)
             {
                 foreach (Transform emojiButtonTransform in sectionView.EmojiContainer)
@@ -167,8 +167,6 @@ namespace DCL.Emoji
             }
             
             emojiSectionViews.Clear();
-            EmojiNameMapping.Clear();
-            emojiValueMapping.Clear();
             sectionTransforms.Clear();
             foundEmojis.Clear();
         }
