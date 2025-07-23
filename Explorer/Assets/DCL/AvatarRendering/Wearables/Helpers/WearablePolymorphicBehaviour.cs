@@ -14,7 +14,6 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.Textures;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;

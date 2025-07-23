@@ -23,14 +23,11 @@ namespace SceneRunner.Scene
         public ISceneContent SceneContent { get; }
 
         public SceneEntityDefinition SceneEntityDefinition { get; }
-
         public StaticSceneMessages StaticSceneMessages { get; }
         public bool SceneLoadingConcluded { get; set; }
         public SceneShortInfo SceneShortInfo { get; }
         public ParcelMathHelper.SceneGeometry Geometry { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
-
-        public Dictionary<string, GameObject> StaticSceneGameObjects { get; }
 
         public SceneData(
             ISceneContent sceneContent,
@@ -38,13 +35,11 @@ namespace SceneRunner.Scene
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,
-            StaticSceneMessages staticSceneMessages,
-            Dictionary<string, GameObject> staticSceneGameObjects)
+            StaticSceneMessages staticSceneMessages)
         {
             SceneContent = sceneContent;
             SceneEntityDefinition = sceneDefinition;
             StaticSceneMessages = staticSceneMessages;
-            StaticSceneGameObjects = staticSceneGameObjects;
             Parcels = parcels;
             SceneShortInfo = new SceneShortInfo(baseParcel, sceneDefinition.id);
             Geometry = geometry;

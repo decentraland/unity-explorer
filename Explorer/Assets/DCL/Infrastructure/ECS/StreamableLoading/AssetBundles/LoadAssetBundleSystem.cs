@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using ECS.Prioritization.Components;
@@ -11,7 +10,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using SceneRunner.Scene;
 using System;
 using System.Threading;
 using AssetManagement;
@@ -19,7 +17,6 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.StreamableLoading.Cache.Disk;
 using System.Buffers;
-using System.IO;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -117,7 +114,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, intention.HasMultipleAssetBundles, ct);
             }
             catch (Exception e)
             {
@@ -141,6 +138,7 @@ namespace ECS.StreamableLoading.AssetBundles
             string version,
             string source,
             bool lookForShaderAssets,
+            bool hasMultipleAssets,
             CancellationToken ct)
         {
             // if the type was not specified don't load any assets
@@ -156,14 +154,14 @@ namespace ECS.StreamableLoading.AssetBundles
                     throw new AssetBundleContainsShaderException(assetBundle.name);
             }
 
-            Object? asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
+            Object?[] assets = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, hasMultipleAssets,loadingMutex, reportCategory, ct);
 
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, assets, expectedObjType, dependencies,
                 version: version,
                 source: source));
         }
 
-        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
+        private static async UniTask<Object[]> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, bool hasMultipleAssets, AssetBundleLoadingMutex loadingMutex, ReportData reportCategory,
             CancellationToken ct)
         {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
@@ -181,11 +179,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 case 0:
                     throw new AssetBundleMissingMainAssetException(assetBundle.name, objectType);
                 case > 1:
-                    ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
+                    if (!hasMultipleAssets)
+                        ReportHub.LogError(reportCategory, $"AssetBundle {assetBundle.name} contains more than one root {objectType}. Only the first one will be used.");
                     break;
             }
 
-            return assets[0];
+            return assets;
         }
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(

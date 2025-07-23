@@ -47,11 +47,16 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         public bool LookForShaderAssets;
 
+        public bool SingleAssetBundleHack;
+        public bool HasMultipleAssetBundles;
+
         private GetAssetBundleIntention(Type? expectedObjectType, string? name = null,
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             SceneAssetBundleManifest? assetBundleManifest = null,
             URLSubdirectory customEmbeddedSubDirectory = default,
             bool lookForShaderAssets = false,
+            bool singleAssetBundleHack = false,
+            bool hashMultipleAssetBundles = false,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -64,6 +69,8 @@ namespace ECS.StreamableLoading.AssetBundles
             cacheHash = null;
             Manifest = assetBundleManifest;
             LookForShaderAssets = lookForShaderAssets;
+            this.SingleAssetBundleHack = singleAssetBundleHack;
+            this.HasMultipleAssetBundles = hashMultipleAssetBundles;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -89,6 +96,9 @@ namespace ECS.StreamableLoading.AssetBundles
         public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null,
             URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
+
+        public static GetAssetBundleIntention CreateSingleAssetBundleHack(string url) =>
+            new (typeof(GameObject), hash: url, singleAssetBundleHack: true, hashMultipleAssetBundles: true, permittedSources: AssetSource.WEB);
 
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);

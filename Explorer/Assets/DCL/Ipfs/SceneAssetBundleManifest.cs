@@ -83,5 +83,10 @@ namespace DCL.Ipfs
         //The first loaded hash will be the one used for all the other requests
         public URLAddress GetCacheableURL(string hash) =>
             assetBundlesBaseUrl.Append(new URLPath(hash));
+
+        public bool SupportsSingleAssetBundle()
+        {
+            return sceneID.Equals("bafkreifqcraqxctg4krbklm6jsbq2x5tueevhmvxx354obl4ogu5owkbqu");
+        }
     }
 }

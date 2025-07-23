@@ -59,16 +59,11 @@ namespace ECS.SceneLifeCycle.Systems
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
-            Dictionary<string, GameObject> staticSceneGameObjects = new ();
-
-            if (definitionComponent.Definition.id.Equals("bafkreifqcraqxctg4krbklm6jsbq2x5tueevhmvxx354obl4ogu5owkbqu") && ApplicationParametersParser.HasFlagStatic("compression"))
-                await LoadBigAssetBundle(staticSceneGameObjects);
-
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
 
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
-                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt), staticSceneGameObjects);
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
             ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
 
@@ -77,28 +72,6 @@ namespace ECS.SceneLifeCycle.Systems
             sceneFacade.Initialize();
             ReportHub.LogProductionInfo($"Loading scene {(sceneFacade.SceneData.IsPortableExperience() ? "(PX)" : "")} '{definition.GetLogSceneName()}' ended");
             return sceneFacade;
-        }
-
-        private async UniTask LoadBigAssetBundle(Dictionary<string, GameObject> staticSceneGameObjects)
-        {
-            ApplicationParametersParser.TryGetValueStatic("compression", out string compressionValue);
-            UnityWebRequest unityWebRequest;
-
-            using (timeProfiler.Measure(ms => UnityEngine.Debug.Log($"JUANI DOWNLOADED ENDED {ms} ms {compressionValue}")))
-            {
-                unityWebRequest =
-                    UnityWebRequestAssetBundle.GetAssetBundle($"https://explorer-artifacts.decentraland.zone/testing/GP_staticscene_{compressionValue}", Hash128.Compute(compressionValue));
-
-                await unityWebRequest.SendWebRequest();
-            }
-
-            using (timeProfiler.Measure(ms => UnityEngine.Debug.Log($"JUANI LOADED ENDED {ms} ms {compressionValue}")))
-            {
-                AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(unityWebRequest);
-
-                foreach (GameObject loadAllAsset in assetBundle.LoadAllAssets<GameObject>())
-                    staticSceneGameObjects.Add(loadAllAsset.name, loadAllAsset);
-            }
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

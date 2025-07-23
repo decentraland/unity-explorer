@@ -4,8 +4,10 @@ using Arch.SystemGroups;
 using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System.Threading;
@@ -22,13 +24,14 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            StartAssetBundleManifestPromiseQuery(World);
+            StartAssetBundleManifestPromiseForScenesQuery(World);
             ResolveAssetBundleManifestPromiseQuery(World);
         }
 
         [Query]
-        [None(typeof(AssetBundleManifestPromise))]
-        public void StartAssetBundleManifestPromise(Entity entity, in SceneDefinitionComponent sceneDefinition, ref PartitionComponent partitionComponent)
+        [None(typeof(AssetBundleManifestPromise), typeof(SceneAssetBundleManifest))]
+        [All(typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
+        public void StartAssetBundleManifestPromiseForScenes(Entity entity, in SceneDefinitionComponent sceneDefinition, ref PartitionComponent partitionComponent)
         {
             var promise = AssetBundleManifestPromise.Create(World,
                 GetAssetBundleManifestIntention.Create(sceneDefinition.Definition.id, new CommonLoadingArguments(sceneDefinition.Definition.id, cancellationTokenSource: new CancellationTokenSource())),

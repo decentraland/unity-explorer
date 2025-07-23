@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.ECS.StreamableLoading.AssetBundles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -50,9 +51,14 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(ISceneFacade))]
+        [All(typeof(StaticScene))]
         private void HandleNotCreatedScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise,
-            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
+            ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent, in StaticScene staticScene)
         {
+            //Wait for static scene to be ready
+            if (!staticScene.IsReady)
+                return;
+
             // Gracefully consume with the possibility of repetitions (in case the scene loading has failed)
             if (promise.IsConsumed)
             {
@@ -66,6 +72,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
                 var scene = result.Asset!;
+                //scene.SceneData.StaticScene = staticScene;
 
                 var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
 

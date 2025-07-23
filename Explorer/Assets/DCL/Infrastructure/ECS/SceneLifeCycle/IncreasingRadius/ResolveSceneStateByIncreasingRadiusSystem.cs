@@ -106,10 +106,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
 
         [Query]
-        [All(typeof(SceneAssetBundleManifest))]
         [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
         private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
-            ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneAssetBundleManifest sceneAssetBundleManifest)
+            ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             //sceneDefinitionComponent.SceneAssetBundleManifest = sceneAssetBundleManifest;
             if (sceneDefinitionComponent.IsPortableExperience)
