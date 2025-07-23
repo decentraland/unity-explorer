@@ -9,5 +9,10 @@
         {
             ChangeState<TypingEnabledChatInputState>();
         }
+
+        protected override void OnInputBlocked()
+        {
+            ChangeState<BlockedChatInputState>();
+        }
     }
 }

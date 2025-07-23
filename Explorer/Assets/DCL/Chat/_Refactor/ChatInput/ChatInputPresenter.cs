@@ -62,11 +62,7 @@ public class ChatInputPresenter : IDisposable
         fsm.ChangeState<InitializingChatInputState>();
 
         Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
-
-        if (result is { Success: true, Value: ChatUserStateUpdater.ChatUserState.CONNECTED })
-            fsm.ChangeState<TypingEnabledChatInputState>();
-        else
-            fsm.ChangeState<BlockedChatInputState>();
+        OnBlockedUpdated(result);
     }
 
     private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
@@ -96,6 +92,11 @@ public class ChatInputPresenter : IDisposable
         cts = cts.SafeRestart();
 
         Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
+        OnBlockedUpdated(result);
+    }
+
+    private void OnBlockedUpdated(Result<ChatUserStateUpdater.ChatUserState> result)
+    {
         fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: ChatUserStateUpdater.ChatUserState.CONNECTED });
     }
 

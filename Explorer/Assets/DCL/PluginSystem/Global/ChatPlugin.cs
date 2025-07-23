@@ -199,8 +199,6 @@ namespace DCL.PluginSystem.Global
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
 
-
-
             var getUserChatStatus = new GetUserChatStatusCommand(chatUserStateUpdater, eventBus);
 
             var currentChannelService = new CurrentChannelService(getUserChatStatus);

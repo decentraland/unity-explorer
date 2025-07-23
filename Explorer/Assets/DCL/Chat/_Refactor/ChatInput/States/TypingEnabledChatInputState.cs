@@ -138,5 +138,10 @@ namespace DCL.Chat
             context.ChatInputView.InsertTextAtCaretPosition(pastedText);
             pasteToastState!.TryDeactivate();
         }
+
+        protected override void OnInputBlocked()
+        {
+            ChangeState<BlockedChatInputState>();
+        }
     }
 }

@@ -4,13 +4,15 @@ namespace DCL.Chat
 {
     public abstract class ChatInputState : MVCState<ChatInputState, ChatInputStateContext>
     {
-        public void OnBlockedUpdated(bool isUnblocked)
+        internal void OnBlockedUpdated(bool isUnblocked)
         {
             if (isUnblocked)
                 OnInputUnblocked();
             else
-                ChangeState<BlockedChatInputState>();
+                OnInputBlocked();
         }
+
+        protected virtual void OnInputBlocked() { }
 
         protected virtual void OnInputUnblocked() { }
     }
