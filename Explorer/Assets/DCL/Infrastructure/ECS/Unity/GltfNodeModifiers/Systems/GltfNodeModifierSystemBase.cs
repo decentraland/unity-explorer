@@ -48,7 +48,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Finds a renderer by path, returning null if not found
         /// </summary>
-        protected static Renderer? FindRendererByPath(GameObject rootGameObject, string path, IReadOnlyList<string>? availablePaths = null)
+        protected static Renderer? FindRendererByPath(Transform gltfRootTransform, string path, IReadOnlyList<string>? availablePaths = null)
         {
             if (string.IsNullOrEmpty(path))
                 return null;
@@ -56,7 +56,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             // There's always 1 child GameObject in both AB or Raw GLTF instantiated GltfContainer...
             // AB: The GO name is "AB:hash"
             // Raw GLTF: the GO name is "Scene"
-            Transform? rendererTransform = rootGameObject.transform.GetChild(0).Find(path);
+            Transform? rendererTransform = gltfRootTransform.GetChild(0).Find(path);
 
             if (rendererTransform != null && rendererTransform.TryGetComponent(out Renderer renderer))
                 return renderer;
@@ -109,13 +109,13 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Cleans up ALL GltfNode entities
         /// </summary>
-        protected void CleanupAllGltfNodeEntities(Entity containerEntity, in GltfContainerComponent gltfContainer)
+        protected void CleanupAllGltfNodeEntities(Entity containerEntity, ref Components.GltfNodeModifiers gltfNodeModifiers)
         {
-            if (gltfContainer.GltfNodeEntities == null || gltfContainer.GltfNodeEntities.Count == 0) return;
+            if (gltfNodeModifiers.GltfNodeEntities == null || gltfNodeModifiers.GltfNodeEntities.Count == 0) return;
 
-            foreach (Entity gltfNodeEntity in gltfContainer.GltfNodeEntities) { CleanupGltfNodeEntity(gltfNodeEntity, containerEntity); }
+            foreach (Entity gltfNodeEntity in gltfNodeModifiers.GltfNodeEntities) { CleanupGltfNodeEntity(gltfNodeEntity, containerEntity); }
 
-            gltfContainer.GltfNodeEntities.Clear();
+            gltfNodeModifiers.GltfNodeEntities.Clear();
         }
 
         /// <summary>
@@ -171,10 +171,10 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Creates a new GltfNode entity for a new modifier
         /// </summary>
-        protected void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent, bool hasShadowOverride,
+        protected void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, Transform gltfRootTransform, ref Components.GltfNodeModifiers gltfNodeModifiers, PartitionComponent partitionComponent, bool hasShadowOverride,
             bool hasMaterialOverride, IReadOnlyList<string>? availablePaths = null)
         {
-            Renderer? renderer = FindRendererByPath(gltfContainer.RootGameObject!, modifier.Path, availablePaths);
+            Renderer? renderer = FindRendererByPath(gltfRootTransform, modifier.Path, availablePaths);
             if (renderer == null) return;
 
             Entity nodeEntity = this.World.Create();
@@ -186,7 +186,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             if (hasMaterialOverride)
                 World.Add(nodeEntity, modifier.Material, partitionComponent);
 
-            gltfContainer.GltfNodeEntities!.Add(nodeEntity);
+            gltfNodeModifiers.GltfNodeEntities!.Add(nodeEntity);
         }
     }
 }

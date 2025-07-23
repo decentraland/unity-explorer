@@ -82,7 +82,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 Promise = promise,
                 State = LoadingState.Finished,
                 RootGameObject = rootGameObject,
-                GltfNodeEntities = new List<Entity>(),
                 OriginalMaterials = new Dictionary<Renderer, Material>
                 {
                     { rootRenderer, originalRootMaterial },
@@ -114,7 +113,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers);
             world.Add(entity, gltfContainer);
-            world.Add(entity, new Components.GltfNodeModifiers());
+            
+            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            world.Add(entity, nodeModifiers);
             world.Add(entity, PartitionComponent.TOP_PRIORITY);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
@@ -124,9 +125,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
-            updatedContainer.GltfNodeEntities.Add(childEntity);
-            world.Set(entity, updatedContainer);
+            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            world.Set(entity, nodeModifiers);
 
             // Act - Remove PBGltfNodeModifiers to trigger HandleGltfNodeModifiersRemoval query
             world.Remove<PBGltfNodeModifiers>(entity);
@@ -136,8 +136,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
             Assert.That(world.Has<GltfNode>(childEntity), Is.False);
             Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.False); // Should be removed by system
-            updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -163,7 +161,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
             world.Add(entity, gltfContainer);
-            world.Add(entity, new Components.GltfNodeModifiers());
+            
+            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            world.Add(entity, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
             Entity childEntity = world.Create();
@@ -172,9 +172,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.blue), PartitionComponent.TOP_PRIORITY);
 
-            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
-            updatedContainer.GltfNodeEntities.Add(childEntity);
-            world.Set(entity, updatedContainer);
+            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            world.Set(entity, nodeModifiers);
 
             // Act - Add cleanup intention to trigger HandleGltfNodeModifiersCleanup query
             world.Add(entity, new GltfNodeModifiersCleanupIntention());
@@ -184,8 +183,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
             Assert.That(world.Has<GltfNode>(childEntity), Is.False);
             Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False); // Should be removed
-            updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -211,8 +208,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             // Assert
             Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.False); // Should be removed
-            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.GltfNodeEntities.Count, Is.EqualTo(0)); // Should remain empty
         }
 
         [Test]
@@ -220,7 +215,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         {
             // Arrange - Entity with components but null GltfNodeEntities
             GltfContainerComponent gltfContainer = CreateGltfContainer();
-            gltfContainer.GltfNodeEntities = null; // Explicitly null
 
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
@@ -231,7 +225,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
             world.Add(entity, gltfContainer);
-            world.Add(entity, new Components.GltfNodeModifiers());
+            
+            var nodeModifiers = new Components.GltfNodeModifiers(null); // Explicitly null
+            world.Add(entity, nodeModifiers);
             world.Add(entity, new GltfNodeModifiersCleanupIntention());
 
             // Act - Run cleanup system (should not throw even with null GltfNodeEntities)

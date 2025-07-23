@@ -7,7 +7,6 @@ using DCL.Diagnostics;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.GltfNodeModifiers.Components;
 using UnityEngine.Pool;
@@ -35,24 +34,24 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
         [Query]
         [All(typeof(PBGltfNodeModifiers), typeof(GltfNodeModifiersCleanupIntention), typeof(Components.GltfNodeModifiers))]
-        private void HandleCleanupIntention(Entity containerEntity, ref GltfContainerComponent gltfContainer)
+        private void HandleCleanupIntention(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref gltfContainer);
+            RunCleanup(containerEntity, ref nodeModifiers);
         }
 
         [Query]
         [All(typeof(Components.GltfNodeModifiers))]
         [None(typeof(PBGltfNodeModifiers))]
-        private void HandleComponentRemoval(Entity containerEntity, ref GltfContainerComponent gltfContainer)
+        private void HandleComponentRemoval(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref gltfContainer);
+            RunCleanup(containerEntity, ref nodeModifiers);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(Components.GltfNodeModifiers))]
-        private void HandleEntityDestruction(Entity containerEntity, ref GltfContainerComponent gltfContainer)
+        private void HandleEntityDestruction(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref gltfContainer);
+            RunCleanup(containerEntity, ref nodeModifiers);
         }
 
         public void FinalizeComponents(in Query query)
@@ -62,16 +61,16 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
         [Query]
         [All(typeof(Components.GltfNodeModifiers))]
-        private void FinalizeComponents(Entity containerEntity, ref GltfContainerComponent gltfContainer)
+        private void FinalizeComponents(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            RunCleanup(containerEntity, ref gltfContainer);
+            RunCleanup(containerEntity, ref nodeModifiers);
         }
 
-        private void RunCleanup(Entity containerEntity, ref GltfContainerComponent gltfContainer)
+        private void RunCleanup(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            CleanupAllGltfNodeEntities(containerEntity, in gltfContainer);
+            CleanupAllGltfNodeEntities(containerEntity, ref nodeModifiers);
 
-            ListPool<Entity>.Release(gltfContainer.GltfNodeEntities);
+            ListPool<Entity>.Release(nodeModifiers.GltfNodeEntities);
 
             World.TryRemove<GltfNodeModifiersCleanupIntention>(containerEntity);
             World.TryRemove<Components.GltfNodeModifiers>(containerEntity);

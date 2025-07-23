@@ -75,7 +75,6 @@ namespace ECS.Unity.GLTFContainer.Systems
                 {
                     component.State = LoadingState.FinishedWithError;
                     component.RootGameObject = null;
-                    component.GltfNodeEntities = null;
                     eventsBuffer.Add(entity, component);
                     return;
                 }

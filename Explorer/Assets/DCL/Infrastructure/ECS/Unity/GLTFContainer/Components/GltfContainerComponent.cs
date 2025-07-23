@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.Diagnostics;
 using System;
 using DCL.ECSComponents;
@@ -28,11 +27,6 @@ namespace ECS.Unity.GLTFContainer.Components
         /// </summary>
         public GameObject? RootGameObject;
 
-        /// <summary>
-        ///     Collection of entities created for GLTF nodes that have modifiers applied
-        /// </summary>
-        public List<Entity>? GltfNodeEntities;
-
         public GltfContainerComponent(ColliderLayer visibleMeshesCollisionMask, ColliderLayer invisibleMeshesCollisionMask, AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> promise)
         {
             VisibleMeshesCollisionMask = visibleMeshesCollisionMask;
@@ -42,7 +36,6 @@ namespace ECS.Unity.GLTFContainer.Components
             NeedsColliderBoundsCheck = true;
             OriginalMaterials = null;
             RootGameObject = null;
-            GltfNodeEntities = null;
         }
 
         public static GltfContainerComponent CreateFaulty(ReportData reportData, Exception exception)
@@ -56,7 +49,6 @@ namespace ECS.Unity.GLTFContainer.Components
         {
             State = LoadingState.FinishedWithError;
             RootGameObject = null;
-            GltfNodeEntities = null;
 
             Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.CreateFinalized(
                 default,
