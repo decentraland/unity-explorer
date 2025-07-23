@@ -86,9 +86,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                     Hide();
                     break;
                 case VoiceChatType.COMMUNITY:
+                    Show();
+                    break;
                 case VoiceChatType.NONE:
                 default:
-                    Show();
                     break;
             }
         }

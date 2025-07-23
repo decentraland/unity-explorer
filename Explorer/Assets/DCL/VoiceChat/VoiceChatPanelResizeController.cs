@@ -8,6 +8,7 @@ namespace DCL.VoiceChat
         private readonly VoiceChatPanelResizeView view;
         private readonly IVoiceChatOrchestratorState voiceChatState;
 
+        private const float DEFAULT_VOICE_CHAT_SIZE = 46;
         private const float EXPANDED_COMMUNITY_VOICE_CHAT_SIZE = 300;
         private const float COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE = 46;
         private const float EXPANDED_PRIVATE_VOICE_CHAT_SIZE = 100;
@@ -23,12 +24,20 @@ namespace DCL.VoiceChat
 
         private void OnUpdateVoiceChatPanelSize(VoiceChatPanelSize chatPanelSize)
         {
-            if (chatPanelSize == VoiceChatPanelSize.DEFAULT)
-                view.VoiceChatPanelLayoutElement.preferredHeight =
-                    voiceChatState.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE ? COLLAPSED_PRIVATE_VOICE_CHAT_SIZE : COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE;
-            else
-                view.VoiceChatPanelLayoutElement.preferredHeight =
-                    voiceChatState.CurrentVoiceChatType.Value == VoiceChatType.PRIVATE ? EXPANDED_PRIVATE_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+            switch (voiceChatState.CurrentVoiceChatType.Value)
+            {
+                case VoiceChatType.NONE:
+                    view.VoiceChatPanelLayoutElement.preferredHeight = DEFAULT_VOICE_CHAT_SIZE;
+                    break;
+                case VoiceChatType.PRIVATE:
+                    view.VoiceChatPanelLayoutElement.preferredHeight =
+                        chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_PRIVATE_VOICE_CHAT_SIZE : EXPANDED_PRIVATE_VOICE_CHAT_SIZE;
+                    break;
+                case VoiceChatType.COMMUNITY:
+                    view.VoiceChatPanelLayoutElement.preferredHeight =
+                        chatPanelSize == VoiceChatPanelSize.DEFAULT ? COLLAPSED_COMMUNITY_VOICE_CHAT_SIZE : EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                    break;
+            }
         }
 
         public void Dispose()
