@@ -125,22 +125,7 @@ namespace DCL.Roads.Settings
         {
             foreach (GPUInstancingLODGroupWithBuffer myCandidate in sourceCandidates)
             {
-                GPUInstancingLODGroupWithBuffer candidate;
-
-                if (myCandidate.Name.StartsWith("RoadTile"))
-                {
-                    if (roadTileCandidate.LODGroup == null)
-                    {
-                        roadTileCandidate.LODGroup = myCandidate.LODGroup;
-                        roadTileCandidate.LODGroup.Name = "RoadTile";
-                        roadTileCandidate.Name = "RoadTile";
-                    }
-
-                    roadTileCandidate.InstancesBuffer = myCandidate.InstancesBuffer;
-                    candidate = roadTileCandidate;
-                }
-                else
-                    candidate = myCandidate;
+                GPUInstancingLODGroupWithBuffer candidate = HandleRoadTileCase(myCandidate);
 
                 if (!targetDict.TryGetValue(candidate, out HashSet<PerInstanceBuffer> matrices))
                 {
@@ -154,6 +139,24 @@ namespace DCL.Roads.Settings
         }
 
         private GPUInstancingLODGroupWithBuffer roadTileCandidate = new ();
+
+        private GPUInstancingLODGroupWithBuffer HandleRoadTileCase(GPUInstancingLODGroupWithBuffer myCandidate)
+        {
+            if (myCandidate.Name.StartsWith("RoadTile"))
+            {
+                if (roadTileCandidate.LODGroup == null)
+                {
+                    roadTileCandidate.LODGroup = myCandidate.LODGroup;
+                    roadTileCandidate.LODGroup.Name = "RoadTile";
+                    roadTileCandidate.Name = "RoadTile";
+                }
+
+                roadTileCandidate.InstancesBuffer = myCandidate.InstancesBuffer;
+                return roadTileCandidate;
+            }
+
+            return myCandidate;
+        }
 #endif
     }
 }

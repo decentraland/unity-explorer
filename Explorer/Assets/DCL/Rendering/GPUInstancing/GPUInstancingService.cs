@@ -29,20 +29,20 @@ namespace DCL.Rendering.GPUInstancing
             public uint nInstBufferSize;
             public uint nMaxLOD_GB;
 
-            public void Set(Camera cam, float maxDistance, GPUInstancingLODGroupWithBuffer candidate, uint instancesCount)
+            public void Set(Camera cam, float maxDistance, LODGroupData lodGroupData, uint instancesCount)
             {
-                lodSizes = candidate.LODGroup.LODSizesMatrix;
+                lodSizes = lodGroupData.LODSizesMatrix;
                 matCamera_MVP = cam.projectionMatrix * cam.worldToCameraMatrix;
                 vCameraPosition = cam.transform.position;
                 fShadowDistance = 0.0f;
-                vBoundsCenter = candidate.LODGroup.Bounds.center;
+                vBoundsCenter = lodGroupData.Bounds.center;
                 frustumOffset = 0.0f;
-                vBoundsExtents = candidate.LODGroup.Bounds.extents;
+                vBoundsExtents = lodGroupData.Bounds.extents;
                 fCameraHalfAngle = 0.5f * cam.fieldOfView * Mathf.Deg2Rad;
                 fMaxDistance = Mathf.Min(maxDistance, cam.farClipPlane);
                 minCullingDistance = cam.nearClipPlane;
                 nInstBufferSize = instancesCount;
-                nMaxLOD_GB = (uint)candidate.LODGroup.LodsScreenSpaceSizes.Length;
+                nMaxLOD_GB = (uint)lodGroupData.LODCount;
             }
         };
 
@@ -145,7 +145,7 @@ namespace DCL.Rendering.GPUInstancing
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers buffers) in candidatesBuffersTable)
             {
-                groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate, (uint)buffers.PerInstanceMatrices.count);
+                groupDataArray[0].Set(renderCamera, Settings.RoadsSceneDistance(LandscapeData.DetailDistance), candidate.LODGroupData, (uint)buffers.PerInstanceMatrices.count);
 
                 buffers.GroupData.SetData(groupDataArray, 0, 0, 1);
                 FrustumCullingAndLODGenComputeShader.SetBuffer(FrustumCullingAndLODGenComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
@@ -176,7 +176,7 @@ namespace DCL.Rendering.GPUInstancing
                 for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
                 {
                     CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
-                    int lodCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
+                    int lodCount = candidate.LODGroupData.LODCount;
 
                     Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i * lodCount);
                 }
@@ -203,7 +203,7 @@ namespace DCL.Rendering.GPUInstancing
                 }
 
                 int _nInstanceCount = candidate.InstancesBuffer.Count;
-                int _nLODCount = candidate.LODGroup.LodsScreenSpaceSizes.Length;
+                int _nLODCount = candidate.LODGroupData.LODCount;
 
                 buffers.LODLevels = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, sizeof(uint) * 4);
                 buffers.InstanceLookUpAndDither = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount * _nLODCount, sizeof(uint) * 4);
