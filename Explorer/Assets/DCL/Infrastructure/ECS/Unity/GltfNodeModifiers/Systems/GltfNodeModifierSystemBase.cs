@@ -39,10 +39,10 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Stores original materials for the specified renderers
         /// </summary>
-        protected static void StoreOriginalMaterials(ref GltfContainerComponent gltfContainer, IEnumerable<Renderer> renderers)
+        protected static void StoreOriginalMaterials(Dictionary<Renderer, Material> originalMaterials, IEnumerable<Renderer> renderers)
         {
             foreach (Renderer? renderer in renderers)
-                gltfContainer.OriginalMaterials![renderer] = renderer.sharedMaterial;
+                originalMaterials[renderer] = renderer.sharedMaterial;
         }
 
         /// <summary>

@@ -58,7 +58,6 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
-                    component.ResetOriginalMaterials();
                     cache.Dereference(component.Hash, result.Asset);
                     entityCollidersSceneCache.Remove(result.Asset);
 

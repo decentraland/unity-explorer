@@ -20,8 +20,6 @@ namespace ECS.Unity.GLTFContainer.Components
         public LoadingState State;
         public bool NeedsColliderBoundsCheck;
 
-        public Dictionary<Renderer, Material>? OriginalMaterials;
-
         /// <summary>
         ///     Reference to the root GameObject of the loaded GLTF asset
         /// </summary>
@@ -34,7 +32,6 @@ namespace ECS.Unity.GLTFContainer.Components
             Promise = promise;
             State = LoadingState.Unknown;
             NeedsColliderBoundsCheck = true;
-            OriginalMaterials = null;
             RootGameObject = null;
         }
 

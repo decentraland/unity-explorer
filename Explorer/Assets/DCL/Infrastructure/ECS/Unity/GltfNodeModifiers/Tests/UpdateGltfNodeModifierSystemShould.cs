@@ -83,11 +83,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 Promise = promise,
                 State = LoadingState.Finished,
                 RootGameObject = rootGameObject,
-                OriginalMaterials = new Dictionary<Renderer, Material>
-                {
-                    { rootRenderer, originalRootMaterial },
-                    { childRenderer, originalChildMaterial },
-                },
             };
         }
 

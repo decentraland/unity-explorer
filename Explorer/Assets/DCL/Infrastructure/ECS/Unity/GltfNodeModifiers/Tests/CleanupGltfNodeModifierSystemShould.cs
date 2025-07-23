@@ -1,16 +1,13 @@
 using DCL.ECSComponents;
 using Decentraland.Common;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common;
-using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
-using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.GltfNodeModifiers.Systems;
 using NUnit.Framework;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using Utility.Primitives;
 using Entity = Arch.Core.Entity;
@@ -30,7 +27,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new CleanupGltfNodeModifierSystem(world);
+            system = new CleanupGltfNodeModifierSystem(world, new EntityEventBuffer<GltfContainerComponent>(1));
 
             // Create test GameObjects with renderers
             rootGameObject = new GameObject("Root");
@@ -64,37 +61,10 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 Object.DestroyImmediate(testMaterial);
         }
 
-        private GltfContainerComponent CreateGltfContainer()
-        {
-            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                world,
-                new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()),
-                PartitionComponent.TOP_PRIORITY);
-
-            var asset = GltfContainerAsset.Create(rootGameObject, null);
-            asset.Renderers.Add(rootRenderer);
-            asset.Renderers.Add(childRenderer);
-
-            world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-
-            return new GltfContainerComponent
-            {
-                Promise = promise,
-                State = LoadingState.Finished,
-                RootGameObject = rootGameObject,
-                OriginalMaterials = new Dictionary<Renderer, Material>
-                {
-                    { rootRenderer, originalRootMaterial },
-                    { childRenderer, originalChildMaterial },
-                },
-            };
-        }
-
         [Test]
         public void HandleGltfNodeModifiersRemoval_CleanupAllEntities()
         {
             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-            GltfContainerComponent gltfContainer = CreateGltfContainer();
 
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
@@ -112,8 +82,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Create entity with components (simulating setup completion)
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers);
-            world.Add(entity, gltfContainer);
-            
+
             var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
             world.Add(entity, nodeModifiers);
             world.Add(entity, PartitionComponent.TOP_PRIORITY);
@@ -142,8 +111,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void HandleGltfNodeModifiersCleanup_WithCleanupIntention()
         {
             // Arrange - Simulate SetupGltfNodeModifierSystem outcome
-            GltfContainerComponent gltfContainer = CreateGltfContainer();
-
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false,
@@ -160,8 +127,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Create entity with all required components for HandleGltfNodeModifiersCleanup query
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
-            world.Add(entity, gltfContainer);
-            
+
             var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
             world.Add(entity, nodeModifiers);
 
@@ -189,8 +155,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void HandleCleanupWithNoGltfNodeEntities()
         {
             // Arrange - Entity with components but no actual GltfNode entities (simulating empty setup)
-            GltfContainerComponent gltfContainer = CreateGltfContainer();
-
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false,
@@ -199,7 +163,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Create entity with all required components for HandleGltfNodeModifiersCleanup query
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
-            world.Add(entity, gltfContainer);
             world.Add(entity, new Components.GltfNodeModifiers());
             world.Add(entity, new GltfNodeModifiersCleanupIntention());
 
@@ -214,8 +177,6 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         public void HandleCleanupWithNullGltfNodeEntities()
         {
             // Arrange - Entity with components but null GltfNodeEntities
-            GltfContainerComponent gltfContainer = CreateGltfContainer();
-
             var gltfNodeModifiers = new PBGltfNodeModifiers
             {
                 IsDirty = false,
@@ -224,8 +185,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Create entity with all required components for HandleGltfNodeModifiersCleanup query
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers); // Required for cleanup query
-            world.Add(entity, gltfContainer);
-            
+
             var nodeModifiers = new Components.GltfNodeModifiers(null); // Explicitly null
             world.Add(entity, nodeModifiers);
             world.Add(entity, new GltfNodeModifiersCleanupIntention());

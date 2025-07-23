@@ -107,8 +107,6 @@ namespace ECS.Unity.GLTFContainer.Tests
             {
                 Promise = promise,
                 State = LoadingState.Finished,
-                OriginalMaterials = new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } },
-
             };
 
             // Add the GltfNodeModifiers component to simulate an entity with node modifiers

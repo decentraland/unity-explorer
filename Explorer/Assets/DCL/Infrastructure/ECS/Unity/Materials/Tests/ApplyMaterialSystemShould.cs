@@ -89,7 +89,7 @@ namespace ECS.Unity.Materials.Tests
             {
                 Promise = promise,
                 State = LoadingState.Finished,
-                OriginalMaterials = new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } }
+
             };
             world.Add(containerEntity, gltfContainerComponent);
 

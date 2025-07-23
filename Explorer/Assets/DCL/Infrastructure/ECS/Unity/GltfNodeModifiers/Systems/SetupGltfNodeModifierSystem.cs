@@ -42,11 +42,10 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             gltfNodeModifiers.IsDirty = false;
             var newGltfNodeModifiers = new Components.GltfNodeModifiers(ListPool<Entity>.Get());
-            gltfContainer.OriginalMaterials ??= new Dictionary<Renderer, Material>();
 
             // Store original materials for all renderers
-            if (gltfContainer.OriginalMaterials.Count == 0)
-                StoreOriginalMaterials(ref gltfContainer, result.Asset!.Renderers);
+            if (newGltfNodeModifiers.OriginalMaterials.Count == 0)
+                StoreOriginalMaterials(newGltfNodeModifiers.OriginalMaterials, result.Asset!.Renderers);
 
             // Special case: single modifier with empty path applies to ALL renderers
             if (IsGltfGlobalModifier(gltfNodeModifiers.Modifiers))

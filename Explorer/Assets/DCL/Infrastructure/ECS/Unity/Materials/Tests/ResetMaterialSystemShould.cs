@@ -10,7 +10,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Utility.Primitives;
 using System.Collections.Generic;
-using ECS.Unity.GLTFContainer.Components;
 using DCL.ECSComponents;
 using ECS.Unity.GltfNodeModifiers.Components;
 
@@ -77,13 +76,12 @@ namespace ECS.Unity.Materials.Tests
             var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = newMaterial;
 
-            // Create container entity with original materials
+            // Create container entity with GltfNodeModifiers containing original materials
             var containerEntity = world.Create();
-            var gltfContainerComponent = new GltfContainerComponent
-            {
-                OriginalMaterials = new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } }
-            };
-            world.Add(containerEntity, gltfContainerComponent);
+            var gltfNodeModifiers = new GltfNodeModifiers.Components.GltfNodeModifiers(new List<Entity>());
+            gltfNodeModifiers.OriginalMaterials[meshRenderer] = originalMaterial;
+
+            world.Add(containerEntity, gltfNodeModifiers);
 
             // Create GltfNode entity with cleanup intention
             var materialComponent = new MaterialComponent

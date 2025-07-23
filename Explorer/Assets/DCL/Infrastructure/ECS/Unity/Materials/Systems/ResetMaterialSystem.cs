@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using ECS.Abstract;
-using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -48,21 +47,18 @@ namespace ECS.Unity.Materials.Systems
         [Query]
         private void ResetGltfNode(Entity entity, ref GltfNodeMaterialCleanupIntention cleanupIntention, ref MaterialComponent materialComponent)
         {
-            var gltfContainer = World.TryGetRef<GltfContainerComponent>(cleanupIntention.ContainerEntity, out bool exists);
-            if (!exists) return;
+            if (!World.TryGet<ECS.Unity.GltfNodeModifiers.Components.GltfNodeModifiers>(cleanupIntention.ContainerEntity, out var gltfNodeModifiers)) return;
 
             // Reset all renderers to their original state
             foreach (var renderer in cleanupIntention.Renderers)
             {
-                if (gltfContainer.OriginalMaterials!.TryGetValue(renderer, out var originalMaterial))
+                if (gltfNodeModifiers.OriginalMaterials.TryGetValue(renderer, out var originalMaterial))
                     renderer.sharedMaterial = originalMaterial;
             }
 
             // Clean up the material component and remove the entity
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
-            World.Remove<PBMaterial>(entity);
-            World.Remove<MaterialComponent>(entity);
-            World.Remove<GltfNodeMaterialCleanupIntention>(entity);
+            World.Remove<PBMaterial, MaterialComponent, GltfNodeMaterialCleanupIntention>(entity);
 
             // Destroy the entity if requested and it's not the container entity itself
             if (cleanupIntention.Destroy && entity != cleanupIntention.ContainerEntity)

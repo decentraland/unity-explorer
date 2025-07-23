@@ -1,4 +1,3 @@
-using Arch.Core;
 using DCL.ECSComponents;
 using Decentraland.Common;
 using ECS.Prioritization.Components;
@@ -9,7 +8,6 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.GltfNodeModifiers.Systems;
-using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
 using UnityEngine;
@@ -123,11 +121,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(world.Has<GltfNode>(entity), Is.True);
             Assert.That(world.Has<PBMaterial>(entity), Is.True);
 
-            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.OriginalMaterials, Is.Not.Null);
-            Assert.That(updatedContainer.OriginalMaterials.Count, Is.EqualTo(2));
-            
             Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
+            Assert.That(nodeModifiers.OriginalMaterials, Is.Not.Null);
+            Assert.That(nodeModifiers.OriginalMaterials.Count, Is.EqualTo(2));
             Assert.That(nodeModifiers.GltfNodeEntities, Is.Not.Null);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
             Assert.That(nodeModifiers.GltfNodeEntities[0], Is.EqualTo(entity));
@@ -209,9 +205,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             // Act - First update
             system.Update(0);
 
-            GltfContainerComponent updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.OriginalMaterials[rootRenderer], Is.EqualTo(originalRootMaterial));
-            Assert.That(updatedContainer.OriginalMaterials[childRenderer], Is.EqualTo(originalChildMaterial));
+            Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
+            Assert.That(nodeModifiers.OriginalMaterials[rootRenderer], Is.EqualTo(originalRootMaterial));
+            Assert.That(nodeModifiers.OriginalMaterials[childRenderer], Is.EqualTo(originalChildMaterial));
 
             // Change renderer materials
             rootRenderer.sharedMaterial = testMaterial;
@@ -235,9 +231,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system.Update(0);
 
             // Assert - Original materials should still be the same
-            updatedContainer = world.Get<GltfContainerComponent>(entity);
-            Assert.That(updatedContainer.OriginalMaterials[rootRenderer], Is.EqualTo(originalRootMaterial));
-            Assert.That(updatedContainer.OriginalMaterials[childRenderer], Is.EqualTo(originalChildMaterial));
+            nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
+            Assert.That(nodeModifiers.OriginalMaterials[rootRenderer], Is.EqualTo(originalRootMaterial));
+            Assert.That(nodeModifiers.OriginalMaterials[childRenderer], Is.EqualTo(originalChildMaterial));
         }
 
         [Test]
