@@ -24,7 +24,13 @@ namespace DCL.NotificationsBusController.NotificationTypes
     [Serializable]
     public struct CommunityUserBannedNotificationMetadata
     {
-        [JsonProperty("community_name")]
+        [JsonProperty("id")]
+        public string CommunityId { get; set; }
+
+        [JsonProperty("memberAddress")]
+        public string UserAddress { get; set; }
+
+        [JsonProperty("name")]
         public string CommunityName { get; set; }
 
         [JsonProperty("thumbnailUrl")]

@@ -25,7 +25,10 @@ namespace DCL.NotificationsBusController.NotificationTypes
     [Serializable]
     public struct CommunityEventSoonNotificationMetadata
     {
-        [JsonProperty("community_name")]
+        [JsonProperty("id")]
+        public string CommunityId { get; set; }
+
+        [JsonProperty("name")]
         public string CommunityName { get; set; }
 
         [JsonProperty("thumbnailUrl")]
@@ -34,7 +37,7 @@ namespace DCL.NotificationsBusController.NotificationTypes
         [JsonProperty("world")]
         public bool World { get; set; }
 
-        [JsonProperty("world_name")]
+        [JsonProperty("worldName")]
         public string WorldName { get; set; }
 
         [JsonProperty("x")]

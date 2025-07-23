@@ -25,13 +25,13 @@ namespace DCL.NotificationsBusController.NotificationTypes
     [Serializable]
     public struct CommunityEventCreatedNotificationMetadata
     {
-        [JsonProperty("community_name")]
+        [JsonProperty("id")]
+        public string CommunityId { get; set; }
+
+        [JsonProperty("name")]
         public string CommunityName { get; set; }
 
         [JsonProperty("thumbnailUrl")]
         public string ThumbnailUrl { get; set; }
-
-        [JsonProperty("community_id")]
-        public string CommunityId { get; set; }
     }
 }
