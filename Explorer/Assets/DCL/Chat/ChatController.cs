@@ -78,6 +78,7 @@ namespace DCL.Chat
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
         private CallButtonController callButtonController;
+        private CommunityStreamButtonController communityStreamButtonController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ISpriteCache thumbnailCache;
@@ -298,6 +299,15 @@ namespace DCL.Chat
 
             callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatOrchestrator, chatEventBus);
             viewInstance.chatTitleBar.CallButton.gameObject.SetActive(isCallEnabled);
+
+            communityStreamButtonController = new CommunityStreamButtonController(
+                viewInstance.chatTitleBar.CommunitiesCallButton,
+                voiceChatOrchestrator,
+                chatEventBus,
+                CurrentChannel,
+                communitiesDataProvider);
+
+            viewInstance.chatTitleBar.CommunitiesCallButton.gameObject.SetActive(false);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -353,6 +363,7 @@ namespace DCL.Chat
             UnsubscribeFromEvents();
             Dispose();
             callButtonController.Reset();
+            communityStreamButtonController?.Reset();
         }
 
 #endregion
@@ -470,6 +481,7 @@ namespace DCL.Chat
             memberListHelper.Dispose();
             chatUsersUpdateCts.SafeCancelAndDispose();
             callButtonController?.Dispose();
+            communityStreamButtonController?.Dispose();
             communitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
             memberListCts.SafeCancelAndDispose();
@@ -501,7 +513,7 @@ namespace DCL.Chat
 
         private void OnStartCall(string userId)
         {
-            voiceChatOrchestrator.StartPrivateCall(new Web3Address(userId));
+            voiceChatOrchestrator.StartCall(new Web3Address(userId), VoiceChatType.PRIVATE);
         }
 
         private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)

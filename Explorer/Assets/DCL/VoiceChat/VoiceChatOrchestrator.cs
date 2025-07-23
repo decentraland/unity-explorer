@@ -1,7 +1,6 @@
 using DCL.Diagnostics;
 using DCL.Utilities;
 using DCL.VoiceChat.Services;
-using DCL.Web3;
 using Decentraland.SocialService.V2;
 using System;
 
@@ -35,7 +34,7 @@ namespace DCL.VoiceChat
     /// </summary>
     public interface IVoiceChatOrchestratorActions
     {
-        void StartPrivateCall(Web3Address walletId);
+        void StartCall(string callId, VoiceChatType callType);
         void AcceptCall();
         void HangUp();
         void RejectCall();
@@ -53,6 +52,7 @@ namespace DCL.VoiceChat
     public interface IVoiceChatOrchestrator : IVoiceChatOrchestratorState, IVoiceChatOrchestratorActions, IVoiceChatOrchestratorUIEvents
     {
         string CurrentRoomUrl { get; }
+        string CurrentCallId { get; }
         IPrivateVoiceChatCallStatusService PrivateStatusService { get; }
         ICommunityVoiceChatCallStatusService CommunityStatusService { get; }
         VoiceChatParticipantsStateService ParticipantsStateService { get; }
@@ -80,6 +80,7 @@ namespace DCL.VoiceChat
         public IReadonlyReactiveProperty<VoiceChatPanelSize> CurrentVoiceChatPanelSize => currentVoiceChatPanelSize;
 
         public string CurrentRoomUrl => activeCallStatusService?.RoomUrl ?? string.Empty;
+        public string CurrentCallId => activeCallStatusService?.CallId ?? string.Empty;
         public IPrivateVoiceChatCallStatusService PrivateStatusService => privateVoiceChatCallStatusService;
         public ICommunityVoiceChatCallStatusService CommunityStatusService => communityVoiceChatCallStatusService;
         public VoiceChatParticipantsStateService ParticipantsStateService => participantsStateService;
@@ -118,16 +119,17 @@ namespace DCL.VoiceChat
             participantsStateService?.Dispose();
         }
 
-        public void StartPrivateCall(Web3Address walletId)
+        public void StartCall(string callId, VoiceChatType callType)
         {
-            if (currentVoiceChatType.Value == VoiceChatType.COMMUNITY)
+            if (currentVoiceChatType.Value != VoiceChatType.NONE)
             {
-                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot start private call while in community call");
+                ReportHub.LogWarning(ReportCategory.VOICE_CHAT, "Cannot start a call while in another call");
                 return;
             }
 
-            SetActiveCallService(privateVoiceChatCallStatusService);
-            privateVoiceChatCallStatusService.StartCall(walletId);
+
+            SetActiveCallService(callType == VoiceChatType.PRIVATE? privateVoiceChatCallStatusService : communityVoiceChatCallStatusService);
+            activeCallStatusService.StartCall(callId);
         }
 
         public void StartCommunityCall(string communityId)

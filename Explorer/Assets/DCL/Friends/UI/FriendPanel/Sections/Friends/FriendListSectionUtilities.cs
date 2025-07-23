@@ -90,7 +90,7 @@ namespace DCL.Friends.UI.FriendPanel.Sections.Friends
             mvcManager.ShowAsync(BlockUserPromptController.IssueCommand(new BlockUserPromptParams(targetUserAddress, targetUserName, BlockUserPromptParams.UserBlockAction.BLOCK))).Forget();
 
         internal static void CallFriend(Web3Address walletId, IVoiceChatOrchestratorActions voiceChatOrchestratorActions) =>
-            voiceChatOrchestratorActions.StartPrivateCall(walletId);
+            voiceChatOrchestratorActions.StartCall(walletId.ToString(), VoiceChatType.PRIVATE);
 
         internal static void OpenProfilePassport(FriendProfile profile, IPassportBridge passportBridge) =>
             passportBridge.ShowAsync(profile.Address).Forget();
