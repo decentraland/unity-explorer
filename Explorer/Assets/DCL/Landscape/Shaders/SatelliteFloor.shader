@@ -77,6 +77,7 @@ Shader "DCL/SatelliteFloor"
             ZWrite[_ZWrite]
             Cull[_Cull]
             AlphaToMask[_AlphaToMask]
+            Offset 0.5, 0.5
 
             HLSLPROGRAM
             #pragma target 2.0
