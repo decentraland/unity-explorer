@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable]
-    public class LODGroupData : IEquatable<LODGroupData>
+    public struct LODGroupData : IEquatable<LODGroupData>
     {
         private const int MAX_LODS_LEVEL = 8;
         private const float DITHER_OVERLAP_FACTOR = 0.20f;
@@ -16,46 +16,37 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         public Matrix4x4 LODSizesMatrix;
         public Bounds Bounds;
 
-        public int LODCount => lodsScreenSpaceSizes.Length;
+        public int LODCount => lodsScreenSpaceSizes?.Length ?? 0;
 
         public LODGroupData(Bounds sharedMeshBounds)
         {
-            UpdateBounds(sharedMeshBounds);
+            Bounds = new Bounds();
+            Bounds.Encapsulate(sharedMeshBounds);
             objectSize = Mathf.Max(Bounds.size.x, Bounds.size.y, Bounds.size.z);
             lodsScreenSpaceSizes = new[] { 0.0f }; // Single LOD with maximum visibility
+            LODSizesMatrix = new Matrix4x4();
             BuildLODMatrix(1);
         }
 
-        public LODGroupData(LODGroup lodGroupBehaviour, LOD[] lods)
-        {
-            objectSize = lodGroupBehaviour.size;
-
-            lodsScreenSpaceSizes = new float[lods.Length];
-
-            for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
-                lodsScreenSpaceSizes[i] = lods[i].screenRelativeTransitionHeight;
-
-            BuildLODMatrix(lods.Length);
-        }
-
-        public void UpdateBounds(IReadOnlyList<CombinedLodsRenderer> combinedLodsRenderers)
+        public LODGroupData(LODGroup lodGroupBehaviour, LOD[] lods, IReadOnlyList<CombinedLodsRenderer> combinedLodsRenderers)
         {
             Bounds = combinedLodsRenderers[0].CombinedMesh.bounds;
 
             for (var i = 1; i < combinedLodsRenderers.Count; i++)
                 Bounds.Encapsulate(combinedLodsRenderers[i].CombinedMesh.bounds);
-        }
 
-        public void UpdateBounds(Bounds sharedMeshBounds)
-        {
-            Bounds = new Bounds();
-            Bounds.Encapsulate(sharedMeshBounds);
+            objectSize = lodGroupBehaviour.size;
+
+            lodsScreenSpaceSizes = new float[lods.Length];
+            for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
+                lodsScreenSpaceSizes[i] = lods[i].screenRelativeTransitionHeight;
+
+            LODSizesMatrix = new Matrix4x4();
+            BuildLODMatrix(lods.Length);
         }
 
         private void BuildLODMatrix(int lodsLength)
         {
-            LODSizesMatrix = new Matrix4x4();
-
             var rowEnd = 0;
             var col = 0;
 
@@ -94,12 +85,10 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         public override int GetHashCode()
         {
             var hashCode = new HashCode();
+            hashCode.Add(LODCount);
             hashCode.Add(objectSize);
-
-            if (lodsScreenSpaceSizes != null)
-                foreach (float size in lodsScreenSpaceSizes)
-                    hashCode.Add(size);
-
+            hashCode.Add(Bounds);
+            hashCode.Add(LODSizesMatrix);
             return hashCode.ToHashCode();
         }
 
@@ -107,31 +96,12 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         {
             const float EPS = 0.001f;
 
-            if (other == null) return false;
-            if (ReferenceEquals(this, other)) return true;
-
+            if (LODCount != other.LODCount) return false;
             if (Math.Abs(objectSize - other.objectSize) > EPS) return false;
-
-            if (lodsScreenSpaceSizes == null || other.lodsScreenSpaceSizes == null || lodsScreenSpaceSizes.Length != other.lodsScreenSpaceSizes.Length)
-                return false;
-
-            for (var i = 0; i < lodsScreenSpaceSizes.Length; i++)
-                if (Math.Abs(lodsScreenSpaceSizes[i] - other.lodsScreenSpaceSizes[i]) > EPS)
-                    return false;
+            if (!Bounds.Equals(other.Bounds)) return false;
+            if (!LODSizesMatrix.Equals(other.LODSizesMatrix)) return false;
 
             return true;
         }
-
-        public override bool Equals(object obj) =>
-            Equals(obj as LODGroupData);
-
-        public static bool operator ==(LODGroupData left, LODGroupData right)
-        {
-            if (ReferenceEquals(left, right)) return true;
-            return left is not null && left.Equals(right);
-        }
-
-        public static bool operator !=(LODGroupData left, LODGroupData right) =>
-            !(left == right);
     }
 }

@@ -115,8 +115,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
             lodGroup.RecalculateBounds();
 
-            LODGroupData = new LODGroupData(lodGroup, lods);
-            LODGroupData.UpdateBounds(CombinedLodsRenderers);
+            LODGroupData = new LODGroupData(lodGroup, lods, CombinedLodsRenderers);
 
             HideAll();
         }
@@ -127,7 +126,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             if (ReferenceEquals(this, other)) return true;
             if (Name != other.Name) return false;
 
-            if (LODGroupData != other.LODGroupData) return false;
+            if (!LODGroupData.Equals(other.LODGroupData)) return false;
 
             // Check CombinedLods
             if (CombinedLodsRenderers == null || other.CombinedLodsRenderers == null || CombinedLodsRenderers.Count != other.CombinedLodsRenderers.Count)
