@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.World
             // GLTF Node Modifier Systems
             SetupGltfNodeModifierSystem.InjectToWorld(ref builder);
             UpdateGltfNodeModifierSystem.InjectToWorld(ref builder);
-            finalizeWorldSystems.Add(CleanupGltfNodeModifierSystem.InjectToWorld(ref builder));
+            finalizeWorldSystems.Add(CleanupGltfNodeModifierSystem.InjectToWorld(ref builder, buffer));
 
             // GLTF Container
             LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData, sharedDependencies.EntityCollidersSceneCache);
