@@ -73,6 +73,7 @@ namespace DCL.PluginSystem.Global
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
         private readonly bool isCallEnabled;
         private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly ICommunityDataService communityDataService;
         private readonly ISpriteCache thumbnailCache;
         private readonly WarningNotificationView warningNotificationView;
         private readonly CommunitiesEventBus communitiesEventBus;
@@ -109,6 +110,7 @@ namespace DCL.PluginSystem.Global
             ProfileRepositoryWrapper profileDataProvider,
             ObjectProxy<IFriendsService> friendsServiceProxy,
             CommunitiesDataProvider communitiesDataProvider,
+            ICommunityDataService communityDataService,
             ISpriteCache thumbnailCache,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
@@ -139,12 +141,13 @@ namespace DCL.PluginSystem.Global
             this.chatMessageFactory = chatMessageFactory;
             this.profileRepositoryWrapper = profileDataProvider;
             this.friendsServiceProxy = friendsServiceProxy;
-            this.communityDataProvider = communityDataProvider;
+            communityDataProvider = communitiesDataProvider;
+            this.communityDataService = communityDataService;
             this.thumbnailCache = thumbnailCache;
             this.warningNotificationView = warningNotificationView;
             this.communitiesEventBus = communitiesEventBus;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
-            isCallEnabled = isCallEnabled;
+            isCallEnabled = includeVoiceChat;
         }
 
         public void Dispose()
@@ -168,6 +171,8 @@ namespace DCL.PluginSystem.Global
                 chatStorage = new ChatHistoryStorage(chatHistory, chatMessageFactory, walletAddress);
             }
 
+            var viewInstance = mainUIView.ChatView2;
+            
             var chatUserStateEventBus = new ChatUserStateEventBus();
             var chatUserStateUpdater = new ChatUserStateUpdater(
                 userBlockingCacheProxy,
@@ -178,16 +183,13 @@ namespace DCL.PluginSystem.Global
                 friendsEventBus,
                 roomHub.ChatRoom(),
                 friendsServiceProxy);
-
-
+            
             var chatMemberService = new ChatMemberListService(roomHub,
                 profileCache,
                 friendsServiceProxy);
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
-
-            ChatMainView? viewInstance = mainUIView.ChatView2;
-
+            
             // Ignore buttons that would lead to the conflicting state
             var chatClickDetectionService = new ChatClickDetectionService((RectTransform)viewInstance.transform,
                 viewInstance.TitlebarView.CloseChatButton.transform,
@@ -199,8 +201,6 @@ namespace DCL.PluginSystem.Global
             var chatContextMenuService = new ChatContextMenuService(mvcManagerMenusAccessFacade,
                 chatClickDetectionService);
 
-
-
             var getUserChatStatus = new GetUserChatStatusCommand(chatUserStateUpdater, eventBus);
 
             var currentChannelService = new CurrentChannelService(getUserChatStatus);
@@ -208,17 +208,20 @@ namespace DCL.PluginSystem.Global
                 new ChatUserStateBridge(chatUserStateEventBus, eventBus, currentChannelService);
 
             var getParticipantProfilesCommand = new GetParticipantProfilesCommand(roomHub, profileCache);
-
+            
             var useCaseFactory = new CommandRegistry(
                 chatConfig,
                 chatSettingsAsset.Value,
                 eventBus,
                 chatMessagesBus,
+                communitiesEventBus,
                 chatHistory,
                 chatStorage,
                 chatUserStateUpdater,
                 currentChannelService,
                 chatMemberService,
+                communityDataProvider,
+                communityDataService,
                 hyperlinkTextFormatter,
                 profileRepositoryWrapper,
                 friendsServiceProxy,

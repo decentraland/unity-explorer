@@ -112,6 +112,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Chat.Services;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
@@ -602,7 +603,8 @@ namespace Global.Dynamic
             GenericUserProfileContextMenuSettings genericUserProfileContextMenuSettingsSo = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GenericUserProfileContextMenuSettings, ct)).Value;
 
             var communitiesDataProvider = new CommunitiesDataProvider(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource, identityCache);
-
+            var communitiesDataService = new CommunityDataService();
+            
             IMVCManagerMenusAccessFacade menusAccessFacade = new MVCManagerMenusAccessFacade(
                 mvcManager,
                 profileCache,
@@ -726,6 +728,7 @@ namespace Global.Dynamic
                     profileRepositoryWrapper,
                     friendServiceProxy,
                     communitiesDataProvider,
+                    communitiesDataService,
                     thumbnailCache,
                     mainUIView.WarningNotification,
                     communitiesEventBus,

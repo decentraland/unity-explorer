@@ -3,6 +3,7 @@ using DCL.Audio;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Chat.Services;
+using DCL.Communities;
 using DCL.Friends;
 using DCL.Settings.Settings;
 using DCL.UI.InputFieldFormatting;
@@ -39,11 +40,14 @@ namespace DCL.Chat.ChatUseCases
             ChatSettingsAsset chatSettings,
             IEventBus eventBus,
             IChatMessagesBus chatMessageBus,
+            CommunitiesEventBus communitiesEventBus,
             IChatHistory chatHistory,
             ChatHistoryStorage? chatHistoryStorage,
             ChatUserStateUpdater chatUserStateUpdater,
             ICurrentChannelService currentChannelService,
             ChatMemberListService chatMemberListService,
+            CommunitiesDataProvider communitiesDataProvider,
+            ICommunityDataService communityDataService,
             ITextFormatter textFormatter,
             ProfileRepositoryWrapper profileRepositoryWrapper,
             ObjectProxy<IFriendsService> friendsServiceProxy,
@@ -54,8 +58,11 @@ namespace DCL.Chat.ChatUseCases
 
             InitializeChat = new InitializeChatSystemCommand(eventBus,
                 chatHistory,
+                communitiesEventBus,
                 friendsServiceProxy,
                 chatHistoryStorage,
+                communitiesDataProvider,
+                communityDataService,
                 chatUserStateUpdater,
                 currentChannelService);
 
@@ -109,6 +116,7 @@ namespace DCL.Chat.ChatUseCases
                 SelectChannel);
 
             CreateChannelViewModel = new CreateChannelViewModelCommand(eventBus,
+                communityDataService,
                 chatConfig,
                 profileRepositoryWrapper);
 

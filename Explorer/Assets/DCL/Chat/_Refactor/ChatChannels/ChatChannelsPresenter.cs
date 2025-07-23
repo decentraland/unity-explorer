@@ -45,8 +45,8 @@ public class ChatChannelsPresenter : IDisposable
 
         chatHistory.ChannelAdded += AddChannelToView;
         chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
-        
-        scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
+
+        //scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
