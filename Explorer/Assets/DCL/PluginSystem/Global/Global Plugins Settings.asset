@@ -51,9 +51,19 @@ MonoBehaviour:
   - rid: 1766526334245273896
   - rid: 3511243270148325472
   - rid: 6144113899072913496
+  - rid: 648265872610426982
   references:
     version: 2
     RefIds:
+    - rid: 648265872610426982
+      type: {class: ConfirmationDialogPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ConfirmationDialogPrefab>k__BackingField:
+          m_AssetGUID: 7b075576ea612439bb40436f7c0fdff0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
