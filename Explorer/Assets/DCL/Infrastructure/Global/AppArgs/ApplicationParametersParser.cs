@@ -49,6 +49,9 @@ namespace Global.AppArgs
         public IEnumerable<string> Flags() =>
             appParameters.Keys;
 
+        public IReadOnlyDictionary<string, string> Args() =>
+            appParameters;
+
         private void AddAlwaysInEditorFlags()
         {
             foreach ((string? key, string? value) in ALWAYS_IN_EDITOR)
@@ -79,7 +82,8 @@ namespace Global.AppArgs
 
                     // Application parameters may come embedded in a deep link:
                     // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&local-scene=true&otherparam=blahblah"
-                    Dictionary<string,string> deepLinkParameters = ProcessDeepLinkParameters(arg);
+                    Dictionary<string, string> deepLinkParameters = ProcessDeepLinkParameters(arg);
+
                     foreach ((string key, string value) in deepLinkParameters)
                         appParameters[key] = value;
                 }
