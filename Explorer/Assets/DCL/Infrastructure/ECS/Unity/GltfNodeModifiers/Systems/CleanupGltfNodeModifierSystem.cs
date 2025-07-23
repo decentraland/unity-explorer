@@ -4,20 +4,22 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Diagnostics;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.GltfNodeModifiers.Components;
 using UnityEngine.Pool;
+using Utility.Arch;
 
 namespace ECS.Unity.GltfNodeModifiers.Systems
 {
     /// <summary>
     ///     Handles cleanup of GLTF Node material modifiers when removed or cleanup intention is added
     /// </summary>
-    [UpdateInGroup(typeof(GltfContainerGroup))]
-    [UpdateAfter(typeof(UpdateGltfNodeModifierSystem))]
+    [UpdateInGroup(typeof(CleanUpGroup))]
+    [UpdateBefore(typeof(CleanUpGltfContainerSystem))]
     [ThrottlingEnabled]
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CleanupGltfNodeModifierSystem : GltfNodeModifierSystemBase, IFinalizeWorldSystem
@@ -71,10 +73,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             ListPool<Entity>.Release(gltfContainer.GltfNodeEntities);
 
-            if (World.Has<GltfNodeModifiersCleanupIntention>(containerEntity))
-                World.Remove<GltfNodeModifiersCleanupIntention>(containerEntity);
-
-            World.Remove<Components.GltfNodeModifiers>(containerEntity);
+            World.TryRemove<GltfNodeModifiersCleanupIntention>(containerEntity);
+            World.TryRemove<Components.GltfNodeModifiers>(containerEntity);
         }
     }
 }

@@ -49,7 +49,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
                 StoreOriginalMaterials(ref gltfContainer, result.Asset!.Renderers);
 
             // Special case: single modifier with empty path applies to ALL renderers
-            if (IsGltfRootModifier(gltfNodeModifiers.Modifiers))
+            if (IsGltfGlobalModifier(gltfNodeModifiers.Modifiers))
                 SetupGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref gltfContainer, result.Asset!);
             else
                 SetupIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref gltfContainer, partitionComponent, result.Asset!);

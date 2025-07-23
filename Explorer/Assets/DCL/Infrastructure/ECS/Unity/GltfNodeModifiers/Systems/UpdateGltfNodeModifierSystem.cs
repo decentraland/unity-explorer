@@ -50,7 +50,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             }
 
             // Special case: single modifier with empty path applies to ALL renderers
-            if (IsGltfRootModifier(gltfNodeModifiers.Modifiers))
+            if (IsGltfGlobalModifier(gltfNodeModifiers.Modifiers))
                 UpdateGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref gltfContainer, result.Asset!);
             else
                 UpdateIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref gltfContainer, partitionComponent, result.Asset!);

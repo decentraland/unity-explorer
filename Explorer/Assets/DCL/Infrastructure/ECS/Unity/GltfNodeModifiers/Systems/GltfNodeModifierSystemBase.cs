@@ -23,7 +23,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Checks if the modifiers represent a global root modifier (single modifier with empty path)
         /// </summary>
-        protected static bool IsGltfRootModifier(IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers) =>
+        protected static bool IsGltfGlobalModifier(IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers) =>
             modifiers.Count == 1 && string.IsNullOrEmpty(modifiers[0].Path);
 
         /// <summary>
