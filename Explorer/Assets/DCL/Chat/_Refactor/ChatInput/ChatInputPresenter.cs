@@ -24,6 +24,7 @@ public class ChatInputPresenter : IDisposable
         ChatInputView view,
         ChatConfig chatConfig,
         IEventBus eventBus,
+        IChatEventBus chatEventBus,
         ICurrentChannelService currentChannelService,
         GetParticipantProfilesCommand getParticipantProfilesCommand,
         ProfileRepositoryWrapper profileRepositoryWrapper,
@@ -39,7 +40,7 @@ public class ChatInputPresenter : IDisposable
         fsm.AddState(new HiddenChatInputState());
         fsm.AddState(new BlockedChatInputState(chatConfig, currentChannelService));
         fsm.AddState(new UnfocusedChatInputState());
-        fsm.AddState(new TypingEnabledChatInputState());
+        fsm.AddState(new TypingEnabledChatInputState(chatEventBus));
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
         scope.Add(eventBus.Subscribe<ChatEvents.CurrentChannelStateUpdatedEvent>(OnForceRefreshInputState));
@@ -62,11 +63,7 @@ public class ChatInputPresenter : IDisposable
         fsm.ChangeState<InitializingChatInputState>();
 
         Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
-
-        if (result is { Success: true, Value: ChatUserStateUpdater.ChatUserState.CONNECTED })
-            fsm.ChangeState<TypingEnabledChatInputState>();
-        else
-            fsm.ChangeState<BlockedChatInputState>();
+        OnBlockedUpdated(result);
     }
 
     private void OnChannelSelected(ChatEvents.ChannelSelectedEvent evt)
@@ -96,6 +93,11 @@ public class ChatInputPresenter : IDisposable
         cts = cts.SafeRestart();
 
         Result<ChatUserStateUpdater.ChatUserState> result = await currentChannelService.ResolveInputStateAsync(cts.Token);
+        OnBlockedUpdated(result);
+    }
+
+    private void OnBlockedUpdated(Result<ChatUserStateUpdater.ChatUserState> result)
+    {
         fsm.CurrentState.OnBlockedUpdated(result is { Success: true, Value: ChatUserStateUpdater.ChatUserState.CONNECTED });
     }
 

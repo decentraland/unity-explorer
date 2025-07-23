@@ -17,7 +17,7 @@ namespace DCL.Chat._Refactor.ChatStates
         private readonly EventSubscriptionScope scope = new ();
 
         public ChatMainController MainController { get; }
-        public bool IsInputFocused => fsm.CurrentState is FocusedChatState;
+        public bool IsFocused => fsm.CurrentState is FocusedChatState;
         public bool IsMinimized => fsm.CurrentState is MinimizedChatState;
         public bool IsHidden => fsm.CurrentState is HiddenChatState;
 

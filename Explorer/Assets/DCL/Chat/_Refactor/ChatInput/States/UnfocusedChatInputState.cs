@@ -23,5 +23,10 @@ namespace DCL.Chat
         {
             context.ChatInputView.inputField.onSelect.RemoveListener(OnInputSelected);
         }
+
+        protected override void OnInputBlocked()
+        {
+            ChangeState<BlockedChatInputState>();
+        }
     }
 }

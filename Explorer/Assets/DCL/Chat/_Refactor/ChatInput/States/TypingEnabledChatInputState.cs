@@ -1,5 +1,6 @@
 ﻿using DCL.Audio;
 using DCL.Chat.ChatUseCases;
+using DCL.Chat.EventBus;
 using DCL.UI.CustomInputField;
 using DCL.UI.SuggestionPanel;
 using MVC;
@@ -16,11 +17,18 @@ namespace DCL.Chat
     {
         private readonly EventSubscriptionScope eventsScope = new ();
 
+        private readonly IChatEventBus chatEventBus;
+
         private PasteToastState? pasteToastState;
         private SuggestionPanelChatInputState? suggestionPanelState;
         private EmojiPanelChatInputState? emojiPanelState;
 
         private CustomInputField inputField = null!;
+
+        public TypingEnabledChatInputState(IChatEventBus chatEventBus)
+        {
+            this.chatEventBus = chatEventBus;
+        }
 
         public void Dispose()
         {
@@ -41,6 +49,8 @@ namespace DCL.Chat
             context.ChatInputView.ApplyFocusStyle();
             context.ChatInputView.SetActiveTyping();
 
+            chatEventBus.InsertTextInChatRequested += InsertText;
+
             ViewDependencies.ClipboardManager.OnPaste += PasteClipboardText;
             inputField.onSubmit.AddListener(HandleMessageSubmitted);
             inputField.Clicked += InputFieldOnClicked;
@@ -53,6 +63,8 @@ namespace DCL.Chat
 
         public override void End()
         {
+            chatEventBus.InsertTextInChatRequested -= InsertText;
+
             ViewDependencies.ClipboardManager.OnPaste -= PasteClipboardText;
             inputField.onSubmit.RemoveListener(HandleMessageSubmitted);
             inputField.Clicked -= InputFieldOnClicked;
@@ -137,6 +149,16 @@ namespace DCL.Chat
         {
             context.ChatInputView.InsertTextAtCaretPosition(pastedText);
             pasteToastState!.TryDeactivate();
+        }
+
+        private void InsertText(string text)
+        {
+            context.ChatInputView.InsertTextAtCaretPosition(text);
+        }
+
+        protected override void OnInputBlocked()
+        {
+            ChangeState<BlockedChatInputState>();
         }
     }
 }

@@ -15,7 +15,6 @@ using DCL.Chat.Services;
 using DCL.Chat.Services.DCL.Chat;
 using DCL.Settings.Settings;
 using DCL.UI.Profiles.Helpers;
-using UnityEngine;
 
 using Utility;
 
@@ -44,9 +43,7 @@ namespace DCL.Chat
         public event Action? PointerEntered;
         public event Action? PointerExited;
 
-        public bool IsVisibleInSharedSpace =>
-            State != ControllerState.ViewHidden;
-
+        public bool IsVisibleInSharedSpace => chatStateMachine!.IsFocused;
 
         public ChatMainController(ViewFactoryMethod viewFactory,
             ChatConfig chatConfig,
@@ -129,6 +126,7 @@ namespace DCL.Chat
                 viewInstance.InputView,
                 chatConfig,
                 eventBus,
+                chatEventBus,
                 currentChannelService,
                 commandRegistry.GetParticipantProfilesCommand,
                 profileRepositoryWrapper,
