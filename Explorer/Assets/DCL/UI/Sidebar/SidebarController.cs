@@ -5,9 +5,9 @@ using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
 using DCL.Chat.History;
 using DCL.Diagnostics;
+using DCL.Communities;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
-using DCL.FeatureFlags;
 using DCL.Friends.UI.FriendPanel;
 using DCL.MarketplaceCredits;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -27,6 +27,7 @@ using ECS;
 using MVC;
 using System;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -76,6 +77,9 @@ namespace DCL.UI.Sidebar
             SkyboxMenuController skyboxMenuController,
             ControlsPanelController controlsPanelController,
             IWebBrowser webBrowser,
+            bool includeCameraReel,
+            bool includeFriends,
+            bool includeMarketplaceCredits,
             ChatView chatView,
             IChatHistory chatHistory,
             ISharedSpaceManager sharedSpaceManager,
@@ -93,11 +97,11 @@ namespace DCL.UI.Sidebar
             this.skyboxMenuController = skyboxMenuController;
             this.controlsPanelController = controlsPanelController;
             this.webBrowser = webBrowser;
-            this.includeCameraReel = FeaturesRegistry.Instance.IsEnabled(FeatureId.CAMERA_REEL);
+            this.includeCameraReel = includeCameraReel;
             this.chatView = chatView;
             this.chatHistory = chatHistory;
-            this.includeFriends = FeaturesRegistry.Instance.IsEnabled(FeatureId.FRIENDS);
-            this.includeMarketplaceCredits = FeaturesRegistry.Instance.IsEnabled(FeatureId.MARKETPLACE_CREDITS);
+            this.includeFriends = includeFriends;
+            this.includeMarketplaceCredits = includeMarketplaceCredits;
             this.sharedSpaceManager = sharedSpaceManager;
             this.selfProfile = selfProfile;
             this.realmData = realmData;
@@ -124,7 +128,7 @@ namespace DCL.UI.Sidebar
             viewInstance!.backpackButton.onClick.AddListener(() =>
             {
                 viewInstance.backpackNotificationIndicator.SetActive(false);
-                OpenExplorePanelInSectionAsync(ExploreSections.Backpack).Forget();
+                OpenExplorePanelInSectionAsync(ExploreSections.Backpack);
             });
 
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSectionAsync(ExploreSections.Settings).Forget());
@@ -325,7 +329,7 @@ namespace DCL.UI.Sidebar
         private async UniTaskVoid CheckForCommunitiesFeatureAsync(CancellationToken ct)
         {
             viewInstance?.communitiesButton.gameObject.SetActive(false);
-            bool includeCommunities = await FeaturesRegistry.Instance.IsEnabledAsync(FeatureId.COMMUNITIES, ct);
+            bool includeCommunities = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
             viewInstance?.communitiesButton.gameObject.SetActive(includeCommunities);
         }
 

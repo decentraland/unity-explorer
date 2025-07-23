@@ -204,7 +204,7 @@ namespace ECS.Unity.Materials.Systems
                 promise = Promise.CreateFinalized(intention, result);
 
                 if (info.VideoRenderer)
-                    World.Add(info.VideoPlayer, new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer });
+                    World.Create(new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer, MediaPlayerComponentEntity = info.VideoPlayer });
             }
             else
                 promise = Promise.Create(
