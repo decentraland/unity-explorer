@@ -9,16 +9,23 @@ namespace ECS.Unity.GltfNodeModifiers.Components
         /// <summary>
         ///     Collection of Unity Renderer components that need material reset
         /// </summary>
-        public IReadOnlyList<Renderer> Renderers { get; set; }
+        public readonly IReadOnlyList<Renderer> Renderers;
 
         /// <summary>
         ///     Reference to the entity that contains the GltfContainerComponent
         /// </summary>
-        public Entity ContainerEntity { get; set; }
+        public readonly Entity ContainerEntity;
 
         /// <summary>
         ///     Whether the entity should be destroyed after material cleanup
         /// </summary>
-        public bool Destroy { get; set; }
+        public readonly bool Destroy;
+
+        public GltfNodeMaterialCleanupIntention(IReadOnlyList<Renderer> renderers, Entity containerEntity, bool destroy = false)
+        {
+            Renderers = renderers;
+            ContainerEntity = containerEntity;
+            Destroy = destroy;
+        }
     }
 }

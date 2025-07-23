@@ -92,12 +92,7 @@ namespace ECS.Unity.Materials.Tests
                 Status = StreamableLoading.LifeCycle.Applied
             };
 
-            var cleanupIntention = new GltfNodeMaterialCleanupIntention
-            {
-                Renderers = new[] { meshRenderer },
-                ContainerEntity = containerEntity,
-                Destroy = true
-            };
+            var cleanupIntention = new GltfNodeMaterialCleanupIntention(new[] { meshRenderer }, containerEntity, true);
 
             var gltfNodeEntity = world.Create(cleanupIntention, materialComponent, new PBMaterial
             {

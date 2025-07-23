@@ -165,12 +165,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected void CreateMaterialCleanupIntention(Entity entity, IReadOnlyList<Renderer> renderers, Entity containerEntity, bool destroy)
         {
-            World.Add(entity, new GltfNodeMaterialCleanupIntention
-            {
-                Renderers = renderers,
-                ContainerEntity = containerEntity,
-                Destroy = destroy,
-            });
+            World.Add(entity, new GltfNodeMaterialCleanupIntention(renderers, containerEntity, destroy));
         }
 
         /// <summary>
