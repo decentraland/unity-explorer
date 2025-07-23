@@ -32,7 +32,7 @@ namespace ECS.StreamableLoading.NFTShapes
 
         public LoadNFTShapeSystem(World world, IStreamableCache<Texture2DData, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IDiskCache<Texture2DData> diskCache, bool ktxEnabled,
             ExtendedObjectPool<Texture2D> videoTexturePool, IDecentralandUrlsSource urlsSource)
-            : base(world, cache, new DiskCacheOptions<Texture2DData, GetNFTShapeIntention>(diskCache, GetNFTShapeIntention.DiskHashCompute.INSTANCE, "nft"))
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.videoTexturePool = videoTexturePool;
