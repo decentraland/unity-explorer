@@ -7,10 +7,11 @@
     "com.atteneder.gltfast": "https://github.com/decentraland/unity-gltf.git",
     "com.brunomikoski.animationsequencer": "0.5.4",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git",
     "com.dcl.gpui-assets": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.dcl.gpui-assets",
+    "com.decentraland.filebrowserpro": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro",
+    "com.decentraland.livekit-sdk": "https://github.com/decentraland/client-sdk-unity.git",
     "com.decentraland.rpc-csharp": "https://github.com/decentraland/rpc-csharp.git?path=rpc-csharp/src",
-    "com.decentraland.unity-shared-dependencies": "https://github.com/decentraland/unity-shared-dependencies.git",
+    "com.decentraland.unity-shared-dependencies": "git@github.com:decentraland/unity-shared-dependencies.git#scene_shader_indirect_tiling",
     "com.gurbu.gpui-pro": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro",
     "com.gurbu.gpui-pro.terrain": "git@github.com:decentraland/unity-explorer-packages.git?path=/GPUInstancerPro/com.gurbu.gpui-pro.terrain",
     "com.mackysoft.serializereference-extensions": "1.3.1",
@@ -38,7 +39,7 @@
     "com.unity.timeline": "1.8.8",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualeffectgraph": "17.0.4",
-    "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
+    "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader#feat/grass_shader_indirect_tiling",
     "decentraland.renderfeatures": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
     "io.sentry.unity": "https://github.com/getsentry/unity.git#2.1.3",
     "net.tnrd.nsubstitute": "https://github.com/decentraland/Unity3D-NSubstitute.git",
@@ -65,8 +66,7 @@
     "com.unity.modules.unitywebrequesttexture": "1.0.0",
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
-    "com.unity.modules.wind": "1.0.0",
-    "com.decentraland.filebrowserpro": "git@github.com:decentraland/unity-explorer-packages.git?path=/FileBrowserPro"
+    "com.unity.modules.wind": "1.0.0"
   },
   "scopedRegistries": [
     {
