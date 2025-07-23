@@ -107,6 +107,8 @@ namespace DCL.Chat
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
 
+        public ReactiveProperty<ChatChannel> CurrentChannel { get; } = new ReactiveProperty<ChatChannel>(ChatChannel.NEARBY_CHANNEL);
+
         public event ConversationOpenedDelegate? ConversationOpened;
         public event ConversationClosedDelegate? ConversationClosed;
         public event IPanelInSharedSpace.ViewShowingCompleteDelegate? ViewShowingComplete;
@@ -318,8 +320,9 @@ namespace DCL.Chat
 
         private void AddNearbyChannelAndSendWelcomeMessage()
         {
-            chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+            var channel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
+            CurrentChannel.UpdateValue(channel);
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
             chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
         }
@@ -424,10 +427,13 @@ namespace DCL.Chat
 
                 viewInstance!.SetCommunitiesData(userCommunities);
 
-                chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
+                var channel = chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
 
                 if (setAsCurrentChannel)
+                {
+                    CurrentChannel.UpdateValue(channel);
                     viewInstance!.CurrentChannelId = channelId;
+                }
             }
             else
             {
@@ -480,10 +486,11 @@ namespace DCL.Chat
             ChatChannel.ChannelId channelId = new ChatChannel.ChannelId(userId);
             ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(channelId));
 
-            chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
+            var channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
 
+            CurrentChannel.UpdateValue(channel);
             viewInstance!.CurrentChannelId = channelId;
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
@@ -528,6 +535,7 @@ namespace DCL.Chat
             if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
                 chatUserStateUpdater.CurrentConversation = channelId.Id;
 
+            CurrentChannel.UpdateValue(chatHistory.Channels[channelId]);
             viewInstance!.CurrentChannelId = channelId;
 
             if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
@@ -1198,8 +1206,9 @@ namespace DCL.Chat
                 AddCommunityConversationAsync(communityId, setAsCurrentChannel: true).Forget();
             else
             {
-                chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
+                var channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
                 viewInstance!.CurrentChannelId = channelId;
+                CurrentChannel.UpdateValue(channel);
             }
 
             SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();
