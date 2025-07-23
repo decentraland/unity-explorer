@@ -133,7 +133,10 @@ namespace DCL.Chat
         {
             connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
             connectionStatusIndicatorContainer.gameObject.SetActive(connectionStatus == OnlineStatus.ONLINE);
-            thumbnailView.GetComponent<ProfilePictureView>().GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+
+            if(thumbnailView != null && thumbnailView.TryGetComponent(out ProfilePictureView profilePictureView))
+                profilePictureView.GreyOut(connectionStatus != OnlineStatus.ONLINE ? offlineThumbnailGreyOutOpacity : 0.0f);
+
             storedConnectionStatus = connectionStatus;
         }
 
