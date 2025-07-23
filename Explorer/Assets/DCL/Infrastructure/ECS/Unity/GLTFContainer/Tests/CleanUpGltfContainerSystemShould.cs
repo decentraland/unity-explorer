@@ -84,7 +84,6 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.True);
             Assert.That(world.TryGet(entity, out GltfContainerComponent component), Is.True);
             Assert.IsTrue(component.Promise.Entity == Entity.Null || !world.IsAlive(component.Promise.Entity));
 

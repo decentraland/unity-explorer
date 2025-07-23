@@ -117,7 +117,6 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             // Assert
             Assert.That(world.Has<GltfContainerComponent>(entity), Is.False);
-            Assert.That(world.Has<GltfNodeModifiersCleanupIntention>(entity), Is.True);
             Assert.That(gltfContainerComponent.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
 
             // Cleanup

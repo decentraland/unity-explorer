@@ -10,7 +10,6 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
-using ECS.Unity.GltfNodeModifiers.Components;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.Arch;
@@ -42,14 +41,6 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
             HandleGltfContainerComponentRemovalQuery(World);
-            HandleCleanupIntentionQuery(World);
-        }
-
-        [Query]
-        [All(typeof(PBGltfNodeModifiers), typeof(GltfNodeModifiersCleanupIntention))]
-        private void HandleCleanupIntention(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
-        {
-            RunCleanup(containerEntity, ref nodeModifiers);
         }
 
         [Query]
@@ -95,7 +86,6 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             ListPool<Entity>.Release(nodeModifiers.GltfNodeEntities);
             DictionaryPool<Renderer, Material>.Release(nodeModifiers.OriginalMaterials);
 
-            World.TryRemove<GltfNodeModifiersCleanupIntention>(containerEntity);
             World.TryRemove<Components.GltfNodeModifiers>(containerEntity);
         }
 
