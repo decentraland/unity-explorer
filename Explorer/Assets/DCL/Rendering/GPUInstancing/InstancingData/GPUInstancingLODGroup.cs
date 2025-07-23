@@ -10,7 +10,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
     [Serializable]
     public class GPUInstancingLODGroup : MonoBehaviour, IEquatable<GPUInstancingLODGroup>
     {
-        public Shader[] whitelistedShaders;
+        public GPUInstancingSettings GPUInstancingSettings;
 
         [Header("REFERENCES")]
         public string Name;
@@ -97,7 +97,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             transform.position = Vector3.zero;
             transform.rotation = Quaternion.identity;
 
-            var meshCombiner = new LodsMeshCombiner(whitelistedShaders, this.transform, lods);
+            var meshCombiner = new LodsMeshCombiner(GPUInstancingSettings.WhitelistedShaders, transform, lods);
             meshCombiner.CollectCombineInstances();
             if (meshCombiner.IsEmpty())
             {

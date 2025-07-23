@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65da9c795edb453c9b50ee6ba3c60e9b, type: 3}
   m_Name: GPUInstancingSettings
   m_EditorClassIdentifier: 
+  WhitelistedShaders:
+  - {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
+  - {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
   FrustumCullingAndLODGenComputeShader: {fileID: 7200000, guid: 17fd5bf4525e4c7eb3384974e131d2a8, type: 3}
   IndirectBufferGenerationComputeShader: {fileID: 7200000, guid: ce2f103db0fd4bf086f0f4a36ae38c03, type: 3}
   DrawArgsInstanceCountTransferComputeShader: {fileID: 7200000, guid: 1581f9e286d943f4aa378de7282cd920, type: 3}
