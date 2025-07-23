@@ -26,7 +26,7 @@ namespace DCL.ECSComponents {
           string.Concat(
             "Ci5kZWNlbnRyYWxhbmQvc2RrL2NvbXBvbmVudHMvYXZhdGFyX3NoYXBlLnBy",
             "b3RvEhtkZWNlbnRyYWxhbmQuc2RrLmNvbXBvbmVudHMaIGRlY2VudHJhbGFu",
-            "ZC9jb21tb24vY29sb3JzLnByb3RvIrEECg1QQkF2YXRhclNoYXBlEgoKAmlk",
+            "ZC9jb21tb24vY29sb3JzLnByb3RvIqEECg1QQkF2YXRhclNoYXBlEgoKAmlk",
             "GAEgASgJEhEKBG5hbWUYAiABKAlIAIgBARIXCgpib2R5X3NoYXBlGAMgASgJ",
             "SAGIAQESNAoKc2tpbl9jb2xvchgEIAEoCzIbLmRlY2VudHJhbGFuZC5jb21t",
             "b24uQ29sb3IzSAKIAQESNAoKaGFpcl9jb2xvchgFIAEoCzIbLmRlY2VudHJh",
@@ -34,16 +34,16 @@ namespace DCL.ECSComponents {
             "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db2xvcjNIBIgBARIiChVleHByZXNzaW9u",
             "X3RyaWdnZXJfaWQYByABKAlIBYgBARIpChxleHByZXNzaW9uX3RyaWdnZXJf",
             "dGltZXN0YW1wGAggASgDSAaIAQESFAoHdGFsa2luZxgJIAEoCEgHiAEBEhEK",
-            "CXdlYXJhYmxlcxgKIAMoCRIOCgZlbW90ZXMYCyADKAkSHgoRaXNfYm9keV9p",
-            "bnZpc2libGUYDCABKAhICIgBAUIHCgVfbmFtZUINCgtfYm9keV9zaGFwZUIN",
-            "Cgtfc2tpbl9jb2xvckINCgtfaGFpcl9jb2xvckIMCgpfZXllX2NvbG9yQhgK",
-            "Fl9leHByZXNzaW9uX3RyaWdnZXJfaWRCHwodX2V4cHJlc3Npb25fdHJpZ2dl",
-            "cl90aW1lc3RhbXBCCgoIX3RhbGtpbmdCFAoSX2lzX2JvZHlfaW52aXNpYmxl",
-            "QhSqAhFEQ0wuRUNTQ29tcG9uZW50c2IGcHJvdG8z"));
+            "CXdlYXJhYmxlcxgKIAMoCRIOCgZlbW90ZXMYCyADKAkSFgoJaGlkZV9ib2R5",
+            "GAwgASgISAiIAQFCBwoFX25hbWVCDQoLX2JvZHlfc2hhcGVCDQoLX3NraW5f",
+            "Y29sb3JCDQoLX2hhaXJfY29sb3JCDAoKX2V5ZV9jb2xvckIYChZfZXhwcmVz",
+            "c2lvbl90cmlnZ2VyX2lkQh8KHV9leHByZXNzaW9uX3RyaWdnZXJfdGltZXN0",
+            "YW1wQgoKCF90YWxraW5nQgwKCl9oaWRlX2JvZHlCFKoCEURDTC5FQ1NDb21w",
+            "b25lbnRzYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Decentraland.Common.ColorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes", "IsBodyInvisible" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "IsBodyInvisible" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::DCL.ECSComponents.PBAvatarShape), global::DCL.ECSComponents.PBAvatarShape.Parser, new[]{ "Id", "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "Wearables", "Emotes", "HideBody" }, new[]{ "Name", "BodyShape", "SkinColor", "HairColor", "EyeColor", "ExpressionTriggerId", "ExpressionTriggerTimestamp", "Talking", "HideBody" }, null, null, null)
           }));
     }
     #endregion
@@ -107,7 +107,7 @@ namespace DCL.ECSComponents {
       talking_ = other.talking_;
       wearables_ = other.wearables_.Clone();
       emotes_ = other.emotes_.Clone();
-      isBodyInvisible_ = other.isBodyInvisible_;
+      hideBody_ = other.hideBody_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -350,31 +350,31 @@ namespace DCL.ECSComponents {
       get { return emotes_; }
     }
 
-    /// <summary>Field number for the "is_body_invisible" field.</summary>
-    public const int IsBodyInvisibleFieldNumber = 12;
-    private bool isBodyInvisible_;
+    /// <summary>Field number for the "hide_body" field.</summary>
+    public const int HideBodyFieldNumber = 12;
+    private bool hideBody_;
     /// <summary>
     /// hides the skin + hair + facial features (default: false)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool IsBodyInvisible {
-      get { if ((_hasBits0 & 4) != 0) { return isBodyInvisible_; } else { return false; } }
+    public bool HideBody {
+      get { if ((_hasBits0 & 4) != 0) { return hideBody_; } else { return false; } }
       set {
         _hasBits0 |= 4;
-        isBodyInvisible_ = value;
+        hideBody_ = value;
       }
     }
-    /// <summary>Gets whether the "is_body_invisible" field is set</summary>
+    /// <summary>Gets whether the "hide_body" field is set</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool HasIsBodyInvisible {
+    public bool HasHideBody {
       get { return (_hasBits0 & 4) != 0; }
     }
-    /// <summary>Clears the value of the "is_body_invisible" field</summary>
+    /// <summary>Clears the value of the "hide_body" field</summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearIsBodyInvisible() {
+    public void ClearHideBody() {
       _hasBits0 &= ~4;
     }
 
@@ -404,7 +404,7 @@ namespace DCL.ECSComponents {
       if (Talking != other.Talking) return false;
       if(!wearables_.Equals(other.wearables_)) return false;
       if(!emotes_.Equals(other.emotes_)) return false;
-      if (IsBodyInvisible != other.IsBodyInvisible) return false;
+      if (HideBody != other.HideBody) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -423,7 +423,7 @@ namespace DCL.ECSComponents {
       if (HasTalking) hash ^= Talking.GetHashCode();
       hash ^= wearables_.GetHashCode();
       hash ^= emotes_.GetHashCode();
-      if (HasIsBodyInvisible) hash ^= IsBodyInvisible.GetHashCode();
+      if (HasHideBody) hash ^= HideBody.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -480,9 +480,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(output, _repeated_wearables_codec);
       emotes_.WriteTo(output, _repeated_emotes_codec);
-      if (HasIsBodyInvisible) {
+      if (HasHideBody) {
         output.WriteRawTag(96);
-        output.WriteBool(IsBodyInvisible);
+        output.WriteBool(HideBody);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -532,9 +532,9 @@ namespace DCL.ECSComponents {
       }
       wearables_.WriteTo(ref output, _repeated_wearables_codec);
       emotes_.WriteTo(ref output, _repeated_emotes_codec);
-      if (HasIsBodyInvisible) {
+      if (HasHideBody) {
         output.WriteRawTag(96);
-        output.WriteBool(IsBodyInvisible);
+        output.WriteBool(HideBody);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -575,7 +575,7 @@ namespace DCL.ECSComponents {
       }
       size += wearables_.CalculateSize(_repeated_wearables_codec);
       size += emotes_.CalculateSize(_repeated_emotes_codec);
-      if (HasIsBodyInvisible) {
+      if (HasHideBody) {
         size += 1 + 1;
       }
       if (_unknownFields != null) {
@@ -628,8 +628,8 @@ namespace DCL.ECSComponents {
       }
       wearables_.Add(other.wearables_);
       emotes_.Add(other.emotes_);
-      if (other.HasIsBodyInvisible) {
-        IsBodyInvisible = other.IsBodyInvisible;
+      if (other.HasHideBody) {
+        HideBody = other.HideBody;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -700,7 +700,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 96: {
-            IsBodyInvisible = input.ReadBool();
+            HideBody = input.ReadBool();
             break;
           }
         }
@@ -772,7 +772,7 @@ namespace DCL.ECSComponents {
             break;
           }
           case 96: {
-            IsBodyInvisible = input.ReadBool();
+            HideBody = input.ReadBool();
             break;
           }
         }
