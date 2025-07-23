@@ -4,14 +4,15 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Diagnostics;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
-using ECS.Unity.GltfNodeModifiers.Components;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace ECS.Unity.GltfNodeModifiers.Systems
 {
@@ -31,14 +32,14 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         }
 
         [Query]
-        [None(typeof(Components.GltfNodeModifiers))]
+        [None(typeof(DeleteEntityIntention), typeof(Components.GltfNodeModifiers))]
         private void SetupGltfNodes(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer, in PartitionComponent partitionComponent)
         {
             if (gltfNodeModifiers.Modifiers.Count == 0 || !IsGltfContainerReady(ref gltfContainer, out StreamableLoadingResult<GltfContainerAsset> result))
                 return;
 
             gltfNodeModifiers.IsDirty = false;
-            gltfContainer.GltfNodeEntities ??= new List<Entity>();
+            gltfContainer.GltfNodeEntities ??= ListPool<Entity>.Get();
             gltfContainer.OriginalMaterials ??= new Dictionary<Renderer, Material>();
 
             // Store original materials for all renderers (only happens once)

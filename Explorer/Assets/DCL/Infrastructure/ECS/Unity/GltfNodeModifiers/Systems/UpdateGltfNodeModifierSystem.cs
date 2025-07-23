@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Diagnostics;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer;
@@ -33,6 +34,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         [All(typeof(Components.GltfNodeModifiers))]
         private void UpdateGltfNodes(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer, in PartitionComponent partitionComponent)
         {

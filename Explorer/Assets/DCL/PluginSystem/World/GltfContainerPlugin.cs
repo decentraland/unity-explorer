@@ -86,7 +86,7 @@ namespace DCL.PluginSystem.World
             // GLTF Node Modifier Systems
             SetupGltfNodeModifierSystem.InjectToWorld(ref builder);
             UpdateGltfNodeModifierSystem.InjectToWorld(ref builder);
-            CleanupGltfNodeModifierSystem.InjectToWorld(ref builder);
+            finalizeWorldSystems.Add(CleanupGltfNodeModifierSystem.InjectToWorld(ref builder));
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, buffer, sharedDependencies.EcsToCRDTWriter);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, buffer);
@@ -95,11 +95,7 @@ namespace DCL.PluginSystem.World
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData,
                 buffer, sharedDependencies.SceneStateProvider, globalDeps.MemoryBudget, loadingStatus,
                 persistentEntities.SceneContainer);
-
-            var cleanUpGltfContainerSystem =
-                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
-
-            finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
+            finalizeWorldSystems.Add(CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache));
         }
     }
 }
