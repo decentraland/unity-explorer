@@ -50,10 +50,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField] private CommunityVoiceChatContextMenuConfiguration contextMenuSettings = null!;
 
         public event Action<UserProfileContextMenuControlSettings.UserData, UserProfileContextMenuControlSettings.FriendshipStatus>? ContextMenuUserProfileButtonClicked;
-        public event Action<VoiceChatMember>? DemoteSpeaker;
-        public event Action<VoiceChatMember>? PromoteToSpeaker;
-        public event Action<VoiceChatMember>? Kick;
-        public event Action<VoiceChatMember>? Ban;
+        public event Action<VoiceChatParticipantsStateService.ParticipantState>? DemoteSpeaker;
+        public event Action<VoiceChatParticipantsStateService.ParticipantState>? PromoteToSpeaker;
+        public event Action<VoiceChatParticipantsStateService.ParticipantState>? Kick;
+        public event Action<VoiceChatParticipantsStateService.ParticipantState>? Ban;
 
         private GenericContextMenu? contextMenu;
         private UserProfileContextMenuControlSettings? userProfileContextMenuControlSettings;
@@ -61,7 +61,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private GenericContextMenuElement? promoteToSpeakerButton;
         private GenericContextMenuElement? kickFromStreamButton;
         private GenericContextMenuElement? banFromCommunityButton;
-        private VoiceChatMember lastClickedProfile = null!;
+        private VoiceChatParticipantsStateService.ParticipantState lastClickedProfile;
         private CancellationToken cancellationToken;
 
         private void Start()
@@ -78,14 +78,14 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                          .AddControl(banFromCommunityButton = new GenericContextMenuElement(new ButtonContextMenuControlSettings(contextMenuSettings.BanUserText, contextMenuSettings.BanUserSprite, () => Ban?.Invoke(lastClickedProfile!))));
         }
 
-        private void OnContextMenuButtonClicked(VoiceChatMember voiceChatMember, Vector2 buttonPosition, PlayerEntryView elementView)
+        private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState voiceChatMember, Vector2 buttonPosition, PlayerEntryView elementView)
         {
             lastClickedProfile = voiceChatMember;
 
-            promoteToSpeakerButton!.Enabled = voiceChatMember.IsModerator && !voiceChatMember.IsSpeaker;
-            demoteSpeakerButton!.Enabled = voiceChatMember.IsModerator && voiceChatMember.IsSpeaker;
-            kickFromStreamButton!.Enabled = voiceChatMember.IsModerator;
-            banFromCommunityButton!.Enabled = voiceChatMember.IsModerator;
+            promoteToSpeakerButton!.Enabled = !voiceChatMember.IsSpeaker;
+            demoteSpeakerButton!.Enabled = voiceChatMember.IsSpeaker;
+            kickFromStreamButton!.Enabled = true;
+            banFromCommunityButton!.Enabled = true;
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition), cancellationToken);
         }

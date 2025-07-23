@@ -270,6 +270,7 @@ namespace DCL.VoiceChat
                 ProfilePictureUrl = new ReactiveProperty<string?>(metadata?.profilePictureUrl),
                 IsRequestingToSpeak = new ReactiveProperty<bool?>(metadata?.isRequestingToSpeak),
                 IsSpeaker = new ReactiveProperty<bool>(metadata?.isSpeaker ?? false),
+                Role = new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.role ?? UserCommunityRoleMetadata.None)
             };
 
             participantStates[participant.Identity] = state;
@@ -293,6 +294,7 @@ namespace DCL.VoiceChat
             state.ProfilePictureUrl?.Dispose();
             state.IsRequestingToSpeak?.Dispose();
             state.IsSpeaker?.Dispose();
+            state.Role?.Dispose();
         }
 
         private void ClearAllParticipantStates()
@@ -366,6 +368,7 @@ namespace DCL.VoiceChat
             existingState.ProfilePictureUrl.Value = metadata?.profilePictureUrl;
             existingState.IsRequestingToSpeak.Value = metadata?.isRequestingToSpeak;
             existingState.IsSpeaker.Value = metadata?.isSpeaker ?? false;
+            existingState.Role.Value = metadata?.role ?? UserCommunityRoleMetadata.None;
         }
 
         private void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
@@ -382,6 +385,7 @@ namespace DCL.VoiceChat
                 state.ProfilePictureUrl.Value = metadata.profilePictureUrl;
                 state.IsRequestingToSpeak.Value = metadata.isRequestingToSpeak;
                 state.IsSpeaker.Value = metadata.isSpeaker ?? false;
+                state.Role.Value = metadata.role;
             }
         }
 
@@ -393,6 +397,15 @@ namespace DCL.VoiceChat
             public ReactiveProperty<string?> ProfilePictureUrl { get; set; }
             public ReactiveProperty<bool?> IsRequestingToSpeak { get; set; }
             public ReactiveProperty<bool> IsSpeaker { get; set; }
+            public ReactiveProperty<UserCommunityRoleMetadata> Role { get; set; }
+        }
+
+        public enum UserCommunityRoleMetadata
+        {
+            None,
+            User,
+            Moderator,
+            Owner
         }
 
         [Serializable]
@@ -405,9 +418,10 @@ namespace DCL.VoiceChat
             public bool? hasClaimedName;
             public bool? isRequestingToSpeak;
             public bool? isSpeaker;
+            public UserCommunityRoleMetadata role;
 
             public override string ToString() =>
-                $"(Name: {name}, HasClaimedName: {hasClaimedName}, ProfilePictureUrl: {profilePictureUrl}, IsRequestingToSpeak: {isRequestingToSpeak}, IsSpeaker: {isSpeaker})";
+                $"(Name: {name}, HasClaimedName: {hasClaimedName}, ProfilePictureUrl: {profilePictureUrl}, IsRequestingToSpeak: {isRequestingToSpeak}, IsSpeaker: {isSpeaker}, Role: {role})";
         }
     }
 }

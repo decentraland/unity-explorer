@@ -8,7 +8,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class PlayerEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action<VoiceChatMember, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
+        public event Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView>? ContextMenuButtonClicked;
 
         [SerializeField] private RectTransform hoverElement;
 
@@ -16,21 +16,20 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [SerializeField] public SimpleProfileView profileView;
 
-        private VoiceChatMember userProfile;
+        private VoiceChatParticipantsStateService.ParticipantState userProfile;
 
         private void Start()
         {
-            userProfile = new VoiceChatMember()
-            {
-                WalletId = "0x012414blablablabla138g",
-                IsModerator = true,
-                IsSpeaker = false
-            };
             hoverElement.gameObject.SetActive(false);
             contextMenuButton.onClick.AddListener(() => ContextMenuButtonClicked?.Invoke(userProfile!, contextMenuButton.transform.position, this));
         }
 
-        public void SubscribeToInteractions(Action<VoiceChatMember, Vector2, PlayerEntryView> contextMenu)
+        public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState)
+        {
+            userProfile = participantState;
+        }
+
+        public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu)
         {
             RemoveAllListeners();
 

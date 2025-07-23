@@ -53,28 +53,22 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
-
-            AddSpeaker();
-            AddSpeaker();
-            AddSpeaker();
-            AddListener();
-            AddListener();
         }
 
-        private void OnPromoteToSpeaker(VoiceChatMember member)
+        private void OnPromoteToSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
         {
         }
 
-        private void OnDemoteSpeaker(VoiceChatMember member)
+        private void OnDemoteSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
         {
         }
 
-        private void OnKickUser(VoiceChatMember member)
+        private void OnKickUser(VoiceChatParticipantsStateService.ParticipantState member)
         {
 
         }
 
-        private void OnBanUser(VoiceChatMember member)
+        private void OnBanUser(VoiceChatParticipantsStateService.ParticipantState member)
         {
         }
 
@@ -124,25 +118,25 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.SetCollapsedButtonState(isPanelCollapsed);
         }
 
-        private void AddSpeaker()
+        private void AddSpeaker(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
-            PlayerEntryView entryView = GetAndConfigurePlayerEntry();
+            PlayerEntryView entryView = GetAndConfigurePlayerEntry(participantState);
             entryView.transform.parent = view.CommunityVoiceChatInCallView.SpeakersParent;
             entryView.transform.localScale = Vector3.one;
         }
 
-        private void AddListener()
+        private void AddListener(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
-            PlayerEntryView entryView = GetAndConfigurePlayerEntry();
+            PlayerEntryView entryView = GetAndConfigurePlayerEntry(participantState);
             entryView.transform.parent = view.CommunityVoiceChatSearchView.ListenersParent;
             entryView.transform.localScale = Vector3.one;
         }
 
-        private PlayerEntryView GetAndConfigurePlayerEntry()
+        private PlayerEntryView GetAndConfigurePlayerEntry(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries.Add(entryView);
-            //entryView.profileView.SetupAsync(new Web3Address(""), profileRepositoryWrapper, CancellationToken.None).Forget();
+            //entryView.profileView.SetupAsync(participantState.WalletId, profileRepositoryWrapper, CancellationToken.None).Forget();
             view.SubscribeContextMenu(entryView);
             return entryView;
         }
