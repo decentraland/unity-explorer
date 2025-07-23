@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.CharacterCamera;
 using DCL.Chat;
 using DCL.Chat.ControllerShowParams;
+using DCL.Communities;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.Friends.UI.FriendPanel;
@@ -29,8 +30,10 @@ namespace DCL.UI.SharedSpaceManager
 
         private readonly bool isFriendsFeatureEnabled;
         private readonly bool isCameraReelFeatureEnabled;
+        private bool isCommunitiesFeatureEnabled;
 
         private readonly CancellationTokenSource cts = new ();
+        private readonly CancellationTokenSource configureShortcutsCts = new ();
         private bool isTransitioning; // true whenever a view is being shown or hidden, so other calls wait for them to finish
         private PanelsSharingSpace panelBeingShown = PanelsSharingSpace.Chat; // Showing a panel may make other panels show too internally, this is the panel that started the process
 
@@ -44,7 +47,13 @@ namespace DCL.UI.SharedSpaceManager
             isCameraReelFeatureEnabled = isCameraReelEnabled;
             ecsWorld = world;
 
-            if (isFriendsEnabled)
+            configureShortcutsCts = configureShortcutsCts.SafeRestart();
+            ConfigureShortcutsAsync(configureShortcutsCts.Token).Forget();
+        }
+
+        private async UniTaskVoid ConfigureShortcutsAsync(CancellationToken ct)
+        {
+            if (isFriendsFeatureEnabled)
                 dclInput.Shortcuts.FriendPanel.performed += OnInputShortcutsFriendPanelPerformedAsync;
 
             dclInput.Shortcuts.EmoteWheel.performed += OnInputShortcutsEmoteWheelPerformedAsync;
@@ -56,7 +65,11 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Settings.performed += OnInputShortcutsSettingsPerformedAsync;
             dclInput.Shortcuts.Backpack.performed += OnInputShortcutsBackpackPerformedAsync;
 
-            if (isCameraReelEnabled)
+            isCommunitiesFeatureEnabled = await CommunitiesFeatureAccess.Instance.IsUserAllowedToUseTheFeatureAsync(ct);
+            if (isCommunitiesFeatureEnabled)
+                dclInput.Shortcuts.Communities.performed += OnInputShortcutsCommunitiesPerformedAsync;
+
+            if (isCameraReelFeatureEnabled)
             {
                 dclInput.InWorldCamera.CameraReel.performed += OnInputShortcutsCameraReelPerformedAsync;
                 dclInput.InWorldCamera.ToggleInWorldCamera.performed += OnInputInWorldCameraToggledAsync;
@@ -78,9 +91,13 @@ namespace DCL.UI.SharedSpaceManager
             dclInput.Shortcuts.Backpack.performed -= OnInputShortcutsBackpackPerformedAsync;
 
             if (isCameraReelFeatureEnabled)
+                dclInput.Shortcuts.Communities.performed -= OnInputShortcutsCommunitiesPerformedAsync;
+
+            if (isCameraReelFeatureEnabled)
                 dclInput.InWorldCamera.CameraReel.performed -= OnInputShortcutsCameraReelPerformedAsync;
 
             cts.SafeCancelAndDispose();
+            configureShortcutsCts.SafeCancelAndDispose();
         }
 
         public async UniTask ShowAsync<TParams>(PanelsSharingSpace panel, TParams parameters = default!)
@@ -389,6 +406,12 @@ namespace DCL.UI.SharedSpaceManager
         {
             if (!isExplorePanelVisible && !isTransitioning)
                 await ToggleVisibilityAsync(PanelsSharingSpace.Chat, new ChatControllerShowParams(true, true));
+        }
+
+        private async void OnInputShortcutsCommunitiesPerformedAsync(InputAction.CallbackContext obj)
+        {
+            if (!isExplorePanelVisible && isCommunitiesFeatureEnabled)
+                await ShowAsync(PanelsSharingSpace.Explore, new ExplorePanelParameter(ExploreSections.Communities));
         }
 
         private async void OnInputInWorldCameraToggledAsync(InputAction.CallbackContext obj)

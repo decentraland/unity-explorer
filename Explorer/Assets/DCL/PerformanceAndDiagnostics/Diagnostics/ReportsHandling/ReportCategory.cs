@@ -74,7 +74,6 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string COMMS_CHAT_HANDLER = nameof(COMMS_CHAT_HANDLER);
 
-
         /// <summary>
         ///     Unspecified ECS World Exceptions
         /// </summary>
@@ -294,14 +293,14 @@ namespace DCL.Diagnostics
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
 
-        public const string PORTABLE_EXPERIENCE= nameof(PORTABLE_EXPERIENCE);
+        public const string PORTABLE_EXPERIENCE = nameof(PORTABLE_EXPERIENCE);
 
         /// <summary>
         ///     Used for multithreading sync messages
         /// </summary>
         public const string SYNC = nameof(SYNC);
 
-        public const string VERSION_CONTROL= nameof(VERSION_CONTROL);
+        public const string VERSION_CONTROL = nameof(VERSION_CONTROL);
 
         public const string ONBOARDING = nameof(ONBOARDING);
 
@@ -320,7 +319,7 @@ namespace DCL.Diagnostics
         public const string GPU_INSTANCING = nameof(GPU_INSTANCING);
 
         /// <summary>
-        /// Used for debugging the chat history storage.
+        ///     Used for debugging the chat history storage.
         /// </summary>
         public const string CHAT_HISTORY = nameof(CHAT_HISTORY);
 
@@ -330,8 +329,14 @@ namespace DCL.Diagnostics
 
         public const string MARKETPLACE_CREDITS = nameof(MARKETPLACE_CREDITS);
 
+        public const string VOICE_CHAT = nameof(VOICE_CHAT);
+
+        public const string COMMUNITY_VOICE_CHAT = nameof(COMMUNITY_VOICE_CHAT);
+
         public const string RUNTIME_DEEPLINKS = nameof(RUNTIME_DEEPLINKS);
 
         public const string SKYBOX = nameof(SKYBOX);
+
+        public const string COMMUNITIES = nameof(COMMUNITIES);
     }
 }

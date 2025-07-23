@@ -40,8 +40,8 @@ namespace MVC.Tests
             manager.PushPopup(previousController);
             var pushInfo = manager.PushPopup(controller);
 
-            Assert.AreEqual(402, pushInfo.ControllerOrdering.OrderInLayer);
-            Assert.AreEqual(401, pushInfo.PopupCloserOrdering.OrderInLayer);
+            Assert.AreEqual(404, pushInfo.ControllerOrdering.OrderInLayer);
+            Assert.AreEqual(403, pushInfo.PopupCloserOrdering.OrderInLayer);
             Assert.AreSame(previousController, pushInfo.PreviousController);
         }
 

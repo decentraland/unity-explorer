@@ -13,22 +13,8 @@ using Utility;
 
 namespace DCL.Chat
 {
-    public class ChatMemberListView : MonoBehaviour, IChatMemberListView
+    public class ChatMemberListView : MonoBehaviour
     {
-        /// <summary>
-        /// A subset of a Profile, stores only the necessary data to be presented by the view.
-        /// </summary>
-        public struct MemberData
-        {
-            public string Id;
-            public string Name;
-            public string FaceSnapshotUrl;
-            public string WalletId;
-            public ChatMemberConnectionStatus ConnectionStatus;
-            public Color ProfileColor;
-            public bool HasClaimedName;
-        }
-
         public delegate void VisibilityChangedDelegate(bool isVisible);
 
         /// <summary>
@@ -39,7 +25,7 @@ namespace DCL.Chat
         [SerializeField]
         private LoopListView2 loopListView;
 
-        private List<MemberData> members = new ();
+        private List<ChatUserData> members = new ();
 
         private ProfileRepositoryWrapper profileRepositoryWrapper;
         private bool isInitialized;
@@ -57,6 +43,12 @@ namespace DCL.Chat
                 {
                     isVisible = value;
                     gameObject.SetActive(value);
+
+                    if (!IsVisible)
+                    {
+                        loopListView.SetListItemCount(0);
+                    }
+
                     VisibilityChanged?.Invoke(value);
                 }
             }
@@ -71,16 +63,6 @@ namespace DCL.Chat
         {
             loopListView.gameObject.GetComponent<ScrollRect>()?.SetScrollSensitivityBasedOnPlatform();
         }
-        
-        public void SetData(IReadOnlyList<MemberData> members)
-        {
-            
-        }
-
-        public void SetMemberCount(int memberCount)
-        {
-            
-        }
 
         public void SetProfileDataProvider(ProfileRepositoryWrapper profileDataProvider)
         {
@@ -91,7 +73,7 @@ namespace DCL.Chat
         /// Replaces the data to be represented by the view.
         /// </summary>
         /// <param name="memberData">The data related to the members of the list.</param>
-        public void SetData(List<MemberData> memberData)
+        public void SetData(List<ChatUserData> memberData)
         {
             members = memberData;
 
@@ -112,9 +94,9 @@ namespace DCL.Chat
 
             LoopListViewItem2 newItem = loopListView.NewListViewItem(loopListView.ItemPrefabDataList[0].mItemPrefab.name);
             ChatMemberListViewItem memberItem = newItem.GetComponent<ChatMemberListViewItem>();
-            memberItem.Id = members[index].Id;
+            memberItem.Id = members[index].WalletAddress;
             memberItem.Name = members[index].Name;
-            memberItem.SetupProfilePicture(profileRepositoryWrapper, members[index].ProfileColor, members[index].FaceSnapshotUrl, members[index].Id);
+            memberItem.SetupProfilePicture(profileRepositoryWrapper, members[index].ProfileColor, members[index].FaceSnapshotUrl);
             memberItem.ConnectionStatus = members[index].ConnectionStatus;
             memberItem.Tag = members[index].WalletId;
             memberItem.NameTextColor = members[index].ProfileColor;
@@ -130,31 +112,13 @@ namespace DCL.Chat
             contextMenuTask = new UniTaskCompletionSource();
             contextMenuCts = contextMenuCts.SafeRestart();
             IsContextMenuOpen = true;
-            await ViewDependencies
-                .GlobalUIViews
-                .ShowUserProfileContextMenuFromWalletIdAsync(
-                    new Web3Address(listItem.Id),
-                    buttonPosition.position,
-                    default,
-                    contextMenuCts.Token,
-                    contextMenuTask.Task,
-                    onMenuHide);
+            await ViewDependencies.GlobalUIViews.ShowUserProfileContextMenuFromWalletIdAsync(new Web3Address(listItem.Id), buttonPosition.position, default(Vector2), contextMenuCts.Token, contextMenuTask.Task, onMenuHide);
             IsContextMenuOpen = false;
         }
 
         private void OnDisable()
         {
             contextMenuTask?.TrySetResult();
-        }
-
-        public void Show()
-        {
-            gameObject.SetActive(true);
-        }
-
-        public void Hide()
-        {
-            gameObject.SetActive(false);
         }
     }
 }

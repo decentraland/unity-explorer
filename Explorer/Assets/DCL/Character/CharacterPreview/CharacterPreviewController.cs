@@ -55,8 +55,8 @@ namespace DCL.CharacterPreview
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),
-                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME),
-                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings},
+                new AvatarShapeComponent(CHARACTER_PREVIEW_NAME, CHARACTER_PREVIEW_NAME) { IsPreview = true },
+                new CharacterPreviewComponent { Camera = avatarContainer.camera, RenderImageRect = renderImage, Settings = avatarContainer.headIKSettings },
                 new CharacterEmoteComponent());
         }
 
@@ -130,16 +130,14 @@ namespace DCL.CharacterPreview
             }
             return;
 
-            bool IsAvatarLoaded()
-            {
-                return !world.Get<AvatarShapeComponent>(avatarEntity).IsDirty;
-            }
-
             bool IsEmoteLoaded() =>
                 emotePromiseEntity == Entity.Null
                 || !world.IsAlive(emotePromiseEntity)
                 || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
         }
+
+        public bool IsAvatarLoaded() =>
+            !globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty;
 
         public void PlayEmote(string emoteId)
         {

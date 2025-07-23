@@ -1,4 +1,5 @@
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
@@ -37,6 +38,7 @@ namespace DCL.Settings
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
         private readonly QualitySettingsAsset qualitySettingsAsset;
+        private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
         private readonly SceneLoadingLimit sceneLoadingLimit;
         private readonly WorldVolumeMacBus worldVolumeMacBus;
@@ -46,6 +48,7 @@ namespace DCL.Settings
         private readonly ChatSettingsAsset chatSettingsAsset;
         private readonly ObjectProxy<IUserBlockingCache> userBlockingCacheProxy;
         private readonly UpscalingController upscalingController;
+        private readonly bool isVoiceChatEnabled;
 
         public event Action<ChatBubbleVisibilitySettings> ChatBubblesVisibilityChanged;
 
@@ -62,9 +65,9 @@ namespace DCL.Settings
             ChatSettingsAsset chatSettingsAsset,
             ObjectProxy<IUserBlockingCache> userBlockingCacheProxy,
             SceneLoadingLimit sceneLoadingLimit,
+            VoiceChatSettingsAsset voiceChatSettings,
             WorldVolumeMacBus worldVolumeMacBus,
-            UpscalingController upscalingController
-        )
+            UpscalingController upscalingController, bool isVoiceChatEnabled)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
@@ -79,7 +82,9 @@ namespace DCL.Settings
             this.controlsSettingsAsset = controlsSettingsAsset;
             this.videoPrioritizationSettings = videoPrioritizationSettings;
             this.sceneLoadingLimit = sceneLoadingLimit;
+            this.voiceChatSettings = voiceChatSettings;
             this.upscalingController = upscalingController;
+            this.isVoiceChatEnabled = isVoiceChatEnabled;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -148,6 +153,9 @@ namespace DCL.Settings
         {
             foreach (SettingsGroup group in sectionConfig.SettingsGroups)
             {
+                if (group.FeatureFlagName != FeatureFlag.None && !FeatureFlagsConfiguration.Instance.IsEnabled(group.FeatureFlagName.GetStringValue()))
+                    return;
+
                 SettingsGroupView generalGroupView = Object.Instantiate(settingsMenuConfiguration.SettingsGroupPrefab, sectionContainer);
 
                 if (!string.IsNullOrEmpty(group.GroupTitle))
@@ -156,10 +164,25 @@ namespace DCL.Settings
                     generalGroupView.GroupTitle.gameObject.SetActive(false);
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                {
-                    var controller = module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, videoPrioritizationSettings, landscapeData, generalAudioMixer, qualitySettingsAsset, controlsSettingsAsset, chatSettingsAsset, memoryCap, sceneLoadingLimit, userBlockingCacheProxy, this, upscalingController, worldVolumeMacBus);
-                    controllers.Add(controller);
-                }
+                    if (module != null)
+                        controllers.Add(module.CreateModule
+                        (
+                            generalGroupView.ModulesContainer,
+                            realmPartitionSettingsAsset,
+                            videoPrioritizationSettings,
+                            landscapeData,
+                            generalAudioMixer,
+                            qualitySettingsAsset,
+                            controlsSettingsAsset,
+                            chatSettingsAsset,
+                            memoryCap,
+                            sceneLoadingLimit,
+                            userBlockingCacheProxy,
+                            this,
+                            voiceChatSettings,
+                            upscalingController,
+                            worldVolumeMacBus,
+                            isVoiceChatEnabled));
             }
         }
 

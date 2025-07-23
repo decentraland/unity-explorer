@@ -204,7 +204,7 @@ namespace ECS.Unity.Materials.Systems
                 promise = Promise.CreateFinalized(intention, result);
 
                 if (info.VideoRenderer)
-                    World.Add(info.VideoPlayer, new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer });
+                    World.Create(new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer, MediaPlayerComponentEntity = info.VideoPlayer });
             }
             else
                 promise = Promise.Create(
@@ -216,7 +216,8 @@ namespace ECS.Unity.Materials.Systems
                         textureComponentValue.FilterMode,
                         textureComponentValue.TextureType,
                         attemptsCount: attemptsCount,
-                        isAvatarTexture: textureComponentValue.IsAvatarTexture
+                        isAvatarTexture: textureComponentValue.IsAvatarTexture,
+                        reportSource: nameof(StartMaterialsLoadingSystem)
                     ),
                     partitionComponent
                 );

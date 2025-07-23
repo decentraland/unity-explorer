@@ -703,9 +703,12 @@ namespace Global.Dynamic
                     chatMessageFactory,
                     profileRepositoryWrapper,
                     friendServiceProxy,
-                    staticContainer.RealmData,
-                    realmNavigator,
-                    menusAccessFacade),
+                    communitiesDataProvider,
+                    thumbnailCache,
+                    mainUIView.WarningNotification,
+                    communitiesEventBus,
+                    voiceChatCallStatusService,
+                    includeVoiceChat),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     mvcManager,
@@ -757,12 +760,15 @@ namespace Global.Dynamic
                     staticContainer.SceneLoadingLimit,
                     mainUIView.WarningNotification,
                     profileRepositoryWrapper,
-                    upscaleController
+                    upscaleController,
+                    communitiesDataProvider,
+                    realmNftNamesProvider,
+                    includeVoiceChat
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
                 new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, mvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, characterPreviewEventBus, globalWorld),
-                new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
+                new SkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, staticContainer.ScenesCache, staticContainer.SceneRestrictionBusController),
                 new LoadingScreenPlugin(assetsProvisioner, mvcManager, audioMixerVolumesController,
                     staticContainer.InputBlock, debugBuilder, staticContainer.LoadingStatus),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, mvcManager, dclCursor),
@@ -834,15 +840,31 @@ namespace Global.Dynamic
                     includeFriends,
                     includeUserBlocking,
                     isNameEditorEnabled,
+                    includeVoiceChat,
                     chatEventBus,
                     sharedSpaceManager,
-                    profileRepositoryWrapper
+                    profileRepositoryWrapper,
+                    voiceChatCallStatusService
                 ),
                 new GenericPopupsPlugin(assetsProvisioner, mvcManager, clipboardManager),
                 new GenericContextMenuPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
                 realmNavigatorContainer.CreatePlugin(),
                 new GPUInstancingPlugin(staticContainer.GPUInstancingService, assetsProvisioner, staticContainer.RealmData, staticContainer.LoadingStatus, exposedGlobalDataContainer.ExposedCameraData),
+                new ConfirmationDialogPlugin(assetsProvisioner, mvcManager, profileRepositoryWrapper),
             };
+
+            if (includeVoiceChat)
+                globalPlugins.Add(
+                    new VoiceChatPlugin(
+                        assetsProvisioner,
+                        roomHub,
+                        mainUIView,
+                        voiceChatCallStatusService,
+                        profileRepositoryWrapper,
+                        entityParticipantTable,
+                        globalWorld,
+                        playerEntity));
+
 
             if (!appArgs.HasDebugFlag() || !appArgs.HasFlagWithValueFalse(AppArgsFlags.LANDSCAPE_TERRAIN_ENABLED))
                 globalPlugins.Add(terrainContainer.CreatePlugin(staticContainer, bootstrapContainer, mapRendererContainer, debugBuilder, FeatureFlagsConfiguration.Instance.IsEnabled(FeatureFlagsStrings.GPUI_ENABLED)));
@@ -877,6 +899,7 @@ namespace Global.Dynamic
                     onlineUsersProvider,
                     realmNavigator,
                     includeUserBlocking,
+                    includeVoiceChat,
                     appArgs,
                     dynamicWorldParams.EnableAnalytics,
                     bootstrapContainer.Analytics,
@@ -889,7 +912,8 @@ namespace Global.Dynamic
                     friendOnlineStatusCacheProxy,
                     friendsCacheProxy,
                     userBlockingCacheProxy,
-                    profileRepositoryWrapper
+                    profileRepositoryWrapper,
+                    voiceChatCallStatusService
                 );
 
                 globalPlugins.Add(friendsContainer);
@@ -942,6 +966,30 @@ namespace Global.Dynamic
                     identityCache,
                     staticContainer.LoadingStatus));
             }
+
+            if (includeCommunities)
+                globalPlugins.Add(new CommunitiesPlugin(
+                    mvcManager,
+                    assetsProvisioner,
+                    staticContainer.InputBlock,
+                    cameraReelStorageService,
+                    cameraReelScreenshotsStorage,
+                    profileRepositoryWrapper,
+                    friendServiceProxy,
+                    communitiesDataProvider,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    placesAPIService,
+                    selfProfile,
+                    realmNavigator,
+                    clipboard,
+                    webBrowser,
+                    eventsApiService,
+                    sharedSpaceManager,
+                    chatEventBus,
+                    communitiesEventBus,
+                    socialServiceContainer.socialServicesRPC,
+                    lambdasProfilesProvider,
+                    identityCache));
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
@@ -1004,16 +1052,6 @@ namespace Global.Dynamic
             await dynamicWorldDependencies.SettingsContainer.InitializePluginAsync(container, ct)!.ThrowOnFail();
 
             return (container, true);
-        }
-
-        private static URLAddress GetFriendsApiUrl(IDecentralandUrlsSource dclUrlSource, IAppArgs appArgs)
-        {
-            string url = dclUrlSource.Url(DecentralandUrl.ApiFriends);
-
-            if (appArgs.TryGetValue(AppArgsFlags.FRIENDS_API_URL, out string? urlFromArgs))
-                url = urlFromArgs!;
-
-            return URLAddress.FromString(url);
         }
 
         private static void ParseDebugForcedEmotes(IReadOnlyCollection<string>? debugEmotes, ref List<URN> parsedEmotes)

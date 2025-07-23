@@ -23,6 +23,7 @@ using DCL.Profiles.Self;
 using DCL.UI.ProfileNames;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -67,9 +68,11 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableFriends;
         private readonly bool includeUserBlocking;
         private readonly bool isNameEditorEnabled;
+        private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
 
         private PassportController? passportController;
 
@@ -104,7 +107,12 @@ namespace DCL.PluginSystem.Global
             ProfileChangesBus profileChangesBus,
             bool enableFriends,
             bool includeUserBlocking,
-            bool isNameEditorEnabled, IChatEventBus chatEventBus, ISharedSpaceManager sharedSpaceManager, ProfileRepositoryWrapper profileDataProvider)
+            bool isNameEditorEnabled,
+            bool isCallEnabled,
+            IChatEventBus chatEventBus,
+            ISharedSpaceManager sharedSpaceManager,
+            ProfileRepositoryWrapper profileDataProvider,
+            IVoiceChatCallStatusService voiceChatCallStatusService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -137,9 +145,11 @@ namespace DCL.PluginSystem.Global
             this.enableFriends = enableFriends;
             this.includeUserBlocking = includeUserBlocking;
             this.isNameEditorEnabled = isNameEditorEnabled;
+            this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
         }
 
         public void Dispose()
@@ -158,6 +168,8 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
 
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
+            BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
+
 
             var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
 
@@ -197,9 +209,12 @@ namespace DCL.PluginSystem.Global
                 enableFriends,
                 includeUserBlocking,
                 isNameEditorEnabled,
+                isCallEnabled,
                 chatEventBus,
                 sharedSpaceManager,
-                profileRepositoryWrapper
+                profileRepositoryWrapper,
+                voiceChatCallStatusService,
+                passport3DPreviewCamera
             );
 
             mvcManager.RegisterController(passportController);
@@ -217,6 +232,9 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject PassportPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceGameObject Badges3DCamera;
 
             [field: SerializeField]
             public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; }

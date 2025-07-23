@@ -11,7 +11,6 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
-using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.RealmNavigation;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -25,7 +24,6 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Cache.InMemory;
 using ECS.StreamableLoading.Common.Components;
 using Global.AppArgs;
-using Global.Dynamic.DebugSettings;
 using Global.Dynamic.LaunchModes;
 using Global.Dynamic.RealmUrl;
 using Global.Versioning;
@@ -167,10 +165,7 @@ namespace Global.Dynamic
                 worldInfoTool
             );
 
-            string defaultStartingRealm = await realmUrls.StartingRealmAsync(ct);
             string? localSceneDevelopmentRealm = await realmUrls.LocalSceneDevelopmentRealmAsync(ct);
-
-
 
             (DynamicWorldContainer? container, bool success) tuple = await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
@@ -179,7 +174,6 @@ namespace Global.Dynamic
                 {
                     StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
-                    DefaultStartingRealm = defaultStartingRealm,
                     StartParcel = new StartParcel(realmLaunchSettings.targetScene),
                     IsolateScenesCommunication = realmLaunchSettings.isolateSceneCommunication,
                     EnableLandscape = debugSettings.EnableLandscape,
@@ -187,7 +181,6 @@ namespace Global.Dynamic
                     EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(),
                     LocalSceneDevelopmentRealm = localSceneDevelopmentRealm ?? string.Empty,
-                    AppParameters = appArgs,
                 },
                 backgroundMusic,
                 world,
@@ -225,7 +218,11 @@ namespace Global.Dynamic
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
             try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appArgs, ct); }
-            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                FeatureFlagsConfiguration.Initialize(new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty));
+                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
+            }
         }
 
         public GlobalWorld CreateGlobalWorld(
@@ -267,7 +264,7 @@ namespace Global.Dynamic
             staticContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
-            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag();
+            staticContainer.DebugContainerBuilder.IsVisible = appArgs.HasDebugFlag() || appArgs.HasFlag(AppArgsFlags.LOCAL_SCENE);
 
             return globalWorld;
         }

@@ -20,11 +20,13 @@ using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.Settings.Settings;
 using DCL.SocialService;
+using DCL.UI;
 using DCL.UI.InputFieldFormatting;
 using DCL.UI.MainUI;
 using DCL.Web3.Identities;
 using DCL.UI.SharedSpaceManager;
 using DCL.Utilities;
+using DCL.VoiceChat;
 using MVC;
 using System.Threading;
 using DCL.Audio;
@@ -67,6 +69,13 @@ namespace DCL.PluginSystem.Global
         private readonly IFriendsEventBus friendsEventBus;
         private readonly ObjectProxy<IFriendsService> friendsServiceProxy;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
+        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly bool isCallEnabled;
+        private readonly CommunitiesDataProvider communityDataProvider;
+        private readonly ISpriteCache thumbnailCache;
+        private readonly WarningNotificationView warningNotificationView;
+        private readonly CommunitiesEventBus communitiesEventBus;
+        private ChatController chatController;
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private IRealmData realmData;
@@ -102,6 +111,12 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IRealmNavigator realmNavigator,
             IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade)
+            CommunitiesDataProvider communityDataProvider,
+            ISpriteCache thumbnailCache,
+            WarningNotificationView warningNotificationView,
+            CommunitiesEventBus communitiesEventBus,
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            bool isCallEnabled)
         {
             this.mvcManager = mvcManager;
             this.chatHistory = chatHistory;
@@ -123,10 +138,16 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.chatMessageFactory = chatMessageFactory;
             this.friendsServiceProxy = friendsServiceProxy;
+            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.isCallEnabled = isCallEnabled;
             this.userBlockingCacheProxy = userBlockingCacheProxy;
             this.socialServiceProxy = socialServiceProxy;
             this.friendsEventBus = friendsEventBus;
             this.profileRepositoryWrapper = profileDataProvider;
+            this.communityDataProvider = communityDataProvider;
+            this.thumbnailCache = thumbnailCache;
+            this.warningNotificationView = warningNotificationView;
+            this.communitiesEventBus = communitiesEventBus;
             this.realmData = realmData;
             this.realmNavigator = realmNavigator;
             this.mvcManagerMenusAccessFacade = mvcManagerMenusAccessFacade;
