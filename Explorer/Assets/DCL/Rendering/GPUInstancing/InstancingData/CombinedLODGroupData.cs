@@ -8,7 +8,7 @@ using UnityEngine;
 namespace DCL.Rendering.GPUInstancing.InstancingData
 {
     [Serializable]
-    public class GPUInstancingLODGroup : MonoBehaviour, IEquatable<GPUInstancingLODGroup>
+    public class CombinedLODGroupData : MonoBehaviour, IEquatable<CombinedLODGroupData>
     {
         [SerializeField] private GPUInstancingSettings GPUInstancingSettings;
 
@@ -71,7 +71,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         [ContextMenu(nameof(CollectSelfData))]
         private void CollectSelfData()
         {
-            if (GetComponentsInChildren<GPUInstancingLODGroup>().Length > 1)
+            if (GetComponentsInChildren<CombinedLODGroupData>().Length > 1)
                 ReportHub.LogWarning(ReportCategory.GPU_INSTANCING, $"{name} has nested GPU instancing candidates, that could lead to duplication of meshes!");
 
             LODGroup lodGroup = GetComponent<LODGroup>();
@@ -108,13 +108,12 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             // LOD Group
             Reference = lodGroup;
             lodGroup.RecalculateBounds();
-
             LODGroupData = new LODGroupData(lodGroup, lods, CombinedLodsRenderers);
 
             HideAll();
         }
 
-        public bool Equals(GPUInstancingLODGroup other)
+        public bool Equals(CombinedLODGroupData other)
         {
             if (other == null) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -142,21 +141,20 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         {
             var hashCode = new HashCode();
             hashCode.Add(LODGroupData.GetHashCode());
-
             // hashCode.Add(CombinedLodsRenderers.GetHashCode());
             return hashCode.ToHashCode();
         }
 
         public override bool Equals(object obj) =>
-            Equals(obj as GPUInstancingLODGroup);
+            Equals(obj as CombinedLODGroupData);
 
-        public static bool operator ==(GPUInstancingLODGroup left, GPUInstancingLODGroup right)
+        public static bool operator ==(CombinedLODGroupData left, CombinedLODGroupData right)
         {
             if (ReferenceEquals(left, right)) return true;
             return left is not null && left.Equals(right);
         }
 
-        public static bool operator !=(GPUInstancingLODGroup left, GPUInstancingLODGroup right) =>
+        public static bool operator !=(CombinedLODGroupData left, CombinedLODGroupData right) =>
             !(left == right);
     }
 }

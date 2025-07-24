@@ -8,15 +8,15 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
     public class GPUInstancingPrefabData : MonoBehaviour
     {
         public List<GPUInstancingLODGroupWithBuffer> IndirectCandidates;
-        private Dictionary<GPUInstancingLODGroup, List<PerInstanceBuffer>> candidatesTable;
+        private Dictionary<CombinedLODGroupData, List<PerInstanceBuffer>> candidatesTable;
 
         [ContextMenu(nameof(CollectSelfData))]
         public void CollectSelfData()
         {
             IndirectCandidates = new List<GPUInstancingLODGroupWithBuffer>();
-            candidatesTable = new Dictionary<GPUInstancingLODGroup, List<PerInstanceBuffer>>();
+            candidatesTable = new Dictionary<CombinedLODGroupData, List<PerInstanceBuffer>>();
 
-            foreach (GPUInstancingLODGroup lodGroup in GetComponentsInChildren<GPUInstancingLODGroup>())
+            foreach (CombinedLODGroupData lodGroup in GetComponentsInChildren<CombinedLODGroupData>())
             {
                 AdjustMaterialChangeInPrefab(lodGroup);
 
@@ -24,17 +24,17 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
                 TryAddToCollected(lodGroup, localToRootMatrix);
             }
 
-            foreach (KeyValuePair<GPUInstancingLODGroup,List<PerInstanceBuffer>> pair in candidatesTable)
+            foreach (KeyValuePair<CombinedLODGroupData, List<PerInstanceBuffer>> pair in candidatesTable)
                 IndirectCandidates.Add(new GPUInstancingLODGroupWithBuffer(pair.Key, pair.Value));
         }
 
-        private static void AdjustMaterialChangeInPrefab(GPUInstancingLODGroup lodGroup)
+        private static void AdjustMaterialChangeInPrefab(CombinedLODGroupData combinedLODGroupData)
         {
-            foreach (var combinedRenderer in lodGroup.CombinedLodsRenderers)
+            foreach (CombinedLodsRenderer combinedRenderer in combinedLODGroupData.CombinedLodsRenderers)
                 combinedRenderer.SharedMaterial = combinedRenderer.RenderParamsSerialized.RefRenderer.sharedMaterials[combinedRenderer.SubMeshId];
         }
 
-        private void TryAddToCollected(GPUInstancingLODGroup newCandidate, Matrix4x4 localToRootMatrix)
+        private void TryAddToCollected(CombinedLODGroupData newCandidate, Matrix4x4 localToRootMatrix)
         {
             Material firstCandidateMaterial = newCandidate.CombinedLodsRenderers.First().SharedMaterial;
 

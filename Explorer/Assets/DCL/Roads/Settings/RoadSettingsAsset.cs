@@ -16,7 +16,7 @@ namespace DCL.Roads.Settings
     public class RoadSettingsAsset : ScriptableObject, IRoadSettingsAsset
     {
         public List<GPUInstancingLODGroupWithBuffer> IndirectLODGroups;
-        public List<GPUInstancingLODGroup> PropsAndTiles;
+        public List<CombinedLODGroupData> PropsAndTiles;
 
         [field: SerializeField] public List<RoadDescription> RoadDescriptions { get; set; }
         [field: SerializeField] public List<AssetReferenceGameObject> RoadAssetsReference { get; set; }
@@ -78,8 +78,8 @@ namespace DCL.Roads.Settings
             }
 
             IndirectLODGroups = tempIndirectCandidates
-                               .Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.LODGroup, kvp.Value.ToList()))
-                               .OrderBy(group => group.LODGroup.Name)
+                               .Select(kvp => new GPUInstancingLODGroupWithBuffer(kvp.Key.combinedLODGroupData, kvp.Value.ToList()))
+                               .OrderBy(group => group.combinedLODGroupData.Name)
                                .ToList();
 
             UnityEditor.EditorUtility.SetDirty(this);
@@ -138,14 +138,14 @@ namespace DCL.Roads.Settings
             }
         }
 
-        private GPUInstancingLODGroup roadTileCachedLODGroup;
+        private CombinedLODGroupData roadTileCachedCombinedLODGroupData;
 
         private GPUInstancingLODGroupWithBuffer HandleRoadTileCase(GPUInstancingLODGroupWithBuffer myCandidate)
         {
             if (myCandidate.Name.StartsWith("RoadTile"))
             {
-                if (roadTileCachedLODGroup == null) roadTileCachedLODGroup = myCandidate.LODGroup;
-                return new GPUInstancingLODGroupWithBuffer(roadTileCachedLODGroup, myCandidate.InstancesBuffer);
+                if (roadTileCachedCombinedLODGroupData == null) roadTileCachedCombinedLODGroupData = myCandidate.combinedLODGroupData;
+                return new GPUInstancingLODGroupWithBuffer(roadTileCachedCombinedLODGroupData, myCandidate.InstancesBuffer);
             }
 
             return myCandidate;
