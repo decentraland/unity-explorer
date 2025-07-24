@@ -149,9 +149,8 @@ namespace DCL.AvatarRendering.Loading.Components
         {
             if (result.Succeeded)
             {
-                string assetBundleManifestVersion = result.Asset!.GetVersion();
-                avatarAttachment.DTO.assetBundleManifestVersion = assetBundleManifestVersion;
-                avatarAttachment.DTO.hasSceneInPath = int.Parse(assetBundleManifestVersion.AsSpan().Slice(1)) >= 25;
+                avatarAttachment.DTO.assetBundleManifestVersion = result.Asset!.GetVersion();
+                avatarAttachment.DTO.hasSceneInPath = result.Asset!.HasHashInPathID();
             }
             else
                 avatarAttachment.DTO.assetBundleManifestRequestFailed = true;

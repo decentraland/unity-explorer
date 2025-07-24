@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         [SetUp]
         public void Setup()
         {
-            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, AB_MANIFEST_VERSION, Array.Empty<string>(), "hash", "04_10_2024"));
+            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(AB_MANIFEST_VERSION));
 
             wearableStorage = new WearableStorage();
 

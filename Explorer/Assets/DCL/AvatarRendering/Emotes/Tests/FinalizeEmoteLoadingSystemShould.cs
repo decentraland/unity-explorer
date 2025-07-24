@@ -142,7 +142,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
             Entity entity = world.Create(mockEmote); // Entity holding the IEmote component
 
-            var manifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date");
+            var manifest = new SceneAssetBundleManifest("v1");
             var intention = new GetAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
             var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             world.Add(entity, promise); // Promise is on the same entity as IEmote

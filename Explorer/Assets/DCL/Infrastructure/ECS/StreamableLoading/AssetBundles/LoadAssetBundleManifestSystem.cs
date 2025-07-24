@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
 
-            return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
+            return new SceneAssetBundleManifest(sceneAbDto.Version);
         }
     }
 }

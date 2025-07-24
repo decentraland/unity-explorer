@@ -68,7 +68,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 definitionComponent.Definition.assetBundleManifestVersion = loadAssetBundleManifest.Result.Value.Asset!.GetVersion();
                 //If ABVersion is over 25 for scenes, the path will contain the scene hash
-                definitionComponent.Definition.hasSceneInPath = int.Parse( definitionComponent.Definition.assetBundleManifestVersion.AsSpan().Slice(1)) >= 25;
+                definitionComponent.Definition.hasSceneInPath = loadAssetBundleManifest.Result.Value.Asset!.HasHashInPathID();
             }
             else
             {

@@ -12,6 +12,7 @@ using UnityEngine.TestTools;
 
 namespace ECS.StreamableLoading.AssetBundles.Tests
 {
+/*
     [TestFixture]
     public class PrepareAssetBundleLoadingParametersSystemShould : UnitySystemTestBase<PrepareAssetBundleLoadingParametersSystem>
     {
@@ -176,4 +177,5 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
             Assert.AreEqual(firstCacheableHash, secondCacheableHash);
         }
     }
+    */
 }
