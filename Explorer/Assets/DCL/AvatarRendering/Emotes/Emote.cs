@@ -8,7 +8,8 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
 using System;
-using UnityEngine;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -30,6 +31,10 @@ namespace DCL.AvatarRendering.Emotes
 
         public void UpdateLoadingStatus(bool isLoading)
         {
+            if (Model.Asset.id.Contains("bafkreihhtbqtzdesgnm24a26qk56bo76gtibiq6f67vqyftchgxxxudgiq"))
+            {
+                Debug.Log($"JUANI HERE IM UPDATING THE VALUE {isLoading} {System.Environment.StackTrace}");
+            }
             IsLoading = isLoading;
         }
 

@@ -18,7 +18,7 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         private readonly ISceneData sceneData;
 
-        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL) : base(world, streamingAssetURL)
+        internal PrepareAssetBundleLoadingParametersSystem(World world, ISceneData sceneData, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL)
         {
             this.sceneData = sceneData;
         }
@@ -34,7 +34,9 @@ namespace ECS.StreamableLoading.AssetBundles
         // If loading is not started yet and there is no result
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            assetBundleIntention.Manifest = sceneData.AssetBundleManifest;
+            assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
+            assetBundleIntention.HasSceneInPath = sceneData.SceneEntityDefinition.hasSceneInPath;
+            assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

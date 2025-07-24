@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -19,10 +20,12 @@ namespace ECS.StreamableLoading.AssetBundles
         };
 
         private readonly URLDomain streamingAssetURL;
+        private readonly URLDomain assetBundlesURL;
 
-        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL) : base(world)
+        protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world)
         {
             this.streamingAssetURL = streamingAssetURL;
+            this.assetBundlesURL = assetBundlesURL;
         }
 
         protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
@@ -46,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (assetBundleIntention.Manifest == null)
+                if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleManifestVersion))
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
@@ -54,6 +57,10 @@ namespace ECS.StreamableLoading.AssetBundles
                     return;
                 }
 
+                /*
+                TODO (JUANI) : This validation should be done in an upper level. It can go away if so;
+                - For GLTF we do it in LoadGltfContainerSystem
+                - And for textures? Where is that done? Do we even requests textures as ABs when not thumbanils?
                 if (!assetBundleIntention.Manifest.Contains(assetBundleIntention.Hash))
                 {
                     // Add the failure to the entity
@@ -62,15 +69,16 @@ namespace ECS.StreamableLoading.AssetBundles
 
                     return;
                 }
+                */
 
                 CommonLoadingArguments ca = assetBundleIntention.CommonArguments;
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                ca.URL = assetBundleIntention.Manifest.GetAssetBundleURL(assetBundleIntention.Hash);
-                ca.CacheableURL = assetBundleIntention.Manifest.GetCacheableURL(assetBundleIntention.Hash);
+                ca.URL = GetAssetBundleURL(assetBundleIntention.HasSceneInPath, assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion);
+                ca.CacheableURL = GetCacheableURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = assetBundleIntention.Manifest.ComputeHash(assetBundleIntention.Hash);
+                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion);
             }
         }
 
@@ -81,5 +89,29 @@ namespace ECS.StreamableLoading.AssetBundles
             customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
+
+        private unsafe Hash128 ComputeHash(string hash, string assetBundleManifestVersion)
+        {
+            //TODO (JUANI): Doing it like this we lose the ability to rebuild assets on a same version, since
+            // new builds with the same version and hash will be incorrectly cached. Tolerated?
+            Span<char> hashBuilder = stackalloc char[assetBundleManifestVersion.Length + hash.Length];
+            assetBundleManifestVersion.AsSpan().CopyTo(hashBuilder);
+            hash.AsSpan().CopyTo(hashBuilder[assetBundleManifestVersion.Length..]);
+
+            fixed (char* ptr = hashBuilder) { return Hash128.Compute(ptr, (uint)(sizeof(char) * hashBuilder.Length)); }
+        }
+
+        private URLAddress GetAssetBundleURL(bool hasSceneIDInPath, string hash, string sceneID, string assetBundleManifestVersion)
+        {
+            if (hasSceneIDInPath)
+                return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{sceneID}/{hash}"));
+
+            return assetBundlesURL.Append(new URLPath($"{assetBundleManifestVersion}/{hash}"));
+        }
+
+        //Used for the OngoingRequests cache. We need to avoid version and sceneID in this URL to be able to reuse assets.
+        //The first loaded hash will be the one used for all the other requests
+        private URLAddress GetCacheableURL(string hash) =>
+            assetBundlesURL.Append(new URLPath(hash));
     }
 }

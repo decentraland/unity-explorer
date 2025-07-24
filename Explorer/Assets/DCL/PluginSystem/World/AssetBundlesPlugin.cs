@@ -58,7 +58,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             // Asset Bundles
-            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL);
+            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, STREAMING_ASSETS_URL, assetBundleURL);
 
             // TODO create a runtime ref-counting cache
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, buffersPool, assetBundleLoadingMutex, partialsDiskCache);
@@ -67,7 +67,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             // Asset Bundles
-            PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
+            PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL, assetBundleURL);
 
             LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
 

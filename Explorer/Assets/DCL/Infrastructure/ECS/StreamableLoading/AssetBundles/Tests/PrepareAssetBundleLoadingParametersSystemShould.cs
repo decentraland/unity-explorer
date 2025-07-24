@@ -20,7 +20,7 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         {
             path = URLDomain.FromString($"file://{Application.dataPath}" + "/../TestResources/AssetBundles/");
             sceneData = Substitute.For<ISceneData>();
-            system = new PrepareAssetBundleLoadingParametersSystem(world, sceneData, path);
+            system = new PrepareAssetBundleLoadingParametersSystem(world, sceneData, path, path);
         }
 
         private ISceneData sceneData;

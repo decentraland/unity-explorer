@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.Emotes
                     permittedSources: this.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory.Value,
                     cancellationTokenSource: this.CancellationTokenSource,
-                    manifest: this.AssetBundleManifest),
+                    manifestVersion: this.AssetBundleManifest.GetVersion()),
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);

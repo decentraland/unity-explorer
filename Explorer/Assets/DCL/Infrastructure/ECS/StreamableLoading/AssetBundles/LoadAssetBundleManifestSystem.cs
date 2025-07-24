@@ -34,16 +34,13 @@ namespace ECS.StreamableLoading.AssetBundles
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetAssetBundleManifestIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct) =>
             new (
                 await LoadAssetBundleManifestAsync(
-                    webRequestController,
-                    assetBundleURL,
                     intention.Hash,
                     GetReportData(),
                     ct
                 )
             );
 
-        private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
-            string hash, ReportData reportCategory, CancellationToken ct)
+        private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
         {
             urlBuilder!.Clear();
 
@@ -55,6 +52,9 @@ namespace ECS.StreamableLoading.AssetBundles
                                                               .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
 
             AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
+
+            if(hash.Contains("bafkreihhtbqtzdesgnm24a26qk56bo76gtibiq6f67vqyftchgxxxudgiq"))
+                UnityEngine.Debug.Log("JUANI FINISHED THE FLAG DTO");
 
             return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
         }

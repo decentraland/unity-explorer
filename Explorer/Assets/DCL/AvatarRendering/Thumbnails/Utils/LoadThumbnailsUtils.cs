@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Loading.Components;
 using DCL.AvatarRendering.Loading.DTO;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
@@ -124,7 +123,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    manifest: attachment.ManifestResult?.Asset,
+                    manifestVersion: attachment.ManifestResult?.Asset.GetVersion(),
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),
                 partitionComponent);

@@ -22,6 +22,7 @@ namespace DCL.Ipfs
         public AssetBundleRegistryEnum assetBundleRegistryEnum;
 
         public string assetBundleManifestVersion;
+        public bool hasSceneInPath;
 
         public EntityDefinitionGeneric() { }
 

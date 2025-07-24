@@ -17,7 +17,7 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class PrepareGlobalAssetBundleLoadingParametersSystem : PrepareAssetBundleLoadingParametersSystemBase
     {
-        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL) : base(world, streamingAssetURL) { }
+        internal PrepareGlobalAssetBundleLoadingParametersSystem(World world, URLDomain streamingAssetURL, URLDomain assetBundlesURL) : base(world, streamingAssetURL, assetBundlesURL) { }
 
         protected override void Update(float t)
         {
@@ -30,8 +30,8 @@ namespace ECS.StreamableLoading.AssetBundles
         // Provides a unique asset bundle manifest for each entity containing an asset bundle
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            // TODO hack, fix Asset Bundle Converter
-            assetBundleIntention.Hash = assetBundleIntention.Manifest.FixCapitalization(assetBundleIntention.Hash);
+            // TODO (JUANI) : Optimize
+            assetBundleIntention.Hash = assetBundleIntention.Hash.ToLower();
 
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }

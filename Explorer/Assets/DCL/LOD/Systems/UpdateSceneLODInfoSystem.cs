@@ -69,13 +69,13 @@ namespace DCL.LOD.Systems
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
-            var manifest = LODUtils.LODManifests(decentralandUrlsSource)[level];
 
+
+            //TODO (JUANI) : This is going to fail
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                manifest: manifest,
                 lookForShaderAsset: true
                 );
 

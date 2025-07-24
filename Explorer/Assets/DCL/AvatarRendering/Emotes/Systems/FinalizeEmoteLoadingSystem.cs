@@ -90,7 +90,8 @@ namespace DCL.AvatarRendering.Emotes
                         foreach (EmoteDTO assetEntity in list.Value)
                         {
                             IEmote component = storage.GetOrAddByDTO(assetEntity);
-                            component.ApplyAndMarkAsLoaded(assetEntity);
+                            //JUANI: COMMENTING THIS ONE OUT
+                            //component.ApplyAndMarkAsLoaded(assetEntity);
                         }
 
                 World.Destroy(entity);
@@ -146,6 +147,10 @@ namespace DCL.AvatarRendering.Emotes
                     }
                     else
                         emote.AssetResults[bodyShape] = asset;
+                }
+                else
+                {
+                    UnityEngine.Debug.Log($"JUANI HERE IS A PROBLEM {((ILoadingIntention)promise.LoadingIntention).CommonArguments.URL} {result.Exception}");
                 }
 
                 emote.UpdateLoadingStatus(false);

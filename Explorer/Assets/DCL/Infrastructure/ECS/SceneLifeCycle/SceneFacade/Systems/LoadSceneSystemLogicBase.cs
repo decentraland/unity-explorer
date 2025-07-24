@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Arch.Core;
+using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -7,9 +8,12 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using SceneRunner;
 using SceneRunner.Scene;
-using Utility;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -24,7 +28,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, ReportData reportCategory, IPartitionComponent partition, CancellationToken ct)
+        public async UniTask<ISceneFacade> FlowAsync(World world, ISceneFactory sceneFactory, GetSceneFacadeIntention intention, ReportData reportCategory, IPartitionComponent partition, CancellationToken ct)
         {
             var definitionComponent = intention.DefinitionComponent;
             var ipfsPath = definitionComponent.IpfsPath;
@@ -41,16 +45,27 @@ namespace ECS.SceneLifeCycle.Systems
 
             var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
 
-            // Before a scene can be ever loaded the asset bundle manifest should be retrieved
-            var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
+
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
-            (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
+            (_, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt);
+
+            //TODO (JUANI): This can go away when we retrieve the version from the asset-bundle-registry
+            AssetBundleManifestPromise loadAssetBundleManifest = await AssetBundleManifestPromise.Create(world,
+                GetAssetBundleManifestIntention.Create(intention.DefinitionComponent.Definition.id, new CommonLoadingArguments(intention.DefinitionComponent.Definition.id)),
+                partition).ToUniTaskAsync(world, cancellationToken: ct);
+
+            if (loadAssetBundleManifest.Result.HasValue)
+            {
+                definitionComponent.Definition.assetBundleManifestVersion = loadAssetBundleManifest.Result.Value.Asset!.GetVersion();
+                //If ABVersion is over 25 for scenes, the path will contain the scene hash
+                definitionComponent.Definition.hasSceneInPath = int.Parse( definitionComponent.Definition.assetBundleManifestVersion.AsSpan().Slice(1)) >= 25;
+            }
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
-            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
+            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
                 definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
             // Launch at the end of the frame
@@ -78,29 +93,6 @@ namespace ECS.SceneLifeCycle.Systems
                 return ReadOnlyMemory<byte>.Empty;
 
             return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
-        }
-
-        protected async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, ReportData reportCategory, CancellationToken ct)
-        {
-            var url = assetBundleURL.Append(URLPath.FromString($"manifest/{sceneId}{PlatformUtils.GetCurrentPlatform()}.json"));
-
-            try
-            {
-                var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
-                    .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
-
-                if (AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, sceneId))
-                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files, sceneId, sceneAbDto.Date);
-
-                ReportHub.LogError(reportCategory.WithStaticDebounce(), $"Asset Bundle Version Mismatch for {sceneId}");
-                return SceneAssetBundleManifest.NULL;
-            }
-            catch
-            {
-                // Don't block the scene if the loading manifest failed, just use NULL
-                ReportHub.LogError(reportCategory.WithStaticDebounce(), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
-                return SceneAssetBundleManifest.NULL;
-            }
         }
 
         /// <summary>
