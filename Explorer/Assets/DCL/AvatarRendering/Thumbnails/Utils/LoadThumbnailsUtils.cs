@@ -10,6 +10,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
@@ -19,6 +20,7 @@ using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.Textures.Texture2DData, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 
 namespace DCL.AvatarRendering.Thumbnails.Utils
 {
@@ -35,31 +37,19 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             return avatarAttachment.ThumbnailAssetResult.Value.Asset;
         }
 
-        public static async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
-            string hash, ReportData reportCategory, CancellationToken ct)
-        {
-            using var scope = URL_BUILDER_POOL.Get(out var urlBuilder);
-            urlBuilder!.Clear();
-
-            urlBuilder.AppendDomain(assetBundleURL)
-                      .AppendSubDirectory(URLSubdirectory.FromString("manifest"))
-                      .AppendPath(URLPath.FromString($"{hash}{PlatformUtils.GetCurrentPlatform()}.json"));
-
-            var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
-                                                       .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
-
-            AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
-
-            return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
-        }
-
-        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(IWebRequestController requestController, URLDomain assetBundleURL, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
+        private static async UniTask<bool> TryResolveAssetBundleManifestAsync(World world, IPartitionComponent partitionComponent, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
         {
             if (attachment.ManifestResult?.Asset == null)
                 try
                 {
-                    var asset = await LoadAssetBundleManifestAsync(requestController, assetBundleURL, attachment.DTO.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? CancellationToken.None);
-                    attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(asset);
+                    AssetBundleManifestPromise promise = AssetBundleManifestPromise.Create(world,
+                        GetAssetBundleManifestIntention.Create(attachment.DTO.GetHash(), new CommonLoadingArguments(attachment.DTO.GetHash(), cancellationTokenSource: cancellationTokenSource)),
+                        partitionComponent);
+
+                    AssetBundleManifestPromise awaitedPromise = await promise.ToUniTaskAsync(world, cancellationToken: cancellationTokenSource?.Token ?? CancellationToken.None);
+
+                    if (awaitedPromise.Result is { Succeeded: true, Asset: not null })
+                        attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(awaitedPromise.Result.Value.Asset);
                 }
                 catch (Exception) { return false; }
 
@@ -94,8 +84,6 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
         }
 
         public static async UniTask CreateWearableThumbnailABPromiseAsync(
-            IWebRequestController requestController,
-            URLDomain assetBundleURL,
             IRealmData realmData,
             IAvatarAttachment attachment,
             World world,
@@ -118,7 +106,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            if (!await TryResolveAssetBundleManifestAsync(requestController, assetBundleURL, attachment, cancellationTokenSource))
+            if (!await TryResolveAssetBundleManifestAsync(world, partitionComponent, attachment, cancellationTokenSource))
             {
                 ReportHub.Log(
                     ReportCategory.THUMBNAILS,
@@ -144,4 +132,5 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
             world.Create(attachment, promise, partitionComponent);
         }
     }
+
 }

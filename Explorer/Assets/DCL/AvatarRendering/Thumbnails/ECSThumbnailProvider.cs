@@ -20,16 +20,11 @@ namespace DCL.AvatarRendering.Wearables
     {
         private readonly IRealmData realmData;
         private readonly World world;
-        private readonly URLDomain assetBundleURL;
-        private readonly IWebRequestController requestController;
 
-        public ECSThumbnailProvider(IRealmData realmData,
-            World world, URLDomain assetBundleURL, IWebRequestController requestController)
+        public ECSThumbnailProvider(IRealmData realmData, World world)
         {
             this.realmData = realmData;
             this.world = world;
-            this.assetBundleURL = assetBundleURL;
-            this.requestController = requestController;
         }
 
         public async UniTask<Sprite> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct)
@@ -38,8 +33,6 @@ namespace DCL.AvatarRendering.Wearables
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
             LoadThumbnailsUtils.CreateWearableThumbnailABPromiseAsync(
-                    requestController,
-                    assetBundleURL,
                     realmData,
                     avatarAttachment,
                     world,
