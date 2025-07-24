@@ -3,6 +3,7 @@ using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
+using Utility.Types;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -46,7 +47,7 @@ namespace ECS.StreamableLoading.Common
             );
         }
 
-        public UniTask<PartialLoadingState> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
+        public UniTask<Result<PartialLoadingState>> DeserializeAsync(SlicedOwnedMemory<byte> data, CancellationToken token)
         {
             using (data)
             {
@@ -55,7 +56,10 @@ namespace ECS.StreamableLoading.Common
 
                 var partialLoadingState = new PartialLoadingState(meta.MaxFileSize, meta.IsFullyDownloaded);
                 partialLoadingState.AppendData(fileData);
-                return UniTask.FromResult(partialLoadingState);
+                
+                var result = Result<PartialLoadingState>.SuccessResult(partialLoadingState);
+                
+                return UniTask.FromResult(result);
             }
         }
 
