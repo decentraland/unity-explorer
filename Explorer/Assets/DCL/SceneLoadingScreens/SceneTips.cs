@@ -22,14 +22,12 @@ namespace DCL.SceneLoadingScreens
             public string Title { get; }
             public string Body { get; }
             public Sprite? Image { get; }
-            public Color BackgroundColor { get; }
 
-            public Tip(string title, string body, Sprite? image, Color backgroundColor)
+            public Tip(string title, string body, Sprite? image)
             {
                 Title = title;
                 Body = body;
                 Image = image;
-                BackgroundColor = backgroundColor;
             }
         }
     }

@@ -26,6 +26,7 @@ namespace Global.Dynamic
 
         [SerializeField] internal InitialRealm initialRealm;
         [SerializeField] internal Vector2Int targetScene;
+        [SerializeField] internal bool EditorSceneStartPosition = true;
         [SerializeField] internal PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
@@ -162,6 +163,11 @@ namespace Global.Dynamic
             //This is the case used on local scene development from creator hub/scene args
             //Check https://github.com/decentraland/js-sdk-toolchain/blob/2c002ca9e6feb98a771337190db2945e013d7b93/packages/%40dcl/sdk-commands/src/commands/start/explorer-alpha.ts#L29
             if (appArgs.HasFlag(AppArgsFlags.POSITION))
+                return;
+
+            //If this bool is true in editor, we want the position to be the one that has been serialized
+            //This avoid the feature flag from overriding the dev's start position
+            if (Application.isEditor && EditorSceneStartPosition)
                 return;
 
             //Note: If you dont want the feature flag for the localhost hostname, remember to remove ir from the feature flag configuration

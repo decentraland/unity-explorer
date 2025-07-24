@@ -12,7 +12,6 @@ namespace DCL.SceneLoadingScreens
     {
         private readonly LocalizedStringDatabase tipsDatabase;
         private readonly LocalizedAssetDatabase imagesDatabase;
-        private readonly SceneTipsConfigurationSO fallbackTipsConfiguration;
         private readonly string fallbackTipsTable;
         private readonly string fallbackImagesTable;
         private readonly TimeSpan defaultDuration;
@@ -22,14 +21,12 @@ namespace DCL.SceneLoadingScreens
         public UnityLocalizationSceneTipsProvider(
             LocalizedStringDatabase tipsDatabase,
             LocalizedAssetDatabase imagesDatabase,
-            SceneTipsConfigurationSO fallbackTipsConfiguration,
             string fallbackTipsTable,
             string fallbackImagesTable,
             TimeSpan defaultDuration)
         {
             this.tipsDatabase = tipsDatabase;
             this.imagesDatabase = imagesDatabase;
-            this.fallbackTipsConfiguration = fallbackTipsConfiguration;
             this.fallbackTipsTable = fallbackTipsTable;
             this.fallbackImagesTable = fallbackImagesTable;
             this.defaultDuration = defaultDuration;
@@ -45,7 +42,7 @@ namespace DCL.SceneLoadingScreens
 
             ct.ThrowIfCancellationRequested();
 
-            fallbackTips = await GetAsync(tipsTable, imagesTable, fallbackTipsConfiguration, ct);
+            fallbackTips = await GetAsync(tipsTable, imagesTable, ct);
         }
 
         public async UniTask<SceneTips> GetAsync(CancellationToken ct) =>
@@ -64,9 +61,7 @@ namespace DCL.SceneLoadingScreens
             return await Get(tipsTable, imagesTable, ct);*/
             fallbackTips;
 
-        private async UniTask<SceneTips> GetAsync(StringTable tipsTable, AssetTable? imagesTable,
-            SceneTipsConfigurationSO tipsConfiguration,
-            CancellationToken ct)
+        private async UniTask<SceneTips> GetAsync(StringTable tipsTable, AssetTable? imagesTable, CancellationToken ct)
         {
             int tipCount = tipsTable.Count / 2;
             var tips = new SceneTips.Tip[tipCount];
@@ -90,10 +85,10 @@ namespace DCL.SceneLoadingScreens
                 string title = tipsTable.GetEntry($"TITLE-{i}").Value;
                 string body = tipsTable.GetEntry($"BODY-{i}").Value;
 
-                tips[i] = new SceneTips.Tip(title, body, sprite, tipsConfiguration.GetColor(i));
+                tips[i] = new SceneTips.Tip(title, body, sprite);
             }
 
-            return new SceneTips(defaultDuration, true, tips);
+            return new SceneTips(defaultDuration, random: false, tips);
         }
     }
 }
