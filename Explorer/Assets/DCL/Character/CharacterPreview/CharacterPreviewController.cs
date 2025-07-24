@@ -130,16 +130,14 @@ namespace DCL.CharacterPreview
             }
             return;
 
-            bool IsAvatarLoaded()
-            {
-                return !world.Get<AvatarShapeComponent>(avatarEntity).IsDirty;
-            }
-
             bool IsEmoteLoaded() =>
                 emotePromiseEntity == Entity.Null
                 || !world.IsAlive(emotePromiseEntity)
                 || world.Get<EmotePromise>(emotePromiseEntity).IsConsumed;
         }
+
+        public bool IsAvatarLoaded() =>
+            !globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty;
 
         public void PlayEmote(string emoteId)
         {

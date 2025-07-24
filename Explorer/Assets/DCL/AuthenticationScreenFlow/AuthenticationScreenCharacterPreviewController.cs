@@ -30,14 +30,14 @@ namespace DCL.AuthenticationScreenFlow
 
         public override void Initialize(Avatar avatar)
         {
+            playEmotesCts = playEmotesCts.SafeRestart();
+
             previewAvatarModel.Wearables = ShortenWearables(avatar);
             previewAvatarModel.Emotes = ShortenEmotes(avatar);
 
             base.Initialize(avatar);
             previewController!.Value.AddHeadIK();
-
-            playEmotesCts = playEmotesCts.SafeRestart();
-            PlayEmoteAndAwaitItAsync(settings.IntroEmoteURN, playEmotesCts.Token).Forget();
+            PlayEmote(settings.IntroEmoteURN);
         }
 
         public new void OnHide(bool triggerOnHideBusEvent = true)
