@@ -97,9 +97,9 @@ namespace DCL.VoiceChat
             }
             else
             {
-                // Start the call for the current community channel
+                // Join the call for the current community channel
                 string communityId = ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id);
-                orchestrator.StartCall(communityId, VoiceChatType.COMMUNITY);
+                orchestrator.CommunityStatusService.JoinCommunityVoiceChatAsync(communityId, ct).Forget();
             }
         }
 

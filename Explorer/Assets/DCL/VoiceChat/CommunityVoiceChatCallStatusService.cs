@@ -87,7 +87,7 @@ namespace DCL.VoiceChat
             JoinCommunityVoiceChatAsync(CallId, cts.Token).Forget();
         }
 
-        private async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
+        public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
             try
             {

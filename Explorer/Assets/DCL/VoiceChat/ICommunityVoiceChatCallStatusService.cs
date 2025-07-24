@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using DCL.Utilities;
+using System.Threading;
 
 namespace DCL.VoiceChat
 {
@@ -17,11 +19,12 @@ namespace DCL.VoiceChat
         /// <summary>
         /// Subscribes to updates for a specific community
         /// </summary>
-        /// <param name="communityId">The community ID to subscribe to</param>
         /// <returns>A reactive property that will receive updates for this community, or null if already subscribed</returns>
         IReadonlyReactiveProperty<CommunityCallStatus>? SubscribeToCommunityUpdates(string communityId);
 
         void UnsubscribeFromCommunityUpdates(string communityId);
+
+        UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken cancellationToken = default);
     }
 
     /// <summary>
