@@ -106,15 +106,16 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         }
 
         /// <summary>
-        ///     Cleans up ALL GltfNode entities
+        ///     Cleans up all GLTF node entities and their associated data
         /// </summary>
-        protected void CleanupAllGltfNodeEntities(Entity containerEntity, ref Components.GltfNodeModifiers gltfNodeModifiers)
+        protected void CleanupAllGltfNodeEntities(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
-            if (gltfNodeModifiers.GltfNodeEntities == null || gltfNodeModifiers.GltfNodeEntities.Count == 0) return;
+            if (nodeModifiers.GltfNodeEntities.Count == 0) return;
 
-            foreach (Entity gltfNodeEntity in gltfNodeModifiers.GltfNodeEntities) { CleanupGltfNodeEntity(gltfNodeEntity, containerEntity); }
+            foreach (Entity entity in nodeModifiers.GltfNodeEntities.Keys)
+                CleanupGltfNodeEntity(entity, containerEntity);
 
-            gltfNodeModifiers.GltfNodeEntities.Clear();
+            nodeModifiers.GltfNodeEntities.Clear();
         }
 
         /// <summary>
@@ -146,9 +147,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         {
             if (World.Has<PBMaterial>(entity))
             {
-                PBMaterial updatedMaterial = material;
-                updatedMaterial.IsDirty = true;
-                World.Set(entity, updatedMaterial);
+                material.IsDirty = true;
+                World.Set(entity, material);
             }
             else
             {
@@ -166,24 +166,23 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         }
 
         /// <summary>
-        ///     Creates a new GltfNode entity for a new modifier
+        ///     Creates a new GLTF node entity for individual modifiers
         /// </summary>
-        protected void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, Transform gltfRootTransform, ref Components.GltfNodeModifiers gltfNodeModifiers, PartitionComponent partitionComponent, bool hasShadowOverride,
-            bool hasMaterialOverride, IReadOnlyList<string>? availablePaths = null)
+        protected void CreateNewGltfNodeEntity(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, Transform gltfRoot, ref Components.GltfNodeModifiers nodeModifiers, PartitionComponent partitionComponent, bool hasShadowOverride, bool hasMaterialOverride, IReadOnlyList<string>? availablePaths = null)
         {
-            Renderer? renderer = FindRendererByPath(gltfRootTransform, modifier.Path, availablePaths);
+            Renderer? renderer = FindRendererByPath(gltfRoot, modifier.Path, availablePaths);
             if (renderer == null) return;
 
             Entity nodeEntity = this.World.Create();
 
-            World.Add(nodeEntity, new GltfNode(new[] { renderer }, containerEntity, modifier.Path), partitionComponent);
-
             renderer.shadowCastingMode = !hasShadowOverride || modifier.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
-            if (hasMaterialOverride)
-                World.Add(nodeEntity, modifier.Material);
+            World.Add(nodeEntity, new GltfNode(new[] { renderer }, containerEntity, modifier.Path));
 
-            gltfNodeModifiers.GltfNodeEntities!.Add(nodeEntity);
+            if (hasMaterialOverride)
+                AddOrUpdateMaterial(nodeEntity, modifier.Material, partitionComponent);
+
+            nodeModifiers.GltfNodeEntities!.Add(nodeEntity, modifier.Path);
         }
     }
 }

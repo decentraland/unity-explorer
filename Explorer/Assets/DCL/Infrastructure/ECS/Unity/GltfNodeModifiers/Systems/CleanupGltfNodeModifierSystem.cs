@@ -79,12 +79,9 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         private void RunCleanup(Entity containerEntity, ref Components.GltfNodeModifiers nodeModifiers)
         {
             CleanupAllGltfNodeEntities(containerEntity, ref nodeModifiers);
-
-            // Reset all renderers to their original materials
             ResetOriginalMaterials(nodeModifiers);
-
-            ListPool<Entity>.Release(nodeModifiers.GltfNodeEntities);
             DictionaryPool<Renderer, Material>.Release(nodeModifiers.OriginalMaterials);
+            DictionaryPool<Entity, string>.Release(nodeModifiers.GltfNodeEntities);
 
             World.TryRemove<Components.GltfNodeModifiers>(containerEntity);
         }

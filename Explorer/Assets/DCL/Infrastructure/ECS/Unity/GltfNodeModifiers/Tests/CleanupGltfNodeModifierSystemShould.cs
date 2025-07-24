@@ -83,18 +83,16 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Entity entity = world.Create();
             world.Add(entity, gltfNodeModifiers);
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             world.Add(entity, nodeModifiers);
             world.Add(entity, PartitionComponent.TOP_PRIORITY);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
             Entity childEntity = world.Create();
+            GltfNode gltfNode = new GltfNode(new[] { childRenderer }, entity, "Child");
+            world.Add(childEntity, gltfNode, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            world.Add(childEntity, new GltfNode(new[] { childRenderer }, entity, "Child"));
-
-            world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
-
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, gltfNode.Path);
             world.Set(entity, nodeModifiers);
 
             // Act - Remove PBGltfNodeModifiers to trigger HandleGltfNodeModifiersRemoval query

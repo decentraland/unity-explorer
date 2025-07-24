@@ -1,26 +1,25 @@
 using Arch.Core;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace ECS.Unity.GltfNodeModifiers.Components
 {
     public struct GltfNodeModifiers
     {
         /// <summary>
-        ///     Collection of entities created for GLTF nodes that have modifiers applied
+        /// Tracks GltfNode entities and their corresponding node paths
         /// </summary>
-        public readonly List<Entity> GltfNodeEntities;
+        public readonly Dictionary<Entity, string> GltfNodeEntities;
 
         /// <summary>
-        ///     Dictionary storing the original materials for each renderer before modifications
+        /// Stores original materials before modification for restoration during cleanup
         /// </summary>
         public readonly Dictionary<Renderer, Material> OriginalMaterials;
 
-        public GltfNodeModifiers(List<Entity> gltfNodeEntities)
+        public GltfNodeModifiers(Dictionary<Entity, string> gltfNodeEntities, Dictionary<Renderer, Material> originalMaterials)
         {
             GltfNodeEntities = gltfNodeEntities;
-            OriginalMaterials = DictionaryPool<Renderer, Material>.Get();
+            OriginalMaterials = originalMaterials;
         }
     }
 }

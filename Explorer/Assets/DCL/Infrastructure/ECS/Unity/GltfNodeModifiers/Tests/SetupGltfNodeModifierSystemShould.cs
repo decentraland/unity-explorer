@@ -9,6 +9,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.GltfNodeModifiers.Systems;
 using NUnit.Framework;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -126,7 +127,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(nodeModifiers.OriginalMaterials.Count, Is.EqualTo(2));
             Assert.That(nodeModifiers.GltfNodeEntities, Is.Not.Null);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
-            Assert.That(nodeModifiers.GltfNodeEntities[0], Is.EqualTo(entity));
+            Assert.That(nodeModifiers.GltfNodeEntities.ContainsKey(entity), Is.True);
 
             GltfNode gltfNode = world.Get<GltfNode>(entity);
             Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2));
@@ -171,7 +172,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Assert.That(nodeModifiers.GltfNodeEntities, Is.Not.Null);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
 
-            Entity childNodeEntity = nodeModifiers.GltfNodeEntities[0];
+            Entity childNodeEntity = nodeModifiers.GltfNodeEntities.Keys.First();
             Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
 
@@ -325,7 +326,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1)); // Entity should be created even without overrides
 
-            Entity childNodeEntity = nodeModifiers.GltfNodeEntities[0];
+            Entity childNodeEntity = nodeModifiers.GltfNodeEntities.Keys.First();
             Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.False); // No material should be added
 
@@ -393,7 +394,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
 
-            Entity childNodeEntity = nodeModifiers.GltfNodeEntities[0];
+            Entity childNodeEntity = nodeModifiers.GltfNodeEntities.Keys.First();
             Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.False); // No material should be added
             Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.Off));
@@ -428,7 +429,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
 
-            Entity childNodeEntity = nodeModifiers.GltfNodeEntities[0];
+            Entity childNodeEntity = nodeModifiers.GltfNodeEntities.Keys.First();
             Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
 
@@ -528,7 +529,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(nodeModifiers.GltfNodeEntities, Is.Not.Null);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
-            Assert.That(nodeModifiers.GltfNodeEntities[0], Is.EqualTo(entity));
+            Assert.That(nodeModifiers.GltfNodeEntities.ContainsKey(entity), Is.True);
 
             GltfNode gltfNode = world.Get<GltfNode>(entity);
             Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2)); // Should include all renderers
@@ -570,7 +571,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Components.GltfNodeModifiers nodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(nodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1)); // Only Child should be created
 
-            Entity childNodeEntity = nodeModifiers.GltfNodeEntities[0];
+            Entity childNodeEntity = nodeModifiers.GltfNodeEntities.Keys.First();
             GltfNode gltfNode = world.Get<GltfNode>(childNodeEntity);
             Assert.That(gltfNode.Path, Is.EqualTo("Child"));
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);

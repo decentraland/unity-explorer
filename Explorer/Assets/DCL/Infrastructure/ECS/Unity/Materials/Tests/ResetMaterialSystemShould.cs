@@ -78,7 +78,7 @@ namespace ECS.Unity.Materials.Tests
 
             // Create container entity with GltfNodeModifiers containing original materials
             var containerEntity = world.Create();
-            var gltfNodeModifiers = new GltfNodeModifiers.Components.GltfNodeModifiers(new List<Entity>());
+            var gltfNodeModifiers = new GltfNodeModifiers.Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             gltfNodeModifiers.OriginalMaterials[meshRenderer] = originalMaterial;
 
             world.Add(containerEntity, gltfNodeModifiers);

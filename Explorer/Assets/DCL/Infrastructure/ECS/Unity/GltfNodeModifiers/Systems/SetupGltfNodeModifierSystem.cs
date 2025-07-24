@@ -35,57 +35,54 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(Components.GltfNodeModifiers))]
-        private void SetupGltfNodes(Entity entity, ref PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer, in PartitionComponent partitionComponent)
+        private void SetupGltfNodes(Entity entity, PBGltfNodeModifiers gltfNodeModifiers, ref GltfContainerComponent gltfContainer, PartitionComponent partitionComponent)
         {
             if (gltfNodeModifiers.Modifiers.Count == 0 || !IsGltfContainerReady(ref gltfContainer, out StreamableLoadingResult<GltfContainerAsset> result))
                 return;
 
             gltfNodeModifiers.IsDirty = false;
-            var newGltfNodeModifiers = new Components.GltfNodeModifiers(ListPool<Entity>.Get());
+            var nodeModifiers = new Components.GltfNodeModifiers(DictionaryPool<Entity, string>.Get(), DictionaryPool<Renderer, Material>.Get());
 
-            // Store original materials for all renderers
-            if (newGltfNodeModifiers.OriginalMaterials.Count == 0)
-                StoreOriginalMaterials(newGltfNodeModifiers.OriginalMaterials, result.Asset!.Renderers);
+            StoreOriginalMaterials(nodeModifiers.OriginalMaterials, result.Asset!.Renderers);
 
             // Special case: single modifier with empty path applies to ALL renderers
             if (IsGltfGlobalModifier(gltfNodeModifiers.Modifiers))
-                SetupGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref newGltfNodeModifiers, result.Asset!);
+                SetupGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref nodeModifiers, result.Asset, partitionComponent);
             else
-                SetupIndividualModifiers(entity, gltfNodeModifiers.Modifiers, result.Asset!.Root.transform, ref newGltfNodeModifiers, partitionComponent, result.Asset!);
+                SetupIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref nodeModifiers, partitionComponent, result.Asset);
 
-            World.Add(entity, newGltfNodeModifiers);
+            World.Add(entity, nodeModifiers);
         }
 
         /// <summary>
-        ///     Handles the special case where a single modifier with empty path applies to ALL renderers
+        ///     Sets up the global modifier (single modifier with empty path)
         /// </summary>
-        private void SetupGlobalModifier(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref Components.GltfNodeModifiers gltfNodeModifiers, GltfContainerAsset asset)
+        private void SetupGlobalModifier(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref Components.GltfNodeModifiers nodeModifiers, GltfContainerAsset asset, PartitionComponent partitionComponent)
         {
             (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
 
-            // Add GltfNode to the container entity itself with all renderers
-            CreateGlobalGltfNode(containerEntity, asset);
-
             asset.SetCastingShadows(!hasShadowOverride || modifier.CastShadows);
 
-            if (hasMaterialOverride)
-                World.Add(containerEntity, modifier.Material);
+            CreateGlobalGltfNode(containerEntity, asset);
 
-            gltfNodeModifiers.GltfNodeEntities!.Add(containerEntity);
+            if (hasMaterialOverride)
+                AddOrUpdateMaterial(containerEntity, modifier.Material, partitionComponent);
+
+            nodeModifiers.GltfNodeEntities.Add(containerEntity, string.Empty);
         }
 
         /// <summary>
-        ///     Handles the normal case where each modifier targets a specific renderer path
+        ///     Sets up individual modifiers (multiple modifiers or specific paths)
         /// </summary>
-        private void SetupIndividualModifiers(Entity containerEntity, IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers, Transform gltfRootTransform, ref Components.GltfNodeModifiers gltfNodeModifiers, PartitionComponent partitionComponent, GltfContainerAsset asset)
+        private void SetupIndividualModifiers(Entity containerEntity, IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers, ref Components.GltfNodeModifiers nodeModifiers, PartitionComponent partitionComponent, GltfContainerAsset asset)
         {
-            foreach (PBGltfNodeModifiers.Types.GltfNodeModifier? modifier in modifiers)
+            foreach (PBGltfNodeModifiers.Types.GltfNodeModifier modifier in modifiers)
             {
                 if (string.IsNullOrEmpty(modifier.Path)) continue; // Empty path only valid for global modifier
 
                 (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
 
-                CreateNewGltfNodeEntity(containerEntity, modifier, gltfRootTransform, ref gltfNodeModifiers, partitionComponent, hasShadowOverride, hasMaterialOverride, asset.HierarchyPaths);
+                CreateNewGltfNodeEntity(containerEntity, modifier, asset.Root.transform, ref nodeModifiers, partitionComponent, hasShadowOverride, hasMaterialOverride, asset.HierarchyPaths);
             }
         }
     }

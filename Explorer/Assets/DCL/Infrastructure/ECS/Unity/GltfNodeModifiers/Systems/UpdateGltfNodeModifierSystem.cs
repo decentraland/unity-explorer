@@ -26,6 +26,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class UpdateGltfNodeModifierSystem : GltfNodeModifierSystemBase
     {
+        private readonly Dictionary<string, Entity> auxiliaryGltfNodePathEntities = new Dictionary<string, Entity>();
+
         public UpdateGltfNodeModifierSystem(World world) : base(world) { }
 
         protected override void Update(float t)
@@ -63,17 +65,17 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         {
             // Check if transitioning from individual modifiers to global modifier
             if (nodeModifiers.GltfNodeEntities is { Count: > 0 } &&
-                (nodeModifiers.GltfNodeEntities.Count > 1 || nodeModifiers.GltfNodeEntities[0] != containerEntity))
+                (nodeModifiers.GltfNodeEntities.Count > 1 || !nodeModifiers.GltfNodeEntities.ContainsKey(containerEntity)))
             {
                 // Clean up individual modifier entities
-                foreach (Entity entityToCleanup in nodeModifiers.GltfNodeEntities) { CleanupGltfNodeEntity(entityToCleanup, containerEntity); }
+                foreach (Entity entityToCleanup in nodeModifiers.GltfNodeEntities.Keys) { CleanupGltfNodeEntity(entityToCleanup, containerEntity); }
 
                 nodeModifiers.GltfNodeEntities.Clear();
 
                 // Add global GltfNode component to container entity if transitioning from individual
                 if (!World.Has<GltfNode>(containerEntity)) { CreateGlobalGltfNode(containerEntity, asset); }
 
-                nodeModifiers.GltfNodeEntities!.Add(containerEntity);
+                nodeModifiers.GltfNodeEntities!.Add(containerEntity, string.Empty);
             }
 
             (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
@@ -97,18 +99,20 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         private void UpdateIndividualModifiers(Entity containerEntity, IList<PBGltfNodeModifiers.Types.GltfNodeModifier> modifiers, ref Components.GltfNodeModifiers nodeModifiers, PartitionComponent partitionComponent, GltfContainerAsset asset)
         {
-            if (nodeModifiers.GltfNodeEntities == null) return;
+            if (nodeModifiers.GltfNodeEntities.Count == 0) return;
 
             // Check if transitioning from global modifier to individual modifiers
-            if (nodeModifiers.GltfNodeEntities.Count == 1 && nodeModifiers.GltfNodeEntities[0] == containerEntity)
+            if (nodeModifiers.GltfNodeEntities.Count == 1 && nodeModifiers.GltfNodeEntities.ContainsKey(containerEntity))
             {
                 CleanupGltfNodeEntity(containerEntity, containerEntity);
                 nodeModifiers.GltfNodeEntities.Remove(containerEntity);
             }
 
-            var existingGltfNodePaths = new Dictionary<string, Entity>();
-
-            foreach (Entity nodeEntity in nodeModifiers.GltfNodeEntities) { existingGltfNodePaths[World.Get<GltfNode>(nodeEntity).Path!] = nodeEntity; }
+            // Check previously existent GltfNode entities to recycle and remove as needed
+            foreach (var kvp in nodeModifiers.GltfNodeEntities)
+            {
+                auxiliaryGltfNodePathEntities[kvp.Value] = kvp.Key;
+            }
 
             foreach (PBGltfNodeModifiers.Types.GltfNodeModifier? modifier in modifiers)
             {
@@ -116,20 +120,24 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
                 (bool hasShadowOverride, bool hasMaterialOverride) = GetModifierOverrides(modifier);
 
-                if (existingGltfNodePaths.TryGetValue(modifier.Path, out Entity existingEntity))
+                if (auxiliaryGltfNodePathEntities.TryGetValue(modifier.Path, out Entity existingEntity))
                 {
                     UpdateExistingGltfNodeEntity(existingEntity, modifier, hasShadowOverride, hasMaterialOverride, partitionComponent);
-                    existingGltfNodePaths.Remove(modifier.Path); // Mark as processed
+                    auxiliaryGltfNodePathEntities.Remove(modifier.Path); // Mark as processed
                 }
-                else { CreateNewGltfNodeEntity(containerEntity, modifier, asset.Root.transform, ref nodeModifiers, partitionComponent, hasShadowOverride, hasMaterialOverride, asset.HierarchyPaths); }
+                else
+                {
+                    CreateNewGltfNodeEntity(containerEntity, modifier, asset.Root.transform, ref nodeModifiers, partitionComponent, hasShadowOverride, hasMaterialOverride, asset.HierarchyPaths);
+                }
             }
 
             // Clean up entities that no longer have corresponding modifiers
-            foreach (Entity orphanedEntity in existingGltfNodePaths.Values)
+            foreach (Entity orphanedEntity in auxiliaryGltfNodePathEntities.Values)
             {
                 CleanupGltfNodeEntity(orphanedEntity, containerEntity);
                 nodeModifiers.GltfNodeEntities!.Remove(orphanedEntity);
             }
+            auxiliaryGltfNodePathEntities.Clear();
         }
 
         /// <summary>

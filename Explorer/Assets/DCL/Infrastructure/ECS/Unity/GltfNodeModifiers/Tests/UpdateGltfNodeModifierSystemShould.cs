@@ -10,6 +10,7 @@ using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.GltfNodeModifiers.Systems;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -105,7 +106,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome for individual modifier
@@ -115,7 +116,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.green), PartitionComponent.TOP_PRIORITY);
 
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, "Child");
             world.Set(entity, nodeModifiers);
 
             // Act - Update to global modifier
@@ -142,7 +143,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             Components.GltfNodeModifiers updatedNodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(updatedNodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
-            Assert.That(updatedNodeModifiers.GltfNodeEntities[0], Is.EqualTo(entity));
+            Assert.That(updatedNodeModifiers.GltfNodeEntities.ContainsKey(entity), Is.True);
 
             GltfNode gltfNode = world.Get<GltfNode>(entity);
             Assert.That(gltfNode.Renderers.Count, Is.EqualTo(2)); // Should have all renderers
@@ -167,7 +168,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome for global modifier
@@ -175,7 +176,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(entity, CreatePbrMaterial(Color.red)); // Add material without PartitionComponent for global
 
-            nodeModifiers.GltfNodeEntities.Add(entity);
+            nodeModifiers.GltfNodeEntities.Add(entity, string.Empty);
             world.Set(entity, nodeModifiers);
 
             // Act - Update to individual modifiers
@@ -202,7 +203,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             Components.GltfNodeModifiers updatedNodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(updatedNodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
 
-            Entity childNodeEntity = updatedNodeModifiers.GltfNodeEntities[0];
+            Entity childNodeEntity = updatedNodeModifiers.GltfNodeEntities.Keys.First();
             Assert.That(world.Has<GltfNode>(childNodeEntity), Is.True);
             Assert.That(world.Has<PBMaterial>(childNodeEntity), Is.True);
         }
@@ -226,7 +227,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
@@ -236,7 +237,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.green), PartitionComponent.TOP_PRIORITY);
 
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, "Child");
             world.Set(entity, nodeModifiers);
 
             // Act - Update with new material
@@ -282,7 +283,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
@@ -292,7 +293,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.green), PartitionComponent.TOP_PRIORITY);
 
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, "Child");
             world.Set(entity, nodeModifiers);
 
             // Act - Remove all modifiers
@@ -330,7 +331,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers();
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Act
@@ -362,7 +363,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
@@ -372,7 +373,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, "Child");
             world.Set(entity, nodeModifiers);
 
             // Act - Update to Unlit material
@@ -418,7 +419,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
@@ -428,7 +429,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, "Child");
             world.Set(entity, nodeModifiers);
 
             // Act - Update to modifier without material (shadow only)
@@ -477,7 +478,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
@@ -487,7 +488,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, "Child");
             world.Set(entity, nodeModifiers);
 
             // Act - Update to explicitly disable shadows
@@ -532,7 +533,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 },
             };
 
-            var nodeModifiers = new Components.GltfNodeModifiers(new List<Entity>());
+            var nodeModifiers = new Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
             Entity entity = world.Create(gltfNodeModifiers, gltfContainer, PartitionComponent.TOP_PRIORITY, nodeModifiers);
 
             // Manually simulate SetupGltfNodeModifierSystem outcome
@@ -542,7 +543,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 
             world.Add(childEntity, CreatePbrMaterial(Color.red), PartitionComponent.TOP_PRIORITY);
 
-            nodeModifiers.GltfNodeEntities.Add(childEntity);
+            nodeModifiers.GltfNodeEntities.Add(childEntity, "Child");
             world.Set(entity, nodeModifiers);
 
             // Act - Update to modifier without any overrides

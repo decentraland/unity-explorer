@@ -110,7 +110,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             };
 
             // Add the GltfNodeModifiers component to simulate an entity with node modifiers
-            var entity = world.Create(gltfContainerComponent, new CRDTEntity(100), new GltfNodeModifiers.Components.GltfNodeModifiers());
+            var entity = world.Create(gltfContainerComponent, new CRDTEntity(100), new GltfNodeModifiers.Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>()));
 
             // Act
             system.Update(0);
