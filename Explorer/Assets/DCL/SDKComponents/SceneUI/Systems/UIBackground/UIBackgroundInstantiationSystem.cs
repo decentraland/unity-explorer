@@ -27,6 +27,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     public partial class UIBackgroundInstantiationSystem : BaseUnityLoopSystem
     {
         private const int ATTEMPTS_COUNT = 6;
+        private const string UNDEFINED_SOURCE = "undefined";
 
         private readonly IComponentPool<DCLImage> imagesPool;
         private readonly ISceneData sceneData;
@@ -115,7 +116,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 if (promiseResult.Succeeded)
                     uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, promiseResult.Asset);
                 else
-                    ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
+                    ReportHub.LogError(ReportCategory.SCENE_UI, $"Error consuming texture promise in {nameof(UIBackgroundInstantiationSystem)} for source {texturePromise.LoadingIntention.Src} | Scene {sceneData.SceneShortInfo.ToString()}");
 
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
                 uiBackgroundComponent.Image.IsHidden = false;
@@ -127,7 +128,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
         private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
         {
-            if (textureComponent == null)
+            if (textureComponent == null || textureComponent.Value.Src == UNDEFINED_SOURCE)
             {
                 // If component is being reuse forget the previous promise
                 TryAddAbortIntention(World, ref promise);
@@ -143,6 +144,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             // If component is being reused forget the previous promise
             TryAddAbortIntention(World, ref promise);
+
+            ReportHub.Log(ReportCategory.SCENE_UI, $"Start loading texture for UI background for source {textureComponentValue.Src} | Scene {sceneData.SceneShortInfo.ToString()}");
 
             promise = Promise.Create(
                 World,
