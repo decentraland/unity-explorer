@@ -40,7 +40,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
             if (candidatesTable.TryGetValue(newCandidate, out List<PerInstanceBuffer> instances))
             {
-                ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Adding {nameof(PerInstanceBuffer)} to existing LODGroup: {newCandidate.Transform.name}");
+                ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Adding {nameof(PerInstanceBuffer)} to existing LODGroup: {newCandidate.Name}");
                 instances.Add(new PerInstanceBuffer(localToRootMatrix, firstCandidateMaterial.mainTextureScale, firstCandidateMaterial.mainTextureOffset));
             }
             else

@@ -138,7 +138,7 @@ namespace DCL.Roads.Settings
             }
         }
 
-        public GPUInstancingLODGroup roadTileCachedLODGroup;
+        private GPUInstancingLODGroup roadTileCachedLODGroup;
 
         private GPUInstancingLODGroupWithBuffer HandleRoadTileCase(GPUInstancingLODGroupWithBuffer myCandidate)
         {

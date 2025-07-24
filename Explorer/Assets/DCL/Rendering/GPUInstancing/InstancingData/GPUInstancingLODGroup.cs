@@ -10,19 +10,20 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
     [Serializable]
     public class GPUInstancingLODGroup : MonoBehaviour, IEquatable<GPUInstancingLODGroup>
     {
-        public GPUInstancingSettings GPUInstancingSettings;
+        [SerializeField] private GPUInstancingSettings GPUInstancingSettings;
 
         [Header("REFERENCES")]
-        public string Name;
-        public LODGroup Reference;
-        public Transform Transform;
-        public List<Renderer> RefRenderers;
+        [SerializeField] private LODGroup Reference;
+        [SerializeField] private List<Renderer> RefRenderers;
 
-        [Space]
-        public LODGroupData LODGroupData;
+        [field: Header("DATA")]
+        [field: SerializeField]
+        public LODGroupData LODGroupData { get; private set; }
 
-        [Space]
-        public List<CombinedLodsRenderer> CombinedLodsRenderers;
+        [field: SerializeField]
+        public List<CombinedLodsRenderer> CombinedLodsRenderers { get; private set; }
+
+        public string Name => Reference != null ? Reference.name : transform.name;
 
         [ContextMenu(nameof(HideAll))]
         public void HideAll()
@@ -41,8 +42,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         [ContextMenu(nameof(ShowAll))]
         public void ShowAll()
         {
-            if(Reference!= null) Reference.enabled = true;
-
+            if (Reference != null) Reference.enabled = true;
             foreach (Renderer refRenderer in RefRenderers) refRenderer.enabled = true;
         }
 
@@ -60,9 +60,6 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
             // LOD Group
             Reference = null;
-            Transform = this.transform;
-            Name = this.transform.name;
-
             LODGroupData = new LODGroupData(meshFilter.sharedMesh.bounds);
 
             CombinedLodsRenderers = new List<CombinedLodsRenderer>
@@ -110,9 +107,6 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
             // LOD Group
             Reference = lodGroup;
-            Transform = lodGroup.transform;
-            Name = lodGroup.transform.name;
-
             lodGroup.RecalculateBounds();
 
             LODGroupData = new LODGroupData(lodGroup, lods, CombinedLodsRenderers);
@@ -124,8 +118,6 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         {
             if (other == null) return false;
             if (ReferenceEquals(this, other)) return true;
-            if (Name != other.Name) return false;
-
             if (!LODGroupData.Equals(other.LODGroupData)) return false;
 
             // Check CombinedLods
@@ -149,8 +141,9 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         public override int GetHashCode()
         {
             var hashCode = new HashCode();
-            hashCode.Add(Name);
             hashCode.Add(LODGroupData.GetHashCode());
+
+            // hashCode.Add(CombinedLodsRenderers.GetHashCode());
             return hashCode.ToHashCode();
         }
 
