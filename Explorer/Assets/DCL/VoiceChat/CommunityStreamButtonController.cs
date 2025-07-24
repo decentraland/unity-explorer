@@ -18,7 +18,6 @@ namespace DCL.VoiceChat
 
         private readonly IDisposable statusSubscription;
         private readonly IDisposable currentChannelSubscription;
-        private readonly IDisposable privateVoiceChatAvailableSubscription;
 
         private readonly CallButtonView view;
         private readonly IVoiceChatOrchestrator orchestrator;
@@ -59,9 +58,10 @@ namespace DCL.VoiceChat
         {
             statusSubscription?.Dispose();
             currentChannelSubscription?.Dispose();
-            privateVoiceChatAvailableSubscription?.Dispose();
             chatEventBus.StartCall -= OnCallButtonClicked;
             view.CallButton.onClick.RemoveListener(OnCallButtonClicked);
+            cts?.Dispose();
+            communityCts?.Dispose();
         }
 
         public void Reset()
@@ -115,11 +115,12 @@ namespace DCL.VoiceChat
             {
                 //Clicking the button finishes the call as we are already in this call
                 if (isCurrentCall) {
-                    //We should show a popup first and then if user accepts that popup, we then hangup
+                    //TODO: This behaviour was removed, now the button is not shown when the call is happening, keeping it for now just for ease of use.
                     orchestrator.HangUp();
                 }
 
                 //Clicking the button will show tooltip as we are in another call
+                // TODO: We need to change this behaviour and make it end the current call and start a new one.
                 else { await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct); }
             }
             else { orchestrator.StartCall(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), VoiceChatType.COMMUNITY); }
@@ -146,8 +147,7 @@ namespace DCL.VoiceChat
         {
             if (newStatus == VoiceChatStatus.VOICE_CHAT_IN_CALL)
             {
-                // If user is a mod they should be able to see the button to stop the call,
-                // We need to update the status of the button if we are in the call that is currently ongoing
+                // if the call that started is in this current channel, we need to hide START STREAM button
             }
         }
 

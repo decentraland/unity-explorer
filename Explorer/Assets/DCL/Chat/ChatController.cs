@@ -79,6 +79,7 @@ namespace DCL.Chat
         private readonly IRoomHub roomHub;
         private CallButtonController callButtonController;
         private CommunityStreamButtonController communityStreamButtonController;
+        private CommunityStreamSubTitleBarController communityStreamSubTitleBarController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ISpriteCache thumbnailCache;
@@ -307,6 +308,12 @@ namespace DCL.Chat
                 CurrentChannel,
                 communitiesDataProvider);
 
+            communityStreamSubTitleBarController = new CommunityStreamSubTitleBarController(
+                viewInstance.CommunityStreamSubTitleBar,
+                voiceChatOrchestrator,
+                CurrentChannel,
+                communitiesDataProvider);
+
             viewInstance.chatTitleBar.CommunitiesCallButton.gameObject.SetActive(false);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
@@ -364,6 +371,7 @@ namespace DCL.Chat
             Dispose();
             callButtonController.Reset();
             communityStreamButtonController?.Reset();
+            communityStreamSubTitleBarController?.Dispose();
         }
 
 #endregion

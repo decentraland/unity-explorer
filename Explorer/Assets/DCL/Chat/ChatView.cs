@@ -8,6 +8,7 @@ using DCL.UI.Profiles.Helpers;
 using DCL.RealmNavigation;
 using DCL.UI;
 using DCL.UI.Communities;
+using DCL.VoiceChat;
 using DCL.Web3;
 using MVC;
 using DG.Tweening;
@@ -118,6 +119,9 @@ namespace DCL.Chat
         [field: Header("Audio")]
         [field: SerializeField] public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField] public AudioClipConfig ChatReceiveMentionMessageAudio {get; private set;}
+
+        [field: Header("Voice Chat")]
+        [field: SerializeField] public CommunityStreamSubTitleBarView CommunityStreamSubTitleBar { get; private set; }
 
         /// <summary>
         /// Raised when the mouse pointer hovers any part of the chat window.

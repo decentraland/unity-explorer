@@ -1375,6 +1375,7 @@ MonoBehaviour:
   conversationsToolbarCanvasGroup: {fileID: 3898375867954426524}
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatReceiveMentionMessageAudio>k__BackingField: {fileID: 11400000, guid: c588f98cfe945864190c601f54ccb4d6, type: 2}
+  <CommunityStreamSubTitleBar>k__BackingField: {fileID: 759607089270939515}
   IsMaskActive: 0
 --- !u!1001 &565260970276897274
 PrefabInstance:
@@ -2680,7 +2681,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1107724909163332428, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 8.76
       objectReference: {fileID: 0}
     - target: {fileID: 1107724909163332428, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2818,6 +2819,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4003247322745094682, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4157419045081911436, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2856,6 +2861,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4247352875810725322, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4350593707150559902, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+      propertyPath: m_IgnoreParentGroups
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569271671841397765, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
@@ -3016,7 +3025,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7085922949328242379, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 134.02
       objectReference: {fileID: 0}
     - target: {fileID: 7085922949328242379, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -3074,11 +3083,43 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 8568418422269912901, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8568418422269912901, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8568418422269912901, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8568418422269912901, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8625913413048701472, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 4394571103471317259, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+--- !u!114 &759607089270939515 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3176008037812757647, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
+  m_PrefabInstance: {fileID: 2781492719535635444}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d871e9357743228a10d15fcea3ea1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &1300557755116459844 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3789034197618338992, guid: 36817c725e1c8f04faa969b8e7898332, type: 3}
