@@ -10,13 +10,12 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         private const int MAX_LODS_LEVEL = 8;
         private const float DITHER_OVERLAP_FACTOR = 0.20f;
 
-        private readonly float[] lodsScreenSpaceSizes;
-        private readonly float objectSize;
+        [SerializeField] private float[] lodsScreenSpaceSizes;
+        [SerializeField] private float objectSize;
 
         public Matrix4x4 LODSizesMatrix;
         public Bounds Bounds;
-
-        public int LODCount => lodsScreenSpaceSizes?.Length ?? 1;
+        public int LODCount;
 
         public LODGroupData(Bounds sharedMeshBounds)
         {
@@ -24,6 +23,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             Bounds.Encapsulate(sharedMeshBounds);
             objectSize = Mathf.Max(Bounds.size.x, Bounds.size.y, Bounds.size.z);
             lodsScreenSpaceSizes = new[] { 0.0f }; // Single LOD with maximum visibility
+            LODCount = lodsScreenSpaceSizes.Length;
             LODSizesMatrix = new Matrix4x4();
             BuildLODMatrix(1);
         }
@@ -41,6 +41,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
             for (var i = 0; i < lods.Length && i < MAX_LODS_LEVEL; i++)
                 lodsScreenSpaceSizes[i] = lods[i].screenRelativeTransitionHeight;
 
+            LODCount = lodsScreenSpaceSizes.Length;
             LODSizesMatrix = new Matrix4x4();
             BuildLODMatrix(lods.Length);
         }
