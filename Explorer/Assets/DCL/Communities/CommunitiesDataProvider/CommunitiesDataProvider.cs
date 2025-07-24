@@ -241,7 +241,7 @@ namespace DCL.Communities
         public async UniTask<bool> UpdateCommunityNotificationsAsync(string communityId, bool value, CancellationToken ct)
         {
             //TODO: implement request
-            return Random.Range(0, 100) > 50;
+            return true;
         }
 
         public async UniTask<bool> SetMemberRoleAsync(string userId, string communityId, CommunityMemberRole newRole, CancellationToken ct)
