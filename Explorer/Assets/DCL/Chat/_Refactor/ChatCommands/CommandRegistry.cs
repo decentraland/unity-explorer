@@ -37,6 +37,7 @@ namespace DCL.Chat.ChatUseCases
         public GetChannelMembersCommand GetChannelMembersCommand { get; }
         public ProcessAndAddMessageCommand ProcessAndAddMessage { get; }
         public GetParticipantProfilesCommand GetParticipantProfilesCommand { get; }
+        public GetUserChatStatusCommand GetUserChatStatusCommand { get; }
 
         public CommandRegistry(
             ChatConfig chatConfig,
@@ -98,6 +99,9 @@ namespace DCL.Chat.ChatUseCases
                 chatMemberListService,
                 GetProfileThumbnail);
 
+            GetUserChatStatusCommand = new GetUserChatStatusCommand(chatUserStateUpdater,
+                eventBus);
+
             LoadAndDisplayMessages = new LoadAndDisplayMessagesCommand(eventBus,
                 GetMessageHistory,
                 GetProfileThumbnail);
@@ -107,8 +111,10 @@ namespace DCL.Chat.ChatUseCases
                 SelectChannel);
             
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
+                communityDataService,
                 profileRepositoryWrapper,
                 GetProfileThumbnail,
+                GetCommunityThumbnail,
                 chatConfig);
 
             SendMessage = new SendMessageCommand(
@@ -126,6 +132,7 @@ namespace DCL.Chat.ChatUseCases
                 communityDataService,
                 chatConfig,
                 profileRepositoryWrapper,
+                GetUserChatStatusCommand,
                 GetProfileThumbnail,
                 GetCommunityThumbnail);
 

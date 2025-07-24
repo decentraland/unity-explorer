@@ -15,8 +15,27 @@ namespace DCL.Chat
         public void Setup(ChatTitlebarViewModel model)
         {
             chatProfilePictureView.Setup(model.ProfileSprite, model.IsLoadingProfile);
-            usernameElement.Setup(model.Username, model.WalletId, model.HasClaimedName,
-                model.ProfileColor);
+
+            if (model.ViewMode == TitlebarViewMode.DirectMessage)
+            {
+                usernameElement.Setup(
+                    model.Username,
+                    model.WalletId,
+                    model.HasClaimedName,
+                    model.ProfileColor
+                );
+                SetProfileBackgroundColor(model.ProfileColor);
+            }
+            else if (model.ViewMode == TitlebarViewMode.Community)
+            {
+                usernameElement.Setup(
+                    model.Username,
+                    null,
+                    false,
+                    Color.white
+                );
+                SetProfileBackgroundColor(Color.gray);
+            }
         }
 
         public void SetProfileBackgroundColor(Color color)

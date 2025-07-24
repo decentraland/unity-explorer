@@ -5,7 +5,7 @@ namespace DCL.Chat.ChatViewModels
 {
     public class ChatTitlebarViewModel
     {
-        public Mode ViewMode;
+        public TitlebarViewMode ViewMode;
         public string Username;
         public Color UsernameColor;
         public string Id;
@@ -14,8 +14,8 @@ namespace DCL.Chat.ChatViewModels
         public bool HasClaimedName;
         public bool IsLoadingProfile { get; set; }
         public Color ProfileColor { get; set; }
-        
-        public static ChatTitlebarViewModel CreateLoading(Mode viewMode)
+
+        public static ChatTitlebarViewModel CreateLoading(TitlebarViewMode viewMode)
         {
             return new ChatTitlebarViewModel
             {
@@ -30,5 +30,5 @@ namespace DCL.Chat.ChatViewModels
         }
     }
 
-    public enum Mode { DirectMessage, Nearby, MemberList }
+    public enum TitlebarViewMode { DirectMessage, Nearby, Community, MemberList }
 }

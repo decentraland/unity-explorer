@@ -116,16 +116,23 @@ public class ChatTitlebarPresenter : IDisposable
 
         try
         {
-            var loadingViewModel = ChatTitlebarViewModel
-               .CreateLoading(channel.ChannelType == ChatChannel.ChatChannelType.NEARBY ? Mode.Nearby : Mode.DirectMessage);
+            var loadingViewModel = ChatTitlebarViewModel.CreateLoading(channel.ChannelType switch
+            {
+                ChatChannel.ChatChannelType.NEARBY => TitlebarViewMode.Nearby,
+                ChatChannel.ChatChannelType.USER => TitlebarViewMode.DirectMessage,
+                ChatChannel.ChatChannelType.COMMUNITY => TitlebarViewMode.Community,
+                _ => TitlebarViewMode.Nearby
+            });
 
             view.defaultTitlebarView.Setup(loadingViewModel);
 
             ChatTitlebarViewModel? finalViewModel = await getTitlebarViewModel.ExecuteAsync(channel, ct);
+            
             if (ct.IsCancellationRequested) return;
 
-            view.defaultTitlebarView.Setup(finalViewModel);
             currentViewModel = finalViewModel;
+            view.defaultTitlebarView.Setup(finalViewModel);
+            
         }
         catch (OperationCanceledException) { }
         catch (Exception e)

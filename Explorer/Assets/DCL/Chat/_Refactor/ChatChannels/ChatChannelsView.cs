@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using DCL.Chat.ChatViewModels;
 using DCL.Chat.ChatViewModels.ChannelViewModels;
 using DCL.Chat.History;
-using DCL.Profiles;
 using DCL.UI;
 using DCL.UI.Profiles.Helpers;
 using DG.Tweening;
@@ -242,36 +238,29 @@ namespace DCL.Chat
                 case NearbyChannelViewModel nearby:
                     newItem.SetConversationName(nearby.DisplayName);
                     newItem.SetConversationIcon(nearby.Icon);
-                    newItem.SetConversationType(isPrivate: false);
-                    newItem.SetConnectionStatus(OnlineStatus.ONLINE);
+                    newItem.Configure(isClosable: false, hasOnlineStatus: false);
                     break;
 
                 case UserChannelViewModel user:
                     newItem.SetConversationName(user.DisplayName);
-                    newItem.SetConversationType(isPrivate: true);
                     newItem.SetClaimedNameIconVisibility(user.HasClaimedName);
-                    newItem.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+                    newItem.Configure(isClosable: true, hasOnlineStatus: true);
+
+                    // newItem.SetConnectionStatus(user.IsOnline ? 
+                    //     OnlineStatus.ONLINE :
+                    //     OnlineStatus.OFFLINE);
+                    
                     if (!string.IsNullOrEmpty(user.ImageUrl))
-                    {
                         newItem.SetPicture(user.ProfilePicture);
-                        // newItem.SetProfileData(
-                        //     profileRepositoryWrapper,
-                        //     user.ProfileColor,
-                        //     user.ImageUrl,
-                        //     user.Id.Id
-                        // );
-                    }
 
                     break;
 
                 case CommunityChannelViewModel community:
                     newItem.SetConversationName(community.DisplayName);
-                    newItem.SetConversationType(isPrivate: true);
-                    newItem.SetConnectionStatus(OnlineStatus.ONLINE);
+                    newItem.Configure(isClosable: true, hasOnlineStatus: false);
+                    
                     if (!string.IsNullOrEmpty(community.ImageUrl))
-                    {
                         newItem.SetPicture(community.Thumbnail);
-                    }
 
                     break;
             }
@@ -304,18 +293,13 @@ namespace DCL.Chat
                 case UserChannelViewModel user:
                     itemToUpdate.SetConversationName(user.DisplayName);
                     itemToUpdate.SetClaimedNameIconVisibility(user.HasClaimedName);
+                    itemToUpdate.SetConnectionStatus(user.IsOnline ? OnlineStatus.ONLINE : OnlineStatus.OFFLINE);
+                    
                     if (!string.IsNullOrEmpty(user.ImageUrl))
-                    {
                         itemToUpdate.SetPicture(user.ProfilePicture);
-                        // itemToUpdate.SetProfileData(
-                        //     profileRepositoryWrapper,
-                        //     user.ProfileColor,
-                        //     user.ImageUrl,
-                        //     user.Id.Id
-                        // );
-                    }
 
                     break;
+                
                 case CommunityChannelViewModel community:
                     itemToUpdate.SetConversationName(community.DisplayName);
                     itemToUpdate.SetPicture(community.Thumbnail);

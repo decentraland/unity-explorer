@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.Chat;
 using DCL.Chat.ChatUseCases;
 using DCL.Chat.ChatViewModels.ChannelViewModels;
 using DCL.Chat.EventBus;
@@ -15,6 +16,7 @@ public class ChatChannelsPresenter : IDisposable
     private readonly IChatChannelsView view;
     private readonly IEventBus eventBus;
     private readonly IChatEventBus chatEventBus;
+    private readonly IChatUserStateEventBus chatUserStateEventBus;
     private readonly IChatHistory chatHistory;
     private readonly SelectChannelCommand selectChannelCommand;
     private readonly LeaveChannelCommand leaveChannelCommand;
@@ -30,6 +32,7 @@ public class ChatChannelsPresenter : IDisposable
     public ChatChannelsPresenter(IChatChannelsView view,
         IEventBus eventBus,
         IChatEventBus chatEventBus,
+        IChatUserStateEventBus chatUserStateEventBus,
         IChatHistory chatHistory,
         ProfileRepositoryWrapper profileRepositoryWrapper,
         SelectChannelCommand selectChannelCommand,
@@ -42,6 +45,7 @@ public class ChatChannelsPresenter : IDisposable
 
         this.eventBus = eventBus;
         this.chatEventBus = chatEventBus;
+        this.chatUserStateEventBus = chatUserStateEventBus;
         this.selectChannelCommand = selectChannelCommand;
         this.leaveChannelCommand = leaveChannelCommand;
         this.openPrivateConversationCommand = openPrivateConversationCommand;
@@ -54,14 +58,29 @@ public class ChatChannelsPresenter : IDisposable
 
         chatHistory.ChannelAdded += OnRuntimeChannelAdded;
         chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
-
+        chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
+        
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
         scope.Add(this.eventBus.Subscribe<ChatEvents.UnreadMessagesUpdatedEvent>(OnUnreadMessagesUpdated));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.UserStatusUpdatedEvent>(OnUserStatusUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
+    }
+
+    private void OnLiveUserConnectionStateChange(string userId, bool isConnected)
+    {
+        var channelId = new ChatChannel.ChannelId(userId);
+
+        if (viewModels.TryGetValue(channelId, out var baseVm) &&
+            baseVm is UserChannelViewModel userVm)
+        {
+            if (userVm.IsOnline != isConnected)
+            {
+                userVm.IsOnline = isConnected;
+                view.UpdateConversation(userVm);
+            }
+        }
     }
 
     private void OnOpenConversationUsingUserId(string userId)
@@ -119,10 +138,7 @@ public class ChatChannelsPresenter : IDisposable
         view.SetUnreadMessages(evt.ChannelId.Id, evt.Count);
     }
 
-    private void OnUserStatusUpdated(ChatEvents.UserStatusUpdatedEvent evt)
-    {
-        view.SetOnlineStatus(evt.UserId, evt.IsOnline);
-    }
+
 
     private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
     {
@@ -152,6 +168,7 @@ public class ChatChannelsPresenter : IDisposable
         lifeCts.SafeCancelAndDispose();
         
         chatEventBus.OpenPrivateConversationRequested -= OnOpenConversationUsingUserId;
+        chatUserStateEventBus.UserConnectionStateChanged -= OnLiveUserConnectionStateChange;
         view.ConversationSelected -= OnViewConversationSelected;
         view.ConversationRemovalRequested -= OnViewConversationRemovalRequested;
         scope.Dispose();

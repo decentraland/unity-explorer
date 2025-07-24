@@ -184,9 +184,7 @@ namespace DCL.PluginSystem.Global
                 roomHub.ChatRoom(),
                 friendsServiceProxy);
             
-            var chatMemberService = new ChatMemberListService(roomHub,
-                profileCache,
-                friendsServiceProxy);
+            
 
             var chatInputBlockingService = new ChatInputBlockingService(inputBlock, world);
             
@@ -204,6 +202,14 @@ namespace DCL.PluginSystem.Global
             var getUserChatStatus = new GetUserChatStatusCommand(chatUserStateUpdater, eventBus);
 
             var currentChannelService = new CurrentChannelService(getUserChatStatus);
+
+            var chatMemberService = new ChatMemberListService(roomHub,
+                profileCache,
+                friendsServiceProxy,
+                currentChannelService,
+                communityDataProvider,
+                web3IdentityCache);
+            
             var chatUserStateBridge =
                 new ChatUserStateBridge(chatUserStateEventBus, eventBus, currentChannelService);
 

@@ -36,28 +36,37 @@ public class ChatDefaultTitlebarView : MonoBehaviour
 
     public void Setup(ChatTitlebarViewModel model)
     {
+        textChannelName.text = model.Username;
+
+        bool shouldShowMembersButton = model.ViewMode == TitlebarViewMode.Nearby ||
+                                       model.ViewMode == TitlebarViewMode.Community;
+
+        buttonOpenMembers.gameObject.SetActive(shouldShowMembersButton);
+
         if (model.IsLoadingProfile)
         {
-            textChannelName.text = model.Username;
             chatProfileView.gameObject.SetActive(false);
             nearbyElementsContainer.SetActive(false);
-            buttonOpenMembers.gameObject.SetActive(false);
+            if (model.ViewMode == TitlebarViewMode.DirectMessage)
+                buttonOpenMembers.gameObject.SetActive(false);
             return;
         }
 
-        textChannelName.text = model.Username;
-        
-        bool isDirectMessage = model.ViewMode == Mode.DirectMessage;
-        chatProfileView.gameObject.SetActive(isDirectMessage);
-        nearbyElementsContainer.SetActive(!isDirectMessage);
-        buttonOpenMembers.gameObject.SetActive(!isDirectMessage);
+        bool showProfile = model.ViewMode == TitlebarViewMode.DirectMessage ||
+                           model.ViewMode == TitlebarViewMode.Community;
 
-        if (isDirectMessage)
+        chatProfileView.gameObject.SetActive(showProfile);
+        nearbyElementsContainer.SetActive(model.ViewMode == TitlebarViewMode.Nearby);
+
+        if (showProfile)
         {
             chatProfileView.Setup(model);
-            chatProfileView.SetProfileBackgroundColor(model.ProfileColor);
         }
+
+        buttonOpenProfileContextMenu.interactable
+            = model.ViewMode == TitlebarViewMode.DirectMessage;
     }
+    
     public void SetMemberCount(string count) => textMembersCount.text = count;
     public void Activate(bool activate) => gameObject.SetActive(activate);
 }

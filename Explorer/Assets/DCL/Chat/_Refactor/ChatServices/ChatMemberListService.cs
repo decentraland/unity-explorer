@@ -8,7 +8,13 @@ using DCL.Diagnostics;
 using DCL.Friends;
 using DCL.Utilities;
 using System.Threading.Tasks;
+using DCL.Chat.History;
+using DCL.Communities;
+using DCL.Profiles.Helpers;
+using DCL.Utilities.Extensions;
+using DCL.Web3.Identities;
 using Utility;
+using Utility.Types;
 
 namespace DCL.Chat.Services
 {
@@ -31,10 +37,14 @@ namespace DCL.Chat.Services
 
     public class ChatMemberListService : IDisposable
     {
+        private readonly ICurrentChannelService currentChannelService;
+        private readonly CommunitiesDataProvider communitiesDataProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly List<ChatMemberListView.MemberData> membersBuffer = new();
         public IReadOnlyList<ChatMemberListView.MemberData> LastKnownMemberList => membersBuffer;
 
         public event Action<IReadOnlyList<ChatMemberListView.MemberData>>? OnMemberListUpdated;
+        public event Action<int> OnMemberCountUpdated;
 
         private readonly IRoomHub roomHub;
         private readonly IProfileCache profileCache;
@@ -46,14 +56,21 @@ namespace DCL.Chat.Services
         // NOTE: to avoid firing events unnecessarily.
         private int lastKnownParticipantCount = -1;
         private string lastKnownIslandSid = string.Empty;
+        private int lastKnownMemberCount = -1;
 
         public ChatMemberListService(IRoomHub roomHub,
             IProfileCache profileCache,
-            ObjectProxy<IFriendsService> friendsServiceProxy)
+            ObjectProxy<IFriendsService> friendsServiceProxy,
+            ICurrentChannelService currentChannelService,
+            CommunitiesDataProvider communitiesDataProvider,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.roomHub = roomHub;
             this.profileCache = profileCache;
             this.friendsServiceProxy = friendsServiceProxy;
+            this.currentChannelService = currentChannelService;
+            this.communitiesDataProvider = communitiesDataProvider;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public void Start()
@@ -75,7 +92,7 @@ namespace DCL.Chat.Services
 
         private async Task UpdateLoopAsync()
         {
-            const int WAIT_TIME_MS = 500;
+            const int WAIT_TIME_MS = 1000;
 
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
@@ -83,26 +100,23 @@ namespace DCL.Chat.Services
             {
                 try
                 {
-                    if (!roomHub.HasAnyRoomConnected())
+                    var currentChannel = currentChannelService.CurrentChannel;
+                    if (currentChannel == null)
                     {
                         await Task.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
                         continue;
                     }
 
-                    int currentParticipantCount = roomHub.ParticipantsCount();
-                    string currentIslandSid = roomHub.IslandRoom().Info.Sid;
-
-                    if (currentIslandSid != lastKnownIslandSid ||
-                        currentParticipantCount != lastKnownParticipantCount)
+                    switch (currentChannel.ChannelType)
                     {
-                        // ReportHub.Log(ReportCategory.UI, $"Member list change detected. Island: '{lastKnownIslandSid}' -> '{currentIslandSid}'. Count: {lastKnownParticipantCount} -> {currentParticipantCount}. Refreshing.");
-
-                        lastKnownIslandSid = currentIslandSid;
-                        lastKnownParticipantCount = currentParticipantCount;
-
-                        GenerateAndBroadcastFullListAsync(cts.Token);
+                        case ChatChannel.ChatChannelType.NEARBY:
+                            await UpdateNearbyDataAsync(cts.Token);
+                            break;
+                        case ChatChannel.ChatChannelType.COMMUNITY:
+                            await UpdateCommunityDataAsync(currentChannel.Id, cts.Token);
+                            break;
                     }
-
+                    
                     await Task.Delay(WAIT_TIME_MS, cancellationToken: cts.Token);
                 }
                 catch (OperationCanceledException)
@@ -121,24 +135,30 @@ namespace DCL.Chat.Services
             GenerateAndBroadcastFullListAsync(cts.Token);
         }
 
-        private void GenerateAndBroadcastFullListAsync(CancellationToken ct)
+        private async UniTask GenerateAndBroadcastFullListAsync(CancellationToken ct)
         {
             membersBuffer.Clear();
             profilesBuffer.Clear();
 
-            GetProfilesFromParticipants(profilesBuffer);
+            var currentChannel = currentChannelService.CurrentChannel;
+            if (currentChannel == null) return;
 
-            foreach (var profile in profilesBuffer)
+            switch (currentChannel.ChannelType)
             {
-                if (ct.IsCancellationRequested) return;
-                membersBuffer.Add(CreateMemberDataFromProfile(profile));
+                case ChatChannel.ChatChannelType.NEARBY:
+                    await FetchNearbyMembersAsync(ct);
+                    break;
+                case ChatChannel.ChatChannelType.COMMUNITY:
+                    await FetchCommunityMembersAsync(currentChannel.Id, ct);
+                    break;
             }
-
-            membersBuffer.Sort(static (a, b) =>
-                string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
 
             if (ct.IsCancellationRequested) return;
 
+            membersBuffer.Sort(static (a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
+            
+            if (ct.IsCancellationRequested) return;
+            
             PlayerLoopHelper.AddContinuation(PlayerLoopTiming.Update, () =>
             {
                 if (ct.IsCancellationRequested)
@@ -148,6 +168,77 @@ namespace DCL.Chat.Services
             });
         }
 
+        private async Task UpdateNearbyDataAsync(CancellationToken ct)
+        {
+            if (!roomHub.HasAnyRoomConnected()) return;
+
+            int currentParticipantCount = roomHub.ParticipantsCount();
+            string currentIslandSid = roomHub.IslandRoom().Info.Sid;
+
+            if (currentParticipantCount != lastKnownMemberCount)
+            {
+                lastKnownMemberCount = currentParticipantCount;
+                await UniTask.SwitchToMainThread(ct);
+                OnMemberCountUpdated?.Invoke(lastKnownMemberCount);
+            }
+
+            if (currentIslandSid != lastKnownIslandSid)
+            {
+                lastKnownIslandSid = currentIslandSid;
+                await GenerateAndBroadcastFullListAsync(ct);
+            }
+        }
+
+        private async Task UpdateCommunityDataAsync(ChatChannel.ChannelId channelId, CancellationToken ct)
+        {
+            string communityId = ChatChannel.GetCommunityIdFromChannelId(channelId);
+            var result = await communitiesDataProvider.GetOnlineMemberCountAsync(communityId, ct)
+                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            if (ct.IsCancellationRequested || !result.Success) return;
+
+            int memberCount = result.Value > 0 ? result.Value - 1 : 0;
+            if (memberCount != lastKnownMemberCount)
+            {
+                lastKnownMemberCount = memberCount;
+                await UniTask.SwitchToMainThread(ct);
+                OnMemberCountUpdated?.Invoke(lastKnownMemberCount);
+            }
+        }
+
+        private async UniTask FetchNearbyMembersAsync(CancellationToken ct)
+        {
+            var profiles = new List<Profile>();
+            GetProfilesFromParticipants(profiles);
+
+            foreach (var profile in profiles)
+            {
+                if (ct.IsCancellationRequested) return;
+                membersBuffer.Add(CreateMemberDataFromProfile(profile));
+            }
+        }
+
+        private async UniTask FetchCommunityMembersAsync(ChatChannel.ChannelId channelId, CancellationToken ct)
+        {
+            string communityId = ChatChannel.GetCommunityIdFromChannelId(channelId);
+            Result<GetCommunityMembersResponse> result = await communitiesDataProvider.GetOnlineCommunityMembersAsync(communityId, ct)
+                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+            if (ct.IsCancellationRequested || !result.Success) return;
+
+            string? localPlayerAddress = web3IdentityCache.Identity?.Address;
+
+            foreach (var memberData in result.Value.data.results)
+            {
+                if (ct.IsCancellationRequested) return;
+                if (memberData.memberAddress == localPlayerAddress) continue;
+
+                membersBuffer.Add(new ChatMemberListView.MemberData
+                {
+                    Id = memberData.memberAddress, Name = memberData.name, FaceSnapshotUrl = memberData.profilePictureUrl, ConnectionStatus = ChatMemberConnectionStatus.Online,
+                    WalletId = $"#{memberData.memberAddress[^4..]}", ProfileColor = ProfileNameColorHelper.GetNameColor(memberData.name), HasClaimedName = false
+                });
+            }
+        }
+        
         private void GetProfilesFromParticipants(List<Profile> outProfiles)
         {
             outProfiles.Clear();

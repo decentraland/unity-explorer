@@ -59,14 +59,17 @@ namespace DCL.Chat.ChatUseCases
             await InitializeCommunityConversationsAsync(ct);
             ct.ThrowIfCancellationRequested();
 
-            // Finalize Initialization
-            var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
-            eventBus.Publish(new ChatEvents.InitialUserStatusLoadedEvent { Users = connectedUsers });
-
             // Publish the full list of channels (DMs + Communities) to the UI
             eventBus.Publish(new ChatEvents.InitialChannelsLoadedEvent
             {
                 Channels = new List<ChatChannel>(chatHistory.Channels.Values)
+            });
+
+            // Finalize Initialization
+            var connectedUsers = await chatUserStateUpdater.InitializeAsync(chatHistory.Channels.Keys);
+            eventBus.Publish(new ChatEvents.InitialUserStatusLoadedEvent
+            {
+                Users = connectedUsers
             });
 
             // Set default channel after all channels are loaded

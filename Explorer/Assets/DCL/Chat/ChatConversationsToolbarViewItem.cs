@@ -105,18 +105,12 @@ namespace DCL.Chat
             tooltipText.text = newName;
         }
 
-        /// <summary>
-        ///     Adapts the UI according to whether the conversation is one-to-one or not.
-        /// </summary>
-        /// <param name="isPrivate">Whether it is a private conversation or not.</param>
-        public void SetConversationType(bool isPrivate)
+        public void Configure(bool isClosable, bool hasOnlineStatus)
         {
-            removeButton.gameObject.SetActive(isPrivate);
-            connectionStatusIndicatorContainer.gameObject.SetActive(isPrivate);
+            removeButton.gameObject.SetActive(isClosable);
+            connectionStatusIndicatorContainer.SetActive(hasOnlineStatus);
         }
-
         
-
         /// <summary>
         /// Changes the color of the background and the letters of the tooltip.
         /// </summary>
@@ -176,15 +170,16 @@ namespace DCL.Chat
 
         public void SetPicture(Sprite? sprite)
         {
-            if (sprite != null)
+            profilePictureView.gameObject.SetActive(true);
+            customIcon.gameObject.SetActive(false);
+
+            bool isLoading = sprite == null;
+
+            profilePictureView.SetLoadingState(isLoading);
+
+            if (!isLoading)
             {
-                profilePictureView.gameObject.SetActive(true);
-                customIcon.gameObject.SetActive(false);
                 profilePictureView.SetImage(sprite);
-            }
-            else
-            {
-                profilePictureView.SetLoadingState(true);
             }
         }
 
@@ -246,6 +241,10 @@ namespace DCL.Chat
 
         public void Initialize()
         {
+            tooltip.gameObject.SetActive(false);
+            removeButton.gameObject.SetActive(false);
+            connectionStatusIndicatorContainer.SetActive(false);
+            
             openButton.onClick.AddListener(() => { OpenButtonClicked?.Invoke(this); });
             removeButton.onClick.AddListener(() =>
             {
@@ -257,9 +256,7 @@ namespace DCL.Chat
 
         protected virtual void Start()
         {
-            tooltip.gameObject.SetActive(false);
-            removeButton.gameObject.SetActive(false);
-            connectionStatusIndicatorContainer.gameObject.SetActive(false);
+            
         }
 
         public void SetCommunityThumbnailData(ISpriteCache spriteCache, string communityImageUrl, CancellationToken none)
