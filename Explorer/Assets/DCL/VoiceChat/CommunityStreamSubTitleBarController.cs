@@ -18,6 +18,7 @@ namespace DCL.VoiceChat
         private readonly IVoiceChatOrchestrator orchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
 
+        private CommunityStreamJoinButtonController joinButtonController;
         private CancellationTokenSource communityCts = new ();
         private bool isVoiceChatActive;
         private bool isCurrentCall;
@@ -32,6 +33,12 @@ namespace DCL.VoiceChat
             this.orchestrator = orchestrator;
             this.currentChannel = currentChannel;
             this.communityDataProvider = communityDataProvider;
+
+            joinButtonController = new CommunityStreamJoinButtonController(
+                view.JoinStreamButton,
+                orchestrator,
+                currentChannel,
+                communityDataProvider);
 
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
         }
@@ -101,6 +108,7 @@ namespace DCL.VoiceChat
         {
             statusSubscription?.Dispose();
             currentChannelSubscription?.Dispose();
+            joinButtonController?.Dispose();
             communityCts?.Dispose();
         }
     }

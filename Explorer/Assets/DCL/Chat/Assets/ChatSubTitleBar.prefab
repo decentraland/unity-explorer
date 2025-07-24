@@ -70,18 +70,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: LiveStreamSubTitleBarView
       objectReference: {fileID: 0}
-    - target: {fileID: 4262518134661730285, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
-      propertyPath: <Button>k__BackingField
-      value: 
-      objectReference: {fileID: 451999474076240916}
-    - target: {fileID: 4262518134661730285, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
-      propertyPath: <ButtonHoverAudio>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: f767192f6c485df418f562c10546e083, type: 2}
-    - target: {fileID: 4262518134661730285, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
-      propertyPath: <ButtonPressedAudio>k__BackingField
-      value: 
-      objectReference: {fileID: 11400000, guid: c04c00e1916f2c547ad65c88cf468c23, type: 2}
     - target: {fileID: 4773166297052838194, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -167,17 +155,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
---- !u!114 &451999474076240916 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8245377933041037009, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}
-  m_PrefabInstance: {fileID: 8370120962539725509}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &3897045096298208247 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4773166297052838194, guid: 301744c2fba2c7c438b837493beddd3d, type: 3}

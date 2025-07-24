@@ -1389,7 +1389,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <InStreamSign>k__BackingField: {fileID: 880047859178411552}
-  <JoinStreamButton>k__BackingField: {fileID: 4262518134661730285}
+  <JoinStreamButton>k__BackingField: {fileID: 317415011732889561}
   <ParticipantsAmount>k__BackingField: {fileID: 5374223481562118236}
 --- !u!1 &3510676817756330553
 GameObject:
@@ -1752,7 +1752,7 @@ GameObject:
   - component: {fileID: 8245377933041037009}
   - component: {fileID: 7235695507418954005}
   - component: {fileID: 3142209241255153715}
-  - component: {fileID: 4262518134661730285}
+  - component: {fileID: 317415011732889561}
   m_Layer: 0
   m_Name: ListenIn_Button
   m_TagString: Untagged
@@ -1893,7 +1893,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <tooltip>k__BackingField: {fileID: 2636177983206373435}
   <hoverableButton>k__BackingField: {fileID: 7235695507418954005}
---- !u!114 &4262518134661730285
+--- !u!114 &317415011732889561
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1902,12 +1902,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 4768870807608930496}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Script: {fileID: 11500000, guid: cfdbe7decd2b4bffbe2615bb69cd0e09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Button>k__BackingField: {fileID: 0}
-  <ButtonPressedAudio>k__BackingField: {fileID: 0}
-  <ButtonHoverAudio>k__BackingField: {fileID: 0}
+  <CallButton>k__BackingField: {fileID: 8245377933041037009}
+  <TooltipParent>k__BackingField: {fileID: 7750354948495703011}
+  <TooltipParentCanvas>k__BackingField: {fileID: 1259292056142338437}
+  <TooltipText>k__BackingField: {fileID: 2270107904525417004}
 --- !u!1 &5194568985233014670
 GameObject:
   m_ObjectHideFlags: 0
@@ -2306,7 +2307,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Call
+  m_text: Join Stream
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}
   m_sharedMaterial: {fileID: 735423033564544980, guid: 96ae0a2159a39234f858ea23bdcc74ad, type: 2}

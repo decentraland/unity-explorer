@@ -8,7 +8,7 @@ namespace DCL.VoiceChat
     {
 
         [field: SerializeField] public GameObject InStreamSign { get; private set; }
-        [field: SerializeField] public ButtonView JoinStreamButton { get; private set; }
+        [field: SerializeField] public CallButtonView JoinStreamButton { get; private set; }
         [field: SerializeField] public TMP_Text ParticipantsAmount { get; private set; }
     }
 }
