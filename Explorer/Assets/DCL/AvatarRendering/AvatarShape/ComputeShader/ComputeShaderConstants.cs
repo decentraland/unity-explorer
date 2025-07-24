@@ -4,7 +4,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
     public class ComputeShaderConstants
     {
-
         public const string HAIR_MATERIAL_NAME = "hair";
         public const string SKIN_MATERIAL_NAME = "skin";
 
@@ -12,7 +11,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
         public const string SKINNING_KERNEL_NAME = "main";
 
         //Compute shader properties
-        public static readonly int BONE_COUNT = 62;
+        public const int BONE_COUNT = 62;
         public static readonly int VERT_COUNT_ID = Shader.PropertyToID("g_VertCount");
         public static readonly int LAST_AVATAR_VERT_COUNT_ID = Shader.PropertyToID("_lastAvatarVertCount");
         public static readonly int LAST_WEARABLE_VERT_COUNT_ID = Shader.PropertyToID("_lastWearableVertCount");
