@@ -70,6 +70,18 @@ namespace DCL.SDKComponents.MediaStream
             static _ => false
         );
 
+        public bool IsReady => Match(
+            static avPro => avPro.AvProMediaPlayer.TextureProducer != null,
+            static _ => true
+        );
+        public Vector2 GetTexureScale => Match(static avPro =>
+            {
+                float vScale = avPro.AvProMediaPlayer.TextureProducer.RequiresVerticalFlip() ? -1 : 1;
+                return new Vector2(1, vScale);
+            },
+            static _ => new Vector2(1, -1)
+        );
+
         public void Dispose(MediaAddress address)
         {
             Match(

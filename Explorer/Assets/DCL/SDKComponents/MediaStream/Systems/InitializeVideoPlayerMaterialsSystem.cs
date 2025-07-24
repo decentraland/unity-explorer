@@ -50,22 +50,17 @@ namespace DCL.SDKComponents.MediaStream
             if (!World.TryGet(mediaPlayerComponentEntity, out MediaPlayerComponent mediaPlayerComponent))
                 return false;
 
-            if (!mediaPlayerComponent.MediaPlayer.IsAvProPlayer(out var avPro))
+            if (!mediaPlayerComponent.MediaPlayer.IsReady)
             {
-                World.Destroy(entity);
+                if (mediaPlayerComponent.MediaPlayer.IsAvProPlayer(out AvProPlayer? _))
+                {
+                    // AV Pro player not initialized yet (should not happen, but we can just wait)
+                    ReportHub.LogWarning(GetReportCategory(), $"Handling {nameof(InitializeVideoPlayerMaterialRequest)} before the AV Pro player was initialized");
+                }
                 return false;
             }
 
-            var textureProducer = avPro!.Value.AvProMediaPlayer.TextureProducer;
-            if (textureProducer == null)
-            {
-                // AV Pro player not initialized yet (should not happen, but we can just wait)
-                ReportHub.LogWarning(GetReportCategory(), $"Handling {nameof(InitializeVideoPlayerMaterialRequest)} before the AV Pro player was initialized");
-                return false;
-            }
-
-            float vScale = textureProducer.RequiresVerticalFlip() ? -1 : 1;
-            texScale = new Vector2(1, vScale);
+            texScale = mediaPlayerComponent.MediaPlayer.GetTexureScale;
 
             World.Destroy(entity);
 
