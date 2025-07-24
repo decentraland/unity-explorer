@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.TestTools;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.Wearable[], DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Tests
@@ -96,7 +96,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
         {
             //Mocking the result of the LoadWearableManifestSystem
             var assetBundleManifestPromise
-                = AssetBundleManifestPromise.Create(world, new GetWearableAssetBundleManifestIntention
+                = AssetBundleManifestPromise.Create(world, new GetAssetBundleManifestIntention()
                 {
                     CommonArguments = new CommonLoadingArguments("mockURL", cancellationTokenSource: cts),
                 }, PartitionComponent.TOP_PRIORITY);

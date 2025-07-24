@@ -8,8 +8,10 @@ using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Cache.Disk;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -36,13 +38,17 @@ namespace DCL.PluginSystem.World
         private readonly IWebRequestController webRequestController;
         private readonly ArrayPool<byte> buffersPool;
         private readonly IDiskCache<PartialLoadingState> partialsDiskCache;
+        private readonly URLDomain assetBundleURL;
 
-        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache)
+
+        public AssetBundlesPlugin(IReportsHandlingSettings reportsHandlingSettings, CacheCleaner cacheCleaner, IWebRequestController webRequestController, ArrayPool<byte> buffersPool, IDiskCache<PartialLoadingState> partialsDiskCache,
+            URLDomain assetBundleURL)
         {
             this.reportsHandlingSettings = reportsHandlingSettings;
             this.webRequestController = webRequestController;
             this.buffersPool = buffersPool;
             this.partialsDiskCache = partialsDiskCache;
+            this.assetBundleURL = assetBundleURL;
             assetBundleCache = new AssetBundleCache();
             assetBundleLoadingMutex = new AssetBundleLoadingMutex();
 
@@ -62,6 +68,9 @@ namespace DCL.PluginSystem.World
         {
             // Asset Bundles
             PrepareGlobalAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, STREAMING_ASSETS_URL);
+
+            LoadAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention>(true, true), assetBundleURL, webRequestController);
+
 
             // TODO create a runtime ref-counting cache
             LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, webRequestController, assetBundleLoadingMutex, buffersPool, partialsDiskCache);

@@ -21,6 +21,8 @@ namespace DCL.Ipfs
         [JsonProperty("status")]
         public AssetBundleRegistryEnum assetBundleRegistryEnum;
 
+        public string assetBundleManifestVersion;
+
         public EntityDefinitionGeneric() { }
 
         public EntityDefinitionGeneric(string id, T metadata)

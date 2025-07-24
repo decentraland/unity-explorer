@@ -28,7 +28,7 @@ using UnityEngine.TestTools;
 // Define Promise types as aliases for clarity, similar to the system file
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>; // Corrected alias
 using GltfPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.GLTF.GLTFData, ECS.StreamableLoading.GLTF.GetGLTFIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
+using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, ECS.StreamableLoading.AssetBundles.GetAssetBundleManifestIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AudioClips.AudioClipData, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList, DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using EmoteResolutionPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -143,7 +143,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             Entity entity = world.Create(mockEmote); // Entity holding the IEmote component
 
             var manifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date");
-            var intention = new GetWearableAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            var intention = new GetAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
             var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY);
             world.Add(entity, promise); // Promise is on the same entity as IEmote
             world.Add(promise.Entity, new StreamableLoadingResult<SceneAssetBundleManifest>(manifest)); // Result on promise's entity
@@ -163,7 +163,7 @@ namespace DCL.AvatarRendering.Emotes.Tests
             IEmote mockEmote = new MockEmote(emoteURN, mockEmoteStorage);
             Entity entity = world.Create(mockEmote); // Carrier entity
 
-            var intention = new GetWearableAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
+            var intention = new GetAssetBundleManifestIntention { CommonArguments = new CommonLoadingArguments(URLAddress.EMPTY) };
             var promise = AssetBundleManifestPromise.Create(world, intention, PartitionComponent.TOP_PRIORITY); // promise.Entity is result-holder
             world.Add(entity, promise); // Add promise component to carrier
 
