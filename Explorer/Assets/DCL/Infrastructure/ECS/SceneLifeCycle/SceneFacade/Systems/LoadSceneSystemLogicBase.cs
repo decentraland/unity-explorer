@@ -51,6 +51,14 @@ namespace ECS.SceneLifeCycle.Systems
 
             (_, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt);
 
+            // Create scene data
+            var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
+            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
+
+            //TODO (JUANI) : Why is it required on the main thread?
+            await UniTask.SwitchToMainThread();
+
             //TODO (JUANI): This can go away when we retrieve the version from the asset-bundle-registry
             AssetBundleManifestPromise loadAssetBundleManifest = await AssetBundleManifestPromise.Create(world,
                 GetAssetBundleManifestIntention.Create(intention.DefinitionComponent.Definition.id, new CommonLoadingArguments(intention.DefinitionComponent.Definition.id)),
@@ -66,11 +74,6 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 //TODO (JUANI): What happens on fail?
             }
-
-            // Create scene data
-            var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
-            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
-                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
