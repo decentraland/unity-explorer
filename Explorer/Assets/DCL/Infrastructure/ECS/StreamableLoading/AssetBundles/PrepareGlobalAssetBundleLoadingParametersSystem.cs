@@ -32,7 +32,6 @@ namespace ECS.StreamableLoading.AssetBundles
         {
             // TODO (JUANI) : Optimize
             assetBundleIntention.Hash = assetBundleIntention.Hash.ToLower();
-
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

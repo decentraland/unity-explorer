@@ -53,9 +53,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
             AssetValidation.ValidateSceneAbDto(sceneAbDto, AssetValidation.WearableIDError, hash);
 
-            if(hash.Contains("bafkreihhtbqtzdesgnm24a26qk56bo76gtibiq6f67vqyftchgxxxudgiq"))
-                UnityEngine.Debug.Log("JUANI FINISHED THE FLAG DTO");
-
             return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files, hash, sceneAbDto.Date);
         }
     }

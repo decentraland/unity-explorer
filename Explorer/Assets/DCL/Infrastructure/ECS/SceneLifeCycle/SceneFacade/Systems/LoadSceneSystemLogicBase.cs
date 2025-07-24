@@ -62,6 +62,10 @@ namespace ECS.SceneLifeCycle.Systems
                 //If ABVersion is over 25 for scenes, the path will contain the scene hash
                 definitionComponent.Definition.hasSceneInPath = int.Parse( definitionComponent.Definition.assetBundleManifestVersion.AsSpan().Slice(1)) >= 25;
             }
+            else
+            {
+                //TODO (JUANI): What happens on fail?
+            }
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;

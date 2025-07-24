@@ -70,7 +70,6 @@ namespace DCL.LOD.Systems
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
 
-
             //TODO (JUANI) : This is going to fail
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,

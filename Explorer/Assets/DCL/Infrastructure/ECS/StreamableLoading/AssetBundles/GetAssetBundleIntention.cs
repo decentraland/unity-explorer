@@ -103,6 +103,13 @@ namespace ECS.StreamableLoading.AssetBundles
             return   new (expectedAssetType, hash: hash, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, manifestVersion: manifestVersion, hasSceneInPath: hasPathInSceneID, parentEntityID: sceneID, cancellationTokenSource: cancellationTokenSource);
 
         }
+
+        public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, AssetSource permittedSources, string manifestVersion, bool hasPathInSceneID,
+            string sceneID, CancellationTokenSource cancellationTokenSource)
+        {
+            return   new (expectedAssetType, hash: hash, permittedSources: permittedSources, manifestVersion: manifestVersion, hasSceneInPath: hasPathInSceneID, parentEntityID: sceneID, cancellationTokenSource: cancellationTokenSource);
+
+        }
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
 

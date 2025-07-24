@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using SceneRunner.Scene;
+using System;
 
 namespace DCL.AvatarRendering.Loading.Components
 {
@@ -12,11 +13,6 @@ namespace DCL.AvatarRendering.Loading.Components
         bool IsLoading { get; }
 
         public void UpdateLoadingStatus(bool isLoading);
-
-        /// <summary>
-        ///     Might be never resolved if Wearable is loaded from the Embedded Source
-        /// </summary>
-        StreamableLoadingResult<SceneAssetBundleManifest>? ManifestResult { get; set; }
 
         /// <summary>
         ///     If null - promise has never been created, otherwise it could contain the result or be un-initialized
@@ -151,13 +147,22 @@ namespace DCL.AvatarRendering.Loading.Components
 
         public static void UpdateManifest(this IAvatarAttachment avatarAttachment, StreamableLoadingResult<SceneAssetBundleManifest> result)
         {
-            avatarAttachment.ManifestResult = result;
+            if (result.Succeeded)
+            {
+                string assetBundleManifestVersion = result.Asset!.GetVersion();
+                avatarAttachment.DTO.assetBundleManifestVersion = assetBundleManifestVersion;
+                avatarAttachment.DTO.hasSceneInPath = int.Parse(assetBundleManifestVersion.AsSpan().Slice(1)) >= 25;
+            }
+            else
+                avatarAttachment.DTO.assetBundleManifestRequestFailed = true;
+
             avatarAttachment.UpdateLoadingStatus(false);
         }
 
         public static void ResetManifest(this IAvatarAttachment avatarAttachment)
         {
-            avatarAttachment.ManifestResult = null;
+            avatarAttachment.DTO.assetBundleManifestVersion = "";
+            avatarAttachment.DTO.hasSceneInPath = false;
             avatarAttachment.UpdateLoadingStatus(false);
         }
     }

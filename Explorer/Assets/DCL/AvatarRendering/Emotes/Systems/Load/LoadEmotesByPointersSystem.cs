@@ -124,7 +124,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
-                if (emote.ManifestResult is { Exception: not null })
+                if (emote.DTO.assetBundleManifestRequestFailed)
                     emotesWithResponse++;
 
                 if (emote.IsLoading) continue;
@@ -207,14 +207,12 @@ namespace DCL.AvatarRendering.Emotes.Load
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             // Manifest is required for Web loading only
-            if (component.ManifestResult == null
+            if (string.IsNullOrEmpty(component.DTO.assetBundleManifestVersion)
                 && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)
 
                 // Skip processing manifest for embedded emotes which do not start with 'urn'
                 && component.GetUrn().IsValid())
             {
-                if (component.DTO.id.Contains("bafkreihhtbqtzdesgnm24a26qk56bo76gtibiq6f67vqyftchgxxxudgiq"))
-                    Debug.Log($"JUANI CREATING ASSET BUNDLE MANIFEST PROMISE FOR bafkreihhtbqtzdesgnm24a26qk56bo76gtibiq6f67vqyftchgxxxudgiq");
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
             }
@@ -224,11 +222,6 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (component.AssetResults[intention.BodyShape] == null)
             {
-                SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
-
-                if (component.DTO.id.Contains("bafkreihhtbqtzdesgnm24a26qk56bo76gtibiq6f67vqyftchgxxxudgiq"))
-                    Debug.Log($"JUANI CREATING ASSET BUNDLE REQUEST FOR PROMISE FOR bafkreihhtbqtzdesgnm24a26qk56bo76gtibiq6f67vqyftchgxxxudgiq {manifest.GetVersion()}");
-
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 var promise = AssetBundlePromise.Create(
                     World!,
@@ -237,8 +230,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                         hash! + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifestVersion: manifest == null ? "" : manifest.GetVersion(),
-                        hasPathInSceneID : true,
+                        manifestVersion: component.DTO.assetBundleManifestVersion,
+                        hasPathInSceneID : component.DTO.hasSceneInPath,
                         sceneID : component.DTO.id,
                         cancellationTokenSource: intention.CancellationTokenSource
                     ),

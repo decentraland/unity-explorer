@@ -30,10 +30,13 @@ namespace DCL.AvatarRendering.Wearables.Tests
     [TestFixture]
     public class ResolveWearableByPointerSystemShould : UnitySystemTestBase<FinalizeAssetBundleWearableLoadingSystem>
     {
+
+        private readonly string AB_MANIFEST_VERSION = "v0";
+
         [SetUp]
         public void Setup()
         {
-            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, "v0", Array.Empty<string>(), "hash", "04_10_2024"));
+            mockedABManifest = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(URLDomain.EMPTY, AB_MANIFEST_VERSION, Array.Empty<string>(), "hash", "04_10_2024"));
 
             wearableStorage = new WearableStorage();
 
@@ -142,7 +145,6 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedAB;
-            mockWearable.ManifestResult = mockedABManifest;
         }
 
         [Test]
@@ -167,7 +169,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             //Assert
             mockUnisexWearable.WearableAssetResults[BodyShape.MALE] = mockedAB;
             mockUnisexWearable.WearableAssetResults[BodyShape.FEMALE] = mockedAB;
-            mockUnisexWearable.ManifestResult = mockedABManifest;
+            mockUnisexWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]
@@ -190,7 +192,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.ManifestResult = mockedABManifest;
+            mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]
@@ -214,7 +216,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
 
             //Assert
             mockWearable.WearableAssetResults[BodyShape.MALE] = mockedDefaultAB;
-            mockWearable.ManifestResult = mockedABManifest;
+            mockWearable.DTO.assetBundleManifestVersion = AB_MANIFEST_VERSION;
         }
 
         [Test]

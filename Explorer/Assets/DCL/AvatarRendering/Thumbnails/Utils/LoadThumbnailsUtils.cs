@@ -38,7 +38,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
 
         private static async UniTask<bool> TryResolveAssetBundleManifestAsync(World world, IPartitionComponent partitionComponent, IAvatarAttachment attachment, CancellationTokenSource? cancellationTokenSource)
         {
-            if (attachment.ManifestResult?.Asset == null)
+            if (string.IsNullOrEmpty(attachment.DTO.assetBundleManifestVersion))
                 try
                 {
                     AssetBundleManifestPromise promise = AssetBundleManifestPromise.Create(world,
@@ -48,7 +48,7 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     AssetBundleManifestPromise awaitedPromise = await promise.ToUniTaskAsync(world, cancellationToken: cancellationTokenSource?.Token ?? CancellationToken.None);
 
                     if (awaitedPromise.Result is { Succeeded: true, Asset: not null })
-                        attachment.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>(awaitedPromise.Result.Value.Asset);
+                        attachment.UpdateManifest(awaitedPromise.Result.Value);
                 }
                 catch (Exception) { return false; }
 
@@ -123,7 +123,9 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    manifestVersion: attachment.ManifestResult?.Asset.GetVersion(),
+                    manifestVersion: attachment.DTO.assetBundleManifestVersion,
+                    hasPathInSceneID: attachment.DTO.hasSceneInPath,
+                    sceneID: attachment.DTO.id,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),
                 partitionComponent);

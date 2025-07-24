@@ -23,6 +23,11 @@ namespace DCL.AvatarRendering.Loading.DTO
         public Content[] content;
         public string? ContentDownloadUrl { get; protected set; }
 
+        public string assetBundleManifestVersion;
+        public bool hasSceneInPath;
+        //TODO (JUANI) : Temporary bool to assumed that the manifest may fail
+        public bool assetBundleManifestRequestFailed;
+
         public abstract MetadataBase Metadata { get; }
 
         [Serializable]

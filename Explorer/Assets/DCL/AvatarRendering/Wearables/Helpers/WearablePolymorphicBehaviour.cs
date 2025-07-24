@@ -42,7 +42,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 GetAssetBundleManifestIntention.Create(component.DTO.GetHash(), new CommonLoadingArguments(component.DTO.GetHash(), cancellationTokenSource: cts)),
                 partitionComponent);
 
-            component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
             component.UpdateLoadingStatus(true);
             world.Create(promise, component, bodyShape);
             return true;
@@ -60,15 +59,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             World world,
             ReportData reportData)
         {
-            SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : wearable.ManifestResult?.Asset;
-
             BodyShape bodyShape = intention.BodyShape;
 
             switch (wearable.Type)
             {
                 case WearableType.FacialFeature:
                     return TryCreateFacialFeaturePromises(
-                        manifest,
                         in intention,
                         customStreamingSubdirectory,
                         wearable,
@@ -78,7 +74,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         reportData);
                 default:
                     return TryCreateSingleGameObjectPromise(
-                        manifest,
                         in intention,
                         customStreamingSubdirectory,
                         wearable,
@@ -90,7 +85,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         }
 
         public static bool TryCreateSingleGameObjectPromise(
-            SceneAssetBundleManifest? sceneAssetBundleManifest,
             in GetWearablesByPointersIntention intention,
             URLSubdirectory customStreamingSubdirectory,
             IWearable wearable,
@@ -101,14 +95,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             ref WearableAssets wearableAssets = ref InitializeResultsArray(wearable, bodyShape, 1);
 
-            return TryCreateMainFilePromise(typeof(GameObject), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData);
+            return TryCreateMainFilePromise(typeof(GameObject), intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData);
         }
 
         /// <summary>
         ///     Facial feature can consist of the main texture and the mask
         /// </summary>
         private static bool TryCreateFacialFeaturePromises(
-            SceneAssetBundleManifest? sceneAssetBundleManifest,
             in GetWearablesByPointersIntention intention,
             URLSubdirectory customStreamingSubdirectory,
             IWearable wearable,
@@ -121,8 +114,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             // 0 stands for the main texture
             // 1 stands for the mask
-            return TryCreateMainFilePromise(typeof(Texture), sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData)
-                   | TryCreateMaskPromise(sceneAssetBundleManifest, intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world);
+            return TryCreateMainFilePromise(typeof(Texture), intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world, reportData)
+                   | TryCreateMaskPromise(intention, customStreamingSubdirectory, wearable, partitionComponent, ref wearableAssets, bodyShape, world);
         }
 
         private static ref WearableAssets InitializeResultsArray(IWearable wearable, BodyShape bodyShape, int size)
@@ -144,7 +137,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
         }
 
-        private static bool TryCreateMaskPromise(SceneAssetBundleManifest?  sceneAssetBundleManifest,
+        private static bool TryCreateMaskPromise(
             GetWearablesByPointersIntention intention, URLSubdirectory customStreamingSubdirectory, IWearable wearable,
             IPartitionComponent partitionComponent, ref WearableAssets wearableAssets, BodyShape bodyShape, World world)
         {
@@ -162,7 +155,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             CreatePromise(
                 typeof(Texture),
-                sceneAssetBundleManifest,
                 intention,
                 customStreamingSubdirectory,
                 mainFileHash,
@@ -176,7 +168,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static bool TryCreateMainFilePromise<T>(
             Type expectedObjectType,
-            SceneAssetBundleManifest? sceneAssetBundleManifest,
             GetWearablesByPointersIntention intention,
             URLSubdirectory customStreamingSubdirectory,
             T wearable,
@@ -200,7 +191,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
 
             CreatePromise(expectedObjectType,
-                sceneAssetBundleManifest,
                 intention,
                 customStreamingSubdirectory,
                 mainFileHash!,
@@ -214,7 +204,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static void CreatePromise<T>(
             Type expectedObjectType,
-            SceneAssetBundleManifest? sceneAssetBundleManifest,
             GetWearablesByPointersIntention intention,
             URLSubdirectory customStreamingSubdirectory,
             string hash,
@@ -250,8 +239,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         hash + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifestVersion: sceneAssetBundleManifest == null ? "" : sceneAssetBundleManifest!.GetVersion(),
-                        hasPathInSceneID: true,
+                        manifestVersion: wearable.DTO.assetBundleManifestVersion,
+                        hasPathInSceneID: wearable.DTO.hasSceneInPath,
                         sceneID : wearable.DTO.id,
                         cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);

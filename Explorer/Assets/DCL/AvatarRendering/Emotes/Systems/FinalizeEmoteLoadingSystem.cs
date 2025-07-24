@@ -148,10 +148,6 @@ namespace DCL.AvatarRendering.Emotes
                     else
                         emote.AssetResults[bodyShape] = asset;
                 }
-                else
-                {
-                    UnityEngine.Debug.Log($"JUANI HERE IS A PROBLEM {((ILoadingIntention)promise.LoadingIntention).CommonArguments.URL} {result.Exception}");
-                }
 
                 emote.UpdateLoadingStatus(false);
                 World.Destroy(entity);
