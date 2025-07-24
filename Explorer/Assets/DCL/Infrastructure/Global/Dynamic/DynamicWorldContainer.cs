@@ -788,7 +788,7 @@ namespace Global.Dynamic
                     upscaleController,
                     communitiesDataProvider,
                     realmNftNamesProvider,
-                    includeVoiceChat
+                    includeVoiceChat,
                     galleryEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
