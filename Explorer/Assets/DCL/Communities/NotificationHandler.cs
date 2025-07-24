@@ -28,8 +28,8 @@ namespace DCL.Communities
             this.mvcManager = mvcManager;
             this.realmNavigator = realmNavigator;
 
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_COMMUNITY_EVENT_CREATED, EventCreatedClicked);
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.SOCIAL_SERVICE_COMMUNITY_EVENT_ABOUT_TO_START, EventStartSoonClicked);
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_CREATED, EventCreatedClicked);
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.COMMUNITY_EVENT_ABOUT_TO_START, EventStartSoonClicked);
         }
 
         public void Dispose()
