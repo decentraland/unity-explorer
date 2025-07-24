@@ -74,8 +74,6 @@ namespace Global.Dynamic
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
-        public IAppArgs AppParameters { get; init; }
-        public string DefaultStartingRealm { get; init; }
     }
 
 

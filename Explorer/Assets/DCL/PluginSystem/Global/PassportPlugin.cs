@@ -58,6 +58,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICameraReelScreenshotsStorage cameraReelScreenshotsStorage;
         private readonly Arch.Core.World world;
         private readonly Entity playerEntity;
+        private readonly bool enableCameraReel;
         private readonly ObjectProxy<IFriendsService> friendsService;
         private readonly ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCache;
         private readonly IOnlineUsersProvider onlineUsersProvider;
@@ -65,6 +66,10 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly INftNamesProvider nftNamesProvider;
         private readonly ProfileChangesBus profileChangesBus;
+        private readonly bool enableFriends;
+        private readonly bool includeUserBlocking;
+        private readonly bool isNameEditorEnabled;
+        private readonly bool isCallEnabled;
         private readonly IChatEventBus chatEventBus;
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
@@ -94,6 +99,7 @@ namespace DCL.PluginSystem.Global
             ICameraReelScreenshotsStorage cameraReelScreenshotsStorage,
             Arch.Core.World world,
             Entity playerEntity,
+            bool enableCameraReel,
             ObjectProxy<IFriendsService> friendsService,
             ObjectProxy<FriendsConnectivityStatusTracker> friendOnlineStatusCacheProxy,
             IOnlineUsersProvider onlineUsersProvider,
@@ -101,6 +107,10 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             INftNamesProvider nftNamesProvider,
             ProfileChangesBus profileChangesBus,
+            bool enableFriends,
+            bool includeUserBlocking,
+            bool isNameEditorEnabled,
+            bool isCallEnabled,
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
@@ -127,6 +137,7 @@ namespace DCL.PluginSystem.Global
             this.playerEntity = playerEntity;
             this.cameraReelStorageService = cameraReelStorageService;
             this.cameraReelScreenshotsStorage = cameraReelScreenshotsStorage;
+            this.enableCameraReel = enableCameraReel;
             this.friendsService = friendsService;
             this.friendOnlineStatusCache = friendOnlineStatusCacheProxy;
             this.onlineUsersProvider = onlineUsersProvider;
@@ -134,6 +145,10 @@ namespace DCL.PluginSystem.Global
             this.web3IdentityCache = web3IdentityCache;
             this.nftNamesProvider = nftNamesProvider;
             this.profileChangesBus = profileChangesBus;
+            this.enableFriends = enableFriends;
+            this.includeUserBlocking = includeUserBlocking;
+            this.isNameEditorEnabled = isNameEditorEnabled;
+            this.isCallEnabled = isCallEnabled;
             this.chatEventBus = chatEventBus;
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
@@ -194,6 +209,11 @@ namespace DCL.PluginSystem.Global
                 passportSettings.GridLayoutFixedColumnCount,
                 passportSettings.ThumbnailHeight,
                 passportSettings.ThumbnailWidth,
+                enableCameraReel,
+                enableFriends,
+                includeUserBlocking,
+                isNameEditorEnabled,
+                isCallEnabled,
                 chatEventBus,
                 sharedSpaceManager,
                 profileRepositoryWrapper,
