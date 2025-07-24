@@ -116,7 +116,11 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+                var result = await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), version, source, intention.LookForShaderAssets, ct);
+
+                if (result.Succeeded) RequestAssetProcessing(result.Asset!);
+
+                return result;
             }
             catch (Exception e)
             {
@@ -131,6 +135,21 @@ namespace ECS.StreamableLoading.AssetBundles
                 throw;
             }
         }
+
+        private void RequestAssetProcessing(AssetBundleData assetBundleData)
+        {
+            // When processing for additional asset types is required we can invoke this method with the relevant generic argument
+            RequestAssetProcessing<GameObject>(assetBundleData);
+        }
+
+        private void RequestAssetProcessing<T>(AssetBundleData assetBundleData) where T: Object
+        {
+            if (!assetBundleData.TryGetMainAsset<T>(out var asset)) return;
+
+            var request = this.World.Create();
+            World.Add(request, new AssetProcessingRequest<T> { Asset = asset });
+        }
+
 
         public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
             AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
