@@ -225,6 +225,7 @@ namespace DCL.VoiceChat
         {
             try
             {
+                ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Raw metadata for {participantId}: {metadata}");
                 ParticipantCallMetadata callMetadata = JsonUtility.FromJson<ParticipantCallMetadata>(metadata);
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Parsed metadata for {participantId}: {callMetadata}");
 
@@ -256,6 +257,7 @@ namespace DCL.VoiceChat
             {
                 try
                 {
+                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Raw initial metadata for {participant.Identity}: {participant.Metadata}");
                     metadata = JsonUtility.FromJson<ParticipantCallMetadata>(participant.Metadata);
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Parsed initial metadata for {participant.Identity}: {metadata}");
                 }
@@ -267,11 +269,11 @@ namespace DCL.VoiceChat
                 WalletId = participant.Identity,
                 IsSpeaking = new ReactiveProperty<bool>(false),
                 Name = new ReactiveProperty<string?>(metadata?.name),
-                HasClaimedName = new ReactiveProperty<bool?>(metadata?.hasClaimedName),
+                HasClaimedName = new ReactiveProperty<bool?>(metadata?.hasClaimedName ?? false),
                 ProfilePictureUrl = new ReactiveProperty<string?>(metadata?.profilePictureUrl),
-                IsRequestingToSpeak = new ReactiveProperty<bool?>(metadata?.isRequestingToSpeak),
+                IsRequestingToSpeak = new ReactiveProperty<bool?>(metadata?.isRequestingToSpeak ?? false),
                 IsSpeaker = new ReactiveProperty<bool>(metadata?.isSpeaker ?? false),
-                Role = new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.role ?? UserCommunityRoleMetadata.None)
+                Role = new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.role ?? UserCommunityRoleMetadata.none)
             };
 
             participantStates[participant.Identity] = state;
@@ -365,11 +367,11 @@ namespace DCL.VoiceChat
             }
 
             existingState.Name.Value = metadata?.name;
-            existingState.HasClaimedName.Value = metadata?.hasClaimedName;
+            existingState.HasClaimedName.Value = metadata?.hasClaimedName ?? false;
             existingState.ProfilePictureUrl.Value = metadata?.profilePictureUrl;
-            existingState.IsRequestingToSpeak.Value = metadata?.isRequestingToSpeak;
+            existingState.IsRequestingToSpeak.Value = metadata?.isRequestingToSpeak ?? false;
             existingState.IsSpeaker.Value = metadata?.isSpeaker ?? false;
-            existingState.Role.Value = metadata?.role ?? UserCommunityRoleMetadata.None;
+            existingState.Role.Value = metadata?.role ?? UserCommunityRoleMetadata.none;
         }
 
         private void UpdateParticipantSpeaking(string participantId, bool isSpeaking)
@@ -386,7 +388,7 @@ namespace DCL.VoiceChat
                 state.HasClaimedName.Value = metadata.hasClaimedName;
                 state.ProfilePictureUrl.Value = metadata.profilePictureUrl;
                 state.IsRequestingToSpeak.Value = metadata.isRequestingToSpeak;
-                state.IsSpeaker.Value = metadata.isSpeaker ?? false;
+                state.IsSpeaker.Value = metadata.isSpeaker;
                 state.Role.Value = metadata.role;
             }
         }
@@ -403,12 +405,13 @@ namespace DCL.VoiceChat
             public ReactiveProperty<UserCommunityRoleMetadata> Role { get; set; }
         }
 
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
         public enum UserCommunityRoleMetadata
         {
-            None,
-            User,
-            Moderator,
-            Owner
+            none,
+            user,
+            moderator,
+            owner
         }
 
         [Serializable]
@@ -418,9 +421,9 @@ namespace DCL.VoiceChat
         {
             public string? name;
             public string? profilePictureUrl;
-            public bool? hasClaimedName;
-            public bool? isRequestingToSpeak;
-            public bool? isSpeaker;
+            public bool hasClaimedName;
+            public bool isRequestingToSpeak;
+            public bool isSpeaker;
             public UserCommunityRoleMetadata role;
 
             public override string ToString() =>
