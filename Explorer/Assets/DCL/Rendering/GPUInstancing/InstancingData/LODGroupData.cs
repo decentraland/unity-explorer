@@ -16,7 +16,7 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
         public Matrix4x4 LODSizesMatrix;
         public Bounds Bounds;
 
-        public int LODCount => lodsScreenSpaceSizes?.Length ?? 0;
+        public int LODCount => lodsScreenSpaceSizes?.Length ?? 1;
 
         public LODGroupData(Bounds sharedMeshBounds)
         {
