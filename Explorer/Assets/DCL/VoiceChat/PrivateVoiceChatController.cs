@@ -95,6 +95,8 @@ namespace DCL.VoiceChat
 
         private void OnVoiceChatStatusChanged(VoiceChatStatus status)
         {
+            if (voiceChatOrchestrator.CurrentVoiceChatType.Value == VoiceChatType.COMMUNITY) return;
+
             switch (status)
             {
                 case VoiceChatStatus.VOICE_CHAT_STARTING_CALL or VoiceChatStatus.VOICE_CHAT_RECEIVED_CALL:
