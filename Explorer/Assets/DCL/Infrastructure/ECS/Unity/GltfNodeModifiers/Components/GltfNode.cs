@@ -25,11 +25,17 @@ namespace ECS.Unity.GltfNodeModifiers.Components
         /// </summary>
         public readonly string? Path;
 
-        public GltfNode(IReadOnlyList<Renderer> renderers, Entity containerEntity, string? path = null)
+        /// <summary>
+        ///     Marks the entity to be destroyed on Cleanup
+        /// </summary>
+        public bool CleanupDestruction;
+
+        public GltfNode(IReadOnlyList<Renderer> renderers, Entity containerEntity, string? path, bool cleanupDestruction = true)
         {
             Renderers = renderers;
             ContainerEntity = containerEntity;
             Path = path;
+            CleanupDestruction = cleanupDestruction;
         }
     }
 }

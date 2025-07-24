@@ -86,8 +86,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
                 if (World.Has<PBMaterial>(containerEntity))
                 {
                     // Material was removed, clean it up but don't destroy entity
-                    GltfNode gltfNode = World.Get<GltfNode>(containerEntity);
-                    CreateMaterialCleanupIntention(containerEntity, gltfNode.Renderers, gltfNode.ContainerEntity, false);
+                    ref GltfNode gltfNode = ref World.TryGetRef<GltfNode>(containerEntity, out bool exists);
+                    TriggerGltfNodeMaterialCleanup(containerEntity, ref gltfNode, false);
                 }
             }
         }
@@ -137,7 +137,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         private void UpdateExistingGltfNodeEntity(Entity nodeEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, bool hasShadowOverride, bool hasMaterialOverride, PartitionComponent partitionComponent)
         {
-            GltfNode gltfNode = World.Get<GltfNode>(nodeEntity);
+            ref GltfNode gltfNode = ref World.TryGetRef<GltfNode>(nodeEntity, out bool exists);
 
             foreach (Renderer? renderer in gltfNode.Renderers)
                 renderer.shadowCastingMode = !hasShadowOverride || modifier.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
@@ -146,7 +146,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             else if (World.Has<PBMaterial>(nodeEntity))
             {
                 // Material was removed, clean it up but don't destroy entity
-                CreateMaterialCleanupIntention(nodeEntity, gltfNode.Renderers, gltfNode.ContainerEntity, false);
+                TriggerGltfNodeMaterialCleanup(nodeEntity, ref gltfNode, false);
             }
         }
     }

@@ -95,9 +95,8 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             if (World.Has<PBMaterial>(gltfNodeEntity))
             {
                 // Add cleanup intention for ResetMaterialSystem to handle
-                GltfNode gltfNode = World.Get<GltfNode>(gltfNodeEntity);
-                CreateMaterialCleanupIntention(gltfNodeEntity, gltfNode.Renderers, gltfNode.ContainerEntity, true);
-                World.Remove<GltfNode>(gltfNodeEntity);
+                ref GltfNode gltfNode = ref World.TryGetRef<GltfNode>(gltfNodeEntity, out bool exists);
+                TriggerGltfNodeMaterialCleanup(gltfNodeEntity, ref gltfNode, true);
             }
             else
             {
@@ -137,7 +136,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// </summary>
         protected void CreateGlobalGltfNode(Entity containerEntity, GltfContainerAsset asset)
         {
-            World.Add(containerEntity, new GltfNode(asset.Renderers, containerEntity, string.Empty));
+            World.Add(containerEntity, new GltfNode(asset.Renderers, containerEntity, string.Empty, false));
         }
 
         /// <summary>
@@ -158,11 +157,12 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         }
 
         /// <summary>
-        ///     Creates a material cleanup intention for an entity
+        ///     Creates the conditions for ResetMaterialSystem to reset the GltfNode entity
         /// </summary>
-        protected void CreateMaterialCleanupIntention(Entity entity, IReadOnlyList<Renderer> renderers, Entity containerEntity, bool destroy)
+        protected void TriggerGltfNodeMaterialCleanup(Entity entity, ref GltfNode gltfNode, bool destroy)
         {
-            World.Add(entity, new GltfNodeMaterialCleanupIntention(renderers, containerEntity, destroy));
+            gltfNode.CleanupDestruction = destroy;
+            World.Remove<PBMaterial>(entity);
         }
 
         /// <summary>

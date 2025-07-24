@@ -66,7 +66,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.That(world.Has<MaterialComponent>(entity), Is.False);
         }
 
-                [Test]
+        [Test]
         public void ResetGltfNodeMaterial()
         {
             // Arrange
@@ -90,15 +90,10 @@ namespace ECS.Unity.Materials.Tests
                 Status = StreamableLoading.LifeCycle.Applied
             };
 
-            var cleanupIntention = new GltfNodeMaterialCleanupIntention(new[] { meshRenderer }, containerEntity, true);
+            var gltfNode = new GltfNode(new[] { meshRenderer }, containerEntity, "path", true);
 
-            var gltfNodeEntity = world.Create(cleanupIntention, materialComponent, new PBMaterial
-            {
-                Pbr = new PBMaterial.Types.PbrMaterial
-                {
-                    AlbedoColor = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f }
-                }
-            });
+            // The GltfNodeModifierSystemBase would remove PBMaterial
+            var gltfNodeEntity = world.Create(gltfNode, materialComponent);
 
             // Act
             system.Update(0);

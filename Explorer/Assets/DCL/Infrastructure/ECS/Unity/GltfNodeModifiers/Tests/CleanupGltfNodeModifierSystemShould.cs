@@ -102,8 +102,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
-            Assert.That(world.Has<GltfNode>(childEntity), Is.False);
+            Assert.That(world.Has<GltfNode>(childEntity), Is.True);
             Assert.That(world.Has<Components.GltfNodeModifiers>(entity), Is.False); // Should be removed by system
         }
 

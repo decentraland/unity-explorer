@@ -10,7 +10,6 @@ using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
-using ECS.Unity.GltfNodeModifiers.Components;
 using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;

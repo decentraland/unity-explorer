@@ -45,12 +45,13 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        private void ResetGltfNode(Entity entity, ref GltfNodeMaterialCleanupIntention cleanupIntention, ref MaterialComponent materialComponent)
+        [None(typeof(PBMaterial))]
+        private void ResetGltfNode(Entity entity, ref GltfNode gltfNode, ref MaterialComponent materialComponent)
         {
-            if (!World.TryGet<ECS.Unity.GltfNodeModifiers.Components.GltfNodeModifiers>(cleanupIntention.ContainerEntity, out var gltfNodeModifiers)) return;
+            if (!World.TryGet<ECS.Unity.GltfNodeModifiers.Components.GltfNodeModifiers>(gltfNode.ContainerEntity, out var gltfNodeModifiers)) return;
 
             // Reset all renderers to their original state
-            foreach (var renderer in cleanupIntention.Renderers)
+            foreach (var renderer in gltfNode.Renderers)
             {
                 if (gltfNodeModifiers.OriginalMaterials.TryGetValue(renderer, out var originalMaterial))
                     renderer.sharedMaterial = originalMaterial;
@@ -60,10 +61,10 @@ namespace ECS.Unity.Materials.Systems
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
 
             // Destroy the entity if requested and it's not the container entity itself
-            if (cleanupIntention.Destroy && entity != cleanupIntention.ContainerEntity)
+            if (gltfNode.CleanupDestruction && entity != gltfNode.ContainerEntity)
                 World.Destroy(entity);
             else
-                World.Remove<PBMaterial, MaterialComponent, GltfNodeMaterialCleanupIntention>(entity);
+                World.Remove<MaterialComponent>(entity);
         }
     }
 }

@@ -136,8 +136,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
-            Assert.That(world.Has<GltfNode>(childEntity), Is.False);
+            Assert.That(world.Has<GltfNode>(childEntity), Is.True);
+            Assert.That(world.Has<PBMaterial>(childEntity), Is.False);
             Assert.That(world.Has<GltfNode>(entity), Is.True); // Container should now have GltfNode
 
             Components.GltfNodeModifiers updatedNodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
@@ -196,8 +196,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNode>(entity), Is.False);
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(entity), Is.True);
+            Assert.That(world.Has<PBMaterial>(entity), Is.False);
+            Assert.That(world.Has<GltfNode>(entity), Is.True);
 
             Components.GltfNodeModifiers updatedNodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(updatedNodeModifiers.GltfNodeEntities.Count, Is.EqualTo(1));
@@ -305,8 +305,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
-            Assert.That(world.Has<GltfNode>(childEntity), Is.False);
+            Assert.That(world.Has<GltfNode>(childEntity), Is.True);
+            Assert.That(world.Has<PBMaterial>(childEntity), Is.False);
             Components.GltfNodeModifiers updatedNodeModifiers = world.Get<Components.GltfNodeModifiers>(entity);
             Assert.That(updatedNodeModifiers.GltfNodeEntities.Count, Is.EqualTo(0));
         }
@@ -451,10 +451,9 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
-
-            GltfNodeMaterialCleanupIntention cleanupIntention = world.Get<GltfNodeMaterialCleanupIntention>(childEntity);
-            Assert.That(cleanupIntention.Destroy, Is.False); // Should not destroy entity, just clean up material
+            Assert.That(world.Has<GltfNode>(childEntity), Is.True);
+            Assert.That(world.TryGet<GltfNode>(childEntity, out var nodeComponent), Is.True);
+            Assert.That(nodeComponent.CleanupDestruction, Is.False); // Should not destroy entity, just clean up material
         }
 
         [Test]
@@ -565,7 +564,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system.Update(0);
 
             // Assert
-            Assert.That(world.Has<GltfNodeMaterialCleanupIntention>(childEntity), Is.True);
+            Assert.That(world.Has<GltfNode>(childEntity), Is.True);
+            Assert.That(world.Has<PBMaterial>(childEntity), Is.False);
 
             // Shadow should default to On since no override specified
             Assert.That(childRenderer.shadowCastingMode, Is.EqualTo(ShadowCastingMode.On));
