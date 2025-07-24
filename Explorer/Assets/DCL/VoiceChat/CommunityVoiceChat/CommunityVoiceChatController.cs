@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 using Vector3 = UnityEngine.Vector3;
@@ -37,7 +38,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.voiceChatOrchestratorState = voiceChatOrchestrator;
             this.voiceChatOrchestrator = voiceChatOrchestrator;
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
-            
+
             voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
             voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
@@ -47,6 +48,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.view.DemoteSpeaker += OnDemoteSpeaker;
             this.view.Kick += OnKickUser;
             this.view.Ban += OnBanUser;
+
+            view.ListenersSectionButton.onClick.AddListener(OpenListenersSection);
+            view.CommunityVoiceChatSearchView.BackButton.onClick.AddListener(CloseListenersSection);
 
             playerEntriesPool = new ObjectPool<PlayerEntryView>(
                 () => Object.Instantiate(playerEntry),
@@ -59,6 +63,16 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void CloseListenersSection()
+        {
+            view.CommunityVoiceChatSearchView.gameObject.SetActive(false);
+        }
+
+        private void OpenListenersSection()
+        {
+            view.CommunityVoiceChatSearchView.gameObject.SetActive(true);
         }
 
         private void OnParticipantLeft(string participantid) =>

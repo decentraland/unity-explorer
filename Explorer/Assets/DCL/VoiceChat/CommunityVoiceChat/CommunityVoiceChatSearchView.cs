@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
@@ -9,5 +10,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         [field: SerializeField]
         public RectTransform ListenersParent { get; private set; }
+
+        [field: SerializeField]
+        public Button BackButton  { get; private set; }
     }
 }

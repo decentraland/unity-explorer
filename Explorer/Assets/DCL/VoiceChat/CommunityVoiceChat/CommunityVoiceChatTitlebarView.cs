@@ -23,6 +23,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public GameObject VoiceChatContainer { get; private set; }
 
         [field: SerializeField]
+        public Button ListenersSectionButton  { get; private set; }
+
+        [field: SerializeField]
         public Button CollapseButton  { get; private set; }
 
         [field: SerializeField]
