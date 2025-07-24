@@ -143,7 +143,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Handles adding or updating a PBMaterial on an entity
         /// </summary>
-        protected void AddOrUpdateMaterial(Entity entity, PBMaterial material, PartitionComponent? partitionComponent = null)
+        protected void AddOrUpdateMaterial(Entity entity, PBMaterial material, in PartitionComponent partitionComponent)
         {
             if (World.Has<PBMaterial>(entity))
             {
@@ -153,10 +153,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
             }
             else
             {
-                if (partitionComponent != null)
-                    World.Add(entity, material, partitionComponent);
-                else
-                    World.Add(entity, material);
+                World.Add(entity, material, partitionComponent);
             }
         }
 
@@ -179,12 +176,12 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             Entity nodeEntity = this.World.Create();
 
-            World.Add(nodeEntity, new GltfNode(new[] { renderer }, containerEntity, modifier.Path));
+            World.Add(nodeEntity, new GltfNode(new[] { renderer }, containerEntity, modifier.Path), partitionComponent);
 
             renderer.shadowCastingMode = !hasShadowOverride || modifier.CastShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
             if (hasMaterialOverride)
-                World.Add(nodeEntity, modifier.Material, partitionComponent);
+                World.Add(nodeEntity, modifier.Material);
 
             gltfNodeModifiers.GltfNodeEntities!.Add(nodeEntity);
         }

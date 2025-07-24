@@ -51,7 +51,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             // Special case: single modifier with empty path applies to ALL renderers
             if (IsGltfGlobalModifier(gltfNodeModifiers.Modifiers))
-                UpdateGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref nodeModifiers, result.Asset!);
+                UpdateGlobalModifier(entity, gltfNodeModifiers.Modifiers[0], ref nodeModifiers, result.Asset!, partitionComponent);
             else
                 UpdateIndividualModifiers(entity, gltfNodeModifiers.Modifiers, ref nodeModifiers, partitionComponent, result.Asset!);
         }
@@ -59,7 +59,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
         /// <summary>
         ///     Updates the global modifier (single modifier with empty path)
         /// </summary>
-        private void UpdateGlobalModifier(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref Components.GltfNodeModifiers nodeModifiers, GltfContainerAsset asset)
+        private void UpdateGlobalModifier(Entity containerEntity, PBGltfNodeModifiers.Types.GltfNodeModifier modifier, ref Components.GltfNodeModifiers nodeModifiers, GltfContainerAsset asset, in PartitionComponent partitionComponent)
         {
             // Check if transitioning from individual modifiers to global modifier
             if (nodeModifiers.GltfNodeEntities is { Count: > 0 } &&
@@ -80,7 +80,7 @@ namespace ECS.Unity.GltfNodeModifiers.Systems
 
             asset.SetCastingShadows(!hasShadowOverride || modifier.CastShadows);
 
-            if (hasMaterialOverride) { AddOrUpdateMaterial(containerEntity, modifier.Material); }
+            if (hasMaterialOverride) { AddOrUpdateMaterial(containerEntity, modifier.Material, partitionComponent); }
             else
             {
                 if (World.Has<PBMaterial>(containerEntity))
