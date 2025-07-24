@@ -460,7 +460,7 @@
         "com.unity.modules.particlesystem": "1.0.0",
         "com.unity.modules.wind": "1.0.0"
       },
-      "hash": "e976d8d5a97afab59bfda9268b6ee805f0059b49"
+      "hash": "afd7a9b5a2d043fdeb8e6f862c64e65522449ff6"
     },
     "decentraland.renderfeatures": {
       "version": "git@github.com:decentraland/unity-explorer-packages.git?path=/RenderGraphs/RenderFeatures",
