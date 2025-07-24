@@ -14,11 +14,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     public class CommunityVoiceChatController : IDisposable
     {
         private readonly CommunityVoiceChatTitlebarView view;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatOrchestratorUIEvents voiceChatOrchestratorUIEvents;
         private readonly IVoiceChatOrchestratorState voiceChatOrchestratorState;
         private readonly IObjectPool<PlayerEntryView> playerEntriesPool;
-        private readonly List<PlayerEntryView> usedPlayerEntries = new ();
+        private readonly Dictionary<string, PlayerEntryView> usedPlayerEntries = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
 
         private bool isPanelCollapsed;
@@ -34,7 +35,12 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.profileRepositoryWrapper = profileRepositoryWrapper;
             this.voiceChatOrchestratorUIEvents = voiceChatOrchestrator;
             this.voiceChatOrchestratorState = voiceChatOrchestrator;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             communityVoiceChatSearchController = new CommunityVoiceChatSearchController(view.CommunityVoiceChatSearchView);
+            
+            voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed += OnParticipantStateRefreshed;
+            voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined += OnParticipantJoined;
+            voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft += OnParticipantLeft;
 
             this.view.CollapseButtonClicked += OnCollapsedButtonClicked;
             this.view.PromoteToSpeaker += OnPromoteToSpeaker;
@@ -53,6 +59,37 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             //Temporary fix, this will be moved to the Show function to set expanded as default state
             voiceChatOrchestratorUIEvents.ChangePanelSize(VoiceChatPanelSize.EXPANDED);
+        }
+
+        private void OnParticipantLeft(string participantid) =>
+            RemoveParticipant(participantid);
+
+        private void OnParticipantJoined(string participantid, VoiceChatParticipantsStateService.ParticipantState participantstate)
+        {
+            if (participantstate.IsSpeaker)
+                AddSpeaker(participantstate);
+            else
+                AddListener(participantstate);
+        }
+
+        private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantsStateService.ParticipantState state)> joinedparticipants, List<string> leftparticipantids)
+        {
+            foreach ((string participantId, VoiceChatParticipantsStateService.ParticipantState state) participantData in joinedparticipants)
+            {
+                if (participantData.state.IsSpeaker)
+                    AddSpeaker(participantData.state);
+                else
+                    AddListener(participantData.state);
+            }
+
+            foreach (string leftparticipantid in leftparticipantids)
+                RemoveParticipant(leftparticipantid);
+        }
+
+        private void RemoveParticipant(string leftparticipantid)
+        {
+            playerEntriesPool.Release(usedPlayerEntries[leftparticipantid]);
+            usedPlayerEntries.Remove(leftparticipantid);
         }
 
         private void OnPromoteToSpeaker(VoiceChatParticipantsStateService.ParticipantState member)
@@ -135,8 +172,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private PlayerEntryView GetAndConfigurePlayerEntry(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
-            usedPlayerEntries.Add(entryView);
-            entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
+            usedPlayerEntries.Add(participantState.WalletId, entryView);
+            //entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
             view.ConfigureEntry(entryView, participantState);
 
             participantState.IsRequestingToSpeak.OnUpdate += (isRequestingToSpeak) => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
@@ -152,8 +189,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void ClearPool()
         {
-            foreach (PlayerEntryView playerEntry in usedPlayerEntries)
-                playerEntriesPool.Release(playerEntry);
+            foreach (KeyValuePair<string,PlayerEntryView> usedPlayerEntry in usedPlayerEntries)
+                playerEntriesPool.Release(usedPlayerEntry.Value);
 
             usedPlayerEntries.Clear();
         }
@@ -165,6 +202,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.DemoteSpeaker -= OnDemoteSpeaker;
             view.Kick -= OnKickUser;
             view.Ban -= OnBanUser;
+            voiceChatOrchestrator.ParticipantsStateService.ParticipantsStateRefreshed -= OnParticipantStateRefreshed;
+            voiceChatOrchestrator.ParticipantsStateService.ParticipantJoined -= OnParticipantJoined;
+            voiceChatOrchestrator.ParticipantsStateService.ParticipantLeft -= OnParticipantLeft;
 
             voiceChatTypeSubscription?.Dispose();
             communityVoiceChatSearchController?.Dispose();
