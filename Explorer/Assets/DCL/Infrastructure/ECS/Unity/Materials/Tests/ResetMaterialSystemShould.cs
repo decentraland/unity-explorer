@@ -78,29 +78,39 @@ namespace ECS.Unity.Materials.Tests
 
             // Create container entity with GltfNodeModifiers containing original materials
             var containerEntity = world.Create();
-            var gltfNodeModifiers = new GltfNodeModifiers.Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>());
-            gltfNodeModifiers.OriginalMaterials[meshRenderer] = originalMaterial;
-
+            var gltfNodeModifiers = new GltfNodeModifiers.Components.GltfNodeModifiers(
+                new Dictionary<Entity, string>(), 
+                new Dictionary<Renderer, Material> { { meshRenderer, originalMaterial } }
+            );
             world.Add(containerEntity, gltfNodeModifiers);
 
-            // Create GltfNode entity with cleanup intention
+            // Create GltfNode entity with MaterialComponent and PBMaterial
             var materialComponent = new MaterialComponent
             {
                 Result = newMaterial,
                 Status = StreamableLoading.LifeCycle.Applied
             };
 
-            var gltfNode = new GltfNode(new[] { meshRenderer }, containerEntity, "path", true);
+            var gltfNode = new GltfNode(new[] { meshRenderer }, containerEntity, "TestPath", true);
 
-            // The GltfNodeModifierSystemBase would remove PBMaterial
-            var gltfNodeEntity = world.Create(gltfNode, materialComponent);
+            var gltfNodeEntity = world.Create(gltfNode, materialComponent, new PBMaterial
+            {
+                Pbr = new PBMaterial.Types.PbrMaterial
+                {
+                    AlbedoColor = new Decentraland.Common.Color4 { R = 1f, G = 0f, B = 0f, A = 1f }
+                }
+            });
 
-            // Act
+            // Verify initial state
+            Assert.AreEqual(newMaterial, meshRenderer.sharedMaterial);
+
+            // Act - Remove PBMaterial to trigger reset (this simulates what GltfNodeModifier systems do)
+            world.Remove<PBMaterial>(gltfNodeEntity);
             system.Update(0);
 
-            // Assert
+            // Assert - Original material should be restored and entity should be destroyed
             Assert.AreEqual(originalMaterial, meshRenderer.sharedMaterial);
-            Assert.That(world.IsAlive(gltfNodeEntity), Is.False); // Entity should be destroyed
+            Assert.That(world.IsAlive(gltfNodeEntity), Is.False); // Entity should be destroyed since CleanupDestruction = true
 
             // Cleanup
             Object.DestroyImmediate(testGameObject);

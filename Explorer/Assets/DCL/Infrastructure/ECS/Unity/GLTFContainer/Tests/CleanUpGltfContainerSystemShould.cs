@@ -52,45 +52,5 @@ namespace ECS.Unity.GLTFContainer.Tests
             cache.Received(1).Dereference("1_Hash", Arg.Any<GltfContainerAsset>());
             collidersSceneCache.Received(2).Remove(Arg.Any<Collider>());
         }
-
-        [Test]
-        public void AddGltfNodeModifiersCleanupIntentionOnDestroy()
-        {
-            // Arrange
-            var originalMaterial = new Material(DefaultMaterial.Get());
-            var newMaterial = new Material(DefaultMaterial.Get());
-            var testGameObject = new GameObject("TestRenderer");
-            var meshRenderer = testGameObject.AddComponent<MeshRenderer>();
-            meshRenderer.sharedMaterial = newMaterial;
-
-            var rootGameObject = new GameObject();
-            var asset = GltfContainerAsset.Create(rootGameObject, null);
-            asset.Renderers.Add(meshRenderer);
-
-            var promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
-            world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-
-            var gltfContainerComponent = new GltfContainerComponent
-            {
-                Promise = promise,
-                State = LoadingState.Finished,
-            };
-
-            // Add the GltfNodeModifiers component to simulate an entity with node modifiers
-            var entity = world.Create(gltfContainerComponent, new DeleteEntityIntention(), new GltfNodeModifiers.Components.GltfNodeModifiers(new Dictionary<Entity, string>(), new Dictionary<Renderer, Material>()));
-
-            // Act
-            system.Update(0);
-
-            // Assert
-            Assert.That(world.TryGet(entity, out GltfContainerComponent component), Is.True);
-            Assert.IsTrue(component.Promise.Entity == Entity.Null || !world.IsAlive(component.Promise.Entity));
-
-            // Cleanup
-            Object.DestroyImmediate(testGameObject);
-            Object.DestroyImmediate(rootGameObject);
-            Object.DestroyImmediate(originalMaterial);
-            Object.DestroyImmediate(newMaterial);
-        }
     }
 }

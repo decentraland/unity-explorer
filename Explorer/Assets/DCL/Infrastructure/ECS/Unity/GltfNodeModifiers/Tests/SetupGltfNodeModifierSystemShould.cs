@@ -21,6 +21,7 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
 {
     public class SetupGltfNodeModifierSystemShould : UnitySystemTestBase<SetupGltfNodeModifierSystem>
     {
+        private GameObject rootContainerGameObject;
         private GameObject rootGameObject;
         private GameObject childGameObject;
         private MeshRenderer rootRenderer;
@@ -35,11 +36,13 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
             system = new SetupGltfNodeModifierSystem(world);
 
             // Create test GameObjects with renderers
+            rootContainerGameObject = new GameObject();
             rootGameObject = new GameObject("Root");
             childGameObject = new GameObject("Child");
+            rootGameObject.transform.SetParent(rootContainerGameObject.transform);
             childGameObject.transform.SetParent(rootGameObject.transform);
 
-            rootRenderer = rootGameObject.AddComponent<MeshRenderer>();
+            rootRenderer = rootContainerGameObject.AddComponent<MeshRenderer>();
             childRenderer = childGameObject.AddComponent<MeshRenderer>();
 
             originalRootMaterial = DefaultMaterial.New();
@@ -53,8 +56,8 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
         [TearDown]
         public void TearDown()
         {
-            if (rootGameObject != null)
-                Object.DestroyImmediate(rootGameObject);
+            if (rootContainerGameObject != null)
+                Object.DestroyImmediate(rootContainerGameObject);
 
             if (originalRootMaterial != null)
                 Object.DestroyImmediate(originalRootMaterial);
@@ -73,17 +76,20 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 new GetGltfContainerAssetIntention("test", "test_hash", new CancellationTokenSource()),
                 PartitionComponent.TOP_PRIORITY);
 
-            var asset = GltfContainerAsset.Create(rootGameObject, null);
+            var asset = GltfContainerAsset.Create(rootContainerGameObject, null);
             asset.Renderers.Add(rootRenderer);
             asset.Renderers.Add(childRenderer);
 
             world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
 
+            // To enable its 'Result' property, same outcome as if FinalizeGltfContainerLoadingSystem had ran
+            promise.TryConsume(world, out var result);
+
             return new GltfContainerComponent
             {
                 Promise = promise,
                 State = LoadingState.Finished,
-                RootGameObject = rootGameObject,
+                RootGameObject = rootContainerGameObject,
             };
         }
 
@@ -587,17 +593,20 @@ namespace ECS.Unity.GltfNodeModifiers.Tests
                 PartitionComponent.TOP_PRIORITY);
 
             var hierarchyPaths = new[] { "Child", "Root" }; // Simulate captured hierarchy paths
-            var asset = GltfContainerAsset.Create(rootGameObject, null, hierarchyPaths);
+            var asset = GltfContainerAsset.Create(rootContainerGameObject, null, hierarchyPaths);
             asset.Renderers.Add(rootRenderer);
             asset.Renderers.Add(childRenderer);
 
             world.Add(promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
 
+            // To enable its 'Result' property, same outcome as if FinalizeGltfContainerLoadingSystem had ran
+            promise.TryConsume(world, out var result);
+
             var gltfContainer = new GltfContainerComponent
             {
                 Promise = promise,
                 State = LoadingState.Finished,
-                RootGameObject = rootGameObject,
+                RootGameObject = rootContainerGameObject,
             };
 
             var gltfNodeModifiers = new PBGltfNodeModifiers
