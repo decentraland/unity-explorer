@@ -264,6 +264,7 @@ namespace DCL.VoiceChat
 
             var state = new ParticipantState
             {
+                WalletId = participant.Identity,
                 IsSpeaking = new ReactiveProperty<bool>(false),
                 Name = new ReactiveProperty<string?>(metadata?.name),
                 HasClaimedName = new ReactiveProperty<bool?>(metadata?.hasClaimedName),
@@ -380,6 +381,7 @@ namespace DCL.VoiceChat
         {
             if (participantStates.TryGetValue(participantId, out ParticipantState state))
             {
+                state.WalletId = participantId;
                 state.Name.Value = metadata.name;
                 state.HasClaimedName.Value = metadata.hasClaimedName;
                 state.ProfilePictureUrl.Value = metadata.profilePictureUrl;
@@ -391,6 +393,7 @@ namespace DCL.VoiceChat
 
         public struct ParticipantState
         {
+            public string WalletId { get; set; }
             public ReactiveProperty<bool> IsSpeaking { get; set; }
             public ReactiveProperty<string?> Name { get; set; }
             public ReactiveProperty<bool?> HasClaimedName { get; set; }

@@ -136,9 +136,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             playerEntriesPool.Get(out PlayerEntryView entryView);
             usedPlayerEntries.Add(entryView);
-            //entryView.profileView.SetupAsync(participantState.WalletId, profileRepositoryWrapper, CancellationToken.None).Forget();
-            view.SubscribeContextMenu(entryView);
+            entryView.profileView.SetupAsync(new Web3Address(participantState.WalletId), profileRepositoryWrapper, CancellationToken.None).Forget();
+            view.ConfigureEntry(entryView, participantState);
+
+            participantState.IsRequestingToSpeak.OnUpdate += (isRequestingToSpeak) => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
+            
             return entryView;
+        }
+
+        private void PlayerEntryIsRequestingToSpeak(bool? isRequestingToSpeak, PlayerEntryView entryView)
+        {
+            entryView.transform.parent = isRequestingToSpeak ?? false ? view.CommunityVoiceChatSearchView.RequestToSpeakParent : view.CommunityVoiceChatSearchView.ListenersParent;
+            entryView.transform.localScale = Vector3.one;
         }
 
         private void ClearPool()

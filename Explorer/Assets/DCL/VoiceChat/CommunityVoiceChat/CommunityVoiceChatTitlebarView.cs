@@ -90,9 +90,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition), cancellationToken);
         }
 
-        public void SubscribeContextMenu(PlayerEntryView entryView)
+        public void ConfigureEntry(PlayerEntryView entryView, VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             entryView.SubscribeToInteractions(OnContextMenuButtonClicked);
+            entryView.SetUserProfile(participantState);
         }
 
         public void SetCollapsedButtonState(bool isCollapsed)

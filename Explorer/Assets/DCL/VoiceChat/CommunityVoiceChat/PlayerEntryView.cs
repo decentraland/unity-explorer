@@ -27,6 +27,13 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         public void SetUserProfile(VoiceChatParticipantsStateService.ParticipantState participantState)
         {
             userProfile = participantState;
+            userProfile.IsSpeaking.OnUpdate -= OnChangeIsSpeaking;
+            userProfile.IsSpeaking.OnUpdate += OnChangeIsSpeaking;
+        }
+
+        private void OnChangeIsSpeaking(bool isSpeaking)
+        {
+            //Handle is speaking logic and visuals
         }
 
         public void SubscribeToInteractions(Action<VoiceChatParticipantsStateService.ParticipantState, Vector2, PlayerEntryView> contextMenu)
