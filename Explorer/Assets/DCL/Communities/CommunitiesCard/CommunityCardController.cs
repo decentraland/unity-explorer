@@ -347,7 +347,7 @@ namespace DCL.Communities.CommunitiesCard
 
                 viewInstance.ResetToggle(true);
 
-                eventListController?.ShowEvents(communityData, ct);
+                eventListController?.ShowEvents(communityData, communityPlaceIds, ct);
             }
         }
 
