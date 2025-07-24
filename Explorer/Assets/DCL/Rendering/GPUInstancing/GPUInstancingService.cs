@@ -170,12 +170,12 @@ namespace DCL.Rendering.GPUInstancing
                 DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_GroupDataBuffer, buffers.GroupData);
                 DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_arrLODCount, buffers.ArrLODCount);
                 DrawArgsInstanceCountTransferComputeShader.SetBuffer(DrawArgsInstanceCountTransferComputeShader_KernelIDs, ComputeVar_IndirectDrawIndexedArgsBuffer, buffers.DrawArgs);
-                DrawArgsInstanceCountTransferComputeShader.SetInt(ComputeVar_nSubMeshCount, candidate.LODGroup.CombinedLodsRenderers.Count);
+                DrawArgsInstanceCountTransferComputeShader.SetInt(ComputeVar_nSubMeshCount, candidate.CombinedLodsRenderers.Count);
                 DrawArgsInstanceCountTransferComputeShader.Dispatch(DrawArgsInstanceCountTransferComputeShader_KernelIDs, 1, 1, 1);
 
-                for (var i = 0; i < candidate.LODGroup.CombinedLodsRenderers.Count; i++)
+                for (var i = 0; i < candidate.CombinedLodsRenderers.Count; i++)
                 {
-                    CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[i];
+                    CombinedLodsRenderer combinedLodRenderer = candidate.CombinedLodsRenderers[i];
                     int lodCount = candidate.LODGroupData.LODCount;
 
                     Graphics.RenderMeshIndirect(combinedLodRenderer.RenderParamsArray, combinedLodRenderer.CombinedMesh, buffers.DrawArgs, commandCount: lodCount, startCommand: i * lodCount);
@@ -188,7 +188,7 @@ namespace DCL.Rendering.GPUInstancing
             renderCamera = camera;
 
             foreach ((GPUInstancingLODGroupWithBuffer candidate, GPUInstancingBuffers _) in candidatesBuffersTable)
-            foreach (var renderer in candidate.LODGroup.CombinedLodsRenderers)
+            foreach (CombinedLodsRenderer renderer in candidate.CombinedLodsRenderers)
                 renderer.RenderParamsArray.camera = renderCamera;
         }
 
@@ -214,13 +214,13 @@ namespace DCL.Rendering.GPUInstancing
                 buffers.PerInstanceMatrices = new GraphicsBuffer(GraphicsBuffer.Target.Structured, GraphicsBuffer.UsageFlags.None, _nInstanceCount, Marshal.SizeOf(typeof(PerInstanceBuffer)));
                 buffers.PerInstanceMatrices.SetData(candidate.InstancesBuffer, 0, 0, _nInstanceCount);
 
-                int combinedRenderersCount = candidate.LODGroup.CombinedLodsRenderers.Count;
+                int combinedRenderersCount = candidate.CombinedLodsRenderers.Count;
                 buffers.DrawArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, count: combinedRenderersCount * _nLODCount, GraphicsBuffer.IndirectDrawIndexedArgs.size);
                 buffers.DrawArgsCommandData = new GraphicsBuffer.IndirectDrawIndexedArgs[combinedRenderersCount * _nLODCount];
 
                 for (var combinedRendererId = 0; combinedRendererId < combinedRenderersCount; combinedRendererId++)
                 {
-                    CombinedLodsRenderer combinedLodRenderer = candidate.LODGroup.CombinedLodsRenderers[combinedRendererId];
+                    CombinedLodsRenderer combinedLodRenderer = candidate.CombinedLodsRenderers[combinedRendererId];
                     Mesh combinedMesh = combinedLodRenderer.CombinedMesh;
 
                     if (combinedMesh == null)

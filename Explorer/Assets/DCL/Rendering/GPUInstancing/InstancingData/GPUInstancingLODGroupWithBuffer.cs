@@ -9,17 +9,18 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
     {
         public string Name;
         public GPUInstancingLODGroup LODGroup;
-
-        public LODGroupData LODGroupData => LODGroup.LODGroupData;
         public List<PerInstanceBuffer> InstancesBuffer;
-        public List<CombinedLodsRenderer> CombinedLodsRenderers => LODGroup.CombinedLodsRenderers;
 
-        public GPUInstancingLODGroupWithBuffer() { }
+        public LODGroupData LODGroupData;
+        public List<CombinedLodsRenderer> CombinedLodsRenderers;
 
         public GPUInstancingLODGroupWithBuffer(GPUInstancingLODGroup lodGroup, List<PerInstanceBuffer> instances)
         {
             Name = lodGroup.Name;
             LODGroup = lodGroup;
+
+            LODGroupData = lodGroup.LODGroupData;
+            CombinedLodsRenderers = LODGroup.CombinedLodsRenderers;
             InstancesBuffer = instances;
         }
 

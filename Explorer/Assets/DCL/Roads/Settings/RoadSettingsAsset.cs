@@ -28,7 +28,7 @@ namespace DCL.Roads.Settings
         public void InitializeInstancingKeywords()
         {
             foreach (var candidate in IndirectLODGroups)
-            foreach (var combinedLodRenderer in candidate.LODGroup.CombinedLodsRenderers)
+            foreach (CombinedLodsRenderer combinedLodRenderer in candidate.CombinedLodsRenderers)
             {
                 if (combinedLodRenderer.SharedMaterial.parent != null)
                 {
@@ -138,21 +138,14 @@ namespace DCL.Roads.Settings
             }
         }
 
-        private GPUInstancingLODGroupWithBuffer roadTileCandidate = new ();
+        public GPUInstancingLODGroup roadTileCachedLODGroup;
 
         private GPUInstancingLODGroupWithBuffer HandleRoadTileCase(GPUInstancingLODGroupWithBuffer myCandidate)
         {
             if (myCandidate.Name.StartsWith("RoadTile"))
             {
-                if (roadTileCandidate.LODGroup == null)
-                {
-                    roadTileCandidate.LODGroup = myCandidate.LODGroup;
-                    roadTileCandidate.LODGroup.Name = "RoadTile";
-                    roadTileCandidate.Name = "RoadTile";
-                }
-
-                roadTileCandidate.InstancesBuffer = myCandidate.InstancesBuffer;
-                return roadTileCandidate;
+                if (roadTileCachedLODGroup == null) roadTileCachedLODGroup = myCandidate.LODGroup;
+                return new GPUInstancingLODGroupWithBuffer(roadTileCachedLODGroup, myCandidate.InstancesBuffer);
             }
 
             return myCandidate;

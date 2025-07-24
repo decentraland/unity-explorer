@@ -31,7 +31,9 @@ namespace DCL.SDKComponents.MediaStream
 
             var material = request.Renderer.sharedMaterial;
             material.SetTextureScale(ShaderUtils.BaseMap, texScale);
-            material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
+
+            if (material.shader.name != "DCL/Scene") // Scene shader doesn't have _AlphaTexture
+                material.SetTextureScale(ShaderUtils.AlphaTexture, texScale);
         }
 
         [Query]
