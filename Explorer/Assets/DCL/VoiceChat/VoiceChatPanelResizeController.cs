@@ -20,6 +20,24 @@ namespace DCL.VoiceChat
             this.voiceChatState = voiceChatState;
 
             this.voiceChatState.CurrentVoiceChatPanelSize.OnUpdate += OnUpdateVoiceChatPanelSize;
+            this.voiceChatState.CurrentVoiceChatType.OnUpdate += OnCurrentVoiceChatTypeChanged;
+        }
+
+        private void OnCurrentVoiceChatTypeChanged(VoiceChatType type)
+        {
+            switch (type)
+            {
+                case VoiceChatType.PRIVATE:
+                    view.VoiceChatPanelLayoutElement.preferredHeight = COLLAPSED_PRIVATE_VOICE_CHAT_SIZE;
+                    break;
+                case VoiceChatType.COMMUNITY:
+                    view.VoiceChatPanelLayoutElement.preferredHeight = EXPANDED_COMMUNITY_VOICE_CHAT_SIZE;
+                    break;
+                case VoiceChatType.NONE:
+                default:
+                    view.VoiceChatPanelLayoutElement.preferredHeight = DEFAULT_VOICE_CHAT_SIZE;
+                    break;
+            }
         }
 
         private void OnUpdateVoiceChatPanelSize(VoiceChatPanelSize chatPanelSize)

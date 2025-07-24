@@ -140,7 +140,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.ConfigureEntry(entryView, participantState);
 
             participantState.IsRequestingToSpeak.OnUpdate += (isRequestingToSpeak) => PlayerEntryIsRequestingToSpeak(isRequestingToSpeak, entryView);
-            
+
             return entryView;
         }
 
