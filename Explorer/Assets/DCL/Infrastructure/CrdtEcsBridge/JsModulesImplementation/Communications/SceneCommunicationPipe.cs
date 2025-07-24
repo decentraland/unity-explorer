@@ -85,8 +85,8 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
 
-            if (!string.IsNullOrEmpty(specialRecipient))
-                sceneMessage.AddSpecialRecipient(specialRecipient);
+            // Always send scene packages to authorative-server instead of broadcasting
+            sceneMessage.AddSpecialRecipient("authorative-server");
 
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;
