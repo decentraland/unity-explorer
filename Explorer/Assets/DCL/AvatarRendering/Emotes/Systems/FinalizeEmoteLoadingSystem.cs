@@ -90,8 +90,10 @@ namespace DCL.AvatarRendering.Emotes
                         foreach (EmoteDTO assetEntity in list.Value)
                         {
                             IEmote component = storage.GetOrAddByDTO(assetEntity);
-                            //JUANI: COMMENTING THIS ONE OUT
-                            //component.ApplyAndMarkAsLoaded(assetEntity);
+                            UnityEngine.Debug.Log("JUANI ARE WE OVERINVOKING THIS?");
+                            //TODO (JUANI): How does this work if this is commented out?
+                            // Dont forget to check that lazy loading is fine
+                            component.ApplyAndMarkAsLoaded(assetEntity);
                         }
 
                 World.Destroy(entity);

@@ -23,6 +23,8 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool IsLoading { get; private set; }
 
+        public Emote() {}
+
         public Emote(StreamableLoadingResult<EmoteDTO> model, bool isLoading = true)
         {
             Model = model;
@@ -31,6 +33,10 @@ namespace DCL.AvatarRendering.Emotes
 
         public void UpdateLoadingStatus(bool isLoading)
         {
+            if (Model.Asset == null)
+                Debug.Log($"JUANI WHATS GOING ON HERE {Model.Asset.id} {Model.Asset.assetBundleManifestVersion} {isLoading}");
+            else
+                Debug.Log($"JUANI WHATS GOING ON HERE 2 {isLoading}");
             IsLoading = isLoading;
         }
 

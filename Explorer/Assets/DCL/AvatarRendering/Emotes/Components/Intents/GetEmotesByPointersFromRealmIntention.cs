@@ -15,6 +15,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public GetEmotesByPointersFromRealmIntention(IReadOnlyList<URN> pointers, CommonLoadingArguments commonArguments)
         {
+            UnityEngine.Debug.Log("JUANI WE ARE DOING THIS TWICE, ARENT WE?");
             Pointers = pointers;
             CommonArguments = commonArguments;
         }
