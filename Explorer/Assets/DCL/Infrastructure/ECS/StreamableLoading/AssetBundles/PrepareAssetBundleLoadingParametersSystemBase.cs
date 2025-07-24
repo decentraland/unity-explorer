@@ -49,7 +49,7 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
-                if (string.IsNullOrEmpty(assetBundleIntention.AssetBundleManifestVersion))
+                if (assetBundleIntention.ManifestHelper.IsEmpty())
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>
                         (GetReportCategory(), CreateException(new ArgumentException($"Manifest must be provided to load {assetBundleIntention.Name} from `WEB` source"))));
@@ -75,10 +75,10 @@ namespace ECS.StreamableLoading.AssetBundles
                 ca.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
                 ca.Timeout = StreamableLoadingDefaults.TIMEOUT;
                 ca.CurrentSource = AssetSource.WEB;
-                ca.URL = GetAssetBundleURL(assetBundleIntention.HasSceneInPath, assetBundleIntention.Hash, assetBundleIntention.ParentEntityID, assetBundleIntention.AssetBundleManifestVersion);
+                ca.URL = GetAssetBundleURL(assetBundleIntention.ManifestHelper.HasSceneInPath, assetBundleIntention.Hash, assetBundleIntention.ManifestHelper.ParentEntityID, assetBundleIntention.ManifestHelper.AssetBundleManifestVersion);
                 ca.CacheableURL = GetCacheableURL(assetBundleIntention.Hash);
                 assetBundleIntention.CommonArguments = ca;
-                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.AssetBundleManifestVersion);
+                assetBundleIntention.cacheHash = ComputeHash(assetBundleIntention.Hash, assetBundleIntention.ManifestHelper.AssetBundleManifestVersion);
             }
         }
 

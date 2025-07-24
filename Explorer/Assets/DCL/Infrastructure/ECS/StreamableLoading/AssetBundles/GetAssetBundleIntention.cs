@@ -9,13 +9,31 @@ using UnityEngine;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
+
+    //TODO (JUANI): This can probably go away when we already fetch it from AB-Registry
+    public struct ManifestHelper
+    {
+        public string AssetBundleManifestVersion;
+        public string ParentEntityID;
+        public bool HasSceneInPath;
+
+        public static ManifestHelper Create(string assetBundleManifestVersion, string parentEntityID, bool hasSceneInPath) =>
+            new ()
+            {
+                AssetBundleManifestVersion = assetBundleManifestVersion,
+                ParentEntityID = parentEntityID,
+                HasSceneInPath = hasSceneInPath
+            };
+
+        public bool IsEmpty() =>
+            string.IsNullOrEmpty(AssetBundleManifestVersion);
+    }
+
     public struct GetAssetBundleIntention : ILoadingIntention, IEquatable<GetAssetBundleIntention>
     {
         public string? Hash;
 
-        public string AssetBundleManifestVersion;
-        public string ParentEntityID;
-        public bool HasSceneInPath;
+        public ManifestHelper ManifestHelper;
 
 
         /// <summary>
@@ -50,9 +68,7 @@ namespace ECS.StreamableLoading.AssetBundles
             string? hash = null, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default,
             bool lookForShaderAssets = false,
-            string manifestVersion = "",
-            string parentEntityID = "",
-            bool hasSceneInPath = false,
+            ManifestHelper manifestHelper = default,
             CancellationTokenSource cancellationTokenSource = null)
         {
             Name = name;
@@ -65,9 +81,7 @@ namespace ECS.StreamableLoading.AssetBundles
             cacheHash = null;
             LookForShaderAssets = lookForShaderAssets;
 
-            AssetBundleManifestVersion = manifestVersion;
-            ParentEntityID = parentEntityID;
-            HasSceneInPath = hasSceneInPath;
+            ManifestHelper = manifestHelper;
         }
 
         internal GetAssetBundleIntention(CommonLoadingArguments commonArguments) : this()
@@ -82,34 +96,14 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public static GetAssetBundleIntention FromHash(Type? expectedAssetType, string hash, string manifestVersion, URLSubdirectory customEmbeddedSubDirectory, string sceneID = "", bool hasPathInSceneID = false)=>
-            new (expectedAssetType, hash: hash, manifestVersion: manifestVersion, parentEntityID: sceneID, hasSceneInPath: hasPathInSceneID, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
-
-        public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, string manifestVersion, CancellationTokenSource cancellationTokenSource, AssetSource permittedSources = AssetSource.ALL, URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (expectedAssetType, hash: hash, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, manifestVersion: manifestVersion, cancellationTokenSource: cancellationTokenSource);
-
         public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name, AssetSource permittedSources = AssetSource.ALL,
             URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, hash: hash, name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
-        public static GetAssetBundleIntention FromHash(Type? expectedAssetType, string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default,
-            bool lookForShaderAsset = false) =>
-            new (expectedAssetType, hash: hash, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset);
+        public static GetAssetBundleIntention FromHash(Type? expectedAssetType, string hash, ManifestHelper manifestHelper = default, AssetSource permittedSources = AssetSource.ALL,
+            URLSubdirectory customEmbeddedSubDirectory = default, bool lookForShaderAsset = false , CancellationTokenSource cancellationTokenSource = null) =>
+            new (expectedAssetType, hash: hash, manifestHelper: manifestHelper, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, lookForShaderAssets: lookForShaderAsset, cancellationTokenSource: cancellationTokenSource);
 
-
-        public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, AssetSource permittedSources, URLSubdirectory customEmbeddedSubDirectory, string manifestVersion,
-            bool hasPathInSceneID, string sceneID, CancellationTokenSource cancellationTokenSource)
-        {
-            return   new (expectedAssetType, hash: hash, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory, manifestVersion: manifestVersion, hasSceneInPath: hasPathInSceneID, parentEntityID: sceneID, cancellationTokenSource: cancellationTokenSource);
-
-        }
-
-        public static GetAssetBundleIntention FromHash(Type expectedAssetType, string hash, AssetSource permittedSources, string manifestVersion, bool hasPathInSceneID,
-            string sceneID, CancellationTokenSource cancellationTokenSource)
-        {
-            return   new (expectedAssetType, hash: hash, permittedSources: permittedSources, manifestVersion: manifestVersion, hasSceneInPath: hasPathInSceneID, parentEntityID: sceneID, cancellationTokenSource: cancellationTokenSource);
-
-        }
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
 

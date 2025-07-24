@@ -57,7 +57,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
             URLSubdirectory customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
 
-            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(hash, parentIntent.AssetBundleManifestVersion, parentIntent.ParentEntityID, parentIntent.HasSceneInPath, customEmbeddedSubdirectory, partition, ct)));
+            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(hash, parentIntent.ManifestHelper, customEmbeddedSubdirectory, partition, ct)));
         }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
@@ -114,7 +114,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), intention.AssetBundleManifestVersion, source, intention.LookForShaderAssets, ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportData(), intention.ManifestHelper.AssetBundleManifestVersion, source, intention.LookForShaderAssets, ct);
             }
             catch (Exception e)
             {
@@ -187,15 +187,13 @@ namespace ECS.StreamableLoading.AssetBundles
 
         private async UniTask<AssetBundleData> WaitForDependencyAsync(
             string hash,
-            string manifestVersion,
-            string sceneID,
-            bool hasPathInSceneID,
+            ManifestHelper manifestHelper,
             URLSubdirectory customEmbeddedSubdirectory,
             IPartitionComponent partition, CancellationToken ct)
         {
             // Inherit partition from the parent promise
             // we don't know the type of the dependency
-            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(null, hash, manifestVersion: manifestVersion, sceneID: sceneID, hasPathInSceneID: hasPathInSceneID, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
+            var assetBundlePromise = AssetPromise<AssetBundleData, GetAssetBundleIntention>.Create(World, GetAssetBundleIntention.FromHash(null, hash, manifestHelper: manifestHelper, customEmbeddedSubDirectory: customEmbeddedSubdirectory), partition);
 
             try
             {

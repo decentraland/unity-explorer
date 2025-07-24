@@ -232,6 +232,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
             else
             {
+                ManifestHelper manifestHelper = ManifestHelper.Create(wearable.DTO.assetBundleManifestVersion, wearable.DTO.id, wearable.DTO.hasSceneInPath);
+
                 // An index is added to the promise to know to which slot of the WearableAssets it belongs to
                 var promise = AssetBundlePromise.Create(world,
                     GetAssetBundleIntention.FromHash(
@@ -239,9 +241,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         hash + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifestVersion: wearable.DTO.assetBundleManifestVersion,
-                        hasPathInSceneID: wearable.DTO.hasSceneInPath,
-                        sceneID : wearable.DTO.id,
+                        manifestHelper:  manifestHelper,
                         cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
                 world.Create(promise, wearable, intention.BodyShape, index);

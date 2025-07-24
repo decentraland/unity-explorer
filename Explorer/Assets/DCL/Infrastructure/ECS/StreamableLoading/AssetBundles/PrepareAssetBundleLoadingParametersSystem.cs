@@ -34,9 +34,10 @@ namespace ECS.StreamableLoading.AssetBundles
         // If loading is not started yet and there is no result
         private new void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
-            assetBundleIntention.AssetBundleManifestVersion = sceneData.SceneEntityDefinition.assetBundleManifestVersion;
-            assetBundleIntention.HasSceneInPath = sceneData.SceneEntityDefinition.hasSceneInPath;
-            assetBundleIntention.ParentEntityID = sceneData.SceneEntityDefinition.id;
+            ManifestHelper manifestHelper = ManifestHelper.Create(sceneData.SceneEntityDefinition.assetBundleManifestVersion,
+                sceneData.SceneEntityDefinition.id,
+                sceneData.SceneEntityDefinition.hasSceneInPath);
+            assetBundleIntention.ManifestHelper = manifestHelper;
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 

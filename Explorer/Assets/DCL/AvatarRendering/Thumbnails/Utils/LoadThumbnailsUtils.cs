@@ -117,15 +117,14 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
+            ManifestHelper manifestHelper = ManifestHelper.Create(attachment.DTO.assetBundleManifestVersion, attachment.DTO.id, attachment.DTO.hasSceneInPath);
             var promise = AssetBundlePromise.Create(
                 world,
                 GetAssetBundleIntention.FromHash(
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    manifestVersion: attachment.DTO.assetBundleManifestVersion,
-                    hasPathInSceneID: attachment.DTO.hasSceneInPath,
-                    sceneID: attachment.DTO.id,
+                    manifestHelper: manifestHelper,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),
                 partitionComponent);
