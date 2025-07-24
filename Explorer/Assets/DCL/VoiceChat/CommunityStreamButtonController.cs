@@ -114,12 +114,15 @@ namespace DCL.VoiceChat
                 VoiceChatStatus.VOICE_CHAT_STARTING_CALL)
             {
                 //Clicking the button finishes the call as we are already in this call
-                if (isCurrentCall) { orchestrator.HangUp(); }
+                if (isCurrentCall) {
+                    //We should show a popup first and then if user accepts that popup, we then hangup
+                    orchestrator.HangUp();
+                }
 
                 //Clicking the button will show tooltip as we are in another call
                 else { await ShowTooltipWithAutoCloseAsync(OWN_USER_ALREADY_IN_CALL_TOOLTIP_TEXT, ct); }
             }
-            else { orchestrator.StartCall(currentChannel.Value.Id.Id, VoiceChatType.COMMUNITY); }
+            else { orchestrator.StartCall(ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id), VoiceChatType.COMMUNITY); }
         }
 
         private async UniTask ShowTooltipWithAutoCloseAsync(string tooltipText, CancellationToken ct)
@@ -156,7 +159,7 @@ namespace DCL.VoiceChat
             switch (newChannel.ChannelType)
             {
                 case ChatChannel.ChatChannelType.COMMUNITY:
-                    HandleChangeToCommunityChannelAsync(newChannel.Id.Id).Forget();
+                    HandleChangeToCommunityChannelAsync(ChatChannel.GetCommunityIdFromChannelId(newChannel.Id)).Forget();
                     break;
                 case ChatChannel.ChatChannelType.NEARBY:
                 case ChatChannel.ChatChannelType.USER:

@@ -127,7 +127,6 @@ namespace DCL.VoiceChat
                 return;
             }
 
-
             SetActiveCallService(callType == VoiceChatType.PRIVATE? privateVoiceChatCallStatusService : communityVoiceChatCallStatusService);
             activeCallStatusService.StartCall(callId);
         }
