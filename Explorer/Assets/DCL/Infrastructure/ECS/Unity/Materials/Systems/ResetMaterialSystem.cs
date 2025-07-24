@@ -56,13 +56,14 @@ namespace ECS.Unity.Materials.Systems
                     renderer.sharedMaterial = originalMaterial;
             }
 
-            // Clean up the material component and remove the entity
+            // Clean up the material
             ReleaseMaterial.Execute(entity, World, ref materialComponent, destroyMaterial);
-            World.Remove<PBMaterial, MaterialComponent, GltfNodeMaterialCleanupIntention>(entity);
 
             // Destroy the entity if requested and it's not the container entity itself
             if (cleanupIntention.Destroy && entity != cleanupIntention.ContainerEntity)
                 World.Destroy(entity);
+            else
+                World.Remove<PBMaterial, MaterialComponent, GltfNodeMaterialCleanupIntention>(entity);
         }
     }
 }
