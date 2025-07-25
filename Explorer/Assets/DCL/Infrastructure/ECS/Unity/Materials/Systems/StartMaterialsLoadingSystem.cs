@@ -202,9 +202,6 @@ namespace ECS.Unity.Materials.Systems
                     : new StreamableLoadingResult<Texture2DData>(GetReportCategory(), CreateException(new EcsEntityNotFoundException(textureComponentValue.VideoPlayerEntity, $"Entity {textureComponentValue.VideoPlayerEntity} not found!. VideoTexture will not be created.")));
 
                 promise = Promise.CreateFinalized(intention, result);
-
-                if (info.VideoRenderer)
-                    World.Create(new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer, MediaPlayerComponentEntity = info.VideoPlayer });
             }
             else
                 promise = Promise.Create(
