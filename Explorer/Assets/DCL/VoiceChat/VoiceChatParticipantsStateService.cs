@@ -46,7 +46,7 @@ namespace DCL.VoiceChat
         public IReadOnlyCollection<string> ConnectedParticipants => connectedParticipants;
         public IReadOnlyCollection<string> ActiveSpeakers => activeSpeakers;
 
-        public string LocalParticipantId { get; }
+        public string LocalParticipantId { get; private set; }
 
         public ParticipantState LocalParticipantState { get; private set; }
 
@@ -77,8 +77,10 @@ namespace DCL.VoiceChat
             voiceChatRoom.ActiveSpeakers.Updated += OnActiveSpeakersUpdated;
             voiceChatRoom.ConnectionUpdated += OnConnectionUpdated;
 
-            // Fix this, we need to wait until Identity is not null before assigning to LocalParticipant
-            LocalParticipantId = identityCache.Identity.Address;
+            identityCache.OnIdentityChanged += OnIdentityChanged;
+            identityCache.OnIdentityCleared += OnIdentityCleared;
+
+            LocalParticipantId = identityCache.Identity?.Address ?? string.Empty;
             CreateLocalParticipantState();
         }
 
@@ -90,6 +92,9 @@ namespace DCL.VoiceChat
             voiceChatRoom.Participants.UpdatesFromParticipant -= OnParticipantUpdated;
             voiceChatRoom.ActiveSpeakers.Updated -= OnActiveSpeakersUpdated;
             voiceChatRoom.ConnectionUpdated -= OnConnectionUpdated;
+
+            identityCache.OnIdentityChanged -= OnIdentityChanged;
+            identityCache.OnIdentityCleared -= OnIdentityCleared;
 
             foreach (ParticipantState state in participantStates.Values) { DisposeParticipantState(state); }
 
@@ -305,6 +310,22 @@ namespace DCL.VoiceChat
             if (callMetadata.HasValue) { UpdateParticipantMetadata(participantId, callMetadata.Value); }
         }
 
+        private void OnIdentityChanged()
+        {
+            string newIdentityId = identityCache.Identity?.Address ?? string.Empty;
+            LocalParticipantId = newIdentityId;
+            LocalParticipantState.WalletId = newIdentityId;
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity changed, updated LocalParticipantId to: {LocalParticipantId}");
+        }
+
+        private void OnIdentityCleared()
+        {
+            LocalParticipantId = string.Empty;
+            LocalParticipantState.WalletId = string.Empty;
+            ResetLocalParticipantState();
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Identity cleared, reset LocalParticipantId and state");
+        }
+
         public Participant? GetParticipant(string identity) =>
             voiceChatRoom.Participants.RemoteParticipant(identity);
 
@@ -403,7 +424,7 @@ namespace DCL.VoiceChat
 
             foreach (Participant participant in currentParticipants)
             {
-                if (participant.Identity == localParticipantId)
+                if (participant.Identity == LocalParticipantId)
                 {
                     RefreshParticipantStateFromMetadata(participant, LocalParticipantState);
                     ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Refreshed local participant state during reconnection");
