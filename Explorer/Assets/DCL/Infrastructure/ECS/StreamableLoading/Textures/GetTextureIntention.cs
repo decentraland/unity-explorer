@@ -76,6 +76,12 @@ namespace ECS.StreamableLoading.Textures
 
         public class DiskHashCompute : AbstractDiskHashCompute<GetTextureIntention>
         {
+            /// <summary>
+            /// Number added to the hash, to differentiate between incompatible serialize/deserialize types.
+            /// E.g. after adding WrapMode and Filtering mode to meta data, previously downloaded textures could not be
+            /// deserialized anymore.
+            /// </summary>
+            private const int ITERATION_NUMBER = 1;
             public static readonly DiskHashCompute INSTANCE = new ();
 
             private DiskHashCompute() { }
@@ -83,6 +89,7 @@ namespace ECS.StreamableLoading.Textures
             protected override void FillPayload(IHashKeyPayload keyPayload, in GetTextureIntention asset)
             {
                 keyPayload.Put(asset.cacheKey);
+                keyPayload.Put(ITERATION_NUMBER);
                 keyPayload.Put((int)asset.WrapMode);
                 keyPayload.Put((int)asset.FilterMode);
                 keyPayload.Put(asset.IsVideoTexture);

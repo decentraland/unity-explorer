@@ -12,11 +12,5 @@ namespace ECS.StreamableLoading.AssetBundles
     public class AssetBundleCache : RefCountStreamableCacheBase<AssetBundleData, AssetBundle, GetAssetBundleIntention>
     {
         protected override ref ProfilerCounterValue<int> inCacheCount => ref ProfilingCounters.AssetBundlesInCache;
-
-        public override bool Equals(GetAssetBundleIntention x, GetAssetBundleIntention y) =>
-            StringComparer.OrdinalIgnoreCase.Equals(x.Hash, y.Hash);
-
-        public override int GetHashCode(GetAssetBundleIntention obj) =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Hash!); // at this point hash can't be null
     }
 }

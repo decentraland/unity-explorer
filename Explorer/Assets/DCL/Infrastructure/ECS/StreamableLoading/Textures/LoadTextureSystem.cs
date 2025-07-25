@@ -30,7 +30,8 @@ namespace ECS.StreamableLoading.Textures
             // A replacement of IProfileRepository to avoid cyclic dependencies
             IAvatarTextureUrlProvider avatarTextureUrlProvider)
             : base(
-                world, cache, new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
+                world, cache, 
+                new DiskCacheOptions<Texture2DData, GetTextureIntention>(diskCache, GetTextureIntention.DiskHashCompute.INSTANCE, "tex")
             )
         {
             this.webRequestController = webRequestController;
