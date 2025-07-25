@@ -326,7 +326,7 @@ MonoBehaviour:
     dynamicLights:
       SceneLimitations:
         LightsPerParcel: 1
-        HardMaxLightCount: 5
+        HardMaxLightCount: 4
         MaxPointLightShadows: 0
         MaxSpotLightShadows: 3
       SpotLightsLods:
@@ -377,7 +377,7 @@ MonoBehaviour:
     dynamicLights:
       SceneLimitations:
         LightsPerParcel: 1
-        HardMaxLightCount: 10
+        HardMaxLightCount: 6
         MaxPointLightShadows: 0
         MaxSpotLightShadows: 3
       SpotLightsLods:
