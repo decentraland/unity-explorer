@@ -150,7 +150,10 @@ namespace ECS.StreamableLoading.Cache.Disk
             Result<T> resultDeserialize = await serializer.DeserializeAsync(data.Value, token);
             
             if(resultDeserialize.Success) 
-                return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(resultDeserialize.Value));
+                if(resultDeserialize.Value != null)
+                    return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.Some(resultDeserialize.Value));
+                else
+                    return EnumResult<Option<T>, TaskError>.SuccessResult(Option<T>.None);
 
             return EnumResult<Option<T>, TaskError>.ErrorResult(TaskError.MessageError, resultDeserialize.ErrorMessage!);
         }

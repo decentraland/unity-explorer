@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using ECS.StreamableLoading.Cache.Disk;
 using System;
 using System.Threading;
+using DCL.Diagnostics;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -33,7 +34,9 @@ namespace ECS.StreamableLoading.Textures
             }
             catch (Exception _)
             {
-                return Result<Texture2DData>.ErrorResult("Texture in disk cache outdated, it will be updated. This error should not appear second time for same texture.");
+                ReportHub.Log(ReportCategory.DISK_CACHE, 
+                    "Texture in disk cache outdated, it will be updated. This error should not appear second time for same texture.");
+                return Result<Texture2DData>.SuccessResult(null);
             }
             
 
