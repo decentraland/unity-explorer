@@ -19,15 +19,6 @@ namespace DCL.LOD.Systems
     {
         public static readonly URLSubdirectory LOD_EMBEDDED_SUBDIRECTORIES = URLSubdirectory.FromString("lods");
 
-        /*public static IReadOnlyList<SceneAssetBundleManifest> LODManifests(IDecentralandUrlsSource decentralandUrlsSource) =>
-            Enumerable
-               .Range(0, 4)
-               .Select(level => new SceneAssetBundleManifest(
-                        URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)}/LOD/{level}/")
-                    )
-                )
-               .ToArray();*/
-
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         private static string LOD_SHADER = "DCL/Scene_TexArray";
         private static readonly List<Material> TEMP_MATERIALS = new (3);

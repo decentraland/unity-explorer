@@ -10,7 +10,6 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.IncreasingRadius;
-using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
@@ -70,12 +69,13 @@ namespace DCL.LOD.Systems
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetCurrentPlatform()}";
 
-            //TODO (JUANI) : This is going to fail
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                lookForShaderAsset: true
+                lookForShaderAsset: true,
+                hasParentEntityIDPathInURL: false,
+                assetBundleVersion: $"LOD/{level.ToString()}"
                 );
 
             sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
