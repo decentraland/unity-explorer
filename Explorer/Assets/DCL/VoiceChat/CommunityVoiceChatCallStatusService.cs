@@ -18,13 +18,17 @@ namespace DCL.VoiceChat
     public class CommunityVoiceChatCallStatusService : VoiceChatCallStatusServiceBase, ICommunityVoiceChatCallStatusService
     {
         private readonly ICommunityVoiceService voiceChatService;
+        private readonly VoiceChatParticipantsStateService participantsStateService;
         private CancellationTokenSource cts;
         private readonly Dictionary<string, string> communityVoiceChatCalls = new();
         private readonly Dictionary<string, CommunitySubscription> communitySubscriptions = new();
 
-        public CommunityVoiceChatCallStatusService(ICommunityVoiceService voiceChatService)
+        public CommunityVoiceChatCallStatusService(
+            ICommunityVoiceService voiceChatService,
+            VoiceChatParticipantsStateService participantsStateService)
         {
             this.voiceChatService = voiceChatService;
+            this.participantsStateService = participantsStateService;
             this.voiceChatService.CommunityVoiceChatUpdateReceived += OnCommunityVoiceChatUpdateReceived;
         }
 
@@ -125,8 +129,8 @@ namespace DCL.VoiceChat
                 switch (response.ResponseCase)
                 {
                     case RequestToSpeakInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        // Send event about raised hand state??
-                        // Maybe just change status for the own user directly instead of waiting for metadata update that would trigger updates everywhere?
+                        // participantsStateService.LocalParticipantState.IsRequestingToSpeak.Value = true;
+                        // We should not be able to do this so easily, we do it here to avoid waiting for metadata update, for now I disable it until we test how fast this comes.
                         break;
                 }
             }

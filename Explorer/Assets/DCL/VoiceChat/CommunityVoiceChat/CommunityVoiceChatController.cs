@@ -20,9 +20,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private readonly Dictionary<string, PlayerEntryView> usedPlayerEntries = new ();
         private readonly CommunityVoiceChatSearchController communityVoiceChatSearchController;
         private readonly CommunityVoiceChatInCallController inCallController;
+        private readonly IDisposable? voiceChatTypeSubscription;
 
         private bool isPanelCollapsed;
-        private readonly IDisposable? voiceChatTypeSubscription;
 
         public CommunityVoiceChatController(
             CommunityVoiceChatTitlebarView view,

@@ -9,15 +9,17 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 {
     public class CommunityVoiceChatInCallFooterController : IDisposable
     {
-        private readonly IDisposable statusSubscription;
-        private readonly IDisposable currentChannelSubscription;
+        private readonly IDisposable isSpeakerSubscription;
+        private readonly IDisposable isRequestingToSpeakSubscription;
 
         private readonly CommunityVoiceChatInCallFooterView view;
         private readonly IVoiceChatOrchestrator orchestrator;
         private readonly IReadonlyReactiveProperty<ChatChannel> currentChannel;
         private readonly MicrophoneButtonController microphoneButtonController;
+        private readonly IDisposable? playerStateSubscription;
 
-        private readonly CancellationTokenSource communityCts = new ();
+
+        private CancellationTokenSource communityCts = new ();
         private CancellationTokenSource cts = new ();
 
         public CommunityVoiceChatInCallFooterController(
@@ -39,12 +41,27 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             // I think we should manage this here and send an event through a bus like the new chat thing is doing? so each controller listens to its own view.
             // view.OpenListenersSectionButton
             //We need to listen to our own user state to properly update the UI.
+
+            isRequestingToSpeakSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.Subscribe(OnRequestingToSpeakChanged);
+            isSpeakerSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Subscribe(OnIsSpeakerChanged);
+        }
+
+        private void OnIsSpeakerChanged(bool isSpeaker)
+        {
+            view.LeaveStageButton.gameObject.SetActive(isSpeaker);
+            view.MicrophoneButton.gameObject.SetActive(isSpeaker);
+            view.RaiseHandButton.gameObject.SetActive(!isSpeaker);
+        }
+
+        private void OnRequestingToSpeakChanged(bool? isRequestingToSpeak)
+        {
+            //Change button appearance? Disable Clicking again? should clicking again cancel our request to speak?
         }
 
         public void Dispose()
         {
-            statusSubscription?.Dispose();
-            currentChannelSubscription?.Dispose();
+            isSpeakerSubscription?.Dispose();
+            isRequestingToSpeakSubscription?.Dispose();
             cts?.Dispose();
             communityCts?.Dispose();
         }
@@ -52,27 +69,18 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private void OnRaiseHandButtonClicked()
         {
             orchestrator.CommunityStatusService.RequestToSpeakInCurrentCall();
-
-            // We send the request and need to change the button appearance I guess + our state?
-            // Unless we react to metadata changes directly then we just subscribe to our own request to speak status?
-            // Might be cleaner that way? but maybe a little less responsive? we could change our status directly so the event is triggered immediately maybe??
-            // In this case we would need to send our state with the request? so the service can update it? We might need to create an interface that only the Community service can access
-            // To avoid views from changing states directly.
         }
 
         private void OnLeaveStageButtonClicked()
         {
             orchestrator.CommunityStatusService.DemoteFromSpeakerInCurrentCall(orchestrator.ParticipantsStateService.LocalParticipantId);
-
-            //Again react based on BE response, dont do anything else here
         }
 
         private void OnEndCallButtonClicked()
         {
             cts = cts?.SafeRestart();
-            HandleCallButtonClickAsync(cts!.Token).Forget();
+            orchestrator.HangUp();
         }
 
-        private async UniTaskVoid HandleCallButtonClickAsync(CancellationToken ct) { }
     }
 }

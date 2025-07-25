@@ -14,20 +14,17 @@ namespace DCL.VoiceChat
         private readonly CommunityVoiceChatCallStatusService communityVoiceChatCallStatusService;
         private readonly VoiceChatParticipantsStateService participantsStateService;
         public readonly VoiceChatOrchestrator VoiceChatOrchestrator;
-        public readonly IWeb3IdentityCache identityCache;
 
         public VoiceChatContainer(
             IRPCSocialServices socialServiceRPC,
             ISocialServiceEventBus socialServiceEventBus,
             IRoomHub roomHub, IWeb3IdentityCache identityCache)
         {
-            this.identityCache = identityCache;
             rpcPrivateVoiceChatService = new RPCPrivateVoiceChatService(socialServiceRPC, socialServiceEventBus);
             rpcCommunityVoiceChatService = new RPCCommunityVoiceChatService(socialServiceRPC, socialServiceEventBus);
+            participantsStateService = new VoiceChatParticipantsStateService(roomHub.VoiceChatRoom().Room(), identityCache);
+            communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService, participantsStateService);
             privateVoiceChatCallStatusService = new PrivateVoiceChatCallStatusService(rpcPrivateVoiceChatService);
-            communityVoiceChatCallStatusService = new CommunityVoiceChatCallStatusService(rpcCommunityVoiceChatService);
-            var room = roomHub.VoiceChatRoom().Room();
-            participantsStateService = new VoiceChatParticipantsStateService(room, identityCache);
 
             VoiceChatOrchestrator = new VoiceChatOrchestrator(
                 privateVoiceChatCallStatusService,
