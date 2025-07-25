@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d82f77858704f5eabde1ef31ea5fe1d, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  <RandomSeed>k__BackingField: 3141592653
+  <RandomSeed>k__BackingField: 1
   <GroundMaterial>k__BackingField: {fileID: 2100000, guid: 8f35af7b7cbbe28408136ca659b08b88, type: 2}
   <ParcelSize>k__BackingField: 16
   <Bounds>k__BackingField:
@@ -29,7 +29,8 @@ MonoBehaviour:
   <RenderTreesAndDetail>k__BackingField: 1
   <GroundInstanceCapacity>k__BackingField: 80
   <TreeInstanceCapacity>k__BackingField: 3000
-  <DetailInstanceCapacity>k__BackingField: 40000
+  <ClutterInstanceCapacity>k__BackingField: 1
+  <GrassInstanceCapacity>k__BackingField: 1
   <GroundMeshes>k__BackingField:
   - {fileID: 1394718660543912083, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
   - {fileID: 2474922959326173943, guid: 6af6e9dc2ce313b49a66e31153e30023, type: 3}
@@ -38,8 +39,8 @@ MonoBehaviour:
   - <Source>k__BackingField: {fileID: 2214953459268991292, guid: 46ba147d6eb053147b59c469dd34425f, type: 3}
     <Collider>k__BackingField: {fileID: 7013496733605040723, guid: dcca3898bf9ce4a42ad171cb4313e6fa, type: 3}
     <LocalSize>k__BackingField: 21.57782
-    <TrunkRadius>k__BackingField: 0.8
-    <CanopyRadius>k__BackingField: 10
+    <CanopyRadius>k__BackingField: 11.7
+    <TrunkRadius>k__BackingField: 2
     <Lods>k__BackingField:
     - <Mesh>k__BackingField: {fileID: 4300000, guid: 1cc28936fb720cd469a6755539529d40, type: 3}
       <MinScreenSize>k__BackingField: 0.19794142
@@ -63,8 +64,8 @@ MonoBehaviour:
   - <Source>k__BackingField: {fileID: 2187335638020092438, guid: a5880297cd94bc64697d703509a25311, type: 3}
     <Collider>k__BackingField: {fileID: 845438642989770326, guid: a99cd2a1ca9ce304fb5284edff5da8d1, type: 3}
     <LocalSize>k__BackingField: 24.402372
-    <TrunkRadius>k__BackingField: 1.5
-    <CanopyRadius>k__BackingField: 11
+    <CanopyRadius>k__BackingField: 12.6
+    <TrunkRadius>k__BackingField: 4
     <Lods>k__BackingField:
     - <Mesh>k__BackingField: {fileID: 4300000, guid: ef75b96575e6f4f47a635b6fad41f46a, type: 3}
       <MinScreenSize>k__BackingField: 0.19976239
@@ -88,8 +89,8 @@ MonoBehaviour:
   - <Source>k__BackingField: {fileID: 757561452486300604, guid: f03a5d1da28bc6e4098274181dec6ed6, type: 3}
     <Collider>k__BackingField: {fileID: 5731890515363948196, guid: 9306a250e75d66d4abb2fdcf55635aad, type: 3}
     <LocalSize>k__BackingField: 42.242
-    <TrunkRadius>k__BackingField: 2
-    <CanopyRadius>k__BackingField: 11
+    <CanopyRadius>k__BackingField: 13.5
+    <TrunkRadius>k__BackingField: 4
     <Lods>k__BackingField:
     - <Mesh>k__BackingField: {fileID: 4300000, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
       <MinScreenSize>k__BackingField: 0.20516509
@@ -110,12 +111,121 @@ MonoBehaviour:
       <MinScreenSize>k__BackingField: 0.017368691
       <Materials>k__BackingField:
       - {fileID: 2100000, guid: 2dee480ba164e4c4d9565df7b04fdc69, type: 2}
-  <DetailPrototypes>k__BackingField:
+  <ClutterPrototypes>k__BackingField:
+  - <Source>k__BackingField: {fileID: 7088211124069903763, guid: a579994199f719143991a656821e99ba, type: 3}
+    <Collider>k__BackingField: {fileID: 1205069210736854335, guid: 11a707b17c5787d448539ca562c8404c, type: 3}
+    <LocalSize>k__BackingField: 2.020337
+    <Radius>k__BackingField: 1.05
+    <MinScale>k__BackingField: 1
+    <MaxScale>k__BackingField: 4
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: -7515708219630606215, guid: 9ddca728df9c124449d9b86a651b3896, type: 3}
+      <MinScreenSize>k__BackingField: 0.05350165
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: f50d7baa6b3e33c47b09d40387bdc634, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4772238169430402490, guid: 9ddca728df9c124449d9b86a651b3896, type: 3}
+      <MinScreenSize>k__BackingField: 0.03484897
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: f50d7baa6b3e33c47b09d40387bdc634, type: 2}
+    - <Mesh>k__BackingField: {fileID: 2289415448551767133, guid: 9ddca728df9c124449d9b86a651b3896, type: 3}
+      <MinScreenSize>k__BackingField: 0.021002172
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: f50d7baa6b3e33c47b09d40387bdc634, type: 2}
+  - <Source>k__BackingField: {fileID: 7276828488207753534, guid: 52b71cdd52d5ecc4bafae3b8c07cbf45, type: 3}
+    <Collider>k__BackingField: {fileID: 7906208086855937056, guid: d58158b48f7c3f448902379aa3b17712, type: 3}
+    <LocalSize>k__BackingField: 1.9055377
+    <Radius>k__BackingField: 0.76
+    <MinScale>k__BackingField: 1
+    <MaxScale>k__BackingField: 4
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: -6016869738107864900, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      <MinScreenSize>k__BackingField: 0.047659174
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 3f84e65f8e32d3348a4bb0e9bddff62e, type: 2}
+    - <Mesh>k__BackingField: {fileID: -6715881877698069216, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      <MinScreenSize>k__BackingField: 0.03279109
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 3f84e65f8e32d3348a4bb0e9bddff62e, type: 2}
+    - <Mesh>k__BackingField: {fileID: 7478756485311197650, guid: 00f5b1975cb058a4691c829eb047a63e, type: 3}
+      <MinScreenSize>k__BackingField: 0.021002172
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 3f84e65f8e32d3348a4bb0e9bddff62e, type: 2}
+  - <Source>k__BackingField: {fileID: 3548471741203574768, guid: 70deea155e1dd1f4d86520b1bbc66096, type: 3}
+    <Collider>k__BackingField: {fileID: 5948663709198613720, guid: d66b4298465b17e4380cf539797b807d, type: 3}
+    <LocalSize>k__BackingField: 1.7325938
+    <Radius>k__BackingField: 0.81
+    <MinScale>k__BackingField: 1
+    <MaxScale>k__BackingField: 4
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: -8038188821805132285, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
+      <MinScreenSize>k__BackingField: 0.05179858
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: afb6f42b6f5b7834b96f692291021293, type: 2}
+    - <Mesh>k__BackingField: {fileID: 2142666779476255502, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
+      <MinScreenSize>k__BackingField: 0.03415625
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: afb6f42b6f5b7834b96f692291021293, type: 2}
+    - <Mesh>k__BackingField: {fileID: -8976505993286064269, guid: 031a91abfb9eed844b8cb2123869ef73, type: 3}
+      <MinScreenSize>k__BackingField: 0.021002172
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: afb6f42b6f5b7834b96f692291021293, type: 2}
+  - <Source>k__BackingField: {fileID: 2281217931661837468, guid: 0b84201e6b7ff9a41aef33f6c69ff90e, type: 3}
+    <Collider>k__BackingField: {fileID: 0}
+    <LocalSize>k__BackingField: 1.747345
+    <Radius>k__BackingField: 0.45
+    <MinScale>k__BackingField: 2
+    <MaxScale>k__BackingField: 3
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: 4300000, guid: 7a5b23ea474707949ac1958443314f0f, type: 3}
+      <MinScreenSize>k__BackingField: 0.1530746
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 34dad2935424df741a1cb7f856144977, type: 2}
+      - {fileID: 2100000, guid: 5b9bc617fb7ebe14c8048311768f243a, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4300002, guid: 7a5b23ea474707949ac1958443314f0f, type: 3}
+      <MinScreenSize>k__BackingField: 0.05358992
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 6cb02e6aaca522d43a15333af3724f50, type: 2}
+      - {fileID: 2100000, guid: 9d64bc5796ac7dc4e902e908b5ece1d3, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4300004, guid: 7a5b23ea474707949ac1958443314f0f, type: 3}
+      <MinScreenSize>k__BackingField: 0.02136003
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 8e5620459c816e7419863f1fe6d8a98b, type: 2}
+      - {fileID: 2100000, guid: 838dcc5b7572bdb4bbc783aee6b35bea, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4300006, guid: 7a5b23ea474707949ac1958443314f0f, type: 3}
+      <MinScreenSize>k__BackingField: 0.01
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: ab09b1fba160f9f458b95be4ee629481, type: 2}
+  - <Source>k__BackingField: {fileID: 4548257113317227881, guid: 5c875413d1b05e044a1ef65680ca7917, type: 3}
+    <Collider>k__BackingField: {fileID: 9037524513379548263, guid: 8d9f729d37e29804abff88e2fe2f4370, type: 3}
+    <LocalSize>k__BackingField: 1.7678366
+    <Radius>k__BackingField: 0.75
+    <MinScale>k__BackingField: 2
+    <MaxScale>k__BackingField: 3
+    <Lods>k__BackingField:
+    - <Mesh>k__BackingField: {fileID: 4300000, guid: 7ee2877b90d2bc048b88aacb57ee6dcc, type: 3}
+      <MinScreenSize>k__BackingField: 0.097534046
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 51cf67ae6a18c334691797a9278b87be, type: 2}
+      - {fileID: 2100000, guid: c1f48de049f5ad144b58b9c8e0a2d88f, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4300002, guid: 7ee2877b90d2bc048b88aacb57ee6dcc, type: 3}
+      <MinScreenSize>k__BackingField: 0.04922326
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: eff2d481e10d0a846b65d083a343d476, type: 2}
+      - {fileID: 2100000, guid: 5092303cdb49b7f4dbce1f538bc65cc7, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4300004, guid: 7ee2877b90d2bc048b88aacb57ee6dcc, type: 3}
+      <MinScreenSize>k__BackingField: 0.022278681
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: f20326771d76f984a9233016cfbd03f1, type: 2}
+      - {fileID: 2100000, guid: bb1f3d7e3f6009c42a71d641d060c28d, type: 2}
+    - <Mesh>k__BackingField: {fileID: 4300006, guid: 7ee2877b90d2bc048b88aacb57ee6dcc, type: 3}
+      <MinScreenSize>k__BackingField: 0.01
+      <Materials>k__BackingField:
+      - {fileID: 2100000, guid: 2eb16beb1d3710a4e9d245843220db5b, type: 2}
+  <GrassPrototypes>k__BackingField:
   - <Source>k__BackingField: {fileID: 1333259486307050118, guid: 7326c89d1e84ecb429de2f08a2baf2fe, type: 3}
-    <ScatterMode>k__BackingField: 0
     <Density>k__BackingField: 1
     <MinScaleXZ>k__BackingField: 1
-    <MaxScaleXZ>k__BackingField: 1.5
+    <MaxScaleXZ>k__BackingField: 2
     <MinScaleY>k__BackingField: 1
     <MaxScaleY>k__BackingField: 2
     <Mesh>k__BackingField: {fileID: 8666578268043267355, guid: 396ff52ab0b0210408b55a00b0c3cd57, type: 3}
