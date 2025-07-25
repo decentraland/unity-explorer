@@ -55,15 +55,15 @@ namespace DCL.AvatarRendering.Emotes
 
         public void CreateAndAddPromiseToWorld(World world, IPartitionComponent partitionComponent, URLSubdirectory? customStreamingSubdirectory, IEmote emote)
         {
-            ManifestHelper manifestHelper = ManifestHelper.Create(emote.DTO.assetBundleManifestVersion, emote.DTO.id, emote.DTO.hasSceneInPath);
-
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
                     this.EmoteHash + PlatformUtils.GetCurrentPlatform(),
+                    assetBundleVersion: emote.DTO.assetBundleManifestVersion,
+                    parentEntityID: emote.DTO.id,
+                    hasParentEntityIDPathInURL : emote.DTO.hasSceneInPath,
                     permittedSources: this.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory.Value,
-                    cancellationTokenSource: this.CancellationTokenSource,
-                    manifestHelper: manifestHelper),
+                    cancellationTokenSource: this.CancellationTokenSource),
                 partitionComponent);
 
             world.Create(promise, emote, this.BodyShape);

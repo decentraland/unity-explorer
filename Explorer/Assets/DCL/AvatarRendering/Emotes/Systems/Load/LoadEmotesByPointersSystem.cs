@@ -223,7 +223,6 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             if (component.AssetResults[intention.BodyShape] == null)
             {
-                ManifestHelper manifestHelper = ManifestHelper.Create(component.DTO.assetBundleManifestVersion, component.DTO.id, component.DTO.hasSceneInPath);
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 var promise = AssetBundlePromise.Create(
                     World!,
@@ -232,7 +231,9 @@ namespace DCL.AvatarRendering.Emotes.Load
                         hash! + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifestHelper: manifestHelper,
+                        assetBundleVersion: component.DTO.assetBundleManifestVersion,
+                        parentEntityID: component.DTO.id,
+                        hasParentEntityIDPathInURL : component.DTO.hasSceneInPath,
                         cancellationTokenSource: intention.CancellationTokenSource
                     ),
                     partitionComponent

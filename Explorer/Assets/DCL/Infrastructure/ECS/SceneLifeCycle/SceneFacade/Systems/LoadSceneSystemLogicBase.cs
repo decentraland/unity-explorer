@@ -60,20 +60,9 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             //TODO (JUANI): This can go away when we retrieve the version from the asset-bundle-registry
-            AssetBundleManifestPromise loadAssetBundleManifest = await AssetBundleManifestPromise.Create(world,
-                GetAssetBundleManifestIntention.Create(intention.DefinitionComponent.Definition.id, new CommonLoadingArguments(intention.DefinitionComponent.Definition.id)),
+            await AssetBundleManifestPromise.Create(world,
+                GetAssetBundleManifestIntention.Create(intention.DefinitionComponent.Definition.id, new CommonLoadingArguments(intention.DefinitionComponent.Definition.id), intention.DefinitionComponent.Definition),
                 partition).ToUniTaskAsync(world, cancellationToken: ct);
-
-            if (loadAssetBundleManifest.Result.HasValue)
-            {
-                definitionComponent.Definition.assetBundleManifestVersion = loadAssetBundleManifest.Result.Value.Asset!.GetVersion();
-                //If ABVersion is over 25 for scenes, the path will contain the scene hash
-                definitionComponent.Definition.hasSceneInPath = loadAssetBundleManifest.Result.Value.Asset!.HasHashInPathID();
-            }
-            else
-            {
-                //TODO (JUANI): What happens on fail?
-            }
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);

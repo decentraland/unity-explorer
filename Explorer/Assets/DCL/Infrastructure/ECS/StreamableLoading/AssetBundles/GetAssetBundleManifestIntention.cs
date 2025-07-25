@@ -1,3 +1,4 @@
+using DCL.Infrastructure.ECS.StreamableLoading.AssetBundles.AssetBundleManifestHelper;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Threading;
@@ -8,11 +9,13 @@ namespace ECS.StreamableLoading.AssetBundles
     {
         public CommonLoadingArguments CommonArguments { get; set; }
         public readonly string Hash;
+        public IApplyAssetBundleManifestResult ApplyAssetBundleManifestResultTo;
 
-        private GetAssetBundleManifestIntention(string hash, CommonLoadingArguments commonArguments)
+        private GetAssetBundleManifestIntention(string hash, CommonLoadingArguments commonArguments, IApplyAssetBundleManifestResult applyAssetBundleManifestResultTo)
         {
             Hash = hash;
             CommonArguments = commonArguments;
+            ApplyAssetBundleManifestResultTo = applyAssetBundleManifestResultTo;
         }
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
@@ -26,7 +29,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public override int GetHashCode() =>
             Hash.GetHashCode();
 
-        public static GetAssetBundleManifestIntention Create(string hash, CommonLoadingArguments commonArguments) =>
-            new (hash, commonArguments);
+        public static GetAssetBundleManifestIntention Create(string hash, CommonLoadingArguments commonArguments, IApplyAssetBundleManifestResult applyAssetBundleManifestResult) =>
+            new (hash, commonArguments, applyAssetBundleManifestResult);
     }
 }

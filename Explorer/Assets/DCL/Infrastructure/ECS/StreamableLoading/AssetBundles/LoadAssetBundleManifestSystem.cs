@@ -11,6 +11,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 using Utility;
 
@@ -24,6 +25,7 @@ namespace ECS.StreamableLoading.AssetBundles
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
 
+        //TODO (JUANI): This whole system can go away once the information comes the entity DTO
         internal LoadAssetBundleManifestSystem(World world,
             IStreamableCache<SceneAssetBundleManifest, GetAssetBundleManifestIntention> cache, URLDomain assetBundleURL, IWebRequestController webRequestController) : base(world, cache)
         {
@@ -31,14 +33,31 @@ namespace ECS.StreamableLoading.AssetBundles
             this.webRequestController = webRequestController;
         }
 
-        protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetAssetBundleManifestIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct) =>
-            new (
-                await LoadAssetBundleManifestAsync(
-                    intention.Hash,
-                    GetReportData(),
-                    ct
-                )
-            );
+        protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetAssetBundleManifestIntention intention, StreamableLoadingState state, IPartitionComponent partition, CancellationToken ct)
+        {
+            SceneAssetBundleManifest sceneAssetBundleManifest = null;
+            try
+            {
+                sceneAssetBundleManifest =
+                    await LoadAssetBundleManifestAsync(
+                        intention.Hash,
+                        GetReportData(),
+                        ct
+                    );
+
+                //When we have the manifest version embedded in the entity, we can delete all of this as the number will be already applied
+                intention.ApplyAssetBundleManifestResultTo.ApplyAssetBundleManifestResult(sceneAssetBundleManifest.GetVersion(), sceneAssetBundleManifest.HasHashInPathID());
+            }
+            catch (Exception e)
+            {
+                //On exception, we can apply a failed result
+                intention.ApplyAssetBundleManifestResultTo.ApplyFailedManifestResult();
+            }
+
+            //We do nothing with this result currently
+            return new StreamableLoadingResult<SceneAssetBundleManifest>(sceneAssetBundleManifest);
+        }
+
 
         private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string hash, ReportData reportCategory, CancellationToken ct)
         {

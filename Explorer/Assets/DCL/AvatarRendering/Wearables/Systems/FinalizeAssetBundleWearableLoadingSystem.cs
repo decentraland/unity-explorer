@@ -51,7 +51,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             if (promise.SafeTryConsume(World, GetReportCategory(), out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 if (result.Succeeded)
-                    wearable.UpdateManifest(result);
+                    wearable.UpdateManifest();
                 else
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 

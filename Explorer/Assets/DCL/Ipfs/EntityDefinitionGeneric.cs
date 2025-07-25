@@ -1,3 +1,4 @@
+using DCL.Infrastructure.ECS.StreamableLoading.AssetBundles.AssetBundleManifestHelper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using Newtonsoft.Json;
 namespace DCL.Ipfs
 {
     [Serializable]
-    public class EntityDefinitionGeneric<T> : IEquatable<EntityDefinitionGeneric<T>>
+    public class EntityDefinitionGeneric<T> : IEquatable<EntityDefinitionGeneric<T>>, IApplyAssetBundleManifestResult
     {
         public const string DEFAULT_VERSION = "v3";
 
@@ -23,6 +24,8 @@ namespace DCL.Ipfs
 
         public string assetBundleManifestVersion;
         public bool hasSceneInPath;
+        public bool assetBundleManifestRequestFailed;
+
 
         public EntityDefinitionGeneric() { }
 
@@ -47,6 +50,17 @@ namespace DCL.Ipfs
 
         public override string ToString() =>
             id;
+
+        public void ApplyAssetBundleManifestResult(string assetBundleManifestVersion, bool hasSceneIDInPath)
+        {
+            this.assetBundleManifestVersion = assetBundleManifestVersion;
+            this.hasSceneInPath = hasSceneIDInPath;
+        }
+
+        public void ApplyFailedManifestResult()
+        {
+            assetBundleManifestRequestFailed = true;
+        }
 
         public string FullInfo() =>
             $"Id: {id}\n"

@@ -145,23 +145,13 @@ namespace DCL.AvatarRendering.Loading.Components
             return false;
         }
 
-        public static void UpdateManifest(this IAvatarAttachment avatarAttachment, StreamableLoadingResult<SceneAssetBundleManifest> result)
+        public static void UpdateManifest(this IAvatarAttachment avatarAttachment)
         {
-            if (result.Succeeded)
-            {
-                avatarAttachment.DTO.assetBundleManifestVersion = result.Asset!.GetVersion();
-                avatarAttachment.DTO.hasSceneInPath = result.Asset!.HasHashInPathID();
-            }
-            else
-                avatarAttachment.DTO.assetBundleManifestRequestFailed = true;
-
             avatarAttachment.UpdateLoadingStatus(false);
         }
 
         public static void ResetManifest(this IAvatarAttachment avatarAttachment)
         {
-            avatarAttachment.DTO.assetBundleManifestVersion = "";
-            avatarAttachment.DTO.hasSceneInPath = false;
             avatarAttachment.UpdateLoadingStatus(false);
         }
     }

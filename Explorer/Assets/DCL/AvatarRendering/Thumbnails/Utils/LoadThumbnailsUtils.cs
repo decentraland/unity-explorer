@@ -42,13 +42,13 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 try
                 {
                     AssetBundleManifestPromise promise = AssetBundleManifestPromise.Create(world,
-                        GetAssetBundleManifestIntention.Create(attachment.DTO.GetHash(), new CommonLoadingArguments(attachment.DTO.GetHash(), cancellationTokenSource: cancellationTokenSource)),
+                        GetAssetBundleManifestIntention.Create(attachment.DTO.GetHash(), new CommonLoadingArguments(attachment.DTO.GetHash(), cancellationTokenSource: cancellationTokenSource), attachment.DTO),
                         partitionComponent);
 
                     AssetBundleManifestPromise awaitedPromise = await promise.ToUniTaskAsync(world, cancellationToken: cancellationTokenSource?.Token ?? CancellationToken.None);
 
                     if (awaitedPromise.Result is { Succeeded: true, Asset: not null })
-                        attachment.UpdateManifest(awaitedPromise.Result.Value);
+                        attachment.UpdateManifest();
                 }
                 catch (Exception) { return false; }
 
@@ -117,14 +117,15 @@ namespace DCL.AvatarRendering.Thumbnails.Utils
                 return;
             }
 
-            ManifestHelper manifestHelper = ManifestHelper.Create(attachment.DTO.assetBundleManifestVersion, attachment.DTO.id, attachment.DTO.hasSceneInPath);
             var promise = AssetBundlePromise.Create(
                 world,
                 GetAssetBundleIntention.FromHash(
                     typeof(Texture2D),
                     hash: thumbnailPath.Value + PlatformUtils.GetCurrentPlatform(),
                     permittedSources: AssetSource.ALL,
-                    manifestHelper: manifestHelper,
+                    assetBundleVersion: attachment.DTO.assetBundleManifestVersion,
+                    hasParentEntityIDPathInURL: attachment.DTO.hasSceneInPath,
+                    parentEntityID: attachment.DTO.id,
                     cancellationTokenSource: cancellationTokenSource ?? new CancellationTokenSource()
                 ),
                 partitionComponent);
