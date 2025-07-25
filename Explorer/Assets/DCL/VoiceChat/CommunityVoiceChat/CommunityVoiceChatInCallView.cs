@@ -14,6 +14,9 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         [field: SerializeField]
         public RectTransform SpeakersParent { get; private set; }
 
+        [field: SerializeField]
+        public CommunityVoiceChatInCallFooterView InCallFooterView { get; private set; }
+
         public void SetCommunityName(string communityName)
         {
             CommunityName.text = communityName;

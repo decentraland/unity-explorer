@@ -49,7 +49,8 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             this.view.Kick += OnKickUser;
             this.view.Ban += OnBanUser;
 
-            view.ListenersSectionButton.onClick.AddListener(OpenListenersSection);
+            // Should we send this through an internal event bus to avoid having these sub-view subscriptions or bubbling up events?
+            view.CommunityVoiceChatInCallView.InCallFooterView.OpenListenersSectionButton.onClick.AddListener(OpenListenersSection);
             view.CommunityVoiceChatSearchView.BackButton.onClick.AddListener(CloseListenersSection);
 
             playerEntriesPool = new ObjectPool<PlayerEntryView>(

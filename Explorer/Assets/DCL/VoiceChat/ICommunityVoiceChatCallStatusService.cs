@@ -25,6 +25,10 @@ namespace DCL.VoiceChat
         void UnsubscribeFromCommunityUpdates(string communityId);
 
         UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken cancellationToken = default);
+
+        void RequestToSpeakInCurrentCall();
+
+        void DemoteFromSpeakerInCurrentCall(string walletId);
     }
 
     /// <summary>

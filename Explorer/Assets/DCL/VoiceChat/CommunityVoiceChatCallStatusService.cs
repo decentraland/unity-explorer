@@ -52,6 +52,7 @@ namespace DCL.VoiceChat
                     //When the call can be started
                     case StartCommunityVoiceChatResponse.ResponseOneofCase.Ok:
                         RoomUrl = response.Ok.Credentials.ConnectionUrl;
+                        CallId = communityId;
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
 
@@ -77,26 +78,23 @@ namespace DCL.VoiceChat
             UpdateStatus(VoiceChatStatus.DISCONNECTED);
         }
 
-        public void JoinCommunityVoiceChat()
-        {
-            //We can start a call only if we are not connected or trying to start a call
-            if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR) return;
-
-            cts = cts.SafeRestart();
-            UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTED_CALL);
-            JoinCommunityVoiceChatAsync(CallId, cts.Token).Forget();
-        }
-
         public async UniTaskVoid JoinCommunityVoiceChatAsync(string communityId, CancellationToken ct)
         {
             try
             {
+                if (Status.Value is not VoiceChatStatus.DISCONNECTED and not VoiceChatStatus.VOICE_CHAT_BUSY and not VoiceChatStatus.VOICE_CHAT_GENERIC_ERROR)
+                    //we should throw here and let the catch handle it?
+                    return;
+
+                UpdateStatus(VoiceChatStatus.VOICE_CHAT_STARTING_CALL);
+
                 JoinCommunityVoiceChatResponse response = await voiceChatService.JoinCommunityVoiceChatAsync(communityId, ct);
 
                 switch (response.ResponseCase)
                 {
                     case JoinCommunityVoiceChatResponse.ResponseOneofCase.Ok:
                         RoomUrl = response.Ok.Credentials.ConnectionUrl;
+                        CallId = communityId;
                         UpdateStatus(VoiceChatStatus.VOICE_CHAT_IN_CALL);
                         break;
                     default:
@@ -110,12 +108,12 @@ namespace DCL.VoiceChat
             }
         }
 
-        public void RequestToSpeak(string communityId)
+        public void RequestToSpeakInCurrentCall()
         {
-            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+            if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL || CallId == null) return;
 
             cts = cts.SafeRestart();
-            RequestToSpeakAsync(communityId, cts.Token).Forget();
+            RequestToSpeakAsync(CallId, cts.Token).Forget();
         }
 
         private async UniTaskVoid RequestToSpeakAsync(string communityId, CancellationToken ct)
@@ -127,13 +125,19 @@ namespace DCL.VoiceChat
                 switch (response.ResponseCase)
                 {
                     case RequestToSpeakInCommunityVoiceChatResponse.ResponseOneofCase.Ok:
-                        //Handle raise hand logic
+                        // Send event about raised hand state??
+                        // Maybe just change status for the own user directly instead of waiting for metadata update that would trigger updates everywhere?
                         break;
                 }
             }
             catch (Exception e)
             {
             }
+        }
+
+        public void PromoteToSpeakerInCurrentCall(string walletId)
+        {
+            PromoteToSpeaker(CallId, walletId);
         }
 
         public void PromoteToSpeaker(string communityId, string walletId)
@@ -162,12 +166,17 @@ namespace DCL.VoiceChat
             }
         }
 
+        public void DemoteFromSpeakerInCurrentCall(string walletId)
+        {
+            DemoteFromSpeaker(CallId, walletId);
+        }
+
         public void DemoteFromSpeaker(string communityId, string walletId)
         {
             if (Status.Value is not VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
 
             cts = cts.SafeRestart();
-            DemoteFromSpeakerAsync(communityId, walletId, cts.Token).Forget();
+            DemoteFromSpeakerAsync(CallId, walletId, cts.Token).Forget();
         }
 
         private async UniTaskVoid DemoteFromSpeakerAsync(string communityId, string walletId, CancellationToken ct)

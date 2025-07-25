@@ -34,6 +34,7 @@ namespace DCL.VoiceChat
         public IReadOnlyCollection<string> ActiveSpeakers => activeSpeakers;
 
         public string LocalParticipantId => voiceChatRoom.Participants.LocalParticipant().Identity;
+        public ParticipantState LocalParticipantState => participantStates[LocalParticipantId];
 
         /// <summary>
         ///     Raised when a new participant joins the voice chat room.
