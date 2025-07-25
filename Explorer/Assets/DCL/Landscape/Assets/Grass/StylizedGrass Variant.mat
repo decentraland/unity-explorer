@@ -137,7 +137,7 @@ Material:
     - _Translucency: 1
     - _TranslucencyDirect: 1
     - _TranslucencyFalloff: 8
-    - _TranslucencyIndirect: 0.496
+    - _TranslucencyIndirect: 0.454
     - _TranslucencyOffset: 1
     - _TwoSided: 0
     - _VertexColorBendingChannel: 0
