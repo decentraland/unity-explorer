@@ -545,7 +545,7 @@ namespace Global.Dynamic
             ISocialServiceEventBus socialServiceEventBus = new SocialServiceEventBus();
             var socialServiceContainer = new SocialServicesContainer(bootstrapContainer.DecentralandUrlsSource, identityCache, socialServiceEventBus, appArgs);
 
-            VoiceChatContainer voiceChatContainer = new VoiceChatContainer(socialServiceContainer.socialServicesRPC, socialServiceEventBus, roomHub);
+            VoiceChatContainer voiceChatContainer = new VoiceChatContainer(socialServiceContainer.socialServicesRPC, socialServiceEventBus, roomHub, identityCache);
 
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
