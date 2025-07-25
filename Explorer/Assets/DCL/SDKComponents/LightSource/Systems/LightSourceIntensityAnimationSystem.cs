@@ -34,8 +34,6 @@ namespace DCL.SDKComponents.LightSource.Systems
         [Query]
         private void AnimateLightSourceIntensity([Data] float dt, ref LightSourceComponent lightSourceComponent, in PBLightSource pbLightSource)
         {
-            Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
-
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             bool isLightOn = sceneStateProvider.IsCurrent && !lightSourceComponent.IsCulled;
@@ -43,6 +41,8 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             float delta = dt * lightSourceComponent.MaxIntensity;
             lightSourceComponent.CurrentIntensity = Mathf.MoveTowards(lightSourceComponent.CurrentIntensity, lightSourceComponent.TargetIntensity, delta);
+
+            Light lightSourceInstance = lightSourceComponent.LightSourceInstance;
 
             lightSourceInstance.intensity = lightSourceComponent.CurrentIntensity;
 
