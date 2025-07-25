@@ -70,15 +70,25 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private async UniTaskVoid OnIsSpeakerChangedAsync(bool isSpeaker)
         {
+            //We need async methods as these happen because of BE responses or Livekit events
             await UniTask.SwitchToMainThread();
             view.LeaveStageButton.gameObject.SetActive(isSpeaker);
             view.MicrophoneButton.gameObject.SetActive(isSpeaker);
             view.RaiseHandButton.gameObject.SetActive(!isSpeaker);
         }
 
-        private void OnRequestingToSpeakChanged(bool? isRequestingToSpeak)
+        private void OnRequestingToSpeakChanged(bool isRequestingToSpeak)
         {
+            OnRequestingToSpeakChangedAsync(isRequestingToSpeak).Forget();
+            //For now hide button after user requests to speak just to see it in action
             //Change button appearance? Disable Clicking again? should clicking again cancel our request to speak?
+        }
+
+        private async UniTaskVoid OnRequestingToSpeakChangedAsync(bool isRequestingToSpeak)
+        {
+            //We need async methods as these happen because of BE responses or Livekit events
+            await UniTask.SwitchToMainThread();
+            view.RaiseHandButton.gameObject.SetActive(!isRequestingToSpeak);
         }
 
         public void Dispose()

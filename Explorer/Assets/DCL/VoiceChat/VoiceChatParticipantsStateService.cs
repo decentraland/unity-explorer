@@ -53,18 +53,18 @@ namespace DCL.VoiceChat
         /// <summary>
         ///     Raised when a new participant joins the voice chat room.
         /// </summary>
-        public event ParticipantJoinedDelegate ParticipantJoined;
+        public event ParticipantJoinedDelegate? ParticipantJoined;
 
         /// <summary>
         ///     Raised when a participant leaves the voice chat room.
         /// </summary>
-        public event ParticipantLeftDelegate ParticipantLeft;
+        public event ParticipantLeftDelegate? ParticipantLeft;
 
         /// <summary>
         ///     Raised when participant states are refreshed after connection or reconnection.
         ///     Provides lists of newly joined participants and participants that have left.
         /// </summary>
-        public event ParticipantsStateRefreshDelegate ParticipantsStateRefreshed;
+        public event ParticipantsStateRefreshDelegate? ParticipantsStateRefreshed;
 
         public VoiceChatParticipantsStateService(
             IRoom voiceChatRoom,
@@ -351,7 +351,7 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<string?>(metadata?.name),
                 new ReactiveProperty<bool?>(metadata?.hasClaimedName ?? false),
                 new ReactiveProperty<string?>(metadata?.profilePictureUrl),
-                new ReactiveProperty<bool?>(metadata?.isRequestingToSpeak ?? false),
+                new ReactiveProperty<bool>(metadata?.isRequestingToSpeak ?? false),
                 new ReactiveProperty<bool>(metadata?.isSpeaker ?? false),
                 new ReactiveProperty<UserCommunityRoleMetadata>(metadata?.role ?? UserCommunityRoleMetadata.none)
             );
@@ -392,13 +392,9 @@ namespace DCL.VoiceChat
         {
             var currentParticipants = new List<Participant>();
 
-            Participant localParticipant = voiceChatRoom.Participants.LocalParticipant();
-
-            currentParticipants.Add(localParticipant);
-
             foreach (string participantId in voiceChatRoom.Participants.RemoteParticipantIdentities())
             {
-                Participant participant = voiceChatRoom.Participants.RemoteParticipant(participantId);
+                Participant participant = voiceChatRoom.Participants.RemoteParticipant(participantId)!;
                 currentParticipants.Add(participant);
             }
 
@@ -408,9 +404,6 @@ namespace DCL.VoiceChat
             {
                 if (voiceChatRoom.Participants.RemoteParticipant(participantId) == null) { participantsToRemove.Add(participantId); }
             }
-
-            string localParticipantId = localParticipant.Identity;
-            participantsToRemove.RemoveAll(id => id == localParticipantId);
 
             foreach (string participantId in participantsToRemove)
             {
@@ -424,12 +417,10 @@ namespace DCL.VoiceChat
 
             foreach (Participant participant in currentParticipants)
             {
-                if (participant.Identity == LocalParticipantId)
+                if (participantStates.TryGetValue(participant.Identity, out ParticipantState existingState))
                 {
-                    RefreshParticipantStateFromMetadata(participant, LocalParticipantState);
-                    ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Refreshed local participant state during reconnection");
+                    RefreshParticipantState(participant, existingState);
                 }
-                else if (participantStates.TryGetValue(participant.Identity, out ParticipantState existingState)) { RefreshParticipantState(participant, existingState); }
                 else
                 {
                     ParticipantState state = CreateParticipantState(participant);
@@ -439,7 +430,12 @@ namespace DCL.VoiceChat
                 }
             }
 
-            if (joinedParticipants.Count > 0 || participantsToRemove.Count > 0) { ParticipantsStateRefreshed?.Invoke(joinedParticipants, participantsToRemove); }
+            Participant localParticipant = voiceChatRoom.Participants.LocalParticipant();
+
+            RefreshParticipantStateFromMetadata(localParticipant, LocalParticipantState);
+            ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Refreshed local participant state during reconnection");
+
+            ParticipantsStateRefreshed?.Invoke(joinedParticipants, participantsToRemove);
         }
 
         private void RefreshParticipantState(Participant participant, ParticipantState existingState)
@@ -481,7 +477,7 @@ namespace DCL.VoiceChat
                 new ReactiveProperty<string?>(null),
                 new ReactiveProperty<bool?>(false),
                 new ReactiveProperty<string?>(null),
-                new ReactiveProperty<bool?>(false),
+                new ReactiveProperty<bool>(false),
                 new ReactiveProperty<bool>(false),
                 new ReactiveProperty<UserCommunityRoleMetadata>(UserCommunityRoleMetadata.none)
             );
@@ -508,12 +504,12 @@ namespace DCL.VoiceChat
             public ReactiveProperty<string?> Name { get; set; }
             public ReactiveProperty<bool?> HasClaimedName { get; set; }
             public ReactiveProperty<string?> ProfilePictureUrl { get; set; }
-            public ReactiveProperty<bool?> IsRequestingToSpeak { get; set; }
+            public ReactiveProperty<bool> IsRequestingToSpeak { get; set; }
             public ReactiveProperty<bool> IsSpeaker { get; set; }
             public ReactiveProperty<UserCommunityRoleMetadata> Role { get; set; }
 
             public ParticipantState(string walletId, ReactiveProperty<bool> isSpeaking, ReactiveProperty<string?> name, ReactiveProperty<bool?> hasClaimedName, ReactiveProperty<string?> profilePictureUrl,
-                ReactiveProperty<bool?> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<UserCommunityRoleMetadata> role)
+                ReactiveProperty<bool> isRequestingToSpeak, ReactiveProperty<bool> isSpeaker, ReactiveProperty<UserCommunityRoleMetadata> role)
             {
                 WalletId = walletId;
                 IsSpeaking = isSpeaking;

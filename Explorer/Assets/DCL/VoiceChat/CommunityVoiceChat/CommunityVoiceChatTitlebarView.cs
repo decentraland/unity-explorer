@@ -7,6 +7,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.VoiceChat.CommunityVoiceChat
 {
@@ -63,11 +64,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         private GenericContextMenuElement? kickFromStreamButton;
         private GenericContextMenuElement? banFromCommunityButton;
         private VoiceChatParticipantsStateService.ParticipantState lastClickedProfile;
-        private CancellationToken cancellationToken;
+        private CancellationTokenSource cts = new ();
 
         private void Start()
         {
-            cancellationToken = new CancellationToken();
             CollapseButton.onClick.AddListener(() => CollapseButtonClicked?.Invoke());
 
             contextMenu = new GenericContextMenu(contextMenuSettings.ContextMenuWidth, verticalLayoutPadding: contextMenuSettings.VerticalPadding, elementsSpacing: contextMenuSettings.ElementsSpacing)
@@ -81,6 +81,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
         private void OnContextMenuButtonClicked(VoiceChatParticipantsStateService.ParticipantState voiceChatMember, Vector2 buttonPosition, PlayerEntryView elementView)
         {
+            cts = cts.SafeRestart();
             lastClickedProfile = voiceChatMember;
 
             promoteToSpeakerButton!.Enabled = !voiceChatMember.IsSpeaker;
@@ -88,7 +89,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             kickFromStreamButton!.Enabled = true;
             banFromCommunityButton!.Enabled = true;
 
-            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition), cancellationToken);
+            ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenu, buttonPosition), cts.Token);
         }
 
         public void ConfigureEntry(PlayerEntryView entryView, VoiceChatParticipantsStateService.ParticipantState participantState)

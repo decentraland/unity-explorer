@@ -41,6 +41,23 @@ namespace DCL.VoiceChat
                 communityDataProvider);
 
             currentChannelSubscription = currentChannel.Subscribe(OnCurrentChannelChanged);
+            statusSubscription = orchestrator.CurrentCallStatus.Subscribe(OnCallStatusChanged);
+        }
+
+        private void OnCallStatusChanged(VoiceChatStatus status)
+        {
+            if (status != VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            if (orchestrator.CurrentCallId == ChatChannel.GetCommunityIdFromChannelId(currentChannel.Value.Id))
+            {
+                //If it's the current call, we can get the call information directly from the orchestrator
+                isCurrentCall = true;
+                HandleCurrentCommunityCall();
+            }
+            else
+            {
+                view.gameObject.SetActive(false);
+            }
         }
 
         private void OnCurrentChannelChanged(ChatChannel newChannel)
@@ -84,6 +101,7 @@ namespace DCL.VoiceChat
 
         private void HandleCurrentCommunityCall()
         {
+            view.gameObject.SetActive(true);
             int participantsCount = orchestrator.ParticipantsStateService.ConnectedParticipants.Count;
             view.ParticipantsAmount.SetText(participantsCount.ToString());
             view.JoinStreamButton.gameObject.SetActive(false);

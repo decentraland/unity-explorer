@@ -1,4 +1,3 @@
-using DCL.Chat.EventBus;
 using DCL.UI.Profiles.Helpers;
 using DCL.Utilities;
 using System;
@@ -92,19 +91,27 @@ namespace DCL.VoiceChat.CommunityVoiceChat
             view.CommunityVoiceChatSearchView.gameObject.SetActive(true);
         }
 
-        private void OnParticipantLeft(string participantid) =>
-            RemoveParticipant(participantid);
+        private void OnParticipantLeft(string participantId) =>
+            RemoveParticipant(participantId);
 
-        private void OnParticipantJoined(string participantid, VoiceChatParticipantsStateService.ParticipantState participantstate)
+        private void OnParticipantJoined(string participantId, VoiceChatParticipantsStateService.ParticipantState participantState)
         {
-            if (participantstate.IsSpeaker)
-                AddSpeaker(participantstate);
+            if (participantState.IsSpeaker)
+                AddSpeaker(participantState);
             else
-                AddListener(participantstate);
+                AddListener(participantState);
         }
 
         private void OnParticipantStateRefreshed(List<(string participantId, VoiceChatParticipantsStateService.ParticipantState state)> joinedParticipants, List<string> leftParticipantIds)
         {
+            if (!usedPlayerEntries.ContainsKey(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.WalletId))
+            {
+                if (voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker)
+                    AddSpeaker(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
+                else
+                    AddListener(voiceChatOrchestrator.ParticipantsStateService.LocalParticipantState);
+            }
+
             foreach ((string participantId, VoiceChatParticipantsStateService.ParticipantState state) participantData in joinedParticipants)
             {
                 if (participantData.state.IsSpeaker)
@@ -117,10 +124,10 @@ namespace DCL.VoiceChat.CommunityVoiceChat
                 RemoveParticipant(leftParticipantId);
         }
 
-        private void RemoveParticipant(string leftparticipantid)
+        private void RemoveParticipant(string leftParticipantId)
         {
-            playerEntriesPool.Release(usedPlayerEntries[leftparticipantid]);
-            usedPlayerEntries.Remove(leftparticipantid);
+            playerEntriesPool.Release(usedPlayerEntries[leftParticipantId]);
+            usedPlayerEntries.Remove(leftParticipantId);
         }
 
         private void OnPromoteToSpeaker(VoiceChatParticipantsStateService.ParticipantState member) { }
