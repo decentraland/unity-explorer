@@ -89,6 +89,7 @@ namespace DCL.PluginSystem.World
         private void OnPoolRelease(Light light)
         {
             light.enabled = false;
+            light.transform.SetParent(null);
         }
 
         private void OnPoolGet(Light light)
@@ -102,9 +103,6 @@ namespace DCL.PluginSystem.World
             light.innerSpotAngle = defaultValues.InnerAngle;
             light.spotAngle = defaultValues.OuterAngle;
             light.cookie = null;
-
-            light.transform.SetParent(null);
-            light.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
         }
 
         public class LightSourcePluginSettings : IDCLPluginSettings
