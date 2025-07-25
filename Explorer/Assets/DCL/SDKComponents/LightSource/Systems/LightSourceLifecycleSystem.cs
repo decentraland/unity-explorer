@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using UnityEngine;
@@ -31,6 +32,8 @@ namespace DCL.SDKComponents.LightSource.Systems
         protected override void Update(float t)
         {
             CreateLightSourceComponentQuery(World);
+            ReleaseLightSourceRemovedFromSceneQuery(World);
+            ReleaseDestroyedLightSourceQuery(World);
         }
 
         [Query]
@@ -55,13 +58,27 @@ namespace DCL.SDKComponents.LightSource.Systems
             pbLightSource.IsDirty = true;
         }
 
-        public void FinalizeComponents(in Query query)
+        [Query]
+        [None(typeof(PBLightSource), typeof(DeleteEntityIntention))]
+        private void ReleaseLightSourceRemovedFromScene(in LightSourceComponent lightSourceComponent)
         {
-            ReleaseLightSourcesQuery(World);
+            ReleaseLightSource(lightSourceComponent);
         }
 
         [Query]
-        private void ReleaseLightSources(in LightSourceComponent lightSourceComponent)
+        [All(typeof(DeleteEntityIntention))]
+        private void ReleaseDestroyedLightSource(in LightSourceComponent lightSourceComponent)
+        {
+            ReleaseLightSource(lightSourceComponent);
+        }
+
+        public void FinalizeComponents(in Query query)
+        {
+            ReleaseLightSourceQuery(World);
+        }
+
+        [Query]
+        private void ReleaseLightSource(in LightSourceComponent lightSourceComponent)
         {
             poolRegistry.Release(lightSourceComponent.LightSourceInstance);
         }
