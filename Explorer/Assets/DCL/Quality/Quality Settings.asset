@@ -326,9 +326,9 @@ MonoBehaviour:
     dynamicLights:
       SceneLimitations:
         LightsPerParcel: 1
-        HardMaxLightCount: 3
-        MaxPointLightShadows: 1
-        MaxSpotLightShadows: 1
+        HardMaxLightCount: 5
+        MaxPointLightShadows: 0
+        MaxSpotLightShadows: 3
       SpotLightsLods:
       - Distance: 20
         IsCulled: 0
@@ -378,7 +378,7 @@ MonoBehaviour:
       SceneLimitations:
         LightsPerParcel: 1
         HardMaxLightCount: 10
-        MaxPointLightShadows: 1
+        MaxPointLightShadows: 0
         MaxSpotLightShadows: 3
       SpotLightsLods:
       - Distance: 10
@@ -439,7 +439,7 @@ MonoBehaviour:
       SceneLimitations:
         LightsPerParcel: 1
         HardMaxLightCount: 10
-        MaxPointLightShadows: 2
+        MaxPointLightShadows: 0
         MaxSpotLightShadows: 3
       SpotLightsLods:
       - Distance: 10
