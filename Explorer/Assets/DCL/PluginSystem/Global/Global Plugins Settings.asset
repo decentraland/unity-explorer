@@ -394,6 +394,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        <LightSourceSettings>k__BackingField:
+          m_AssetGUID: 52c856180dc5d6447b902f06d38f4161
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
@@ -607,12 +613,6 @@ MonoBehaviour:
       data:
         <LoadingScreenPrefab>k__BackingField:
           m_AssetGUID: 605506dac7ec04ed09953980478e93d4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_SubObjectGUID: 
-          m_EditorAssetChanged: 0
-        <FallbackTipsConfiguration>k__BackingField:
-          m_AssetGUID: dc412497f06504faeb6e30b848c0842d
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
