@@ -14,6 +14,10 @@ namespace DCL.Chat.History
         public readonly bool IsSentByOwnUser;
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
+
+        /// <summary>
+        /// The instant when the message was sent (UTC), in OLE Automation Date format. Zero means null or unassigned.
+        /// </summary>
         public readonly double SentTimestamp;
 
         public ChatMessage(

@@ -341,14 +341,15 @@ namespace DCL.Chat
                   //  item = listView.NewListViewItem(listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.BlockedUser].mItemPrefab.name);
                 else
                 {
-                    item = listView.NewListViewItem(itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry].mItemPrefab.name :
-                        itemData.IsSentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn].mItemPrefab.name : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry].mItemPrefab.name);
+                    ItemPrefabConfData prefabConf = itemData.IsSystemMessage ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.SystemChatEntry] :
+                        itemData.IsSentByOwnUser ? listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntryOwn] : listView.ItemPrefabDataList[(int)ChatItemPrefabIndex.ChatEntry];
+                    item = listView.NewListViewItem(prefabConf.mItemPrefab.name);
 
                     ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
                     Button? messageOptionsButton = itemScript.messageBubbleElement.messageOptionsButton;
                     messageOptionsButton?.onClick.RemoveAllListeners();
 
-                    SetItemDataAsync(index, itemData, itemScript).Forget();
+                    SetItemDataAsync(index, itemData, itemScript, prefabConf.mPadding).Forget();
                     itemScript.ChatEntryClicked -= OnChatEntryClicked;
 
                     if (itemData is { IsSentByOwnUser: false, IsSystemMessage: false })
@@ -375,7 +376,7 @@ namespace DCL.Chat
             ChatMessageOptionsButtonClicked?.Invoke(itemDataMessage, itemScript);
         }
 
-        private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView)
+        private async UniTaskVoid SetItemDataAsync(int index, ChatMessage itemData, ChatEntryView itemView, float defaultItemPadding)
         {
             if (itemData.IsSystemMessage)
                 itemView.usernameElement.userName.color = ProfileNameColorHelper.GetNameColor(itemData.SenderValidatedName);
@@ -390,7 +391,13 @@ namespace DCL.Chat
                 }
             }
 
-            itemView.SetItemData(itemData);
+            // Whether the timestamp is not null (old messages, backward compatibility) and either the message is the first in the feed or the day it was sent is different from the previous messages
+            bool wasSentInDifferentDate = itemData.SentTimestamp != 0.0f && (index == chatMessages.Count - 1 || DateTime.FromOADate(itemData.SentTimestamp).Date != DateTime.FromOADate(chatMessages[index + 1].SentTimestamp).Date);
+            // There is a date divider inside each instance which is shown or not. The divider is always at the top of the message and its height is not taken into account
+            // when calculating the space a message occupies in the feed, so an extra space has to be added between this message and the previous one, when the divider is present.
+            itemView.GetComponent<LoopListViewItem2>().Padding = wasSentInDifferentDate ? itemView.dateDividerElement.sizeDelta.y
+                                                                                        : defaultItemPadding;
+            itemView.SetItemData(itemData, wasSentInDifferentDate);
 
             // Views that correspond to new added items have to be animated
             if (index - 1 < entriesPendingToAnimate) // Note: -1 because the first real message starts at 1, which is the latest messaged added

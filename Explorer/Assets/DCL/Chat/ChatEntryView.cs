@@ -1,6 +1,10 @@
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
+using SuperScrollView;
+using System;
+using System.Globalization;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -21,6 +25,8 @@ namespace DCL.Chat
         [field: Header("Elements")]
         [field: SerializeField] internal ChatEntryUsernameElement usernameElement { get; private set; }
         [field: SerializeField] internal ChatEntryMessageBubbleElement messageBubbleElement { get; private set; }
+        [field: SerializeField] internal RectTransform dateDividerElement { get; private set; }
+        [field: SerializeField] internal TMP_Text dateDividerText { get; private set; }
 
         [field: Header("Avatar Profile")]
         [field: SerializeField] internal ProfilePictureView ProfilePictureView { get; private set; }
@@ -35,12 +41,30 @@ namespace DCL.Chat
             chatEntryCanvasGroup.DOFade(1, 0.5f);
         }
 
-        public void SetItemData(ChatMessage data)
+        public void SetItemData(ChatMessage data, bool showDateDivider)
         {
             chatMessage = data;
             usernameElement.SetUsername(data.SenderValidatedName, data.SenderWalletId);
             messageBubbleElement.SetMessageData(data);
+
+            dateDividerElement.gameObject.SetActive(showDateDivider);
+
+            if (showDateDivider)
+                dateDividerText.text = GetDateRepresentation(DateTime.FromOADate(data.SentTimestamp).Date);
+
             rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, messageBubbleElement.backgroundRectTransform.sizeDelta.y);
+        }
+
+        private string GetDateRepresentation(DateTime date)
+        {
+            if(date == DateTime.Today)
+                return "Today";
+            else if (date == DateTime.Today.AddDays(-1.0))
+                return "Yesterday";
+            else if(date.Year == DateTime.Today.Year)
+                return date.ToString("ddd, d MMM", CultureInfo.InvariantCulture);
+            else
+                return date.ToString("ddd, d MMM, yyyy", CultureInfo.InvariantCulture);
         }
 
         private void Awake()
