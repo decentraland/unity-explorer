@@ -46,6 +46,9 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             var light = lightSourceComponent.LightSourceInstance;
 
+            light.enabled &= debugState.LightsEnabled;
+            if (!debugState.LightsEnabled) return;
+
             bool shadowsEnabled = debugState.ShadowsEnabled && (light.type != LightType.Point || debugState.PointLightShadowsEnabled);
 
             var maxShadowQuality = shadowsEnabled ? LightShadows.Soft : LightShadows.None;

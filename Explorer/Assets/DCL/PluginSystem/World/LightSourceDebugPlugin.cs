@@ -37,6 +37,16 @@ namespace DCL.PluginSystem.World
         {
             var widget = debugContainerBuilder?.TryAddWidget("Light Sources");
 
+            widget?.AddToggleField("Lights", evt =>
+                {
+                    UpdateDebugState(s =>
+                    {
+                        s.LightsEnabled = evt.newValue;
+                        return s;
+                    });
+                },
+                debugState.ShadowsEnabled);
+
             widget?.AddToggleField("Shadows", evt =>
                 {
                     UpdateDebugState(s =>
