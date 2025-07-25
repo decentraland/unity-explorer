@@ -31,14 +31,8 @@ namespace DCL.AvatarRendering.Emotes
             IsLoading = isLoading;
         }
 
-        public void UpdateLoadingStatus(bool isLoading)
-        {
-            if (Model.Asset == null)
-                Debug.Log($"JUANI WHATS GOING ON HERE {Model.Asset.id} {Model.Asset.assetBundleManifestVersion} {isLoading}");
-            else
-                Debug.Log($"JUANI WHATS GOING ON HERE 2 {isLoading}");
+        public void UpdateLoadingStatus(bool isLoading) =>
             IsLoading = isLoading;
-        }
 
         public bool IsOnChain() =>
             IsOnChain(id: ((IAvatarAttachment<EmoteDTO>)this).GetUrn().ToString());
