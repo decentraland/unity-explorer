@@ -195,7 +195,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
 
             var sceneId = "remoteSceneId";
             var mockSceneData = new MockSceneData { SceneEntityDefinition = new SceneEntityDefinition(sceneId, new SceneMetadata()) };
-            mockSceneData.AssetBundleManifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", System.Array.Empty<string>(), "hash", "date");
 
             var hash = "emote_hash_remote";
             var loop = false;
@@ -248,7 +247,6 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             public ISceneContent SceneContent => new SceneNonHashedContent(URLDomain.FromString("file://mock/"));
             public SceneEntityDefinition SceneEntityDefinition { get; set; } = new ("sceneId", new SceneMetadata());
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f);
-            public SceneAssetBundleManifest AssetBundleManifest { get; set; } = SceneAssetBundleManifest.NULL;
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
             public bool HasRequiredPermission(string permission) => true;

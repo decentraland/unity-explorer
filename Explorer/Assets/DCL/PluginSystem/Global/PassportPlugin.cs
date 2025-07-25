@@ -43,7 +43,6 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly IRealmData realmData;
-        private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
@@ -73,6 +72,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISharedSpaceManager sharedSpaceManager;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private PassportController? passportController;
 
@@ -83,7 +83,6 @@ namespace DCL.PluginSystem.Global
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
             IRealmData realmData,
-            URLDomain assetBundleURL,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
@@ -112,7 +111,8 @@ namespace DCL.PluginSystem.Global
             IChatEventBus chatEventBus,
             ISharedSpaceManager sharedSpaceManager,
             ProfileRepositoryWrapper profileDataProvider,
-            IVoiceChatCallStatusService voiceChatCallStatusService)
+            IVoiceChatCallStatusService voiceChatCallStatusService,
+            IThumbnailProvider thumbnailProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -120,7 +120,6 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
             this.realmData = realmData;
-            this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
@@ -150,6 +149,7 @@ namespace DCL.PluginSystem.Global
             this.sharedSpaceManager = sharedSpaceManager;
             this.profileRepositoryWrapper = profileDataProvider;
             this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.thumbnailProvider = thumbnailProvider;
         }
 
         public void Dispose()
@@ -170,9 +170,6 @@ namespace DCL.PluginSystem.Global
             PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct)).Value.GetComponent<PassportView>();
             BadgePreviewCameraView passport3DPreviewCamera = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.Badges3DCamera, ct)).Value.GetComponent<BadgePreviewCameraView>();
 
-
-            var thumbnailProvider = new ECSThumbnailProvider(realmData, world, assetBundleURL, webRequestController);
-
             passportController = new PassportController(
                 PassportController.CreateLazily(chatView, null),
                 cursor,
@@ -186,7 +183,7 @@ namespace DCL.PluginSystem.Global
                 selfProfile,
                 world,
                 playerEntity,
-                thumbnailProvider,
+                this.thumbnailProvider,
                 webBrowser,
                 decentralandUrlsSource,
                 badgesAPIClient,

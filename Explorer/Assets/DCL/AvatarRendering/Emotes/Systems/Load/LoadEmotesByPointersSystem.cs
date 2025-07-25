@@ -124,7 +124,7 @@ namespace DCL.AvatarRendering.Emotes.Load
 
             foreach (IEmote emote in emotes)
             {
-                if (emote.ManifestResult is { Exception: not null })
+                if (emote.DTO.assetBundleManifestRequestFailed)
                     emotesWithResponse++;
 
                 if (emote.IsLoading) continue;
@@ -195,7 +195,8 @@ namespace DCL.AvatarRendering.Emotes.Load
                         missingPointers.Add(shortenedPointer);
                         intention.RequestedPointers.Add(loadingIntentionPointer);
                     }
-
+                    emote = IEmote.NewEmpty();
+                    emoteStorage.Set(loadingIntentionPointer, emote);
                     continue;
                 }
 
@@ -207,22 +208,21 @@ namespace DCL.AvatarRendering.Emotes.Load
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             // Manifest is required for Web loading only
-            if (component.ManifestResult == null
+            if (string.IsNullOrEmpty(component.DTO.assetBundleManifestVersion)
                 && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)
 
                 // Skip processing manifest for embedded emotes which do not start with 'urn'
                 && component.GetUrn().IsValid())
-
+            {
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 return component.CreateAssetBundleManifestPromise(World!, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
+            }
 
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
                 return false;
 
             if (component.AssetResults[intention.BodyShape] == null)
             {
-                SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
-
                 // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 var promise = AssetBundlePromise.Create(
                     World!,
@@ -231,7 +231,9 @@ namespace DCL.AvatarRendering.Emotes.Load
                         hash! + PlatformUtils.GetCurrentPlatform(),
                         permittedSources: intention.PermittedSources,
                         customEmbeddedSubDirectory: customStreamingSubdirectory,
-                        manifest: manifest,
+                        assetBundleVersion: component.DTO.assetBundleManifestVersion,
+                        parentEntityID: component.DTO.id,
+                        hasParentEntityIDPathInURL : component.DTO.hasSceneInPath,
                         cancellationTokenSource: intention.CancellationTokenSource
                     ),
                     partitionComponent
