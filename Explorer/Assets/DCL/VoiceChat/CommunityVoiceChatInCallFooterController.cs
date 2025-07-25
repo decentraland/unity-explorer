@@ -11,6 +11,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
     {
         private readonly IDisposable isSpeakerSubscription;
         private readonly IDisposable isRequestingToSpeakSubscription;
+        private readonly IDisposable callStateSubscription;
 
         private readonly CommunityVoiceChatInCallFooterView view;
         private readonly IVoiceChatOrchestrator orchestrator;
@@ -40,14 +41,36 @@ namespace DCL.VoiceChat.CommunityVoiceChat
 
             // I think we should manage this here and send an event through a bus like the new chat thing is doing? so each controller listens to its own view.
             // view.OpenListenersSectionButton
-            //We need to listen to our own user state to properly update the UI.
 
             isRequestingToSpeakSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsRequestingToSpeak.Subscribe(OnRequestingToSpeakChanged);
             isSpeakerSubscription = orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Subscribe(OnIsSpeakerChanged);
+            callStateSubscription = orchestrator.CurrentCallStatus.Subscribe(OnCallStateChanged);
+
+            view.LeaveStageButton.gameObject.SetActive(false);
+            view.MicrophoneButton.gameObject.SetActive(false);
+            view.RaiseHandButton.gameObject.SetActive(false);
+
+            //We also need to initialize the UI properly when a call is active.
+        }
+
+        private void OnCallStateChanged(VoiceChatStatus callStatus)
+        {
+            if (orchestrator.CurrentVoiceChatType.Value != VoiceChatType.COMMUNITY) return;
+
+            if (callStatus != VoiceChatStatus.VOICE_CHAT_IN_CALL) return;
+
+            bool isSpeaker = orchestrator.ParticipantsStateService.LocalParticipantState.IsSpeaker.Value;
+            OnIsSpeakerChanged(isSpeaker);
         }
 
         private void OnIsSpeakerChanged(bool isSpeaker)
         {
+            OnIsSpeakerChangedAsync(isSpeaker).Forget();
+        }
+
+        private async UniTaskVoid OnIsSpeakerChangedAsync(bool isSpeaker)
+        {
+            await UniTask.SwitchToMainThread();
             view.LeaveStageButton.gameObject.SetActive(isSpeaker);
             view.MicrophoneButton.gameObject.SetActive(isSpeaker);
             view.RaiseHandButton.gameObject.SetActive(!isSpeaker);
@@ -62,6 +85,7 @@ namespace DCL.VoiceChat.CommunityVoiceChat
         {
             isSpeakerSubscription?.Dispose();
             isRequestingToSpeakSubscription?.Dispose();
+            callStateSubscription?.Dispose();
             cts?.Dispose();
             communityCts?.Dispose();
         }
