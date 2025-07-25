@@ -1,11 +1,12 @@
-﻿using Cysharp.Threading.Tasks;
-using UnityEngine.Networking;
+﻿using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
     public readonly struct GenericPutRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
     {
         public UnityWebRequest UnityWebRequest { get; }
+
+        public bool Idempotent => false;
 
         internal static GenericPutRequest Initialize(in CommonArguments commonArguments, GenericPutArguments arguments)
         {

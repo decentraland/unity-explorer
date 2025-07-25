@@ -1,3 +1,4 @@
+using System;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
@@ -5,6 +6,8 @@ namespace DCL.WebRequests
     public readonly struct GenericHeadRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
     {
         public UnityWebRequest UnityWebRequest { get; }
+
+        public bool Idempotent => true;
 
         private GenericHeadRequest(UnityWebRequest unityWebRequest)
         {

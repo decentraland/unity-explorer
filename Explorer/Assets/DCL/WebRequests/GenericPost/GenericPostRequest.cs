@@ -6,6 +6,8 @@ namespace DCL.WebRequests
     {
         public UnityWebRequest UnityWebRequest { get; }
 
+        public bool Idempotent => false;
+
         internal static GenericPostRequest Initialize(in CommonArguments commonArguments, GenericPostArguments arguments)
         {
             if (arguments.MultipartFormSections != null)

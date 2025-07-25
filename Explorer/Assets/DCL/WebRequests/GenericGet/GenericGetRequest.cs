@@ -6,6 +6,8 @@ namespace DCL.WebRequests
     {
         public UnityWebRequest UnityWebRequest { get; }
 
+        public bool Idempotent => true;
+
         private GenericGetRequest(UnityWebRequest unityWebRequest)
         {
             UnityWebRequest = unityWebRequest;
