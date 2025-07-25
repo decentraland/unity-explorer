@@ -9,7 +9,7 @@ using Utility;
 
 namespace DCL.VoiceChat.Services
 {
-    public class RPCVoiceChatService : IVoiceService
+    public class RPCPrivateVoiceChatService : IVoiceService
     {
         /// <summary>
         ///     Timeout used for foreground operations
@@ -42,7 +42,7 @@ namespace DCL.VoiceChat.Services
         private CancellationTokenSource subscriptionCts = new();
         private bool isServiceDisabled = false;
 
-        public RPCVoiceChatService(
+        public RPCPrivateVoiceChatService(
             IRPCSocialServices socialServiceRPC,
             ISocialServiceEventBus socialServiceEventBus)
         {

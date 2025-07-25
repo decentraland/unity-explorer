@@ -71,13 +71,15 @@ namespace DCL.Chat
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly ILoadingStatus loadingStatus;
         private readonly ChatHistoryStorage? chatStorage;
-        private readonly IVoiceChatCallStatusService voiceChatCallStatusService;
+        private readonly IVoiceChatOrchestrator voiceChatOrchestrator;
         private readonly ChatUserStateUpdater chatUserStateUpdater;
         private readonly IChatUserStateEventBus chatUserStateEventBus;
         private readonly ChatControllerChatBubblesHelper chatBubblesHelper;
         private readonly ChatControllerMemberListHelper memberListHelper;
         private readonly IRoomHub roomHub;
         private CallButtonController callButtonController;
+        private CommunityStreamButtonController communityStreamButtonController;
+        private CommunityStreamSubTitleBarController communityStreamSubTitleBarController;
         private readonly ProfileRepositoryWrapper profileRepositoryWrapper;
         private readonly CommunitiesDataProvider communitiesDataProvider;
         private readonly ISpriteCache thumbnailCache;
@@ -106,6 +108,8 @@ namespace DCL.Chat
 
         public string IslandRoomSid => islandRoom.Info.Sid;
         public string PreviousRoomSid { get; set; } = string.Empty;
+
+        public ReactiveProperty<ChatChannel> CurrentChannel { get; } = new ReactiveProperty<ChatChannel>(ChatChannel.NEARBY_CHANNEL);
 
         public event ConversationOpenedDelegate? ConversationOpened;
         public event ConversationClosedDelegate? ConversationClosed;
@@ -142,8 +146,9 @@ namespace DCL.Chat
             IMVCManager mvcManager,
             WarningNotificationView warningNotificationView,
             CommunitiesEventBus communitiesEventBus,
-            IVoiceChatCallStatusService voiceChatCallStatusService,
-            bool isCallEnabled) : base(viewFactory)
+            IVoiceChatOrchestrator voiceChatOrchestrator,
+            bool isCallEnabled
+            ) : base(viewFactory)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.chatHistory = chatHistory;
@@ -161,7 +166,7 @@ namespace DCL.Chat
             this.chatStorage = chatStorage;
             this.profileRepositoryWrapper = profileDataProvider;
             friendsServiceProxy = friendsService;
-            this.voiceChatCallStatusService = voiceChatCallStatusService;
+            this.voiceChatOrchestrator = voiceChatOrchestrator;
             this.communitiesDataProvider = communitiesDataProvider;
             this.thumbnailCache = thumbnailCache;
             this.mvcManager = mvcManager;
@@ -293,8 +298,23 @@ namespace DCL.Chat
 
             viewInstance.Initialize(chatHistory.Channels, chatSettings, GetChannelMembersAsync, loadingStatus, profileCache, thumbnailCache, OpenContextMenuAsync);
 
-            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatCallStatusService, chatEventBus);
+            callButtonController = new CallButtonController(viewInstance.chatTitleBar.CallButton, voiceChatOrchestrator, chatEventBus);
             viewInstance.chatTitleBar.CallButton.gameObject.SetActive(isCallEnabled);
+
+            communityStreamButtonController = new CommunityStreamButtonController(
+                viewInstance.chatTitleBar.CommunitiesCallButton,
+                voiceChatOrchestrator,
+                chatEventBus,
+                CurrentChannel,
+                communitiesDataProvider);
+
+            communityStreamSubTitleBarController = new CommunityStreamSubTitleBarController(
+                viewInstance.CommunityStreamSubTitleBar,
+                voiceChatOrchestrator,
+                CurrentChannel,
+                communitiesDataProvider);
+
+            viewInstance.chatTitleBar.CommunitiesCallButton.gameObject.SetActive(false);
             chatStorage?.SetNewLocalUserWalletAddress(web3IdentityCache.Identity!.Address);
 
             SubscribeToEvents();
@@ -317,8 +337,9 @@ namespace DCL.Chat
 
         private void AddNearbyChannelAndSendWelcomeMessage()
         {
-            chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
+            var channel = chatHistory.AddOrGetChannel(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY);
             viewInstance!.CurrentChannelId = ChatChannel.NEARBY_CHANNEL_ID;
+            CurrentChannel.UpdateValue(channel);
             chatHistory.AddMessage(ChatChannel.NEARBY_CHANNEL_ID, ChatChannel.ChatChannelType.NEARBY, ChatMessage.NewFromSystem(WELCOME_MESSAGE));
             chatHistory.Channels[ChatChannel.NEARBY_CHANNEL_ID].MarkAllMessagesAsRead();
         }
@@ -349,6 +370,8 @@ namespace DCL.Chat
             UnsubscribeFromEvents();
             Dispose();
             callButtonController.Reset();
+            communityStreamButtonController?.Reset();
+            communityStreamSubTitleBarController?.Dispose();
         }
 
 #endregion
@@ -423,10 +446,13 @@ namespace DCL.Chat
 
                 viewInstance!.SetCommunitiesData(userCommunities);
 
-                chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
+                var channel = chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(response.data.id), ChatChannel.ChatChannelType.COMMUNITY);
 
                 if (setAsCurrentChannel)
+                {
+                    CurrentChannel.UpdateValue(channel);
                     viewInstance!.CurrentChannelId = channelId;
+                }
             }
             else
             {
@@ -463,6 +489,7 @@ namespace DCL.Chat
             memberListHelper.Dispose();
             chatUsersUpdateCts.SafeCancelAndDispose();
             callButtonController?.Dispose();
+            communityStreamButtonController?.Dispose();
             communitiesServiceCts.SafeCancelAndDispose();
             errorNotificationCts.SafeCancelAndDispose();
             memberListCts.SafeCancelAndDispose();
@@ -479,10 +506,11 @@ namespace DCL.Chat
             ChatChannel.ChannelId channelId = new ChatChannel.ChannelId(userId);
             ConversationOpened?.Invoke(chatHistory.Channels.ContainsKey(channelId));
 
-            chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
+            var channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.USER);
             chatUserStateUpdater.CurrentConversation = userId;
             chatUserStateUpdater.AddConversation(userId);
 
+            CurrentChannel.UpdateValue(channel);
             viewInstance!.CurrentChannelId = channelId;
 
             chatUsersUpdateCts = chatUsersUpdateCts.SafeRestart();
@@ -493,8 +521,7 @@ namespace DCL.Chat
 
         private void OnStartCall(string userId)
         {
-            voiceChatCallStatusService.StartCall(new Web3Address(userId));
-
+            voiceChatOrchestrator.StartCall(new Web3Address(userId), VoiceChatType.PRIVATE);
         }
 
         private void OnCommunitiesDataProviderCommunityCreated(CreateOrUpdateCommunityResponse.CommunityData newCommunity)
@@ -528,6 +555,7 @@ namespace DCL.Chat
             if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
                 chatUserStateUpdater.CurrentConversation = channelId.Id;
 
+            CurrentChannel.UpdateValue(chatHistory.Channels[channelId]);
             viewInstance!.CurrentChannelId = channelId;
 
             if(chatHistory.Channels[channelId].ChannelType == ChatChannel.ChatChannelType.USER)
@@ -1198,8 +1226,9 @@ namespace DCL.Chat
                 AddCommunityConversationAsync(communityId, setAsCurrentChannel: true).Forget();
             else
             {
-                chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
+                var channel = chatHistory.AddOrGetChannel(channelId, ChatChannel.ChatChannelType.COMMUNITY);
                 viewInstance!.CurrentChannelId = channelId;
+                CurrentChannel.UpdateValue(channel);
             }
 
             SetupViewWithUserStateOnMainThreadAsync(ChatUserStateUpdater.ChatUserState.CONNECTED).Forget();

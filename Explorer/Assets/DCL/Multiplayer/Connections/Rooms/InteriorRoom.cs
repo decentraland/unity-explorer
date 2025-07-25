@@ -144,7 +144,7 @@ namespace DCL.Multiplayer.Connections.Rooms
                                                 };
 
             // TODO check the order of these messages
-            ConnectionUpdated?.Invoke(assigned, connectionUpdate);
+            ConnectionUpdated?.Invoke(assigned, connectionUpdate, null);
             ConnectionStateChanged?.Invoke(currentState);
         }
 
@@ -189,9 +189,9 @@ namespace DCL.Multiplayer.Connections.Rooms
             previous.ConnectionUpdated -= RoomOnConnectionUpdated;
         }
 
-        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate)
+        private void RoomOnConnectionUpdated(IRoom room, ConnectionUpdate connectionupdate, DisconnectReason? disconnectReason = null)
         {
-            ConnectionUpdated?.Invoke(room, connectionupdate);
+            ConnectionUpdated?.Invoke(room, connectionupdate, disconnectReason);
         }
 
         private void RoomOnConnectionStateChanged(ConnectionState connectionstate)
@@ -260,7 +260,7 @@ namespace DCL.Multiplayer.Connections.Rooms
         public void SetLocalName(string name) =>
             assigned.SetLocalName(name);
 
-        public Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
+        public Task<(bool success, string? errorMessage)> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
             assigned.EnsureAssigned().ConnectAsync(url, authToken, cancelToken, autoSubscribe);
 
         public Task DisconnectAsync(CancellationToken token) =>

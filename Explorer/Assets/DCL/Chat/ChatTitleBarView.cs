@@ -38,8 +38,8 @@ namespace DCL.Chat
         [SerializeField] private Button showMemberListButton;
         [SerializeField] private Button hideMemberListButton;
         [SerializeField] private Button openContextMenuButton;
-        [field: SerializeField]
-        public CallButtonView CallButton { get; private set; }
+        [field: SerializeField] public CallButtonView CallButton { get; private set; }
+        [field: SerializeField] public CallButtonView CommunitiesCallButton { get; private set; }
 
         [SerializeField] private TMP_Text chatTitleMemberListNumberText;
         [SerializeField] private TMP_Text memberListTitleMemberListNumberText;
