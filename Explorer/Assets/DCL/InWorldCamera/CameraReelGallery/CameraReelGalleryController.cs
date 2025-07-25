@@ -14,9 +14,7 @@ using DG.Tweening;
 using MVC;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using NUnit.Framework.Internal;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Pool;
@@ -308,6 +306,17 @@ namespace DCL.InWorldCamera.CameraReelGallery
             if(currentSize <= 0)
                 view.emptyState.SetActive(true);
         }
+        
+        private void OnReelPublicStateChange(string reelId, bool isPublic)
+        {
+            foreach (var thumbnail in pagedCameraReelManager.AllOrderedResponses)
+            {
+                if(thumbnail.id != reelId) continue;
+                
+                thumbnail.isPublic = isPublic;
+                return;
+            }
+        }
 
         private void PrepareShowGallery(CancellationToken ct)
         {
@@ -325,6 +334,7 @@ namespace DCL.InWorldCamera.CameraReelGallery
         {
             view.scrollRect.onValueChanged.AddListener(OnScrollRectValueChanged);
             view.loadingSpinner.SetActive(false);
+            galleryEventBus.ReelPublicStateChangeEvent += OnReelPublicStateChange;
         }
 
         public async UniTask ShowWalletGalleryAsync(string walletAddress, CancellationToken ct, CameraReelStorageStatus? storageStatus = null)
@@ -583,6 +593,8 @@ namespace DCL.InWorldCamera.CameraReelGallery
 
             HideDeleteModal();
             optionButtonController?.HideControl();
+            
+            galleryEventBus.ReelPublicStateChangeEvent -= OnReelPublicStateChange;
         }
 
         public void Dispose()

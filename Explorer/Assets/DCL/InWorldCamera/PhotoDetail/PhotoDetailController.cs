@@ -45,7 +45,6 @@ namespace DCL.InWorldCamera.PhotoDetail
         private CancellationTokenSource showReelCts = new ();
         private CancellationTokenSource downloadScreenshotCts = new ();
         private CancellationTokenSource setPublicCts = new ();
-        private CancellationTokenSource closePanelCts = new ();
 
         private bool metadataPanelIsOpen = true;
         private bool isClosing;
@@ -99,16 +98,6 @@ namespace DCL.InWorldCamera.PhotoDetail
                 HideDeleteModal();
         }
 
-        private void OnReelPublicStateChange(string reelId, bool isPublic)
-        {
-            foreach (var reel in inputData.AllReels)
-            {
-                if(reel.id != reelId) continue;
-                
-                reel.isPublic = isPublic;
-            }
-        }
-
         private void JumpInClicked()
         {
             isClosing = true;
@@ -136,7 +125,6 @@ namespace DCL.InWorldCamera.PhotoDetail
             viewInstance.cancelDeleteIntentButton?.onClick.AddListener(() => DeletionModalCancelClick());
             viewInstance.cancelDeleteIntentBackgroundButton?.onClick.AddListener(() => DeletionModalCancelClick(false));
             viewInstance.deleteReelButton?.onClick.AddListener(DeleteScreenshot);
-
 
             Activated?.Invoke();
 
