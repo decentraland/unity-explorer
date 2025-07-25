@@ -16,9 +16,6 @@ namespace DCL.PluginSystem.Global
             public LoadingScreenObjectRef LoadingScreenPrefab { get; private set; }
 
             [field: SerializeField]
-            public AssetReferenceT<SceneTipsConfigurationSO> FallbackTipsConfiguration { get; private set; }
-
-            [field: SerializeField]
             public string FallbackTipsTable { get; private set; }
 
             [field: SerializeField]

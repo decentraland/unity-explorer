@@ -70,6 +70,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1dbd1decb60282248bd089c32bec5d02
+    m_Address: SkyboxRenderController
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1f557ed079be146f9aeb090104c115c9
     m_Address: Assets/DCL/MapRenderer/Addressables/SceneOfInterest.prefab
     m_ReadOnly: 0
@@ -100,13 +105,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2e201c78ef54a4b3bb0edd235bf0ed52
-    m_Address: WearablesImg
+  - m_GUID: 2eac55a1aa3034858a71ab0e06baf5de
+    m_Address: ClusterMarkerObject
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2eac55a1aa3034858a71ab0e06baf5de
-    m_Address: ClusterMarkerObject
+  - m_GUID: 33891647b85dc47319f39490bb24594d
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ToggleWithCheck.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -142,6 +147,11 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4362b43091b0d462db2641f8c866e9b9
     m_Address: Assets/DCL/UI/Profile/Names/Assets/ProfileNameEditor.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 497073cedbc8540c2b17104cfee96158
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/SubMenuButton.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -210,11 +220,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 5c36aa92efab46341b9b02fd6a38a4e7
-    m_Address: StylizedSkyboxController
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5ed0eaf7428cb4135baf7d2e09a9430a
     m_Address: PageSelector
     m_ReadOnly: 0
@@ -265,11 +270,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6ea398d3ecc4e457baad22c2f43aabfc
-    m_Address: LoadingEmbedded
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 70c6f2eab01fc462a9a2cac0d661417e
     m_Address: RewardPanel
     m_ReadOnly: 0
@@ -295,8 +295,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a24101494a664ee59a8952e20b8f441
+    m_Address: Assets/DCL/UI/GenericContextMenu/Prefabs/ControlsContainer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 7a43321b8055d407ba2e871e873c7062
     m_Address: EmoteWheelRarityBackgrounds.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b075576ea612439bb40436f7c0fdff0
+    m_Address: Assets/DCL/UI/ConfirmationDialog/Prefabs/ConfirmationDialog.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -315,8 +325,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 875491fc8a6c64fe2aa217d9a750e8a3
-    m_Address: LANDImg
+  - m_GUID: 8a91951d2f71f174d998356f01a3603c
+    m_Address: Assets/DCL/Passport/Prefabs/Badges/Badge3DPreviewCamera.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -365,11 +375,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9d145b4f22db146a2b25d2a7d5a1f795
-    m_Address: DAOImg
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a1d5d4f99234041159f0c215eef3eff3
     m_Address: NewNotificationPanel
     m_ReadOnly: 0
@@ -405,23 +410,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bd64e7058e4a44a1eafef49d75c5f0d0
-    m_Address: LoadingRainbowGradient
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bda7566751d4243fb842e1a272cb9f83
     m_Address: MapCategoryIconMapping
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: beceeda1295384ef4921493b30d5cf45
-    m_Address: EditorImg
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cb536b0cdd6084c87a55b1ff25637eae
-    m_Address: Assets/DCL/SceneLoadingScreens/Textures/CreditsImg.png
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -432,11 +422,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d65049d6f7a244863b39c4dda5ba538e
     m_Address: NametagsData
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: dc412497f06504faeb6e30b848c0842d
-    m_Address: FallbackSceneTipsConfiguration
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
@@ -467,11 +452,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e8f593404f0a19749bc68df2b5064215
     m_Address: StylizedSkyboxAnimation
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f75abfa64274a47fd9b3b14143dd8fa0
-    m_Address: MANAImg
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

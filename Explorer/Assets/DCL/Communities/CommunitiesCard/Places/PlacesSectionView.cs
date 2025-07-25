@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.UI;
+using DCL.UI.ConfirmationDialog.Opener;
 using DCL.UI.GenericContextMenu.Controls.Configs;
 using DCL.UI.GenericContextMenuParameter;
 using DCL.UI.Utilities;
@@ -31,9 +33,8 @@ namespace DCL.Communities.CommunitiesCard.Places
         [field: SerializeField] private LoopGridView loopGrid { get; set; } = null!;
         [field: SerializeField] private ScrollRect loopGridScrollRect { get; set; } = null!;
         [field: SerializeField] private GameObject emptyState { get; set; } = null!;
-        [field: SerializeField] private GameObject loadingObject { get; set; } = null!;
+        [field: SerializeField] private SkeletonLoadingView loadingObject { get; set; } = null!;
         [field: SerializeField] private CommunityPlaceContextMenuConfiguration contextMenuConfiguration { get; set; } = null!;
-        [field: SerializeField] private ConfirmationDialogView confirmationDialogView { get; set; } = null!;
         [field: SerializeField] private Sprite deleteSprite { get; set; } = null!;
 
         public event Action? NewDataRequested;
@@ -71,8 +72,13 @@ namespace DCL.Communities.CommunitiesCard.Places
         public void SetEmptyStateActive(bool active) =>
             emptyState.SetActive(active && !canModify);
 
-        public void SetLoadingStateActive(bool active) =>
-            loadingObject.SetActive(active);
+        public void SetLoadingStateActive(bool active)
+        {
+            if (active)
+                loadingObject.ShowLoading();
+            else
+                loadingObject.HideLoading();
+        }
 
         public void SetCanModify(bool canModify)
         {
@@ -142,17 +148,16 @@ namespace DCL.Communities.CommunitiesCard.Places
 
             async UniTaskVoid ShowBanConfirmationDialogAsync(CancellationToken ct)
             {
-                Result<ConfirmationDialogView.ConfirmationResult> dialogResult = await confirmationDialogView.ShowConfirmationDialogAsync(
-                                                                                                                  new ConfirmationDialogView.DialogData(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
-                                                                                                                      DELETE_PLACE_CANCEL_TEXT,
-                                                                                                                      DELETE_PLACE_CONFIRM_TEXT,
-                                                                                                                      deleteSprite,
-                                                                                                                      false, false,
-                                                                                                                      DELETE_PLACE_SUB_TEXT),
-                                                                                                                  ct)
-                                                                                                             .SuppressToResultAsync(ReportCategory.COMMUNITIES);
+                Result<ConfirmationResult> dialogResult = await ViewDependencies.ConfirmationDialogOpener.OpenConfirmationDialogAsync(new ConfirmationDialogParameter(string.Format(DELETE_PLACE_TEXT_FORMAT, placeInfo.title, communityName),
+                                                                                         DELETE_PLACE_CANCEL_TEXT,
+                                                                                         DELETE_PLACE_CONFIRM_TEXT,
+                                                                                         deleteSprite,
+                                                                                         false, false,
+                                                                                         subText: DELETE_PLACE_SUB_TEXT),
+                                                                                     ct)
+                                                                                .SuppressToResultAsync(ReportCategory.COMMUNITIES);
 
-                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationDialogView.ConfirmationResult.CANCEL) return;
+                if (ct.IsCancellationRequested || !dialogResult.Success || dialogResult.Value == ConfirmationResult.CANCEL) return;
 
                 ElementDeleteButtonClicked?.Invoke(placeInfo);
             }
