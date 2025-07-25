@@ -57,7 +57,7 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
-            lightSourceComponent.DistanceToPlayer = math.distance(transform.Transform.position, characterObject.Position);
+            lightSourceComponent.DistanceToPlayerSq = math.distancesq(transform.Transform.position, characterObject.Position);
         }
 
         private void SortAndCullLightSources()
@@ -78,7 +78,7 @@ namespace DCL.SDKComponents.LightSource.Systems
             if (!LightSourceHelper.IsPBLightSourceActive(pbLightSource, settings.DefaultValues.Active)) return;
 
             lightSourceComponent.Index = lightData.Length;
-            lightData.AddNoResize(new LightData(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayer));
+            lightData.AddNoResize(new LightData(pbLightSource.TypeCase, lightSourceComponent.DistanceToPlayerSq));
         }
 
         [BurstCompile]
@@ -133,12 +133,12 @@ namespace DCL.SDKComponents.LightSource.Systems
         {
             public PBLightSource.TypeOneofCase Type;
 
-            public float Distance;
+            public float DistanceSq;
 
-            public LightData(PBLightSource.TypeOneofCase type, float distance)
+            public LightData(PBLightSource.TypeOneofCase type, float distanceSq)
             {
                 Type = type;
-                Distance = distance;
+                DistanceSq = distanceSq;
             }
         }
 
@@ -159,7 +159,7 @@ namespace DCL.SDKComponents.LightSource.Systems
 
             public int Compare(int lhs, int rhs)
             {
-                return LightData[lhs].Distance.CompareTo(LightData[rhs].Distance);
+                return LightData[lhs].DistanceSq.CompareTo(LightData[rhs].DistanceSq);
             }
         }
 

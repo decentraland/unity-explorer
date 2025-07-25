@@ -67,8 +67,11 @@ namespace DCL.SDKComponents.LightSource.Systems
         private int FindLOD(List<LightSourceSettings.LodSettings> lodSettings,  LightSourceComponent lightSourceComponent)
         {
             for (var lod = 0; lod < lodSettings.Count - 1; lod++)
-                if (lightSourceComponent.DistanceToPlayer < lodSettings[lod].Distance)
+            {
+                float distance = lodSettings[lod].Distance;
+                if (lightSourceComponent.DistanceToPlayerSq < distance * distance)
                     return lod;
+            }
 
             return lodSettings.Count - 1;
         }
