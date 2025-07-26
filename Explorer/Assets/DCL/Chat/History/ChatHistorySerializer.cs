@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -15,6 +16,7 @@ namespace DCL.Chat.History
         private const int ENTRY_SENT_BY_LOCAL_USER = 0;
         private const int ENTRY_MESSAGE = 1;
         private const int ENTRY_USERNAME = 2;
+        private const int ENTRY_TIMESTAMP = 3;
 
         private const string LOCAL_USER_TRUE_VALUE = "T";
         private const string LOCAL_USER_FALSE_VALUE = "F";
@@ -23,7 +25,7 @@ namespace DCL.Chat.History
         private readonly StringBuilder builder = new StringBuilder(256); // Enough not to be resized
         private readonly JsonSerializer jsonSerializer = new JsonSerializer();
 
-        private readonly string[] entryValues = new string[3];
+        private readonly string[] entryValues = new string[4];
         private readonly ChatMessageFactory messageFactory;
 
         public ChatHistorySerializer(ChatMessageFactory messageFactory)
@@ -42,6 +44,7 @@ namespace DCL.Chat.History
             entryValues[ENTRY_SENT_BY_LOCAL_USER] = messageToAppend.IsSentByOwnUser ? LOCAL_USER_TRUE_VALUE : LOCAL_USER_FALSE_VALUE;
             entryValues[ENTRY_MESSAGE] = messageToAppend.Message;
             entryValues[ENTRY_USERNAME] = messageToAppend.SenderValidatedName;
+            entryValues[ENTRY_TIMESTAMP] = messageToAppend.SentTimestamp.ToString(CultureInfo.InvariantCulture);
 
             destination.Write(CreateHistoryEntry(entryValues));
             destination.Flush();
@@ -81,7 +84,7 @@ namespace DCL.Chat.History
                     ParseEntryValues(currentLine, entryValues);
                     bool sentByLocalUser = entryValues[ENTRY_SENT_BY_LOCAL_USER] == LOCAL_USER_TRUE_VALUE;
                     string walletAddress = sentByLocalUser ? localUserWalletAddress : remoteUserWalletAddress;
-                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], string.Empty);
+                    ChatMessage newMessage = messageFactory.CreateChatMessage(walletAddress, sentByLocalUser, entryValues[ENTRY_MESSAGE], entryValues[ENTRY_USERNAME], double.Parse(entryValues[ENTRY_TIMESTAMP]));
 
                     obtainedMessages.Add(newMessage);
                     currentLine = await reader2.ReadLineAsync();
@@ -145,6 +148,7 @@ namespace DCL.Chat.History
             values[ENTRY_SENT_BY_LOCAL_USER] = (entryParts.Length > ENTRY_SENT_BY_LOCAL_USER) ? entryParts[ENTRY_SENT_BY_LOCAL_USER] : LOCAL_USER_FALSE_VALUE;
             values[ENTRY_MESSAGE] =            (entryParts.Length > ENTRY_MESSAGE)            ? entryParts[ENTRY_MESSAGE] : string.Empty;
             values[ENTRY_USERNAME] =           (entryParts.Length > ENTRY_USERNAME)           ? entryParts[ENTRY_USERNAME] : string.Empty;
+            values[ENTRY_TIMESTAMP] =          (entryParts.Length > ENTRY_TIMESTAMP)          ? entryParts[ENTRY_TIMESTAMP] : "0.0";
         }
     }
 }

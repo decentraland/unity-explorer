@@ -179,6 +179,10 @@ MonoBehaviour:
     mPadding: 8
     mInitCreateCount: 1
     mStartPosOffset: 0
+  - mItemPrefab: {fileID: 1823520394044014357, guid: b485c96f82076984fa8ddfb70c0c7e2c, type: 3}
+    mPadding: 8
+    mInitCreateCount: 1
+    mStartPosOffset: 0
   mArrangeType: 1
   mSupportScrollBar: 1
   mItemSnapEnable: 0
@@ -583,7 +587,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 81955961218408590}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

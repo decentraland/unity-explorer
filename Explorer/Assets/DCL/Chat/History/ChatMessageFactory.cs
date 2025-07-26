@@ -31,8 +31,8 @@ namespace DCL.Chat.History
         /// <param name="message">The formatted text message.</param>
         /// <param name="usernameOverride">Optional. A sender's username to use instead of the one stored in the profile currently.
         /// Leave it null to use the one provided by the profile.</param>
-        /// <param name="communityId">The ID of the community to which the message is sent, if any. Null if none.</param>
-        public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, string message, string? usernameOverride, string communityId)
+        /// <param name="sentTimestamp">The UTC time when the message was sent, in OLE automation format.</param>
+        public ChatMessage CreateChatMessage(string senderWalletAddress, bool isSentByLocalUser, string message, string? usernameOverride, double sentTimestamp)
         {
             Profile? ownProfile = null;
 
@@ -50,6 +50,7 @@ namespace DCL.Chat.History
                     senderWalletAddress,
                     true,
                     GetUserHash(ownProfile),
+                    sentTimestamp,
                     isMention: false
                 );
             }
@@ -72,6 +73,7 @@ namespace DCL.Chat.History
                 senderWalletAddress,
                 false,
                 GetUserHash(profile),
+                sentTimestamp,
                 isMention,
                 false
             );
