@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using UnityEngine.Serialization;
+﻿using System;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Rendering.GPUInstancing
@@ -7,22 +7,18 @@ namespace DCL.Rendering.GPUInstancing
     [CreateAssetMenu(fileName = nameof(GPUInstancingSettings), menuName = "DCL/" + nameof(GPUInstancingSettings), order = 0)]
     public class GPUInstancingSettings : ScriptableObject
     {
-        private const float SCENE_DIST_MIN = 20f;
-        private const float ENV_DIST_MIN = 1000f;
-        private const float ENV_DIST_MAX = 7000f;
+        private const int SCENE_DIST_MIN = 20;
+        private const int SCENE_DIST_MAX = 150;
 
         public ComputeShader FrustumCullingAndLODGenComputeShader;
         public ComputeShader IndirectBufferGenerationComputeShader;
         public ComputeShader DrawArgsInstanceCountTransferComputeShader;
 
-        public float RenderDistScaleFactor = 1f;
+        [field: Range(SCENE_DIST_MIN, SCENE_DIST_MAX)]
+        [field: SerializeField]
+        public int RenderDistanceInParcels { get; set; } = 70;
 
-        public float RoadsSceneDistance(float envDistance)
-        {
-            float normalizedEnvDistance = Mathf.InverseLerp(ENV_DIST_MIN, ENV_DIST_MAX, envDistance);
-            float result = SCENE_DIST_MIN + (Mathf.Lerp(0, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT - SCENE_DIST_MIN, normalizedEnvDistance) * RenderDistScaleFactor);
-
-            return result * ParcelMathHelper.PARCEL_SIZE;
-        }
+        public int RoadsSceneDistance() =>
+            Math.Clamp(RenderDistanceInParcels, SCENE_DIST_MIN, SCENE_DIST_MAX) * ParcelMathHelper.PARCEL_SIZE;
     }
 }

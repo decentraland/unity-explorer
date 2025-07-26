@@ -5,7 +5,7 @@ namespace DCL.Landscape.Settings
 {
     public class LandscapeData : ScriptableObject
     {
-        public Action<float> OnDetailDistanceChanged;
+        public event Action<float> OnDetailDistanceChanged;
 
         public bool showSatelliteView;
         public bool drawTerrain;

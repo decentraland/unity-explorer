@@ -4,6 +4,7 @@ using DCL.Friends.UserBlocking;
 using DCL.Landscape.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Quality;
+using DCL.Rendering.GPUInstancing;
 using DCL.SDKComponents.MediaStream.Settings;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
@@ -37,6 +38,7 @@ namespace DCL.Settings
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly VideoPrioritizationSettings videoPrioritizationSettings;
         private readonly LandscapeData landscapeData;
+        private readonly GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings;
         private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly VoiceChatSettingsAsset voiceChatSettings;
         private readonly ISystemMemoryCap memoryCap;
@@ -59,6 +61,7 @@ namespace DCL.Settings
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
             VideoPrioritizationSettings videoPrioritizationSettings,
             LandscapeData landscapeData,
+            GPUInstancingRenderFeature.GPUInstancingRenderFeature_Settings roadsSettings,
             QualitySettingsAsset qualitySettingsAsset,
             ControlsSettingsAsset controlsSettingsAsset,
             ISystemMemoryCap memoryCap,
@@ -74,6 +77,7 @@ namespace DCL.Settings
             this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
+            this.roadsSettings = roadsSettings;
             this.qualitySettingsAsset = qualitySettingsAsset;
             this.memoryCap = memoryCap;
             this.chatSettingsAsset = chatSettingsAsset;
@@ -171,6 +175,7 @@ namespace DCL.Settings
                             realmPartitionSettingsAsset,
                             videoPrioritizationSettings,
                             landscapeData,
+                            roadsSettings,
                             generalAudioMixer,
                             qualitySettingsAsset,
                             controlsSettingsAsset,
