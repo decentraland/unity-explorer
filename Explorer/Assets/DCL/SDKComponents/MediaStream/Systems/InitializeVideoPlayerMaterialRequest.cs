@@ -1,11 +1,11 @@
 ﻿using Arch.Core;
-using UnityEngine;
+using ECS.Unity.Textures.Components;
 
 namespace DCL.SDKComponents.MediaStream
 {
     public struct InitializeVideoPlayerMaterialRequest
     {
-        public Renderer Renderer;
+        public VideoTextureConsumer Consumer;
         public Entity MediaPlayerComponentEntity;
     }
 }

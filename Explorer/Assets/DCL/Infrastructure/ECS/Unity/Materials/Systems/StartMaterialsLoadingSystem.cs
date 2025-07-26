@@ -228,9 +228,6 @@ namespace ECS.Unity.Materials.Systems
                 StreamableLoadingResult<Texture2DData> result = new StreamableLoadingResult<Texture2DData>(info.VideoTexture!);
 
                 promise = Promise.CreateFinalized(intention, result);
-
-                if (info.VideoRenderer)
-                    World.Create(new InitializeVideoPlayerMaterialRequest { Renderer = info.VideoRenderer, MediaPlayerComponentEntity = info.VideoPlayer });
             }
             else
                 promise = Promise.Create(
