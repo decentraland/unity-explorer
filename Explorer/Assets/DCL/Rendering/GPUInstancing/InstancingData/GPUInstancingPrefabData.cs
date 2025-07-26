@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.Rendering.GPUInstancing.InstancingData
@@ -35,13 +36,15 @@ namespace DCL.Rendering.GPUInstancing.InstancingData
 
         private void TryAddToCollected(GPUInstancingLODGroup newCandidate, Matrix4x4 localToRootMatrix)
         {
+            Material firstCandidateMaterial = newCandidate.CombinedLodsRenderers.First().SharedMaterial;
+
             if (candidatesTable.TryGetValue(newCandidate, out List<PerInstanceBuffer> instances))
             {
                 ReportHub.Log(ReportCategory.GPU_INSTANCING, $"Adding {nameof(PerInstanceBuffer)} to existing LODGroup: {newCandidate.Transform.name}");
-                instances.Add(new PerInstanceBuffer(localToRootMatrix));
+                instances.Add(new PerInstanceBuffer(localToRootMatrix, firstCandidateMaterial.mainTextureScale, firstCandidateMaterial.mainTextureOffset));
             }
             else
-                candidatesTable.Add(newCandidate, new List<PerInstanceBuffer> { new (localToRootMatrix) });
+                candidatesTable.Add(newCandidate, new List<PerInstanceBuffer> { new (localToRootMatrix, firstCandidateMaterial.mainTextureScale, firstCandidateMaterial.mainTextureOffset) });
         }
     }
 }

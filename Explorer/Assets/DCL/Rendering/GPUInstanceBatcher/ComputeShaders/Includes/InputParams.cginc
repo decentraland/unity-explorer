@@ -5,7 +5,9 @@
 struct PerInstance
 {
     float4x4 worldMatrix;
-    float3 colour;
+    float4 colour;
+    float2 tiling;
+    float2 offset;
 };
 
 RWStructuredBuffer<PerInstance> PerInstanceData;

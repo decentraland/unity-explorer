@@ -99,6 +99,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 0.25, y: 0.25}
+      offset: {x: 0.5, y: 0.75}
   - Name: RoadSideStraight
     LODGroup: {fileID: 3662528169251428093}
     InstancesBuffer:
@@ -120,6 +122,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 5976652901196538861}
     InstancesBuffer:
@@ -141,6 +145,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: HedgeMiddleLarge
     LODGroup: {fileID: 5493080353175256334}
     InstancesBuffer:
@@ -162,6 +168,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
 --- !u!1 &7577275457085050935
 GameObject:
   m_ObjectHideFlags: 0

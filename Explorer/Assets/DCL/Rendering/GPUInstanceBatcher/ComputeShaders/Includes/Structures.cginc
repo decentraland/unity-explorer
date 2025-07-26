@@ -5,6 +5,8 @@ struct PerInstance
 {
     float4x4 worldMatrix;
     float4 colour;
+    float2 tiling;
+    float2 offset;
 };
 
 struct PerInstanceLODLevels

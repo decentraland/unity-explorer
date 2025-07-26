@@ -195,7 +195,7 @@ MonoBehaviour:
     e33: 0
   CombinedLodsRenderers:
   - SubMeshId: 0
-    CombinedMesh: {fileID: -6948799273827352249}
+    CombinedMesh: {fileID: -7401623504969784432}
     SharedMaterial: {fileID: 2100000, guid: 9c966795d8052704abe4bc0f21992a6d, type: 2}
     RenderParamsSerialized:
       RefRenderer: {fileID: 7395617651910055435}
@@ -217,7 +217,7 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 7342138800443175179, guid: 14c353cd19b5ed543b9bb8851997011b, type: 3}
   m_PrefabInstance: {fileID: 235884021952947968}
   m_PrefabAsset: {fileID: 0}
---- !u!43 &-6948799273827352249
+--- !u!43 &-7401623504969784432
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

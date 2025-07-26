@@ -99,6 +99,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 0.25, y: 0.25}
+      offset: {x: 0.5, y: 0.5}
   - Name: RoadSideCornerSmall
     LODGroup: {fileID: 8967294299166144331}
     InstancesBuffer:
@@ -120,6 +122,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: HedgeBallGreen
     LODGroup: {fileID: 5973169121785644302}
     InstancesBuffer:
@@ -141,6 +145,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
 --- !u!1 &8565709133921575800
 GameObject:
   m_ObjectHideFlags: 0

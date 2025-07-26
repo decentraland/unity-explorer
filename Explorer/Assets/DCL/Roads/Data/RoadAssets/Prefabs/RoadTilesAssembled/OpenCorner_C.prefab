@@ -99,6 +99,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 0.25, y: 0.25}
+      offset: {x: 0.75, y: 0.75}
   - Name: RoadSideL
     LODGroup: {fileID: 6657997513763388681}
     InstancesBuffer:
@@ -120,6 +122,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 7654009331373903602}
     InstancesBuffer:
@@ -141,6 +145,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
     - instMatrix:
         e00: -1
         e01: 0
@@ -159,6 +165,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: HedgeBallGreen
     LODGroup: {fileID: 6058813463953810377}
     InstancesBuffer:
@@ -180,6 +188,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: Bench01
     LODGroup: {fileID: 260541510935670389}
     InstancesBuffer:
@@ -201,6 +211,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
 --- !u!1 &9046393924846440403
 GameObject:
   m_ObjectHideFlags: 0

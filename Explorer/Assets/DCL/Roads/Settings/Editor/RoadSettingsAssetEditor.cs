@@ -17,8 +17,8 @@ namespace DCL.Roads.Settings.Editor
         private bool showNotFoundMessage;
         private bool showUpdatedMessage;
 
-        private Vector2Int parcelsMin = new (-175, -175);
-        private Vector2Int parcelsMax = new (175, 175);
+        private Vector2Int parcelsMin = new (-15, -15);
+        private Vector2Int parcelsMax = new (15, 15);
 
         public override void OnInspectorGUI()
         {

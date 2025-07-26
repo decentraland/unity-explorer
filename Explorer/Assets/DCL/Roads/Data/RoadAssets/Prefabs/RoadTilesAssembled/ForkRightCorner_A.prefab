@@ -131,6 +131,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 0.25, y: 0.25}
+      offset: {x: 0.75, y: 0.25}
   - Name: RoadSideStraight
     LODGroup: {fileID: 8374667437615879406}
     InstancesBuffer:
@@ -152,6 +154,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: RoadSideDecor01
     LODGroup: {fileID: 1448598302027637246}
     InstancesBuffer:
@@ -173,6 +177,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
   - Name: RoadSideCornerSmall
     LODGroup: {fileID: 3216650454040222574}
     InstancesBuffer:
@@ -194,6 +200,8 @@ MonoBehaviour:
         e32: 0
         e33: 1
       instColourTint: {x: 1, y: 1, z: 1, w: 1}
+      tiling: {x: 1, y: 1}
+      offset: {x: 0, y: 0}
 --- !u!1001 &3315065508708563288
 PrefabInstance:
   m_ObjectHideFlags: 0
