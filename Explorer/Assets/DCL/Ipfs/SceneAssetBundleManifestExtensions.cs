@@ -1,4 +1,6 @@
-﻿namespace SceneRunner.Scene
+﻿using DCL.Ipfs;
+
+namespace SceneRunner.Scene
 {
     public static class SceneAssetBundleManifestExtensions
     {

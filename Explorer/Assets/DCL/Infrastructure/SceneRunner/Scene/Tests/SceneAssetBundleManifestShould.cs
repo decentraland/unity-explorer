@@ -1,5 +1,6 @@
 ﻿using System;
 using CommunicationData.URLHelpers;
+using DCL.Ipfs;
 using NUnit.Framework;
 using UnityEngine;
 

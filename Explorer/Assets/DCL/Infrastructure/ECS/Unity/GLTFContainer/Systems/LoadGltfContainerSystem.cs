@@ -4,6 +4,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
+using Cysharp.Threading.Tasks;
+using DCL.ECS.StreamableLoading.AssetBundles;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -13,6 +15,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Interaction.Utility;
+using ECS.StreamableLoading.AssetBundles;
 using SceneRunner.Scene;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
@@ -30,18 +33,54 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly ISceneData sceneData;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
 
+        private readonly StaticScene staticScene;
+
         internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData,
-            IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache, StaticScene staticScene) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
             this.sceneData = sceneData;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.staticScene = staticScene;
         }
 
         protected override void Update(float t)
         {
+            ResolveStaticSceneQuery(World);
             StartLoadingQuery(World);
             ReconfigureGltfContainerQuery(World);
+        }
+
+
+        [Query]
+        [None(typeof(GltfContainerComponent))]
+        private void ResolveStaticScene(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
+        {
+            GltfContainerComponent component;
+            sdkComponent.IsDirty = false; // IsDirty is only relevant for ReConfiguration of the GLTFContainer
+
+            if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
+            {
+                component = GltfContainerComponent.CreateFaulty(
+                    GetReportData(),
+                    new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content")
+                );
+                World.Add(entity, component);
+            }
+            else
+            {
+                // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash, new CancellationTokenSource()), partitionComponent);
+                World.Add(promise.Entity, new StreamableLoadingResult<AssetBundleData>(staticScene.AssetData));
+                component = new GltfContainerComponent(
+                    sdkComponent.GetVisibleMeshesCollisionMask(),
+                    sdkComponent.GetInvisibleMeshesCollisionMask(),
+                    promise);
+                component.State = LoadingState.Loading;
+                World.Add(entity, component);
+            }
+
+            eventsBuffer.Add(entity, component);
         }
 
         [Query]

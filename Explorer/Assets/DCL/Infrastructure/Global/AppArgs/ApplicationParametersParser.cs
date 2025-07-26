@@ -13,7 +13,7 @@ namespace Global.AppArgs
     [AutoInterface]
     public class ApplicationParametersParser : IAppArgs
     {
-        private readonly Dictionary<string, string> appParameters = new ();
+        private static readonly Dictionary<string, string> appParameters = new ();
 
         private static readonly IReadOnlyDictionary<string, string> ALWAYS_IN_EDITOR = new Dictionary<string, string>
         {
@@ -36,6 +36,12 @@ namespace Global.AppArgs
 
         public bool HasFlag(string flagName) =>
             appParameters.ContainsKey(flagName);
+
+        public static bool HasFlagStatic(string flagName) =>
+            appParameters.ContainsKey(flagName);
+
+        public static bool TryGetValueStatic(string flagName, out string? value) =>
+            appParameters.TryGetValue(flagName, out value);
 
         public bool TryGetValue(string flagName, out string? value) =>
             appParameters.TryGetValue(flagName, out value);

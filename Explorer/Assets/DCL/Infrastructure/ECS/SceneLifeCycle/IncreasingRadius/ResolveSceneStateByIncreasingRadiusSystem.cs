@@ -108,8 +108,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [None(typeof(SceneLoadingState), typeof(DeleteEntityIntention), typeof(RoadInfo))]
         private void AddNewSceneDefinitionToList(in Entity entity, in PartitionComponent partitionComponent,
-            in SceneDefinitionComponent sceneDefinitionComponent)
+            ref SceneDefinitionComponent sceneDefinitionComponent)
         {
+            //sceneDefinitionComponent.SceneAssetBundleManifest = sceneAssetBundleManifest;
             if (sceneDefinitionComponent.IsPortableExperience)
             {
                 //Portable experiences shouldnt be analyzed. Create straight away

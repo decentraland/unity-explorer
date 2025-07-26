@@ -4,11 +4,16 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Utils.Time;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using Global.AppArgs;
 using SceneRunner;
 using SceneRunner.Scene;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Networking;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -18,10 +23,14 @@ namespace ECS.SceneLifeCycle.Systems
         protected readonly URLDomain assetBundleURL;
         protected readonly IWebRequestController webRequestController;
 
+        private readonly TimeProfiler timeProfiler;
+
+
         protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, URLDomain assetBundleURL)
         {
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
+            timeProfiler = new TimeProfiler(true);
         }
 
         public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, ReportData reportCategory, IPartitionComponent partition, CancellationToken ct)
@@ -42,19 +51,19 @@ namespace ECS.SceneLifeCycle.Systems
             var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
-            var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
-            (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
-
-            // Create scene data
-            var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
-            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
-                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
+            (_, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadSceneMetadata, loadMainCrdt);
 
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
+
+            // Create scene data
+            var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
+
+            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, baseParcel,
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
             ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
 

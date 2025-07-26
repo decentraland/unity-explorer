@@ -25,8 +25,6 @@ namespace SceneRunner.Scene
         /// </summary>
         ParcelMathHelper.SceneGeometry Geometry { get; }
 
-        SceneAssetBundleManifest AssetBundleManifest { get; }
-
         /// <summary>
         ///     Main.crdt file that should be applied first before launching the scene
         /// </summary>
@@ -82,6 +80,7 @@ namespace SceneRunner.Scene
             public SceneEntityDefinition SceneEntityDefinition => new (string.Empty, new SceneMetadata());
             public ParcelMathHelper.SceneGeometry Geometry => new (Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f);
             public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
+            public Dictionary<string, GameObject> StaticSceneGameObjects => new ();
             public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
             public bool HasRequiredPermission(string permission) =>

@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.Reporting;

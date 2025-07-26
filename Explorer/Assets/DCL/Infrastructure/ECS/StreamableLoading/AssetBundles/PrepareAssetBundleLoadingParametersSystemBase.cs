@@ -5,6 +5,7 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Linq;
+using UnityEngine;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
@@ -46,6 +47,20 @@ namespace ECS.StreamableLoading.AssetBundles
             // Second priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.WEB))
             {
+                if (assetBundleIntention.SingleAssetBundleHack)
+                {
+                    CommonLoadingArguments caHack = assetBundleIntention.CommonArguments;
+                    caHack.Attempts = StreamableLoadingDefaults.ATTEMPTS_COUNT;
+                    caHack.Timeout = StreamableLoadingDefaults.TIMEOUT;
+                    caHack.CurrentSource = AssetSource.WEB;
+                    caHack.URL = URLAddress.FromString(assetBundleIntention.Hash);
+                    caHack.CacheableURL = URLAddress.FromString(assetBundleIntention.Hash);
+                    assetBundleIntention.CommonArguments = caHack;
+                    assetBundleIntention.cacheHash = Hash128.Compute(assetBundleIntention.Hash);
+                    return;
+                }
+
+
                 if (assetBundleIntention.Manifest == null)
                 {
                     World.Add(entity, new StreamableLoadingResult<AssetBundleData>

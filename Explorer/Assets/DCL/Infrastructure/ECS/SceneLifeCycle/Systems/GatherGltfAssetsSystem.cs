@@ -4,10 +4,12 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.RealmNavigation;
 using DCL.Utilities;
+using DCL.Utils.Time;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
+using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System;
@@ -22,7 +24,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
-        private const int FRAMES_COUNT = 90;
+        private const int FRAMES_COUNT = 1;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -60,6 +62,7 @@ namespace ECS.SceneLifeCycle.Systems
             forEachEvent = GatherEntities;
         }
 
+        private TimeProfiler? timeProfiler;
         public override void Initialize()
         {
             entitiesUnderObservation = HashSetPool<Entity>.Get();
@@ -76,14 +79,28 @@ namespace ECS.SceneLifeCycle.Systems
             sceneData.SceneLoadingConcluded = true;
         }
 
+        private bool concludedFrames;
+
         protected override void Update(float t)
         {
+            if (timeProfiler == null && sceneData.StaticSceneGameObjects.Count > 0)
+            {
+                timeProfiler = new TimeProfiler(true);
+                timeProfiler.StartMeasure();
+            }
+
             if (sceneStateProvider.TickNumber < FRAMES_COUNT)
             {
                 eventsBuffer.ForEach(forEachEvent);
             }
             else if (!concluded)
             {
+                if (sceneData.StaticSceneGameObjects.Count > 0 && !concludedFrames)
+                {
+                    timeProfiler.EndMeasure(ms => UnityEngine.Debug.Log($"JUANI IT RAN FOR {ms} ms {sceneStateProvider.TickNumber}"));
+                    concludedFrames = true;
+                }
+
                 if (totalAssetsToResolve == -1)
                     totalAssetsToResolve = entitiesUnderObservation!.Count;
 

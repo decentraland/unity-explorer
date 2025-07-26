@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace DCL.Landscape.Utils
+namespace DCL.Utils.Time
 {
     public class TimeProfiler
     {

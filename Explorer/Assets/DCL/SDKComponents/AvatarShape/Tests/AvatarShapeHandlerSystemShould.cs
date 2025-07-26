@@ -243,8 +243,7 @@ namespace ECS.Unity.AvatarShape.Tests
                          });
 
             sceneData.SceneContent.Returns(sceneContent);
-            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "sceneId" });
-            sceneData.AssetBundleManifest.Returns(new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date"));
+            sceneData.SceneEntityDefinition.Returns(new SceneEntityDefinition { id = "sceneId" , AssetBundleManifest = new SceneAssetBundleManifest(URLDomain.EMPTY, "v1", Array.Empty<string>(), "hash", "date")});
 
             system = new AvatarShapeHandlerSystem(world, globalWorld, pool, sceneData, false);
 

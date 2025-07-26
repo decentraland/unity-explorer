@@ -1,3 +1,4 @@
+using SceneRunner.Scene;
 using System;
 
 namespace DCL.Ipfs
@@ -13,5 +14,8 @@ namespace DCL.Ipfs
 
         public string GetLogSceneName() =>
             logSceneName ??= $"{metadata.scene?.DecodedBase} - {id}";
+
+        //TODO (JUANI): This could be here, since we could be getting it from the asset-bundle-registry
+        public SceneAssetBundleManifest AssetBundleManifest;
     }
 }
