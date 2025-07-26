@@ -21,6 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Components
         {
             IsDisposed = true;
             Image = null;
+            Status = 0;
         }
     }
 }

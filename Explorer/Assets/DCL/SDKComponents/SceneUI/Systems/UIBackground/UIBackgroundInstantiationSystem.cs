@@ -13,6 +13,7 @@ using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
+using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
@@ -27,6 +28,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
     public partial class UIBackgroundInstantiationSystem : BaseUnityLoopSystem
     {
         private const int ATTEMPTS_COUNT = 6;
+        private const string UNDEFINED_SOURCE = "undefined";
 
         private readonly IComponentPool<DCLImage> imagesPool;
         private readonly ISceneData sceneData;
@@ -115,7 +117,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 if (promiseResult.Succeeded)
                     uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, promiseResult.Asset);
                 else
-                    ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
+                    ReportHub.LogError(ReportCategory.SCENE_UI, $"Error consuming texture promise in {nameof(UIBackgroundInstantiationSystem)} for source {texturePromise.LoadingIntention.Src} | Scene {sceneData.SceneShortInfo.ToString()}");
 
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
                 uiBackgroundComponent.Image.IsHidden = false;
@@ -127,10 +129,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
         private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
         {
-            if (textureComponent == null)
+            if (textureComponent == null || textureComponent.Value.Src == UNDEFINED_SOURCE)
             {
                 // If component is being reuse forget the previous promise
-                TryAddAbortIntention(World, ref promise);
+                TryAddAbortIntention(ref promise);
                 return;
             }
 
@@ -142,7 +144,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 return;
 
             // If component is being reused forget the previous promise
-            TryAddAbortIntention(World, ref promise);
+            TryAddAbortIntention(ref promise);
+
+            ReportHub.Log(ReportCategory.SCENE_UI, $"Start loading texture for UI background for source {textureComponentValue.Src} | Scene {sceneData.SceneShortInfo.ToString()}");
 
             promise = Promise.Create(
                 World,
@@ -158,13 +162,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 partitionComponent);
         }
 
-        private static void TryAddAbortIntention(World world, ref Promise? promise)
+        private void TryAddAbortIntention(ref Promise? promise)
         {
             if (promise == null)
                 return;
 
-            promise.Value.ForgetLoading(world);
-
+            Promise texturePromiseValue = promise.Value;
+            texturePromiseValue.ForgetLoading(World);
+            texturePromiseValue.TryDereference(World);
             // Nullify the entity reference
             promise = null;
         }
