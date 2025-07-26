@@ -1,7 +1,9 @@
+using System.Threading;
 using DCL.Chat.History;
 using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
+using DCL.UI.ProfileElements;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -16,6 +18,9 @@ namespace DCL.Chat
         public delegate void RemoveButtonClickedDelegate(ChatConversationsToolbarViewItem item);
         public delegate void TooltipShownDelegate(GameObject tooltip);
 
+        [SerializeField]
+        private ProfilePictureView profilePictureView;
+        
         [SerializeField]
         protected GameObject thumbnailView;
 
@@ -101,6 +106,18 @@ namespace DCL.Chat
         }
 
         /// <summary>
+        ///     Adapts the UI according to whether the conversation is one-to-one or not.
+        /// </summary>
+        /// <param name="isPrivate">Whether it is a private conversation or not.</param>
+        public void SetConversationType(bool isPrivate)
+        {
+            removeButton.gameObject.SetActive(isPrivate);
+            connectionStatusIndicatorContainer.gameObject.SetActive(isPrivate);
+        }
+
+        
+
+        /// <summary>
         /// Changes the color of the background and the letters of the tooltip.
         /// </summary>
         /// <param name="newName">The "name" of the conversation.</param>
@@ -124,7 +141,8 @@ namespace DCL.Chat
         /// <param name="connectionStatus">The current connection status.</param>
         public void SetConnectionStatus(OnlineStatus connectionStatus)
         {
-            connectionStatusIndicator.color = onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
+            connectionStatusIndicator.color =
+                onlineStatusConfiguration.GetConfiguration(connectionStatus).StatusColor;
         }
 
         /// <summary>
@@ -139,6 +157,35 @@ namespace DCL.Chat
                 openButton.OnSelect(null);
             else
                 openButton.OnDeselect(null);
+        }
+
+        /// <summary>
+        ///     Provides the data required to display the profile picture.
+        /// </summary>
+        /// <param name="profileDataProvider">A way to access Profile data asynchronously.</param>
+        /// <param name="userColor">The color of the user's profile picture. It affects the tooltip too.</param>
+        /// <param name="faceSnapshotUrl">The URL to the profile picture.</param>
+        /// <param name="userId">The Id of the user (wallet Id).</param>
+        public void SetProfileData(ProfileRepositoryWrapper profileDataProvider, Color userColor, string faceSnapshotUrl, string userId)
+        {
+            customIcon.gameObject.SetActive(false);
+            profilePictureView.gameObject.SetActive(true);
+            profilePictureView.Setup(profileDataProvider, userColor, faceSnapshotUrl, userId);
+            tooltipText.color = userColor;
+        }
+
+        public void SetPicture(Sprite? sprite)
+        {
+            if (sprite != null)
+            {
+                profilePictureView.gameObject.SetActive(true);
+                customIcon.gameObject.SetActive(false);
+                profilePictureView.SetImage(sprite);
+            }
+            else
+            {
+                profilePictureView.SetLoadingState(true);
+            }
         }
 
         /// <summary>
@@ -213,6 +260,10 @@ namespace DCL.Chat
             tooltip.gameObject.SetActive(false);
             removeButton.gameObject.SetActive(false);
             connectionStatusIndicatorContainer.gameObject.SetActive(false);
+        }
+
+        public void SetCommunityThumbnailData(ISpriteCache spriteCache, string communityImageUrl, CancellationToken none)
+        {
         }
     }
 }

@@ -42,6 +42,12 @@ namespace DCL.UI.ProfileElements
             LoadThumbnailAsync(faceSnapshotUrl).Forget();
         }
 
+        public void SetImage(Sprite image)
+        {
+            thumbnailImageView.SetImage(image);
+            SetLoadingState(false);
+        }
+
         public void SetupOnlyColor(Color userColor)
         {
             thumbnailBackground.color = userColor;

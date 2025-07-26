@@ -14,6 +14,7 @@ namespace DCL.Chat.History
         public readonly bool IsSentByOwnUser;
         public readonly bool IsSystemMessage;
         public readonly bool IsMention;
+        public readonly bool IsSeparator;
 
         public ChatMessage(
             string message,
@@ -23,7 +24,8 @@ namespace DCL.Chat.History
             string senderWalletId,
             bool isMention = false,
             bool isSystemMessage = false,
-            bool isPaddingElement = false)
+            bool isPaddingElement = false,
+            bool isSeparator = false)
         {
             Message = message;
             SenderValidatedName = senderValidatedName;
@@ -33,6 +35,7 @@ namespace DCL.Chat.History
             SenderWalletId = senderWalletId;
             IsMention = isMention;
             IsSystemMessage = isSystemMessage;
+            IsSeparator = isSeparator;
         }
 
         public static ChatMessage NewPaddingElement() =>
@@ -44,6 +47,9 @@ namespace DCL.Chat.History
                 false,
                 false,
                 true);
+        
+        public static ChatMessage NewSeparator() =>
+            new (string.Empty, string.Empty, string.Empty, false, string.Empty, isSeparator: true);
 
         public static ChatMessage CopyWithNewMessage(string newMessage, ChatMessage chatMessage) =>
             new (newMessage,
@@ -61,6 +67,11 @@ namespace DCL.Chat.History
 
         public bool Equals(ChatMessage other)
         {
+            if (IsSeparator != other.IsSeparator)
+                return false;
+            if (IsSeparator) 
+                return true;
+            
             if (IsPaddingElement != other.IsPaddingElement)
                 return false;
             if (IsPaddingElement)
@@ -86,6 +97,9 @@ namespace DCL.Chat.History
         {
             if (IsPaddingElement)
                 return 1;
+            
+            if (IsSeparator)
+                return 2;
 
             if (IsSystemMessage)
                 return HashCode.Combine(Message, true);
@@ -96,6 +110,7 @@ namespace DCL.Chat.History
 
         public override string ToString() =>
             IsPaddingElement ? "[Padding]" :
+            IsSeparator ? "[Separator]" :
             IsSystemMessage ? $"[System] {Message}" :
             $"[{SenderValidatedName}] {Message}";
     }

@@ -120,7 +120,7 @@ namespace DCL.UI.SharedSpaceManager
             try
             {
                 await HideAllAsync(panelToIgnore: PanelsSharingSpace.Chat);
-
+                
                 PanelRegistration<TParams> registration = registrations[panel].GetByParams<TParams>();
                 IPanelInSharedSpace<TParams> panelInSharedSpace = registration.instance;
 
@@ -143,10 +143,8 @@ namespace DCL.UI.SharedSpaceManager
                     {
                         if (!panelInSharedSpace.IsVisibleInSharedSpace && isFriendsFeatureEnabled)
                         {
-                            ChatController chatController = registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>();
-
-                            // The chat is hidden while the friends panel is present
-                            chatController.SetViewVisibility(false);
+                            ChatMainController chatController = registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainController>();
+                            chatController.SetVisibility(false);
 
                             await registration.IssueShowCommandAsync(mvcManager, parameters, cts.Token);
 
@@ -160,7 +158,7 @@ namespace DCL.UI.SharedSpaceManager
 
                             // Once the friends panel is hidden, chat must appear (unless the Friends panel was hidden due to showing the chat panel)
                             if (panelBeingShown != PanelsSharingSpace.Chat)
-                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatController>().OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false, false));
+                                await registrations[PanelsSharingSpace.Chat].GetPanel<ChatMainController>().OnShownInSharedSpaceAsync(cts.Token, new ChatControllerShowParams(false, false));
                         }
                         else
                             isTransitioning = false;

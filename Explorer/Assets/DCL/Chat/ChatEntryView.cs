@@ -1,3 +1,4 @@
+using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.UI.ProfileElements;
 using DG.Tweening;
@@ -27,6 +28,7 @@ namespace DCL.Chat
         [field: SerializeField] internal Button profileButton { get; private set; }
 
         private ChatMessage chatMessage;
+        private ChatMessageViewModel chatMessageViewModel;
         private readonly Vector3[] cornersCache = new Vector3[4];
 
         public void AnimateChatEntry()

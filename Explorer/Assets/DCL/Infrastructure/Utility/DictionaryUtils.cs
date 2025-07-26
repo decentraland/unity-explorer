@@ -27,7 +27,7 @@ namespace Utility
             return result;
         }
 
-        public static async UniTask<IEnumerable<TValue>> GetKeysContainingTextAsync<TValue>(Dictionary<string, TValue> dictionary, string matchingText, List<TValue> result, CancellationToken ct)
+        public static async UniTask<IEnumerable<TValue>> GetKeysContainingTextAsync<TValue>(IReadOnlyDictionary<string, TValue> dictionary, string matchingText, List<TValue> result, CancellationToken ct)
         {
             result.Clear();
             int iterationCount = 0;

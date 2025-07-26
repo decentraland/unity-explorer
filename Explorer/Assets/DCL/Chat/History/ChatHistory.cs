@@ -84,9 +84,9 @@ namespace DCL.Chat.History
             ChannelRemoved?.Invoke(channelId, channel.ChannelType);
         }
 
-        public void AddMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType channelType, ChatMessage newMessage)
+        public void AddMessage(ChatChannel.ChannelId channelId, ChatChannel.ChatChannelType? channelType, ChatMessage newMessage)
         {
-            var channel = AddOrGetChannel(channelId, channelType);
+            var channel = AddOrGetChannel(channelId, channelType ?? ChatChannel.ChatChannelType.UNDEFINED);
             channel.AddMessage(newMessage);
         }
 

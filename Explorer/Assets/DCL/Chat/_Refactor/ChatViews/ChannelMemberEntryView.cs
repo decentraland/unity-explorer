@@ -1,0 +1,61 @@
+﻿using System;
+using DCL.Chat.ChatViewModels;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace DCL.Chat
+{
+    public struct MemberEntryContextMenuRequest
+    {
+        public string UserId;
+        public Vector3 Position;
+    }
+
+    public class ChannelMemberEntryView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    {
+        public event Action<MemberEntryContextMenuRequest> OnContextMenuRequested;
+
+        [Header("UI References")]
+        [SerializeField] private TMP_Text userNameText;
+        [SerializeField] private ChatProfilePictureView profilePictureView;
+        [SerializeField] private ChatUsernameView usernameView;
+        [SerializeField] private GameObject onlineIndicator;
+        [SerializeField] private Button contextMenuButton;
+
+        private ChatMemberListViewModel model;
+
+        private void Awake()
+        {
+            contextMenuButton.onClick.AddListener(HandleContextMenuRequest);
+        }
+
+        private void HandleContextMenuRequest()
+        {
+            var request = new MemberEntryContextMenuRequest
+            {
+                UserId = model.UserId, Position = contextMenuButton.transform.position
+            };
+            OnContextMenuRequested?.Invoke(request);
+        }
+
+        public void Setup(ChatMemberListViewModel model)
+        {
+            this.model = model;
+            onlineIndicator.SetActive(model.IsOnline);
+            profilePictureView.Setup(model.ProfilePicture, model.IsLoading);
+            usernameView.Setup(model.UserName, model.UserId, model.HasClaimedName, model.ProfileColor);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            contextMenuButton.gameObject.SetActive(true);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            contextMenuButton.gameObject.SetActive(false);
+        }
+    }
+}
