@@ -275,8 +275,8 @@ namespace DCL.Chat
                                             .AddControl(notificationPingToggles[(int)ChatAudioSettings.NONE] = new ToggleWithCheckContextMenuControlSettings("None", x => OnNotificationPingOptionSelected(ChatAudioSettings.NONE), toggleGroup)));
 
                 contextMenuInstance = new UI.GenericContextMenuParameter.GenericContextMenu(chatContextMenuSettings.ContextMenuWidth, chatContextMenuSettings.OffsetFromTarget, chatContextMenuSettings.VerticalPadding, chatContextMenuSettings.ElementsSpacing, anchorPoint: ContextMenuOpenDirection.TOP_LEFT)
-                   .AddControl(deleteChatHistoryButton)
-                   .AddControl(subMenuSettings);
+                   .AddControl(subMenuSettings)
+                   .AddControl(deleteChatHistoryButton);
         }
     }
 }
