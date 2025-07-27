@@ -1,5 +1,4 @@
 using DCL.Chat.History;
-using DCL.UI.Profiles.Helpers;
 using DCL.UI;
 using DCL.UI.Buttons;
 using DG.Tweening;
@@ -116,6 +115,15 @@ namespace DCL.Chat
         public void SetUnreadMessages(int currentUnreadMessages)
         {
             unreadMessagesBadge.Number = currentUnreadMessages;
+        }
+
+        /// <summary>
+        /// It replaces the number in the conversation icon with an '@' that indicates that one or more unread messages are mentions.
+        /// </summary>
+        /// <param name="show">When True, it replaces the number. Otherwise it does nothing.</param>
+        public void ShowMentionSign(bool show)
+        {
+            unreadMessagesBadge.ShowMentionsSign(show);
         }
 
         /// <summary>

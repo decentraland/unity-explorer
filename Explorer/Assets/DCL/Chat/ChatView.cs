@@ -731,7 +731,22 @@ namespace DCL.Chat
         /// <param name="destinationChannel">The Id of the conversation.</param>
         public void RefreshUnreadMessages(ChatChannel.ChannelId destinationChannel)
         {
-            conversationsToolbar.SetUnreadMessages(destinationChannel, channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages);
+            int unreadMessages = channels[destinationChannel].Messages.Count - channels[destinationChannel].ReadMessages;
+            IReadOnlyList<ChatMessage> messages = channels[destinationChannel].Messages;
+
+            // Checks if there is any mention to the current user among the unread messages
+            bool hasMentions = false;
+
+            for (int i = 0; i < unreadMessages; ++i)
+            {
+                if (messages[i + 1].IsMention) // Note: +1 due to padding
+                {
+                    hasMentions = true;
+                    break;
+                }
+            }
+
+            conversationsToolbar.SetUnreadMessages(destinationChannel, unreadMessages, hasMentions);
         }
 #endregion
 

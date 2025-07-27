@@ -19,6 +19,7 @@ namespace DCL.UI.Buttons
         private int maximum = 1;
 
         private int currentValue;
+        private bool isMentionsVisible;
 
         public int Number
         {
@@ -26,12 +27,28 @@ namespace DCL.UI.Buttons
 
             set
             {
-                if (currentValue != value)
+                if (currentValue != value && !isMentionsVisible)
                 {
                     currentValue = value;
                     numberText.text = currentValue > maximum ? $"+{maximum}" : currentValue.ToString();
-                    numberPanel.SetActive(currentValue > 0);
                 }
+
+                numberPanel.SetActive(currentValue > 0);
+            }
+        }
+
+        /// <summary>
+        /// It replaces the number with an '@'. Afterwards, changing the number will not show the number until the mention sign is hidden.
+        /// </summary>
+        /// <param name="show">When True, it replaces the number; otherwise it deactivates the mention sign (setting the number will show the number).</param>
+        public void ShowMentionsSign(bool show)
+        {
+            isMentionsVisible = show;
+
+            if (isMentionsVisible)
+            {
+                numberText.text = "@";
+                numberPanel.SetActive(true);
             }
         }
     }
