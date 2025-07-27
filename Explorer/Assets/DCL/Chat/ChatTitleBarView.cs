@@ -193,11 +193,9 @@ namespace DCL.Chat
             if (contextMenuInstance == null)
                 InitializeChannelContextMenu();
 
-            int defaultNotificationPingValue = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_SOUNDS); // General settings
-
             // Initializes the value of the toggles inside the submenu of the Notification Ping
             for (int i = 0; i < notificationPingToggles.Length; ++i)
-                notificationPingToggles[i].SetInitialValue(i == DCLPlayerPrefs.GetInt(GetCurrentChannelSettingsKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS), defaultNotificationPingValue));
+                notificationPingToggles[i].SetInitialValue(i == (int)ChatUserSettings.GetNotificationPingValuePerChannel(currentChannelId));
 
             ViewDependencies.ContextMenuOpener.OpenContextMenu(new GenericContextMenuParameter(contextMenuInstance,
                                                                                              openContextMenuButton.transform.position,
@@ -206,14 +204,7 @@ namespace DCL.Chat
 
         private void OnNotificationPingOptionSelected(ChatAudioSettings selectedMode)
         {
-            DCLPlayerPrefs.SetInt(GetCurrentChannelSettingsKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS), (int)selectedMode, save: true);
-        }
-
-        // Decorates a property key so it can be properly stored/loaded in player prefs for the current user and channel
-        private string GetCurrentChannelSettingsKey(string propertyKey)
-        {
-            // TODO: The player prefs class should provide a way to save date per user in the same computer. Otherwise, the Id of the user will have to be concatenated to the key
-            return currentChannelId.Id + propertyKey;
+            ChatUserSettings.SetNotificationPintValuePerChannel(selectedMode, currentChannelId);
         }
 
         private void OnDeleteChatHistoryButtonClicked()
