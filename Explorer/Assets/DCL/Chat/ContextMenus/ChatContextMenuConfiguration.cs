@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace DCL.Chat
 {
+    /// <summary>
+    /// Layout configuration for the context menu that appears when pressing the 3 dots button at the top-right corner of the chat.
+    /// </summary>
     [CreateAssetMenu(fileName = "ChatContextMenuSettings", menuName = "DCL/Chat/ChatMenuSettings")]
     public class ChatContextMenuConfiguration : ScriptableObject
     {

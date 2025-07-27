@@ -5,29 +5,29 @@ using DCL.Settings.Settings;
 namespace DCL.Chat
 {
     /// <summary>
-    ///
+    /// Provides a unified way to modify the settings related to the chat from the main controller.
     /// </summary>
     public static class ChatUserSettings
     {
         /// <summary>
-        ///
+        /// Gets the selected option for the Notification ping sound behaviour, for a given chat conversation.
         /// </summary>
-        /// <param name="currentChannelId"></param>
-        /// <returns></returns>
-        public static ChatAudioSettings GetNotificationPingValuePerChannel(ChatChannel.ChannelId currentChannelId)
+        /// <param name="channelId">The id of the conversation.</param>
+        /// <returns>The current value of the setting. If it does not exist, the value of the global Notification ping setting is returned instead.</returns>
+        public static ChatAudioSettings GetNotificationPingValuePerChannel(ChatChannel.ChannelId channelId)
         {
             int defaultNotificationPingValue = DCLPlayerPrefs.GetInt(DCLPrefKeys.SETTINGS_CHAT_SOUNDS); // General settings
-            return (ChatAudioSettings)DCLPlayerPrefs.GetInt(GetCurrentChannelSettingsKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, currentChannelId), defaultNotificationPingValue);
+            return (ChatAudioSettings)DCLPlayerPrefs.GetInt(GetCurrentChannelSettingsKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, channelId), defaultNotificationPingValue);
         }
 
         /// <summary>
-        ///
+        /// Replaces the selected option for the Notification ping sound behaviour, for a given chat conversation.
         /// </summary>
-        /// <param name="selectedMode"></param>
-        /// <param name="currentChannelId"></param>
-        public static void SetNotificationPintValuePerChannel(ChatAudioSettings selectedMode, ChatChannel.ChannelId currentChannelId)
+        /// <param name="selectedMode">The new value.</param>
+        /// <param name="channelId">The id of the conversation.</param>
+        public static void SetNotificationPintValuePerChannel(ChatAudioSettings selectedMode, ChatChannel.ChannelId channelId)
         {
-            DCLPlayerPrefs.SetInt(GetCurrentChannelSettingsKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, currentChannelId), (int)selectedMode, save: true);
+            DCLPlayerPrefs.SetInt(GetCurrentChannelSettingsKey(DCLPrefKeys.SETTINGS_CHAT_SOUNDS, channelId), (int)selectedMode, save: true);
         }
 
         // Decorates a property key so it can be properly stored/loaded in player prefs for the current user and channel
