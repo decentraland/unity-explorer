@@ -24,13 +24,13 @@ namespace DCL.NotificationsBusController.NotificationTypes
     [Serializable]
     public struct CommunityUserRemovedNotificationMetadata
     {
-        [JsonProperty("id")]
+        [JsonProperty("communityId")]
         public string CommunityId { get; set; }
 
         [JsonProperty("memberAddress")]
         public string UserAddress { get; set; }
 
-        [JsonProperty("name")]
+        [JsonProperty("communityName")]
         public string CommunityName { get; set; }
 
         [JsonProperty("thumbnailUrl")]
