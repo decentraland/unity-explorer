@@ -1,5 +1,6 @@
 using DCL.Landscape.Settings;
 using DCL.LOD;
+using DCL.SDKComponents.LightSource;
 using DCL.SDKComponents.MediaStream.Settings;
 using ECS.Prioritization;
 using System;
@@ -20,7 +21,8 @@ namespace DCL.Quality.Runtime
             RealmPartitionSettingsAsset? realmPartitionSettings = null,
             VideoPrioritizationSettings? videoPrioritizationSettings = null,
             ILODSettingsAsset? lodSettingsAsset = null,
-            LandscapeData? landscapeData = null)
+            LandscapeData? landscapeData = null,
+            LightSourceSettings? lightSourceSettings = null)
         {
             var runtimes = new List<IQualitySettingRuntime>();
 
@@ -28,6 +30,7 @@ namespace DCL.Quality.Runtime
             runtimes.Add(CreateLensFlareRuntime());
             runtimes.Add(CreateGlobalVolume());
             runtimes.Add(CreateEnvironmentRuntime(realmPartitionSettings, videoPrioritizationSettings, lodSettingsAsset, landscapeData));
+            runtimes.Add(CreateDynamicLightsRuntime(lightSourceSettings));
             CreateRendererFeaturesRuntimes(rendererFeaturesCache, settingsAsset, runtimes);
 
             return new QualityLevelController(runtimes, settingsAsset.customSettings);
@@ -45,6 +48,9 @@ namespace DCL.Quality.Runtime
             ILODSettingsAsset? lodSettingsAsset,
             LandscapeData? landscapeData) =>
             new EnvironmentSettingsRuntime(realmPartitionSettings, videoPrioritizationSettings, lodSettingsAsset, landscapeData);
+
+        private static IQualitySettingRuntime CreateDynamicLightsRuntime(LightSourceSettings? lightSourceSettings) =>
+            new DynamicLightsSettingsRuntime(lightSourceSettings);
 
         /// <summary>
         ///     Create a separate class for every renderer feature type possibly available
