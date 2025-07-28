@@ -12,6 +12,7 @@ using ECS.StreamableLoading.GLTF.DownloadProvider;
 using GLTFast;
 using GLTFast.Materials;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 
@@ -26,6 +27,7 @@ namespace ECS.StreamableLoading.GLTF
         private readonly GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger();
         private readonly bool patchTexturesFormat;
         private readonly bool importFilesByHash;
+        private readonly bool isLocalSceneDevelopment;
         private readonly IGltFastDownloadStrategy downloadStrategy;
 
         internal LoadGLTFSystem(World world,
@@ -33,11 +35,13 @@ namespace ECS.StreamableLoading.GLTF
             IWebRequestController webRequestController,
             bool patchTexturesFormat,
             bool importFilesByHash,
+            bool isLocalSceneDevelopment,
             IGltFastDownloadStrategy downloadStrategy) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.patchTexturesFormat = patchTexturesFormat;
             this.importFilesByHash = importFilesByHash;
+            this.isLocalSceneDevelopment = isLocalSceneDevelopment;
             this.downloadStrategy = downloadStrategy;
         }
 
@@ -79,7 +83,10 @@ namespace ECS.StreamableLoading.GLTF
                 if (patchTexturesFormat)
                     PatchTexturesForWearable(gltfImport);
 
-                var gltfData = new GLTFData(gltfImport, rootContainer);
+                // Capture hierarchy paths for local scene development debugging
+                var hierarchyPaths = isLocalSceneDevelopment ? CaptureHierarchyPaths(rootContainer) : null;
+
+                var gltfData = new GLTFData(gltfImport, rootContainer, hierarchyPaths);
                 gltfData.AddReference();
                 return new StreamableLoadingResult<GLTFData>(gltfData);
             }
@@ -145,6 +152,49 @@ namespace ECS.StreamableLoading.GLTF
                 }
             else
                 await gltfImport.InstantiateSceneAsync(rootContainerTransform);
+        }
+
+        /// <summary>
+        /// Captures all possible paths in the GLTF GameObject hierarchy for LSD debugging purposes
+        /// </summary>
+        private static List<string> CaptureHierarchyPaths(GameObject rootContainer)
+        {
+            var paths = new List<string>();
+
+            // Start from the GLTF root's children
+            if (rootContainer.transform.childCount > 0)
+            {
+                var gltfRoot = rootContainer.transform.GetChild(0);
+                for (int i = 0; i < gltfRoot.childCount; i++)
+                {
+                    CaptureHierarchyPathsRecursive(gltfRoot.GetChild(i), "", paths);
+                }
+            }
+
+            // Sort paths for easier reading in debug output
+            paths.Sort();
+            return paths;
+        }
+
+        /// <summary>
+        /// Recursively captures all paths in the hierarchy
+        /// </summary>
+        private static void CaptureHierarchyPathsRecursive(Transform transform, string currentPath, List<string> paths)
+        {
+            // Build the path for this transform
+            string transformPath = string.IsNullOrEmpty(currentPath)
+                ? transform.name
+                : $"{currentPath}/{transform.name}";
+
+            // Add this path if it has a Renderer
+            if (transform.GetComponent<Renderer>() != null)
+                paths.Add(transformPath);
+
+            // Recursively process children
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                CaptureHierarchyPathsRecursive(transform.GetChild(i), transformPath, paths);
+            }
         }
     }
 }

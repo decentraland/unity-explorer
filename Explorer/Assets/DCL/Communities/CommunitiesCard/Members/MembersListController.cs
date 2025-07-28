@@ -36,7 +36,6 @@ namespace DCL.Communities.CommunitiesCard.Members
         private const int WARNING_NOTIFICATION_DURATION_MS = 3000;
 
         private readonly MembersListView view;
-        private readonly ConfirmationDialogView confirmationDialogView;
         private readonly IMVCManager mvcManager;
         private readonly ObjectProxy<IFriendsService> friendServiceProxy;
         private readonly CommunitiesDataProvider communitiesDataProvider;
@@ -446,11 +445,8 @@ namespace DCL.Communities.CommunitiesCard.Members
             FetchNewDataAsync(ct).Forget();
         }
 
-        private void OnMainButtonClicked(MemberData profile)
-        {
-            // Handle main button click
-            // Debug.Log("MainButtonClicked: " + profile.id);
-        }
+        private void OnMainButtonClicked(MemberData profile) =>
+            OpenProfilePassport(profile);
 
         private void OnFriendButtonClicked(MemberData profile) =>
             HandleContextMenuUserProfileButtonAsync(profile.ToUserData(), profile.friendshipStatus.Convert());

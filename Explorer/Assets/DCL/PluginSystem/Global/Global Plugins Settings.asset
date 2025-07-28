@@ -51,9 +51,19 @@ MonoBehaviour:
   - rid: 1766526334245273896
   - rid: 3511243270148325472
   - rid: 6144113899072913496
+  - rid: 648265872610426982
   references:
     version: 2
     RefIds:
+    - rid: 648265872610426982
+      type: {class: ConfirmationDialogPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ConfirmationDialogPrefab>k__BackingField:
+          m_AssetGUID: 7b075576ea612439bb40436f7c0fdff0
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
     - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -424,6 +434,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        Badges3DCamera:
+          m_AssetGUID: 8a91951d2f71f174d998356f01a3603c
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
           m_SubObjectName: 
@@ -646,6 +662,12 @@ MonoBehaviour:
           m_SubObjectType: 
           m_SubObjectGUID: 
           m_EditorAssetChanged: 0
+        ControlsContainerPrefab:
+          m_AssetGUID: 7a24101494a664ee59a8952e20b8f441
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
         GenericContextMenuSeparatorPrefab:
           m_AssetGUID: 52bc5c5fe83f743cdba8dab60b247e96
           m_SubObjectName: 
@@ -684,6 +706,18 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         GenericContextMenuTextPrefab:
           m_AssetGUID: 9c27490a499144f85bed4593943fe86a
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuToggleWithCheckPrefab:
+          m_AssetGUID: 33891647b85dc47319f39490bb24594d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_SubObjectGUID: 
+          m_EditorAssetChanged: 0
+        GenericContextMenuSubMenuButtonPrefab:
+          m_AssetGUID: 497073cedbc8540c2b17104cfee96158
           m_SubObjectName: 
           m_SubObjectType: 
           m_SubObjectGUID: 
