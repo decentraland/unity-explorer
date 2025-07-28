@@ -7,8 +7,10 @@ using DCL.Chat.ChatViewModels;
 using DCL.Chat.History;
 using DCL.Communities;
 using DCL.Profiles;
+using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
 using DCL.Web3;
+using UnityEngine;
 using Utility;
 using Color = UnityEngine.Color;
 
@@ -45,43 +47,9 @@ namespace DCL.Chat.ChatUseCases
                 ChatChannel.ChatChannelType.COMMUNITY => await CreateCommunityViewModelAsync(channel, ct),
                 _ => throw new ArgumentOutOfRangeException()
             };
-
-            var viewModel = new ChatTitlebarViewModel();
-
-            if (channel.ChannelType == ChatChannel.ChatChannelType.USER)
-            {
-                viewModel.ViewMode = TitlebarViewMode.DirectMessage;
-                viewModel.WalletId = new Web3Address(channel.Id.Id);
-
-                Profile? profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
-                if (ct.IsCancellationRequested || profile == null)
-                {
-                    return new ChatTitlebarViewModel
-                    {
-                        Username = "Unknown User"
-                    };
-                }
-
-                viewModel.Id = profile.UserId;
-                viewModel.Username = profile.Name;
-                viewModel.HasClaimedName = profile.HasClaimedName;
-                viewModel.WalletId = profile.WalletId;
-                viewModel.ProfileColor = profile.UserNameColor;
-
-                await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
-            }
-            else
-            {
-                viewModel.ViewMode = TitlebarViewMode.Nearby;
-                viewModel.Username = chatConfig.NearbyConversationName;
-                viewModel.HasClaimedName = false;
-                viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true));
-            }
-
-            return viewModel;
         }
 
-        private async Task<ChatTitlebarViewModel> CreateCommunityViewModelAsync(ChatChannel channel, CancellationToken ct)
+        private async UniTask<ChatTitlebarViewModel> CreateCommunityViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
             if (!communityDataService.TryGetCommunity(channel.Id, out var communityData))
             {
@@ -91,17 +59,21 @@ namespace DCL.Chat.ChatUseCases
                 };
             }
 
-            var thumbnail = await getCommunityThumbnailCommand
+            Sprite thumbnail = await getCommunityThumbnailCommand
                 .ExecuteAsync(communityData.thumbnails?.raw, ct);
 
-            return new ChatTitlebarViewModel
+            var viewModel = new ChatTitlebarViewModel
             {
-                ViewMode = TitlebarViewMode.Community, Id = communityData.id, Username = communityData.name, ProfileSprite = thumbnail,
+                ViewMode = TitlebarViewMode.Community, Id = communityData.id, Username = communityData.name,
                 ProfileColor = Color.gray
             };
+
+            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(thumbnail, false));
+
+            return viewModel;
         }
 
-        private async Task<ChatTitlebarViewModel> CreateUserViewModelAsync(ChatChannel channel, CancellationToken ct)
+        private async UniTask<ChatTitlebarViewModel> CreateUserViewModelAsync(ChatChannel channel, CancellationToken ct)
         {
             var profile = await profileRepository.GetProfileAsync(channel.Id.Id, ct);
             if (ct.IsCancellationRequested) return null;
@@ -114,22 +86,26 @@ namespace DCL.Chat.ChatUseCases
                 };
             }
 
-            var thumbnail = await getProfileThumbnailCommand
-                .ExecuteAsync(profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
-
-            return new ChatTitlebarViewModel
+            var viewModel = new ChatTitlebarViewModel
             {
                 ViewMode = TitlebarViewMode.DirectMessage, Id = profile.UserId, Username = profile.Name, HasClaimedName = profile.HasClaimedName,
-                WalletId = profile.WalletId, ProfileColor = profile.UserNameColor, ProfileSprite = thumbnail
+                WalletId = profile.WalletId!, ProfileColor = profile.UserNameColor,
             };
+
+            await GetProfileThumbnailCommand.Instance.ExecuteAsync(viewModel.Thumbnail, chatConfig.DefaultProfileThumbnail, profile.UserId, profile.Avatar.FaceSnapshotUrl, ct);
+
+            return viewModel;
         }
 
         private ChatTitlebarViewModel CreateNearbyViewModel(ChatChannel channel)
         {
-            return new ChatTitlebarViewModel
+            var viewModel = new ChatTitlebarViewModel
             {
-                ViewMode = TitlebarViewMode.Nearby, Username = chatConfig.NearbyConversationName, ProfileSprite = chatConfig.NearbyConversationIcon
+                ViewMode = TitlebarViewMode.Nearby, Username = chatConfig.NearbyConversationName,
             };
+
+            viewModel.Thumbnail.UpdateValue(ProfileThumbnailViewModel.FromLoaded(chatConfig.NearbyConversationIcon, true));
+            return viewModel;
         }
     }
 }

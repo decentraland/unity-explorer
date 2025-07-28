@@ -87,8 +87,7 @@ namespace DCL.Chat.ChatUseCases
             GetCommunityThumbnail = new GetCommunityThumbnailCommand(spriteCache,
                 chatConfig);
 
-            GetChannelMembersCommand = new GetChannelMembersCommand(eventBus,
-                chatMemberListService, chatConfig);
+            GetChannelMembersCommand = new GetChannelMembersCommand(chatConfig);
 
             GetUserChatStatusCommand = new GetUserChatStatusCommand(chatUserStateUpdater,
                 eventBus);
@@ -100,8 +99,8 @@ namespace DCL.Chat.ChatUseCases
             GetTitlebarViewModel = new GetTitlebarViewModelCommand(eventBus,
                 communityDataService,
                 profileRepositoryWrapper,
-                GetCommunityThumbnail,
-                chatConfig);
+                chatConfig,
+                GetCommunityThumbnail);
 
             SendMessage = new SendMessageCommand(
                 chatMessageBus,

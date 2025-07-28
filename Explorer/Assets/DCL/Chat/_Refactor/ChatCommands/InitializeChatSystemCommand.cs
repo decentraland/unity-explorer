@@ -121,7 +121,10 @@ namespace DCL.Chat.ChatUseCases
 
                 // Now create the channels in the history
                 foreach (var community in openCommunities)
-                    chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(community.id), ChatChannel.ChatChannelType.COMMUNITY);
+                {
+                    ChatChannel channel = chatHistory.AddOrGetChannel(ChatChannel.NewCommunityChannelId(community.id), ChatChannel.ChatChannelType.COMMUNITY);
+                    channel.TryInitializeChannel();
+                }
             }
             else
             {
@@ -135,7 +138,7 @@ namespace DCL.Chat.ChatUseCases
             string allClosedCommunityChats = DCLPlayerPrefs.GetString(DCLPrefKeys.CLOSED_COMMUNITY_CHATS, string.Empty);
             return allClosedCommunityChats.Contains(communityId);
         }
-        
+
         private void SetDefaultChannel(ChatChannel nearbyChannel)
         {
             currentChannelService.SetCurrentChannel(nearbyChannel);

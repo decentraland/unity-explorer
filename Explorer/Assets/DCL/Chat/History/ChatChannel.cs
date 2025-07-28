@@ -74,7 +74,7 @@ namespace DCL.Chat.History
         /// <summary>
         /// Raised when all the messages of the channel are deleted.
         /// </summary>
-        public event ClearedDelegate Cleared;
+        public event ClearedDelegate? Cleared;
 
         /// <summary>
         /// Raised when a message is added to the channel.
@@ -84,7 +84,7 @@ namespace DCL.Chat.History
         /// <summary>
         /// Raised when a message is read, added or removed.
         /// </summary>
-        public event ReadMessagesChangedDelegate ReadMessagesChanged;
+        public event ReadMessagesChangedDelegate? ReadMessagesChanged;
 
         /// <summary>
         /// Gets all the messages contained in the thread. The first messages in the list are the latest added.
@@ -133,6 +133,8 @@ namespace DCL.Chat.History
         /// <param name="messagesToStore">The messages of the channel, in the order they were sent.</param>
         public void FillChannel(List<ChatMessage> messagesToStore)
         {
+            messages.Clear();
+
             messages.Capacity = messagesToStore.Count + 2;
 
             // Adding two elements to count as top and bottom padding
@@ -143,6 +145,8 @@ namespace DCL.Chat.History
                 messages.Add(messagesToStore[i]);
 
             messages.Add(PADDING_MESSAGE);
+
+            isInitialized = true;
         }
 
         /// <summary>
@@ -151,17 +155,7 @@ namespace DCL.Chat.History
         /// <param name="message">A message.</param>
         public void AddMessage(ChatMessage message)
         {
-            if (!isInitialized)
-            {
-                InitializeChannel();
-            }
-
-            // Removing padding element and reversing list due to infinite scroll view behaviour
-            // messages.Remove(messages[^1]);
-            // messages.Reverse();
-            // messages.Add(message);
-            // messages.Add(PADDING_MESSAGE);
-            // messages.Reverse();
+            TryInitializeChannel();
 
             // Insert new message after first padding element (index 1)
             messages.Insert(1, message);
@@ -169,8 +163,11 @@ namespace DCL.Chat.History
             MessageAdded?.Invoke(this, message, 1);
         }
 
-        private void InitializeChannel()
+        public void TryInitializeChannel()
         {
+            if (isInitialized)
+                return;
+
             // Adding two elements to count as top and bottom padding
             messages.Add(PADDING_MESSAGE);
             messages.Add(PADDING_MESSAGE);

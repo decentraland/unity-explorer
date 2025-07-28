@@ -116,6 +116,7 @@ namespace DCL.Chat
         public void Clear()
         {
             loopList.SetListItemCount(0, false);
+            loopList.RefreshAllShownItem();
         }
 
         public void ShowLastMessage(bool useSmoothScroll = false)

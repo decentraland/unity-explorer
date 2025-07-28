@@ -12,6 +12,7 @@ using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.UI.ProfileElements;
 using DCL.UI.Profiles.Helpers;
+using DCL.Utilities;
 using UnityEngine;
 using Utility;
 
@@ -37,7 +38,6 @@ public class CreateChannelViewModelCommand
         this.chatConfig = chatConfig;
         this.profileRepository = profileRepository;
         this.getUserChatStatusCommand = getUserChatStatusCommand;
-        this.getProfileThumbnailCommand = getProfileThumbnailCommand;
         this.getCommunityThumbnailCommand = getCommunityThumbnailCommand;
     }
 
@@ -120,7 +120,7 @@ public class CreateChannelViewModelCommand
             viewModel.ProfileColor = Color.gray;
             viewModel.HasClaimedName = false;
             viewModel.ImageUrl = null;
-            viewModel.ProfilePicture = chatConfig.DefaultProfileThumbnail;
+            viewModel.ProfilePicture.UpdateValue(new ReactiveProperty<ProfileThumbnailViewModel>(ProfileThumbnailViewModel.FromLoaded(chatConfig.DefaultProfileThumbnail, true)));
         }
 
         eventBus.Publish(new ChatEvents.ChannelUpdatedEvent

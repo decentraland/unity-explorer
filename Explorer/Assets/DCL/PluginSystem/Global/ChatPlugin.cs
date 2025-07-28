@@ -81,7 +81,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManagerMenusAccessFacade mvcManagerMenusAccessFacade;
         private ChatMainController chatMainController;
         private ChatUserStateUpdater chatUserStateUpdater;
-        private ChatBusListenerService? chatBusListenerService;
+        private ChatHistoryService? chatBusListenerService;
         private readonly IEventBus eventBus = new EventBus();
         private readonly EventSubscriptionScope pluginScope = new ();
 
@@ -261,7 +261,7 @@ namespace DCL.PluginSystem.Global
                 chatClickDetectionService
             );
 
-            chatBusListenerService = new ChatBusListenerService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig);
+            chatBusListenerService = new ChatHistoryService(chatMessagesBus, chatHistory, hyperlinkTextFormatter, chatConfig);
 
             pluginScope.Add(chatMainController);
 

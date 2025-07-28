@@ -1,30 +1,20 @@
 ﻿using System;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.ChatViewModels;
-using DCL.Chat.Services;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Chat.EventBus;
 using DCL.UI.ProfileElements;
 using UnityEngine;
 
-using Utility;
-
 namespace DCL.Chat.ChatUseCases
 {
     public class GetChannelMembersCommand
     {
-        private readonly IEventBus eventBus;
-        private readonly ChatMemberListService memberListService;
         private readonly ChatConfig chatConfig;
 
-        public GetChannelMembersCommand(
-            IEventBus eventBus,
-            ChatMemberListService memberListService,
-            ChatConfig chatConfig)
+        public GetChannelMembersCommand(ChatConfig chatConfig)
         {
-            this.eventBus = eventBus;
-            this.memberListService = memberListService;
             this.chatConfig = chatConfig;
         }
 

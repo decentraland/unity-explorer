@@ -162,15 +162,6 @@ namespace DCL.Chat.ChatMessages
                 view.ShowItem(separatorFixedIndexFromBottom - 1);
         }
 
-        private void OnReadMessagesChanged(ChatChannel changedChannel)
-        {
-            // if (currentChannelService.CurrentChannel != changedChannel)
-            //     return;
-            //
-            // MoveNewMessagesSeparatorAfterPendingMessages();
-            // view.ReconstructScrollView(false);
-        }
-
         private void OnProfileContextMenuRequested(string userId, Vector2 position)
         {
             var request = new UserProfileMenuRequest
@@ -236,6 +227,7 @@ namespace DCL.Chat.ChatMessages
             {
                 RemoveNewMessagesSeparator(true);
                 viewModels.ForEach(ChatMessageViewModel.RELEASE);
+                viewModels.Clear();
                 view.Clear();
             }
         }
@@ -252,7 +244,6 @@ namespace DCL.Chat.ChatMessages
             scope.Add(eventBus.Subscribe<ChatEvents.ChatHistoryClearedEvent>(OnChatHistoryCleared));
 
             chatHistory.MessageAdded += OnMessageAddedToChatHistory;
-            chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
         }
 
         private void Unsubscribe()
@@ -265,7 +256,6 @@ namespace DCL.Chat.ChatMessages
 
             scope.Dispose();
             chatHistory.MessageAdded -= OnMessageAddedToChatHistory;
-            chatHistory.ReadMessagesChanged -= OnReadMessagesChanged;
         }
 
         protected override void Activate(ControllerNoData input)

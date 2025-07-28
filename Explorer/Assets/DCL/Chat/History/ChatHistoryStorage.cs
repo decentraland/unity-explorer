@@ -210,8 +210,6 @@ namespace DCL.Chat.History
             if (messagesBuffer.Count > 0)
                 chatHistory.Channels[channelId].FillChannel(messagesBuffer);
 
-            channelFile.IsInitialized = true;
-
             ReportHub.Log(reportData, $"Conversation initialized.");
         }
 

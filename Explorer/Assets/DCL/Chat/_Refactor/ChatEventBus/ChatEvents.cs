@@ -80,18 +80,6 @@ namespace DCL.Chat.EventBus
         }
 
         /// <summary>
-        /// Event:          UnreadMessagesUpdatedEvent (NOT-USED)
-        /// Triggered By:   Systems processing incoming messages.
-        /// When:           A new message arrives for a channel that is not currently selected, or read status is updated.
-        /// Subscribers:    ChatChannelsPresenter: Updates the unread message count badge on the specific channel item.
-        /// </summary>
-        public struct UnreadMessagesUpdatedEvent
-        {
-            public ChatChannel.ChannelId ChannelId;
-            public int Count;
-        }
-
-        /// <summary>
         /// Event:          UserStatusUpdatedEvent (NOT-USED)
         /// Triggered By:   ChatUserStateUpdater
         /// When:           A user's online status changes (e.g., a friend logs in or out).
@@ -102,14 +90,6 @@ namespace DCL.Chat.EventBus
             public string UserId;
             public bool IsOnline;
         }
-
-        /// <summary>
-        /// Event:          ChannelReadEvent (NOT-USED)
-        /// Triggered By:   MarkChannelAsReadCommand
-        /// When:           A user has read all messages in a channel (e.g., by scrolling to the bottom).
-        /// Subscribers:    (None currently) This event primarily signals a data model change. UI updates are handled by UnreadMessagesUpdatedEvent.
-        /// </summary>
-        public struct ChannelReadEvent { public ChatChannel.ChannelId ChannelId; }
 
         /// <summary>
         ///     Event:          ChatHistoryClearedEvent

@@ -8,14 +8,14 @@ namespace DCL.Chat.Services
     /// <summary>
     ///     Listens to the bus and adds a formatted message to the chat history
     /// </summary>
-    public class ChatBusListenerService : IDisposable
+    public class ChatHistoryService : IDisposable
     {
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IChatHistory chatHistory;
         private readonly ITextFormatter hyperlinkTextFormatter;
         private readonly ChatConfig chatConfig;
 
-        public ChatBusListenerService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig chatConfig)
+        public ChatHistoryService(IChatMessagesBus chatMessagesBus, IChatHistory chatHistory, ITextFormatter hyperlinkTextFormatter, ChatConfig chatConfig)
         {
             this.chatMessagesBus = chatMessagesBus;
             this.hyperlinkTextFormatter = hyperlinkTextFormatter;
