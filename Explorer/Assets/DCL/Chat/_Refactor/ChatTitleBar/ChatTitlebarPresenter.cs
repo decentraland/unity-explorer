@@ -55,7 +55,7 @@ public class ChatTitlebarPresenter : IDisposable
         view.OnContextMenuRequested += OnChatContextMenuRequested;
         view.OnProfileContextMenuRequested += OnProfileContextMenuRequested;
 
-        chatMemberListService.OnMemberListUpdated += OnMemberListUpdated;
+        chatMemberListService.OnMemberCountUpdated += OnMemberCountUpdated;
 
         scope.Add(eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnChannelSelected));
     }
@@ -64,7 +64,7 @@ public class ChatTitlebarPresenter : IDisposable
     {
         view.OnCloseRequested -= OnCloseRequested;
         view.OnMembersToggleRequested -= OnMembersToggleRequested;
-        chatMemberListService.OnMemberListUpdated -= OnMemberListUpdated;
+        chatMemberListService.OnMemberCountUpdated -= OnMemberCountUpdated;
 
         lifeCts.SafeCancelAndDispose();
         profileLoadCts.SafeCancelAndDispose();
@@ -84,7 +84,7 @@ public class ChatTitlebarPresenter : IDisposable
     {
         var options = new ChatOptionsContextMenuData
         {
-            DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon,
+            DeleteChatHistoryText = chatConfig.DeleteChatHistoryContextMenuText, DeleteChatHistoryIcon = chatConfig.ClearChatHistoryContextMenuIcon
         };
 
         data.contextMenuData = options;
@@ -92,12 +92,12 @@ public class ChatTitlebarPresenter : IDisposable
         chatContextMenuService.ShowChannelOptionsAsync(data).Forget();
     }
 
-    private void OnMemberListUpdated(IReadOnlyList<ChatMemberListView.MemberData> memberList)
+    private void OnMemberCountUpdated(int memberCount)
     {
-        var memberCount = memberList.Count.ToString();
+        string memberCountText = memberCount.ToString();
 
-        view.defaultTitlebarView.SetMemberCount(memberCount);
-        view.membersTitlebarView.SetMemberCount(memberCount);
+        view.defaultTitlebarView.SetMemberCount(memberCountText);
+        view.membersTitlebarView.SetMemberCount(memberCountText);
     }
 
     private void OnCloseRequested() =>
