@@ -52,7 +52,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 pbAvatarShape.GetSkinColor().ToUnityColor(),
                 pbAvatarShape.GetHairColor().ToUnityColor(),
                 pbAvatarShape.GetEyeColor().ToUnityColor(),
-                pbAvatarShape is { HasHideBody: true, HideBody: true }));
+                pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true }));
         }
 
         [Query]
@@ -97,7 +97,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.SkinColor = pbAvatarShape.GetSkinColor().ToUnityColor();
             avatarShapeComponent.EyesColor = pbAvatarShape.GetEyeColor().ToUnityColor();
             avatarShapeComponent.IsDirty = true;
-            avatarShapeComponent.IsBodyInvisible = pbAvatarShape is { HasHideBody: true, HideBody: true };
+            avatarShapeComponent.IsBodyInvisible = pbAvatarShape is { HasShowOnlyWearables: true, ShowOnlyWearables: true };
             pbAvatarShape.IsDirty = false;
         }
 

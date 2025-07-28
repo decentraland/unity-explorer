@@ -58,8 +58,8 @@ namespace DCL.AvatarRendering.AvatarShape.Helpers
         {
             var alpha = 1f;
 
-            if (self.HasHideBody)
-                alpha = self.HideBody ? 0f : 1f;
+            if (self.HasShowOnlyWearables)
+                alpha = self.ShowOnlyWearables ? 0f : 1f;
 
             return alpha;
         }
