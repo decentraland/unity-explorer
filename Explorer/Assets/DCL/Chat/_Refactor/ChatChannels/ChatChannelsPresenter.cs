@@ -29,7 +29,7 @@ public class ChatChannelsPresenter : IDisposable
     private readonly CreateChannelViewModelCommand createChannelViewModelCommand;
     private readonly Dictionary<ChatChannel.ChannelId, BaseChannelViewModel> viewModels = new();
 
-    private bool isInitialized  ;
+    private bool isInitialized;
 
     private CancellationTokenSource lifeCts;
     private EventSubscriptionScope scope = new();
@@ -68,18 +68,14 @@ public class ChatChannelsPresenter : IDisposable
 
         this.chatHistory.ChannelAdded += OnRuntimeChannelAdded;
         this.chatHistory.ReadMessagesChanged += OnReadMessagesChanged;
-        
         this.chatEventBus.OpenPrivateConversationRequested += OnOpenConversationUsingUserId;
         this.chatMessageBus.MessageAdded += OnMessageAdded;
         this.chatUserStateEventBus.UserConnectionStateChanged += OnLiveUserConnectionStateChange;
-        chatHistory.ReadMessagesChanged += OnUnreadMessagesUpdated;
 
         scope.Add(this.eventBus.Subscribe<ChatEvents.InitialChannelsLoadedEvent>(OnInitialChannelsLoaded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelUpdatedEvent>(OnChannelUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelAddedEvent>(OnChannelAdded));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelLeftEvent>(OnChannelLeft));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.MessageReceivedEvent>(OnMessageReceived));
-        scope.Add(this.eventBus.Subscribe<ChatEvents.UnreadMessagesUpdatedEvent>(OnUnreadMessagesUpdated));
         scope.Add(this.eventBus.Subscribe<ChatEvents.ChannelSelectedEvent>(OnSystemChannelSelected));
     }
 
@@ -145,11 +141,6 @@ public class ChatChannelsPresenter : IDisposable
         AddChannelToView(evt.Channel);
     }
 
-    private void OnUnreadMessagesUpdated(ChatEvents.UnreadMessagesUpdatedEvent evt)
-    {
-        view.SetUnreadMessages(evt.ChannelId, evt.Count);
-    }
-
     private void OnSystemChannelSelected(ChatEvents.ChannelSelectedEvent evt)
     {
         view.SelectConversation(evt.Channel.Id);
@@ -173,7 +164,8 @@ public class ChatChannelsPresenter : IDisposable
 
     private void AddChannelToView(ChatChannel channel)
     {
-        var viewModel = createChannelViewModelCommand.CreateViewModelAndFetch(channel, lifeCts.Token);
+        var viewModel = createChannelViewModelCommand
+            .CreateViewModelAndFetch(channel, lifeCts.Token);
         viewModels[viewModel.Id] = viewModel;
         view.AddConversation(viewModel);
     }
@@ -188,14 +180,6 @@ public class ChatChannelsPresenter : IDisposable
         {
             UpdateUnreadCount(channel);
         }
-    }
-
-    private void OnMessageReceived(ChatEvents.MessageReceivedEvent evt)
-    {
-        if (evt.ChannelId.Equals(currentChannelService.CurrentChannelId))
-            return;
-
-        UpdateUnreadCount(currentChannelService.CurrentChannel);
     }
 
     private void OnReadMessagesChanged(ChatChannel changedChannel)
