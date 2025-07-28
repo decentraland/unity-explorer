@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using LiveKit;
+using LiveKit.Audio;
 using LiveKit.Proto;
 using LiveKit.Rooms;
 using LiveKit.Rooms.Participants;
@@ -26,7 +27,8 @@ namespace DCL.VoiceChat
         private readonly VoiceChatMicrophoneHandler microphoneHandler;
 
         private ITrack microphoneTrack;
-        private OptimizedMonoRtcAudioSource monoRtcAudioSource;
+        //private OptimizedMonoRtcAudioSource monoRtcAudioSource;
+        private MicrophoneRtcAudioSource microphoneRtcAudioSource;
         private CancellationTokenSource trackPublishingCts;
         private bool isDisposed;
 
@@ -67,12 +69,13 @@ namespace DCL.VoiceChat
 
             try
             {
-                monoRtcAudioSource = new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);
-                monoRtcAudioSource.Start();
+                microphoneHandler.InitializeMicrophone();
+                microphoneRtcAudioSource = microphoneHandler.MicrophoneRtcAudioSource;//new OptimizedMonoRtcAudioSource(microphoneHandler.AudioFilter);
+                //microphoneRtcAudioSource.Start();
 
                 microphoneTrack = voiceChatRoom.AudioTracks.CreateAudioTrack(
                     voiceChatRoom.Participants.LocalParticipant().Name,
-                    monoRtcAudioSource);
+                    microphoneRtcAudioSource);
 
                 var options = new TrackPublishOptions
                 {
@@ -244,8 +247,8 @@ namespace DCL.VoiceChat
         private void CleanupLocalTrack()
         {
             microphoneTrack = null;
-            monoRtcAudioSource?.Stop();
-            monoRtcAudioSource = null;
+            microphoneRtcAudioSource?.Stop();
+            //monoRtcAudioSource = null;
             trackPublishingCts?.SafeCancelAndDispose();
             trackPublishingCts = null;
         }

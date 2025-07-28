@@ -33,6 +33,7 @@ namespace DCL.VoiceChat
 
         private bool isDisposed;
         private VoiceChatStatus currentStatus;
+        private ConnectionUpdate connectionState = ConnectionUpdate.Disconnected;
 
         public event Action ConnectionEstablished;
         public event Action ConnectionLost;
@@ -170,6 +171,10 @@ namespace DCL.VoiceChat
         {
             ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Connection update: {connectionUpdate}");
 
+            if (connectionState == connectionUpdate) return;
+
+            connectionState = connectionUpdate;
+
             switch (connectionUpdate)
             {
                 case ConnectionUpdate.Connected:
@@ -177,7 +182,7 @@ namespace DCL.VoiceChat
                     break;
 
                 case ConnectionUpdate.Disconnected:
-                    OnConnectionLost();
+                    OnConnectionLost(disconnectReason);
                     break;
 
                 case ConnectionUpdate.Reconnecting:
@@ -246,8 +251,10 @@ namespace DCL.VoiceChat
             catch (Exception ex) { ReportHub.LogWarning(ReportCategory.VOICE_CHAT, $"{TAG} Failed to setup connection: {ex.Message}"); }
         }
 
-        private void OnConnectionLost()
+        private void OnConnectionLost(DisconnectReason? disconnectReason)
         {
+            //TODO: Add proper logic to handle disconnection reason.
+
             try
             {
                 ReportHub.Log(ReportCategory.VOICE_CHAT, $"{TAG} Cleaning up tracks and media");
